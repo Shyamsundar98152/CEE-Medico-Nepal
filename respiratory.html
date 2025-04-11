@@ -1,0 +1,468 @@
+# I will generate the Respiratory System Quiz HTML and save it as a downloadable file.
+html_content = """
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Respiratory System Quiz - CEE Medico Nepal</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css"/>
+  <style>
+    :root {
+      --primary-color: #2c3e50;
+      --secondary-color: #3498db;
+      --accent-color: #e74c3c;
+      --light-color: #ecf0f1;
+      --text-color: #333;
+      --botany-color: #2ecc71;
+    }
+
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    }
+
+    body {
+      background-color: #f9f9f9;
+      color: var(--text-color);
+    }
+
+    header, footer {
+      background-color: var(--primary-color);
+      color: white;
+      padding: 1rem 0;
+    }
+
+    .container {
+      width: 90%;
+      max-width: 1000px;
+      margin: 0 auto;
+    }
+
+    .quiz-hero {
+      text-align: center;
+      background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+      color: white;
+      padding: 2rem 0;
+    }
+
+    .quiz-container {
+      margin: 2rem 0;
+    }
+
+    .quiz-question {
+      background: white;
+      border-radius: 8px;
+      padding: 1.5rem;
+      margin-bottom: 1rem;
+      box-shadow: 0 5px 15px rgba(0,0,0,0.05);
+    }
+
+    .quiz-option {
+      padding: 1rem;
+      background-color: var(--light-color);
+      border-radius: 5px;
+      margin-bottom: 0.5rem;
+      cursor: pointer;
+    }
+
+    .quiz-option:hover {
+      background-color: #dcdcdc;
+    }
+
+    .quiz-option.correct {
+      border: 2px solid var(--botany-color);
+      background-color: #e8f8f5;
+    }
+
+    .quiz-option.incorrect {
+      border: 2px solid var(--accent-color);
+      background-color: #fdecea;
+    }
+
+    .quiz-explanation {
+      display: none;
+      padding: 1rem;
+      border-left: 5px solid var(--secondary-color);
+      margin-top: 1rem;
+      background-color: #f0f0f0;
+    }
+
+    .quiz-navigation {
+      margin-top: 2rem;
+      text-align: center;
+    }
+
+    .quiz-navigation button {
+      margin: 0 1rem;
+      padding: 0.7rem 1.5rem;
+      border: none;
+      background-color: var(--secondary-color);
+      color: white;
+      border-radius: 5px;
+      cursor: pointer;
+    }
+
+    .quiz-results {
+      display: none;
+      text-align: center;
+      padding: 2rem;
+      background: white;
+      border-radius: 10px;
+      box-shadow: 0 5px 10px rgba(0,0,0,0.1);
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <div class="container">
+      <h1>CEE Medico Nepal</h1>
+      <p>Respiratory System Quiz</p>
+    </div>
+  </header>
+
+  <section class="quiz-hero">
+    <div class="container">
+      <h2>Test Your Knowledge on the Respiratory System</h2>
+      <p>Essential questions for MBBS Entrance Preparation in Nepal</p>
+    </div>
+  </section>
+
+  <main class="container quiz-container">
+    <div id="quiz-box"></div>
+
+    <div class="quiz-navigation">
+      <button onclick="prevQuestion()">Previous</button>
+      <button onclick="nextQuestion()">Next</button>
+      <button onclick="submitQuiz()">Submit</button>
+    </div>
+
+    <div class="quiz-results" id="results-box">
+      <h2>Quiz Completed!</h2>
+      <p id="score-text"></p>
+      <button onclick="restartQuiz()">Retake Quiz</button>
+    </div>
+  </main>
+
+  <footer>
+    <div class="container">
+      <p>&copy; 2025 CEE Medico Nepal. All Rights Reserved.</p>
+    </div>
+  </footer>
+
+  <script>
+    const quizData = [
+       {
+        question: "1. What is the primary function of the respiratory system?",
+        options: ["A) Digestion", "B) Oxygen exchange", "C) Excretion", "D) Circulation"],
+        correct: 1,
+        explanation: "The primary function of the respiratory system is to facilitate the exchange of oxygen and carbon dioxide in the body."
+    },
+    {
+        question: "2. Which structure is responsible for gas exchange in the lungs?",
+        options: ["A) Trachea", "B) Bronchi", "C) Alveoli", "D) Diaphragm"],
+        correct: 2,
+        explanation: "Alveoli are tiny air sacs in the lungs where the exchange of oxygen and carbon dioxide occurs."
+    },
+    {
+        question: "3. What is the primary muscle involved in breathing?",
+        options: ["A) Intercostal muscles", "B) Diaphragm", "C) Pectoral muscles", "D) Trapezius"],
+        correct: 1,
+        explanation: "The diaphragm is the primary muscle involved in breathing, contracting and relaxing to allow air in and out of the lungs."
+    },
+    {
+        question: "4. The trachea divides into two:",
+        options: ["A) Bronchi", "B) Alveoli", "C) Bronchioles", "D) Pharynx"],
+        correct: 0,
+        explanation: "The trachea divides into two main bronchi, each leading to one of the lungs."
+    },
+    {
+        question: "5. Which part of the respiratory system is commonly referred to as the windpipe?",
+        options: ["A) Larynx", "B) Pharynx", "C) Trachea", "D) Bronchus"],
+        correct: 2,
+        explanation: "The trachea is commonly known as the windpipe, responsible for carrying air to the bronchi."
+    },
+    {
+        question: "6. What is the role of hemoglobin in respiration?",
+        options: ["A) Breaks down carbon dioxide", "B) Transports oxygen", "C) Expels air", "D) Moistens air"],
+        correct: 1,
+        explanation: "Hemoglobin in red blood cells binds to oxygen and transports it throughout the body."
+    },
+    {
+        question: "7. Which structure prevents food from entering the airway during swallowing?",
+        options: ["A) Uvula", "B) Epiglottis", "C) Larynx", "D) Pharynx"],
+        correct: 1,
+        explanation: "The epiglottis is a flap that closes over the trachea during swallowing to prevent food from entering the airway."
+    },
+    {
+        question: "8. What happens to the diaphragm during inhalation?",
+        options: ["A) It relaxes", "B) It contracts and moves down", "C) It moves up", "D) It remains stationary"],
+        correct: 1,
+        explanation: "During inhalation, the diaphragm contracts and moves downward, creating space for the lungs to expand."
+    },
+    {
+        question: "9. Which part of the brain controls the respiratory rate?",
+        options: ["A) Cerebellum", "B) Medulla oblongata", "C) Hypothalamus", "D) Thalamus"],
+        correct: 1,
+        explanation: "The medulla oblongata regulates the respiratory rate by sending signals to the respiratory muscles."
+    },
+    {
+        question: "10. Oxygen is transported in the blood primarily by:",
+        options: ["A) White blood cells", "B) Plasma", "C) Hemoglobin", "D) Platelets"],
+        correct: 2,
+        explanation: "Oxygen is transported in the blood primarily by hemoglobin, which binds to oxygen in the red blood cells."
+    },
+    {
+        question: "11. Which gas is expelled from the body during exhalation?",
+        options: ["A) Oxygen", "B) Nitrogen", "C) Carbon dioxide", "D) Hydrogen"],
+        correct: 2,
+        explanation: "Carbon dioxide is expelled from the body during exhalation as a waste product of cellular respiration."
+    },
+    {
+        question: "12. The exchange of gases between the lungs and blood occurs in the:",
+        options: ["A) Bronchi", "B) Bronchioles", "C) Alveoli", "D) Trachea"],
+        correct: 2,
+        explanation: "Gas exchange between the lungs and blood occurs in the alveoli, tiny air sacs in the lungs."
+    },
+    {
+        question: "13. What is the role of the nasal cavity in respiration?",
+        options: ["A) Absorbs oxygen", "B) Warms and filters air", "C) Contracts the diaphragm", "D) Exchanges gases"],
+        correct: 1,
+        explanation: "The nasal cavity warms, filters, and moistens the air before it enters the lungs."
+    },
+    {
+        question: "14. Which of the following is a common respiratory disease characterized by airway inflammation?",
+        options: ["A) Tuberculosis", "B) Asthma", "C) Pneumonia", "D) Bronchitis"],
+        correct: 1,
+        explanation: "Asthma is a chronic respiratory condition characterized by inflammation and narrowing of the airways."
+    },
+    {
+        question: "15. What is the function of the pleura in the respiratory system?",
+        options: ["A) Produces mucus", "B) Protects the lungs", "C) Aids in gas exchange", "D) Filters dust particles"],
+        correct: 1,
+        explanation: "The pleura is a double-layered membrane that surrounds and protects the lungs, reducing friction during breathing."
+    },
+    {
+        question: "16. The bronchi divide into smaller tubes called:",
+        options: ["A) Alveoli", "B) Tracheae", "C) Bronchioles", "D) Pleura"],
+        correct: 2,
+        explanation: "The bronchi divide into smaller branches called bronchioles, which lead to the alveoli where gas exchange occurs."
+    },
+    {
+        question: "17. What is tidal volume?",
+        options: ["A) The total lung capacity", "B) The volume of air inhaled and exhaled during a normal breath", "C) The amount of air left in the lungs after exhalation", "D) The maximum amount of air that can be inhaled"],
+        correct: 1,
+        explanation: "Tidal volume is the amount of air inhaled and exhaled during a normal, unforced breath."
+    },
+    {
+        question: "18. Which of the following occurs during exhalation?",
+        options: ["A) Diaphragm contracts", "B) Chest cavity increases in size", "C) Air pressure in the lungs increases", "D) Rib cage expands"],
+        correct: 2,
+        explanation: "During exhalation, the diaphragm relaxes and moves up, increasing air pressure in the lungs, forcing air out."
+    },
+    {
+        question: "19. Oxygen is exchanged for carbon dioxide in the:",
+        options: ["A) Trachea", "B) Lungs", "C) Alveoli", "D) Bronchi"],
+        correct: 2,
+        explanation: "Oxygen and carbon dioxide are exchanged in the alveoli, where oxygen enters the blood and carbon dioxide is expelled."
+    },
+    {
+        question: "20. What is the respiratory condition that involves infection and inflammation of the alveoli?",
+        options: ["A) Asthma", "B) Pneumonia", "C) Bronchitis", "D) Emphysema"],
+        correct: 1,
+        explanation: "Pneumonia is an infection that inflames the alveoli, often filling them with fluid or pus, leading to breathing difficulties."
+    },
+    {
+        question: "21. Which structure is responsible for producing sound?",
+        options: ["A) Larynx", "B) Pharynx", "C) Epiglottis", "D) Trachea"],
+        correct: 0,
+        explanation: "The larynx, also known as the voice box, contains the vocal cords and is responsible for sound production."
+    },
+    {
+        question: "22. The lungs are covered by a thin membrane called the:",
+        options: ["A) Pleura", "B) Pericardium", "C) Diaphragm", "D) Alveoli"],
+        correct: 0,
+        explanation: "The pleura is a thin membrane that covers the lungs and lines the chest cavity, helping reduce friction during breathing."
+    },
+    {
+        question: "23. Which of the following is a waste product of cellular respiration?",
+                options: ["A) Glucose", "B) Oxygen", "C) Carbon dioxide", "D) ATP"],
+        correct: 2,
+        explanation: "Carbon dioxide is a waste product of cellular respiration, which is expelled from the body during exhalation."
+    },
+    {
+        question: "24. What is the normal rate of breathing in an adult at rest?",
+        options: ["A) 12-20 breaths per minute", "B) 25-30 breaths per minute", "C) 5-10 breaths per minute", "D) 30-40 breaths per minute"],
+        correct: 0,
+        explanation: "The normal breathing rate for a healthy adult at rest is between 12 to 20 breaths per minute."
+    },
+    {
+        question: "25. Which of the following conditions results from the collapse of part or all of a lung?",
+        options: ["A) Asthma", "B) Emphysema", "C) Pneumothorax", "D) Tuberculosis"],
+        correct: 2,
+        explanation: "Pneumothorax occurs when air leaks into the space between the lungs and chest wall, causing part or all of a lung to collapse."
+    },
+    {
+        question: "26. Which respiratory disease is caused by long-term exposure to irritating particles like smoke?",
+        options: ["A) Asthma", "B) Emphysema", "C) Tuberculosis", "D) Pneumonia"],
+        correct: 1,
+        explanation: "Emphysema is a chronic respiratory disease often caused by smoking, characterized by damage to the alveoli in the lungs."
+    },
+    {
+        question: "27. What is the role of surfactant in the lungs?",
+        options: ["A) Protects the airways", "B) Prevents the alveoli from collapsing", "C) Helps filter air", "D) Reduces friction"],
+        correct: 1,
+        explanation: "Surfactant is a substance that reduces surface tension in the alveoli, preventing them from collapsing and aiding in gas exchange."
+    },
+    {
+        question: "28. Which part of the respiratory system is lined with cilia to help remove debris?",
+        options: ["A) Alveoli", "B) Trachea", "C) Diaphragm", "D) Lungs"],
+        correct: 1,
+        explanation: "The trachea is lined with tiny hair-like structures called cilia, which help to remove debris and mucus from the airways."
+    },
+    {
+        question: "29. The amount of air that can be forcibly exhaled after a normal exhalation is known as:",
+        options: ["A) Tidal volume", "B) Vital capacity", "C) Expiratory reserve volume", "D) Residual volume"],
+        correct: 2,
+        explanation: "Expiratory reserve volume is the additional amount of air that can be forcibly exhaled after a normal exhalation."
+    },
+    {
+        question: "30. What is the term for the total amount of air the lungs can hold?",
+        options: ["A) Tidal volume", "B) Inspiratory capacity", "C) Total lung capacity", "D) Residual volume"],
+        correct: 2,
+        explanation: "Total lung capacity is the maximum amount of air the lungs can hold, including tidal volume, inspiratory and expiratory reserve volumes, and residual volume."
+    },
+    {
+        question: "31. Which of the following best describes external respiration?",
+        options: ["A) Exchange of gases between cells and blood", "B) Exchange of gases between alveoli and blood", "C) Cellular use of oxygen", "D) Absorption of oxygen by the stomach"],
+        correct: 1,
+        explanation: "External respiration refers to the exchange of gases between the alveoli in the lungs and the blood in the pulmonary capillaries."
+    },
+    {
+        question: "32. The exchange of gases between blood and body tissues is called:",
+        options: ["A) Internal respiration", "B) External respiration", "C) Cellular respiration", "D) Pulmonary ventilation"],
+        correct: 0,
+        explanation: "Internal respiration is the exchange of gases between the blood and the body's tissues, where oxygen is delivered and carbon dioxide is collected."
+    },
+    {
+        question: "33. Which structure is the first to warm and filter air as it enters the respiratory system?",
+        options: ["A) Trachea", "B) Bronchi", "C) Nasal cavity", "D) Pharynx"],
+        correct: 2,
+        explanation: "The nasal cavity is the first structure in the respiratory system to warm, moisten, and filter incoming air."
+    },
+    {
+        question: "34. What condition is characterized by inflammation of the bronchi?",
+        options: ["A) Asthma", "B) Bronchitis", "C) Emphysema", "D) Pneumonia"],
+        correct: 1,
+        explanation: "Bronchitis is an inflammation of the bronchi, typically caused by infection or irritation from smoke or pollutants."
+    },
+    {
+        question: "35. What is the effect of high altitude on the respiratory system?",
+        options: ["A) Decreased oxygen availability", "B) Increased tidal volume", "C) Increased oxygen availability", "D) Decreased breathing rate"],
+        correct: 0,
+        explanation: "At high altitudes, oxygen availability decreases, making it harder for the body to obtain the oxygen it needs."
+    },
+    {
+        question: "36. Which of the following is NOT a symptom of chronic obstructive pulmonary disease (COPD)?",
+        options: ["A) Shortness of breath", "B) Wheezing", "C) Chest tightness", "D) High fever"],
+        correct: 3,
+        explanation: "High fever is not a common symptom of COPD, which is characterized by chronic shortness of breath, wheezing, and chest tightness."
+    },
+    {
+        question: "37. Which type of cell in the lungs produces surfactant?",
+        options: ["A) Type I alveolar cells", "B) Macrophages", "C) Type II alveolar cells", "D) Red blood cells"],
+        correct: 2,
+        explanation: "Type II alveolar cells produce surfactant, a substance that reduces surface tension in the lungs and prevents alveoli from collapsing."
+    },
+    {
+        question: "38. What happens to carbon dioxide levels in the blood when a person holds their breath?",
+        options: ["A) Carbon dioxide levels increase", "B) Carbon dioxide levels decrease", "C) Carbon dioxide is exhaled", "D) Carbon dioxide is converted to oxygen"],
+        correct: 0,
+        explanation: "When a person holds their breath, carbon dioxide levels increase in the blood due to the lack of exhalation."
+    },
+    {
+        question: "39. What is the medical term for difficulty breathing?",
+        options: ["A) Apnea", "B) Dyspnea", "C) Tachypnea", "D) Bradypnea"],
+        correct: 1,
+        explanation: "Dyspnea is the medical term for difficulty or labored breathing, often associated with respiratory conditions."
+    },
+    {
+        question: "40. The structure that vibrates to produce sound when air passes through is the:",
+        options: ["A) Trachea", "B) Bronchi", "C) Larynx", "D) Pharynx"],
+        correct: 2,
+        explanation: "The larynx, or voice box, contains the vocal cords that vibrate to produce sound when air is expelled from the lungs."
+    },
+    ];
+
+    let current = 0;
+    let score = 0;
+    let userAnswers = [];
+
+    function renderQuestion() {
+      const q = quizData[current];
+      let html = '<div class="quiz-question">';
+      html += `<h3>Q${current + 1}. ${q.question}</h3>`;
+      q.options.forEach((opt, i) => {
+        html += `<div class="quiz-option" onclick="selectOption(${i})">${opt}</div>`;
+      });
+      html += `<div class="quiz-explanation" id="explanation">${q.explanation}</div>`;
+      html += '</div>';
+      document.getElementById('quiz-box').innerHTML = html;
+    }
+
+    function selectOption(index) {
+      const options = document.querySelectorAll('.quiz-option');
+      options.forEach((el, i) => {
+        el.classList.remove('correct', 'incorrect');
+        if (i === index) {
+          if (i === quizData[current].correct) {
+            el.classList.add('correct');
+            score++;
+          } else {
+            el.classList.add('incorrect');
+            options[quizData[current].correct].classList.add('correct');
+          }
+        }
+        el.onclick = null;
+      });
+      document.getElementById('explanation').style.display = 'block';
+      userAnswers[current] = index;
+    }
+
+    function nextQuestion() {
+      if (current < quizData.length - 1) {
+        current++;
+        renderQuestion();
+      }
+    }
+
+    function prevQuestion() {
+      if (current > 0) {
+        current--;
+        renderQuestion();
+      }
+    }
+
+    function submitQuiz() {
+      document.getElementById('quiz-box').style.display = 'none';
+      document.querySelector('.quiz-navigation').style.display = 'none';
+      document.getElementById('results-box').style.display = 'block';
+      document.getElementById('score-text').innerText = `You scored ${score} out of ${quizData.length}`;
+    }
+
+    function restartQuiz() {
+      current = 0;
+      score = 0;
+      userAnswers = [];
+      document.getElementById('quiz-box').style.display = 'block';
+      document.querySelector('.quiz-navigation').style.display = 'block';
+      document.getElementById('results-box').style.display = 'none';
+      renderQuestion();
+    }
+
+    renderQuestion();
+  </script>
+</body>
+</html>
