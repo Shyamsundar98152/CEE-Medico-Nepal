@@ -1,0 +1,836 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Respiratory System Quiz - CEE Medico Nepal</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css"/>
+  <style>
+    :root {
+      --primary-color: #2c3e50;
+      --secondary-color: #3498db;
+      --accent-color: #e74c3c;
+      --light-color: #ecf0f1;
+      --text-color: #333;
+      --botany-color: #2ecc71;
+    }
+
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    }
+
+    body {
+      background-color: #f9f9f9;
+      color: var(--text-color);
+    }
+
+    header, footer {
+      background-color: var(--primary-color);
+      color: white;
+      padding: 1rem 0;
+    }
+
+    .container {
+      width: 90%;
+      max-width: 1000px;
+      margin: 0 auto;
+    }
+
+    .quiz-hero {
+      text-align: center;
+      background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+      color: white;
+      padding: 2rem 0;
+    }
+
+    .quiz-container {
+      margin: 2rem 0;
+    }
+
+    .quiz-question {
+      background: white;
+      border-radius: 8px;
+      padding: 1.5rem;
+      margin-bottom: 1rem;
+      box-shadow: 0 5px 15px rgba(0,0,0,0.05);
+    }
+
+    .quiz-option {
+      padding: 1rem;
+      background-color: var(--light-color);
+      border-radius: 5px;
+      margin-bottom: 0.5rem;
+      cursor: pointer;
+    }
+
+    .quiz-option:hover {
+      background-color: #dcdcdc;
+    }
+
+    .quiz-option.correct {
+      border: 2px solid var(--botany-color);
+      background-color: #e8f8f5;
+    }
+
+    .quiz-option.incorrect {
+      border: 2px solid var(--accent-color);
+      background-color: #fdecea;
+    }
+
+    .quiz-explanation {
+      display: none;
+      padding: 1rem;
+      border-left: 5px solid var(--secondary-color);
+      margin-top: 1rem;
+      background-color: #f0f0f0;
+    }
+
+    .quiz-navigation {
+      margin-top: 2rem;
+      text-align: center;
+    }
+
+    .quiz-navigation button {
+      margin: 0 1rem;
+      padding: 0.7rem 1.5rem;
+      border: none;
+      background-color: var(--secondary-color);
+      color: white;
+      border-radius: 5px;
+      cursor: pointer;
+    }
+
+    .quiz-results {
+      display: none;
+      text-align: center;
+      padding: 2rem;
+      background: white;
+      border-radius: 10px;
+      box-shadow: 0 5px 10px rgba(0,0,0,0.1);
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <div class="container">
+      <h1>CEE Medico Nepal</h1>
+      <p>Digestive System Quiz</p>
+    </div>
+  </header>
+
+  <section class="quiz-hero">
+    <div class="container">
+      <h2>Test Your Knowledge on the Digestive System</h2>
+      <p>Essential questions for MBBS Entrance Preparation in Nepal</p>
+    </div>
+  </section>
+
+  <main class="container quiz-container">
+    <div id="quiz-box"></div>
+
+    <div class="quiz-navigation">
+      <button onclick="prevQuestion()">Previous</button>
+      <button onclick="nextQuestion()">Next</button>
+      <button onclick="submitQuiz()">Submit</button>
+    </div>
+
+    <div class="quiz-results" id="results-box">
+      <h2>Quiz Completed!</h2>
+      <p id="score-text"></p>
+      <button onclick="restartQuiz()">Retake Quiz</button>
+    </div>
+  </main>
+
+  <footer>
+    <div class="container">
+      <p>&copy; 2025 CEE Medico Nepal. All Rights Reserved.</p>
+    </div>
+  </footer>
+
+  <script>
+    const quizData = [
+      {
+        question: "1. Which enzyme is primarily responsible for the digestion of starch in the mouth?",
+        options: ["A) Pepsin", "B) Amylase", "C) Lipase", "D) Trypsin"],
+        correct: 1,
+        explanation: "Salivary amylase is the enzyme that begins the breakdown of starch into maltose in the mouth."
+    },
+    {
+        question: "2. In which part of the digestive system is bile stored and concentrated?",
+        options: ["A) Liver", "B) Gallbladder", "C) Small Intestine", "D) Pancreas"],
+        correct: 1,
+        explanation: "Bile is produced by the liver and stored and concentrated in the gallbladder until needed for fat digestion."
+    },
+    {
+        question: "3. What is the primary function of the large intestine?",
+        options: ["A) Absorb nutrients", "B) Produce bile", "C) Absorb water", "D) Digest proteins"],
+        correct: 2,
+        explanation: "The large intestine is mainly responsible for absorbing water and electrolytes from indigestible food matter."
+    },
+    {
+        question: "4. Which hormone stimulates the secretion of gastric acid in the stomach?",
+        options: ["A) Secretin", "B) Gastrin", "C) Cholecystokinin", "D) Somatostatin"],
+        correct: 1,
+        explanation: "Gastrin is a hormone that stimulates the stomach to secrete gastric acid, which helps in digestion."
+    },
+    {
+        question: "5. The breakdown of proteins into peptides is primarily achieved by which enzyme in the stomach?",
+        options: ["A) Amylase", "B) Lipase", "C) Pepsin", "D) Trypsin"],
+        correct: 2,
+        explanation: "Pepsin, secreted by the stomach lining, is the primary enzyme responsible for breaking down proteins into peptides."
+    },
+    {
+        question: "6. Which part of the digestive system is the primary site for nutrient absorption?",
+        options: ["A) Stomach", "B) Small Intestine", "C) Large Intestine", "D) Esophagus"],
+        correct: 1,
+        explanation: "The small intestine is the primary site where the absorption of nutrients into the bloodstream occurs."
+    },
+    {
+        question: "7. Which enzyme is secreted by the pancreas to digest fats?",
+        options: ["A) Amylase", "B) Lipase", "C) Pepsin", "D) Sucrase"],
+        correct: 1,
+        explanation: "Pancreatic lipase is the enzyme responsible for breaking down dietary fats into fatty acids and glycerol."
+    },
+    {
+        question: "8. What is the primary role of bile in digestion?",
+        options: ["A) Digest proteins", "B) Neutralize stomach acid", "C) Emulsify fats", "D) Absorb water"],
+        correct: 2,
+        explanation: "Bile emulsifies fats, breaking them into smaller droplets, which makes it easier for digestive enzymes to act on them."
+    },
+    {
+        question: "9. Which of the following structures prevents the backflow of food from the stomach into the esophagus?",
+        options: ["A) Pyloric Sphincter", "B) Lower Esophageal Sphincter", "C) Ileocecal Valve", "D) Cardiac Sphincter"],
+        correct: 1,
+        explanation: "The lower esophageal sphincter (also known as the cardiac sphincter) prevents the backflow of stomach contents into the esophagus."
+    },
+    {
+        question: "10. Which cells in the stomach are responsible for secreting hydrochloric acid?",
+        options: ["A) Parietal Cells", "B) Chief Cells", "C) Goblet Cells", "D) Enterocytes"],
+        correct: 0,
+        explanation: "Parietal cells in the stomach lining secrete hydrochloric acid (HCl), which aids in digestion and creates an acidic environment."
+    },
+    {
+        question: "11. What is the primary function of the esophagus?",
+        options: ["A) Digest food", "B) Absorb nutrients", "C) Transport food to the stomach", "D) Produce enzymes"],
+        correct: 2,
+        explanation: "The esophagus is responsible for transporting food from the mouth to the stomach through peristaltic movements."
+    },
+    {
+        question: "12. Which type of muscle is found in the wall of the stomach?",
+        options: ["A) Smooth Muscle", "B) Cardiac Muscle", "C) Skeletal Muscle", "D) Voluntary Muscle"],
+        correct: 0,
+        explanation: "The wall of the stomach is made up of smooth muscle, which is involuntary and helps in the mixing and churning of food."
+    },
+    {
+        question: "13. Which nutrient is primarily digested in the stomach?",
+        options: ["A) Carbohydrates", "B) Proteins", "C) Fats", "D) Vitamins"],
+        correct: 1,
+        explanation: "The stomach primarily digests proteins, using enzymes like pepsin to break them down into smaller peptides."
+    },
+    {
+        question: "14. The small intestine is divided into three parts. Which of the following is NOT one of them?",
+        options: ["A) Duodenum", "B) Jejunum", "C) Ileum", "D) Cecum"],
+        correct: 3,
+        explanation: "The cecum is part of the large intestine, not the small intestine, which consists of the duodenum, jejunum, and ileum."
+    },
+    {
+        question: "15. Which structure increases the surface area for absorption in the small intestine?",
+        options: ["A) Microvilli", "B) Villi", "C) Circular Folds", "D) All of the above"],
+        correct: 3,
+        explanation: "Microvilli, villi, and circular folds all work together to significantly increase the surface area for nutrient absorption in the small intestine."
+    },
+    {
+        question: "16. What is the function of the pancreas in digestion?",
+        options: ["A) Secretes bile", "B) Produces insulin", "C) Releases digestive enzymes", "D) Absorbs nutrients"],
+        correct: 2,
+        explanation: "The pancreas produces and releases digestive enzymes into the small intestine to aid in the digestion of carbohydrates, proteins, and fats."
+    },
+    {
+        question: "17. Which part of the digestive system is responsible for the absorption of water and electrolytes?",
+        options: ["A) Stomach", "B) Small Intestine", "C) Large Intestine", "D) Pancreas"],
+        correct: 2,
+        explanation: "The large intestine absorbs water and electrolytes from indigestible food matter, forming solid waste."
+    },
+    {
+        question: "18. What is the role of salivary amylase?",
+        options: ["A) Breaks down proteins", "B) Emulsifies fats", "C) Digests carbohydrates", "D) Activates pepsin"],
+        correct: 2,
+        explanation: "Salivary amylase is an enzyme that begins the digestion of carbohydrates in the mouth."
+    },
+    {
+        question: "19. Which digestive organ is primarily responsible for detoxifying substances?",
+        options: ["A) Stomach", "B) Small Intestine", "C) Liver", "D) Gallbladder"],
+        correct: 2,
+        explanation: "The liver is responsible for detoxifying harmful substances, metabolizing drugs, and producing bile."
+    },
+    {
+        question: "20. The process by which food is moved through the digestive tract is called:",
+        options: ["A) Ingestion", "B) Peristalsis", "C) Absorption", "D) Digestion"],
+        correct: 1,
+        explanation: "Peristalsis is the wave-like muscle contractions that move food through the digestive tract."
+    },
+
+
+    {
+        question: "21. What type of digestion occurs in the mouth?",
+        options: ["A) Mechanical only", "B) Chemical only", "C) Both mechanical and chemical", "D) None"],
+        correct: 2,
+        explanation: "Digestion in the mouth involves both mechanical digestion (chewing) and chemical digestion (salivary enzymes)."
+    },
+    {
+        question: "22. Which structure prevents food from entering the trachea during swallowing?",
+        options: ["A) Epiglottis", "B) Uvula", "C) Pharynx", "D) Larynx"],
+        correct: 0,
+        explanation: "The epiglottis is a flap that closes over the trachea during swallowing to prevent food from entering the airway."
+    },
+    {
+        question: "23. Which nutrient is absorbed mainly in the jejunum?",
+        options: ["A) Proteins", "B) Fats", "C) Carbohydrates", "D) All of the above"],
+        correct: 3,
+        explanation: "The jejunum is primarily responsible for the absorption of nutrients, including proteins, fats, and carbohydrates."
+    },
+    {
+        question: "24. The primary site of bile production is the:",
+        options: ["A) Gallbladder", "B) Liver", "C) Pancreas", "D) Small Intestine"],
+        correct: 1,
+        explanation: "The liver produces bile, which is stored and concentrated in the gallbladder."
+    },
+    {
+        question: "25. Which of the following vitamins is absorbed in the large intestine?",
+        options: ["A) Vitamin A", "B) Vitamin C", "C) Vitamin K", "D) Vitamin D"],
+        correct: 2,
+        explanation: "Vitamin K is produced by bacteria in the large intestine and is absorbed there."
+    },
+    {
+        question: "26. What is the function of goblet cells in the intestinal lining?",
+        options: ["A) Secrete digestive enzymes", "B) Absorb nutrients", "C) Produce mucus", "D) Regulate pH"],
+        correct: 2,
+        explanation: "Goblet cells in the intestinal lining secrete mucus, which lubricates and protects the intestinal walls."
+    },
+    {
+        question: "27. The primary function of the stomach is to:",
+        options: ["A) Absorb nutrients", "B) Store food", "C) Digest carbohydrates", "D) Produce bile"],
+        correct: 1,
+        explanation: "The stomach's primary function is to store food and initiate the digestion of proteins."
+    },
+    {
+        question: "28. Which hormone is released by the small intestine to stimulate bile secretion?",
+        options: ["A) Gastrin", "B) Secretin", "C) Cholecystokinin", "D) Insulin"],
+        correct: 2,
+        explanation: "Cholecystokinin is released by the small intestine and stimulates the gallbladder to release bile."
+    },
+    {
+        question: "29. The enzyme lactase is essential for the digestion of:",
+        options: ["A) Lactose", "B) Maltose", "C) Sucrose", "D) Glucose"],
+        correct: 0,
+        explanation: "Lactase is an enzyme that breaks down lactose, the sugar found in milk and dairy products."
+    },
+    {
+        question: "30. What type of dietary fiber is most effective in promoting regular bowel movements?",
+        options: ["A) Soluble fiber", "B) Insoluble fiber", "C) Protein", "D) Fats"],
+        correct: 1,
+        explanation: "Insoluble fiber adds bulk to the stool and helps promote regular bowel movements."
+    },
+
+    {
+        question: "31. The function of the ileocecal valve is to:",
+        options: ["A) Control food entry into the stomach", "B) Prevent backflow into the small intestine", "C) Regulate bile secretion", "D) Absorb nutrients"],
+        correct: 1,
+        explanation: "The ileocecal valve prevents backflow from the large intestine into the ileum of the small intestine."
+    },
+    {
+        question: "32. Which of the following is a function of the liver?",
+        options: ["A) Produces insulin", "B) Converts glucose to glycogen", "C) Absorbs nutrients", "D) Secretes enzymes"],
+        correct: 1,
+        explanation: "The liver converts glucose to glycogen for storage and regulates blood sugar levels."
+    },
+    {
+        question: "33. The primary action of the pyloric sphincter is to:",
+        options: ["A) Open to allow food into the stomach", "B) Prevent food from entering the duodenum", "C) Control the release of chyme into the small intestine", "D) Absorb nutrients"],
+        correct: 2,
+        explanation: "The pyloric sphincter regulates the release of chyme from the stomach into the duodenum."
+    },
+    {
+        question: "34. Which of the following is NOT a function of saliva?",
+        options: ["A) Lubrication", "B) Digestion of proteins", "C) Antimicrobial action", "D) Taste enhancement"],
+        correct: 1,
+        explanation: "Saliva primarily aids in lubrication, carbohydrate digestion, and has antimicrobial properties but does not digest proteins."
+    },
+    {
+        question: "35. Which structure connects the throat to the stomach?",
+        options: ["A) Esophagus", "B) Pharynx", "C) Duodenum", "D) Colon"],
+        correct: 0,
+        explanation: "The esophagus is the tube that connects the throat (pharynx) to the stomach."
+    },
+    {
+        question: "36. In which part of the digestive system does the majority of chemical digestion occur?",
+        options: ["A) Stomach", "B) Small Intestine", "C) Large Intestine", "D) Mouth"],
+        correct: 1,
+        explanation: "The majority of chemical digestion occurs in the small intestine, aided by enzymes from the pancreas and bile from the liver."
+    },
+    {
+        question: "37. Which of the following is a primary digestive enzyme found in pancreatic juice?",
+        options: ["A) Amylase", "B) Pepsin", "C) Trypsin", "D) Lactase"],
+        correct: 2,
+        explanation: "Trypsin is a key enzyme produced by the pancreas that helps digest proteins in the small intestine."
+    },
+    {
+        question: "38. The absorption of glucose in the small intestine primarily occurs through which process?",
+        options: ["A) Diffusion", "B) Active transport", "C) Facilitated diffusion", "D) Osmosis"],
+        correct: 1,
+        explanation: "Glucose absorption in the small intestine occurs primarily through active transport mechanisms."
+    },
+    {
+        question: "39. What is the primary role of the villi in the small intestine?",
+        options: ["A) Increase surface area for absorption", "B) Produce digestive enzymes", "C) Transport food", "D) Store bile"],
+        correct: 0,
+        explanation: "Villi are finger-like projections that increase the surface area of the small intestine to enhance nutrient absorption."
+    },
+    {
+        question: "40. Which enzyme is responsible for breaking down proteins into amino acids?",
+        options: ["A) Amylase", "B) Lipase", "C) Pepsin", "D) Maltase"],
+        correct: 2,
+        explanation: "Pepsin is the enzyme that breaks down proteins into smaller peptides and eventually into amino acids."
+    },
+    {
+        question: "41. Which part of the digestive system is responsible for the majority of nutrient absorption?",
+        options: ["A) Stomach", "B) Small Intestine", "C) Large Intestine", "D) Esophagus"],
+        correct: 1,
+        explanation: "The small intestine is primarily responsible for nutrient absorption due to its large surface area."
+    },
+    {
+        question: "42. Which of the following organs produces bile?",
+        options: ["A) Pancreas", "B) Gallbladder", "C) Liver", "D) Stomach"],
+        correct: 2,
+        explanation: "Bile is produced by the liver and stored in the gallbladder until needed for digestion."
+    },
+    {
+        question: "43. What type of digestion occurs in the stomach?",
+        options: ["A) Chemical only", "B) Mechanical only", "C) Both chemical and mechanical", "D) None"],
+        correct: 2,
+        explanation: "The stomach performs both mechanical digestion (mixing and churning food) and chemical digestion (breaking down proteins)."
+    },
+    {
+        question: "44. Which enzyme breaks down lipids in the digestive system?",
+        options: ["A) Amylase", "B) Pepsin", "C) Trypsin", "D) Lipase"],
+        correct: 3,
+        explanation: "Lipase is the enzyme responsible for breaking down lipids (fats) into fatty acids and glycerol."
+    },
+    {
+        question: "45. The lining of the small intestine has small, finger-like projections called:",
+        options: ["A) Villi", "B) Microvilli", "C) Rugae", "D) Folds"],
+        correct: 0,
+        explanation: "Villi are the small, finger-like projections that increase the surface area for absorption in the small intestine."
+    },
+    {
+        question: "46. What is the primary function of the gallbladder?",
+        options: ["A) Store bile", "B) Produce enzymes", "C) Absorb nutrients", "D) Digest carbohydrates"],
+        correct: 0,
+        explanation: "The gallbladder's primary function is to store and concentrate bile produced by the liver."
+    },
+    {
+        question: "47. The process of converting food into a usable form of energy is called:",
+        options: ["A) Digestion", "B) Metabolism", "C) Absorption", "D) Excretion"],
+        correct: 1,
+        explanation: "Metabolism is the process by which the body converts food into energy and building blocks for growth."
+    },
+    {
+        question: "48. What is the role of pancreatic juice in digestion?",
+        options: ["A) Emulsify fats", "B) Neutralize stomach acid", "C) Both A and B", "D) Digest proteins only"],
+        correct: 2,
+        explanation: "Pancreatic juice contains enzymes that emulsify fats and neutralize stomach acid to optimize digestion in the small intestine."
+    },
+    {
+        question: "49. Which vitamin is produced by gut bacteria?",
+        options: ["A) Vitamin A", "B) Vitamin C", "C) Vitamin K", "D) Vitamin B12"],
+        correct: 2,
+        explanation: "Vitamin K is produced by bacteria in the large intestine and plays a crucial role in blood clotting."
+    },
+    {
+        question: "50. What is the main function of the stomach's acidic environment?",
+        options: ["A) Break down carbohydrates", "B) Activate enzymes", "C) Absorb nutrients", "D) Protect against pathogens"],
+        correct: 1,
+        explanation: "The acidic environment in the stomach activates digestive enzymes, particularly pepsin, and helps kill harmful bacteria."
+    },
+
+    {
+        question: "51. The enzyme responsible for the digestion of nucleic acids is:",
+        options: ["A) Nuclease", "B) Amylase", "C) Pepsin", "D) Lipase"],
+        correct: 0,
+        explanation: "Nucleases are enzymes that break down nucleic acids (DNA and RNA) into nucleotides."
+    },
+    {
+        question: "52. The small intestine is primarily lined with which type of epithelial tissue?",
+        options: ["A) Stratified squamous", "B) Simple columnar", "C) Cuboidal", "D) Transitional"],
+        correct: 1,
+        explanation: "The lining of the small intestine is made of simple columnar epithelium, which aids in absorption."
+    },
+    {
+        question: "53. Which of the following structures secretes digestive enzymes into the small intestine?",
+        options: ["A) Liver", "B) Gallbladder", "C) Pancreas", "D) Stomach"],
+        correct: 2,
+        explanation: "The pancreas secretes digestive enzymes into the small intestine to aid in the breakdown of food."
+    },
+    {
+        question: "54. What is the primary function of the rectum?",
+        options: ["A) Absorb nutrients", "B) Store waste", "C) Digest food", "D) Produce bile"],
+        correct: 1,
+        explanation: "The rectum stores waste material until it is excreted from the body."
+    },
+    {
+        question: "55. Which of the following is NOT a function of the liver?",
+        options: ["A) Bile production", "B) Glucose storage", "C) Lipid digestion", "D) Detoxification"],
+        correct: 2,
+        explanation: "The liver does not digest lipids; it produces bile, which emulsifies fats for digestion in the small intestine."
+    },
+    {
+        question: "56. The primary site of water reabsorption in the digestive system is the:",
+        options: ["A) Stomach", "B) Small Intestine", "C) Large Intestine", "D) Pancreas"],
+        correct: 2,
+        explanation: "The large intestine is primarily responsible for absorbing water from indigestible food matter, forming solid waste."
+    },
+    {
+        question: "57. Which type of fiber is beneficial for lowering cholesterol levels?",
+        options: ["A) Soluble fiber", "B) Insoluble fiber", "C) Protein", "D) Saturated fat"],
+        correct: 0,
+        explanation: "Soluble fiber can help lower cholesterol levels by binding to bile acids in the digestive system."
+    },
+    {
+        question: "58. The enzyme maltase is responsible for breaking down:",
+        options: ["A) Starch", "B) Lactose", "C) Maltose", "D) Sucrose"],
+        correct: 2,
+        explanation: "Maltase breaks down maltose into two glucose molecules during digestion."
+    },
+    {
+        question: "59. What is the primary role of the pharynx in digestion?",
+        options: ["A) Absorption of nutrients", "B) Passage of food to the esophagus", "C) Production of saliva", "D) Secretion of digestive enzymes"],
+        correct: 1,
+        explanation: "The pharynx serves as a passage for food from the mouth to the esophagus."
+    },
+    {
+        question: "60. Which of the following substances is primarily absorbed in the stomach?",
+        options: ["A) Proteins", "B) Carbohydrates", "C) Alcohol", "D) Vitamins"],
+        correct: 2,
+        explanation: "Alcohol is primarily absorbed in the stomach, while most nutrients are absorbed in the small intestine."
+    },
+
+    {
+        question: "61. The primary digestive function of the liver is to produce:",
+        options: ["A) Bile", "B) Digestive enzymes", "C) Hormones", "D) Insulin"],
+        correct: 0,
+        explanation: "The liver's primary digestive function is the production of bile, which aids in fat digestion."
+    },
+    {
+        question: "62. Which of the following enzymes is NOT produced by the pancreas?",
+        options: ["A) Lipase", "B) Amylase", "C) Lactase", "D) Trypsin"],
+        correct: 2,
+        explanation: "Lactase is not produced by the pancreas; it is produced in the small intestine to digest lactose."
+    },
+    {
+        question: "63. Which type of movement helps mix food in the stomach?",
+        options: ["A) Peristalsis", "B) Segmentation", "C) Churning", "D) Absorption"],
+        correct: 2,
+        explanation: "Churning is the movement in the stomach that mixes food with gastric juices to form chyme."
+    },
+    {
+        question: "64. The primary function of the digestive system is to:",
+        options: ["A) Absorb oxygen", "B) Produce energy", "C) Break down food", "D) Circulate blood"],
+        correct: 2,
+        explanation: "The primary function of the digestive system is to break down food into usable nutrients."
+    },
+    {
+        question: "65. The small intestine is connected to the stomach by the:",
+        options: ["A) Pyloric sphincter", "B) Ileocecal valve", "C) Lower esophageal sphincter", "D) Duodenum"],
+        correct: 0,
+        explanation: "The pyloric sphincter controls the passage of chyme from the stomach to the small intestine."
+    },
+    {
+        question: "66. What is the main function of the large intestine?",
+        options: ["A) Nutrient absorption", "B) Water absorption", "C) Protein digestion", "D) Fat digestion"],
+        correct: 1,
+        explanation: "The main function of the large intestine is to absorb water from indigestible food matter."
+    },
+    {
+        question: "67. Which of the following structures is part of the upper gastrointestinal tract?",
+        options: ["A) Stomach", "B) Small Intestine", "C) Large Intestine", "D) Rectum"],
+        correct: 0,
+        explanation: "The stomach is part of the upper gastrointestinal tract, along with the esophagus and duodenum."
+    },
+    {
+        question: "68. What is the primary role of hydrochloric acid in the stomach?",
+        options: ["A) Break down carbohydrates", "B) Activate pepsin", "C) Emulsify fats", "D) Neutralize bile"],
+        correct: 1,
+        explanation: "Hydrochloric acid activates pepsin, which is essential for protein digestion in the stomach."
+    },
+    {
+        question: "69. The primary function of the appendix is:",
+        options: ["A) Digest food", "B) Absorb nutrients", "C) Store gut flora", "D) Produce bile"],
+        correct: 2,
+        explanation: "The appendix is thought to play a role in storing gut flora and supporting the immune system."
+    },
+    {
+        question: "70. Which part of the digestive system is responsible for the production of insulin?",
+        options: ["A) Liver", "B) Stomach", "C) Pancreas", "D) Gallbladder"],
+        correct: 2,
+        explanation: "The pancreas produces insulin, which regulates blood sugar levels."
+    },
+
+    {
+        question: "71. The main carbohydrate digested in the mouth is:",
+        options: ["A) Fructose", "B) Lactose", "C) Starch", "D) Sucrose"],
+        correct: 2,
+        explanation: "Starch is the primary carbohydrate digested in the mouth by salivary amylase."
+    },
+    {
+        question: "72. Which of the following is the primary site of digestion and absorption?",
+        options: ["A) Stomach", "B) Small Intestine", "C) Large Intestine", "D) Esophagus"],
+        correct: 1,
+        explanation: "The small intestine is the primary site of digestion and nutrient absorption."
+    },
+    {
+        question: "73. What is the function of the pyloric sphincter?",
+        options: ["A) Prevents food from entering the esophagus", "B) Controls the release of chyme into the small intestine", "C) Secretes digestive enzymes", "D) Absorbs nutrients"],
+        correct: 1,
+        explanation: "The pyloric sphincter controls the passage of chyme from the stomach into the small intestine."
+    },
+    {
+        question: "74. The hormone secretin is produced in response to:",
+        options: ["A) Low pH in the small intestine", "B) High fat content", "C) Glucose in the bloodstream", "D) Protein intake"],
+        correct: 0,
+        explanation: "Secretin is released in response to low pH in the small intestine to stimulate the pancreas to release bicarbonate."
+    },
+    {
+        question: "75. Which structure primarily absorbs water and salts from indigestible food matter?",
+        options: ["A) Small Intestine", "B) Large Intestine", "C) Stomach", "D) Pancreas"],
+        correct: 1,
+        explanation: "The large intestine primarily absorbs water and salts from indigestible food matter, forming solid waste."
+    },
+    {
+        question: "76. Which type of cells in the stomach secrete hydrochloric acid?",
+        options: ["A) Parietal cells", "B) Chief cells", "C) Mucous cells", "D) Goblet cells"],
+        correct: 0,
+        explanation: "Parietal cells in the stomach lining secrete hydrochloric acid, which is essential for digestion."
+    },
+    {
+        question: "77. The primary role of bile is to:",
+        options: ["A) Break down carbohydrates", "B) Emulsify fats", "C) Digest proteins", "D) Absorb vitamins"],
+        correct: 1,
+        explanation: "Bile emulsifies fats, making them easier for digestive enzymes to break down."
+    },
+    {
+        question: "78. Which of the following is a digestive disorder characterized by inflammation of the stomach lining?",
+        options: ["A) Appendicitis", "B) Gastritis", "C) Hepatitis", "D) Colitis"],
+        correct: 1,
+        explanation: "Gastritis is the inflammation of the stomach lining, which can lead to various digestive issues."
+    },
+    {
+        question: "79. The process of swallowing is known as:",
+        options: ["A) Peristalsis", "B) Mastication", "C) Deglutition", "D) Absorption"],
+        correct: 2,
+        explanation: "Deglutition is the process of swallowing food from the mouth to the esophagus."
+    },
+    {
+        question: "80. Which of the following structures prevents food from entering the trachea during swallowing?",
+        options: ["A) Uvula", "B) Epiglottis", "C) Pharynx", "D) Larynx"],
+        correct: 1,
+        explanation: "The epiglottis is a flap that covers the trachea during swallowing to prevent food from entering the airway."
+    },
+
+    {
+        question: "81. Which hormone stimulates the secretion of gastric juice?",
+        options: ["A) Secretin", "B) Gastrin", "C) Insulin", "D) Glucagon"],
+        correct: 1,
+        explanation: "Gastrin stimulates the secretion of gastric juice in response to food intake."
+    },
+    {
+        question: "82. What is the primary cause of peptic ulcers?",
+        options: ["A) Viral infection", "B) Bacterial infection", "C) Excessive bile production", "D) Poor digestion"],
+        correct: 1,
+        explanation: "Peptic ulcers are primarily caused by the bacterium Helicobacter pylori, leading to inflammation of the stomach lining."
+    },
+    {
+        question: "83. The enzyme pepsin is activated by:",
+        options: ["A) Bile", "B) Trypsin", "C) Hydrochloric acid", "D) Alkaline secretions"],
+        correct: 2,
+        explanation: "Pepsin is activated by hydrochloric acid in the stomach, allowing it to break down proteins."
+    },
+    {
+        question: "84. What is the primary function of the digestive system?",
+        options: ["A) Transport oxygen", "B) Produce hormones", "C) Convert food into energy", "D) Remove waste"],
+        correct: 2,
+        explanation: "The primary function of the digestive system is to convert food into energy and essential nutrients."
+    },
+    {
+        question: "85. The primary source of energy for the body is:",
+        options: ["A) Proteins", "B) Carbohydrates", "C) Vitamins", "D) Minerals"],
+        correct: 1,
+        explanation: "Carbohydrates are the primary source of energy for the body."
+    },
+    {
+        question: "86. Which of the following nutrients is digested in the stomach?",
+        options: ["A) Carbohydrates", "B) Lipids", "C) Proteins", "D) Nucleic acids"],
+        correct: 2,
+        explanation: "Proteins are primarily digested in the stomach through the action of pepsin."
+    },
+    {
+        question: "87. The digestive process that involves the breakdown of food into smaller molecules is known as:",
+        options: ["A) Absorption", "B) Digestion", "C) Metabolism", "D) Excretion"],
+        correct: 1,
+        explanation: "Digestion is the process of breaking down food into smaller molecules for absorption."
+    },
+    {
+        question: "88. Which part of the digestive system is involved in the formation of feces?",
+        options: ["A) Stomach", "B) Small Intestine", "C) Large Intestine", "D) Esophagus"],
+        correct: 2,
+        explanation: "The large intestine is involved in the formation of feces by absorbing water and salts from indigestible food."
+    },
+    {
+        question: "89. Which digestive enzyme is secreted by salivary glands?",
+        options: ["A) Pepsin", "B) Amylase", "C) Lipase", "D) Trypsin"],
+        correct: 1,
+        explanation: "Amylase is the enzyme secreted by salivary glands to begin carbohydrate digestion in the mouth."
+    },
+    {
+        question: "90. Which of the following is NOT a function of the liver?",
+        options: ["A) Glucose metabolism", "B) Lipid digestion", "C) Detoxification", "D) Protein synthesis"],
+        correct: 1,
+        explanation: "The liver does not digest lipids; it processes fats but does not perform digestion."
+    },
+
+    {
+        question: "91. The main digestive enzyme responsible for protein digestion is:",
+        options: ["A) Amylase", "B) Pepsin", "C) Lipase", "D) Nuclease"],
+        correct: 1,
+        explanation: "Pepsin is the main digestive enzyme responsible for breaking down proteins in the stomach."
+    },
+    {
+        question: "92. The presence of which substance stimulates the release of bile from the gallbladder?",
+        options: ["A) Protein", "B) Glucose", "C) Fat", "D) Fiber"],
+        correct: 2,
+        explanation: "The presence of fat in the small intestine stimulates the release of bile from the gallbladder."
+    },
+    {
+        question: "93. The primary function of mucous in the digestive system is to:",
+        options: ["A) Digest food", "B) Protect and lubricate the lining of the digestive tract", "C) Absorb nutrients", "D) Control enzyme activity"],
+        correct: 1,
+        explanation: "Mucous protects and lubricates the lining of the digestive tract, facilitating the movement of food."
+    },
+    {
+        question: "94. What is the primary cause of constipation?",
+        options: ["A) Dehydration", "B) Excess fiber intake", "C) Lack of exercise", "D) All of the above"],
+        correct: 0,
+        explanation: "Dehydration is the primary cause of constipation, as it leads to harder stools that are difficult to pass."
+    },
+    {
+        question: "95. The gallbladder is located:",
+        options: ["A) Behind the stomach", "B) Under the liver", "C) Near the pancreas", "D) In the small intestine"],
+        correct: 1,
+        explanation: "The gallbladder is located under the liver and stores bile until it is needed for digestion."
+    },
+    {
+        question: "96. Which part of the digestive system is responsible for the final absorption of nutrients?",
+        options: ["A) Stomach", "B) Small Intestine", "C) Large Intestine", "D) Mouth"],
+        correct: 1,
+        explanation: "The small intestine is responsible for the final absorption of nutrients before they enter the bloodstream."
+    },
+    {
+        question: "97. What is the main function of the esophagus?",
+        options: ["A) Absorb nutrients", "B) Digest food", "C) Transport food to the stomach", "D) Produce saliva"],
+        correct: 2,
+        explanation: "The esophagus is responsible for transporting food from the mouth to the stomach."
+    },
+    {
+        question: "98. Which of the following is a function of the intestinal villi?",
+        options: ["A) Increase surface area for absorption", "B) Secrete digestive enzymes", "C) Protect against pathogens", "D) Produce bile"],
+        correct: 0,
+        explanation: "Intestinal villi increase the surface area of the small intestine for better nutrient absorption."
+    },
+    {
+        question: "99. What is the primary role of saliva in digestion?",
+        options: ["A) Absorb nutrients", "B) Activate enzymes", "C) Break down proteins", "D) Lubricate food"],
+        correct: 3,
+        explanation: "Saliva lubricates food, making it easier to swallow and contains enzymes that begin carbohydrate digestion."
+    },
+    {
+        question: "100. The main purpose of the digestive system is to:",
+        options: ["A) Provide energy", "B) Produce hormones", "C) Break down food into nutrients", "D) Eliminate waste"],
+        correct: 2,
+        explanation: "The main purpose of the digestive system is to break down food into nutrients that the body can use."
+    },
+
+
+    ];
+
+    let current = 0;
+    let score = 0;
+    let userAnswers = [];
+
+    function renderQuestion() {
+      const q = quizData[current];
+      let html = '<div class="quiz-question">';
+      html += `<h3>Q${current + 1}. ${q.question}</h3>`;
+      q.options.forEach((opt, i) => {
+        html += `<div class="quiz-option" onclick="selectOption(${i})">${opt}</div>`;
+      });
+      html += `<div class="quiz-explanation" id="explanation">${q.explanation}</div>`;
+      html += '</div>';
+      document.getElementById('quiz-box').innerHTML = html;
+    }
+
+    function selectOption(index) {
+      const options = document.querySelectorAll('.quiz-option');
+      options.forEach((el, i) => {
+        el.classList.remove('correct', 'incorrect');
+        if (i === index) {
+          if (i === quizData[current].correct) {
+            el.classList.add('correct');
+            score++;
+          } else {
+            el.classList.add('incorrect');
+            options[quizData[current].correct].classList.add('correct');
+          }
+        }
+        el.onclick = null;
+      });
+      document.getElementById('explanation').style.display = 'block';
+      userAnswers[current] = index;
+    }
+
+    function nextQuestion() {
+      if (current < quizData.length - 1) {
+        current++;
+        renderQuestion();
+      }
+    }
+
+    function prevQuestion() {
+      if (current > 0) {
+        current--;
+        renderQuestion();
+      }
+    }
+
+    function submitQuiz() {
+      document.getElementById('quiz-box').style.display = 'none';
+      document.querySelector('.quiz-navigation').style.display = 'none';
+      document.getElementById('results-box').style.display = 'block';
+      document.getElementById('score-text').innerText = `You scored ${score} out of ${quizData.length}`;
+    }
+
+    function restartQuiz() {
+      current = 0;
+      score = 0;
+      userAnswers = [];
+      document.getElementById('quiz-box').style.display = 'block';
+      document.querySelector('.quiz-navigation').style.display = 'block';
+      document.getElementById('results-box').style.display = 'none';
+      renderQuestion();
+    }
+
+    renderQuestion();
+  </script>
+</body>
+</html>

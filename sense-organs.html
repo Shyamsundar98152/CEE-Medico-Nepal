@@ -1,0 +1,829 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Respiratory System Quiz - CEE Medico Nepal</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css"/>
+  <style>
+    :root {
+      --primary-color: #2c3e50;
+      --secondary-color: #3498db;
+      --accent-color: #e74c3c;
+      --light-color: #ecf0f1;
+      --text-color: #333;
+      --botany-color: #2ecc71;
+    }
+
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    }
+
+    body {
+      background-color: #f9f9f9;
+      color: var(--text-color);
+    }
+
+    header, footer {
+      background-color: var(--primary-color);
+      color: white;
+      padding: 1rem 0;
+    }
+
+    .container {
+      width: 90%;
+      max-width: 1000px;
+      margin: 0 auto;
+    }
+
+    .quiz-hero {
+      text-align: center;
+      background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+      color: white;
+      padding: 2rem 0;
+    }
+
+    .quiz-container {
+      margin: 2rem 0;
+    }
+
+    .quiz-question {
+      background: white;
+      border-radius: 8px;
+      padding: 1.5rem;
+      margin-bottom: 1rem;
+      box-shadow: 0 5px 15px rgba(0,0,0,0.05);
+    }
+
+    .quiz-option {
+      padding: 1rem;
+      background-color: var(--light-color);
+      border-radius: 5px;
+      margin-bottom: 0.5rem;
+      cursor: pointer;
+    }
+
+    .quiz-option:hover {
+      background-color: #dcdcdc;
+    }
+
+    .quiz-option.correct {
+      border: 2px solid var(--botany-color);
+      background-color: #e8f8f5;
+    }
+
+    .quiz-option.incorrect {
+      border: 2px solid var(--accent-color);
+      background-color: #fdecea;
+    }
+
+    .quiz-explanation {
+      display: none;
+      padding: 1rem;
+      border-left: 5px solid var(--secondary-color);
+      margin-top: 1rem;
+      background-color: #f0f0f0;
+    }
+
+    .quiz-navigation {
+      margin-top: 2rem;
+      text-align: center;
+    }
+
+    .quiz-navigation button {
+      margin: 0 1rem;
+      padding: 0.7rem 1.5rem;
+      border: none;
+      background-color: var(--secondary-color);
+      color: white;
+      border-radius: 5px;
+      cursor: pointer;
+    }
+
+    .quiz-results {
+      display: none;
+      text-align: center;
+      padding: 2rem;
+      background: white;
+      border-radius: 10px;
+      box-shadow: 0 5px 10px rgba(0,0,0,0.1);
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <div class="container">
+      <h1>CEE Medico Nepal</h1>
+      <p>Sensory organ Quiz</p>
+    </div>
+  </header>
+
+  <section class="quiz-hero">
+    <div class="container">
+      <h2>Test Your Knowledge on the Sense organs</h2>
+      <p>Essential questions for MBBS Entrance Preparation in Nepal</p>
+    </div>
+  </section>
+
+  <main class="container quiz-container">
+    <div id="quiz-box"></div>
+
+    <div class="quiz-navigation">
+      <button onclick="prevQuestion()">Previous</button>
+      <button onclick="nextQuestion()">Next</button>
+      <button onclick="submitQuiz()">Submit</button>
+    </div>
+
+    <div class="quiz-results" id="results-box">
+      <h2>Quiz Completed!</h2>
+      <p id="score-text"></p>
+      <button onclick="restartQuiz()">Retake Quiz</button>
+    </div>
+  </main>
+
+  <footer>
+    <div class="container">
+      <p>&copy; 2025 CEE Medico Nepal. All Rights Reserved.</p>
+    </div>
+  </footer>
+
+  <script>
+    const quizData = [
+      {
+        question: "1. Which part of the eye is responsible for focusing light onto the retina?",
+        options: ["A) Cornea", "B) Lens", "C) Retina", "D) Pupil"],
+        correct: 1,
+        explanation: "The lens changes shape to focus light onto the retina for clear vision."
+    },
+    {
+        question: "2. Which structure in the ear is responsible for converting sound waves into electrical signals?",
+        options: ["A) Cochlea", "B) Eardrum", "C) Auditory canal", "D) Semicircular canals"],
+        correct: 0,
+        explanation: "The cochlea contains hair cells that convert sound vibrations into electrical signals for the brain."
+    },
+    {
+        question: "3. The sense of taste is primarily detected by which type of receptors?",
+        options: ["A) Thermoreceptors", "B) Photoreceptors", "C) Chemoreceptors", "D) Mechanoreceptors"],
+        correct: 2,
+        explanation: "Chemoreceptors detect chemical substances, which are essential for taste perception."
+    },
+    {
+        question: "4. Which part of the brain is primarily responsible for processing visual information?",
+        options: ["A) Cerebellum", "B) Occipital lobe", "C) Temporal lobe", "D) Frontal lobe"],
+        correct: 1,
+        explanation: "The occipital lobe is the primary area for processing visual information in the brain."
+    },
+    {
+        question: "5. The sense of balance is maintained by which part of the inner ear?",
+        options: ["A) Cochlea", "B) Vestibular system", "C) Auditory nerve", "D) Eustachian tube"],
+        correct: 1,
+        explanation: "The vestibular system, which includes the semicircular canals, is responsible for maintaining balance."
+    },
+    {
+        question: "6. Which type of sensory receptor is primarily responsible for detecting light?",
+        options: ["A) Rods", "B) Cones", "C) Both A and B", "D) Neither A nor B"],
+        correct: 2,
+        explanation: "Rods and cones are both photoreceptors in the retina that detect light and contribute to vision."
+    },
+    {
+        question: "7. The organ responsible for the sense of smell is called the:",
+        options: ["A) Olfactory bulb", "B) Olfactory epithelium", "C) Nasal cavity", "D) Tongue"],
+        correct: 1,
+        explanation: "The olfactory epithelium contains sensory receptors for detecting odors."
+    },
+    {
+        question: "8. Which type of receptor responds to changes in temperature?",
+        options: ["A) Nociceptors", "B) Thermoreceptors", "C) Mechanoreceptors", "D) Photoreceptors"],
+        correct: 1,
+        explanation: "Thermoreceptors are specialized sensory receptors that respond to temperature changes."
+    },
+    {
+        question: "9. Which part of the eye is responsible for controlling the amount of light that enters?",
+        options: ["A) Retina", "B) Iris", "C) Pupil", "D) Sclera"],
+        correct: 1,
+        explanation: "The iris controls the size of the pupil, thus regulating the amount of light entering the eye."
+    },
+    {
+        question: "10. The blind spot in the eye is located where:",
+        options: ["A) The retina", "B) The optic nerve exits the eye", "C) The lens is located", "D) The cornea is located"],
+        correct: 1,
+        explanation: "The blind spot is the area on the retina where the optic nerve exits, lacking photoreceptors."
+    },
+    {
+        question: "11. Which structure in the ear helps to equalize pressure?",
+        options: ["A) Cochlea", "B) Eustachian tube", "C) Semicircular canals", "D) Ossicles"],
+        correct: 1,
+        explanation: "The Eustachian tube connects the middle ear to the throat, helping to equalize pressure."
+    },
+    {
+        question: "12. Which part of the tongue is most sensitive to bitter tastes?",
+        options: ["A) Tip", "B) Sides", "C) Back", "D) Middle"],
+        correct: 2,
+        explanation: "The back of the tongue is most sensitive to bitter tastes, which can signal toxicity."
+    },
+    {
+        question: "13. What type of sensation do nociceptors detect?",
+        options: ["A) Touch", "B) Pain", "C) Pressure", "D) Temperature"],
+        correct: 1,
+        explanation: "Nociceptors are sensory receptors that detect pain and harmful stimuli."
+    },
+    {
+        question: "14. Which type of sensory receptor is involved in detecting pressure?",
+        options: ["A) Photoreceptors", "B) Chemoreceptors", "C) Mechanoreceptors", "D) Thermoreceptors"],
+        correct: 2,
+        explanation: "Mechanoreceptors respond to mechanical pressure or distortion."
+    },
+    {
+        question: "15. The primary function of the lens in the eye is to:",
+        options: ["A) Protect the eye", "B) Focus light", "C) Detect light", "D) Store images"],
+        correct: 1,
+        explanation: "The lens refracts light rays to focus them onto the retina."
+    },
+    {
+        question: "16. Which structure in the eye contains the highest concentration of cones?",
+        options: ["A) Peripheral retina", "B) Fovea centralis", "C) Optic disc", "D) Cornea"],
+        correct: 1,
+        explanation: "The fovea centralis has the highest concentration of cones, enabling sharp central vision."
+    },
+    {
+        question: "17. The ability to perceive depth and distance is primarily due to:",
+        options: ["A) Monocular cues", "B) Binocular cues", "C) Motion parallax", "D) Visual acuity"],
+        correct: 1,
+        explanation: "Binocular cues, such as retinal disparity, help us perceive depth and distance."
+    },
+    {
+        question: "18. Which cranial nerve is responsible for transmitting visual information from the retina to the brain?",
+        options: ["A) Optic nerve (II)", "B) Oculomotor nerve (III)", "C) Trigeminal nerve (V)", "D) Facial nerve (VII)"],
+        correct: 0,
+        explanation: "The optic nerve (II) carries visual information from the retina to the brain."
+    },
+    {
+        question: "19. Which part of the ear is responsible for hearing?",
+        options: ["A) Cochlea", "B) Semicircular canals", "C) Auditory tube", "D) Oval window"],
+        correct: 0,
+        explanation: "The cochlea is responsible for converting sound waves into neural signals for hearing."
+    },
+    {
+        question: "20. What is the primary function of the olfactory receptors?",
+        options: ["A) Detect light", "B) Detect sound", "C) Detect chemical substances (smell)", "D) Detect pressure"],
+        correct: 2,
+        explanation: "Olfactory receptors are specialized for detecting chemical substances, allowing us to perceive smell."
+    },
+    // Additional questions can be added following the same structure
+    {
+        question: "21. The part of the ear that vibrates in response to sound waves is the:",
+        options: ["A) Cochlea", "B) Tympanic membrane", "C) Auditory ossicles", "D) Oval window"],
+        correct: 1,
+        explanation: "The tympanic membrane, or eardrum, vibrates when sound waves hit it, transmitting sound to the inner ear."
+    },
+    {
+        question: "22. Which sensory organ is primarily involved in equilibrium and balance?",
+        options: ["A) Eye", "B) Nose", "C) Ear", "D) Tongue"],
+        correct: 2,
+        explanation: "The ear, particularly the vestibular system, is responsible for maintaining equilibrium and balance."
+    },
+    {
+        question: "23. The cells that transduce sound vibrations into neural signals in the cochlea are called:",
+        options: ["A) Rods", "B) Cones", "C) Hair cells", "D) Ganglion cells"],
+        correct: 2,
+        explanation: "Hair cells in the cochlea are responsible for converting sound vibrations into electrical signals."
+    },
+    {
+        question: "24. Which area of the tongue is primarily responsible for detecting sour tastes?",
+        options: ["A) Tip", "B) Sides", "C) Back", "D) Center"],
+        correct: 1,
+        explanation: "The sides of the tongue are more sensitive to sour tastes due to the distribution of taste buds."
+    },
+    {
+        question: "25. Which of the following best describes the role of photoreceptors in the retina?",
+        options: ["A) Detect sound", "B) Detect temperature", "C) Detect light", "D) Detect pressure"],
+        correct: 2,
+        explanation: "Photoreceptors in the retina (rods and cones) are responsible for detecting light and enabling vision."
+    },
+    {
+        question: "26. The structure responsible for changing the shape of the lens to focus on objects at different distances is the:",
+        options: ["A) Iris", "B) Ciliary body", "C) Retina", "D) Cornea"],
+        correct: 1,
+        explanation: "The ciliary body controls the shape of the lens, allowing the eye to focus on near or distant objects."
+    },
+    {
+        question: "27. Which type of sensory neuron is involved in the sense of smell?",
+        options: ["A) Bipolar neurons", "B) Unipolar neurons", "C) Multipolar neurons", "D) Glial cells"],
+        correct: 0,
+        explanation: "Bipolar neurons are responsible for transmitting olfactory information from the nasal cavity to the brain."
+    },
+    {
+        question: "28. The gelatinous structure that helps in maintaining the shape of the eyeball is called:",
+        options: ["A) Aqueous humor", "B) Vitreous humor", "C) Cornea", "D) Sclera"],
+        correct: 1,
+        explanation: "The vitreous humor is a gel-like substance that fills the space between the lens and the retina, maintaining the eyeball's shape."
+    },
+    {
+        question: "29. Which condition is characterized by the loss of transparency of the lens?",
+        options: ["A) Glaucoma", "B) Cataract", "C) Macular degeneration", "D) Retinal detachment"],
+        correct: 1,
+        explanation: "Cataracts are a condition where the lens becomes cloudy, leading to vision impairment."
+    },
+    {
+        question: "30. The ability to detect subtle changes in sound is primarily due to the functioning of the:",
+        options: ["A) Cochlea", "B) Auditory nerve", "C) Tympanic membrane", "D) Semicircular canals"],
+        correct: 0,
+        explanation: "The cochlea contains hair cells that allow the ear to detect subtle changes in sound frequencies."
+    },
+    {
+        question: "31. The sensory structure that detects taste is primarily found on the:",
+        options: ["A) Skin", "B) Tongue", "C) Nose", "D) Eyes"],
+        correct: 1,
+        explanation: "Taste buds, located primarily on the tongue, are responsible for the sensation of taste."
+    },
+    {
+        question: "32. Which part of the brain is responsible for processing auditory information?",
+        options: ["A) Occipital lobe", "B) Temporal lobe", "C) Frontal lobe", "D) Parietal lobe"],
+        correct: 1,
+        explanation: "The temporal lobe is primarily involved in processing auditory information."
+    },
+    {
+        question: "33. The condition where one loses their sense of smell is known as:",
+        options: ["A) Anosmia", "B) Hyperosmia", "C) Hyposmia", "D) Dysosmia"],
+        correct: 0,
+        explanation: "Anosmia refers to the complete loss of the sense of smell."
+    },
+    {
+        question: "34. The structure in the eye that provides color to the eye is the:",
+        options: ["A) Retina", "B) Iris", "C) Cornea", "D) Sclera"],
+        correct: 1,
+        explanation: "The iris is the colored part of the eye that controls the size of the pupil."
+    },
+    {
+        question: "35. Which of the following is responsible for the perception of vibrations on the skin?",
+        options: ["A) Thermoreceptors", "B) Photoreceptors", "C) Mechanoreceptors", "D) Nociceptors"],
+        correct: 2,
+        explanation: "Mechanoreceptors are responsible for detecting vibrations and pressure on the skin."
+    },
+    {
+        question: "36. The primary function of the pupil is to:",
+        options: ["A) Refract light", "B) Control light entry", "C) Focus images", "D) Store images"],
+        correct: 1,
+        explanation: "The pupil adjusts its size to control the amount of light entering the eye."
+    },
+    {
+        question: "37. Which sensory organ is responsible for detecting changes in body position?",
+        options: ["A) Eye", "B) Ear", "C) Nose", "D) Skin"],
+        correct: 1,
+        explanation: "The ear contains the vestibular system, which detects changes in body position and movement."
+    },
+    {
+        question: "38. The part of the inner ear that contains fluid and helps with balance is the:",
+        options: ["A) Cochlea", "B) Utricle", "C) Saccule", "D) All of the above"],
+        correct: 3,
+        explanation: "The utricle, saccule, and semicircular canals are all involved in balance and equilibrium."
+    },
+    {
+        question: "39. Which of the following taste sensations is detected at the back of the tongue?",
+        options: ["A) Sweet", "B) Sour", "C) Bitter", "D) Salty"],
+        correct: 2,
+        explanation: "The back of the tongue is most sensitive to bitter tastes, which can indicate toxins."
+    },
+    {
+        question: "40. The structure responsible for maintaining the shape of the ear is the:",
+        options: ["A) Pinna", "B) Tympanic membrane", "C) Auditory canal", "D) Cochlea"],
+        correct: 0,
+        explanation: "The pinna (outer ear) is responsible for capturing sound waves and directing them into the ear."
+    },
+    {
+        question: "41. Which part of the eye contains photoreceptors that detect color?",
+        options: ["A) Retina", "B) Lens", "C) Fovea", "D) Cornea"],
+        correct: 2,
+        explanation: "The fovea contains a high concentration of cones, which are responsible for color vision."
+    },
+    {
+        question: "42. Which cranial nerve is associated with the sense of taste?",
+        options: ["A) Olfactory nerve (I)", "B) Trigeminal nerve (V)", "C) Facial nerve (VII)", "D) Vagus nerve (X)"],
+        correct: 2,
+        explanation: "The facial nerve (VII) is responsible for transmitting taste sensations from the anterior part of the tongue."
+    },
+    {
+        question: "43. The organ responsible for detecting sound pressure waves is the:",
+        options: ["A) Cochlea", "B) Eardrum", "C) Auditory nerve", "D) Semicircular canals"],
+        correct: 1,
+        explanation: "The eardrum (tympanic membrane) vibrates in response to sound pressure waves."
+    },
+    {
+        question: "44. The primary sensory structure involved in detecting light and dark is:",
+        options: ["A) Cones", "B) Rods", "C) Both A and B", "D) None of the above"],
+        correct: 2,
+        explanation: "Both rods and cones in the retina are involved in detecting light and dark conditions."
+    },
+    {
+        question: "45. Which structure helps to protect the eye from dust and debris?",
+        options: ["A) Eyelid", "B) Cornea", "C) Iris", "D) Retina"],
+        correct: 0,
+        explanation: "The eyelid helps protect the eye by blinking and keeping out dust and debris."
+    },
+    {
+        question: "46. The part of the eye that is responsible for producing tears is the:",
+        options: ["A) Lacrimal gland", "B) Cornea", "C) Retina", "D) Sclera"],
+        correct: 0,
+        explanation: "The lacrimal gland produces tears that help lubricate and protect the eye."
+    },
+    {
+        question: "47. The ability to perceive taste is largely dependent on the interaction of taste buds with:",
+        options: ["A) Smell", "B) Light", "C) Sound", "D) Touch"],
+        correct: 0,
+        explanation: "The sense of taste is heavily influenced by the sense of smell, enhancing flavor perception."
+    },
+    {
+        question: "48. The function of the iris is to:",
+        options: ["A) Protect the eye", "B) Control the size of the pupil", "C) Focus light", "D) Detect color"],
+        correct: 1,
+        explanation: "The iris controls the size of the pupil, thereby regulating the amount of light that enters the eye."
+    },
+    {
+        question: "49. The vestibular system is primarily involved in:",
+        options: ["A) Hearing", "B) Vision", "C) Balance", "D) Taste"],
+        correct: 2,
+        explanation: "The vestibular system is responsible for maintaining balance and spatial orientation."
+    },
+    {
+        question: "50. Which part of the brain integrates sensory information from different modalities?",
+        options: ["A) Cerebellum", "B) Thalamus", "C) Hypothalamus", "D) Brainstem"],
+        correct: 1,
+        explanation: "The thalamus acts as a relay station for sensory information before it reaches the appropriate areas of the brain."
+    },
+    {
+        question: "51. The phenomenon where sound waves are amplified by the ossicles is known as:",
+        options: ["A) Transduction", "B) Resonance", "C) Conduction", "D) Refraction"],
+        correct: 2,
+        explanation: "Conduction refers to the transmission and amplification of sound waves by the ossicles in the middle ear."
+    },
+    {
+        question: "52. The structure in the ear that contains the organ of Corti is the:",
+        options: ["A) Cochlea", "B) Semicircular canals", "C) Eustachian tube", "D) Auditory canal"],
+        correct: 0,
+        explanation: "The organ of Corti, which contains hair cells that transduce sound, is located in the cochlea."
+    },
+    {
+        question: "53. The loss of the ability to perceive sounds is known as:",
+        options: ["A) Anosmia", "B) Presbycusis", "C) Tinnitus", "D) Hearing loss"],
+        correct: 3,
+        explanation: "Hearing loss is a general term for the inability to hear sounds effectively."
+    },
+    {
+        question: "54. Which part of the inner ear is involved in detecting rotational movement?",
+        options: ["A) Cochlea", "B) Utricle", "C) Saccule", "D) Semicircular canals"],
+        correct: 3,
+        explanation: "The semicircular canals are responsible for detecting rotational movements of the head."
+    },
+    {
+        question: "55. The taste sensation associated with monosodium glutamate (MSG) is known as:",
+        options: ["A) Sweet", "B) Umami", "C) Sour", "D) Salty"],
+        correct: 1,
+        explanation: "Umami is a taste sensation associated with savory flavors, often enhanced by MSG."
+    },
+    {
+        question: "56. The structure that helps to regulate the pressure in the middle ear is the:",
+        options: ["A) Auditory canal", "B) Eustachian tube", "C) Cochlea", "D) Tympanic membrane"],
+        correct: 1,
+        explanation: "The Eustachian tube connects the middle ear to the throat and helps to equalize air pressure."
+    },
+    {
+        question: "57. Which of the following best describes the role of the optic chiasm?",
+        options: ["A) Process sound", "B) Cross visual information to opposite sides of the brain", "C) Control eye movements", "D) Regulate pupil size"],
+        correct: 1,
+        explanation: "The optic chiasm is where visual information from both eyes crosses to the opposite side of the brain for processing."
+    },
+    {
+        question: "58. The condition characterized by an inability to see in dim light is called:",
+        options: ["A) Night blindness", "B) Color blindness", "C) Cataract", "D) Glaucoma"],
+        correct: 0,
+        explanation: "Night blindness (nyctalopia) is the inability to see well in low light conditions, often due to rod dysfunction."
+    },
+    {
+        question: "59. The area of the retina with the highest visual acuity is the:",
+        options: ["A) Peripheral retina", "B) Fovea", "C) Optic nerve", "D) Cornea"],
+        correct: 1,
+        explanation: "The fovea is the central part of the retina, responsible for sharp central vision."
+    },
+    {
+        question: "60. Which of the following is NOT a primary taste sensation?",
+        options: ["A) Sweet", "B) Sour", "C) Spicy", "D) Bitter"],
+        correct: 2,
+        explanation: "Spicy is not considered a primary taste sensation; it is a pain sensation perceived through nociceptors."
+    },
+    {
+        question: "61. The primary sensory receptors responsible for detecting touch are called:",
+        options: ["A) Photoreceptors", "B) Chemoreceptors", "C) Mechanoreceptors", "D) Thermoreceptors"],
+        correct: 2,
+        explanation: "Mechanoreceptors detect mechanical pressure and deformation, allowing us to perceive touch."
+    },
+    {
+        question: "62. Which part of the ear contains the structures that facilitate hearing?",
+        options: ["A) Outer ear", "B) Middle ear", "C) Inner ear", "D) All of the above"],
+        correct: 3,
+        explanation: "All parts of the ear work together to facilitate hearing, including the outer, middle, and inner ear."
+    },
+    {
+        question: "63. The organ responsible for detecting gravity and linear acceleration is the:",
+        options: ["A) Cochlea", "B) Utricle", "C) Saccule", "D) All of the above"],
+        correct: 3,
+        explanation: "The utricle and saccule detect gravity and linear acceleration, while the cochlea is involved in hearing."
+    },
+    {
+        question: "64. The part of the brain responsible for processing tactile information is the:",
+        options: ["A) Occipital lobe", "B) Parietal lobe", "C) Temporal lobe", "D) Frontal lobe"],
+        correct: 1,
+        explanation: "The parietal lobe processes sensory information related to touch and proprioception."
+    },
+    {
+        question: "65. The color vision deficiency known as red-green color blindness is due to a malfunction of:",
+        options: ["A) Rods", "B) Cones", "C) Bipolar cells", "D) Ganglion cells"],
+        correct: 1,
+        explanation: "Red-green color blindness is caused by a malfunction in the cones responsible for detecting red and green wavelengths."
+    },
+    {
+        question: "66. The sense of taste is influenced by which of the following?",
+        options: ["A) Smell", "B) Temperature", "C) Texture", "D) All of the above"],
+        correct: 3,
+        explanation: "Taste perception is influenced by smell, temperature, and texture, enhancing the overall flavor experience."
+    },
+    {
+        question: "67. The fluid-filled structures responsible for balance are located in the:",
+        options: ["A) Cochlea", "B) Semicircular canals", "C) Eustachian tube", "D) Tympanic membrane"],
+        correct: 1,
+        explanation: "The semicircular canals contain fluid and are crucial for maintaining balance and spatial orientation."
+    },
+    {
+        question: "68. Which structure in the eye adjusts the focus for near and distant objects?",
+        options: ["A) Cornea", "B) Pupil", "C) Ciliary body", "D) Retina"],
+        correct: 2,
+        explanation: "The ciliary body controls the shape of the lens to adjust focus for near or distant vision."
+    },
+    {
+        question: "69. The structure that protects the eye from excessive light exposure is the:",
+        options: ["A) Iris", "B) Pupil", "C) Eyelid", "D) Retina"],
+        correct: 2,
+        explanation: "The eyelid protects the eye by closing to block excessive light and debris."
+    },
+    {
+        question: "70. The part of the eye that allows light to enter is the:",
+        options: ["A) Cornea", "B) Iris", "C) Lens", "D) Retina"],
+        correct: 0,
+        explanation: "The cornea is the transparent front part of the eye that allows light to enter."
+    },
+    {
+        question: "71. Which type of receptor is primarily responsible for detecting changes in light intensity?",
+        options: ["A) Mechanoreceptors", "B) Thermoreceptors", "C) Photoreceptors", "D) Nociceptors"],
+        correct: 2,
+        explanation: "Photoreceptors in the retina detect changes in light intensity, allowing us to perceive brightness."
+    },
+    {
+        question: "72. The main component of the outer ear is the:",
+        options: ["A) Cochlea", "B) Pinna", "C) Eardrum", "D) Auditory canal"],
+        correct: 1,
+        explanation: "The pinna, or auricle, is the visible part of the outer ear that captures sound waves."
+    },
+    {
+        question: "73. The organ responsible for detecting sound waves is the:",
+        options: ["A) Ear", "B) Eye", "C) Nose", "D) Skin"],
+        correct: 0,
+        explanation: "The ear is the organ specifically designed for detecting sound waves and converting them into signals."
+    },
+    {
+        question: "74. Which of the following structures is involved in both hearing and balance?",
+        options: ["A) Cochlea", "B) Semicircular canals", "C) Eustachian tube", "D) Tympanic membrane"],
+        correct: 1,
+        explanation: "The semicircular canals are involved in balance, while the cochlea is involved in hearing."
+    },
+    {
+        question: "75. The primary role of the ciliary body is to:",
+        options: ["A) Protect the eye", "B) Control pupil size", "C) Adjust lens shape", "D) Produce tears"],
+        correct: 2,
+        explanation: "The ciliary body adjusts the shape of the lens for focusing on objects at varying distances."
+    },
+    {
+        question: "76. The photoreceptor responsible for color vision is known as a:",
+        options: ["A) Rod", "B) Cone", "C) Both A and B", "D) None of the above"],
+        correct: 1,
+        explanation: "Cones are photoreceptors that enable color vision, while rods are more sensitive to light."
+    },
+    {
+        question: "77. The area of the retina where the optic nerve exits is called the:",
+        options: ["A) Fovea", "B) Blind spot", "C) Macula", "D) Cornea"],
+        correct: 1,
+        explanation: "The blind spot is the area where the optic nerve leaves the eye, and it lacks photoreceptors."
+    },
+    {
+        question: "78. Which taste is primarily detected by taste buds located at the tip of the tongue?",
+        options: ["A) Sweet", "B) Sour", "C) Bitter", "D) Salty"],
+        correct: 0,
+        explanation: "The tip of the tongue is most sensitive to sweet tastes."
+    },
+    {
+        question: "79. The tympanic membrane is commonly known as the:",
+        options: ["A) Pinna", "B) Eardrum", "C) Cochlea", "D) Auditory canal"],
+        correct: 1,
+        explanation: "The tympanic membrane, or eardrum, vibrates in response to sound waves."
+    },
+    {
+        question: "80. The olfactory receptors are located in the:",
+        options: ["A) Nasal cavity", "B) Mouth", "C) Eyes", "D) Ears"],
+        correct: 0,
+        explanation: "Olfactory receptors are located in the nasal cavity and are responsible for the sense of smell."
+    },
+    {
+        question: "81. The part of the ear that amplifies sound vibrations is the:",
+        options: ["A) Cochlea", "B) Ossicles", "C) Auditory nerve", "D) Semicircular canals"],
+        correct: 1,
+        explanation: "The ossicles (malleus, incus, stapes) amplify sound vibrations in the middle ear."
+    },
+    {
+        question: "82. The condition characterized by an increase in intraocular pressure is known as:",
+        options: ["A) Glaucoma", "B) Cataract", "C) Astigmatism", "D) Retinal detachment"],
+        correct: 0,
+        explanation: "Glaucoma is a condition that can damage the optic nerve due to increased pressure in the eye."
+    },
+    {
+        question: "83. The structure responsible for directing sound waves into the ear is the:",
+        options: ["A) Pinna", "B) Cochlea", "C) Tympanic membrane", "D) Auditory canal"],
+        correct: 0,
+        explanation: "The pinna captures sound waves and directs them into the auditory canal."
+    },
+    {
+        question: "84. The ability to perceive the position of body parts is known as:",
+        options: ["A) Proprioception", "B) Nociception", "C) Thermoception", "D) Mechanoreception"],
+        correct: 0,
+        explanation: "Proprioception is the sense that allows us to perceive the position and movement of our body parts."
+    },
+    {
+        question: "85. The outermost layer of the eye is called the:",
+        options: ["A) Sclera", "B) Cornea", "C) Retina", "D) Iris"],
+        correct: 0,
+        explanation: "The sclera is the white outer layer of the eye that provides protection and structure."
+    },
+    {
+        question: "86. The sense of hearing is initiated by the vibration of the:",
+        options: ["A) Cochlea", "B) Tympanic membrane", "C) Auditory nerve", "D) Eardrum"],
+        correct: 1,
+        explanation: "The tympanic membrane (eardrum) vibrates in response to sound waves, initiating the hearing process."
+    },
+    {
+        question: "87. The inner ear is primarily responsible for:",
+        options: ["A) Hearing and balance", "B) Sound amplification", "C) Sound transmission", "D) None of the above"],
+        correct: 0,
+        explanation: "The inner ear contains structures responsible for both hearing (cochlea) and balance (vestibular system)."
+    },
+    {
+        question: "88. Which type of sensory receptor detects changes in temperature?",
+        options: ["A) Photoreceptors", "B) Mechanoreceptors", "C) Thermoreceptors", "D) Nociceptors"],
+        correct: 2,
+        explanation: "Thermoreceptors are responsible for detecting changes in temperature."
+    },
+    {
+        question: "89. The area of the brain that processes visual information is the:",
+        options: ["A) Temporal lobe", "B) Occipital lobe", "C) Parietal lobe", "D) Frontal lobe"],
+        correct: 1,
+        explanation: "The occipital lobe is responsible for processing visual information received from the eyes."
+    },
+    {
+        question: "90. The auditory nerve transmits signals from the ear to the:",
+        options: ["A) Brain", "B) Spinal cord", "C) Heart", "D) Lungs"],
+        correct: 0,
+        explanation: "The auditory nerve transmits auditory signals from the cochlea in the inner ear to the brain."
+    },
+    {
+        question: "91. The part of the eye that contains the most rods is the:",
+        options: ["A) Fovea", "B) Periphery of the retina", "C) Macula", "D) Iris"],
+        correct: 1,
+        explanation: "The periphery of the retina contains a high concentration of rods, which are sensitive to low light."
+    },
+    {
+        question: "92. The sensation of pain is detected by:",
+        options: ["A) Mechanoreceptors", "B) Photoreceptors", "C) Nociceptors", "D) Thermoreceptors"],
+        correct: 2,
+        explanation: "Nociceptors are specialized sensory receptors that detect pain and harmful stimuli."
+    },
+    {
+        question: "93. Which structure in the ear helps to equalize pressure?",
+        options: ["A) Cochlea", "B) Semicircular canals", "C) Eustachian tube", "D) Auditory canal"],
+        correct: 2,
+        explanation: "The Eustachian tube helps equalize pressure between the middle ear and the atmosphere."
+    },
+    {
+        question: "94. The part of the brain responsible for processing sensory information from the skin is the:",
+        options: ["A) Occipital lobe", "B) Parietal lobe", "C) Temporal lobe", "D) Frontal lobe"],
+        correct: 1,
+        explanation: "The parietal lobe processes sensory information related to touch, temperature, and pain from the skin."
+    },
+    {
+        question: "95. The structure that focuses light onto the retina is the:",
+        options: ["A) Cornea", "B) Lens", "C) Sclera", "D) Retina"],
+        correct: 1,
+        explanation: "The lens adjusts its shape to focus light onto the retina for clear vision."
+    },
+    {
+        question: "96. The sense of balance is primarily detected by the:",
+        options: ["A) Cochlea", "B) Semicircular canals", "C) Utricle", "D) All of the above"],
+        correct: 3,
+        explanation: "The cochlea, utricle, and semicircular canals all contribute to the sense of balance."
+    },
+    {
+        question: "97. The olfactory bulb is responsible for:",
+        options: ["A) Processing sound", "B) Detecting light", "C) Processing smell", "D) Detecting taste"],
+        correct: 2,
+        explanation: "The olfactory bulb processes olfactory information received from the nasal cavity."
+    },
+    {
+        question: "98. The part of the eye that adjusts its size to regulate light entry is the:",
+        options: ["A) Pupil", "B) Iris", "C) Cornea", "D) Lens"],
+        correct: 0,
+        explanation: "The pupil changes size to regulate the amount of light entering the eye."
+    },
+    {
+        question: "99. The primary function of the auditory canal is to:",
+        options: ["A) Amplify sound", "B) Transmit sound to the eardrum", "C) Equalize pressure", "D) Protect the inner ear"],
+        correct: 1,
+        explanation: "The auditory canal transmits sound waves from the outer ear to the tympanic membrane (eardrum)."
+    },
+    {
+        question: "100. The part of the eye responsible for peripheral vision is the:",
+        options: ["A) Fovea", "B) Rods", "C) Cones", "D) Macula"],
+        correct: 1,
+        explanation: "Rods are primarily responsible for peripheral vision and detecting motion in low light."
+    }
+
+
+    ];
+
+    let current = 0;
+    let score = 0;
+    let userAnswers = [];
+
+    function renderQuestion() {
+      const q = quizData[current];
+      let html = '<div class="quiz-question">';
+      html += `<h3>Q${current + 1}. ${q.question}</h3>`;
+      q.options.forEach((opt, i) => {
+        html += `<div class="quiz-option" onclick="selectOption(${i})">${opt}</div>`;
+      });
+      html += `<div class="quiz-explanation" id="explanation">${q.explanation}</div>`;
+      html += '</div>';
+      document.getElementById('quiz-box').innerHTML = html;
+    }
+
+    function selectOption(index) {
+      const options = document.querySelectorAll('.quiz-option');
+      options.forEach((el, i) => {
+        el.classList.remove('correct', 'incorrect');
+        if (i === index) {
+          if (i === quizData[current].correct) {
+            el.classList.add('correct');
+            score++;
+          } else {
+            el.classList.add('incorrect');
+            options[quizData[current].correct].classList.add('correct');
+          }
+        }
+        el.onclick = null;
+      });
+      document.getElementById('explanation').style.display = 'block';
+      userAnswers[current] = index;
+    }
+
+    function nextQuestion() {
+      if (current < quizData.length - 1) {
+        current++;
+        renderQuestion();
+      }
+    }
+
+    function prevQuestion() {
+      if (current > 0) {
+        current--;
+        renderQuestion();
+      }
+    }
+
+    function submitQuiz() {
+      document.getElementById('quiz-box').style.display = 'none';
+      document.querySelector('.quiz-navigation').style.display = 'none';
+      document.getElementById('results-box').style.display = 'block';
+      document.getElementById('score-text').innerText = `You scored ${score} out of ${quizData.length}`;
+    }
+
+    function restartQuiz() {
+      current = 0;
+      score = 0;
+      userAnswers = [];
+      document.getElementById('quiz-box').style.display = 'block';
+      document.querySelector('.quiz-navigation').style.display = 'block';
+      document.getElementById('results-box').style.display = 'none';
+      renderQuestion();
+    }
+
+    renderQuestion();
+  </script>
+</body>
+</html>

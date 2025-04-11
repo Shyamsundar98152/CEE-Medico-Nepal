@@ -1,0 +1,827 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Respiratory System Quiz - CEE Medico Nepal</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css"/>
+  <style>
+    :root {
+      --primary-color: #2c3e50;
+      --secondary-color: #3498db;
+      --accent-color: #e74c3c;
+      --light-color: #ecf0f1;
+      --text-color: #333;
+      --botany-color: #2ecc71;
+    }
+
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    }
+
+    body {
+      background-color: #f9f9f9;
+      color: var(--text-color);
+    }
+
+    header, footer {
+      background-color: var(--primary-color);
+      color: white;
+      padding: 1rem 0;
+    }
+
+    .container {
+      width: 90%;
+      max-width: 1000px;
+      margin: 0 auto;
+    }
+
+    .quiz-hero {
+      text-align: center;
+      background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+      color: white;
+      padding: 2rem 0;
+    }
+
+    .quiz-container {
+      margin: 2rem 0;
+    }
+
+    .quiz-question {
+      background: white;
+      border-radius: 8px;
+      padding: 1.5rem;
+      margin-bottom: 1rem;
+      box-shadow: 0 5px 15px rgba(0,0,0,0.05);
+    }
+
+    .quiz-option {
+      padding: 1rem;
+      background-color: var(--light-color);
+      border-radius: 5px;
+      margin-bottom: 0.5rem;
+      cursor: pointer;
+    }
+
+    .quiz-option:hover {
+      background-color: #dcdcdc;
+    }
+
+    .quiz-option.correct {
+      border: 2px solid var(--botany-color);
+      background-color: #e8f8f5;
+    }
+
+    .quiz-option.incorrect {
+      border: 2px solid var(--accent-color);
+      background-color: #fdecea;
+    }
+
+    .quiz-explanation {
+      display: none;
+      padding: 1rem;
+      border-left: 5px solid var(--secondary-color);
+      margin-top: 1rem;
+      background-color: #f0f0f0;
+    }
+
+    .quiz-navigation {
+      margin-top: 2rem;
+      text-align: center;
+    }
+
+    .quiz-navigation button {
+      margin: 0 1rem;
+      padding: 0.7rem 1.5rem;
+      border: none;
+      background-color: var(--secondary-color);
+      color: white;
+      border-radius: 5px;
+      cursor: pointer;
+    }
+
+    .quiz-results {
+      display: none;
+      text-align: center;
+      padding: 2rem;
+      background: white;
+      border-radius: 10px;
+      box-shadow: 0 5px 10px rgba(0,0,0,0.1);
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <div class="container">
+      <h1>CEE Medico Nepal</h1>
+      <p>Excretory System Quiz</p>
+    </div>
+  </header>
+
+  <section class="quiz-hero">
+    <div class="container">
+      <h2>Test Your Knowledge on the Excretory System</h2>
+      <p>Essential questions for MBBS Entrance Preparation in Nepal</p>
+    </div>
+  </section>
+
+  <main class="container quiz-container">
+    <div id="quiz-box"></div>
+
+    <div class="quiz-navigation">
+      <button onclick="prevQuestion()">Previous</button>
+      <button onclick="nextQuestion()">Next</button>
+      <button onclick="submitQuiz()">Submit</button>
+    </div>
+
+    <div class="quiz-results" id="results-box">
+      <h2>Quiz Completed!</h2>
+      <p id="score-text"></p>
+      <button onclick="restartQuiz()">Retake Quiz</button>
+    </div>
+  </main>
+
+  <footer>
+    <div class="container">
+      <p>&copy; 2025 CEE Medico Nepal. All Rights Reserved.</p>
+    </div>
+  </footer>
+
+  <script>
+    const quizData = [
+      {
+        question: "1. What is the functional unit of the kidney?",
+        options: ["A) Nephron", "B) Glomerulus", "C) Loop of Henle", "D) Collecting duct"],
+        correct: 0,
+        explanation: "The nephron is the functional unit of the kidney, responsible for filtering blood and forming urine."
+    },
+    {
+        question: "2. Which part of the nephron is responsible for the filtration of blood?",
+        options: ["A) Proximal convoluted tubule", "B) Glomerulus", "C) Loop of Henle", "D) Distal convoluted tubule"],
+        correct: 1,
+        explanation: "The glomerulus is a network of capillaries that filters blood in the nephron."
+    },
+    {
+        question: "3. What is the main nitrogenous waste product excreted by humans?",
+        options: ["A) Urea", "B) Ammonia", "C) Creatinine", "D) Uric acid"],
+        correct: 0,
+        explanation: "Urea is the main nitrogenous waste product in humans, formed from protein metabolism."
+    },
+    {
+        question: "4. Which hormone regulates water reabsorption in the kidneys?",
+        options: ["A) Aldosterone", "B) Antidiuretic hormone (ADH)", "C) Renin", "D) Erythropoietin"],
+        correct: 1,
+        explanation: "Antidiuretic hormone (ADH) increases water reabsorption in the kidneys, reducing urine volume."
+    },
+    {
+        question: "5. The primary site for reabsorption of water and solutes in the nephron is:",
+        options: ["A) Glomerulus", "B) Proximal convoluted tubule", "C) Loop of Henle", "D) Collecting duct"],
+        correct: 1,
+        explanation: "The proximal convoluted tubule is the primary site for reabsorption of water, ions, and nutrients."
+    },
+    {
+        question: "6. What type of transport is used for the reabsorption of glucose in the kidneys?",
+        options: ["A) Active transport", "B) Passive diffusion", "C) Facilitated diffusion", "D) Osmosis"],
+        correct: 0,
+        explanation: "Glucose reabsorption in the kidneys occurs via active transport, requiring energy."
+    },
+    {
+        question: "7. Which of the following structures collects urine from the nephrons?",
+        options: ["A) Ureter", "B) Renal pelvis", "C) Bladder", "D) Urethra"],
+        correct: 1,
+        explanation: "The renal pelvis collects urine from the nephrons and channels it into the ureters."
+    },
+    {
+        question: "8. The Loop of Henle is primarily involved in:",
+        options: ["A) Filtration", "B) Secretion", "C) Concentration of urine", "D) Excretion of waste"],
+        correct: 2,
+        explanation: "The Loop of Henle is involved in the concentration of urine through the reabsorption of water and salts."
+    },
+    {
+        question: "9. Which component of the kidney is primarily responsible for the production of erythropoietin?",
+        options: ["A) Glomerulus", "B) Renal cortex", "C) Renal medulla", "D) Loop of Henle"],
+        correct: 1,
+        explanation: "The renal cortex produces erythropoietin, which stimulates red blood cell production in response to low oxygen levels."
+    },
+    {
+        question: "10. What is the main function of the ureters?",
+        options: ["A) Store urine", "B) Produce urine", "C) Transport urine", "D) Filter blood"],
+        correct: 2,
+        explanation: "The ureters transport urine from the kidneys to the urinary bladder."
+    },
+    {
+        question: "11. Which condition is characterized by the presence of blood in the urine?",
+        options: ["A) Hematuria", "B) Anuria", "C) Oliguria", "D) Pyuria"],
+        correct: 0,
+        explanation: "Hematuria refers to the presence of blood in the urine, which can indicate various medical conditions."
+    },
+    {
+        question: "12. The process by which substances are transported from the blood into the nephron is called:",
+        options: ["A) Filtration", "B) Reabsorption", "C) Secretion", "D) Excretion"],
+        correct: 2,
+        explanation: "Secretion is the process of moving substances from the blood into the nephron for excretion."
+    },
+    {
+        question: "13. Which of the following ions is primarily reabsorbed in the distal convoluted tubule?",
+        options: ["A) Sodium", "B) Potassium", "C) Calcium", "D) Chloride"],
+        correct: 0,
+        explanation: "The distal convoluted tubule primarily reabsorbs sodium ions, regulated by aldosterone."
+    },
+    {
+        question: "14. What is the normal range of urine pH in humans?",
+        options: ["A) 4.5 - 5.5", "B) 6.0 - 7.5", "C) 7.0 - 8.0", "D) 9.0 - 10.0"],
+        correct: 1,
+        explanation: "The normal pH range of urine in humans is typically between 6.0 and 7.5."
+    },
+    {
+        question: "15. Which structure in the kidney is primarily responsible for filtration?",
+        options: ["A) Nephron", "B) Renal artery", "C) Glomerulus", "D) Ureter"],
+        correct: 2,
+        explanation: "The glomerulus is the site where blood filtration occurs in the nephron."
+    },
+    {
+        question: "16. The main driving force for glomerular filtration is:",
+        options: ["A) Osmotic pressure", "B) Hydrostatic pressure", "C) Blood pressure", "D) Tissue pressure"],
+        correct: 1,
+        explanation: "Hydrostatic pressure in the glomerulus drives the filtration of blood into the nephron."
+    },
+    {
+        question: "17. Which of the following statements is true regarding the bladder?",
+        options: ["A) It can hold about 50 mL of urine", "B) It is a muscular sac", "C) It has a single layer of epithelial cells", "D) It is located outside the pelvic cavity"],
+        correct: 1,
+        explanation: "The bladder is a muscular sac that stores urine until it is excreted from the body."
+    },
+    {
+        question: "18. What is the role of the juxtaglomerular apparatus?",
+        options: ["A) Filtration of blood", "B) Regulation of blood pressure", "C) Secretion of hormones", "D) Absorption of nutrients"],
+        correct: 1,
+        explanation: "The juxtaglomerular apparatus regulates blood pressure and glomerular filtration rate by releasing renin."
+    },
+    {
+        question: "19. The condition characterized by low urine output is known as:",
+        options: ["A) Oliguria", "B) Anuria", "C) Polyuria", "D) Dysuria"],
+        correct: 0,
+        explanation: "Oliguria is defined as low urine output, often indicative of dehydration or kidney dysfunction."
+    },
+    {
+        question: "20. Which part of the nephron is primarily involved in the reabsorption of sodium and water?",
+        options: ["A) Glomerulus", "B) Proximal convoluted tubule", "C) Loop of Henle", "D) Distal convoluted tubule"],
+        correct: 1,
+        explanation: "The proximal convoluted tubule is primarily responsible for the reabsorption of sodium and water."
+    },
+    {
+        question: "21. Which substance is NOT normally found in urine?",
+        options: ["A) Urea", "B) Glucose", "C) Creatinine", "D) Uric acid"],
+        correct: 1,
+        explanation: "Glucose is not normally found in urine; its presence may indicate diabetes mellitus."
+    },
+    {
+        question: "22. The primary mechanism of action of diuretics is to:",
+        options: ["A) Increase water reabsorption", "B) Decrease blood pressure", "C) Promote urine formation", "D) Increase sodium retention"],
+        correct: 2,
+        explanation: "Diuretics promote urine formation by inhibiting sodium reabsorption in the kidneys."
+    },
+    {
+        question: "23. Which hormone is responsible for the regulation of sodium reabsorption in the nephron?",
+        options: ["A) Antidiuretic hormone (ADH)", "B) Aldosterone", "C) Cortisol", "D) Insulin"],
+        correct: 1,
+        explanation: "Aldosterone promotes sodium reabsorption in the distal convoluted tubule and collecting duct."
+    },
+    {
+        question: "24. The presence of ketone bodies in urine is indicative of:",
+        options: ["A) Kidney failure", "B) Diabetes mellitus", "C) Liver disease", "D) Urinary tract infection"],
+        correct: 1,
+        explanation: "The presence of ketone bodies in urine can indicate diabetes mellitus or prolonged fasting."
+    },
+    {
+        question: "25. The primary function of the renal corpuscle is:",
+        options: ["A) Reabsorption of nutrients", "B) Filtration of blood", "C) Secretion of hormones", "D) Concentration of urine"],
+        correct: 1,
+        explanation: "The renal corpuscle, comprising the glomerulus and Bowman's capsule, is responsible for filtering blood."
+    },
+    {
+        question: "26. What is the role of aquaporins in the nephron?",
+        options: ["A) Transport glucose", "B) Regulate sodium levels", "C) Facilitate water reabsorption", "D) Filter blood"],
+        correct: 2,
+        explanation: "Aquaporins are water channels that facilitate water reabsorption in the nephron."
+    },
+    {
+        question: "27. Which structure prevents the backflow of urine from the bladder to the ureters?",
+        options: ["A) Sphincter muscles", "B) Ureteral valves", "C) Bladder wall", "D) Renal pelvis"],
+        correct: 1,
+        explanation: "Ureteral valves prevent the backflow of urine from the bladder into the ureters."
+    },
+    {
+        question: "28. Which of the following is a primary cause of kidney stones?",
+        options: ["A) Excessive calcium intake", "B) Dehydration", "C) Urinary tract infections", "D) All of the above"],
+        correct: 3,
+        explanation: "Kidney stones can be caused by excessive calcium intake, dehydration, and urinary tract infections."
+    },
+    {
+        question: "29. What is the role of the renal pelvis?",
+        options: ["A) Filtration", "B) Urine storage", "C) Urine collection", "D) Water reabsorption"],
+        correct: 2,
+        explanation: "The renal pelvis collects urine produced in the kidney and funnels it into the ureter."
+    },
+    {
+        question: "30. The main site of potassium secretion in the nephron is:",
+        options: ["A) Proximal convoluted tubule", "B) Loop of Henle", "C) Distal convoluted tubule", "D) Collecting duct"],
+        correct: 2,
+        explanation: "The distal convoluted tubule is the main site for potassium secretion into the urine."
+    },
+    {
+        question: "31. Which type of epithelial cells line the renal tubules?",
+        options: ["A) Squamous", "B) Cuboidal", "C) Columnar", "D) Transitional"],
+        correct: 1,
+        explanation: "Cuboidal epithelial cells line the renal tubules, facilitating absorption and secretion."
+    },
+    {
+        question: "32. The condition characterized by increased urination is known as:",
+        options: ["A) Oliguria", "B) Anuria", "C) Polyuria", "D) Dysuria"],
+        correct: 2,
+        explanation: "Polyuria refers to increased urination, which can occur in diabetes or as a side effect of certain medications."
+    },
+    {
+        question: "33. What is the primary function of the Bowman's capsule?",
+        options: ["A) Reabsorb glucose", "B) Filter blood", "C) Secrete hormones", "D) Store urine"],
+        correct: 1,
+        explanation: "Bowman's capsule encases the glomerulus and is primarily responsible for the filtration of blood."
+    },
+    {
+        question: "34. The part of the nephron that is impermeable to water is:",
+        options: ["A) Proximal convoluted tubule", "B) Descending Loop of Henle", "C) Ascending Loop of Henle", "D) Collecting duct"],
+        correct: 2,
+        explanation: "The ascending Loop of Henle is impermeable to water, allowing for the reabsorption of salts without water."
+    },
+    {
+        question: "35. Which of the following best describes the process of glomerular filtration?",
+        options: ["A) Selective reabsorption of nutrients", "B) Bulk flow of plasma into Bowman's capsule", "C) Active transport of ions", "D) Passive diffusion of waste products"],
+        correct: 1,
+        explanation: "Glomerular filtration is the bulk flow of plasma from the glomerulus into Bowman's capsule."
+    },
+    {
+        question: "36. Which part of the nephron has a high permeability to water?",
+        options: ["A) Proximal convoluted tubule", "B) Descending Loop of Henle", "C) Ascending Loop of Henle", "D) Distal convoluted tubule"],
+        correct: 1,
+        explanation: "The descending Loop of Henle is highly permeable to water, allowing for water reabsorption."
+    },
+    {
+        question: "37. What is the main function of the collecting duct?",
+        options: ["A) Secretion of potassium", "B) Filtration of blood", "C) Final concentration of urine", "D) Reabsorption of glucose"],
+        correct: 2,
+        explanation: "The collecting duct plays a critical role in the final concentration of urine and reabsorption of water."
+    },
+    {
+        question: "38. The term 'renal threshold' refers to:",
+        options: ["A) Maximum capacity for urine storage", "B) Point at which substances appear in urine", "C) Level of hydration required for kidney function", "D) Minimum blood pressure for filtration"],
+        correct: 1,
+        explanation: "Renal threshold is the point at which certain substances, like glucose, start to appear in urine when their blood concentration exceeds a certain level."
+    },
+    {
+        question: "39. The excretion of excess hydrogen ions primarily occurs in which part of the nephron?",
+        options: ["A) Proximal convoluted tubule", "B) Loop of Henle", "C) Distal convoluted tubule", "D) Collecting duct"],
+        correct: 2,
+        explanation: "The distal convoluted tubule is involved in the secretion of excess hydrogen ions to regulate blood pH."
+    },
+    {
+        question: "40. The process of removing waste products from the blood is known as:",
+        options: ["A) Filtration", "B) Excretion", "C) Absorption", "D) Secretion"],
+        correct: 1,
+        explanation: "Excretion is the process of removing waste products and excess substances from the blood."
+    },
+    {
+        question: "41. Which type of nephron is primarily responsible for the concentration of urine?",
+        options: ["A) Cortical nephron", "B) Juxtamedullary nephron", "C) Superficial nephron", "D) Medullary nephron"],
+        correct: 1,
+        explanation: "Juxtamedullary nephrons have longer loops of Henle and are primarily responsible for concentrating urine."
+    },
+    {
+        question: "42. Which of the following statements about kidney failure is TRUE?",
+        options: ["A) It leads to increased blood urea nitrogen (BUN)", "B) It is reversible in all cases", "C) It does not affect fluid balance", "D) It is only caused by diabetes"],
+        correct: 0,
+        explanation: "Kidney failure often leads to increased blood urea nitrogen (BUN) due to decreased filtration capacity."
+    },
+    {
+        question: "43. Which electrolyte imbalance is commonly associated with kidney disease?",
+        options: ["A) Hyperkalemia", "B) Hyponatremia", "C) Hypercalcemia", "D) Hypomagnesemia"],
+        correct: 0,
+        explanation: "Hyperkalemia, or elevated potassium levels, is a common electrolyte imbalance associated with kidney disease."
+    },
+    {
+        question: "44. The process by which water and solutes are reabsorbed from the filtrate into the blood is called:",
+        options: ["A) Filtration", "B) Reabsorption", "C) Secretion", "D) Excretion"],
+        correct: 1,
+        explanation: "Reabsorption is the process of moving water and solutes from the filtrate back into the blood."
+    },
+    {
+        question: "45. What is the primary cause of glomerulonephritis?",
+        options: ["A) Infection", "B) Immune response", "C) Hypertension", "D) Diabetes"],
+        correct: 1,
+        explanation: "Glomerulonephritis is primarily caused by an immune response that damages the glomeruli in the kidneys."
+    },
+    {
+        question: "46. Which of the following structures is NOT part of the urinary system?",
+        options: ["A) Kidneys", "B) Ureters", "C) Gallbladder", "D) Bladder"],
+        correct: 2,
+        explanation: "The gallbladder is part of the biliary system and is not involved in the urinary system."
+    },
+    {
+        question: "47. What is the primary function of the loop of Henle?",
+        options: ["A) Filtration", "B) Concentration of urine", "C) Absorption of nutrients", "D) Secretion of hormones"],
+        correct: 1,
+        explanation: "The loop of Henle is primarily responsible for the concentration of urine through the reabsorption of water and salts."
+    },
+    {
+        question: "48. Which type of diuretic works by inhibiting sodium reabsorption in the proximal convoluted tubule?",
+        options: ["A) Loop diuretic", "B) Thiazide diuretic", "C) Potassium-sparing diuretic", "D) Carbonic anhydrase inhibitor"],
+        correct: 3,
+        explanation: "Carbonic anhydrase inhibitors inhibit sodium reabsorption in the proximal convoluted tubule."
+    },
+    {
+        question: "49. The renal arteries branch off from which major blood vessel?",
+        options: ["A) Aorta", "B) Inferior vena cava", "C) Pulmonary artery", "D) Subclavian artery"],
+        correct: 0,
+        explanation: "The renal arteries branch off from the aorta and supply blood to the kidneys."
+    },
+    {
+        question: "50. Which of the following is the most common cause of chronic kidney disease?",
+        options: ["A) Glomerulonephritis", "B) Diabetes mellitus", "C) Polycystic kidney disease", "D) Hypertension"],
+        correct: 1,
+        explanation: "Diabetes mellitus is the most common cause of chronic kidney disease, leading to diabetic nephropathy."
+    },
+    {
+        question: "51. The primary nitrogenous waste product in the urine of birds and reptiles is:",
+        options: ["A) Urea", "B) Uric acid", "C) Ammonia", "D) Creatinine"],
+        correct: 1,
+        explanation: "Birds and reptiles excrete uric acid as a nitrogenous waste product to conserve water."
+    },
+    {
+        question: "52. The term 'nephron sparing surgery' is used to describe procedures aimed at:",
+        options: ["A) Removing the entire kidney", "B) Preserving functional nephron units", "C) Removing renal tumors", "D) Treating urinary infections"],
+        correct: 1,
+        explanation: "Nephron sparing surgery aims to preserve functional nephron units while removing tumors or affected areas."
+    },
+    {
+        question: "53. The glomerular filtration rate (GFR) is primarily influenced by:",
+        options: ["A) Blood volume", "B) Blood pressure", "C) Age", "D) Diet"],
+        correct: 1,
+        explanation: "Blood pressure is the primary factor influencing the glomerular filtration rate (GFR)."
+    },
+    {
+        question: "54. Which of the following is a common symptom of urinary tract infection (UTI)?",
+        options: ["A) Back pain", "B) Polyuria", "C) Fever", "D) All of the above"],
+        correct: 3,
+        explanation: "A urinary tract infection can cause back pain, polyuria, fever, and other symptoms."
+    },
+    {
+        question: "55. The process by which glucose is reabsorbed in the nephron occurs primarily in the:",
+        options: ["A) Distal convoluted tubule", "B) Proximal convoluted tubule", "C) Loop of Henle", "D) Collecting duct"],
+        correct: 1,
+        explanation: "Glucose is primarily reabsorbed in the proximal convoluted tubule through active transport."
+    },
+    {
+        question: "56. Which electrolyte is most affected by kidney disease, often leading to cardiac complications?",
+        options: ["A) Sodium", "B) Potassium", "C) Calcium", "D) Magnesium"],
+        correct: 1,
+        explanation: "Hyperkalemia (elevated potassium) is a common complication in kidney disease and can lead to cardiac issues."
+    },
+    {
+        question: "57. The condition characterized by the presence of pus in the urine is called:",
+        options: ["A) Hematuria", "B) Pyuria", "C) Oliguria", "D) Anuria"],
+        correct: 1,
+        explanation: "Pyuria is the presence of pus in the urine, often indicating infection or inflammation."
+    },
+    {
+        question: "58. The renal system plays a key role in regulating which of the following?",
+        options: ["A) Blood pH", "B) Blood volume", "C) Electrolyte balance", "D) All of the above"],
+        correct: 3,
+        explanation: "The renal system regulates blood pH, blood volume, and electrolyte balance through filtration and reabsorption."
+    },
+    {
+        question: "59. Which of the following hormones is secreted by the kidneys?",
+        options: ["A) Insulin", "B) Glucagon", "C) Renin", "D) Thyroid hormone"],
+        correct: 2,
+        explanation: "Renin is a hormone secreted by the kidneys that plays a role in blood pressure regulation."
+    },
+    {
+        question: "60. The primary site of secretion in the nephron is the:",
+        options: ["A) Proximal convoluted tubule", "B) Distal convoluted tubule", "C) Loop of Henle", "D) Collecting duct"],
+        correct: 1,
+        explanation: "The distal convoluted tubule is primarily responsible for the secretion of waste products into the urine."
+    },
+    {
+        question: "61. Which of the following diseases is characterized by the presence of protein in the urine?",
+        options: ["A) Nephrotic syndrome", "B) Glomerulonephritis", "C) Chronic kidney disease", "D) All of the above"],
+        correct: 0,
+        explanation: "Nephrotic syndrome is characterized by significant proteinuria, leading to edema and other symptoms."
+    },
+    {
+        question: "62. Which structure serves as a reservoir for urine before excretion?",
+        options: ["A) Kidney", "B) Ureter", "C) Bladder", "D) Urethra"],
+        correct: 2,
+        explanation: "The bladder serves as a reservoir for urine until it is excreted from the body."
+    },
+    {
+        question: "63. The presence of which of the following in the urine may indicate liver disease?",
+        options: ["A) Bilirubin", "B) Glucose", "C) Ketones", "D) Protein"],
+        correct: 0,
+        explanation: "Bilirubin in urine can indicate liver disease or dysfunction, as it is a breakdown product of hemoglobin."
+    },
+    {
+        question: "64. Which component of urine is primarily responsible for its yellow color?",
+        options: ["A) Urea", "B) Creatinine", "C) Urobilin", "D) Bilirubin"],
+        correct: 2,
+        explanation: "Urobilin, a breakdown product of bilirubin, is primarily responsible for the yellow color of urine."
+    },
+    {
+        question: "65. The role of aldosterone in the kidneys is to:",
+        options: ["A) Increase sodium reabsorption", "B) Decrease potassium secretion", "C) Promote water excretion", "D) Inhibit renin release"],
+        correct: 0,
+        explanation: "Aldosterone increases sodium reabsorption and promotes potassium secretion in the kidneys."
+    },
+    {
+        question: "66. The presence of which of the following substances in the urine is an indicator of diabetes?",
+        options: ["A) Glucose", "B) Protein", "C) Bilirubin", "D) Hemoglobin"],
+        correct: 0,
+        explanation: "The presence of glucose in urine is a common indicator of diabetes mellitus."
+    },
+    {
+        question: "67. Which part of the nephron is primarily responsible for the reabsorption of calcium?",
+        options: ["A) Proximal convoluted tubule", "B) Loop of Henle", "C) Distal convoluted tubule", "D) Collecting duct"],
+        correct: 2,
+        explanation: "The distal convoluted tubule is primarily responsible for the reabsorption of calcium, regulated by parathyroid hormone."
+    },
+    {
+        question: "68. Which of the following best describes the term 'anuria'?",
+        options: ["A) Decreased urine output", "B) Absence of urine output", "C) Excessive urination", "D) Normal urine output"],
+        correct: 1,
+        explanation: "Anuria is defined as the absence of urine output, which can indicate severe kidney dysfunction."
+    },
+    {
+        question: "69. Which of the following structures connects the kidneys to the bladder?",
+        options: ["A) Urethra", "B) Renal pelvis", "C) Ureter", "D) Urethral sphincter"],
+        correct: 2,
+        explanation: "The ureters are the tubes that connect the kidneys to the bladder, transporting urine."
+    },
+    {
+        question: "70. The term 'glomerulosclerosis' refers to:",
+        options: ["A) Inflammation of the glomeruli", "B) Hardening of the glomeruli", "C) Enlargement of the kidneys", "D) Infection of the urinary tract"],
+        correct: 1,
+        explanation: "Glomerulosclerosis is the hardening of the glomeruli, often leading to kidney dysfunction."
+    },
+    {
+        question: "71. Which of the following is a risk factor for developing chronic kidney disease?",
+        options: ["A) High blood pressure", "B) Diabetes", "C) Family history of kidney disease", "D) All of the above"],
+        correct: 3,
+        explanation: "High blood pressure, diabetes, and family history are all significant risk factors for developing chronic kidney disease."
+    },
+    {
+        question: "72. Which of the following substances is typically NOT found in normal urine?",
+        options: ["A) Urea", "B) Glucose", "C) Urobilin", "D) Creatinine"],
+        correct: 1,
+        explanation: "Glucose is typically not found in normal urine; its presence can indicate diabetes or renal tubular dysfunction."
+    },
+    {
+        question: "73. The most common type of kidney stone is made of:",
+        options: ["A) Calcium oxalate", "B) Uric acid", "C) Struvite", "D) Cystine"],
+        correct: 0,
+        explanation: "Calcium oxalate stones are the most common type of kidney stone formed due to various factors including diet."
+    },
+    {
+        question: "74. The presence of ketones in urine typically indicates:",
+        options: ["A) Kidney damage", "B) High fat diet", "C) Dehydration", "D) Diabetes"],
+        correct: 3,
+        explanation: "The presence of ketones in urine is often associated with uncontrolled diabetes or high-fat diets."
+    },
+    {
+        question: "75. Which hormone is responsible for regulating water balance in the body?",
+        options: ["A) Aldosterone", "B) Antidiuretic hormone (ADH)", "C) Renin", "D) Erythropoietin"],
+        correct: 1,
+        explanation: "Antidiuretic hormone (ADH) regulates water balance by promoting water reabsorption in the kidneys."
+    },
+    {
+        question: "76. Which of the following is NOT a function of the kidneys?",
+        options: ["A) Regulation of blood pressure", "B) Regulation of electrolytes", "C) Synthesis of insulin", "D) Regulation of blood pH"],
+        correct: 2,
+        explanation: "The kidneys regulate blood pressure, electrolytes, and blood pH, but they do not synthesize insulin."
+    },
+    {
+        question: "77. Which part of the nephron is involved in the concentration of urine through counter-current multiplication?",
+        options: ["A) Proximal convoluted tubule", "B) Descending loop of Henle", "C) Ascending loop of Henle", "D) Collecting duct"],
+        correct: 2,
+        explanation: "The ascending loop of Henle is involved in counter-current multiplication, concentrating urine."
+    },
+    {
+        question: "78. Which of the following best describes nephrotic syndrome?",
+        options: ["A) Excessive proteinuria", "B) Increased hematuria", "C) Decreased urine output", "D) Elevated blood pressure"],
+        correct: 0,
+        explanation: "Nephrotic syndrome is characterized by excessive proteinuria, leading to edema and other systemic effects."
+    },
+    {
+        question: "79. The presence of red blood cells in urine is referred to as:",
+        options: ["A) Hematuria", "B) Hemoglobinuria", "C) Myoglobinuria", "D) Pyuria"],
+        correct: 0,
+        explanation: "Hematuria is the presence of red blood cells in urine, which can indicate various kidney or urinary tract issues."
+    },
+    {
+        question: "80. Which of the following is a common treatment for urinary tract infections?",
+        options: ["A) Antibiotics", "B) Antivirals", "C) Antifungals", "D) Diuretics"],
+        correct: 0,
+        explanation: "Antibiotics are commonly prescribed to treat urinary tract infections."
+    },
+    {
+        question: "81. The primary site of sodium reabsorption in the nephron is the:",
+        options: ["A) Proximal convoluted tubule", "B) Loop of Henle", "C) Distal convoluted tubule", "D) Collecting duct"],
+        correct: 0,
+        explanation: "The proximal convoluted tubule is the primary site for sodium reabsorption in the nephron."
+    },
+    {
+        question: "82. Which condition is characterized by the kidneys being unable to excrete wastes effectively?",
+        options: ["A) Nephrotic syndrome", "B) Acute kidney injury", "C) Chronic kidney disease", "D) All of the above"],
+        correct: 3,
+        explanation: "All these conditions can lead to the kidneys' inability to excrete wastes effectively."
+    },
+    {
+        question: "83. The main function of the proximal convoluted tubule is to:",
+        options: ["A) Secrete waste products", "B) Reabsorb glucose and amino acids", "C) Concentrate urine", "D) Regulate blood pH"],
+        correct: 1,
+        explanation: "The proximal convoluted tubule is primarily responsible for reabsorbing glucose, amino acids, and most of the filtered water and electrolytes."
+    },
+    {
+        question: "84. What is the primary nitrogenous waste product in humans?",
+        options: ["A) Urea", "B) Uric acid", "C) Creatinine", "D) Ammonia"],
+        correct: 0,
+        explanation: "Urea is the primary nitrogenous waste product in humans, produced from protein metabolism."
+    },
+    {
+        question: "85. Which of the following is a function of the renal system?",
+        options: ["A) Regulation of blood pressure", "B) Acid-base balance", "C) Regulation of fluid balance", "D) All of the above"],
+        correct: 3,
+        explanation: "The renal system is involved in regulating blood pressure, acid-base balance, and fluid balance."
+    },
+    {
+        question: "86. Which of the following conditions is often a consequence of chronic kidney disease?",
+        options: ["A) Hypertension", "B) Anemia", "C) Bone disease", "D) All of the above"],
+        correct: 3,
+        explanation: "Chronic kidney disease can lead to hypertension, anemia, and bone disease due to metabolic changes."
+    },
+    {
+        question: "87. What is the most common symptom of bladder cancer?",
+        options: ["A) Painful urination", "B) Hematuria", "C) Frequent urination", "D) Urgency to urinate"],
+        correct: 1,
+        explanation: "Hematuria (blood in urine) is the most common symptom of bladder cancer."
+    },
+    {
+        question: "88. Which of the following is a common diagnostic test for kidney function?",
+        options: ["A) Blood urea nitrogen (BUN)", "B) Complete blood count (CBC)", "C) Liver function tests", "D) Electrocardiogram (ECG)"],
+        correct: 0,
+        explanation: "Blood urea nitrogen (BUN) levels are commonly tested to assess kidney function."
+    },
+    {
+        question: "89. Which type of urine test can detect the presence of ketones?",
+        options: ["A) Microscopic examination", "B) Urine culture", "C) Urine dipstick test", "D) 24-hour urine collection"],
+        correct: 2,
+        explanation: "A urine dipstick test can detect the presence of ketones in the urine."
+    },
+    {
+        question: "90. Which of the following best describes 'oliguria'?",
+        options: ["A) Normal urine output", "B) Decreased urine output", "C) Increased urine output", "D) Absence of urine output"],
+        correct: 1,
+        explanation: "Oliguria is defined as decreased urine output, which can indicate kidney dysfunction or dehydration."
+    },
+    {
+        question: "91. Which of the following conditions can lead to the formation of renal calculi?",
+        options: ["A) Hyperparathyroidism", "B) Dehydration", "C) High sodium intake", "D) All of the above"],
+        correct: 3,
+        explanation: "All these conditions can contribute to the formation of renal calculi (kidney stones)."
+    },
+    {
+        question: "92. Which part of the nephron is involved in the reabsorption of bicarbonate?",
+        options: ["A) Proximal convoluted tubule", "B) Loop of Henle", "C) Distal convoluted tubule", "D) Collecting duct"],
+        correct: 0,
+        explanation: "The proximal convoluted tubule is primarily involved in the reabsorption of bicarbonate, helping to regulate blood pH."
+    },
+    {
+        question: "93. The most common cause of acute kidney injury is:",
+        options: ["A) Glomerulonephritis", "B) Acute tubular necrosis", "C) Diabetic nephropathy", "D) Obstruction"],
+        correct: 1,
+        explanation: "Acute tubular necrosis, often due to ischemia or nephrotoxic substances, is the most common cause of acute kidney injury."
+    },
+    {
+        question: "94. Which of the following conditions is associated with the formation of uric acid stones?",
+        options: ["A) Gout", "B) Diabetes", "C) Hypertension", "D) Hypercalcemia"],
+        correct: 0,
+        explanation: "Gout is associated with high levels of uric acid in the blood, which can lead to the formation of uric acid stones."
+    },
+    {
+        question: "95. Which imaging technique is commonly used to evaluate kidney structure and function?",
+        options: ["A) X-ray", "B) Ultrasound", "C) MRI", "D) CT scan"],
+        correct: 1,
+        explanation: "Ultrasound is commonly used to evaluate kidney structure and function non-invasively."
+    },
+    {
+        question: "96. The presence of which of the following in the urine indicates a possible renal tubular dysfunction?",
+        options: ["A) Glucose", "B) Bilirubin", "C) Hemoglobin", "D) Urobilin"],
+        correct: 0,
+        explanation: "The presence of glucose in urine may indicate renal tubular dysfunction, as glucose is normally reabsorbed."
+    },
+    {
+        question: "97. Which of the following electrolytes is primarily regulated by the kidneys?",
+        options: ["A) Sodium", "B) Potassium", "C) Calcium", "D) All of the above"],
+        correct: 3,
+        explanation: "The kidneys play a crucial role in regulating sodium, potassium, and calcium levels in the body."
+    },
+    {
+        question: "98. What is the purpose of the kidney's renin-angiotensin-aldosterone system?",
+        options: ["A) Regulate blood sugar", "B) Control blood pressure", "C) Manage electrolyte balance", "D) Filter waste"],
+        correct: 1,
+        explanation: "The renin-angiotensin-aldosterone system helps regulate blood pressure by controlling blood volume and vascular resistance."
+    },
+    {
+        question: "99. Which of the following best describes 'hyperkalemia'?",
+        options: ["A) Low potassium levels", "B) Normal potassium levels", "C) High potassium levels", "D) Excessive urination"],
+        correct: 2,
+        explanation: "Hyperkalemia refers to high potassium levels in the blood, which can cause serious cardiac issues."
+    },
+    {
+        question: "100. The primary function of the collecting ducts is to:",
+        options: ["A) Secrete waste", "B) Reabsorb nutrients", "C) Concentrate urine", "D) Filter blood"],
+        correct: 2,
+        explanation: "The collecting ducts play a key role in concentrating urine through the reabsorption of water, influenced by ADH."
+    }
+
+    ];
+
+    let current = 0;
+    let score = 0;
+    let userAnswers = [];
+
+    function renderQuestion() {
+      const q = quizData[current];
+      let html = '<div class="quiz-question">';
+      html += `<h3>Q${current + 1}. ${q.question}</h3>`;
+      q.options.forEach((opt, i) => {
+        html += `<div class="quiz-option" onclick="selectOption(${i})">${opt}</div>`;
+      });
+      html += `<div class="quiz-explanation" id="explanation">${q.explanation}</div>`;
+      html += '</div>';
+      document.getElementById('quiz-box').innerHTML = html;
+    }
+
+    function selectOption(index) {
+      const options = document.querySelectorAll('.quiz-option');
+      options.forEach((el, i) => {
+        el.classList.remove('correct', 'incorrect');
+        if (i === index) {
+          if (i === quizData[current].correct) {
+            el.classList.add('correct');
+            score++;
+          } else {
+            el.classList.add('incorrect');
+            options[quizData[current].correct].classList.add('correct');
+          }
+        }
+        el.onclick = null;
+      });
+      document.getElementById('explanation').style.display = 'block';
+      userAnswers[current] = index;
+    }
+
+    function nextQuestion() {
+      if (current < quizData.length - 1) {
+        current++;
+        renderQuestion();
+      }
+    }
+
+    function prevQuestion() {
+      if (current > 0) {
+        current--;
+        renderQuestion();
+      }
+    }
+
+    function submitQuiz() {
+      document.getElementById('quiz-box').style.display = 'none';
+      document.querySelector('.quiz-navigation').style.display = 'none';
+      document.getElementById('results-box').style.display = 'block';
+      document.getElementById('score-text').innerText = `You scored ${score} out of ${quizData.length}`;
+    }
+
+    function restartQuiz() {
+      current = 0;
+      score = 0;
+      userAnswers = [];
+      document.getElementById('quiz-box').style.display = 'block';
+      document.querySelector('.quiz-navigation').style.display = 'block';
+      document.getElementById('results-box').style.display = 'none';
+      renderQuestion();
+    }
+
+    renderQuestion();
+  </script>
+</body>
+</html>
