@@ -1,0 +1,850 @@
+ <!DOCTYPE html>
+<html lang="en">
+<head>
+    <link rel="apple-touch-icon" sizes="180x180" href="/fevicon/apple-touch-icon.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="/fevicon/favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="/fevicon/favicon-16x16.png">
+    <link rel="manifest" href="/fevicon/site.webmanifest">
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+    <title>Ethers - CEE Medico Nepal</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css"/>
+    <style>
+        :root {
+            --primary-color: #2c3e50;
+            --secondary-color: #3498db;
+            --accent-color: #e74c3c;
+            --light-color: #ecf0f1;
+            --text-color: #333;
+            --botany-color: #2ecc71;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        body {
+            line-height: 1.6;
+            color: var(--text-color);
+            background-color: #f9f9f9;
+        }
+
+        .container {
+            width: 100%;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 15px;
+        }
+
+        a {
+            text-decoration: none;
+            color: inherit;
+        }
+
+        img {
+            max-width: 100%;
+            height: auto;
+        }
+
+        /* Header Styles */
+        header {
+            background-color: var(--primary-color);
+            color: white;
+            padding: 1rem 0;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+
+        .header-container {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+
+        .logo {
+            display: flex;
+            align-items: center;
+        }
+
+        .logo img {
+            height: 50px;
+            margin-right: 10px;
+        }
+
+        .logo-text h1 {
+            font-size: 1.8rem;
+            font-weight: 700;
+            margin-bottom: 0.2rem;
+        }
+
+        .logo-text p {
+            font-size: 0.9rem;
+            color: var(--light-color);
+            opacity: 0.8;
+        }
+
+        nav ul {
+            display: flex;
+            list-style: none;
+            margin: 0;
+        }
+
+        nav ul li {
+            position: relative;
+            margin-left: 1.5rem;
+        }
+
+        nav ul li a {
+            color: white;
+            font-weight: 500;
+            font-size: 1.1rem;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            padding: 0.5rem 0;
+            transition: color 0.3s;
+        }
+
+        nav ul li a:hover {
+            color: var(--secondary-color);
+        }
+
+        .dropdown-menu {
+            position: absolute;
+            top: 100%;
+            left: 0;
+            background-color: white;
+            min-width: 200px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+            border-radius: 5px;
+            padding: 10px 0;
+            opacity: 0;
+            visibility: hidden;
+            transition: all 0.3s;
+            z-index: 10;
+        }
+
+        .dropdown:hover .dropdown-menu {
+            opacity: 1;
+            visibility: visible;
+        }
+
+        .dropdown-menu li {
+            margin: 0;
+            padding: 0;
+        }
+
+        .dropdown-menu li a {
+            color: var(--text-color);
+            padding: 8px 20px;
+            display: block;
+            font-size: 1rem;
+        }
+
+        .dropdown-menu li a:hover {
+            background-color: var(--light-color);
+            color: var(--primary-color);
+        }
+
+        .mobile-menu-btn {
+            display: none;
+            background: none;
+            border: none;
+            color: white;
+            font-size: 1.5rem;
+            cursor: pointer;
+        }
+
+        /* Quiz Hero Section */
+        .quiz-hero {
+            text-align: center;
+            background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+            color: white;
+            padding: 3rem 1rem;
+        }
+
+        .quiz-hero h2 {
+            font-size: 2rem;
+            margin-bottom: 1rem;
+        }
+
+        .quiz-hero p {
+            font-size: 1.1rem;
+            max-width: 800px;
+            margin: 0 auto;
+        }
+
+        /* Quiz Container */
+        .quiz-container {
+            margin: 2rem 0;
+        }
+
+        .quiz-question {
+            background: white;
+            border-radius: 8px;
+            padding: 1.5rem;
+            margin-bottom: 1rem;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.05);
+            transition: transform 0.3s;
+        }
+
+        .quiz-question:hover {
+            transform: translateY(-5px);
+        }
+
+        .quiz-option {
+            padding: 1rem;
+            background-color: var(--light-color);
+            border-radius: 5px;
+            margin-bottom: 0.5rem;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+
+        .quiz-option:hover {
+            background-color: #dcdcdc;
+        }
+
+        .quiz-option.correct {
+            border: 2px solid var(--botany-color);
+            background-color: #e8f8f5;
+        }
+
+        .quiz-option.incorrect {
+            border: 2px solid var(--accent-color);
+            background-color: #fdecea;
+        }
+
+        .quiz-option.selected {
+            background-color: #e0e0e0;
+        }
+
+        .quiz-explanation {
+            display: none;
+            padding: 1rem;
+            border-left: 5px solid var(--secondary-color);
+            margin-top: 1rem;
+            background-color: #f0f0f0;
+        }
+
+        .quiz-navigation {
+            margin-top: 2rem;
+            text-align: center;
+            display: flex;
+            justify-content: center;
+            gap: 1rem;
+            flex-wrap: wrap;
+        }
+
+        .quiz-navigation button {
+            padding: 0.7rem 1.5rem;
+            border: none;
+            background-color: var(--secondary-color);
+            color: white;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+
+        .quiz-navigation button:hover {
+            background-color: var(--primary-color);
+        }
+
+        .quiz-navigation button:disabled {
+            background-color: #ccc;
+            cursor: not-allowed;
+        }
+
+        .quiz-results {
+            display: none;
+            text-align: center;
+            padding: 2rem;
+            background: white;
+            border-radius: 10px;
+            box-shadow: 0 5px 10px rgba(0, 0, 0, 0.1);
+        }
+
+        /* Footer Styles */
+        footer {
+            background-color: var(--primary-color);
+            color: white;
+            padding: 3rem 0 1rem;
+        }
+
+        .footer-container {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 2rem;
+            margin-bottom: 2rem;
+        }
+
+        .footer-section h3 {
+            font-size: 1.3rem;
+            margin-bottom: 1rem;
+        }
+
+        .footer-section p,
+        .footer-section ul li {
+            font-size: 0.9rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .footer-section ul {
+            list-style: none;
+        }
+
+        .footer-section ul li a {
+            color: var(--light-color);
+            transition: color 0.3s;
+        }
+
+        .footer-section ul li a:hover {
+            color: var(--secondary-color);
+        }
+
+        .social-links {
+            display: flex;
+            gap: 1rem;
+        }
+
+        .social-links a {
+            color: white;
+            font-size: 1.2rem;
+            transition: color 0.3s;
+        }
+
+        .social-links a:hover {
+            color: var(--secondary-color);
+        }
+
+        .footer-bottom {
+            text-align: center;
+            padding-top: 1rem;
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .footer-bottom p {
+            font-size: 0.9rem;
+        }
+
+        /* Responsive Design */
+        @media (max-width: 768px) {
+            .header-container {
+                flex-direction: row;
+                justify-content: space-between;
+            }
+
+            .mobile-menu-btn {
+                display: block;
+            }
+
+            nav {
+                display: none;
+                width: 100%;
+            }
+
+            nav.active {
+                display: block;
+            }
+
+            nav ul {
+                flex-direction: column;
+                padding: 1rem 0;
+            }
+
+            nav ul li {
+                margin: 0.5rem 0;
+            }
+
+            .dropdown-menu {
+                position: static;
+                box-shadow: none;
+                background-color: var(--light-color);
+                opacity: 1;
+                visibility: visible;
+                display: none;
+            }
+
+            .dropdown:hover .dropdown-menu {
+                display: block;
+            }
+
+            .quiz-hero h2 {
+                font-size: 1.5rem;
+            }
+
+            .quiz-hero p {
+                font-size: 1rem;
+            }
+
+            .quiz-navigation {
+                flex-direction: column;
+                gap: 0.5rem;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .logo-text h1 {
+                font-size: 1.5rem;
+            }
+
+            .logo-text p {
+                font-size: 0.8rem;
+            }
+
+            .quiz-question {
+                padding: 1rem;
+            }
+
+            .quiz-option {
+                padding: 0.8rem;
+            }
+
+            .footer-container {
+                grid-template-columns: 1fr;
+                text-align: center;
+            }
+
+            .social-links {
+                justify-content: center;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Header -->
+    <header>
+        <div class="container header-container">
+            <div class="logo">
+                <img src="Logo.png" alt="CEE Medico Nepal Logo">
+                <div class="logo-text">
+                    <h1>CEE Medico Nepal</h1>
+                    <p>MBBS Entrance Preparation</p>
+                </div>
+            </div>
+            
+            <button class="mobile-menu-btn" id="mobileMenuBtn">
+                <i class="fas fa-bars"></i>
+            </button>
+            
+            <nav id="mainNav">
+                <ul>
+                    <li><a href="index.html">Home</a></li>
+                    <li class="dropdown">
+                        <a href="#">Subjects <i class="fas fa-chevron-down"></i></a>
+                        <ul class="dropdown-menu">
+                            <li><a href="physics.html">Physics</a></li>
+                            <li><a href="chemistry.html">Chemistry</a></li>
+                            <li><a href="botany.html">Botany</a></li>
+                            <li><a href="zoology.html">Zoology</a></li>
+                            <li><a href="mat.html">MAT</a></li>
+                        </ul>
+                    </li>
+                    <li><a href="#">Practice</a></li>
+                    <li><a href="#">Mock Tests</a></li>
+                    <li><a href="/Blog/blog.html">Blog</a></li>
+                    <li><a href="contact.html">Contact</a></li>
+                </ul>
+            </nav>
+        </div>
+    </header>
+
+    <!-- Quiz Hero Section -->
+    <section class="quiz-hero">
+        <div class="container">
+            <h2>Test Your Knowledge on Ethers</h2>
+            <p>Essential questions for MBBS Entrance Preparation in Nepal</p>
+        </div>
+    </section>
+
+    <!-- Quiz Main Content -->
+    <main class="container quiz-container">
+        <div id="quiz-box"></div>
+
+        <div class="quiz-navigation">
+            <button onclick="prevQuestion()">Previous</button>
+            <button onclick="nextQuestion()">Next</button>
+            <button onclick="submitQuiz()">Submit</button>
+        </div>
+
+        <div class="quiz-results" id="results-box">
+            <h2>Quiz Completed!</h2>
+            <p id="score-text"></p>
+            <button onclick="restartQuiz()">Retake Quiz</button>
+        </div>
+    </main>
+
+    <!-- Footer -->
+    <footer>
+        <div class="container footer-container">
+            <div class="footer-section">
+                <h3>About Us</h3>
+                <p>CEE Medico Nepal is dedicated to helping students excel in MBBS entrance exams with quality resources and practice materials.</p>
+            </div>
+            <div class="footer-section">
+                <h3>Quick Links</h3>
+                <ul>
+                    <li><a href="index.html">Home</a></li>
+                    <li><a href="physics.html">Physics</a></li>
+                    <li><a href="chemistry.html">Chemistry</a></li>
+                    <li><a href="botany.html">Botany</a></li>
+                    <li><a href="zoology.html">Zoology</a></li>
+                    <li><a href="mat.html">MAT</a></li>
+                    <li><a href="contact.html">Contact</a></li>
+                </ul>
+            </div>
+            <div class="footer-section">
+                <h3>Contact Us</h3>
+                <p>Email: avik96045@gmail.com</p>
+                <p>Phone: +977 9812240229</p>
+                <p>Address: Kathmandu, Nepal</p>
+            </div>
+            <div class="footer-section">
+                <h3>Follow Us</h3>
+                <div class="social-links">
+                    <a href="https://www.facebook.com/techgy.shyamsundar"><i class="fab fa-facebook-f"></i></a>
+                    <a href="#"><i class="fab fa-twitter"></i></a>
+                    <a href="https://www.instagram.com/shyamsundar98122/"><i class="fab fa-instagram"></i></a>
+                    <a href="https://www.youtube.com/@ceemediconepal"><i class="fab fa-linkedin-in"></i></a>
+                </div>
+            </div>
+        </div>
+        <div class="footer-bottom">
+            <p>&copy; 2025 CEE Medico Nepal. All Rights Reserved.</p>
+        </div>
+    </footer>
+
+    <script>
+        const quizData = [
+  {
+    "question": "1. Ethers are characterized by which of the following functional groups?",
+    "options": ["A) -OH", "B) -COOH", "C) -O-", "D) -NH2"],
+    "correct": 2,
+    "explanation": "Ethers are characterized by the functional group -O- (oxygen atom bonded to two alkyl or aryl groups)."
+  },
+  {
+    "question": "2. Which of the following is the IUPAC name for dimethyl ether?",
+    "options": ["A) Methoxymethane", "B) Dimethylether", "C) Ethoxyethane", "D) Methanol"],
+    "correct": 0,
+    "explanation": "The IUPAC name for dimethyl ether is methoxymethane."
+  },
+  {
+    "question": "3. Ethers are less reactive than alcohols because they do not contain which group?",
+    "options": ["A) Hydroxyl group", "B) Alkyl group", "C) Carbonyl group", "D) Amino group"],
+    "correct": 0,
+    "explanation": "Ethers do not contain the hydroxyl group (-OH), which makes alcohols more reactive."
+  },
+  {
+    "question": "4. Which of the following methods is commonly used for the preparation of ethers?",
+    "options": ["A) Reduction of aldehydes", "B) Condensation of alcohols", "C) Electrophilic substitution", "D) Friedel-Crafts alkylation"],
+    "correct": 1,
+    "explanation": "Ethers can be prepared by the condensation of alcohols, typically using an acid catalyst."
+  },
+  {
+    "question": "5. Which of the following is the correct general formula for ethers?",
+    "options": ["A) R-O-R'", "B) R-OH", "C) R-COOH", "D) R-NH2"],
+    "correct": 0,
+    "explanation": "The general formula for ethers is R-O-R', where R and R' are alkyl or aryl groups."
+  },
+  {
+    "question": "6. Which of the following is a common use of ethers?",
+    "options": ["A) As solvents", "B) As fuels", "C) In the production of acids", "D) In the manufacture of soaps"],
+    "correct": 0,
+    "explanation": "Ethers are commonly used as solvents in organic chemistry due to their low reactivity."
+  },
+  {
+    "question": "7. Which of the following ethers is commonly used as an anesthetic?",
+    "options": ["A) Diethyl ether", "B) Methanol", "C) Isopropyl alcohol", "D) Acetone"],
+    "correct": 0,
+    "explanation": "Diethyl ether is commonly used as an anesthetic due to its volatile and non-reactive nature."
+  },
+  {
+    "question": "8. Which of the following ethers has a higher boiling point?",
+    "options": ["A) Diethyl ether", "B) Dimethyl ether", "C) Ethyl methyl ether", "D) None of the above"],
+    "correct": 1,
+    "explanation": "Dimethyl ether has a lower boiling point than diethyl ether because it has smaller alkyl groups."
+  },
+  {
+    "question": "9. Ethers can be oxidized to form which of the following?",
+    "options": ["A) Alcohols", "B) Ketones", "C) Aldehydes", "D) Peroxides"],
+    "correct": 3,
+    "explanation": "Ethers can be oxidized to form peroxides, which are highly reactive."
+  },
+  {
+    "question": "10. The reaction between an alcohol and a strong acid to form an ether is known as:",
+    "options": ["A) Friedel-Crafts alkylation", "B) Williamson synthesis", "C) Etherification", "D) Halogenation"],
+    "correct": 2,
+    "explanation": "The reaction between an alcohol and a strong acid (e.g., sulfuric acid) to form an ether is known as etherification."
+  },
+  {
+    "question": "11. Which of the following ethers is a common solvent in organic reactions?",
+    "options": ["A) Diethyl ether", "B) Propane", "C) Butane", "D) Acetylene"],
+    "correct": 0,
+    "explanation": "Diethyl ether is commonly used as a solvent in organic reactions due to its ability to dissolve a wide range of compounds."
+  },
+  {
+    "question": "12. The reaction between sodium metal and an alcohol to form an ether is an example of a:",
+    "options": ["A) Redox reaction", "B) Nucleophilic substitution", "C) Electrophilic substitution", "D) Condensation reaction"],
+    "correct": 1,
+    "explanation": "This reaction is an example of a nucleophilic substitution reaction, where the alcohol is converted into an ether."
+  },
+  {
+    "question": "13. Which of the following ethers is used as a solvent in the extraction of lipids?",
+    "options": ["A) Diethyl ether", "B) Methyl ether", "C) Acetone", "D) Chloroform"],
+    "correct": 0,
+    "explanation": "Diethyl ether is commonly used as a solvent for extracting lipids due to its non-polar nature."
+  },
+  {
+    "question": "14. Which of the following is the result of the reaction between an ether and a strong acid?",
+    "options": ["A) Formation of an alcohol", "B) Formation of a ketone", "C) Formation of a peroxide", "D) Formation of a carboxylic acid"],
+    "correct": 2,
+    "explanation": "Ethers can react with strong acids to form peroxides, which are highly reactive and potentially hazardous."
+  },
+  {
+    "question": "15. Which of the following ethers is most likely to be used in a laboratory setting?",
+    "options": ["A) Dimethyl ether", "B) Diethyl ether", "C) Propylene oxide", "D) Tetrahydrofuran (THF)"],
+    "correct": 1,
+    "explanation": "Diethyl ether is commonly used in laboratories as a solvent due to its ease of handling and good solvent properties."
+  },
+  {
+    "question": "16. In which type of reaction do ethers typically undergo cleavage?",
+    "options": ["A) Electrophilic substitution", "B) Nucleophilic substitution", "C) Dehydrohalogenation", "D) Free radical substitution"],
+    "correct": 1,
+    "explanation": "Ethers typically undergo nucleophilic substitution reactions, where the ether bond is cleaved by a nucleophile."
+  },
+  {
+    "question": "17. Which of the following is the general method for preparing ethers?",
+    "options": ["A) Reaction of alcohols with alkyl halides", "B) Reaction of alcohols with acids", "C) Reaction of alcohols with sodium metal", "D) Reaction of alkenes with hydrogen"],
+    "correct": 0,
+    "explanation": "Ethers are generally prepared by the reaction of alcohols with alkyl halides (Williamson synthesis)."
+  },
+  {
+    "question": "18. Which of the following is true for the physical properties of ethers?",
+    "options": ["A) Ethers are generally polar", "B) Ethers are highly reactive", "C) Ethers are less volatile than alcohols", "D) Ethers have higher boiling points than alcohols of similar molecular weight"],
+    "correct": 0,
+    "explanation": "Ethers are generally polar, but their polarity is lower than alcohols, making them less reactive."
+  },
+  {
+    "question": "19. What is the characteristic feature of ethers that makes them useful as solvents?",
+    "options": ["A) High reactivity", "B) High boiling points", "C) Low boiling points and low reactivity", "D) High polarity"],
+    "correct": 2,
+    "explanation": "Ethers are useful as solvents due to their low boiling points and low reactivity, which allow them to dissolve a variety of substances without reacting."
+  },
+  {
+    "question": "20. The reaction between an alkoxide ion and an alkyl halide is an example of which reaction?",
+    "options": ["A) Aldol condensation", "B) Williamson synthesis", "C) Friedel-Crafts alkylation", "D) Ethers formation via nucleophilic attack"],
+    "correct": 1,
+    "explanation": "This reaction is an example of the Williamson synthesis, which is used to prepare ethers."
+  },
+  {
+    "question": "21. Which of the following is a potential risk of working with ethers in a laboratory?",
+    "options": ["A) High toxicity", "B) Formation of peroxides", "C) Formation of acids", "D) None of the above"],
+    "correct": 1,
+    "explanation": "Ethers can form peroxides, which are highly explosive, posing a significant risk in laboratory settings."
+  },
+  {
+    "question": "22. The reaction between an ether and hydrogen halides results in:",
+    "options": ["A) Cleavage of the ether bond", "B) Formation of alcohols", "C) Formation of esters", "D) Formation of alkyl halides"],
+    "correct": 0,
+    "explanation": "The reaction of ethers with hydrogen halides results in the cleavage of the ether bond, forming alcohols and alkyl halides."
+  },
+  {
+    "question": "23. Ethers are generally resistant to which of the following reactions?",
+    "options": ["A) Hydrolysis", "B) Oxidation", "C) Electrophilic addition", "D) Substitution reactions"],
+    "correct": 0,
+    "explanation": "Ethers are generally resistant to hydrolysis and do not easily undergo reactions with water."
+  },
+  {
+    "question": "24. Which of the following is the method used to synthesize aryl ethers?",
+    "options": ["A) Williamson synthesis", "B) Kolbe-Schmitt reaction", "C) Friedel-Crafts alkylation", "D) Nucleophilic substitution of phenols"],
+    "correct": 3,
+    "explanation": "Aryl ethers are synthesized by nucleophilic substitution of phenols with alkyl halides."
+  },
+  {
+    "question": "25. Which of the following is a common byproduct in the reaction of ethers with peroxides?",
+    "options": ["A) Alcohols", "B) Esters", "C) Acids", "D) Peroxides"],
+    "correct": 0,
+    "explanation": "Ethers can react with peroxides to form alcohols and potentially other dangerous products."
+  },
+  {
+    "question": "26. Which of the following reactions is used to prepare ethers?",
+    "options": ["A) Dehydration of alcohols", "B) Aldol condensation", "C) Williamson synthesis", "D) Reduction of carbonyl compounds"],
+    "correct": 2,
+    "explanation": "The Williamson synthesis is a common method used to prepare ethers by reacting an alkoxide ion with an alkyl halide."
+  },
+  {
+    "question": "27. Which of the following ethers is commonly used in biodiesel production?",
+    "options": ["A) Tetrahydrofuran", "B) Diethyl ether", "C) Methyl ether", "D) Ethyl methyl ether"],
+    "correct": 3,
+    "explanation": "Ethyl methyl ether is used in biodiesel production due to its properties as a solvent."
+  },
+  {
+    "question": "28. Ethers are resistant to which of the following reactions?",
+    "options": ["A) Electrophilic aromatic substitution", "B) Nucleophilic substitution", "C) Hydrolysis", "D) Dehydration"],
+    "correct": 2,
+    "explanation": "Ethers are resistant to hydrolysis and do not react easily with water under normal conditions."
+  },
+  {
+    "question": "29. The stability of ethers is primarily due to the:",
+    "options": ["A) Resonance stabilization", "B) Weak oxygen-carbon bond", "C) Lack of highly reactive groups", "D) Ability to form hydrogen bonds"],
+    "correct": 2,
+    "explanation": "Ethers are stable primarily due to the lack of highly reactive groups in their structure."
+  },
+  {
+    "question": "30. Which of the following ethers has a greater tendency to form peroxides?",
+    "options": ["A) Diethyl ether", "B) Dimethyl ether", "C) Methyl ethyl ether", "D) Tetrahydrofuran"],
+    "correct": 0,
+    "explanation": "Diethyl ether has a greater tendency to form peroxides, which can be dangerous if not handled properly."
+  },
+  {
+    "question": "31. Which of the following is a characteristic property of ethers?",
+    "options": ["A) Strong hydrogen bonding", "B) High boiling points", "C) Weak dipole-dipole interactions", "D) Reactivity with acids"],
+    "correct": 2,
+    "explanation": "Ethers generally have weak dipole-dipole interactions and do not form strong hydrogen bonds, making them less reactive."
+  },
+  {
+    "question": "32. Which of the following is used in the preparation of phenyl ethers?",
+    "options": ["A) Williamson synthesis", "B) Friedel-Crafts alkylation", "C) Benzoin condensation", "D) Kolbe-Schmitt reaction"],
+    "correct": 0,
+    "explanation": "Phenyl ethers are often prepared using the Williamson synthesis method, where an alkoxide reacts with an alkyl halide."
+  },
+  {
+    "question": "33. Which of the following ethers is used in laboratory settings as a solvent for lipid extraction?",
+    "options": ["A) Diethyl ether", "B) Methanol", "C) Tetrahydrofuran", "D) Acetone"],
+    "correct": 0,
+    "explanation": "Diethyl ether is used as a solvent for lipid extraction due to its non-polar nature."
+  },
+  {
+    "question": "34. Ethers undergo cleavage under which conditions?",
+    "options": ["A) Strong acid", "B) Heat and pressure", "C) Strong bases", "D) With halogens"],
+    "correct": 0,
+    "explanation": "Ethers undergo cleavage when treated with strong acids."
+  },
+  {
+    "question": "35. Which of the following is the result of the reaction of ethers with halogen acids?",
+    "options": ["A) Alcohols and alkyl halides", "B) Aldehydes", "C) Ketones", "D) Alkyl peroxides"],
+    "correct": 0,
+    "explanation": "Ethers react with halogen acids to form alcohols and alkyl halides."
+  },
+  {
+    "question": "36. Which of the following ethers can be prepared by the reaction of alcohols with an alkyl halide?",
+    "options": ["A) Dimethyl ether", "B) Diethyl ether", "C) Methyl ethyl ether", "D) All of the above"],
+    "correct": 3,
+    "explanation": "All of the above ethers can be prepared by the reaction of alcohols with alkyl halides in a nucleophilic substitution reaction."
+  },
+  {
+    "question": "37. Ethers have low reactivity due to which factor?",
+    "options": ["A) Lack of a highly reactive functional group", "B) Ability to form hydrogen bonds", "C) Strong polar interactions", "D) Non-polar nature of the molecules"],
+    "correct": 0,
+    "explanation": "Ethers have low reactivity because they lack a highly reactive functional group like a hydroxyl or carbonyl group."
+  },
+  {
+    "question": "38. Which of the following ethers is more likely to form peroxides upon exposure to air?",
+    "options": ["A) Diethyl ether", "B) Dimethyl ether", "C) Ethyl ether", "D) Both A and B"],
+    "correct": 3,
+    "explanation": "Both diethyl ether and dimethyl ether are more likely to form peroxides when exposed to air due to their low reactivity."
+  },
+  {
+    "question": "39. Which of the following is true about ethers?",
+    "options": ["A) They have higher boiling points than alcohols", "B) They do not undergo nucleophilic substitution", "C) They can form peroxides", "D) They are polar and highly reactive"],
+    "correct": 2,
+    "explanation": "Ethers can form peroxides, which are highly reactive, especially when exposed to light and air."
+  },
+  {
+    "question": "40. What is a major disadvantage of using ethers in chemical reactions?",
+    "options": ["A) High reactivity", "B) Formation of toxic fumes", "C) Formation of peroxides", "D) Lack of solubility in water"],
+    "correct": 2,
+    "explanation": "The formation of peroxides is a major disadvantage when using ethers, as peroxides can be explosive."
+  }
+];
+
+        let current = 0;
+        let score = 0;
+        let userAnswers = new Array(quizData.length).fill(null);
+
+        function renderQuestion() {
+            const q = quizData[current];
+            let html = '<div class="quiz-question">';
+            html += `<h3>Q${current + 1}. ${q.question}</h3>`;
+            q.options.forEach((opt, i) => {
+                const selected = userAnswers[current] === i ? 'selected' : '';
+                html += `<div class="quiz-option ${selected}" onclick="selectOption(${i})">${opt}</div>`;
+            });
+            html += `<div class="quiz-explanation" id="explanation">${q.explanation}</div>`;
+            html += '</div>';
+            document.getElementById('quiz-box').innerHTML = html;
+
+            // Update button states
+            document.querySelector('button[onclick="prevQuestion()"]').disabled = current === 0;
+            document.querySelector('button[onclick="nextQuestion()"]').disabled = current === quizData.length - 1;
+        }
+
+        function selectOption(index) {
+            const options = document.querySelectorAll('.quiz-option');
+            options.forEach((el, i) => {
+                el.classList.remove('correct', 'incorrect', 'selected');
+                if (i === index) {
+                    if (i === quizData[current].correct) {
+                        el.classList.add('correct');
+                        if (userAnswers[current] === null) score++;
+                    } else {
+                        el.classList.add('incorrect');
+                        options[quizData[current].correct].classList.add('correct');
+                    }
+                }
+                el.onclick = null;
+            });
+            document.getElementById('explanation').style.display = 'block';
+            userAnswers[current] = index;
+        }
+
+        function nextQuestion() {
+            if (current < quizData.length - 1) {
+                current++;
+                renderQuestion();
+                window.scrollTo({ top: document.getElementById('quiz-box').offsetTop, behavior: 'smooth' });
+            }
+        }
+
+        function prevQuestion() {
+            if (current > 0) {
+                current--;
+                renderQuestion();
+                window.scrollTo({ top: document.getElementById('quiz-box').offsetTop, behavior: 'smooth' });
+            }
+        }
+
+        function submitQuiz() {
+            document.getElementById('quiz-box').style.display = 'none';
+            document.querySelector('.quiz-navigation').style.display = 'none';
+            document.getElementById('results-box').style.display = 'block';
+            document.getElementById('score-text').innerText = `You scored ${score} out of ${quizData.length}`;
+            window.scrollTo({ top: document.getElementById('results-box').offsetTop, behavior: 'smooth' });
+        }
+
+        function restartQuiz() {
+            current = 0;
+            score = 0;
+            userAnswers = new Array(quizData.length).fill(null);
+            document.getElementById('quiz-box').style.display = 'block';
+            document.querySelector('.quiz-navigation').style.display = 'flex';
+            document.getElementById('results-box').style.display = 'none';
+            renderQuestion();
+        }
+
+        // Mobile Menu Toggle
+        document.getElementById('mobileMenuBtn').addEventListener('click', () => {
+            const nav = document.getElementById('mainNav');
+            nav.classList.toggle('active');
+        });
+
+        renderQuestion();
+    </script>
+</body>
+</html>
