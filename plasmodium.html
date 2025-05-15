@@ -1,0 +1,935 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Plasmodium - CEE Medico Nepal</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+  <style>
+    :root {
+      --primary-color: #2c3e50;
+      --secondary-color: #3498db;
+      --accent-color: #e74c3c;
+      --light-color: #ecf0f1;
+      --text-color: #333;
+      --botany-color: #2ecc71;
+      --physics-color: #9b59b6;
+      --chemistry-color: #e67e22;
+      --zoology-color: #16a085;
+      --mat-color: #c0392b;
+    }
+
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    }
+
+    body {
+      line-height: 1.6;
+      color: var(--text-color);
+      background-color: #f9f9f9;
+      display: flex;
+      flex-direction: column;
+      min-height: 100vh;
+    }
+
+    .container {
+      width: 100%;
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 0 20px;
+    }
+
+    a {
+      text-decoration: none;
+      color: inherit;
+    }
+
+    img {
+      max-width: 100%;
+      height: auto;
+    }
+
+    /* Header Styles */
+    header {
+      background-color: var(--primary-color);
+      color: white;
+      padding: 1rem 0;
+      box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+      position: sticky;
+      top: 0;
+      z-index: 100;
+    }
+
+    .header-container {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .logo {
+      display: flex;
+      align-items: center;
+    }
+
+    .logo img {
+      height: 50px;
+      margin-right: 10px;
+    }
+
+    .logo-text h1 {
+      font-size: 1.5rem;
+      font-weight: 700;
+      margin-bottom: 0.2rem;
+      color: white;
+    }
+
+    .logo-text p {
+      font-size: 0.8rem;
+      color: var(--light-color);
+      opacity: 0.8;
+    }
+
+    nav ul {
+      display: flex;
+      list-style: none;
+    }
+
+    nav ul li {
+      position: relative;
+      margin-left: 1.5rem;
+    }
+
+    nav ul li a {
+      color: white;
+      text-decoration: none;
+      font-weight: 500;
+      transition: color 0.3s;
+      font-size: 1rem;
+      display: flex;
+      align-items: center;
+      gap: 5px;
+    }
+
+    nav ul li a:hover {
+      color: var(--secondary-color);
+    }
+
+    .dropdown-menu {
+      position: absolute;
+      top: 100%;
+      left: 0;
+      background-color: white;
+      min-width: 200px;
+      box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+      border-radius: 5px;
+      padding: 10px 0;
+      opacity: 0;
+      visibility: hidden;
+      transition: all 0.3s;
+      z-index: 10;
+    }
+
+    .dropdown:hover .dropdown-menu {
+      opacity: 1;
+      visibility: visible;
+    }
+
+    .dropdown-menu li {
+      margin: 0;
+      padding: 0;
+    }
+
+    .dropdown-menu li a {
+      color: var(--text-color);
+      padding: 8px 20px;
+      display: block;
+      font-size: 0.9rem;
+    }
+
+    .dropdown-menu li a:hover {
+      background-color: var(--light-color);
+      color: var(--primary-color);
+    }
+
+    .mobile-menu-btn {
+      display: none;
+      background: none;
+      border: none;
+      color: white;
+      font-size: 1.5rem;
+      cursor: pointer;
+    }
+
+    /* Quiz Hero Section */
+    .quiz-hero {
+      text-align: center;
+      background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+      color: white;
+      padding: 3rem 0;
+      background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+    }
+
+    .quiz-hero h2 {
+      font-size: 2rem;
+      margin-bottom: 1rem;
+    }
+
+    .quiz-hero p {
+      font-size: 1.1rem;
+      opacity: 0.9;
+    }
+
+    /* Quiz Container */
+    .quiz-container {
+      margin: 2rem auto;
+      flex: 1;
+    }
+
+    .quiz-question {
+      background: white;
+      border-radius: 8px;
+      padding: 1.5rem;
+      margin-bottom: 1rem;
+      box-shadow: 0 5px 15px rgba(0,0,0,0.05);
+    }
+
+    .quiz-option {
+      padding: 1rem;
+      background-color: var(--light-color);
+      border-radius: 5px;
+      margin-bottom: 0.5rem;
+      cursor: pointer;
+      transition: all 0.3s;
+    }
+
+    .quiz-option:hover {
+      background-color: #dcdcdc;
+    }
+
+    .quiz-option.correct {
+      border: 2px solid var(--botany-color);
+      background-color: #e8f8f5;
+    }
+
+    .quiz-option.incorrect {
+      border: 2px solid var(--accent-color);
+      background-color: #fdecea;
+    }
+
+    .quiz-explanation {
+      display: none;
+      padding: 1rem;
+      border-left: 5px solid var(--secondary-color);
+      margin-top: 1rem;
+      background-color: #f0f0f0;
+      border-radius: 0 5px 5px 0;
+    }
+
+    .quiz-navigation {
+      margin-top: 2rem;
+      text-align: center;
+    }
+
+    .quiz-navigation button {
+      margin: 0 0.5rem;
+      padding: 0.7rem 1.5rem;
+      border: none;
+      background-color: var(--secondary-color);
+      color: white;
+      border-radius: 5px;
+      cursor: pointer;
+      transition: all 0.3s;
+      font-weight: 600;
+    }
+
+    .quiz-navigation button:hover {
+      background-color: #2980b9;
+    }
+
+    .quiz-results {
+      display: none;
+      text-align: center;
+      padding: 2rem;
+      background: white;
+      border-radius: 10px;
+      box-shadow: 0 5px 10px rgba(0,0,0,0.1);
+      margin: 2rem 0;
+    }
+
+    .quiz-results h2 {
+      color: var(--primary-color);
+      margin-bottom: 1rem;
+    }
+
+    .quiz-results button {
+      margin-top: 1rem;
+      padding: 0.8rem 1.8rem;
+      background-color: var(--accent-color);
+      color: white;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+      font-weight: 600;
+      transition: all 0.3s;
+    }
+
+    .quiz-results button:hover {
+      background-color: #c0392b;
+    }
+
+    /* Footer Styles */
+    footer {
+      background-color: var(--primary-color);
+      color: white;
+      padding: 3rem 0 1.5rem;
+      margin-top: auto;
+    }
+
+    .footer-container {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+      gap: 2rem;
+      margin-bottom: 2rem;
+    }
+
+    .footer-column h3 {
+      font-size: 1.3rem;
+      margin-bottom: 1.5rem;
+      position: relative;
+      padding-bottom: 0.5rem;
+    }
+
+    .footer-column h3::after {
+      content: '';
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      width: 50px;
+      height: 3px;
+      background-color: var(--secondary-color);
+    }
+
+    .footer-column ul {
+      list-style: none;
+    }
+
+    .footer-column ul li {
+      margin-bottom: 0.8rem;
+    }
+
+    .footer-column ul li a {
+      color: #ecf0f1;
+      transition: color 0.3s;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .footer-column ul li a:hover {
+      color: var(--secondary-color);
+    }
+
+    .social-links {
+      display: flex;
+      gap: 1rem;
+      margin-top: 1rem;
+    }
+
+    .social-links a {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+      background-color: rgba(255, 255, 255, 0.1);
+      transition: all 0.3s;
+    }
+
+    .social-links a:hover {
+      background-color: var(--secondary-color);
+      transform: translateY(-3px);
+    }
+
+    .copyright {
+      text-align: center;
+      padding-top: 1.5rem;
+      border-top: 1px solid rgba(255, 255, 255, 0.1);
+      font-size: 0.9rem;
+      color: #bdc3c7;
+    }
+
+    /* Responsive Styles */
+    @media (max-width: 992px) {
+      .logo-text h1 {
+        font-size: 1.3rem;
+      }
+      
+      nav ul li {
+        margin-left: 1rem;
+      }
+    }
+
+    @media (max-width: 768px) {
+      .header-container {
+        flex-direction: column;
+        text-align: center;
+      }
+      
+      .logo {
+        margin-bottom: 1rem;
+        justify-content: center;
+      }
+      
+      nav {
+        width: 100%;
+      }
+      
+      nav ul {
+        justify-content: center;
+      }
+      
+      .quiz-hero h2 {
+        font-size: 1.8rem;
+      }
+    }
+
+    @media (max-width: 576px) {
+      .header-container {
+        flex-direction: row;
+        justify-content: space-between;
+      }
+      
+      .logo {
+        margin-bottom: 0;
+      }
+      
+      nav {
+        display: none;
+      }
+      
+      .mobile-menu-btn {
+        display: block;
+      }
+      
+      .quiz-hero h2 {
+        font-size: 1.5rem;
+      }
+      
+      .quiz-hero p {
+        font-size: 1rem;
+      }
+      
+      .quiz-navigation {
+        display: flex;
+        flex-direction: column;
+        gap: 0.5rem;
+      }
+      
+      .quiz-navigation button {
+        width: 100%;
+        margin: 0.2rem 0;
+      }
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <div class="container header-container">
+      <div class="logo">
+        <img src="/img/Logo.png" alt="CEE Medico Nepal Logo">
+        <div class="logo-text">
+          <h1>CEE Medico Nepal</h1>
+          <p>MBBS Entrance Preparation</p>
+        </div>
+      </div>
+      
+      <button class="mobile-menu-btn" id="mobileMenuBtn">
+        <i class="fas fa-bars"></i>
+      </button>
+      
+      <nav id="mainNav">
+        <ul>
+          <li><a href="index.html">Home</a></li>
+          <li class="dropdown">
+            <a href="#">Subjects <i class="fas fa-chevron-down"></i></a>
+            <ul class="dropdown-menu">
+              <li><a href="physics.html">Physics</a></li>
+              <li><a href="chemistry.html">Chemistry</a></li>
+              <li><a href="botany.html">Botany</a></li>
+              <li><a href="zoology.html">Zoology</a></li>
+              <li><a href="mat.html">MAT</a></li>
+            </ul>
+          </li>
+          <li><a href="#">Practice</a></li>
+          <li><a href="#">Mock Tests</a></li>
+          <li><a href="/Blog/blog.html">Blog</a></li>
+          <li><a href="contact.html">Contact</a></li>
+        </ul>
+      </nav>
+    </div>
+  </header>
+
+  <section class="quiz-hero">
+    <div class="container">
+      <h2>Test Your Knowledge on Plasmodium</h2>
+      <p>Essential questions for MBBS Entrance Preparation in Nepal</p>
+    </div>
+  </section>
+
+  <main class="container quiz-container">
+    <div id="quiz-box"></div>
+
+    <div class="quiz-navigation">
+      <button onclick="prevQuestion()">Previous</button>
+      <button onclick="nextQuestion()">Next</button>
+      <button onclick="submitQuiz()">Submit</button>
+    </div>
+
+    <div class="quiz-results" id="results-box">
+      <h2>Quiz Completed!</h2>
+      <p id="score-text"></p>
+      <button onclick="restartQuiz()">Retake Quiz</button>
+    </div>
+  </main>
+
+  <footer>
+    <div class="container">
+      <div class="footer-container">
+        <div class="footer-column">
+          <h3>About Us</h3>
+          <p>CEE Medico Nepal is a premier institute dedicated to helping students prepare for MBBS entrance examinations in Nepal with comprehensive study materials and expert guidance.</p>
+        </div>
+        
+        <div class="footer-column">
+          <h3>Quick Links</h3>
+          <ul>
+            <li><a href="index.html"><i class="fas fa-home"></i> Home</a></li>
+            <li><a href="/Blog/blog.html"><i class="fas fa-blog"></i> Blog</a></li>
+            <li><a href="contact.html"><i class="fas fa-envelope"></i> Contact</a></li>
+          </ul>
+        </div>
+        
+        <div class="footer-column">
+          <h3>Subjects</h3>
+          <ul>
+            <li><a href="physics.html"><i class="fas fa-atom"></i> Physics</a></li>
+            <li><a href="chemistry.html"><i class="fas fa-flask"></i> Chemistry</a></li>
+            <li><a href="botany.html"><i class="fas fa-leaf"></i> Botany</a></li>
+            <li><a href="zoology.html"><i class="fas fa-paw"></i> Zoology</a></li>
+            <li><a href="mat.html"><i class="fas fa-square-root-alt"></i> MAT</a></li>
+          </ul>
+        </div>
+        
+        <div class="footer-column">
+          <h3>Connect With Us</h3>
+          <p><i class="fas fa-map-marker-alt"></i> Kathmandu, Nepal</p>
+          <p><i class="fas fa-phone"></i> +977 9812240229</p>
+          <p><i class="fas fa-envelope"></i> info@ceemediconepal.xyz</p>
+          
+          <div class="social-links">
+            <a href="https://www.facebook.com/techgy.shyamsundar"><i class="fab fa-facebook-f"></i></a>
+            <a href="https://www.instagram.com/shyamsundar98122/"><i class="fab fa-instagram"></i></a>
+            <a href="https://www.youtube.com/@ceemediconepal"><i class="fab fa-youtube"></i></a>
+           
+          </div>
+        </div>
+      </div>
+      
+      <div class="copyright">
+        <p>&copy; 2025 CEE Medico Nepal. All Rights Reserved.</p>
+      </div>
+    </div>
+  </footer>
+
+  <script>
+    const quizData = [
+
+
+{
+    question: "1. Plasmodium is a type of:",
+    options: ["A) Bacterium", "B) Protozoan", "C) Fungus", "D) Alga"],
+    correct: 1,
+    explanation: "Plasmodium is a protozoan parasite that causes malaria."
+},
+{
+    question: "2. The infective stage of Plasmodium to humans is:",
+    options: ["A) Sporozoite", "B) Merozoite", "C) Trophozoite", "D) Gametocyte"],
+    correct: 0,
+    explanation: "Sporozoites are injected into human blood by female Anopheles mosquito."
+},
+{
+    question: "3. Plasmodium is transmitted by:",
+    options: ["A) Male Anopheles", "B) Female Anopheles", "C) Culex mosquito", "D) Aedes mosquito"],
+    correct: 1,
+    explanation: "Only female Anopheles mosquito transmits Plasmodium."
+},
+{
+    question: "4. Exoerythrocytic phase of Plasmodium occurs in the:",
+    options: ["A) RBCs", "B) Spleen", "C) Liver", "D) Bone marrow"],
+    correct: 2,
+    explanation: "The liver is where the exoerythrocytic schizogony occurs, producing merozoites."
+},
+{
+    question: "5. The definitive host of Plasmodium is:",
+    options: ["A) Human", "B) Monkey", "C) Mosquito", "D) Pig"],
+    correct: 2,
+    explanation: "Mosquito is the definitive host where sexual reproduction occurs."
+},
+{
+    question: "6. Which stage of Plasmodium is released from liver cells?",
+    options: ["A) Sporozoite", "B) Merozoite", "C) Gametocyte", "D) Trophozoite"],
+    correct: 1,
+    explanation: "Merozoites are released from hepatocytes into the bloodstream."
+},
+{
+    question: "7. Sexual reproduction in Plasmodium occurs in the:",
+    options: ["A) Human RBCs", "B) Human liver", "C) Mosquito stomach", "D) Mosquito salivary gland"],
+    correct: 2,
+    explanation: "Sexual reproduction (sporogony) occurs in the gut of the female mosquito."
+},
+{
+    question: "8. The periodic fever in malaria is due to:",
+    options: ["A) Liver damage", "B) Rupture of RBCs", "C) Presence of trophozoites", "D) Antigen-antibody reaction"],
+    correct: 1,
+    explanation: "The cyclic rupture of infected RBCs releases toxins causing fever."
+},
+{
+    question: "9. Plasmodium vivax causes:",
+    options: ["A) Malignant tertian malaria", "B) Benign tertian malaria", "C) Quartan malaria", "D) Cerebral malaria"],
+    correct: 1,
+    explanation: "Plasmodium vivax causes benign tertian malaria with fever every 48 hours."
+},
+{
+    question: "10. Plasmodium falciparum is dangerous because it causes:",
+    options: ["A) Chronic malaria", "B) Cerebral malaria", "C) Tertian malaria", "D) No symptoms"],
+    correct: 1,
+    explanation: "P. falciparum can cause cerebral malaria, a severe and life-threatening condition."
+},
+{
+    question: "11. Which stage of Plasmodium is found in mosquito salivary gland?",
+    options: ["A) Sporozoite", "B) Ookinete", "C) Gametocyte", "D) Merozoite"],
+    correct: 0,
+    explanation: "Sporozoites are stored in mosquito's salivary glands ready for transmission."
+},
+{
+    question: "12. The nucleus of Plasmodium is:",
+    options: ["A) Prokaryotic", "B) Eukaryotic", "C) Absent", "D) Multiple"],
+    correct: 1,
+    explanation: "Plasmodium is a eukaryotic organism and has a true nucleus."
+},
+{
+    question: "13. Plasmodium belongs to which phylum?",
+    options: ["A) Ciliophora", "B) Sarcomastigophora", "C) Apicomplexa", "D) Euglenozoa"],
+    correct: 2,
+    explanation: "Plasmodium is an apicomplexan protozoan, which are intracellular parasites."
+},
+{
+    question: "14. Schizogony occurs in:",
+    options: ["A) Only in mosquito", "B) Human liver and RBC", "C) Mosquito midgut", "D) Human lungs"],
+    correct: 1,
+    explanation: "Schizogony is a type of asexual reproduction that occurs in liver and RBCs of humans."
+},
+{
+    question: "15. Merozoites invade:",
+    options: ["A) Liver cells", "B) RBCs", "C) Spleen", "D) Mosquito salivary gland"],
+    correct: 1,
+    explanation: "Merozoites enter red blood cells to begin erythrocytic schizogony."
+},
+{
+    question: "16. In human host, Plasmodium reproduces by:",
+    options: ["A) Conjugation", "B) Sporogony", "C) Schizogony", "D) Binary fission"],
+    correct: 2,
+    explanation: "Plasmodium reproduces asexually in humans through schizogony."
+},
+{
+    question: "17. The function of hypnozoite stage in Plasmodium vivax is:",
+    options: ["A) Invasion", "B) Dormancy in liver", "C) RBC rupture", "D) Gamete formation"],
+    correct: 1,
+    explanation: "Hypnozoites are dormant liver stages that can cause relapse in vivax malaria."
+},
+{
+    question: "18. Gametocytes develop in:",
+    options: ["A) Liver cells", "B) Mosquito stomach", "C) Human RBCs", "D) Salivary glands"],
+    correct: 2,
+    explanation: "Plasmodium gametocytes form in human RBCs and are taken up by mosquito."
+},
+{
+    question: "19. The zygote of Plasmodium is known as:",
+    options: ["A) Sporoblast", "B) Ookinete", "C) Sporozoite", "D) Oocyst"],
+    correct: 1,
+    explanation: "The fertilized zygote in mosquito develops into a motile ookinete."
+},
+{
+    question: "20. The oocyst of Plasmodium is formed in:",
+    options: ["A) Human RBCs", "B) Human liver", "C) Mosquito midgut wall", "D) Mosquito salivary gland"],
+    correct: 2,
+    explanation: "Oocyst forms on the wall of the mosquito’s gut and releases sporozoites."
+},
+{
+    question: "21. The diagnostic stage of Plasmodium in humans is:",
+    options: ["A) Sporozoite", "B) Gametocyte", "C) Merozoite", "D) Trophozoite"],
+    correct: 3,
+    explanation: "Trophozoites can be observed in blood smears for malaria diagnosis."
+},
+{
+    question: "22. Plasmodium falciparum infects:",
+    options: ["A) Only old RBCs", "B) Only young RBCs", "C) All stages of RBCs", "D) Reticulocytes only"],
+    correct: 2,
+    explanation: "P. falciparum can infect RBCs of all ages, making it more virulent."
+},
+{
+    question: "23. What is released when RBCs rupture during malaria?",
+    options: ["A) Hemoglobin", "B) Toxins and merozoites", "C) Enzymes", "D) Platelets"],
+    correct: 1,
+    explanation: "Rupture releases merozoites and toxic substances like hemozoin."
+},
+{
+    question: "24. The pigment formed from digested hemoglobin by Plasmodium is:",
+    options: ["A) Melanin", "B) Bilirubin", "C) Hemozoin", "D) Porphyrin"],
+    correct: 2,
+    explanation: "Hemozoin is a dark pigment formed by Plasmodium during hemoglobin digestion."
+},
+{
+    question: "25. The mosquito injects sporozoites into:",
+    options: ["A) RBCs", "B) Liver", "C) Skin", "D) Bloodstream"],
+    correct: 3,
+    explanation: "Sporozoites are introduced into the bloodstream and reach the liver."
+},
+
+{
+    question: "26. Which Plasmodium species causes quartan malaria?",
+    options: ["A) P. falciparum", "B) P. vivax", "C) P. malariae", "D) P. ovale"],
+    correct: 2,
+    explanation: "Plasmodium malariae causes quartan malaria with fever recurring every 72 hours."
+},
+{
+    question: "27. In which organ do hypnozoites persist?",
+    options: ["A) Brain", "B) Liver", "C) Kidney", "D) Spleen"],
+    correct: 1,
+    explanation: "Hypnozoites are dormant forms in the liver that can cause malaria relapses."
+},
+{
+    question: "28. The process of development of sporozoites from oocyst is:",
+    options: ["A) Gamogony", "B) Schizogony", "C) Sporogony", "D) Conjugation"],
+    correct: 2,
+    explanation: "Sporogony occurs in the mosquito, producing sporozoites from the oocyst."
+},
+{
+    question: "29. The motile zygote formed in mosquito is called:",
+    options: ["A) Sporozoite", "B) Merozoite", "C) Ookinete", "D) Trophozoite"],
+    correct: 2,
+    explanation: "Ookinete is a motile zygote that penetrates the mosquito gut wall."
+},
+{
+    question: "30. Which Plasmodium species can cause relapse?",
+    options: ["A) P. falciparum", "B) P. malariae", "C) P. vivax", "D) All of the above"],
+    correct: 2,
+    explanation: "P. vivax and P. ovale can cause relapse due to hypnozoites in the liver."
+},
+{
+    question: "31. Which form is ingested by mosquito during a blood meal?",
+    options: ["A) Trophozoite", "B) Merozoite", "C) Gametocyte", "D) Sporozoite"],
+    correct: 2,
+    explanation: "Gametocytes are the sexual forms ingested by mosquito from human blood."
+},
+{
+    question: "32. Hemozoin pigment is produced by:",
+    options: ["A) Liver", "B) Mosquito", "C) Human WBCs", "D) Plasmodium"],
+    correct: 3,
+    explanation: "Plasmodium digests hemoglobin and forms hemozoin pigment in RBCs."
+},
+{
+    question: "33. Malarial parasite was first discovered by:",
+    options: ["A) Louis Pasteur", "B) Charles Laveran", "C) Ronald Ross", "D) Robert Koch"],
+    correct: 1,
+    explanation: "Charles Laveran discovered the malarial parasite in 1880."
+},
+{
+    question: "34. Ronald Ross discovered the transmission of malaria by:",
+    options: ["A) Anopheles mosquito", "B) Culex mosquito", "C) Aedes mosquito", "D) Sandfly"],
+    correct: 0,
+    explanation: "Ronald Ross showed that malaria is transmitted by the Anopheles mosquito."
+},
+{
+    question: "35. Which one is not a stage in the Plasmodium life cycle?",
+    options: ["A) Sporozoite", "B) Trophozoite", "C) Zoospore", "D) Merozoite"],
+    correct: 2,
+    explanation: "Zoospore is not a part of the Plasmodium life cycle."
+},
+{
+    question: "36. Number of nuclei in mature schizont of Plasmodium vivax:",
+    options: ["A) 4", "B) 6", "C) 12–24", "D) 1"],
+    correct: 2,
+    explanation: "Mature schizonts of P. vivax typically have 12–24 merozoites."
+},
+{
+    question: "37. Gametocytes of P. falciparum are:",
+    options: ["A) Round", "B) Elongated", "C) Crescent-shaped", "D) Oval"],
+    correct: 2,
+    explanation: "P. falciparum gametocytes are distinctive due to their crescent shape."
+},
+{
+    question: "38. Relapse is not seen in infections caused by:",
+    options: ["A) P. vivax", "B) P. ovale", "C) P. falciparum", "D) P. cynomolgi"],
+    correct: 2,
+    explanation: "P. falciparum does not form hypnozoites, hence no relapse."
+},
+{
+    question: "39. The drug used for radical cure of vivax malaria is:",
+    options: ["A) Chloroquine", "B) Quinine", "C) Artemisinin", "D) Primaquine"],
+    correct: 3,
+    explanation: "Primaquine is used to eliminate hypnozoites from the liver in vivax malaria."
+},
+{
+    question: "40. The periodicity of fever in P. vivax is:",
+    options: ["A) 48 hours", "B) 72 hours", "C) 24 hours", "D) Irregular"],
+    correct: 0,
+    explanation: "In vivax malaria, fever occurs every 48 hours (tertian)."
+},
+{
+    question: "41. Which form of Plasmodium crosses the mosquito gut wall?",
+    options: ["A) Sporozoite", "B) Gametocyte", "C) Ookinete", "D) Merozoite"],
+    correct: 2,
+    explanation: "Ookinete penetrates the mosquito gut wall to form an oocyst."
+},
+{
+    question: "42. Plasmodium is an example of:",
+    options: ["A) Facultative parasite", "B) Obligate parasite", "C) Free-living protozoan", "D) Saprophyte"],
+    correct: 1,
+    explanation: "Plasmodium is an obligate intracellular parasite."
+},
+{
+    question: "43. Plasmodium species that infect humans are:",
+    options: ["A) 2", "B) 3", "C) 4", "D) 5"],
+    correct: 3,
+    explanation: "There are 5 Plasmodium species known to infect humans: vivax, falciparum, malariae, ovale, and knowlesi."
+},
+{
+    question: "44. What does 'tertian' mean in malaria?",
+    options: ["A) Fever every third day", "B) Fever every second day", "C) Daily fever", "D) No fever"],
+    correct: 1,
+    explanation: "Tertian malaria has fever every third day (i.e., 48-hour cycle)."
+},
+{
+    question: "45. The first organ infected by Plasmodium in humans is:",
+    options: ["A) Liver", "B) Blood", "C) Brain", "D) Spleen"],
+    correct: 0,
+    explanation: "Sporozoites travel to and infect liver cells first."
+},
+{
+    question: "46. The method of malaria diagnosis in labs is:",
+    options: ["A) Saliva test", "B) Skin biopsy", "C) Blood smear microscopy", "D) Urine test"],
+    correct: 2,
+    explanation: "A stained blood smear is examined under microscope to detect Plasmodium."
+},
+{
+    question: "47. Ring stage of Plasmodium is seen in:",
+    options: ["A) Liver", "B) RBCs", "C) Mosquito", "D) Spleen"],
+    correct: 1,
+    explanation: "The ring stage trophozoite appears in RBCs during early erythrocytic cycle."
+},
+{
+    question: "48. Which is the most virulent species of Plasmodium?",
+    options: ["A) P. vivax", "B) P. ovale", "C) P. falciparum", "D) P. malariae"],
+    correct: 2,
+    explanation: "P. falciparum is the most virulent and can cause cerebral malaria."
+},
+{
+    question: "49. P. knowlesi causes malaria primarily in:",
+    options: ["A) Pigs", "B) Birds", "C) Monkeys", "D) Humans only"],
+    correct: 2,
+    explanation: "P. knowlesi is a zoonotic species found in macaques but can infect humans."
+},
+{
+    question: "50. The best strategy to control malaria is:",
+    options: ["A) Antibiotics", "B) Mosquito control", "C) Vaccination", "D) Blood transfusion"],
+    correct: 1,
+    explanation: "Controlling mosquito vectors is crucial in preventing malaria transmission."
+}
+
+
+
+
+    ];
+
+    let current = 0;
+    let score = 0;
+    let userAnswers = [];
+
+    function renderQuestion() {
+      const q = quizData[current];
+      let html = '<div class="quiz-question">';
+      html += `<h3>Q${current + 1}. ${q.question}</h3>`;
+      q.options.forEach((opt, i) => {
+        html += `<div class="quiz-option" onclick="selectOption(${i})">${opt}</div>`;
+      });
+      html += `<div class="quiz-explanation" id="explanation">${q.explanation}</div>`;
+      html += '</div>';
+      document.getElementById('quiz-box').innerHTML = html;
+    }
+
+    function selectOption(index) {
+      const options = document.querySelectorAll('.quiz-option');
+      options.forEach((el, i) => {
+        el.classList.remove('correct', 'incorrect');
+        if (i === index) {
+          if (i === quizData[current].correct) {
+            el.classList.add('correct');
+            score++;
+          } else {
+            el.classList.add('incorrect');
+            options[quizData[current].correct].classList.add('correct');
+          }
+        }
+        el.onclick = null;
+      });
+      document.getElementById('explanation').style.display = 'block';
+      userAnswers[current] = index;
+    }
+
+    function nextQuestion() {
+      if (current < quizData.length - 1) {
+        current++;
+        renderQuestion();
+      }
+    }
+
+    function prevQuestion() {
+      if (current > 0) {
+        current--;
+        renderQuestion();
+      }
+    }
+
+    function submitQuiz() {
+      document.getElementById('quiz-box').style.display = 'none';
+      document.querySelector('.quiz-navigation').style.display = 'none';
+      document.getElementById('results-box').style.display = 'block';
+      document.getElementById('score-text').innerText = `You scored ${score} out of ${quizData.length}`;
+    }
+
+    function restartQuiz() {
+      current = 0;
+      score = 0;
+      userAnswers = [];
+      document.getElementById('quiz-box').style.display = 'block';
+      document.querySelector('.quiz-navigation').style.display = 'block';
+      document.getElementById('results-box').style.display = 'none';
+      renderQuestion();
+    }
+
+    // Mobile menu toggle
+    document.getElementById('mobileMenuBtn').addEventListener('click', function() {
+      const nav = document.getElementById('mainNav');
+      nav.style.display = nav.style.display === 'none' ? 'block' : 'none';
+    });
+
+    // Initialize
+    renderQuestion();
+  </script>
+</body>
+</html>
