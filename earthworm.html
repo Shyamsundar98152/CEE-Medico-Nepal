@@ -1,0 +1,934 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Earthworm - CEE Medico Nepal</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+  <style>
+    :root {
+      --primary-color: #2c3e50;
+      --secondary-color: #3498db;
+      --accent-color: #e74c3c;
+      --light-color: #ecf0f1;
+      --text-color: #333;
+      --botany-color: #2ecc71;
+      --physics-color: #9b59b6;
+      --chemistry-color: #e67e22;
+      --zoology-color: #16a085;
+      --mat-color: #c0392b;
+    }
+
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    }
+
+    body {
+      line-height: 1.6;
+      color: var(--text-color);
+      background-color: #f9f9f9;
+      display: flex;
+      flex-direction: column;
+      min-height: 100vh;
+    }
+
+    .container {
+      width: 100%;
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 0 20px;
+    }
+
+    a {
+      text-decoration: none;
+      color: inherit;
+    }
+
+    img {
+      max-width: 100%;
+      height: auto;
+    }
+
+    /* Header Styles */
+    header {
+      background-color: var(--primary-color);
+      color: white;
+      padding: 1rem 0;
+      box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+      position: sticky;
+      top: 0;
+      z-index: 100;
+    }
+
+    .header-container {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .logo {
+      display: flex;
+      align-items: center;
+    }
+
+    .logo img {
+      height: 50px;
+      margin-right: 10px;
+    }
+
+    .logo-text h1 {
+      font-size: 1.5rem;
+      font-weight: 700;
+      margin-bottom: 0.2rem;
+      color: white;
+    }
+
+    .logo-text p {
+      font-size: 0.8rem;
+      color: var(--light-color);
+      opacity: 0.8;
+    }
+
+    nav ul {
+      display: flex;
+      list-style: none;
+    }
+
+    nav ul li {
+      position: relative;
+      margin-left: 1.5rem;
+    }
+
+    nav ul li a {
+      color: white;
+      text-decoration: none;
+      font-weight: 500;
+      transition: color 0.3s;
+      font-size: 1rem;
+      display: flex;
+      align-items: center;
+      gap: 5px;
+    }
+
+    nav ul li a:hover {
+      color: var(--secondary-color);
+    }
+
+    .dropdown-menu {
+      position: absolute;
+      top: 100%;
+      left: 0;
+      background-color: white;
+      min-width: 200px;
+      box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+      border-radius: 5px;
+      padding: 10px 0;
+      opacity: 0;
+      visibility: hidden;
+      transition: all 0.3s;
+      z-index: 10;
+    }
+
+    .dropdown:hover .dropdown-menu {
+      opacity: 1;
+      visibility: visible;
+    }
+
+    .dropdown-menu li {
+      margin: 0;
+      padding: 0;
+    }
+
+    .dropdown-menu li a {
+      color: var(--text-color);
+      padding: 8px 20px;
+      display: block;
+      font-size: 0.9rem;
+    }
+
+    .dropdown-menu li a:hover {
+      background-color: var(--light-color);
+      color: var(--primary-color);
+    }
+
+    .mobile-menu-btn {
+      display: none;
+      background: none;
+      border: none;
+      color: white;
+      font-size: 1.5rem;
+      cursor: pointer;
+    }
+
+    /* Quiz Hero Section */
+    .quiz-hero {
+      text-align: center;
+      background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+      color: white;
+      padding: 3rem 0;
+      background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+    }
+
+    .quiz-hero h2 {
+      font-size: 2rem;
+      margin-bottom: 1rem;
+    }
+
+    .quiz-hero p {
+      font-size: 1.1rem;
+      opacity: 0.9;
+    }
+
+    /* Quiz Container */
+    .quiz-container {
+      margin: 2rem auto;
+      flex: 1;
+    }
+
+    .quiz-question {
+      background: white;
+      border-radius: 8px;
+      padding: 1.5rem;
+      margin-bottom: 1rem;
+      box-shadow: 0 5px 15px rgba(0,0,0,0.05);
+    }
+
+    .quiz-option {
+      padding: 1rem;
+      background-color: var(--light-color);
+      border-radius: 5px;
+      margin-bottom: 0.5rem;
+      cursor: pointer;
+      transition: all 0.3s;
+    }
+
+    .quiz-option:hover {
+      background-color: #dcdcdc;
+    }
+
+    .quiz-option.correct {
+      border: 2px solid var(--botany-color);
+      background-color: #e8f8f5;
+    }
+
+    .quiz-option.incorrect {
+      border: 2px solid var(--accent-color);
+      background-color: #fdecea;
+    }
+
+    .quiz-explanation {
+      display: none;
+      padding: 1rem;
+      border-left: 5px solid var(--secondary-color);
+      margin-top: 1rem;
+      background-color: #f0f0f0;
+      border-radius: 0 5px 5px 0;
+    }
+
+    .quiz-navigation {
+      margin-top: 2rem;
+      text-align: center;
+    }
+
+    .quiz-navigation button {
+      margin: 0 0.5rem;
+      padding: 0.7rem 1.5rem;
+      border: none;
+      background-color: var(--secondary-color);
+      color: white;
+      border-radius: 5px;
+      cursor: pointer;
+      transition: all 0.3s;
+      font-weight: 600;
+    }
+
+    .quiz-navigation button:hover {
+      background-color: #2980b9;
+    }
+
+    .quiz-results {
+      display: none;
+      text-align: center;
+      padding: 2rem;
+      background: white;
+      border-radius: 10px;
+      box-shadow: 0 5px 10px rgba(0,0,0,0.1);
+      margin: 2rem 0;
+    }
+
+    .quiz-results h2 {
+      color: var(--primary-color);
+      margin-bottom: 1rem;
+    }
+
+    .quiz-results button {
+      margin-top: 1rem;
+      padding: 0.8rem 1.8rem;
+      background-color: var(--accent-color);
+      color: white;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+      font-weight: 600;
+      transition: all 0.3s;
+    }
+
+    .quiz-results button:hover {
+      background-color: #c0392b;
+    }
+
+    /* Footer Styles */
+    footer {
+      background-color: var(--primary-color);
+      color: white;
+      padding: 3rem 0 1.5rem;
+      margin-top: auto;
+    }
+
+    .footer-container {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+      gap: 2rem;
+      margin-bottom: 2rem;
+    }
+
+    .footer-column h3 {
+      font-size: 1.3rem;
+      margin-bottom: 1.5rem;
+      position: relative;
+      padding-bottom: 0.5rem;
+    }
+
+    .footer-column h3::after {
+      content: '';
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      width: 50px;
+      height: 3px;
+      background-color: var(--secondary-color);
+    }
+
+    .footer-column ul {
+      list-style: none;
+    }
+
+    .footer-column ul li {
+      margin-bottom: 0.8rem;
+    }
+
+    .footer-column ul li a {
+      color: #ecf0f1;
+      transition: color 0.3s;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .footer-column ul li a:hover {
+      color: var(--secondary-color);
+    }
+
+    .social-links {
+      display: flex;
+      gap: 1rem;
+      margin-top: 1rem;
+    }
+
+    .social-links a {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+      background-color: rgba(255, 255, 255, 0.1);
+      transition: all 0.3s;
+    }
+
+    .social-links a:hover {
+      background-color: var(--secondary-color);
+      transform: translateY(-3px);
+    }
+
+    .copyright {
+      text-align: center;
+      padding-top: 1.5rem;
+      border-top: 1px solid rgba(255, 255, 255, 0.1);
+      font-size: 0.9rem;
+      color: #bdc3c7;
+    }
+
+    /* Responsive Styles */
+    @media (max-width: 992px) {
+      .logo-text h1 {
+        font-size: 1.3rem;
+      }
+      
+      nav ul li {
+        margin-left: 1rem;
+      }
+    }
+
+    @media (max-width: 768px) {
+      .header-container {
+        flex-direction: column;
+        text-align: center;
+      }
+      
+      .logo {
+        margin-bottom: 1rem;
+        justify-content: center;
+      }
+      
+      nav {
+        width: 100%;
+      }
+      
+      nav ul {
+        justify-content: center;
+      }
+      
+      .quiz-hero h2 {
+        font-size: 1.8rem;
+      }
+    }
+
+    @media (max-width: 576px) {
+      .header-container {
+        flex-direction: row;
+        justify-content: space-between;
+      }
+      
+      .logo {
+        margin-bottom: 0;
+      }
+      
+      nav {
+        display: none;
+      }
+      
+      .mobile-menu-btn {
+        display: block;
+      }
+      
+      .quiz-hero h2 {
+        font-size: 1.5rem;
+      }
+      
+      .quiz-hero p {
+        font-size: 1rem;
+      }
+      
+      .quiz-navigation {
+        display: flex;
+        flex-direction: column;
+        gap: 0.5rem;
+      }
+      
+      .quiz-navigation button {
+        width: 100%;
+        margin: 0.2rem 0;
+      }
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <div class="container header-container">
+      <div class="logo">
+        <img src="/img/Logo.png" alt="CEE Medico Nepal Logo">
+        <div class="logo-text">
+          <h1>CEE Medico Nepal</h1>
+          <p>MBBS Entrance Preparation</p>
+        </div>
+      </div>
+      
+      <button class="mobile-menu-btn" id="mobileMenuBtn">
+        <i class="fas fa-bars"></i>
+      </button>
+      
+      <nav id="mainNav">
+        <ul>
+          <li><a href="index.html">Home</a></li>
+          <li class="dropdown">
+            <a href="#">Subjects <i class="fas fa-chevron-down"></i></a>
+            <ul class="dropdown-menu">
+              <li><a href="physics.html">Physics</a></li>
+              <li><a href="chemistry.html">Chemistry</a></li>
+              <li><a href="botany.html">Botany</a></li>
+              <li><a href="zoology.html">Zoology</a></li>
+              <li><a href="mat.html">MAT</a></li>
+            </ul>
+          </li>
+          <li><a href="#">Practice</a></li>
+          <li><a href="#">Mock Tests</a></li>
+          <li><a href="/Blog/blog.html">Blog</a></li>
+          <li><a href="contact.html">Contact</a></li>
+        </ul>
+      </nav>
+    </div>
+  </header>
+
+  <section class="quiz-hero">
+    <div class="container">
+      <h2>Test Your Knowledge on Earthworm</h2>
+      <p>Essential questions for MBBS Entrance Preparation in Nepal</p>
+    </div>
+  </section>
+
+  <main class="container quiz-container">
+    <div id="quiz-box"></div>
+
+    <div class="quiz-navigation">
+      <button onclick="prevQuestion()">Previous</button>
+      <button onclick="nextQuestion()">Next</button>
+      <button onclick="submitQuiz()">Submit</button>
+    </div>
+
+    <div class="quiz-results" id="results-box">
+      <h2>Quiz Completed!</h2>
+      <p id="score-text"></p>
+      <button onclick="restartQuiz()">Retake Quiz</button>
+    </div>
+  </main>
+
+  <footer>
+    <div class="container">
+      <div class="footer-container">
+        <div class="footer-column">
+          <h3>About Us</h3>
+          <p>CEE Medico Nepal is a premier institute dedicated to helping students prepare for MBBS entrance examinations in Nepal with comprehensive study materials and expert guidance.</p>
+        </div>
+        
+        <div class="footer-column">
+          <h3>Quick Links</h3>
+          <ul>
+            <li><a href="index.html"><i class="fas fa-home"></i> Home</a></li>
+            <li><a href="/Blog/blog.html"><i class="fas fa-blog"></i> Blog</a></li>
+            <li><a href="contact.html"><i class="fas fa-envelope"></i> Contact</a></li>
+          </ul>
+        </div>
+        
+        <div class="footer-column">
+          <h3>Subjects</h3>
+          <ul>
+            <li><a href="physics.html"><i class="fas fa-atom"></i> Physics</a></li>
+            <li><a href="chemistry.html"><i class="fas fa-flask"></i> Chemistry</a></li>
+            <li><a href="botany.html"><i class="fas fa-leaf"></i> Botany</a></li>
+            <li><a href="zoology.html"><i class="fas fa-paw"></i> Zoology</a></li>
+            <li><a href="mat.html"><i class="fas fa-square-root-alt"></i> MAT</a></li>
+          </ul>
+        </div>
+        
+        <div class="footer-column">
+          <h3>Connect With Us</h3>
+          <p><i class="fas fa-map-marker-alt"></i> Kathmandu, Nepal</p>
+          <p><i class="fas fa-phone"></i> +977 9812240229</p>
+          <p><i class="fas fa-envelope"></i> info@ceemediconepal.xyz</p>
+          
+          <div class="social-links">
+            <a href="https://www.facebook.com/techgy.shyamsundar"><i class="fab fa-facebook-f"></i></a>
+            <a href="https://www.instagram.com/shyamsundar98122/"><i class="fab fa-instagram"></i></a>
+            <a href="https://www.youtube.com/@ceemediconepal"><i class="fab fa-youtube"></i></a>
+           
+          </div>
+        </div>
+      </div>
+      
+      <div class="copyright">
+        <p>&copy; 2025 CEE Medico Nepal. All Rights Reserved.</p>
+      </div>
+    </div>
+  </footer>
+
+  <script>
+    const quizData = [
+
+{
+    question: "1. Scientific name of earthworm is:",
+    options: ["A) Rana tigrina", "B) Pheretima posthuma", "C) Periplaneta americana", "D) Lumbricus terrestris"],
+    correct: 1,
+    explanation: "The most common Indian earthworm is Pheretima posthuma."
+},
+{
+    question: "2. Earthworm belongs to the phylum:",
+    options: ["A) Arthropoda", "B) Annelida", "C) Mollusca", "D) Echinodermata"],
+    correct: 1,
+    explanation: "Earthworms belong to phylum Annelida, characterized by segmented bodies."
+},
+{
+    question: "3. The body of earthworm is divided into how many segments?",
+    options: ["A) 80-90", "B) 100-120", "C) 150-180", "D) 50-60"],
+    correct: 2,
+    explanation: "The earthworm’s body consists of about 100 to 120 segments called metameres."
+},
+{
+    question: "4. Earthworm breathes through:",
+    options: ["A) Lungs", "B) Skin", "C) Gills", "D) Spiracles"],
+    correct: 1,
+    explanation: "Earthworms perform cutaneous respiration through their moist skin."
+},
+{
+    question: "5. Locomotion in earthworm is aided by:",
+    options: ["A) Legs", "B) Muscular foot", "C) Setae", "D) Cilia"],
+    correct: 2,
+    explanation: "Setae are tiny bristles that anchor the body to help in movement."
+},
+{
+    question: "6. The clitellum in earthworm is found on segments:",
+    options: ["A) 1–5", "B) 10–20", "C) 14–16", "D) 20–25"],
+    correct: 2,
+    explanation: "Clitellum is a glandular band on segments 14 to 16 involved in reproduction."
+},
+{
+    question: "7. Earthworm is:",
+    options: ["A) Dioecious", "B) Monoecious", "C) Asexual", "D) Unisexual"],
+    correct: 1,
+    explanation: "Earthworms are monoecious (hermaphrodite), having both male and female sex organs."
+},
+{
+    question: "8. Fertilization in earthworm is:",
+    options: ["A) Internal", "B) External", "C) Parthenogenetic", "D) Self"],
+    correct: 1,
+    explanation: "Earthworms undergo external fertilization in a cocoon formed by clitellum."
+},
+{
+    question: "9. Digestive tract of earthworm starts from:",
+    options: ["A) Pharynx", "B) Buccal cavity", "C) Mouth", "D) Gizzard"],
+    correct: 2,
+    explanation: "The digestive system begins at the mouth located at the anterior tip."
+},
+{
+    question: "10. Grinding of food in earthworm takes place in:",
+    options: ["A) Mouth", "B) Pharynx", "C) Crop", "D) Gizzard"],
+    correct: 3,
+    explanation: "Gizzard is a muscular structure that grinds the food with help of ingested stones."
+},
+{
+    question: "11. Typhlosole is found in:",
+    options: ["A) Pharynx", "B) Intestine", "C) Crop", "D) Gizzard"],
+    correct: 1,
+    explanation: "Typhlosole is an internal fold in the intestine increasing surface area for absorption."
+},
+{
+    question: "12. Earthworm excretes nitrogenous waste mainly as:",
+    options: ["A) Uric acid", "B) Ammonia", "C) Urea", "D) Creatinine"],
+    correct: 1,
+    explanation: "Earthworms are ammonotelic and excrete ammonia as primary waste."
+},
+{
+    question: "13. Excretory organs of earthworm are:",
+    options: ["A) Malpighian tubules", "B) Flame cells", "C) Nephridia", "D) Green glands"],
+    correct: 2,
+    explanation: "Nephridia are coiled tubules that remove nitrogenous wastes."
+},
+{
+    question: "14. Number of hearts in earthworm is:",
+    options: ["A) 1", "B) 3", "C) 5", "D) 7"],
+    correct: 2,
+    explanation: "Earthworms have five pairs of aortic arches acting as hearts."
+},
+{
+    question: "15. Blood in earthworm is:",
+    options: ["A) Colorless", "B) Red due to hemoglobin", "C) Blue due to haemocyanin", "D) Green due to chlorocruorin"],
+    correct: 1,
+    explanation: "Their blood is red because hemoglobin is dissolved in plasma."
+},
+{
+    question: "16. Circulatory system in earthworm is:",
+    options: ["A) Open", "B) Closed", "C) Absent", "D) Lymphatic"],
+    correct: 1,
+    explanation: "Earthworms have a closed circulatory system."
+},
+{
+    question: "17. Which segment contains the pharyngeal nephridia?",
+    options: ["A) 1–4", "B) 4–6", "C) 3–5", "D) 5–9"],
+    correct: 2,
+    explanation: "Pharyngeal nephridia are located in segments 4 to 6."
+},
+{
+    question: "18. Nerve ring in earthworm is formed by:",
+    options: ["A) Subpharyngeal and supra-pharyngeal ganglia", "B) Dorsal and ventral nerves", "C) Only ventral ganglion", "D) Segmental nerves"],
+    correct: 0,
+    explanation: "The nerve ring comprises cerebral ganglia (supra) and subpharyngeal ganglia connected by circumpharyngeal connectives."
+},
+{
+    question: "19. Earthworm's nervous system is:",
+    options: ["A) Ladder-like", "B) Nerve net", "C) Diffused", "D) Absent"],
+    correct: 0,
+    explanation: "It consists of a paired ventral nerve cord with ganglia in each segment."
+},
+{
+    question: "20. Prostomium in earthworm is:",
+    options: ["A) Sensory lobe", "B) Excretory organ", "C) Part of clitellum", "D) Feeding organ"],
+    correct: 0,
+    explanation: "Prostomium is a lobe that acts as a sensory and burrowing aid."
+},
+{
+    question: "21. Earthworm shows which type of segmentation?",
+    options: ["A) Pseudometamerism", "B) True metamerism", "C) Unsegmented", "D) Superficial segmentation"],
+    correct: 1,
+    explanation: "Earthworm's body is truly metamerically segmented both externally and internally."
+},
+{
+    question: "22. Spermathecae in earthworm store:",
+    options: ["A) Sperms of self", "B) Sperms of mate", "C) Eggs", "D) Fertilized eggs"],
+    correct: 1,
+    explanation: "Spermathecae store sperms received from another earthworm during copulation."
+},
+{
+    question: "23. Setae are absent in which segment?",
+    options: ["A) First", "B) Clitellar", "C) Anal", "D) All of these"],
+    correct: 3,
+    explanation: "Setae are absent from first, last, and clitellum segments."
+},
+{
+    question: "24. Function of clitellum is:",
+    options: ["A) Excretion", "B) Respiration", "C) Reproduction", "D) Sensory"],
+    correct: 2,
+    explanation: "Clitellum secretes mucus and cocoon for reproduction."
+},
+{
+    question: "25. Male genital pores in earthworm open on:",
+    options: ["A) 10th segment", "B) 15th segment", "C) 18th segment", "D) 14th segment"],
+    correct: 2,
+    explanation: "Male genital pores are located on the 18th segment."
+},
+{
+    question: "26. Cocoon in earthworm is formed by:",
+    options: ["A) Clitellum", "B) Spermatheca", "C) Typhlosole", "D) Nephridia"],
+    correct: 0,
+    explanation: "The mucus secreted by clitellum forms the cocoon that contains fertilized eggs."
+},
+{
+    question: "27. Earthworm is important in agriculture because it:",
+    options: ["A) Destroys pests", "B) Fertilizes soil", "C) Fixes nitrogen", "D) Pollinates plants"],
+    correct: 1,
+    explanation: "Earthworms enhance soil aeration and fertility by burrowing and digesting organic matter."
+},
+{
+    question: "28. Earthworm feeds on:",
+    options: ["A) Dead insects", "B) Green leaves", "C) Organic matter in soil", "D) Fruits"],
+    correct: 2,
+    explanation: "Earthworms are detritivores and feed on decaying organic matter in soil."
+},
+{
+    question: "29. The coelomic fluid of earthworm has:",
+    options: ["A) Digestive enzymes", "B) Germ cells", "C) Amoeboid cells", "D) Mucus only"],
+    correct: 2,
+    explanation: "Coelomic fluid contains amoeboid cells with defensive properties."
+},
+{
+    question: "30. Earthworms exhibit which type of development?",
+    options: ["A) Indirect", "B) With larva", "C) Direct", "D) Metamorphic"],
+    correct: 2,
+    explanation: "Earthworms show direct development with no larval stage."
+},[
+{
+    question: "31. Which part of the earthworm's body secretes coelomic fluid?",
+    options: ["A) Clitellum", "B) Setae", "C) Coelomic epithelium", "D) Typhlosole"],
+    correct: 2,
+    explanation: "Coelomic epithelium secretes coelomic fluid that helps in defense and excretion."
+},
+{
+    question: "32. Which one is absent in earthworm?",
+    options: ["A) Eyes", "B) Ventral nerve cord", "C) Nephridia", "D) Typhlosole"],
+    correct: 0,
+    explanation: "Earthworms do not have eyes but respond to light through photoreceptors."
+},
+{
+    question: "33. Which cells in earthworm coelomic fluid are phagocytic?",
+    options: ["A) Basophils", "B) Mucocytes", "C) Granulocytes", "D) Amoebocytes"],
+    correct: 3,
+    explanation: "Amoebocytes in the coelomic fluid act as phagocytes and defend against pathogens."
+},
+{
+    question: "34. Nephridia of earthworm help in:",
+    options: ["A) Respiration", "B) Circulation", "C) Excretion", "D) Digestion"],
+    correct: 2,
+    explanation: "Nephridia are excretory organs that remove nitrogenous waste."
+},
+{
+    question: "35. Earthworm’s brain is located in segment:",
+    options: ["A) 1st", "B) 2nd", "C) 3rd", "D) 5th"],
+    correct: 1,
+    explanation: "The cerebral ganglia (brain) are located in the 3rd segment above the pharynx."
+},
+{
+    question: "36. Crop in earthworm is involved in:",
+    options: ["A) Digestion", "B) Absorption", "C) Storage of food", "D) Grinding"],
+    correct: 2,
+    explanation: "Crop temporarily stores food before passing it to the gizzard."
+},
+{
+    question: "37. The reproductive system of earthworm is found in which segments?",
+    options: ["A) Anterior only", "B) Middle segments", "C) Posterior segments", "D) Distributed throughout"],
+    correct: 1,
+    explanation: "Reproductive organs are found in the middle segments such as 9–18."
+},
+{
+    question: "38. Common mode of reproduction in earthworm is:",
+    options: ["A) Asexual by budding", "B) Parthenogenesis", "C) Sexual reproduction", "D) Fragmentation"],
+    correct: 2,
+    explanation: "Earthworms reproduce sexually and are hermaphroditic."
+},
+{
+    question: "39. The spermathecae in earthworm are located in segments:",
+    options: ["A) 5–9", "B) 6–10", "C) 7–11", "D) 4–8"],
+    correct: 2,
+    explanation: "Spermathecae are located in segments 6th to 9th or 7th to 11th depending on species."
+},
+{
+    question: "40. Blood vessels of earthworm that supply intestine are called:",
+    options: ["A) Ventral vessels", "B) Lateral vessels", "C) Intestinal vessels", "D) Lateral hearts"],
+    correct: 0,
+    explanation: "Ventral vessels carry blood to the body including intestines."
+},
+{
+    question: "41. Earthworms show chemoreception through:",
+    options: ["A) Setae", "B) Cuticle", "C) Epidermal receptors", "D) Nephridia"],
+    correct: 2,
+    explanation: "Chemoreceptors are present in the epidermis to detect chemical stimuli."
+},
+{
+    question: "42. Earthworm’s body cavity is:",
+    options: ["A) Pseudocoelom", "B) Haemocoel", "C) Acoelom", "D) True coelom"],
+    correct: 3,
+    explanation: "Earthworm has a true coelom lined by mesodermal epithelium."
+},
+{
+    question: "43. Earthworm has how many pairs of testes?",
+    options: ["A) 1", "B) 2", "C) 3", "D) 4"],
+    correct: 1,
+    explanation: "There are two pairs of testes located in the 10th and 11th segments."
+},
+{
+    question: "44. Which cells help in regeneration in earthworms?",
+    options: ["A) Neoblasts", "B) Chloragogen cells", "C) Amoebocytes", "D) Basophils"],
+    correct: 1,
+    explanation: "Chloragogen cells store nutrients and help in regeneration."
+},
+{
+    question: "45. How do earthworms contribute to soil fertility?",
+    options: ["A) By fixing nitrogen", "B) By secreting hormones", "C) By aerating soil and decomposing organic matter", "D) By parasitism"],
+    correct: 2,
+    explanation: "Earthworms aerate soil and decompose organic material, improving soil structure."
+},
+{
+    question: "46. Which type of symmetry is found in earthworm?",
+    options: ["A) Radial", "B) Asymmetrical", "C) Bilateral", "D) Spherical"],
+    correct: 2,
+    explanation: "Earthworms show bilateral symmetry with a defined anterior and posterior."
+},
+{
+    question: "47. Anus of earthworm is located on:",
+    options: ["A) Segment 20", "B) Last segment", "C) Segment 18", "D) Segment 5"],
+    correct: 1,
+    explanation: "The anus is found in the terminal segment of the earthworm."
+},
+{
+    question: "48. Earthworm is sensitive to which stimulus?",
+    options: ["A) Sound", "B) Taste", "C) Light", "D) Magnetic field"],
+    correct: 2,
+    explanation: "Earthworms are negatively phototactic; they move away from light."
+},
+{
+    question: "49. Chloragogen cells are similar to which vertebrate organ?",
+    options: ["A) Heart", "B) Lungs", "C) Liver", "D) Spleen"],
+    correct: 2,
+    explanation: "Chloragogen cells function like the liver in metabolism and detoxification."
+},
+{
+    question: "50. The number of pairs of septal nephridia in each segment is:",
+    options: ["A) 1 pair", "B) 2 pairs", "C) 20–25 pairs", "D) 40–50 pairs"],
+    correct: 3,
+    explanation: "Each segment from 15 onwards has 40–50 pairs of septal nephridia."
+}
+
+
+
+
+
+    ];
+
+    let current = 0;
+    let score = 0;
+    let userAnswers = [];
+
+    function renderQuestion() {
+      const q = quizData[current];
+      let html = '<div class="quiz-question">';
+      html += `<h3>Q${current + 1}. ${q.question}</h3>`;
+      q.options.forEach((opt, i) => {
+        html += `<div class="quiz-option" onclick="selectOption(${i})">${opt}</div>`;
+      });
+      html += `<div class="quiz-explanation" id="explanation">${q.explanation}</div>`;
+      html += '</div>';
+      document.getElementById('quiz-box').innerHTML = html;
+    }
+
+    function selectOption(index) {
+      const options = document.querySelectorAll('.quiz-option');
+      options.forEach((el, i) => {
+        el.classList.remove('correct', 'incorrect');
+        if (i === index) {
+          if (i === quizData[current].correct) {
+            el.classList.add('correct');
+            score++;
+          } else {
+            el.classList.add('incorrect');
+            options[quizData[current].correct].classList.add('correct');
+          }
+        }
+        el.onclick = null;
+      });
+      document.getElementById('explanation').style.display = 'block';
+      userAnswers[current] = index;
+    }
+
+    function nextQuestion() {
+      if (current < quizData.length - 1) {
+        current++;
+        renderQuestion();
+      }
+    }
+
+    function prevQuestion() {
+      if (current > 0) {
+        current--;
+        renderQuestion();
+      }
+    }
+
+    function submitQuiz() {
+      document.getElementById('quiz-box').style.display = 'none';
+      document.querySelector('.quiz-navigation').style.display = 'none';
+      document.getElementById('results-box').style.display = 'block';
+      document.getElementById('score-text').innerText = `You scored ${score} out of ${quizData.length}`;
+    }
+
+    function restartQuiz() {
+      current = 0;
+      score = 0;
+      userAnswers = [];
+      document.getElementById('quiz-box').style.display = 'block';
+      document.querySelector('.quiz-navigation').style.display = 'block';
+      document.getElementById('results-box').style.display = 'none';
+      renderQuestion();
+    }
+
+    // Mobile menu toggle
+    document.getElementById('mobileMenuBtn').addEventListener('click', function() {
+      const nav = document.getElementById('mainNav');
+      nav.style.display = nav.style.display === 'none' ? 'block' : 'none';
+    });
+
+    // Initialize
+    renderQuestion();
+  </script>
+</body>
+</html>
