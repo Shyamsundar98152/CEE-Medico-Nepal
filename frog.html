@@ -1,0 +1,937 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Frog - CEE Medico Nepal</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+  <style>
+    :root {
+      --primary-color: #2c3e50;
+      --secondary-color: #3498db;
+      --accent-color: #e74c3c;
+      --light-color: #ecf0f1;
+      --text-color: #333;
+      --botany-color: #2ecc71;
+      --physics-color: #9b59b6;
+      --chemistry-color: #e67e22;
+      --zoology-color: #16a085;
+      --mat-color: #c0392b;
+    }
+
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    }
+
+    body {
+      line-height: 1.6;
+      color: var(--text-color);
+      background-color: #f9f9f9;
+      display: flex;
+      flex-direction: column;
+      min-height: 100vh;
+    }
+
+    .container {
+      width: 100%;
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 0 20px;
+    }
+
+    a {
+      text-decoration: none;
+      color: inherit;
+    }
+
+    img {
+      max-width: 100%;
+      height: auto;
+    }
+
+    /* Header Styles */
+    header {
+      background-color: var(--primary-color);
+      color: white;
+      padding: 1rem 0;
+      box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+      position: sticky;
+      top: 0;
+      z-index: 100;
+    }
+
+    .header-container {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .logo {
+      display: flex;
+      align-items: center;
+    }
+
+    .logo img {
+      height: 50px;
+      margin-right: 10px;
+    }
+
+    .logo-text h1 {
+      font-size: 1.5rem;
+      font-weight: 700;
+      margin-bottom: 0.2rem;
+      color: white;
+    }
+
+    .logo-text p {
+      font-size: 0.8rem;
+      color: var(--light-color);
+      opacity: 0.8;
+    }
+
+    nav ul {
+      display: flex;
+      list-style: none;
+    }
+
+    nav ul li {
+      position: relative;
+      margin-left: 1.5rem;
+    }
+
+    nav ul li a {
+      color: white;
+      text-decoration: none;
+      font-weight: 500;
+      transition: color 0.3s;
+      font-size: 1rem;
+      display: flex;
+      align-items: center;
+      gap: 5px;
+    }
+
+    nav ul li a:hover {
+      color: var(--secondary-color);
+    }
+
+    .dropdown-menu {
+      position: absolute;
+      top: 100%;
+      left: 0;
+      background-color: white;
+      min-width: 200px;
+      box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+      border-radius: 5px;
+      padding: 10px 0;
+      opacity: 0;
+      visibility: hidden;
+      transition: all 0.3s;
+      z-index: 10;
+    }
+
+    .dropdown:hover .dropdown-menu {
+      opacity: 1;
+      visibility: visible;
+    }
+
+    .dropdown-menu li {
+      margin: 0;
+      padding: 0;
+    }
+
+    .dropdown-menu li a {
+      color: var(--text-color);
+      padding: 8px 20px;
+      display: block;
+      font-size: 0.9rem;
+    }
+
+    .dropdown-menu li a:hover {
+      background-color: var(--light-color);
+      color: var(--primary-color);
+    }
+
+    .mobile-menu-btn {
+      display: none;
+      background: none;
+      border: none;
+      color: white;
+      font-size: 1.5rem;
+      cursor: pointer;
+    }
+
+    /* Quiz Hero Section */
+    .quiz-hero {
+      text-align: center;
+      background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+      color: white;
+      padding: 3rem 0;
+      background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+    }
+
+    .quiz-hero h2 {
+      font-size: 2rem;
+      margin-bottom: 1rem;
+    }
+
+    .quiz-hero p {
+      font-size: 1.1rem;
+      opacity: 0.9;
+    }
+
+    /* Quiz Container */
+    .quiz-container {
+      margin: 2rem auto;
+      flex: 1;
+    }
+
+    .quiz-question {
+      background: white;
+      border-radius: 8px;
+      padding: 1.5rem;
+      margin-bottom: 1rem;
+      box-shadow: 0 5px 15px rgba(0,0,0,0.05);
+    }
+
+    .quiz-option {
+      padding: 1rem;
+      background-color: var(--light-color);
+      border-radius: 5px;
+      margin-bottom: 0.5rem;
+      cursor: pointer;
+      transition: all 0.3s;
+    }
+
+    .quiz-option:hover {
+      background-color: #dcdcdc;
+    }
+
+    .quiz-option.correct {
+      border: 2px solid var(--botany-color);
+      background-color: #e8f8f5;
+    }
+
+    .quiz-option.incorrect {
+      border: 2px solid var(--accent-color);
+      background-color: #fdecea;
+    }
+
+    .quiz-explanation {
+      display: none;
+      padding: 1rem;
+      border-left: 5px solid var(--secondary-color);
+      margin-top: 1rem;
+      background-color: #f0f0f0;
+      border-radius: 0 5px 5px 0;
+    }
+
+    .quiz-navigation {
+      margin-top: 2rem;
+      text-align: center;
+    }
+
+    .quiz-navigation button {
+      margin: 0 0.5rem;
+      padding: 0.7rem 1.5rem;
+      border: none;
+      background-color: var(--secondary-color);
+      color: white;
+      border-radius: 5px;
+      cursor: pointer;
+      transition: all 0.3s;
+      font-weight: 600;
+    }
+
+    .quiz-navigation button:hover {
+      background-color: #2980b9;
+    }
+
+    .quiz-results {
+      display: none;
+      text-align: center;
+      padding: 2rem;
+      background: white;
+      border-radius: 10px;
+      box-shadow: 0 5px 10px rgba(0,0,0,0.1);
+      margin: 2rem 0;
+    }
+
+    .quiz-results h2 {
+      color: var(--primary-color);
+      margin-bottom: 1rem;
+    }
+
+    .quiz-results button {
+      margin-top: 1rem;
+      padding: 0.8rem 1.8rem;
+      background-color: var(--accent-color);
+      color: white;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+      font-weight: 600;
+      transition: all 0.3s;
+    }
+
+    .quiz-results button:hover {
+      background-color: #c0392b;
+    }
+
+    /* Footer Styles */
+    footer {
+      background-color: var(--primary-color);
+      color: white;
+      padding: 3rem 0 1.5rem;
+      margin-top: auto;
+    }
+
+    .footer-container {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+      gap: 2rem;
+      margin-bottom: 2rem;
+    }
+
+    .footer-column h3 {
+      font-size: 1.3rem;
+      margin-bottom: 1.5rem;
+      position: relative;
+      padding-bottom: 0.5rem;
+    }
+
+    .footer-column h3::after {
+      content: '';
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      width: 50px;
+      height: 3px;
+      background-color: var(--secondary-color);
+    }
+
+    .footer-column ul {
+      list-style: none;
+    }
+
+    .footer-column ul li {
+      margin-bottom: 0.8rem;
+    }
+
+    .footer-column ul li a {
+      color: #ecf0f1;
+      transition: color 0.3s;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .footer-column ul li a:hover {
+      color: var(--secondary-color);
+    }
+
+    .social-links {
+      display: flex;
+      gap: 1rem;
+      margin-top: 1rem;
+    }
+
+    .social-links a {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+      background-color: rgba(255, 255, 255, 0.1);
+      transition: all 0.3s;
+    }
+
+    .social-links a:hover {
+      background-color: var(--secondary-color);
+      transform: translateY(-3px);
+    }
+
+    .copyright {
+      text-align: center;
+      padding-top: 1.5rem;
+      border-top: 1px solid rgba(255, 255, 255, 0.1);
+      font-size: 0.9rem;
+      color: #bdc3c7;
+    }
+
+    /* Responsive Styles */
+    @media (max-width: 992px) {
+      .logo-text h1 {
+        font-size: 1.3rem;
+      }
+      
+      nav ul li {
+        margin-left: 1rem;
+      }
+    }
+
+    @media (max-width: 768px) {
+      .header-container {
+        flex-direction: column;
+        text-align: center;
+      }
+      
+      .logo {
+        margin-bottom: 1rem;
+        justify-content: center;
+      }
+      
+      nav {
+        width: 100%;
+      }
+      
+      nav ul {
+        justify-content: center;
+      }
+      
+      .quiz-hero h2 {
+        font-size: 1.8rem;
+      }
+    }
+
+    @media (max-width: 576px) {
+      .header-container {
+        flex-direction: row;
+        justify-content: space-between;
+      }
+      
+      .logo {
+        margin-bottom: 0;
+      }
+      
+      nav {
+        display: none;
+      }
+      
+      .mobile-menu-btn {
+        display: block;
+      }
+      
+      .quiz-hero h2 {
+        font-size: 1.5rem;
+      }
+      
+      .quiz-hero p {
+        font-size: 1rem;
+      }
+      
+      .quiz-navigation {
+        display: flex;
+        flex-direction: column;
+        gap: 0.5rem;
+      }
+      
+      .quiz-navigation button {
+        width: 100%;
+        margin: 0.2rem 0;
+      }
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <div class="container header-container">
+      <div class="logo">
+        <img src="/img/Logo.png" alt="CEE Medico Nepal Logo">
+        <div class="logo-text">
+          <h1>CEE Medico Nepal</h1>
+          <p>MBBS Entrance Preparation</p>
+        </div>
+      </div>
+      
+      <button class="mobile-menu-btn" id="mobileMenuBtn">
+        <i class="fas fa-bars"></i>
+      </button>
+      
+      <nav id="mainNav">
+        <ul>
+          <li><a href="index.html">Home</a></li>
+          <li class="dropdown">
+            <a href="#">Subjects <i class="fas fa-chevron-down"></i></a>
+            <ul class="dropdown-menu">
+              <li><a href="physics.html">Physics</a></li>
+              <li><a href="chemistry.html">Chemistry</a></li>
+              <li><a href="botany.html">Botany</a></li>
+              <li><a href="zoology.html">Zoology</a></li>
+              <li><a href="mat.html">MAT</a></li>
+            </ul>
+          </li>
+          <li><a href="#">Practice</a></li>
+          <li><a href="#">Mock Tests</a></li>
+          <li><a href="/Blog/blog.html">Blog</a></li>
+          <li><a href="contact.html">Contact</a></li>
+        </ul>
+      </nav>
+    </div>
+  </header>
+
+  <section class="quiz-hero">
+    <div class="container">
+      <h2>Test Your Knowledge on Frog</h2>
+      <p>Essential questions for MBBS Entrance Preparation in Nepal</p>
+    </div>
+  </section>
+
+  <main class="container quiz-container">
+    <div id="quiz-box"></div>
+
+    <div class="quiz-navigation">
+      <button onclick="prevQuestion()">Previous</button>
+      <button onclick="nextQuestion()">Next</button>
+      <button onclick="submitQuiz()">Submit</button>
+    </div>
+
+    <div class="quiz-results" id="results-box">
+      <h2>Quiz Completed!</h2>
+      <p id="score-text"></p>
+      <button onclick="restartQuiz()">Retake Quiz</button>
+    </div>
+  </main>
+
+  <footer>
+    <div class="container">
+      <div class="footer-container">
+        <div class="footer-column">
+          <h3>About Us</h3>
+          <p>CEE Medico Nepal is a premier institute dedicated to helping students prepare for MBBS entrance examinations in Nepal with comprehensive study materials and expert guidance.</p>
+        </div>
+        
+        <div class="footer-column">
+          <h3>Quick Links</h3>
+          <ul>
+            <li><a href="index.html"><i class="fas fa-home"></i> Home</a></li>
+            <li><a href="/Blog/blog.html"><i class="fas fa-blog"></i> Blog</a></li>
+            <li><a href="contact.html"><i class="fas fa-envelope"></i> Contact</a></li>
+          </ul>
+        </div>
+        
+        <div class="footer-column">
+          <h3>Subjects</h3>
+          <ul>
+            <li><a href="physics.html"><i class="fas fa-atom"></i> Physics</a></li>
+            <li><a href="chemistry.html"><i class="fas fa-flask"></i> Chemistry</a></li>
+            <li><a href="botany.html"><i class="fas fa-leaf"></i> Botany</a></li>
+            <li><a href="zoology.html"><i class="fas fa-paw"></i> Zoology</a></li>
+            <li><a href="mat.html"><i class="fas fa-square-root-alt"></i> MAT</a></li>
+          </ul>
+        </div>
+        
+        <div class="footer-column">
+          <h3>Connect With Us</h3>
+          <p><i class="fas fa-map-marker-alt"></i> Kathmandu, Nepal</p>
+          <p><i class="fas fa-phone"></i> +977 9812240229</p>
+          <p><i class="fas fa-envelope"></i> info@ceemediconepal.xyz</p>
+          
+          <div class="social-links">
+            <a href="https://www.facebook.com/techgy.shyamsundar"><i class="fab fa-facebook-f"></i></a>
+            <a href="https://www.instagram.com/shyamsundar98122/"><i class="fab fa-instagram"></i></a>
+            <a href="https://www.youtube.com/@ceemediconepal"><i class="fab fa-youtube"></i></a>
+           
+          </div>
+        </div>
+      </div>
+      
+      <div class="copyright">
+        <p>&copy; 2025 CEE Medico Nepal. All Rights Reserved.</p>
+      </div>
+    </div>
+  </footer>
+
+  <script>
+    const quizData = [
+
+
+
+
+      
+{
+    question: "1. The scientific name of frog commonly found in Nepal is:",
+    options: ["A) Rana tigrina", "B) Rana hexadactyla", "C) Rana temporaria", "D) Rana tigerina"],
+    correct: 3,
+    explanation: "The commonly found frog in Nepal is *Rana tigerina*, also known as the Indian bullfrog."
+},
+{
+    question: "2. Frogs belong to which class of vertebrates?",
+    options: ["A) Reptilia", "B) Aves", "C) Amphibia", "D) Pisces"],
+    correct: 2,
+    explanation: "Frogs are cold-blooded animals with dual mode of life, hence placed in class Amphibia."
+},
+{
+    question: "3. Which structure in frog is responsible for sound production?",
+    options: ["A) Glottis", "B) Trachea", "C) Vocal cords", "D) Larynx"],
+    correct: 3,
+    explanation: "Vocal cords in frogs, present in larynx, are responsible for sound production."
+},
+{
+    question: "4. In male frogs, sound-producing structures are better developed due to:",
+    options: ["A) Hormones", "B) Vocal sacs", "C) Larger lungs", "D) Buccal cavity"],
+    correct: 1,
+    explanation: "Male frogs have better-developed vocal cords and vocal sacs under hormonal influence."
+},
+{
+    question: "5. Which of the following is the excretory organ in frog?",
+    options: ["A) Kidney", "B) Malpighian tubules", "C) Flame cells", "D) Nephridia"],
+    correct: 0,
+    explanation: "Frogs have mesonephric kidneys as excretory organs."
+},
+{
+    question: "6. Which blood vessel carries oxygenated blood in frog?",
+    options: ["A) Pulmonary vein", "B) Pulmonary artery", "C) Renal portal vein", "D) Anterior vena cava"],
+    correct: 0,
+    explanation: "Pulmonary vein carries oxygenated blood from lungs to heart."
+},
+{
+    question: "7. Which chamber of frog's heart receives oxygenated blood?",
+    options: ["A) Right atrium", "B) Left atrium", "C) Ventricle", "D) Sinus venosus"],
+    correct: 1,
+    explanation: "Left atrium receives oxygenated blood from lungs via pulmonary vein."
+},
+{
+    question: "8. Number of chambers in frog's heart is:",
+    options: ["A) Two", "B) Three", "C) Four", "D) Five"],
+    correct: 1,
+    explanation: "Frog’s heart has three chambers – two atria and one ventricle."
+},
+{
+    question: "9. The skin of frog helps in:",
+    options: ["A) Digestion", "B) Excretion", "C) Respiration", "D) Reproduction"],
+    correct: 2,
+    explanation: "Frog respire through skin (cutaneous respiration) when underwater."
+},
+{
+    question: "10. The cloaca in frog is a common passage for:",
+    options: ["A) Excretory and digestive systems", "B) Reproductive and digestive systems", "C) Digestive, reproductive, and excretory systems", "D) Only digestive system"],
+    correct: 2,
+    explanation: "Cloaca is the common opening for digestive, reproductive and excretory systems in frogs."
+},
+{
+    question: "11. How many pairs of cranial nerves are present in frog?",
+    options: ["A) 10", "B) 12", "C) 8", "D) 9"],
+    correct: 0,
+    explanation: "Frogs have 10 pairs of cranial nerves."
+},
+{
+    question: "12. Nictitating membrane in frog is used for:",
+    options: ["A) Hearing", "B) Feeding", "C) Cleaning the eye", "D) Olfaction"],
+    correct: 2,
+    explanation: "Nictitating membrane helps protect and clean the frog's eye."
+},
+{
+    question: "13. Fertilization in frog is:",
+    options: ["A) Internal", "B) External", "C) Self", "D) Absent"],
+    correct: 1,
+    explanation: "Fertilization in frogs is external, occurs in water."
+},
+{
+    question: "14. The respiratory structure of tadpole is:",
+    options: ["A) Skin", "B) Lungs", "C) Gills", "D) Spiracles"],
+    correct: 2,
+    explanation: "Tadpoles respire through gills which are later replaced by lungs."
+},
+{
+    question: "15. The voice box in frog is called:",
+    options: ["A) Glottis", "B) Larynx", "C) Trachea", "D) Buccopharyngeal cavity"],
+    correct: 1,
+    explanation: "Larynx acts as the voice box in frogs."
+},
+{
+    question: "16. The blood of frog is:",
+    options: ["A) Without hemoglobin", "B) Red due to copper", "C) Blue", "D) Red due to hemoglobin"],
+    correct: 3,
+    explanation: "Frog blood is red due to presence of hemoglobin in RBCs."
+},
+{
+    question: "17. The type of teeth present in frog is:",
+    options: ["A) Acrodont", "B) Thecodont", "C) Pleurodont", "D) Homodont"],
+    correct: 0,
+    explanation: "Frogs have acrodont teeth, meaning they are attached to the surface of the jaw."
+},
+{
+    question: "18. The largest organ in the body cavity of frog is:",
+    options: ["A) Heart", "B) Liver", "C) Kidney", "D) Lungs"],
+    correct: 1,
+    explanation: "Liver is the largest internal organ in frog."
+},
+{
+    question: "19. Frogs absorb water through:",
+    options: ["A) Mouth", "B) Gills", "C) Skin", "D) Anus"],
+    correct: 2,
+    explanation: "Frogs absorb water through their moist skin."
+},
+{
+    question: "20. The main nitrogenous waste in frog is:",
+    options: ["A) Ammonia", "B) Urea", "C) Uric acid", "D) Creatinine"],
+    correct: 1,
+    explanation: "Frogs are ureotelic animals and excrete urea."
+},
+{
+    question: "21. In frog, urine is stored in:",
+    options: ["A) Cloaca", "B) Kidney", "C) Bladder", "D) Intestine"],
+    correct: 2,
+    explanation: "Urinary bladder stores urine before it is released through cloaca."
+},
+{
+    question: "22. Frog's heart is covered by a membrane called:",
+    options: ["A) Peritoneum", "B) Pleura", "C) Pericardium", "D) Epicardium"],
+    correct: 2,
+    explanation: "The heart is enclosed in a protective sac called pericardium."
+},
+{
+    question: "23. The organ that helps in buoyancy in frog is:",
+    options: ["A) Liver", "B) Lungs", "C) Skin", "D) Gall bladder"],
+    correct: 1,
+    explanation: "Lungs help frog float in water, aiding in buoyancy."
+},
+{
+    question: "24. Which of the following is a vestigial organ in frog?",
+    options: ["A) Tongue", "B) Gall bladder", "C) Tympanum", "D) Nictitating membrane"],
+    correct: 3,
+    explanation: "Nictitating membrane is a vestigial organ in frogs."
+},
+{
+    question: "25. The function of tympanum in frog is:",
+    options: ["A) Respiration", "B) Digestion", "C) Hearing", "D) Circulation"],
+    correct: 2,
+    explanation: "Tympanum in frog functions as an external ear for hearing."
+},
+{
+    question: "26. In frogs, the opening of the Eustachian tube is located in the:",
+    options: ["A) Tympanum", "B) Buccal cavity", "C) Pharynx", "D) Mouth floor"],
+    correct: 1,
+    explanation: "Eustachian tubes open in the buccal cavity to equalize air pressure on the tympanum."
+},
+{
+    question: "27. In frogs, fat bodies are associated with:",
+    options: ["A) Protection", "B) Digestion", "C) Reproduction and hibernation", "D) Respiration"],
+    correct: 2,
+    explanation: "Fat bodies store energy and help during hibernation and breeding."
+},
+{
+    question: "28. The locomotion in frogs is aided by:",
+    options: ["A) Forelimbs", "B) Hind limbs", "C) Tail", "D) Skin folds"],
+    correct: 1,
+    explanation: "Hind limbs are long and powerful, aiding in leaping and swimming."
+},
+{
+    question: "29. The lungs in frog are connected to buccal cavity through:",
+    options: ["A) Bronchi", "B) Trachea", "C) Glottis", "D) Gullet"],
+    correct: 2,
+    explanation: "Glottis is the slit-like opening through which air enters the lungs from buccal cavity."
+},
+{
+    question: "30. During aestivation, frogs:",
+    options: ["A) Hibernate", "B) Breed", "C) Become active", "D) Shed skin"],
+    correct: 0,
+    explanation: "Aestivation is a dormant state during hot and dry conditions."
+},
+{
+    question: "31. Frogs shed their skin to:",
+    options: ["A) Avoid parasites", "B) Grow in size", "C) Excrete nitrogen", "D) Avoid predators"],
+    correct: 1,
+    explanation: "Frogs shed skin regularly to accommodate growth and maintain skin function."
+},
+{
+    question: "32. The number of vertebrae in the vertebral column of frog is:",
+    options: ["A) 7", "B) 10", "C) 9", "D) 12"],
+    correct: 2,
+    explanation: "The vertebral column of frog has 9 vertebrae followed by a urostyle."
+},
+{
+    question: "33. Urostyle in frog is formed by fusion of:",
+    options: ["A) Ribs", "B) Tail vertebrae", "C) Pelvis", "D) Sternum"],
+    correct: 1,
+    explanation: "Urostyle is a rod-like structure formed by fusion of tail vertebrae."
+},
+{
+    question: "34. Which gland produces bile in frog?",
+    options: ["A) Gall bladder", "B) Stomach", "C) Pancreas", "D) Liver"],
+    correct: 3,
+    explanation: "Liver produces bile, which is stored in the gall bladder."
+},
+{
+    question: "35. The bile from liver helps in:",
+    options: ["A) Protein digestion", "B) Emulsification of fat", "C) Carbohydrate breakdown", "D) Vitamin synthesis"],
+    correct: 1,
+    explanation: "Bile salts emulsify fats into smaller droplets for enzyme action."
+},
+{
+    question: "36. Gastric glands in frog stomach secrete:",
+    options: ["A) Bile", "B) Pepsin", "C) Lipase", "D) Insulin"],
+    correct: 1,
+    explanation: "Pepsin is secreted by gastric glands for protein digestion."
+},
+{
+    question: "37. Pancreas in frog secretes:",
+    options: ["A) Only insulin", "B) Enzymes and hormones", "C) Only enzymes", "D) Mucus"],
+    correct: 1,
+    explanation: "Pancreas secretes digestive enzymes and hormones like insulin."
+},
+{
+    question: "38. In frog, respiration occurs through skin in:",
+    options: ["A) Aquatic condition only", "B) Aestivation only", "C) Hibernation only", "D) Both hibernation and aquatic conditions"],
+    correct: 3,
+    explanation: "During both hibernation and aquatic life, frogs respire through skin."
+},
+{
+    question: "39. Male frog can be distinguished by:",
+    options: ["A) Vocal sac", "B) Nictitating membrane", "C) Absence of tympanum", "D) Longer tongue"],
+    correct: 0,
+    explanation: "Male frogs have vocal sacs to produce mating calls."
+},
+{
+    question: "40. The reproductive ducts in male frog open into the:",
+    options: ["A) Cloaca", "B) Bladder", "C) Testes", "D) Intestine"],
+    correct: 0,
+    explanation: "Sperms from testes pass through ducts and open into cloaca."
+},
+{
+    question: "41. Which one is not a function of frog's skin?",
+    options: ["A) Respiration", "B) Water absorption", "C) Reproduction", "D) Protection"],
+    correct: 2,
+    explanation: "Frog’s skin is not involved in reproduction."
+},
+{
+    question: "42. Ovaries in female frog release eggs into:",
+    options: ["A) Oviduct", "B) Cloaca", "C) Coelomic cavity", "D) Fallopian tube"],
+    correct: 2,
+    explanation: "Eggs from ovaries are first released into the coelomic cavity."
+},
+{
+    question: "43. The optic lobes in frog are part of:",
+    options: ["A) Cerebellum", "B) Cerebrum", "C) Diencephalon", "D) Midbrain"],
+    correct: 3,
+    explanation: "Optic lobes, located in midbrain, control vision in frogs."
+},
+{
+    question: "44. The Jacobson's organ in frogs is concerned with:",
+    options: ["A) Hearing", "B) Smell", "C) Vision", "D) Balance"],
+    correct: 1,
+    explanation: "Jacobson’s organ is an olfactory structure found in the roof of buccal cavity."
+},
+{
+    question: "45. The digestion of protein begins in frog at:",
+    options: ["A) Mouth", "B) Esophagus", "C) Stomach", "D) Intestine"],
+    correct: 2,
+    explanation: "Protein digestion starts in the stomach with pepsin."
+},
+{
+    question: "46. Vasa efferentia in frogs are associated with:",
+    options: ["A) Blood vessels", "B) Excretory system", "C) Nervous system", "D) Reproductive system"],
+    correct: 3,
+    explanation: "Vasa efferentia carry sperms from testes to kidneys in frogs."
+},
+{
+    question: "47. Number of fingers in frog’s forelimb is:",
+    options: ["A) Three", "B) Four", "C) Five", "D) Six"],
+    correct: 1,
+    explanation: "Forelimbs of frogs have four fingers while hindlimbs have five toes."
+},
+{
+    question: "48. Respiratory surface in buccal cavity of frog is lined with:",
+    options: ["A) Glandular epithelium", "B) Keratinized epithelium", "C) Ciliated epithelium", "D) Vascular epithelium"],
+    correct: 3,
+    explanation: "Buccal cavity has vascular epithelium for buccopharyngeal respiration."
+},
+{
+    question: "49. The part of frog brain controlling body balance is:",
+    options: ["A) Cerebrum", "B) Cerebellum", "C) Medulla", "D) Optic lobe"],
+    correct: 1,
+    explanation: "Cerebellum coordinates muscular movements and body balance."
+},
+{
+    question: "50. The copulatory pad in frog is present on:",
+    options: ["A) Hind limbs", "B) Thumb of forelimb", "C) Head", "D) Abdomen"],
+    correct: 1,
+    explanation: "Male frogs have copulatory pads on thumb of forelimbs to grasp females during mating."
+}
+
+
+
+
+    ];
+
+    let current = 0;
+    let score = 0;
+    let userAnswers = [];
+
+    function renderQuestion() {
+      const q = quizData[current];
+      let html = '<div class="quiz-question">';
+      html += `<h3>Q${current + 1}. ${q.question}</h3>`;
+      q.options.forEach((opt, i) => {
+        html += `<div class="quiz-option" onclick="selectOption(${i})">${opt}</div>`;
+      });
+      html += `<div class="quiz-explanation" id="explanation">${q.explanation}</div>`;
+      html += '</div>';
+      document.getElementById('quiz-box').innerHTML = html;
+    }
+
+    function selectOption(index) {
+      const options = document.querySelectorAll('.quiz-option');
+      options.forEach((el, i) => {
+        el.classList.remove('correct', 'incorrect');
+        if (i === index) {
+          if (i === quizData[current].correct) {
+            el.classList.add('correct');
+            score++;
+          } else {
+            el.classList.add('incorrect');
+            options[quizData[current].correct].classList.add('correct');
+          }
+        }
+        el.onclick = null;
+      });
+      document.getElementById('explanation').style.display = 'block';
+      userAnswers[current] = index;
+    }
+
+    function nextQuestion() {
+      if (current < quizData.length - 1) {
+        current++;
+        renderQuestion();
+      }
+    }
+
+    function prevQuestion() {
+      if (current > 0) {
+        current--;
+        renderQuestion();
+      }
+    }
+
+    function submitQuiz() {
+      document.getElementById('quiz-box').style.display = 'none';
+      document.querySelector('.quiz-navigation').style.display = 'none';
+      document.getElementById('results-box').style.display = 'block';
+      document.getElementById('score-text').innerText = `You scored ${score} out of ${quizData.length}`;
+    }
+
+    function restartQuiz() {
+      current = 0;
+      score = 0;
+      userAnswers = [];
+      document.getElementById('quiz-box').style.display = 'block';
+      document.querySelector('.quiz-navigation').style.display = 'block';
+      document.getElementById('results-box').style.display = 'none';
+      renderQuestion();
+    }
+
+    // Mobile menu toggle
+    document.getElementById('mobileMenuBtn').addEventListener('click', function() {
+      const nav = document.getElementById('mainNav');
+      nav.style.display = nav.style.display === 'none' ? 'block' : 'none';
+    });
+
+    // Initialize
+    renderQuestion();
+  </script>
+</body>
+</html>
