@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Login</title>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script>
+</head>
+<body>
+  <h2>Login to Your Site</h2>
+  <input type="email" id="email" placeholder="Email"><br>
+  <input type="password" id="password" placeholder="Password"><br>
+  <button onclick="login()">Login</button>
+  <button onclick="signup()">Sign Up</button>
+  <p id="msg"></p>
+
+  <script>
+    const supabase = supabase.createClient(
+      'https://hevzgxaicjpkboysnakt.supabase.co',
+      'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImhldnpneGFpY2pwa2JveXNuYWt0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDgxNzc3ODcsImV4cCI6MjA2Mzc1Mzc4N30.1G2m4yvU9ek-qAYZGcBN1kTtIQIPiyUkg8uQuFyEq1g'
+    );
+
+    async function login() {
+      const email = document.getElementById("email").value;
+      const password = document.getElementById("password").value;
+      const { error } = await supabase.auth.signInWithPassword({ email, password });
+
+      if (error) {
+        document.getElementById("msg").innerText = "Login failed: " + error.message;
+      } else {
+        window.location.href = "index.html";
+      }
+    }
+
+    async function signup() {
+      const email = document.getElementById("email").value;
+      const password = document.getElementById("password").value;
+      const { error } = await supabase.auth.signUp({ email, password });
+
+      if (error) {
+        document.getElementById("msg").innerText = "Signup failed: " + error.message;
+      } else {
+        document.getElementById("msg").innerText = "Signup successful! Check your email.";
+      }
+    }
+  </script>
+</body>
+</html>
