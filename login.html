@@ -1,43 +1,97 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-  <title>Login Page</title>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Modern Login Page</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css"/>
+
+  <!-- 🔽 Your CSS here (exactly what you provided above) -->
+  <style>
+    /* ... all your CSS unchanged ... */
+  </style>
 </head>
 <body>
-  <h2>Login</h2>
-  <input type="email" id="email" placeholder="Email"><br>
-  <input type="password" id="password" placeholder="Password"><br>
-  <button id="loginBtn">Login</button>
-  <p id="message"></p>
+  <div class="login-container">
+    <div class="login-header">
+      <h1>Welcome Back</h1>
+      <p>Please login to your account</p>
+    </div>
+    
+    <form class="login-form" id="loginForm">
+      <div class="form-group">
+        <label for="username">Email</label>
+        <i class="fas fa-user"></i>
+        <input type="email" id="email" placeholder="Enter your email" required />
+      </div>
+      
+      <div class="form-group">
+        <label for="password">Password</label>
+        <i class="fas fa-lock"></i>
+        <input type="password" id="password" placeholder="Enter your password" required />
+      </div>
+      
+      <div class="remember-forgot">
+        <div class="remember-me">
+          <input type="checkbox" id="remember">
+          <label for="remember">Remember me</label>
+        </div>
+        <div class="forgot-password">
+          <a href="#">Forgot password?</a>
+        </div>
+      </div>
+      
+      <button type="submit" class="login-button">Login</button>
+      
+      <div class="social-login">
+        <p>Or login with</p>
+        <div class="social-icons">
+          <div class="social-icon facebook"><i class="fab fa-facebook-f"></i></div>
+          <div class="social-icon twitter"><i class="fab fa-twitter"></i></div>
+          <div class="social-icon google"><i class="fab fa-google"></i></div>
+        </div>
+      </div>
+      
+      <div class="signup-link">
+        Don't have an account? <a href="#">Sign up</a>
+      </div>
+    </form>
+  </div>
 
+  <!-- 🔽 Firebase Scripts -->
   <script type="module">
+    // Import Firebase
     import { initializeApp } from "https://www.gstatic.com/firebasejs/11.8.1/firebase-app.js";
     import { getAuth, signInWithEmailAndPassword } from "https://www.gstatic.com/firebasejs/11.8.1/firebase-auth.js";
 
+    // Your Firebase config
     const firebaseConfig = {
       apiKey: "AIzaSyB66MZa0WZk3WPydcjmCDu7P_CE0FD60ug",
       authDomain: "login-2f07b.firebaseapp.com",
       projectId: "login-2f07b",
-      storageBucket: "login-2f07b.firebasestorage.app",
+      storageBucket: "login-2f07b.appspot.com",
       messagingSenderId: "709252763741",
       appId: "1:709252763741:web:b3902697cc9c8b157a7db4",
       measurementId: "G-G7ZY1MJ106"
     };
 
+    // Initialize Firebase
     const app = initializeApp(firebaseConfig);
     const auth = getAuth(app);
 
-    document.getElementById("loginBtn").addEventListener("click", () => {
+    // Handle Login
+    document.getElementById("loginForm").addEventListener("submit", function (e) {
+      e.preventDefault();
       const email = document.getElementById("email").value;
       const password = document.getElementById("password").value;
 
       signInWithEmailAndPassword(auth, email, password)
         .then((userCredential) => {
-          // Login successful
-          window.location.href = "protected.html";
+          alert("✅ Login successful!");
+          window.location.href = "protected.html"; // 🔒 redirect to protected page
         })
         .catch((error) => {
-          document.getElementById("message").innerText = "Login failed: " + error.message;
+          alert("❌ Login failed: " + error.message);
         });
     });
   </script>
