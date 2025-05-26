@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Forgot Password</title>
+  <style>
+    body {
+      background: linear-gradient(135deg, #667eea, #764ba2);
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+      font-family: 'Segoe UI', sans-serif;
+    }
+
+    .reset-container {
+      background: #fff;
+      padding: 30px;
+      border-radius: 12px;
+      box-shadow: 0 8px 20px rgba(0, 0, 0, 0.2);
+      width: 300px;
+      text-align: center;
+    }
+
+    input {
+      width: 100%;
+      padding: 12px;
+      margin: 15px 0;
+      border-radius: 8px;
+      border: 1px solid #ccc;
+    }
+
+    button {
+      width: 100%;
+      padding: 12px;
+      background: #667eea;
+      color: white;
+      border: none;
+      border-radius: 8px;
+      font-weight: bold;
+      cursor: pointer;
+    }
+
+    button:hover {
+      background: #556cd6;
+    }
+
+    .message {
+      margin-top: 15px;
+      color: red;
+    }
+  </style>
+</head>
+<body>
+
+<div class="reset-container">
+  <h2>Reset Password</h2>
+  <input type="email" id="resetEmail" placeholder="Enter your email" required />
+  <button onclick="resetPassword()">Send Reset Email</button>
+  <div class="message" id="resetMessage"></div>
+</div>
+
+<!-- Firebase -->
+<script type="module">
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/11.8.1/firebase-app.js";
+  import { getAuth, sendPasswordResetEmail } from "https://www.gstatic.com/firebasejs/11.8.1/firebase-auth.js";
+
+  const firebaseConfig = {
+    apiKey: "AIzaSyB66MZa0WZk3WPydcjmCDu7P_CE0FD60ug",
+    authDomain: "login-2f07b.firebaseapp.com",
+    projectId: "login-2f07b",
+    storageBucket: "login-2f07b.appspot.com",
+    messagingSenderId: "709252763741",
+    appId: "1:709252763741:web:b3902697cc9c8b157a7db4",
+    measurementId: "G-G7ZY1MJ106"
+  };
+
+  const app = initializeApp(firebaseConfig);
+  const auth = getAuth(app);
+
+  window.resetPassword = function () {
+    const email = document.getElementById('resetEmail').value;
+    const message = document.getElementById('resetMessage');
+
+    sendPasswordResetEmail(auth, email)
+      .then(() => {
+        message.style.color = 'green';
+        message.textContent = 'Password reset email sent!';
+      })
+      .catch((error) => {
+        message.style.color = 'red';
+        message.textContent = 'Error: ' + error.message;
+      });
+  };
+</script>
+
+</body>
+</html>
