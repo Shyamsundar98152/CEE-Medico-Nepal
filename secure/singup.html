@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Sign Up</title>
+  <style>
+    body {
+      background: linear-gradient(135deg, #667eea, #764ba2);
+      height: 100vh;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      font-family: 'Segoe UI', sans-serif;
+    }
+
+    .signup-container {
+      background: white;
+      padding: 30px;
+      border-radius: 15px;
+      width: 300px;
+      box-shadow: 0 10px 25px rgba(0,0,0,0.2);
+    }
+
+    input {
+      width: 100%;
+      padding: 10px;
+      margin-top: 10px;
+      margin-bottom: 20px;
+      border-radius: 8px;
+      border: 1px solid #ccc;
+    }
+
+    button {
+      width: 100%;
+      padding: 12px;
+      background: #667eea;
+      color: white;
+      font-size: 16px;
+      font-weight: bold;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+    }
+
+    button:hover {
+      background: #556cd6;
+    }
+
+    .message {
+      margin-top: 10px;
+      color: red;
+      text-align: center;
+    }
+  </style>
+</head>
+<body>
+  <div class="signup-container">
+    <h2>Create Account</h2>
+    <input type="email" id="signupEmail" placeholder="Email" required />
+    <input type="password" id="signupPassword" placeholder="Password" required />
+    <button onclick="signup()">Sign Up</button>
+    <div class="message" id="message"></div>
+  </div>
+
+  <!-- Firebase SDKs -->
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/11.8.1/firebase-app.js";
+    import { getAuth, createUserWithEmailAndPassword } from "https://www.gstatic.com/firebasejs/11.8.1/firebase-auth.js";
+
+    const firebaseConfig = {
+      apiKey: "AIzaSyB66MZa0WZk3WPydcjmCDu7P_CE0FD60ug",
+      authDomain: "login-2f07b.firebaseapp.com",
+      projectId: "login-2f07b",
+      storageBucket: "login-2f07b.appspot.com",
+      messagingSenderId: "709252763741",
+      appId: "1:709252763741:web:b3902697cc9c8b157a7db4",
+      measurementId: "G-G7ZY1MJ106"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const auth = getAuth(app);
+
+    window.signup = function () {
+      const email = document.getElementById("signupEmail").value;
+      const password = document.getElementById("signupPassword").value;
+      const msg = document.getElementById("message");
+
+      createUserWithEmailAndPassword(auth, email, password)
+        .then((userCredential) => {
+          msg.style.color = "green";
+          msg.textContent = "Signup successful!";
+          // Redirect or further action
+        })
+        .catch((error) => {
+          msg.textContent = "Error: " + error.message;
+        });
+    };
+  </script>
+</body>
+</html>
