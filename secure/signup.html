@@ -14,6 +14,7 @@
     body {
       background: linear-gradient(135deg, #667eea, #764ba2);
       font-family: 'Segoe UI', sans-serif;
+      min-height: 100vh;
     }
     
     /* Header Styles */
@@ -69,7 +70,7 @@
     /* Main Content */
     .main-content {
       padding-top: 80px;
-      height: 100vh;
+      min-height: calc(100vh - 80px);
       display: flex;
       justify-content: center;
       align-items: center;
@@ -183,6 +184,21 @@
       text-decoration: none;
     }
     
+    .loading {
+      display: inline-block;
+      width: 20px;
+      height: 20px;
+      border: 3px solid rgba(255,255,255,.3);
+      border-radius: 50%;
+      border-top-color: #fff;
+      animation: spin 1s ease-in-out infinite;
+      margin-right: 10px;
+    }
+    
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+    
     @media (max-width: 768px) {
       .header-container {
         padding: 15px 20px;
@@ -218,18 +234,26 @@
     <div class="signup-container">
       <h2>Create Account</h2>
       <div class="input-group">
+        <input type="text" id="signupName" placeholder="Full Name" required />
+      </div>
+      <div class="input-group">
         <input type="email" id="signupEmail" placeholder="Email" required />
       </div>
       <div class="input-group">
-        <input type="password" id="signupPassword" placeholder="Password" required />
+        <input type="password" id="signupPassword" placeholder="Password (min. 6 characters)" required minlength="6" />
       </div>
-      <button class="btn-primary" onclick="signup()">Sign Up</button>
+      <div class="input-group">
+        <input type="password" id="signupConfirmPassword" placeholder="Confirm Password" required />
+      </div>
+      <button class="btn-primary" id="signupBtn" onclick="signup()">
+        <span id="signupBtnText">Sign Up</span>
+      </button>
       
       <div class="divider">OR</div>
       
-      <button class="btn-google" onclick="signInWithGoogle()">
+      <button class="btn-google" id="googleBtn" onclick="signInWithGoogle()">
         <img src="https://upload.wikimedia.org/wikipedia/commons/5/53/Google_%22G%22_Logo.svg" alt="Google" class="google-icon">
-        Sign up with Google
+        <span id="googleBtnText">Sign up with Google</span>
       </button>
       
       <div class="message" id="message"></div>
@@ -247,9 +271,16 @@
       getAuth, 
       createUserWithEmailAndPassword,
       GoogleAuthProvider,
-      signInWithPopup
+      signInWithPopup,
+      updateProfile
     } from "https://www.gstatic.com/firebasejs/11.8.1/firebase-auth.js";
+    import { 
+      getFirestore,
+      doc,
+      setDoc
+    } from "https://www.gstatic.com/firebasejs/11.8.1/firebase-firestore.js";
 
+    // Firebase configuration
     const firebaseConfig = {
       apiKey: "AIzaSyB66MZa0WZk3WPydcjmCDu7P_CE0FD60ug",
       authDomain: "login-2f07b.firebaseapp.com",
@@ -260,53 +291,149 @@
       measurementId: "G-G7ZY1MJ106"
     };
 
+    // Initialize Firebase
     const app = initializeApp(firebaseConfig);
     const auth = getAuth(app);
+    const db = getFirestore(app);
     const provider = new GoogleAuthProvider();
 
-    window.signup = function () {
-      const email = document.getElementById("signupEmail").value;
+    // Helper function to show loading state
+    function setLoading(buttonId, isLoading) {
+      const button = document.getElementById(buttonId);
+      const buttonText = document.getElementById(`${buttonId}Text`);
+      
+      if (isLoading) {
+        button.disabled = true;
+        buttonText.innerHTML = `<span class="loading"></span> Processing...`;
+      } else {
+        button.disabled = false;
+        if (buttonId === 'signupBtn') {
+          buttonText.textContent = 'Sign Up';
+        } else {
+          buttonText.textContent = 'Sign up with Google';
+        }
+      }
+    }
+
+    // Sign up with email and password
+    window.signup = async function () {
+      const name = document.getElementById("signupName").value.trim();
+      const email = document.getElementById("signupEmail").value.trim();
       const password = document.getElementById("signupPassword").value;
+      const confirmPassword = document.getElementById("signupConfirmPassword").value;
       const msg = document.getElementById("message");
 
-      createUserWithEmailAndPassword(auth, email, password)
-        .then((userCredential) => {
-          msg.style.color = "green";
-          msg.textContent = "Signup successful!";
-          // Redirect to dashboard or home page
-          window.location.href = "login.html";
-        })
-        .catch((error) => {
-          msg.textContent = "Error: " + error.message;
+      // Validate inputs
+      if (!name || !email || !password || !confirmPassword) {
+        msg.textContent = "Please fill in all fields";
+        return;
+      }
+
+      if (password !== confirmPassword) {
+        msg.textContent = "Passwords don't match";
+        return;
+      }
+
+      if (password.length < 6) {
+        msg.textContent = "Password must be at least 6 characters";
+        return;
+      }
+
+      setLoading('signupBtn', true);
+      msg.textContent = "";
+
+      try {
+        // Create user with email/password
+        const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+        const user = userCredential.user;
+        
+        // Update user profile with display name
+        await updateProfile(user, {
+          displayName: name
         });
+        
+        // Create user document in Firestore
+        await setDoc(doc(db, "users", user.uid), {
+          name: name,
+          email: email,
+          createdAt: new Date(),
+          lastLogin: new Date()
+        });
+        
+        msg.style.color = "green";
+        msg.textContent = "Signup successful! Redirecting...";
+        setTimeout(() => {
+          window.location.href = "login.html";
+        }, 1500);
+      } catch (error) {
+        let errorMessage = "Signup failed";
+        
+        // Handle specific error cases
+        if (error.code === "auth/email-already-in-use") {
+          errorMessage = "Email already in use";
+        } else if (error.code === "auth/invalid-email") {
+          errorMessage = "Invalid email address";
+        } else if (error.code === "auth/weak-password") {
+          errorMessage = "Password is too weak";
+        } else {
+          errorMessage = error.message;
+        }
+        
+        msg.textContent = errorMessage;
+      } finally {
+        setLoading('signupBtn', false);
+      }
     };
     
-    window.signInWithGoogle = function() {
-      signInWithPopup(auth, provider)
-        .then((result) => {
-          // This gives you a Google Access Token
-          const credential = GoogleAuthProvider.credentialFromResult(result);
-          const token = credential.accessToken;
-          // The signed-in user info
-          const user = result.user;
-          
-          document.getElementById("message").style.color = "green";
-          document.getElementById("message").textContent = "Google sign-in successful!";
-          // Redirect to dashboard or home page
-          window.location.href = "login.html";
-        })
-        .catch((error) => {
-          // Handle Errors here.
-          const errorCode = error.code;
-          const errorMessage = error.message;
-          // The email of the user's account used.
-          const email = error.customData.email;
-          // The AuthCredential type that was used.
-          const credential = GoogleAuthProvider.credentialFromError(error);
-          
-          document.getElementById("message").textContent = "Google sign-in error: " + errorMessage;
+    // Sign in with Google
+    window.signInWithGoogle = async function() {
+      setLoading('googleBtn', true);
+      document.getElementById("message").textContent = "";
+      
+      try {
+        const result = await signInWithPopup(auth, provider);
+        const credential = GoogleAuthProvider.credentialFromResult(result);
+        const token = credential.accessToken;
+        const user = result.user;
+        
+        // Create user document in Firestore for Google sign-in
+        await setDoc(doc(db, "users", user.uid), {
+          name: user.displayName,
+          email: user.email,
+          photoURL: user.photoURL,
+          provider: "google",
+          createdAt: new Date(),
+          lastLogin: new Date()
         });
+        
+        document.getElementById("message").style.color = "green";
+        document.getElementById("message").textContent = "Google sign-in successful! Redirecting...";
+        setTimeout(() => {
+          window.location.href = "login.html";
+        }, 1500);
+      } catch (error) {
+        let errorMessage = "Google sign-in failed";
+        
+        if (error.code === "auth/account-exists-with-different-credential") {
+          errorMessage = "Email already in use with another method";
+        } else if (error.code === "auth/popup-closed-by-user") {
+          errorMessage = "Sign-in popup was closed";
+        } else {
+          errorMessage = error.message;
+        }
+        
+        document.getElementById("message").textContent = errorMessage;
+      } finally {
+        setLoading('googleBtn', false);
+      }
     };
+
+    // Add form submission on Enter key
+    document.addEventListener('keypress', function(e) {
+      if (e.key === 'Enter') {
+        signup();
+      }
+    });
   </script>
 </body>
 </html>
