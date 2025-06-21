@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Quiz Result</title>
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <main class="results-container">
+    <div class="results-card">
+      <div class="results-header">
+        <h2>Quiz Results</h2>
+        <p>Thank you, <span id="result-name">User</span>!</p>
+      </div>
+      <div class="score-display" id="score-section">
+        <div class="score-details">
+          <div>Score: <span id="correct-answers">0</span>/<span id="total-questions">0</span></div>
+          <div id="user-rank">Rank: </div>
+        </div>
+      </div>
+      <p id="waiting-message"></p>
+      <a href="quiz.html" class="btn-primary">Retake</a>
+    </div>
+  </main>
+  <script type="module">
+    import { database, ref, get } from './firebase.js';
+
+    const urlParams = new URLSearchParams(window.location.search);
+    const score = parseInt(urlParams.get('score')) || 0;
+    const total = parseInt(urlParams.get('total')) || 0;
+    const name = decodeURIComponent(urlParams.get('name'));
+    const userEmail = decodeURIComponent(urlParams.get('email'));
+
+    document.getElementById('result-name').textContent = name;
+    document.getElementById('correct-answers').textContent = score;
+    document.getElementById('total-questions').textContent = total;
+
+    const settingRef = ref(database, 'resultSettings/resultsPublished');
+    const resultsRef = ref(database, 'quizResults');
+
+    get(settingRef).then(snap => {
+      if (!snap.val()) {
+        document.getElementById('score-section').style.display = 'none';
+        document.getElementById('waiting-message').textContent = "Results will be published soon.";
+      }
+    });
+
+    get(resultsRef).then(snap => {
+      if (snap.exists()) {
+        const data = Object.values(snap.val());
+        const sorted = data.sort((a, b) => b.score - a.score);
+        const userIndex = sorted.findIndex(r => r.userEmail === userEmail);
+        if (userIndex >= 0) {
+          document.getElementById('user-rank').textContent = `Rank: ${userIndex + 1}`;
+        }
+      }
+    });
+  </script>
+</body>
+</html>
