@@ -1,0 +1,561 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Live Quiz - Test Your Knowledge</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        :root {
+            --primary-color: #4e73df;
+            --secondary-color: #1cc88a;
+            --dark-color: #5a5c69;
+            --light-color: #f8f9fc;
+        }
+        
+        body {
+            font-family: 'Nunito', sans-serif;
+            background-color: #f8f9fc;
+        }
+        
+        .navbar {
+            background-color: white;
+            box-shadow: 0 0.15rem 1.75rem 0 rgba(58, 59, 69, 0.15);
+        }
+        
+        .navbar-brand {
+            font-weight: 800;
+            color: var(--primary-color);
+        }
+        
+        .quiz-container {
+            background-color: white;
+            border-radius: 0.35rem;
+            box-shadow: 0 0.15rem 1.75rem 0 rgba(58, 59, 69, 0.1);
+            padding: 2rem;
+            margin-bottom: 2rem;
+        }
+        
+        .question-card {
+            margin-bottom: 1.5rem;
+            border-left: 0.25rem solid var(--primary-color);
+        }
+        
+        .option-label {
+            display: block;
+            padding: 0.75rem 1.25rem;
+            margin-bottom: 0.5rem;
+            border: 1px solid #d1d3e2;
+            border-radius: 0.35rem;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        
+        .option-label:hover {
+            background-color: #f8f9fa;
+        }
+        
+        .option-input:checked + .option-label {
+            background-color: var(--primary-color);
+            color: white;
+            border-color: var(--primary-color);
+        }
+        
+        .btn-submit {
+            background-color: var(--primary-color);
+            border: none;
+            padding: 0.75rem 1.5rem;
+            font-weight: 600;
+        }
+        
+        .btn-submit:hover {
+            background-color: #2e59d9;
+        }
+        
+        .result-card {
+            background-color: white;
+            border-radius: 0.35rem;
+            box-shadow: 0 0.15rem 1.75rem 0 rgba(58, 59, 69, 0.1);
+            padding: 2rem;
+            text-align: center;
+        }
+        
+        .score-display {
+            font-size: 3rem;
+            font-weight: 800;
+            color: var(--primary-color);
+        }
+        
+        .rank-display {
+            font-size: 1.5rem;
+            color: var(--dark-color);
+        }
+        
+        .progress {
+            height: 1rem;
+            margin: 1rem 0;
+        }
+        
+        .explanation {
+            background-color: #f8f9fa;
+            padding: 1rem;
+            border-radius: 0.35rem;
+            margin-top: 1rem;
+            display: none;
+        }
+        
+        footer {
+            background-color: white;
+            padding: 2rem 0;
+            margin-top: 2rem;
+            box-shadow: 0 -0.15rem 1.75rem 0 rgba(58, 59, 69, 0.1);
+        }
+        
+        .premium-badge {
+            background-color: #f6c23e;
+            color: white;
+            padding: 0.25rem 0.5rem;
+            border-radius: 0.25rem;
+            font-size: 0.75rem;
+            font-weight: 700;
+        }
+    </style>
+</head>
+<body>
+    <!-- Header/Navbar -->
+    <nav class="navbar navbar-expand-lg navbar-light sticky-top mb-4">
+        <div class="container">
+            <a class="navbar-brand" href="#">Live Quiz</a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav me-auto">
+                    <li class="nav-item">
+                        <a class="nav-link active" href="#"><i class="fas fa-home me-1"></i> Home</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="#"><span class="premium-badge me-1">PRO</span> Premium</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="#"><i class="fas fa-info-circle me-1"></i> About</a>
+                    </li>
+                </ul>
+                <div class="d-flex">
+                    <a href="https://ceemediconepal.xyz" class="btn btn-outline-primary"><i class="fas fa-sign-in-alt me-1"></i> Login</a>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Main Content -->
+    <div class="container">
+        <div class="row justify-content-center">
+            <div class="col-lg-8">
+                <!-- Quiz Title -->
+                <div class="text-center mb-5">
+                    <h1 class="fw-bold mb-3">Medical Knowledge Quiz</h1>
+                    <p class="lead text-muted">Test your medical knowledge with this challenging quiz. Each correct answer gives you 1 point, while incorrect answers deduct 0.25 points.</p>
+                </div>
+                
+                <!-- Quiz Container -->
+                <div id="quiz-container" class="quiz-container">
+                    <div id="quiz-content">
+                        <!-- Quiz questions will be loaded here -->
+                        <div class="text-center">
+                            <div class="spinner-border text-primary" role="status">
+                                <span class="visually-hidden">Loading...</span>
+                            </div>
+                            <p class="mt-2">Loading quiz questions...</p>
+                        </div>
+                    </div>
+                    
+                    <div class="d-grid gap-2">
+                        <button id="submit-btn" class="btn btn-submit btn-lg" disabled>
+                            <i class="fas fa-paper-plane me-2"></i> Submit Quiz
+                        </button>
+                    </div>
+                </div>
+                
+                <!-- Results Container (initially hidden) -->
+                <div id="results-container" class="result-card" style="display: none;">
+                    <h2 class="mb-4">Quiz Results</h2>
+                    <div class="score-display mb-2" id="final-score">0</div>
+                    <div class="rank-display mb-4" id="rank-display">Calculating your rank...</div>
+                    
+                    <div class="progress">
+                        <div id="score-progress" class="progress-bar bg-success" role="progressbar" style="width: 0%"></div>
+                    </div>
+                    
+                    <p class="text-muted mb-4">You scored better than <span id="percentile">0</span>% of participants</p>
+                    
+                    <div id="question-results">
+                        <!-- Question results will be loaded here -->
+                    </div>
+                    
+                    <button id="retake-btn" class="btn btn-outline-primary mt-4" disabled>
+                        <i class="fas fa-sync-alt me-2"></i> Retake Quiz (Available in 24 hours)
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Footer -->
+    <footer>
+        <div class="container">
+            <div class="row">
+                <div class="col-lg-4 mb-4 mb-lg-0">
+                    <h5 class="fw-bold mb-3">Live Quiz</h5>
+                    <p class="text-muted">Test your knowledge and compete with others in our live quiz platform.</p>
+                </div>
+                <div class="col-lg-2 col-6 mb-4 mb-lg-0">
+                    <h6 class="fw-bold mb-3">Quick Links</h6>
+                    <ul class="list-unstyled">
+                        <li class="mb-2"><a href="#" class="text-decoration-none text-muted">Home</a></li>
+                        <li class="mb-2"><a href="#" class="text-decoration-none text-muted">Premium</a></li>
+                        <li class="mb-2"><a href="#" class="text-decoration-none text-muted">About</a></li>
+                    </ul>
+                </div>
+                <div class="col-lg-2 col-6 mb-4 mb-lg-0">
+                    <h6 class="fw-bold mb-3">Legal</h6>
+                    <ul class="list-unstyled">
+                        <li class="mb-2"><a href="#" class="text-decoration-none text-muted">Privacy Policy</a></li>
+                        <li class="mb-2"><a href="#" class="text-decoration-none text-muted">Terms of Service</a></li>
+                    </ul>
+                </div>
+                <div class="col-lg-4">
+                    <h6 class="fw-bold mb-3">Connect With Us</h6>
+                    <div class="d-flex gap-3">
+                        <a href="#" class="text-decoration-none text-muted"><i class="fab fa-facebook-f"></i></a>
+                        <a href="#" class="text-decoration-none text-muted"><i class="fab fa-twitter"></i></a>
+                        <a href="#" class="text-decoration-none text-muted"><i class="fab fa-instagram"></i></a>
+                        <a href="#" class="text-decoration-none text-muted"><i class="fab fa-linkedin-in"></i></a>
+                    </div>
+                </div>
+            </div>
+            <hr class="my-4">
+            <div class="row">
+                <div class="col-md-6 text-center text-md-start">
+                    <p class="text-muted small mb-0">© 2023 Live Quiz. All rights reserved.</p>
+                </div>
+                <div class="col-md-6 text-center text-md-end">
+                    <p class="text-muted small mb-0">Powered by <a href="https://ceemediconepal.xyz" class="text-decoration-none">CeeMedicoNepal</a></p>
+                </div>
+            </div>
+        </div>
+    </footer>
+
+    <!-- Firebase and other scripts -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.0/firebase-database-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.0/firebase-auth-compat.js"></script>
+    
+    <script>
+        // Firebase configuration
+        const firebaseConfig = {
+            apiKey: "AIzaSyDfCO-xxHPpgSfE-I6KTmsw35Lo9n2v56s",
+            authDomain: "live-quiz-6e77b.firebaseapp.com",
+            databaseURL: "https://live-quiz-6e77b-default-rtdb.asia-southeast1.firebasedatabase.app",
+            projectId: "live-quiz-6e77b",
+            storageBucket: "live-quiz-6e77b.appspot.com",
+            messagingSenderId: "50057610341",
+            appId: "1:50057610341:web:d4e88673a20757d4c9328c"
+        };
+
+        // Initialize Firebase
+        const app = firebase.initializeApp(firebaseConfig);
+        const database = firebase.database();
+        const auth = firebase.auth();
+        
+        // Sample questions (in a real app, these would come from your Firebase database)
+        const questions = [
+            {
+                "question": "What is the most common cause of chronic kidney disease worldwide?",
+                "options": [
+                    "A) Diabetes mellitus",
+                    "B) Hypertension",
+                    "C) Glomerulonephritis",
+                    "D) Polycystic kidney disease"
+                ],
+                "correct": 0,
+                "explanation": "Diabetes mellitus is the leading cause of chronic kidney disease worldwide, accounting for about 30-50% of cases."
+            },
+            {
+                "question": "Which of the following is NOT a typical symptom of Parkinson's disease?",
+                "options": [
+                    "A) Resting tremor",
+                    "B) Bradykinesia",
+                    "C) Muscle rigidity",
+                    "D) Hyperreflexia"
+                ],
+                "correct": 3,
+                "explanation": "The classic triad of Parkinson's disease symptoms includes resting tremor, bradykinesia (slowness of movement), and muscle rigidity. Hyperreflexia is not typically associated with Parkinson's."
+            },
+            {
+                "question": "What is the first-line treatment for anaphylaxis?",
+                "options": [
+                    "A) Diphenhydramine",
+                    "B) Epinephrine",
+                    "C) Methylprednisolone",
+                    "D) Albuterol"
+                ],
+                "correct": 1,
+                "explanation": "Epinephrine (adrenaline) is the first-line treatment for anaphylaxis. It works rapidly to counteract the life-threatening symptoms by constricting blood vessels and opening airways."
+            },
+            {
+                "question": "Which vitamin deficiency is associated with night blindness?",
+                "options": [
+                    "A) Vitamin A",
+                    "B) Vitamin B12",
+                    "C) Vitamin C",
+                    "D) Vitamin D"
+                ],
+                "correct": 0,
+                "explanation": "Vitamin A is essential for the production of rhodopsin, the photopigment in the retina that enables vision in low-light conditions. Deficiency can lead to night blindness."
+            },
+            {
+                "question": "What is the most common type of stroke?",
+                "options": [
+                    "A) Ischemic stroke",
+                    "B) Hemorrhagic stroke",
+                    "C) Subarachnoid hemorrhage",
+                    "D) Transient ischemic attack"
+                ],
+                "correct": 0,
+                "explanation": "Ischemic strokes account for about 87% of all strokes. They occur when a blood clot blocks or narrows an artery leading to the brain."
+            }
+        ];
+        
+        // Quiz state variables
+        let userAnswers = [];
+        let quizSubmitted = false;
+        let userAttempts = 0;
+        
+        // DOM elements
+        const quizContent = document.getElementById('quiz-content');
+        const submitBtn = document.getElementById('submit-btn');
+        const quizContainer = document.getElementById('quiz-container');
+        const resultsContainer = document.getElementById('results-container');
+        const questionResults = document.getElementById('question-results');
+        const finalScoreElement = document.getElementById('final-score');
+        const rankDisplay = document.getElementById('rank-display');
+        const percentileElement = document.getElementById('percentile');
+        const scoreProgress = document.getElementById('score-progress');
+        const retakeBtn = document.getElementById('retake-btn');
+        
+        // Initialize the quiz
+        function initQuiz() {
+            // Check if user has already attempted the quiz
+            checkAttemptStatus();
+            
+            // Load questions
+            renderQuestions();
+            
+            // Set up event listeners
+            submitBtn.addEventListener('click', submitQuiz);
+            retakeBtn.addEventListener('click', () => {
+                alert('You can retake this quiz after 24 hours from your last attempt.');
+            });
+        }
+        
+        // Check if user has already attempted the quiz
+        function checkAttemptStatus() {
+            // In a real app, you would check Firebase for the user's attempt status
+            // For this demo, we'll use localStorage
+            const lastAttempt = localStorage.getItem('lastQuizAttempt');
+            
+            if (lastAttempt) {
+                const now = new Date();
+                const lastAttemptDate = new Date(lastAttempt);
+                const hoursSinceLastAttempt = (now - lastAttemptDate) / (1000 * 60 * 60);
+                
+                if (hoursSinceLastAttempt < 24) {
+                    // User has attempted recently
+                    quizSubmitted = true;
+                    showResults(JSON.parse(localStorage.getItem('lastQuizResult')));
+                    retakeBtn.disabled = true;
+                }
+            }
+        }
+        
+        // Render questions to the DOM
+        function renderQuestions() {
+            if (quizSubmitted) return;
+            
+            let html = '';
+            
+            questions.forEach((question, index) => {
+                html += `
+                    <div class="question-card p-3">
+                        <h4 class="mb-3">${index + 1}. ${question.question}</h4>
+                        <div class="options">
+                `;
+                
+                question.options.forEach((option, optionIndex) => {
+                    html += `
+                        <div class="form-check mb-2">
+                            <input class="form-check-input option-input" type="radio" name="question-${index}" id="question-${index}-option-${optionIndex}" value="${optionIndex}">
+                            <label class="form-check-label option-label" for="question-${index}-option-${optionIndex}">
+                                ${option}
+                            </label>
+                        </div>
+                    `;
+                });
+                
+                html += `</div></div>`;
+            });
+            
+            quizContent.innerHTML = html;
+            
+            // Enable submit button once questions are loaded
+            submitBtn.disabled = false;
+        }
+        
+        // Submit the quiz
+        function submitQuiz() {
+            // Collect user answers
+            userAnswers = [];
+            let allAnswered = true;
+            
+            questions.forEach((question, index) => {
+                const selectedOption = document.querySelector(`input[name="question-${index}"]:checked`);
+                
+                if (selectedOption) {
+                    userAnswers.push(parseInt(selectedOption.value));
+                } else {
+                    allAnswered = false;
+                    userAnswers.push(null);
+                }
+            });
+            
+            if (!allAnswered) {
+                if (!confirm('You have not answered all questions. Submit anyway?')) {
+                    return;
+                }
+            }
+            
+            // Calculate score
+            const score = calculateScore();
+            
+            // Save attempt to Firebase (in a real app)
+            saveQuizResult(score);
+            
+            // Show results
+            showResults(score);
+            
+            // Update UI
+            quizSubmitted = true;
+            submitBtn.disabled = true;
+            
+            // Store attempt in localStorage for demo purposes
+            localStorage.setItem('lastQuizAttempt', new Date().toISOString());
+            localStorage.setItem('lastQuizResult', JSON.stringify(score));
+        }
+        
+        // Calculate score based on answers
+        function calculateScore() {
+            let score = 0;
+            
+            questions.forEach((question, index) => {
+                if (userAnswers[index] !== null) {
+                    if (userAnswers[index] === question.correct) {
+                        score += 1; // +1 for correct answer
+                    } else {
+                        score -= 0.25; // -0.25 for wrong answer
+                    }
+                }
+            });
+            
+            // Ensure score doesn't go below 0
+            return Math.max(0, score);
+        }
+        
+        // Save quiz result to Firebase
+        function saveQuizResult(score) {
+            // In a real app, you would:
+            // 1. Authenticate the user
+            // 2. Save to their user profile
+            // 3. Update the quiz results leaderboard
+            
+            // For this demo, we'll simulate it with localStorage
+            const results = JSON.parse(localStorage.getItem('quizResults')) || [];
+            const timestamp = new Date().toISOString();
+            
+            results.push({
+                score: score,
+                timestamp: timestamp,
+                // In a real app, you'd include user ID/name
+            });
+            
+            localStorage.setItem('quizResults', JSON.stringify(results));
+        }
+        
+        // Show results to the user
+        function showResults(score) {
+            // Hide quiz, show results
+            quizContainer.style.display = 'none';
+            resultsContainer.style.display = 'block';
+            
+            // Display final score
+            finalScoreElement.textContent = score.toFixed(2);
+            
+            // Calculate percentage (based on max possible score)
+            const maxScore = questions.length;
+            const percentage = (score / maxScore) * 100;
+            scoreProgress.style.width = `${percentage}%`;
+            
+            // Simulate rank and percentile (in a real app, you'd query Firebase)
+            const simulatedRank = Math.floor(Math.random() * 50) + 1;
+            const simulatedPercentile = 100 - (simulatedRank / 100 * 100);
+            
+            rankDisplay.textContent = `Rank: #${simulatedRank}`;
+            percentileElement.textContent = simulatedPercentile.toFixed(0);
+            
+            // Show question-by-question results
+            let resultsHtml = '<h4 class="mb-3">Question Breakdown</h4>';
+            
+            questions.forEach((question, index) => {
+                const userAnswer = userAnswers[index];
+                const isCorrect = userAnswer === question.correct;
+                const answered = userAnswer !== null;
+                
+                resultsHtml += `
+                    <div class="mb-4 p-3 border rounded">
+                        <h5>${index + 1}. ${question.question}</h5>
+                        <p class="mb-2 ${isCorrect ? 'text-success' : 'text-danger'}">
+                            <strong>Your answer:</strong> ${answered ? question.options[userAnswer] : 'Not answered'}
+                        </p>
+                        <p class="mb-2 text-success"><strong>Correct answer:</strong> ${question.options[question.correct]}</p>
+                        <button class="btn btn-sm btn-outline-secondary toggle-explanation">Show Explanation</button>
+                        <div class="explanation">
+                            <p class="mb-0"><strong>Explanation:</strong> ${question.explanation}</p>
+                        </div>
+                    </div>
+                `;
+            });
+            
+            questionResults.innerHTML = resultsHtml;
+            
+            // Add event listeners for explanation toggles
+            document.querySelectorAll('.toggle-explanation').forEach(button => {
+                button.addEventListener('click', function() {
+                    const explanation = this.nextElementSibling;
+                    if (explanation.style.display === 'block') {
+                        explanation.style.display = 'none';
+                        this.textContent = 'Show Explanation';
+                    } else {
+                        explanation.style.display = 'block';
+                        this.textContent = 'Hide Explanation';
+                    }
+                });
+            });
+        }
+        
+        // Initialize the quiz when the page loads
+        window.addEventListener('DOMContentLoaded', initQuiz);
+    </script>
+</body>
+</html>
