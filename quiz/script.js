@@ -15,6 +15,8 @@ let score = 0;
 let timeLeft = 600; // 10 minutes in seconds
 let timerInterval;
 let quizStarted = false;
+let currentQuestion = 0;
+let userAnswers = [];
 
 // Generate unique ID per device
 const deviceId = localStorage.getItem('quiz_device') || crypto.randomUUID();
@@ -66,7 +68,7 @@ function startQuiz() {
   submitBtn.style.display = 'block';
   timerEl.style.display = 'block';
 
-  renderQuiz();
+  renderQuestion();
   startTimer();
 }
 
@@ -93,22 +95,80 @@ function updateTimerDisplay() {
   }
 }
 
-function renderQuiz() {
+function renderQuestion() {
   quizEl.innerHTML = '';
-  questions.forEach((q, i) => {
-    const qBox = document.createElement('div');
-    qBox.className = 'question-box';
-    qBox.innerHTML = `
-      <p>${i + 1}. ${q.question}</p>
-      ${q.options.map((opt, j) => `
-        <label>
-          <input type="radio" name="q${i}" value="${j}">
-          ${opt}
-        </label>
-      `).join('')}
-    `;
-    quizEl.appendChild(qBox);
+  const q = questions[currentQuestion];
+  
+  const qBox = document.createElement('div');
+  qBox.className = 'quiz-question';
+  qBox.innerHTML = `
+    <h3>Q${currentQuestion + 1}. ${q.question}</h3>
+    ${q.options.map((opt, i) => `
+      <div class="quiz-option" onclick="selectOption(${i})">
+        <input type="radio" name="q${currentQuestion}" id="opt${i}" value="${i}" style="display:none">
+        <label for="opt${i}">${opt}</label>
+      </div>
+    `).join('')}
+    ${q.explanation ? `<div class="quiz-explanation" id="explanation">${q.explanation}</div>` : ''}
+  `;
+  
+  quizEl.appendChild(qBox);
+  
+  // Navigation buttons
+  const navDiv = document.createElement('div');
+  navDiv.className = 'quiz-navigation';
+  navDiv.innerHTML = `
+    <button onclick="prevQuestion()" ${currentQuestion === 0 ? 'disabled' : ''}>Previous</button>
+    <button onclick="nextQuestion()" ${currentQuestion === questions.length - 1 ? 'disabled' : ''}>Next</button>
+    <button onclick="submitQuiz()">Submit</button>
+  `;
+  quizEl.appendChild(navDiv);
+  
+  // Highlight previously selected answer if exists
+  if (userAnswers[currentQuestion] !== undefined) {
+    selectOption(userAnswers[currentQuestion], true);
+  }
+}
+
+function selectOption(index, noScoreUpdate = false) {
+  const options = document.querySelectorAll('.quiz-option');
+  const correctIndex = questions[currentQuestion].correct;
+  
+  options.forEach((el, i) => {
+    el.classList.remove('correct', 'incorrect');
+    if (i === index) {
+      if (i === correctIndex) {
+        el.classList.add('correct');
+        if (!noScoreUpdate && userAnswers[currentQuestion] === undefined) {
+          score++;
+        }
+      } else {
+        el.classList.add('incorrect');
+        options[correctIndex].classList.add('correct');
+      }
+    }
   });
+  
+  const explanationEl = document.getElementById('explanation');
+  if (explanationEl) {
+    explanationEl.style.display = 'block';
+  }
+  
+  userAnswers[currentQuestion] = index;
+}
+
+function nextQuestion() {
+  if (currentQuestion < questions.length - 1) {
+    currentQuestion++;
+    renderQuestion();
+  }
+}
+
+function prevQuestion() {
+  if (currentQuestion > 0) {
+    currentQuestion--;
+    renderQuestion();
+  }
 }
 
 async function submitQuiz() {
@@ -116,9 +176,9 @@ async function submitQuiz() {
   
   clearInterval(timerInterval);
   
-  const answers = [...document.querySelectorAll('input[type=radio]:checked')];
-  if (answers.length !== questions.length) {
-    if (!confirm('You have not answered all questions. Submit anyway?')) {
+  const unanswered = questions.length - Object.keys(userAnswers).length;
+  if (unanswered > 0) {
+    if (!confirm(`You have ${unanswered} unanswered questions. Submit anyway?`)) {
       startTimer();
       return;
     }
@@ -128,14 +188,13 @@ async function submitQuiz() {
   const userEmail = userEmailInput.value.trim();
   
   let correct = 0;
-  const total = questions.length;
-  answers.forEach((ans, i) => {
-    if (parseInt(ans.value) === questions[i].correct) correct++;
+  questions.forEach((q, i) => {
+    if (userAnswers[i] === q.correct) correct++;
   });
 
-  const wrong = total - correct;
+  const wrong = questions.length - correct;
   score = (correct * 1) - (wrong * 0.25);
-  const percentage = (score / total) * 100;
+  const percentage = (score / questions.length) * 100;
 
   try {
     await set(ref(db, `responses/${deviceId}`), {
@@ -158,18 +217,35 @@ async function submitQuiz() {
 }
 
 function showResults(correct, wrong, score, percentage) {
+  quizEl.style.display = 'none';
+  document.querySelector('.quiz-navigation').style.display = 'none';
+  
   resultEl.innerHTML = `
-    <h3>Quiz Results</h3>
-    <p><strong>Name:</strong> ${userNameInput.value.trim()}</p>
-    <p><strong>Correct Answers:</strong> ${correct}/${questions.length}</p>
-    <p><strong>Wrong Answers:</strong> ${wrong}</p>
-    <p><strong>Score:</strong> ${score.toFixed(2)}</p>
-    <p><strong>Percentage:</strong> ${percentage.toFixed(2)}%</p>
-    <div id="ranking-info">Calculating your rank...</div>
+    <div class="quiz-results">
+      <h2>Quiz Completed!</h2>
+      <p><strong>Name:</strong> ${userNameInput.value.trim()}</p>
+      <p><strong>Correct Answers:</strong> ${correct}/${questions.length}</p>
+      <p><strong>Wrong Answers:</strong> ${wrong}</p>
+      <p><strong>Score:</strong> ${score.toFixed(2)}</p>
+      <p><strong>Percentage:</strong> ${percentage.toFixed(2)}%</p>
+      <div id="ranking-info">Calculating your rank...</div>
+      <button onclick="restartQuiz()">Retake Quiz</button>
+    </div>
   `;
   resultEl.style.display = 'block';
   
   fetchRankings(score);
+}
+
+function restartQuiz() {
+  currentQuestion = 0;
+  score = 0;
+  userAnswers = [];
+  timeLeft = 600;
+  quizEl.style.display = 'block';
+  resultEl.style.display = 'none';
+  renderQuestion();
+  startTimer();
 }
 
 async function fetchRankings(myScore) {
@@ -185,7 +261,6 @@ async function fetchRankings(myScore) {
       ...data
     }));
     
-    // Sort by score descending, then by timestamp ascending (earlier submissions rank higher if scores are equal)
     results.sort((a, b) => {
       if (b.score !== a.score) return b.score - a.score;
       return a.timestamp - b.timestamp;
@@ -194,7 +269,6 @@ async function fetchRankings(myScore) {
     const rank = results.findIndex(r => r.id === deviceId) + 1;
     const totalParticipants = results.length;
 
-    // Show top 3 participants
     let leaderboard = '<div class="leaderboard"><h4>Top Participants</h4><ol>';
     const topCount = Math.min(3, totalParticipants);
     
@@ -222,12 +296,14 @@ function showPreviousResults(previousData) {
   rulesEl.style.display = 'none';
   
   resultEl.innerHTML = `
-    <h3>Your Previous Results</h3>
-    <p><strong>Name:</strong> ${previousData.userName || 'Not provided'}</p>
-    <p><strong>Correct Answers:</strong> ${previousData.correct}/${questions.length}</p>
-    <p><strong>Score:</strong> ${previousData.score.toFixed(2)}</p>
-    <p><strong>Percentage:</strong> ${previousData.percentage.toFixed(2)}%</p>
-    <div id="ranking-info">Loading current rank...</div>
+    <div class="quiz-results">
+      <h2>Your Previous Results</h2>
+      <p><strong>Name:</strong> ${previousData.userName || 'Not provided'}</p>
+      <p><strong>Correct Answers:</strong> ${previousData.correct}/${questions.length}</p>
+      <p><strong>Score:</strong> ${previousData.score.toFixed(2)}</p>
+      <p><strong>Percentage:</strong> ${previousData.percentage.toFixed(2)}%</p>
+      <div id="ranking-info">Loading current rank...</div>
+    </div>
   `;
   resultEl.style.display = 'block';
   
@@ -235,9 +311,16 @@ function showPreviousResults(previousData) {
 }
 
 function disableQuiz() {
-  const radioInputs = document.querySelectorAll('input[type=radio]');
-  radioInputs.forEach(input => {
-    input.disabled = true;
+  const options = document.querySelectorAll('.quiz-option');
+  options.forEach(option => {
+    option.onclick = null;
   });
   submitBtn.disabled = true;
 }
+
+// Make functions available globally for HTML onclick attributes
+window.prevQuestion = prevQuestion;
+window.nextQuestion = nextQuestion;
+window.selectOption = selectOption;
+window.submitQuiz = submitQuiz;
+window.restartQuiz = restartQuiz;
