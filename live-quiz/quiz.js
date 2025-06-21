@@ -12,6 +12,7 @@ const firebaseConfig = {
 const app = firebase.initializeApp(firebaseConfig);
 const database = firebase.database();
 const auth = firebase.auth();
+const functions = firebase.functions();
 
 // Quiz state
 let quizState = {
@@ -22,49 +23,67 @@ let quizState = {
     timerInterval: null,
     userId: null,
     username: '',
-    hasSubmitted: false
+    email: '',
+    hasSubmitted: false,
+    correctCount: 0,
+    wrongCount: 0,
+    unansweredCount: 0
 };
 
-// Questions data - you can modify this as needed
+// Questions data
 const questions = [
     {
-        question: "What is the capital of France?",
-        options: ["London", "Berlin", "Paris", "Madrid"],
-        answer: 2
+        "question": "31. The critical angle for a medium is the angle of incidence for which the angle of refraction is:",
+        "options": ["A) 0°", "B) 45°", "C) 90°", "D) 180°"],
+        "correct": 2,
+        "explanation": "Critical angle is defined where the angle of refraction is 90°."
     },
     {
-        question: "Which planet is known as the Red Planet?",
-        options: ["Venus", "Mars", "Jupiter", "Saturn"],
-        answer: 1
+        "question": "32. The primary function of a capacitor is to:",
+        "options": ["A) Store current", "B) Store charge", "C) Store magnetic field", "D) Increase resistance"],
+        "correct": 1,
+        "explanation": "Capacitors store electric charge and energy in the electric field."
     },
-    // Add 18 more questions following the same format
+    {
+        "question": "33. Which of the following is NOT a property of sound waves?",
+        "options": ["A) Diffraction", "B) Polarization", "C) Reflection", "D) Refraction"],
+        "correct": 1,
+        "explanation": "Sound waves cannot be polarized because they are longitudinal waves."
+    },
+    // Add 17 more questions following the same format
     // ...
     {
-        question: "What is the largest mammal?",
-        options: ["Elephant", "Blue Whale", "Giraffe", "Polar Bear"],
-        answer: 1
+        "question": "50. The SI unit of absorbed dose is:",
+        "options": ["A) Gray", "B) Sievert", "C) Becquerel", "D) Curie"],
+        "correct": 0,
+        "explanation": "The gray (Gy) is the SI unit of absorbed dose."
     }
 ];
 
-// Make sure we have exactly 20 questions
+// Ensure we have exactly 20 questions
 if (questions.length !== 20) {
     console.error("Please ensure there are exactly 20 questions");
 }
 
 // DOM Elements
+const timeCheckScreen = document.getElementById('time-check-screen');
 const introScreen = document.getElementById('intro-screen');
 const quizScreen = document.getElementById('quiz-screen');
 const resultScreen = document.getElementById('result-screen');
 const answersScreen = document.getElementById('answers-screen');
+const availabilityMessage = document.getElementById('availability-message');
+const countdownElement = document.getElementById('countdown');
 const startQuizBtn = document.getElementById('start-quiz');
 const usernameInput = document.getElementById('username');
+const emailInput = document.getElementById('email');
 const questionText = document.getElementById('question-text');
 const optionsContainer = document.getElementById('options-container');
 const prevQuestionBtn = document.getElementById('prev-question');
 const nextQuestionBtn = document.getElementById('next-question');
 const currentQuestionDisplay = document.getElementById('current-question');
 const quizProgress = document.getElementById('quiz-progress');
-const timerDisplay = document.getElementById('timer');
+const timerDisplay = document.getElementById('timer-display');
+const currentScoreDisplay = document.getElementById('current-score');
 const rankBadge = document.getElementById('rank-badge');
 const resultScore = document.getElementById('result-score');
 const resultMessage = document.getElementById('result-message');
@@ -72,6 +91,8 @@ const leaderboardList = document.getElementById('leaderboard-list');
 const viewAnswersBtn = document.getElementById('view-answers');
 const backToResultsBtn = document.getElementById('back-to-results');
 const answersContainer = document.getElementById('answers-container');
+const statsContainer = document.getElementById('stats-container');
+const explanationText = document.getElementById('explanation-text');
 
 // Event Listeners
 startQuizBtn.addEventListener('click', startQuiz);
@@ -83,18 +104,156 @@ backToResultsBtn.addEventListener('click', () => {
     resultScreen.classList.remove('d-none');
 });
 
-function startQuiz() {
-    // First check if quiz is available
-    if (!checkQuizAvailability()) return;
+// Initialize quiz
+document.addEventListener('DOMContentLoaded', function() {
+    checkQuizAvailability();
+});
+
+// Check quiz availability using server time
+async function checkQuizAvailability() {
+    try {
+        // First try to get server time
+        const serverTimeCheck = functions.httpsCallable('checkQuizAvailability');
+        const result = await serverTimeCheck({});
+        
+        if (result.data.is_available) {
+            // Quiz is available
+            timeCheckScreen.classList.add('d-none');
+            introScreen.classList.remove('d-none');
+            return true;
+        } else {
+            // Quiz is not available yet
+            showCountdown(new Date(result.data.open_time), new Date(result.data.server_time));
+            return false;
+        }
+    } catch (error) {
+        console.error("Error checking server availability:", error);
+        // Fallback to client-side check with database time
+        return checkDatabaseTime();
+    }
+}
+
+// Fallback to database time check
+async function checkDatabaseTime() {
+    try {
+        const snapshot = await database.ref('quiz_settings').once('value');
+        const settings = snapshot.val();
+        
+        if (!settings) {
+            throw new Error("No quiz settings found");
+        }
+        
+        const now = settings.server_time ? new Date(settings.server_time) : new Date();
+        const openTime = new Date(settings.open_time);
+        
+        if (now >= openTime) {
+            timeCheckScreen.classList.add('d-none');
+            introScreen.classList.remove('d-none');
+            return true;
+        } else {
+            showCountdown(openTime, now);
+            return false;
+        }
+    } catch (error) {
+        console.error("Error checking database time:", error);
+        // Final fallback to client time
+        return clientSideTimeCheck();
+    }
+}
+
+// Ultimate fallback to client time
+function clientSideTimeCheck() {
+    const QUIZ_OPEN_TIME = new Date("2025-06-21T20:22:00Z");
+    const now = new Date();
     
+    if (now >= QUIZ_OPEN_TIME) {
+        timeCheckScreen.classList.add('d-none');
+        introScreen.classList.remove('d-none');
+        return true;
+    } else {
+        showCountdown(QUIZ_OPEN_TIME, now);
+        availabilityMessage.innerHTML += `<p class="text-warning mt-2">Note: Using device time as fallback</p>`;
+        return false;
+    }
+}
+
+// Show countdown timer
+function showCountdown(targetDate, currentDate) {
+    timeCheckScreen.classList.remove('d-none');
+    introScreen.classList.add('d-none');
+    
+    availabilityMessage.innerHTML = `
+        <p>The quiz will open on:</p>
+        <h4>${targetDate.toLocaleString()}</h4>
+        <p>Current server time: ${currentDate.toLocaleString()}</p>
+    `;
+    
+    updateCountdown(targetDate, currentDate);
+    const countdownInterval = setInterval(() => {
+        const now = new Date(currentDate.getTime() + 1000);
+        currentDate = now;
+        updateCountdown(targetDate, now);
+        
+        if (now >= targetDate) {
+            clearInterval(countdownInterval);
+            availabilityMessage.innerHTML += `
+                <div class="alert alert-success mt-3">
+                    The quiz is now available! <a href="#" onclick="location.reload()" class="alert-link">Refresh page</a>
+                </div>
+            `;
+        }
+    }, 1000);
+}
+
+function updateCountdown(targetDate, currentDate) {
+    const diff = targetDate - currentDate;
+    
+    if (diff <= 0) {
+        countdownElement.innerHTML = `
+            <div class="alert alert-success">
+                The quiz is now available! <a href="#" onclick="location.reload()" class="alert-link">Refresh page</a>
+            </div>
+        `;
+        return;
+    }
+    
+    const days = Math.floor(diff / (1000 * 60 * 60 * 24));
+    const hours = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+    const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+    const seconds = Math.floor((diff % (1000 * 60)) / 1000);
+    
+    countdownElement.innerHTML = `
+        <div class="countdown-timer">
+            <div class="countdown-item">
+                <span class="countdown-value">${days}</span>
+                <span class="countdown-label">Days</span>
+            </div>
+            <div class="countdown-item">
+                <span class="countdown-value">${hours}</span>
+                <span class="countdown-label">Hours</span>
+            </div>
+            <div class="countdown-item">
+                <span class="countdown-value">${minutes}</span>
+                <span class="countdown-label">Minutes</span>
+            </div>
+            <div class="countdown-item">
+                <span class="countdown-value">${seconds}</span>
+                <span class="countdown-label">Seconds</span>
+            </div>
+        </div>
+    `;
+}
+
+// Start the quiz
+function startQuiz() {
     const username = usernameInput.value.trim();
     if (!username) {
         alert('Please enter your name');
         return;
     }
-    // ... rest of your existing startQuiz code ...
-}
+
     quizState.username = username;
+    quizState.email = emailInput.value.trim();
     
     // Authenticate anonymously
     auth.signInAnonymously()
@@ -115,7 +274,7 @@ function checkPreviousAttempt() {
         .then((snapshot) => {
             if (snapshot.exists() && snapshot.val().hasCompleted) {
                 // User has already taken the quiz
-                alert('You have already taken this quiz. Only one attempt is allowed.');
+                alert('You have already taken this test. Only one attempt is allowed.');
             } else {
                 // Start the quiz
                 initializeQuiz();
@@ -134,6 +293,9 @@ function initializeQuiz() {
     
     // Initialize answers array
     quizState.answers = new Array(questions.length).fill(null);
+    quizState.correctCount = 0;
+    quizState.wrongCount = 0;
+    quizState.unansweredCount = questions.length;
     
     // Start timer
     startTimer();
@@ -158,7 +320,7 @@ function startTimer() {
 function updateTimerDisplay() {
     const minutes = Math.floor(quizState.timeLeft / 60);
     const seconds = quizState.timeLeft % 60;
-    timerDisplay.textContent = `${minutes}:${seconds < 10 ? '0' : ''}${seconds}`;
+    timerDisplay.textContent = `Time: ${minutes}:${seconds < 10 ? '0' : ''}${seconds}`;
 }
 
 function showQuestion(index) {
@@ -171,8 +333,10 @@ function showQuestion(index) {
     const question = questions[index];
     questionText.textContent = question.question;
     
-    // Clear previous options
+    // Clear previous options and explanation
     optionsContainer.innerHTML = '';
+    explanationText.style.display = 'none';
+    explanationText.textContent = '';
     
     // Add new options
     question.options.forEach((option, i) => {
@@ -192,10 +356,14 @@ function showQuestion(index) {
     // Update navigation buttons
     prevQuestionBtn.disabled = index === 0;
     nextQuestionBtn.textContent = index === questions.length - 1 ? 'Submit' : 'Next';
+    
+    // Update current score display
+    updateScoreDisplay();
 }
 
 function selectOption(optionIndex) {
     const currentQuestion = quizState.currentQuestion;
+    const previousAnswer = quizState.answers[currentQuestion];
     
     // Remove selected class from all options
     const options = optionsContainer.querySelectorAll('.option');
@@ -204,8 +372,41 @@ function selectOption(optionIndex) {
     // Add selected class to clicked option
     options[optionIndex].classList.add('selected');
     
+    // Update counts
+    if (previousAnswer === null) {
+        quizState.unansweredCount--;
+    }
+    
     // Save answer
     quizState.answers[currentQuestion] = optionIndex;
+    
+    // Update score
+    updateScoreDisplay();
+}
+
+function updateScoreDisplay() {
+    // Calculate current score with negative marking
+    let tempScore = 0;
+    let tempCorrect = 0;
+    let tempWrong = 0;
+    let tempUnanswered = 0;
+    
+    questions.forEach((question, index) => {
+        if (quizState.answers[index] === null) {
+            tempUnanswered++;
+        } else if (quizState.answers[index] === question.correct) {
+            tempCorrect++;
+            tempScore += 1;
+        } else {
+            tempWrong++;
+            tempScore -= 0.25;
+        }
+    });
+    
+    // Ensure score doesn't go below zero
+    tempScore = Math.max(0, tempScore);
+    
+    currentScoreDisplay.textContent = tempScore.toFixed(2);
 }
 
 function showPreviousQuestion() {
@@ -226,13 +427,26 @@ function showNextQuestion() {
 function submitQuiz() {
     clearInterval(quizState.timerInterval);
     
-    // Calculate score
+    // Calculate final score with negative marking
     quizState.score = 0;
+    quizState.correctCount = 0;
+    quizState.wrongCount = 0;
+    quizState.unansweredCount = 0;
+    
     questions.forEach((question, index) => {
-        if (quizState.answers[index] === question.answer) {
-            quizState.score++;
+        if (quizState.answers[index] === null) {
+            quizState.unansweredCount++;
+        } else if (quizState.answers[index] === question.correct) {
+            quizState.correctCount++;
+            quizState.score += 1;
+        } else {
+            quizState.wrongCount++;
+            quizState.score -= 0.25;
         }
     });
+    
+    // Ensure score doesn't go below zero
+    quizState.score = Math.max(0, quizState.score);
     
     // Save results to Firebase
     saveResults();
@@ -244,7 +458,11 @@ function saveResults() {
     
     const userData = {
         username: quizState.username,
+        email: quizState.email,
         score: quizState.score,
+        correct: quizState.correctCount,
+        wrong: quizState.wrongCount,
+        unanswered: quizState.unansweredCount,
         timestamp: firebase.database.ServerValue.TIMESTAMP,
         hasCompleted: true
     };
@@ -257,6 +475,8 @@ function saveResults() {
                 userId: quizState.userId,
                 username: quizState.username,
                 score: quizState.score,
+                correct: quizState.correctCount,
+                wrong: quizState.wrongCount,
                 timestamp: firebase.database.ServerValue.TIMESTAMP
             });
         })
@@ -266,7 +486,7 @@ function saveResults() {
         })
         .catch((error) => {
             console.error("Error saving results:", error);
-            // Show results anyway (data might be saved but we didn't get confirmation)
+            // Show results anyway
             showResults();
         });
 }
@@ -276,7 +496,19 @@ function showResults() {
     resultScreen.classList.remove('d-none');
     
     // Display score
-    resultScore.textContent = `You scored ${quizState.score}/20`;
+    resultScore.textContent = `Your Score: ${quizState.score.toFixed(2)}`;
+    
+    // Display statistics
+    statsContainer.innerHTML = `
+        <p><strong>Correct Answers:</strong> ${quizState.correctCount}</p>
+        <p><strong>Wrong Answers:</strong> ${quizState.wrongCount}</p>
+        <p><strong>Unanswered:</strong> ${quizState.unansweredCount}</p>
+        <div class="progress mt-3">
+            <div class="progress-bar bg-success" style="width: ${(quizState.correctCount/questions.length)*100}%">${quizState.correctCount}</div>
+            <div class="progress-bar bg-danger" style="width: ${(quizState.wrongCount/questions.length)*100}%">${quizState.wrongCount}</div>
+            <div class="progress-bar bg-secondary" style="width: ${(quizState.unansweredCount/questions.length)*100}%">${quizState.unansweredCount}</div>
+        </div>
+    `;
     
     // Get leaderboard data
     database.ref('results').orderByChild('score').limitToLast(50).once('value')
@@ -303,19 +535,22 @@ function showResults() {
             
             rankBadge.textContent = rankText;
             
+            // Calculate percentage
+            const percentage = ((totalParticipants - rank) / totalParticipants * 100).toFixed(1);
+            
             // Display message based on rank
             if (rank === 1) {
-                resultMessage.textContent = "Congratulations! You're in first place!";
+                resultMessage.innerHTML = `<strong>Performance:</strong> Congratulations! You're ranked #1!`;
             } else if (rank <= 3) {
-                resultMessage.textContent = `Amazing! You're in the top ${rank}!`;
+                resultMessage.innerHTML = `<strong>Performance:</strong> Excellent! You're in the top 3!`;
             } else if (rank <= Math.ceil(totalParticipants * 0.1)) {
-                resultMessage.textContent = `Great job! You're in the top 10%!`;
+                resultMessage.innerHTML = `<strong>Performance:</strong> Great job! You scored better than ${percentage}% of participants!`;
             } else if (rank <= Math.ceil(totalParticipants * 0.25)) {
-                resultMessage.textContent = `Good work! You're in the top 25%!`;
+                resultMessage.innerHTML = `<strong>Performance:</strong> Good work! You scored better than ${percentage}% of participants!`;
             } else if (rank <= Math.ceil(totalParticipants * 0.5)) {
-                resultMessage.textContent = `Nice! You scored better than half of participants!`;
+                resultMessage.innerHTML = `<strong>Performance:</strong> Nice! You scored better than ${percentage}% of participants!`;
             } else {
-                resultMessage.textContent = `Keep practicing! You can do better next time!`;
+                resultMessage.innerHTML = `<strong>Performance:</strong> Keep practicing! You scored better than ${percentage}% of participants!`;
             }
             
             // Display leaderboard (top 10 + user if not in top 10)
@@ -351,9 +586,16 @@ function addLeaderboardItem(result, rank) {
     }
     
     item.innerHTML = `
-        <div class="d-flex justify-content-between">
-            <div>${rank}. ${result.username}</div>
-            <div>${result.score}/20</div>
+        <div class="d-flex justify-content-between align-items-center">
+            <div>
+                <strong>${rank}.</strong> ${result.username}
+                ${result.userId === quizState.userId ? '<span class="badge bg-primary ms-2">You</span>' : ''}
+            </div>
+            <div>
+                <span class="text-success">${result.correct}</span> | 
+                <span class="text-danger">${result.wrong}</span> | 
+                <strong>${result.score.toFixed(2)}</strong>
+            </div>
         </div>
     `;
     
@@ -370,81 +612,30 @@ function showAnswers() {
         const answerItem = document.createElement('div');
         answerItem.className = 'mb-4 p-3 border rounded';
         
-        const isCorrect = quizState.answers[index] === question.answer;
+        const userAnswer = quizState.answers[index];
+        const isCorrect = userAnswer === question.correct;
         const answerClass = isCorrect ? 'text-success' : 'text-danger';
+        let answerStatus = '';
+        
+        if (userAnswer === null) {
+            answerStatus = '<span class="text-secondary">Not answered</span>';
+        } else if (isCorrect) {
+            answerStatus = '<span class="text-success">Correct (+1)</span>';
+        } else {
+            answerStatus = '<span class="text-danger">Incorrect (-0.25)</span>';
+        }
         
         answerItem.innerHTML = `
             <h5>Question ${index + 1}: ${question.question}</h5>
-            <p>Your answer: <span class="${answerClass}">${question.options[quizState.answers[index]] || 'Not answered'}</span></p>
-            <p>Correct answer: <span class="text-success">${question.options[question.answer]}</span></p>
+            <p>Your answer: ${userAnswer !== null ? question.options[userAnswer] : 'Not answered'} 
+            <strong>${answerStatus}</strong></p>
+            <p>Correct answer: <span class="text-success">${question.options[question.correct]}</span></p>
+            <div class="explanation alert alert-light mt-2">
+                <strong>Explanation:</strong> ${question.explanation}
+            </div>
+            <hr>
         `;
         
         answersContainer.appendChild(answerItem);
     });
-}
-// Quiz Access Control
-const QUIZ_OPEN_TIME = new Date("2025-6-21T20:14:00"); // Change to your desired open time
-
-function checkQuizAvailability() {
-    const now = new Date();
-    
-    if (now < QUIZ_OPEN_TIME) {
-        // Quiz is not yet available
-        introScreen.innerHTML = `
-            <div class="text-center">
-                <h2>Quiz Not Available Yet</h2>
-                <p>The quiz will open on:</p>
-                <h4>${QUIZ_OPEN_TIME.toLocaleString()}</h4>
-                <p>Your local time: ${now.toLocaleString()}</p>
-                <div id="countdown" class="mt-4"></div>
-            </div>
-        `;
-        
-        // Start countdown timer
-        updateCountdown();
-        setInterval(updateCountdown, 1000);
-        
-        return false;
-    }
-    return true;
-}
-
-function updateCountdown() {
-    const now = new Date();
-    const diff = QUIZ_OPEN_TIME - now;
-    
-    if (diff <= 0) {
-        document.getElementById('countdown').innerHTML = `
-            <div class="alert alert-success">
-                The quiz is now available! <a href="#" onclick="location.reload()">Refresh page</a>
-            </div>
-        `;
-        return;
-    }
-    
-    const days = Math.floor(diff / (1000 * 60 * 60 * 24));
-    const hours = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
-    const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
-    const seconds = Math.floor((diff % (1000 * 60)) / 1000);
-    
-    document.getElementById('countdown').innerHTML = `
-        <div class="countdown-timer">
-            <div class="countdown-item">
-                <span class="countdown-value">${days}</span>
-                <span class="countdown-label">Days</span>
-            </div>
-            <div class="countdown-item">
-                <span class="countdown-value">${hours}</span>
-                <span class="countdown-label">Hours</span>
-            </div>
-            <div class="countdown-item">
-                <span class="countdown-value">${minutes}</span>
-                <span class="countdown-label">Minutes</span>
-            </div>
-            <div class="countdown-item">
-                <span class="countdown-value">${seconds}</span>
-                <span class="countdown-label">Seconds</span>
-            </div>
-        </div>
-    `;
 }
