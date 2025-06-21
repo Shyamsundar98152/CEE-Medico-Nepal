@@ -379,3 +379,69 @@ function showAnswers() {
         answersContainer.appendChild(answerItem);
     });
 }
+// Quiz Access Control
+const QUIZ_OPEN_TIME = new Date("2025-6-21T20:14:00"); // Change to your desired open time
+
+function checkQuizAvailability() {
+    const now = new Date();
+    
+    if (now < QUIZ_OPEN_TIME) {
+        // Quiz is not yet available
+        introScreen.innerHTML = `
+            <div class="text-center">
+                <h2>Quiz Not Available Yet</h2>
+                <p>The quiz will open on:</p>
+                <h4>${QUIZ_OPEN_TIME.toLocaleString()}</h4>
+                <p>Your local time: ${now.toLocaleString()}</p>
+                <div id="countdown" class="mt-4"></div>
+            </div>
+        `;
+        
+        // Start countdown timer
+        updateCountdown();
+        setInterval(updateCountdown, 1000);
+        
+        return false;
+    }
+    return true;
+}
+
+function updateCountdown() {
+    const now = new Date();
+    const diff = QUIZ_OPEN_TIME - now;
+    
+    if (diff <= 0) {
+        document.getElementById('countdown').innerHTML = `
+            <div class="alert alert-success">
+                The quiz is now available! <a href="#" onclick="location.reload()">Refresh page</a>
+            </div>
+        `;
+        return;
+    }
+    
+    const days = Math.floor(diff / (1000 * 60 * 60 * 24));
+    const hours = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+    const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+    const seconds = Math.floor((diff % (1000 * 60)) / 1000);
+    
+    document.getElementById('countdown').innerHTML = `
+        <div class="countdown-timer">
+            <div class="countdown-item">
+                <span class="countdown-value">${days}</span>
+                <span class="countdown-label">Days</span>
+            </div>
+            <div class="countdown-item">
+                <span class="countdown-value">${hours}</span>
+                <span class="countdown-label">Hours</span>
+            </div>
+            <div class="countdown-item">
+                <span class="countdown-value">${minutes}</span>
+                <span class="countdown-label">Minutes</span>
+            </div>
+            <div class="countdown-item">
+                <span class="countdown-value">${seconds}</span>
+                <span class="countdown-label">Seconds</span>
+            </div>
+        </div>
+    `;
+}
