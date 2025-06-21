@@ -83,14 +83,17 @@ backToResultsBtn.addEventListener('click', () => {
     resultScreen.classList.remove('d-none');
 });
 
-// Start the quiz
 function startQuiz() {
+    // First check if quiz is available
+    if (!checkQuizAvailability()) return;
+    
     const username = usernameInput.value.trim();
     if (!username) {
         alert('Please enter your name');
         return;
     }
-
+    // ... rest of your existing startQuiz code ...
+}
     quizState.username = username;
     
     // Authenticate anonymously
