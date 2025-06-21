@@ -559,7 +559,6 @@
   {"question":"8. Photon of λ = 250 nm hits metal work function 2 eV. KE of photoelectron?","options":["A)3.96 eV","B)1.96 eV","C)2.00 eV","D)0.96 eV"],"correct":3,"explanation":"E_photon≈4.96 eV ⇒ KE≈4.96−2=2.96≈0.96 missing? Actually ≈2.96 eV, none match."},
   {"question":"9. In a series LCR resonance, impedance is:","options":["A) minimum","B) maximum","C) equal to R","D) infinite"],"correct":0,"explanation":"At resonance, inductive and capacitive reactances cancel, impedance = R (minimum)."},
   {"question":"10. A rod moves in B-field producing emf. Emf ∝:","options":["A) velocity","B) length","C) magnetic field","D) all"],"correct":3,"explanation":"ε = Bℓv, proportional to all three quantities."},
-  
   {"question":"11. Two point charges +q and −q are separated by distance d. At the midpoint, the electric potential is:","options":["A) q/(4πε₀d)","B) −q/(4πε₀d)","C) 0","D) Infinity"],"correct":2,"explanation":"Potentials from equal and opposite charges cancel at midpoint."},
   {"question":"12. A charged particle enters a uniform magnetic field perpendicular to its velocity, it moves in:","options":["A) Straight line","B) Circular path","C) Helical path","D) Elliptical path"],"correct":1,"explanation":"Magnetic force perpendicular to velocity causes circular motion."},
   {"question":"13. A 10 μF capacitor is charged to 100 V and then disconnected. Energy stored is:","options":["A) 0.05 J","B) 0.005 J","C) 5 J","D) 0.5 J"],"correct":0,"explanation":"E = ½CV² = 0.5×10e‑6×100² = 0.05 J."},
@@ -604,77 +603,87 @@
 
 ;
 
-    let current = 0;
-    let score = 0;
-    let userAnswers = [];
+   let current = 0;
+  let score = 0;
+  let userAnswers = [];
 
-    function renderQuestion() {
-      const q = quizData[current];
-      let html = '<div class="quiz-question">';
-      html += `<h3>Q${current + 1}. ${q.question}</h3>`;
-      q.options.forEach((opt, i) => {
-        html += `<div class="quiz-option" onclick="selectOption(${i})">${opt}</div>`;
-      });
-      html += `<div class="quiz-explanation" id="explanation">${q.explanation}</div>`;
-      html += '</div>';
-      document.getElementById('quiz-box').innerHTML = html;
-    }
+  function renderQuestion() {
+    const q = quizData[current];
+    let html = '<div class="quiz-question">';
+    html += `<h3>Q${current + 1}. ${q.question}</h3>`;
+    q.options.forEach((opt, i) => {
+      html += `<div class="quiz-option" onclick="selectOption(${i})">${opt}</div>`;
+    });
+    html += `<div class="quiz-explanation" id="explanation" style="display:none;">${q.explanation}</div>`;
+    html += '</div>';
+    document.getElementById('quiz-box').innerHTML = html;
+  }
 
-    function selectOption(index) {
-      const options = document.querySelectorAll('.quiz-option');
-      options.forEach((el, i) => {
-        el.classList.remove('correct', 'incorrect');
-        if (i === index) {
-          if (i === quizData[current].correct) {
-            el.classList.add('correct');
-            score++;
-          } else {
-            el.classList.add('incorrect');
-            options[quizData[current].correct].classList.add('correct');
-          }
+  function selectOption(index) {
+    const options = document.querySelectorAll('.quiz-option');
+    options.forEach((el, i) => {
+      el.classList.remove('correct', 'incorrect');
+      if (i === index) {
+        if (i === quizData[current].correct) {
+          el.classList.add('correct');
+          score++;
+        } else {
+          el.classList.add('incorrect');
+          options[quizData[current].correct].classList.add('correct');
         }
-        el.onclick = null;
-      });
-      document.getElementById('explanation').style.display = 'block';
-      userAnswers[current] = index;
-    }
-
-    function nextQuestion() {
-      if (current < quizData.length - 1) {
-        current++;
-        renderQuestion();
       }
-    }
+      el.onclick = null;
+    });
+    document.getElementById('explanation').style.display = 'block';
+    userAnswers[current] = index;
+  }
 
-    function prevQuestion() {
-      if (current > 0) {
-        current--;
-        renderQuestion();
-      }
-    }
-
-    function submitQuiz() {
-      document.getElementById('quiz-box').style.display = 'none';
-      document.querySelector('.quiz-navigation').style.display = 'none';
-      document.getElementById('results-box').style.display = 'block';
-      document.getElementById('score-text').innerText = `You scored ${score} out of ${quizData.length}`;
-    }
-
-    function restartQuiz() {
-      current = 0;
-      score = 0;
-      userAnswers = [];
-      document.getElementById('quiz-box').style.display = 'block';
-      document.querySelector('.quiz-navigation').style.display = 'block';
-      document.getElementById('results-box').style.display = 'none';
+  function nextQuestion() {
+    if (current < quizData.length - 1) {
+      current++;
       renderQuestion();
     }
+  }
 
-    document.getElementById('mobileMenuBtn').addEventListener('click', function () {
+  function prevQuestion() {
+    if (current > 0) {
+      current--;
+      renderQuestion();
+    }
+  }
+
+  function submitQuiz() {
+    document.getElementById('quiz-box').style.display = 'none';
+    document.querySelector('.quiz-navigation').style.display = 'none';
+    document.getElementById('results-box').style.display = 'block';
+    document.getElementById('score-text').innerText = `You scored ${score} out of ${quizData.length}`;
+  }
+
+  function restartQuiz() {
+    current = 0;
+    score = 0;
+    userAnswers = [];
+    document.getElementById('quiz-box').style.display = 'block';
+    document.querySelector('.quiz-navigation').style.display = 'block';
+    document.getElementById('results-box').style.display = 'none';
+    renderQuestion();
+  }
+
+  window.onload = function () {
+    renderQuestion();
+  };
+
+  // Optional: Only if you actually have a mobile menu
+  const mobileMenuBtn = document.getElementById('mobileMenuBtn');
+  if (mobileMenuBtn) {
+    mobileMenuBtn.addEventListener('click', function () {
       const nav = document.getElementById('mainNav');
-      nav.style.display = nav.style.display === 'none' ? 'block' : 'none';
+      if (nav) {
+        nav.style.display = nav.style.display === 'none' ? 'block' : 'none';
+      }
     });
-  </script>
+  }
+</script>
 
   <!-- Firebase logic using ES module -->
   <script type="module">
