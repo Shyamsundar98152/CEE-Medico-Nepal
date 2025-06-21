@@ -140,6 +140,33 @@
                 padding: 10px 12px;
             }
         }
+         .countdown-timer {
+            display: flex;
+            justify-content: center;
+            gap: 15px;
+            margin-top: 20px;
+        }
+        
+        .countdown-item {
+            text-align: center;
+            background: var(--primary-color);
+            color: white;
+            padding: 10px 15px;
+            border-radius: 5px;
+            min-width: 80px;
+        }
+        
+        .countdown-value {
+            font-size: 1.8rem;
+            font-weight: bold;
+            display: block;
+        }
+        
+        .countdown-label {
+            font-size: 0.9rem;
+            text-transform: uppercase;
+            opacity: 0.8;
+        }
     </style>
 </head>
 <body>
@@ -155,11 +182,20 @@
             </div>
         </div>
     </header>
+  <div class="container">
+        <!-- Time Check Screen (initially shown) -->
+        <div class="quiz-container" id="time-check-screen">
+            <div class="text-center">
+                <h2>Medical Physics Quiz</h2>
+                <div id="availability-message"></div>
+                <div id="countdown" class="mt-4"></div>
+            </div>
+        </div>
 
     <!-- Main Quiz Container -->
     <div class="container">
-        <!-- Intro Screen -->
-        <div class="quiz-container" id="intro-screen">
+        <!-- Intro Screen (hidden until quiz time) -->
+        <div class="quiz-container d-none" id="intro-screen">
             <h2 class="text-center mb-4">Medical Physics Challenge</h2>
             <div class="alert alert-info">
                 <h5>Scoring System:</h5>
@@ -273,21 +309,83 @@
         const database = firebase.database();
         const auth = firebase.auth();
 
-        // Quiz state
-        let quizState = {
-            currentQuestion: 0,
-            answers: [],
-            score: 0,
-            timeLeft: 30 * 60, // 30 minutes in seconds
-            timerInterval: null,
-            userId: null,
-            username: '',
-            email: '',
-            hasSubmitted: false,
-            correctCount: 0,
-            wrongCount: 0,
-            unansweredCount: 0
-        };
+        // Quiz Access Control
+        const QUIZ_OPEN_TIME = new Date("2023-12-25T09:00:00"); // Change this to your desired open time
+        
+        // DOM Elements
+        const timeCheckScreen = document.getElementById('time-check-screen');
+        const introScreen = document.getElementById('intro-screen');
+        const availabilityMessage = document.getElementById('availability-message');
+        const countdownElement = document.getElementById('countdown');
+        
+        // Check quiz availability on page load
+        document.addEventListener('DOMContentLoaded', function() {
+            checkQuizAvailability();
+        });
+
+        function checkQuizAvailability() {
+            const now = new Date();
+            
+            if (now < QUIZ_OPEN_TIME) {
+                // Quiz is not yet available
+                availabilityMessage.innerHTML = `
+                    <p>The quiz will open on:</p>
+                    <h4>${QUIZ_OPEN_TIME.toLocaleString()}</h4>
+                    <p>Your local time: ${now.toLocaleString()}</p>
+                `;
+                
+                // Start countdown timer
+                updateCountdown();
+                setInterval(updateCountdown, 1000);
+                
+                return false;
+            } else {
+                // Quiz is available
+                timeCheckScreen.classList.add('d-none');
+                introScreen.classList.remove('d-none');
+                return true;
+            }
+        }
+
+        function updateCountdown() {
+            const now = new Date();
+            const diff = QUIZ_OPEN_TIME - now;
+            
+            if (diff <= 0) {
+                countdownElement.innerHTML = `
+                    <div class="alert alert-success">
+                        The quiz is now available! <a href="#" onclick="location.reload()" class="alert-link">Refresh page</a>
+                    </div>
+                `;
+                return;
+            }
+            
+            const days = Math.floor(diff / (1000 * 60 * 60 * 24));
+            const hours = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+            const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+            const seconds = Math.floor((diff % (1000 * 60)) / 1000);
+            
+            countdownElement.innerHTML = `
+                <div class="countdown-timer">
+                    <div class="countdown-item">
+                        <span class="countdown-value">${days}</span>
+                        <span class="countdown-label">Days</span>
+                    </div>
+                    <div class="countdown-item">
+                        <span class="countdown-value">${hours}</span>
+                        <span class="countdown-label">Hours</span>
+                    </div>
+                    <div class="countdown-item">
+                        <span class="countdown-value">${minutes}</span>
+                        <span class="countdown-label">Minutes</span>
+                    </div>
+                    <div class="countdown-item">
+                        <span class="countdown-value">${seconds}</span>
+                        <span class="countdown-label">Seconds</span>
+                    </div>
+                </div>
+            `;
+        }
 
         // Questions data
         const questions = [
