@@ -289,7 +289,8 @@
     <script src="https://www.gstatic.com/firebasejs/9.6.0/firebase-database-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.6.0/firebase-auth-compat.js"></script>
     
-   <script>
+    <!-- Updated Firebase Script -->
+    <script>
     // Firebase configuration
     const firebaseConfig = {
         apiKey: "AIzaSyDfCO-xxHPpgSfE-I6KTmsw35Lo9n2v56s",
@@ -306,70 +307,11 @@
     const database = firebase.database();
     const auth = firebase.auth();
     
-    // Sample questions
-    const questions = [
-        {
-            "question": "What is the most common cause of chronic kidney disease worldwide?",
-            "options": [
-                "A) Diabetes mellitus",
-                "B) Hypertension",
-                "C) Glomerulonephritis",
-                "D) Polycystic kidney disease"
-            ],
-            "correct": 0,
-            "explanation": "Diabetes mellitus is the leading cause of chronic kidney disease worldwide, accounting for about 30-50% of cases."
-        },
-        {
-            "question": "Which of the following is NOT a typical symptom of Parkinson's disease?",
-            "options": [
-                "A) Resting tremor",
-                "B) Bradykinesia",
-                "C) Muscle rigidity",
-                "D) Hyperreflexia"
-            ],
-            "correct": 3,
-            "explanation": "The classic triad of Parkinson's disease symptoms includes resting tremor, bradykinesia (slowness of movement), and muscle rigidity. Hyperreflexia is not typically associated with Parkinson's."
-        },
-        {
-            "question": "What is the first-line treatment for anaphylaxis?",
-            "options": [
-                "A) Diphenhydramine",
-                "B) Epinephrine",
-                "C) Methylprednisolone",
-                "D) Albuterol"
-            ],
-            "correct": 1,
-            "explanation": "Epinephrine (adrenaline) is the first-line treatment for anaphylaxis. It works rapidly to counteract the life-threatening symptoms by constricting blood vessels and opening airways."
-        },
-        {
-            "question": "Which vitamin deficiency is associated with night blindness?",
-            "options": [
-                "A) Vitamin A",
-                "B) Vitamin B12",
-                "C) Vitamin C",
-                "D) Vitamin D"
-            ],
-            "correct": 0,
-            "explanation": "Vitamin A is essential for the production of rhodopsin, the photopigment in the retina that enables vision in low-light conditions. Deficiency can lead to night blindness."
-        },
-        {
-            "question": "What is the most common type of stroke?",
-            "options": [
-                "A) Ischemic stroke",
-                "B) Hemorrhagic stroke",
-                "C) Subarachnoid hemorrhage",
-                "D) Transient ischemic attack"
-            ],
-            "correct": 0,
-            "explanation": "Ischemic strokes account for about 87% of all strokes. They occur when a blood clot blocks or narrows an artery leading to the brain."
-        }
-    ];
-    
     // Quiz state variables
-    let userAnswers = Array(questions.length).fill(null);
+    let questions = [];
+    let userAnswers = [];
     let quizSubmitted = false;
     let userInfo = {};
-    let userIP = '';
     let currentQuestionIndex = 0;
     
     // DOM elements
@@ -389,46 +331,61 @@
     
     // Initialize the quiz
     function initQuiz() {
-        // Get user IP (for anonymous identification)
-        fetch('https://api.ipify.org?format=json')
-            .then(response => response.json())
-            .then(data => {
-                userIP = data.ip;
-                checkSubmissionStatus();
-            })
-            .catch(() => {
-                // If IP detection fails, use a fallback (less reliable)
-                userIP = 'unknown-' + Math.random().toString(36).substring(2, 15);
-                checkSubmissionStatus();
-            });
+        // Load questions from Firebase
+        loadQuestions().then(() => {
+            userAnswers = Array(questions.length).fill(null);
+            checkSubmissionStatus();
+        });
         
         // Set up event listeners
         userInfoForm.addEventListener('submit', startQuiz);
-        submitBtn.addEventListener('click', submitQuiz);
     }
-    
-    // Check if user has already submitted the quiz
-    function checkSubmissionStatus() {
-        const submissionsRef = database.ref('submissions');
-        
-        submissionsRef.orderByChild('ip').equalTo(userIP).once('value')
+
+    // Load questions from Firebase
+    function loadQuestions() {
+        return database.ref('medicalQuestions').once('value')
             .then(snapshot => {
                 if (snapshot.exists()) {
-                    // User has already submitted
-                    const submissionData = Object.values(snapshot.val())[0];
-                    showAlreadySubmitted(submissionData);
+                    questions = Object.values(snapshot.val());
                 } else {
-                    // User can take the quiz
-                    userInfoContainer.style.display = 'block';
+                    // Fallback to default questions if none in database
+                    questions = [
+                        {
+                            "question": "What is the most common cause of chronic kidney disease worldwide?",
+                            "options": [
+                                "A) Diabetes mellitus",
+                                "B) Hypertension",
+                                "C) Glomerulonephritis",
+                                "D) Polycystic kidney disease"
+                            ],
+                            "correct": 0,
+                            "explanation": "Diabetes mellitus is the leading cause of chronic kidney disease worldwide."
+                        },
+                        // Add other default questions here
+                    ];
                 }
-            })
-            .catch(error => {
-                console.error("Error checking submission status:", error);
-                // If there's an error, allow the user to proceed
-                userInfoContainer.style.display = 'block';
             });
     }
-    
+
+    // Check if user has already submitted the quiz
+    function checkSubmissionStatus() {
+        auth.onAuthStateChanged(user => {
+            if (user) {
+                database.ref('users/' + user.uid + '/attempts').once('value')
+                    .then(snapshot => {
+                        if (snapshot.exists() && snapshot.val() >= 3) {
+                            showAlreadySubmitted();
+                        } else {
+                            userInfoContainer.style.display = 'block';
+                        }
+                    });
+            } else {
+                // Allow anonymous users
+                userInfoContainer.style.display = 'block';
+            }
+        });
+    }
+
     // Start the quiz after user info is submitted
     function startQuiz(e) {
         e.preventDefault();
@@ -437,7 +394,6 @@
         userInfo = {
             name: document.getElementById('user-name').value.trim(),
             email: document.getElementById('user-email').value.trim() || null,
-            ip: userIP,
             timestamp: new Date().toISOString()
         };
         
@@ -447,14 +403,22 @@
             return;
         }
         
-        // Hide user info form, show quiz
-        userInfoContainer.style.display = 'none';
-        quizContainer.style.display = 'block';
-        
-        // Load first question
-        renderQuestion(currentQuestionIndex);
+        // Authenticate user anonymously
+        auth.signInAnonymously()
+            .then(() => {
+                // Hide user info form, show quiz
+                userInfoContainer.style.display = 'none';
+                quizContainer.style.display = 'block';
+                
+                // Load first question
+                renderQuestion(currentQuestionIndex);
+            })
+            .catch(error => {
+                console.error("Authentication failed:", error);
+                alert("Error starting quiz. Please try again.");
+            });
     }
-    
+
     // Render a single question to the DOM
     function renderQuestion(index) {
         const question = questions[index];
@@ -526,9 +490,9 @@
         questions.forEach((question, index) => {
             if (userAnswers[index] !== null) {
                 if (userAnswers[index] === question.correct) {
-                    score += 1; // +1 for correct answer
+                    score += 1;
                 } else {
-                    score -= 0.25; // -0.25 for wrong answer
+                    score -= 0.25;
                 }
             }
         });
@@ -543,81 +507,72 @@
         
         // Save submission to Firebase
         saveQuizResult(score);
-        
-        // Show results
-        showResults(score);
-        
-        // Update UI
-        quizSubmitted = true;
-        quizContainer.style.display = 'none';
     }
-    
+
     // Save quiz result to Firebase
     function saveQuizResult(score) {
-        const submissionsRef = database.ref('submissions');
-        const leaderboardRef = database.ref('leaderboard');
-        
-        // Create submission data
-        const submissionData = {
-            ...userInfo,
+        const user = auth.currentUser;
+        if (!user) return;
+
+        const quizResult = {
+            userId: user.uid,
+            userName: userInfo.name,
+            userEmail: userInfo.email || null,
             score: score,
-            answers: userAnswers,
-            submittedAt: new Date().toISOString()
+            answers: JSON.stringify(userAnswers),
+            timestamp: new Date().toISOString()
         };
-        
-        // Save to submissions
-        submissionsRef.push(submissionData)
+
+        // Save to quizResults
+        database.ref('quizResults').push(quizResult)
             .then(() => {
-                // Also add to leaderboard (without answers)
-                const leaderboardEntry = {
-                    name: userInfo.name,
-                    score: score,
-                    submittedAt: submissionData.submittedAt
-                };
-                
-                if (userInfo.email) {
-                    leaderboardEntry.email = userInfo.email;
-                }
-                
-                leaderboardRef.push(leaderboardEntry);
+                // Update user attempts count
+                return database.ref('users/' + user.uid).transaction(userData => {
+                    if (!userData) {
+                        userData = {
+                            name: userInfo.name,
+                            email: userInfo.email || null,
+                            attempts: 0,
+                            lastAttempt: new Date().toISOString()
+                        };
+                    }
+                    userData.attempts = (userData.attempts || 0) + 1;
+                    userData.lastAttempt = new Date().toISOString();
+                    return userData;
+                });
+            })
+            .then(() => {
+                showResults(score);
+                quizSubmitted = true;
+                quizContainer.style.display = 'none';
             })
             .catch(error => {
-                console.error("Error saving quiz result:", error);
+                console.error("Error saving results:", error);
             });
     }
-    
+
     // Show results to the user
     function showResults(score) {
         resultsContainer.style.display = 'block';
-        
-        // Display final score
         finalScoreElement.textContent = score.toFixed(2);
         
-        // Calculate percentage (based on max possible score)
+        // Calculate percentage
         const maxScore = questions.length;
         const percentage = (score / maxScore) * 100;
         scoreProgress.style.width = `${percentage}%`;
         
-        // Get leaderboard data for ranking
-        database.ref('leaderboard').once('value')
+        // Get ranking data
+        database.ref('quizResults').orderByChild('score').once('value')
             .then(snapshot => {
                 if (snapshot.exists()) {
-                    const leaderboard = Object.values(snapshot.val());
-                    const betterScores = leaderboard.filter(entry => entry.score > score).length;
-                    const totalParticipants = leaderboard.length;
+                    const allResults = Object.values(snapshot.val());
+                    const betterScores = allResults.filter(result => result.score > score).length;
+                    const totalParticipants = allResults.length;
                     const percentile = ((totalParticipants - betterScores) / totalParticipants * 100).toFixed(0);
                     
                     rankDisplay.textContent = `Rank: #${betterScores + 1} of ${totalParticipants}`;
                     percentileElement.textContent = percentile;
-                } else {
-                    rankDisplay.textContent = "First participant!";
-                    percentileElement.textContent = "100";
                 }
-            })
-            .catch(error => {
-                console.error("Error getting leaderboard:", error);
-                rankDisplay.textContent = "Rank: Unknown";
-                percentileElement.textContent = "0";
             });
         
         // Show question-by-question results
@@ -661,17 +616,25 @@
     }
     
     // Show message if user has already submitted
-    function showAlreadySubmitted(submissionData) {
-        userInfoContainer.style.display = 'none';
-        quizContainer.style.display = 'none';
-        alreadySubmittedContainer.style.display = 'block';
-        
-        // Show previous score
-        previousScoreElement.textContent = submissionData.score.toFixed(2);
+    function showAlreadySubmitted() {
+        const user = auth.currentUser;
+        if (!user) return;
+
+        database.ref('quizResults').orderByChild('userId').equalTo(user.uid).limitToLast(1).once('value')
+            .then(snapshot => {
+                if (snapshot.exists()) {
+                    const result = Object.values(snapshot.val())[0];
+                    userInfoContainer.style.display = 'none';
+                    quizContainer.style.display = 'none';
+                    alreadySubmittedContainer.style.display = 'block';
+                    previousScoreElement.textContent = result.score.toFixed(2);
+                }
+            });
     }
     
     // Initialize the quiz when the page loads
     window.addEventListener('DOMContentLoaded', initQuiz);
-</script>
+    </script>
 </body>
 </html>
+    
