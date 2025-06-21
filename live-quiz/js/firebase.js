@@ -1,8 +1,22 @@
 import { initializeApp } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-app.js";
-import { getDatabase, ref, get, push, serverTimestamp } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-database.js";
-import { getAuth, signInAnonymously } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-auth.js";
+import { 
+    getDatabase, 
+    ref, 
+    get, 
+    push, 
+    serverTimestamp,
+    set,
+    onValue
+} from "https://www.gstatic.com/firebasejs/9.22.0/firebase-database.js";
+import { 
+    getAuth, 
+    signInAnonymously, 
+    onAuthStateChanged,
+    createUserWithEmailAndPassword,
+    signInWithEmailAndPassword
+} from "https://www.gstatic.com/firebasejs/9.22.0/firebase-auth.js";
 
-// Firebase configuration
+// Your Firebase configuration
 const firebaseConfig = {
   apiKey: "AIzaSyDfCO-xxHPpgSfE-I6KTmsw35Lo9n2v56s",
   authDomain: "live-quiz-6e77b.firebaseapp.com",
@@ -19,4 +33,17 @@ const database = getDatabase(app);
 const auth = getAuth(app);
 
 // Export Firebase services
-export { database, ref, get, push, serverTimestamp, auth, signInAnonymously };
+export { 
+    database, 
+    ref, 
+    get, 
+    push, 
+    set,
+    onValue,
+    serverTimestamp, 
+    auth, 
+    signInAnonymously,
+    onAuthStateChanged,
+    createUserWithEmailAndPassword,
+    signInWithEmailAndPassword
+};
