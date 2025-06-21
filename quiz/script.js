@@ -24,7 +24,7 @@ localStorage.setItem('quiz_device', deviceId);
 checkParticipation();
 
 // Load questions
-fetch('./quiz.json')
+fetch('data/quiz.json')
   .then(res => res.json())
   .then(data => {
     questions = data;
