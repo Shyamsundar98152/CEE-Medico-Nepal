@@ -289,564 +289,389 @@
     <script src="https://www.gstatic.com/firebasejs/9.6.0/firebase-database-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.6.0/firebase-auth-compat.js"></script>
     
-    <script>
-        // Firebase configuration
-        const firebaseConfig = {
-            apiKey: "AIzaSyDfCO-xxHPpgSfE-I6KTmsw35Lo9n2v56s",
-            authDomain: "live-quiz-6e77b.firebaseapp.com",
-            databaseURL: "https://live-quiz-6e77b-default-rtdb.asia-southeast1.firebasedatabase.app",
-            projectId: "live-quiz-6e77b",
-            storageBucket: "live-quiz-6e77b.appspot.com",
-            messagingSenderId: "50057610341",
-            appId: "1:50057610341:web:d4e88673a20757d4c9328c"
-        };
+   <script>
+    // Firebase configuration
+    const firebaseConfig = {
+        apiKey: "AIzaSyDfCO-xxHPpgSfE-I6KTmsw35Lo9n2v56s",
+        authDomain: "live-quiz-6e77b.firebaseapp.com",
+        databaseURL: "https://live-quiz-6e77b-default-rtdb.asia-southeast1.firebasedatabase.app",
+        projectId: "live-quiz-6e77b",
+        storageBucket: "live-quiz-6e77b.appspot.com",
+        messagingSenderId: "50057610341",
+        appId: "1:50057610341:web:d4e88673a20757d4c9328c"
+    };
 
-        // Initialize Firebase
-        const app = firebase.initializeApp(firebaseConfig);
-        const database = firebase.database();
-        const auth = firebase.auth();
-        
-        // Sample questions
-        const questions = [
-  {
-    "question": "1. The process by which plants make their own food is called",
-    "options": ["A) Respiration", "B) Photosynthesis", "C) Transpiration", "D) Germination"],
-    "correct": 2,
-    "explanation": "Photosynthesis is the process of food synthesis in plants."
-  },
-  {
-    "question": "2. The green pigment responsible for photosynthesis is",
-    "options": ["A) Chlorophyll", "B) Carotene", "C) Xanthophyll", "D) Anthocyanin"],
-    "correct": 1,
-    "explanation": "Chlorophyll absorbs light energy for photosynthesis."
-  },
-  {
-    "question": "3. The opening on the leaf surface that controls gas exchange is called",
-    "options": ["A) Stomata", "B) Cuticle", "C) Vein", "D) Trichome"],
-    "correct": 1,
-    "explanation": "Stomata regulate gas exchange and transpiration."
-  },
-  {
-    "question": "4. The vascular tissue responsible for transporting water is",
-    "options": ["A) Phloem", "B) Xylem", "C) Cortex", "D) Cambium"],
-    "correct": 2,
-    "explanation": "Xylem transports water from roots to leaves."
-  },
-  {
-    "question": "5. The food-conducting tissue in plants is called",
-    "options": ["A) Phloem", "B) Xylem", "C) Parenchyma", "D) Collenchyma"],
-    "correct": 1,
-    "explanation": "Phloem transports food throughout the plant."
-  },
-  {
-    "question": "6. The process of water loss from plant leaves is called",
-    "options": ["A) Photosynthesis", "B) Transpiration", "C) Respiration", "D) Evaporation"],
-    "correct": 2,
-    "explanation": "Transpiration is water loss from leaves."
-  },
-  {
-    "question": "7. The plant hormone responsible for cell elongation is",
-    "options": ["A) Auxin", "B) Gibberellin", "C) Cytokinin", "D) Ethylene"],
-    "correct": 1,
-    "explanation": "Auxin promotes cell elongation."
-  },
-  {
-    "question": "8. The protective layer covering the surface of leaves is called",
-    "options": ["A) Cuticle", "B) Epidermis", "C) Stomata", "D) Palisade"],
-    "correct": 1,
-    "explanation": "Cuticle prevents water loss."
-  },
-  {
-    "question": "9. The site of photosynthesis in plant cells is",
-    "options": ["A) Mitochondria", "B) Chloroplast", "C) Nucleus", "D) Vacuole"],
-    "correct": 2,
-    "explanation": "Chloroplast contains chlorophyll for photosynthesis."
-  },
-  {
-    "question": "10. Which part of the plant anchors it to the soil?",
-    "options": ["A) Stem", "B) Leaf", "C) Root", "D) Flower"],
-    "correct": 3,
-    "explanation": "Roots anchor the plant."
-  },
-  {
-    "question": "11. The type of root found in monocot plants is",
-    "options": ["A) Tap root", "B) Fibrous root", "C) Adventitious root", "D) Lateral root"],
-    "correct": 2,
-    "explanation": "Monocots have fibrous roots."
-  },
-  {
-    "question": "12. The reproductive part of a flower is",
-    "options": ["A) Petal", "B) Sepal", "C) Stamen and Pistil", "D) Leaf"],
-    "correct": 3,
-    "explanation": "Stamen (male) and pistil (female) are reproductive organs."
-  },
-  {
-    "question": "13. The male reproductive part of a flower is",
-    "options": ["A) Pistil", "B) Stamen", "C) Petal", "D) Sepal"],
-    "correct": 2,
-    "explanation": "Stamen produces pollen grains."
-  },
-  {
-    "question": "14. The process of fusion of male and female gametes is called",
-    "options": ["A) Fertilization", "B) Germination", "C) Pollination", "D) Photosynthesis"],
-    "correct": 1,
-    "explanation": "Fertilization forms zygote."
-  },
-  {
-    "question": "15. The part of the plant that transports food is",
-    "options": ["A) Phloem", "B) Xylem", "C) Cambium", "D) Epidermis"],
-    "correct": 1,
-    "explanation": "Phloem transports food from leaves."
-  },
-  {
-    "question": "16. The plant hormone that promotes seed germination is",
-    "options": ["A) Cytokinin", "B) Gibberellin", "C) Auxin", "D) Ethylene"],
-    "correct": 2,
-    "explanation": "Gibberellin promotes germination."
-  },
-  {
-    "question": "17. The opening between two guard cells is called",
-    "options": ["A) Stoma", "B) Pore", "C) Trichome", "D) Vein"],
-    "correct": 1,
-    "explanation": "Stoma controls gas exchange."
-  },
-  {
-    "question": "18. The type of plant that completes its life cycle in two years is called",
-    "options": ["A) Annual", "B) Biennial", "C) Perennial", "D) Ephemeral"],
-    "correct": 2,
-    "explanation": "Biennial plants live two years."
-  },
-  {
-    "question": "19. The part of the seed that stores food is",
-    "options": ["A) Embryo", "B) Cotyledon", "C) Seed coat", "D) Radicle"],
-    "correct": 2,
-    "explanation": "Cotyledons store food."
-  },
-  {
-    "question": "20. The leaf arrangement where leaves are in pairs is called",
-    "options": ["A) Alternate", "B) Opposite", "C) Whorled", "D) Rosette"],
-    "correct": 2,
-    "explanation": "Opposite leaves grow in pairs."
-  },
-  {
-    "question": "21. The function of xylem vessels is",
-    "options": ["A) Transport of food", "B) Transport of water", "C) Support only", "D) Storage"],
-    "correct": 2,
-    "explanation": "Xylem transports water."
-  },
-  {
-    "question": "22. The tissue responsible for growth in plants is",
-    "options": ["A) Parenchyma", "B) Collenchyma", "C) Meristem", "D) Sclerenchyma"],
-    "correct": 3,
-    "explanation": "Meristematic tissue causes growth."
-  },
-  {
-    "question": "23. The outermost layer of cells in roots and stems is",
-    "options": ["A) Epidermis", "B) Cortex", "C) Phloem", "D) Xylem"],
-    "correct": 1,
-    "explanation": "Epidermis is outermost."
-  },
-  {
-    "question": "24. The thickening of stems and roots in dicots is due to",
-    "options": ["A) Primary growth", "B) Secondary growth", "C) Tertiary growth", "D) None"],
-    "correct": 2,
-    "explanation": "Secondary growth increases girth."
-  },
-  {
-    "question": "25. The plant hormone responsible for fruit ripening is",
-    "options": ["A) Auxin", "B) Cytokinin", "C) Ethylene", "D) Gibberellin"],
-    "correct": 3,
-    "explanation": "Ethylene promotes ripening."
-  },
-  {
-    "question": "26. The main site of photosynthesis in a leaf is",
-    "options": ["A) Palisade mesophyll", "B) Spongy mesophyll", "C) Epidermis", "D) Cuticle"],
-    "correct": 1,
-    "explanation": "Palisade cells contain most chloroplasts."
-  },
-  {
-    "question": "27. The type of venation found in monocot leaves is",
-    "options": ["A) Reticulate", "B) Parallel", "C) Pinnate", "D) Palmate"],
-    "correct": 2,
-    "explanation": "Monocots have parallel venation."
-  },
-  {
-    "question": "28. The plant that lacks vascular tissues is",
-    "options": ["A) Fern", "B) Moss", "C) Pine", "D) Grass"],
-    "correct": 2,
-    "explanation": "Mosses are non-vascular."
-  },
-  {
-    "question": "29. The female part of the flower is called",
-    "options": ["A) Stigma", "B) Pistil", "C) Ovary", "D) All of these"],
-    "correct": 4,
-    "explanation": "Pistil includes stigma, style, ovary."
-  },
-  {
-    "question": "30. Which plant tissue provides mechanical support?",
-    "options": ["A) Parenchyma", "B) Collenchyma", "C) Sclerenchyma", "D) Phloem"],
-    "correct": 3,
-    "explanation": "Sclerenchyma provides strength."
-  },
-  {
-    "question": "31. The seed leaves of a plant are called",
-    "options": ["A) Cotyledons", "B) Radicle", "C) Hypocotyl", "D) Plumule"],
-    "correct": 1,
-    "explanation": "Cotyledons are seed leaves."
-  },
-  {
-    "question": "32. The part of the flower that attracts pollinators is",
-    "options": ["A) Sepal", "B) Petal", "C) Stamen", "D) Pistil"],
-    "correct": 2,
-    "explanation": "Petals are often colorful to attract pollinators."
-  },
-  {
-    "question": "33. The site of pollen production is",
-    "options": ["A) Ovary", "B) Anther", "C) Stigma", "D) Style"],
-    "correct": 2,
-    "explanation": "Anther produces pollen grains."
-  },
-  {
-    "question": "34. The process of shedding leaves seasonally is called",
-    "options": ["A) Germination", "B) Abscission", "C) Transpiration", "D) Pollination"],
-    "correct": 2,
-    "explanation": "Abscission is leaf fall."
-  },
-  {
-    "question": "35. The opening of stomata is regulated by",
-    "options": ["A) Guard cells", "B) Epidermis", "C) Mesophyll", "D) Xylem"],
-    "correct": 1,
-    "explanation": "Guard cells control stomatal opening."
-  },
-  {
-    "question": "36. The storage tissue in seeds is called",
-    "options": ["A) Endosperm", "B) Cotyledon", "C) Embryo", "D) Radicle"],
-    "correct": 1,
-    "explanation": "Endosperm stores food in seeds."
-  },
-  {
-    "question": "37. Which plant hormone delays leaf fall?",
-    "options": ["A) Auxin", "B) Ethylene", "C) Abscisic acid", "D) Cytokinin"],
-    "correct": 1,
-    "explanation": "Auxin delays abscission."
-  },
-  {
-    "question": "38. The structure responsible for water absorption in roots is",
-    "options": ["A) Root hair", "B) Root cap", "C) Cortex", "D) Xylem"],
-    "correct": 1,
-    "explanation": "Root hairs absorb water."
-  },
-  {
-    "question": "39. The compound responsible for cell wall rigidity is",
-    "options": ["A) Cellulose", "B) Lignin", "C) Starch", "D) Protein"],
-    "correct": 1,
-    "explanation": "Cellulose provides cell wall strength."
-  },
-  {
-    "question": "40. The main component of phloem sap is",
-    "options": ["A) Water", "B) Mineral salts", "C) Sucrose", "D) Oxygen"],
-    "correct": 3,
-    "explanation": "Phloem sap mainly contains sugars like sucrose."
-  }
-]
-;
-        
-        // Quiz state variables
-        let userAnswers = [];
-        let quizSubmitted = false;
-        let userInfo = {};
-        let userIP = '';
-        
-        // DOM elements
-        const userInfoContainer = document.getElementById('user-info-container');
-        const userInfoForm = document.getElementById('user-info-form');
-        const quizContent = document.getElementById('quiz-content');
-        const submitBtn = document.getElementById('submit-btn');
-        const quizContainer = document.getElementById('quiz-container');
-        const resultsContainer = document.getElementById('results-container');
-        const questionResults = document.getElementById('question-results');
-        const finalScoreElement = document.getElementById('final-score');
-        const rankDisplay = document.getElementById('rank-display');
-        const percentileElement = document.getElementById('percentile');
-        const scoreProgress = document.getElementById('score-progress');
-        const alreadySubmittedContainer = document.getElementById('already-submitted');
-        const previousScoreElement = document.getElementById('previous-score');
-        
-        // Initialize the quiz
-        function initQuiz() {
-            // Get user IP (for anonymous identification)
-            fetch('https://api.ipify.org?format=json')
-                .then(response => response.json())
-                .then(data => {
-                    userIP = data.ip;
-                    checkSubmissionStatus();
-                })
-                .catch(() => {
-                    // If IP detection fails, use a fallback (less reliable)
-                    userIP = 'unknown-' + Math.random().toString(36).substring(2, 15);
-                    checkSubmissionStatus();
-                });
-            
-            // Set up event listeners
-            userInfoForm.addEventListener('submit', startQuiz);
-            submitBtn.addEventListener('click', submitQuiz);
+    // Initialize Firebase
+    const app = firebase.initializeApp(firebaseConfig);
+    const database = firebase.database();
+    const auth = firebase.auth();
+    
+    // Sample questions
+    const questions = [
+        {
+            "question": "What is the most common cause of chronic kidney disease worldwide?",
+            "options": [
+                "A) Diabetes mellitus",
+                "B) Hypertension",
+                "C) Glomerulonephritis",
+                "D) Polycystic kidney disease"
+            ],
+            "correct": 0,
+            "explanation": "Diabetes mellitus is the leading cause of chronic kidney disease worldwide, accounting for about 30-50% of cases."
+        },
+        {
+            "question": "Which of the following is NOT a typical symptom of Parkinson's disease?",
+            "options": [
+                "A) Resting tremor",
+                "B) Bradykinesia",
+                "C) Muscle rigidity",
+                "D) Hyperreflexia"
+            ],
+            "correct": 3,
+            "explanation": "The classic triad of Parkinson's disease symptoms includes resting tremor, bradykinesia (slowness of movement), and muscle rigidity. Hyperreflexia is not typically associated with Parkinson's."
+        },
+        {
+            "question": "What is the first-line treatment for anaphylaxis?",
+            "options": [
+                "A) Diphenhydramine",
+                "B) Epinephrine",
+                "C) Methylprednisolone",
+                "D) Albuterol"
+            ],
+            "correct": 1,
+            "explanation": "Epinephrine (adrenaline) is the first-line treatment for anaphylaxis. It works rapidly to counteract the life-threatening symptoms by constricting blood vessels and opening airways."
+        },
+        {
+            "question": "Which vitamin deficiency is associated with night blindness?",
+            "options": [
+                "A) Vitamin A",
+                "B) Vitamin B12",
+                "C) Vitamin C",
+                "D) Vitamin D"
+            ],
+            "correct": 0,
+            "explanation": "Vitamin A is essential for the production of rhodopsin, the photopigment in the retina that enables vision in low-light conditions. Deficiency can lead to night blindness."
+        },
+        {
+            "question": "What is the most common type of stroke?",
+            "options": [
+                "A) Ischemic stroke",
+                "B) Hemorrhagic stroke",
+                "C) Subarachnoid hemorrhage",
+                "D) Transient ischemic attack"
+            ],
+            "correct": 0,
+            "explanation": "Ischemic strokes account for about 87% of all strokes. They occur when a blood clot blocks or narrows an artery leading to the brain."
         }
-        
-        // Check if user has already submitted the quiz
-        function checkSubmissionStatus() {
-            const submissionsRef = database.ref('submissions');
-            
-            submissionsRef.orderByChild('ip').equalTo(userIP).once('value')
-                .then(snapshot => {
-                    if (snapshot.exists()) {
-                        // User has already submitted
-                        const submissionData = Object.values(snapshot.val())[0];
-                        showAlreadySubmitted(submissionData);
-                    } else {
-                        // User can take the quiz
-                        userInfoContainer.style.display = 'block';
-                    }
-                })
-                .catch(error => {
-                    console.error("Error checking submission status:", error);
-                    // If there's an error, allow the user to proceed
-                    userInfoContainer.style.display = 'block';
-                });
-        }
-        
-        // Start the quiz after user info is submitted
-        function startQuiz(e) {
-            e.preventDefault();
-            
-            // Get user info
-            userInfo = {
-                name: document.getElementById('user-name').value.trim(),
-                email: document.getElementById('user-email').value.trim() || null,
-                ip: userIP,
-                timestamp: new Date().toISOString()
-            };
-            
-            // Validate name
-            if (!userInfo.name) {
-                alert('Please enter your name to continue.');
-                return;
-            }
-            
-            // Hide user info form, show quiz
-            userInfoContainer.style.display = 'none';
-            quizContainer.style.display = 'block';
-            
-            // Load questions
-            renderQuestions();
-        }
-        
-        // Render questions to the DOM
-        function renderQuestions() {
-            let html = '';
-            
-            questions.forEach((question, index) => {
-                html += `
-                    <div class="question-card p-3">
-                        <h4 class="mb-3">${index + 1}. ${question.question}</h4>
-                        <div class="options">
-                `;
-                
-                question.options.forEach((option, optionIndex) => {
-                    html += `
-                        <div class="form-check mb-2">
-                            <input class="form-check-input option-input" type="radio" name="question-${index}" id="question-${index}-option-${optionIndex}" value="${optionIndex}">
-                            <label class="form-check-label option-label" for="question-${index}-option-${optionIndex}">
-                                ${option}
-                            </label>
-                        </div>
-                    `;
-                });
-                
-                html += `</div></div>`;
+    ];
+    
+    // Quiz state variables
+    let userAnswers = Array(questions.length).fill(null);
+    let quizSubmitted = false;
+    let userInfo = {};
+    let userIP = '';
+    let currentQuestionIndex = 0;
+    
+    // DOM elements
+    const userInfoContainer = document.getElementById('user-info-container');
+    const userInfoForm = document.getElementById('user-info-form');
+    const quizContent = document.getElementById('quiz-content');
+    const submitBtn = document.getElementById('submit-btn');
+    const quizContainer = document.getElementById('quiz-container');
+    const resultsContainer = document.getElementById('results-container');
+    const questionResults = document.getElementById('question-results');
+    const finalScoreElement = document.getElementById('final-score');
+    const rankDisplay = document.getElementById('rank-display');
+    const percentileElement = document.getElementById('percentile');
+    const scoreProgress = document.getElementById('score-progress');
+    const alreadySubmittedContainer = document.getElementById('already-submitted');
+    const previousScoreElement = document.getElementById('previous-score');
+    
+    // Initialize the quiz
+    function initQuiz() {
+        // Get user IP (for anonymous identification)
+        fetch('https://api.ipify.org?format=json')
+            .then(response => response.json())
+            .then(data => {
+                userIP = data.ip;
+                checkSubmissionStatus();
+            })
+            .catch(() => {
+                // If IP detection fails, use a fallback (less reliable)
+                userIP = 'unknown-' + Math.random().toString(36).substring(2, 15);
+                checkSubmissionStatus();
             });
-            
-            quizContent.innerHTML = html;
-            
-            // Enable submit button once questions are loaded
-            submitBtn.disabled = false;
-        }
         
-        // Submit the quiz
-        function submitQuiz() {
-            // Collect user answers
-            userAnswers = [];
-            let allAnswered = true;
-            
-            questions.forEach((question, index) => {
-                const selectedOption = document.querySelector(`input[name="question-${index}"]:checked`);
-                
-                if (selectedOption) {
-                    userAnswers.push(parseInt(selectedOption.value));
+        // Set up event listeners
+        userInfoForm.addEventListener('submit', startQuiz);
+        submitBtn.addEventListener('click', submitQuiz);
+    }
+    
+    // Check if user has already submitted the quiz
+    function checkSubmissionStatus() {
+        const submissionsRef = database.ref('submissions');
+        
+        submissionsRef.orderByChild('ip').equalTo(userIP).once('value')
+            .then(snapshot => {
+                if (snapshot.exists()) {
+                    // User has already submitted
+                    const submissionData = Object.values(snapshot.val())[0];
+                    showAlreadySubmitted(submissionData);
                 } else {
-                    allAnswered = false;
-                    userAnswers.push(null);
+                    // User can take the quiz
+                    userInfoContainer.style.display = 'block';
                 }
+            })
+            .catch(error => {
+                console.error("Error checking submission status:", error);
+                // If there's an error, allow the user to proceed
+                userInfoContainer.style.display = 'block';
             });
-            
-            if (!allAnswered) {
-                if (!confirm('You have not answered all questions. Submit anyway?')) {
-                    return;
+    }
+    
+    // Start the quiz after user info is submitted
+    function startQuiz(e) {
+        e.preventDefault();
+        
+        // Get user info
+        userInfo = {
+            name: document.getElementById('user-name').value.trim(),
+            email: document.getElementById('user-email').value.trim() || null,
+            ip: userIP,
+            timestamp: new Date().toISOString()
+        };
+        
+        // Validate name
+        if (!userInfo.name) {
+            alert('Please enter your name to continue.');
+            return;
+        }
+        
+        // Hide user info form, show quiz
+        userInfoContainer.style.display = 'none';
+        quizContainer.style.display = 'block';
+        
+        // Load first question
+        renderQuestion(currentQuestionIndex);
+    }
+    
+    // Render a single question to the DOM
+    function renderQuestion(index) {
+        const question = questions[index];
+        
+        let html = `
+            <div class="question-card p-3">
+                <div class="d-flex justify-content-between align-items-center mb-3">
+                    <span class="badge bg-primary">Question ${index + 1} of ${questions.length}</span>
+                    <span class="text-muted">Score: ${calculateCurrentScore().toFixed(2)}</span>
+                </div>
+                <h4 class="mb-3">${question.question}</h4>
+                <div class="options">
+        `;
+        
+        question.options.forEach((option, optionIndex) => {
+            const isChecked = userAnswers[index] === optionIndex ? 'checked' : '';
+            html += `
+                <div class="form-check mb-2">
+                    <input class="form-check-input option-input" type="radio" 
+                           name="current-question" id="question-${index}-option-${optionIndex}" 
+                           value="${optionIndex}" ${isChecked}
+                           onchange="saveAnswer(${index}, ${optionIndex})">
+                    <label class="form-check-label option-label" for="question-${index}-option-${optionIndex}">
+                        ${option}
+                    </label>
+                </div>
+            `;
+        });
+        
+        html += `</div></div>`;
+        
+        // Navigation buttons
+        html += `
+            <div class="d-flex justify-content-between mt-4">
+                <button class="btn btn-outline-primary" onclick="navigateQuestion(-1)" ${index === 0 ? 'disabled' : ''}>
+                    <i class="fas fa-arrow-left me-2"></i> Previous
+                </button>
+                
+                ${index < questions.length - 1 ? `
+                    <button class="btn btn-primary" onclick="navigateQuestion(1)">
+                        Next <i class="fas fa-arrow-right ms-2"></i>
+                    </button>
+                ` : `
+                    <button id="final-submit-btn" class="btn btn-success" onclick="submitQuiz()">
+                        Submit Quiz <i class="fas fa-paper-plane ms-2"></i>
+                    </button>
+                `}
+            </div>
+        `;
+        
+        quizContent.innerHTML = html;
+    }
+    
+    // Save answer to current question
+    function saveAnswer(questionIndex, answerIndex) {
+        userAnswers[questionIndex] = answerIndex;
+    }
+    
+    // Navigate between questions
+    function navigateQuestion(direction) {
+        currentQuestionIndex += direction;
+        renderQuestion(currentQuestionIndex);
+    }
+    
+    // Calculate current score based on answered questions
+    function calculateCurrentScore() {
+        let score = 0;
+        
+        questions.forEach((question, index) => {
+            if (userAnswers[index] !== null) {
+                if (userAnswers[index] === question.correct) {
+                    score += 1; // +1 for correct answer
+                } else {
+                    score -= 0.25; // -0.25 for wrong answer
                 }
             }
-            
-            // Calculate score
-            const score = calculateScore();
-            
-            // Save submission to Firebase
-            saveQuizResult(score);
-            
-            // Show results
-            showResults(score);
-            
-            // Update UI
-            quizSubmitted = true;
-            submitBtn.disabled = true;
-            quizContainer.style.display = 'none';
-        }
+        });
         
-        // Calculate score based on answers
-        function calculateScore() {
-            let score = 0;
+        return Math.max(0, score);
+    }
+    
+    // Submit the quiz
+    function submitQuiz() {
+        // Calculate final score
+        const score = calculateCurrentScore();
+        
+        // Save submission to Firebase
+        saveQuizResult(score);
+        
+        // Show results
+        showResults(score);
+        
+        // Update UI
+        quizSubmitted = true;
+        quizContainer.style.display = 'none';
+    }
+    
+    // Save quiz result to Firebase
+    function saveQuizResult(score) {
+        const submissionsRef = database.ref('submissions');
+        const leaderboardRef = database.ref('leaderboard');
+        
+        // Create submission data
+        const submissionData = {
+            ...userInfo,
+            score: score,
+            answers: userAnswers,
+            submittedAt: new Date().toISOString()
+        };
+        
+        // Save to submissions
+        submissionsRef.push(submissionData)
+            .then(() => {
+                // Also add to leaderboard (without answers)
+                const leaderboardEntry = {
+                    name: userInfo.name,
+                    score: score,
+                    submittedAt: submissionData.submittedAt
+                };
+                
+                if (userInfo.email) {
+                    leaderboardEntry.email = userInfo.email;
+                }
+                
+                leaderboardRef.push(leaderboardEntry);
+            })
+            .catch(error => {
+                console.error("Error saving quiz result:", error);
+            });
+    }
+    
+    // Show results to the user
+    function showResults(score) {
+        resultsContainer.style.display = 'block';
+        
+        // Display final score
+        finalScoreElement.textContent = score.toFixed(2);
+        
+        // Calculate percentage (based on max possible score)
+        const maxScore = questions.length;
+        const percentage = (score / maxScore) * 100;
+        scoreProgress.style.width = `${percentage}%`;
+        
+        // Get leaderboard data for ranking
+        database.ref('leaderboard').once('value')
+            .then(snapshot => {
+                if (snapshot.exists()) {
+                    const leaderboard = Object.values(snapshot.val());
+                    const betterScores = leaderboard.filter(entry => entry.score > score).length;
+                    const totalParticipants = leaderboard.length;
+                    const percentile = ((totalParticipants - betterScores) / totalParticipants * 100).toFixed(0);
+                    
+                    rankDisplay.textContent = `Rank: #${betterScores + 1} of ${totalParticipants}`;
+                    percentileElement.textContent = percentile;
+                } else {
+                    rankDisplay.textContent = "First participant!";
+                    percentileElement.textContent = "100";
+                }
+            })
+            .catch(error => {
+                console.error("Error getting leaderboard:", error);
+                rankDisplay.textContent = "Rank: Unknown";
+                percentileElement.textContent = "0";
+            });
+        
+        // Show question-by-question results
+        let resultsHtml = '<h4 class="mb-3">Question Breakdown</h4>';
+        
+        questions.forEach((question, index) => {
+            const userAnswer = userAnswers[index];
+            const isCorrect = userAnswer === question.correct;
+            const answered = userAnswer !== null;
             
-            questions.forEach((question, index) => {
-                if (userAnswers[index] !== null) {
-                    if (userAnswers[index] === question.correct) {
-                        score += 1; // +1 for correct answer
-                    } else {
-                        score -= 0.25; // -0.25 for wrong answer
-                    }
+            resultsHtml += `
+                <div class="mb-4 p-3 border rounded">
+                    <h5>${index + 1}. ${question.question}</h5>
+                    <p class="mb-2 ${isCorrect ? 'text-success' : 'text-danger'}">
+                        <strong>Your answer:</strong> ${answered ? question.options[userAnswer] : 'Not answered'}
+                    </p>
+                    <p class="mb-2 text-success"><strong>Correct answer:</strong> ${question.options[question.correct]}</p>
+                    <button class="btn btn-sm btn-outline-secondary toggle-explanation">Show Explanation</button>
+                    <div class="explanation">
+                        <p class="mb-0"><strong>Explanation:</strong> ${question.explanation}</p>
+                    </div>
+                </div>
+            `;
+        });
+        
+        questionResults.innerHTML = resultsHtml;
+        
+        // Add event listeners for explanation toggles
+        document.querySelectorAll('.toggle-explanation').forEach(button => {
+            button.addEventListener('click', function() {
+                const explanation = this.nextElementSibling;
+                if (explanation.style.display === 'block') {
+                    explanation.style.display = 'none';
+                    this.textContent = 'Show Explanation';
+                } else {
+                    explanation.style.display = 'block';
+                    this.textContent = 'Hide Explanation';
                 }
             });
-            
-            // Ensure score doesn't go below 0
-            return Math.max(0, score);
-        }
+        });
+    }
+    
+    // Show message if user has already submitted
+    function showAlreadySubmitted(submissionData) {
+        userInfoContainer.style.display = 'none';
+        quizContainer.style.display = 'none';
+        alreadySubmittedContainer.style.display = 'block';
         
-        // Save quiz result to Firebase
-        function saveQuizResult(score) {
-            const submissionsRef = database.ref('submissions');
-            const leaderboardRef = database.ref('leaderboard');
-            
-            // Create submission data
-            const submissionData = {
-                ...userInfo,
-                score: score,
-                answers: userAnswers,
-                submittedAt: new Date().toISOString()
-            };
-            
-            // Save to submissions
-            submissionsRef.push(submissionData)
-                .then(() => {
-                    // Also add to leaderboard (without answers)
-                    const leaderboardEntry = {
-                        name: userInfo.name,
-                        score: score,
-                        submittedAt: submissionData.submittedAt
-                    };
-                    
-                    if (userInfo.email) {
-                        leaderboardEntry.email = userInfo.email;
-                    }
-                    
-                    leaderboardRef.push(leaderboardEntry);
-                })
-                .catch(error => {
-                    console.error("Error saving quiz result:", error);
-                });
-        }
-        
-        // Show results to the user
-        function showResults(score) {
-            resultsContainer.style.display = 'block';
-            
-            // Display final score
-            finalScoreElement.textContent = score.toFixed(2);
-            
-            // Calculate percentage (based on max possible score)
-            const maxScore = questions.length;
-            const percentage = (score / maxScore) * 100;
-            scoreProgress.style.width = `${percentage}%`;
-            
-            // Get leaderboard data for ranking
-            database.ref('leaderboard').once('value')
-                .then(snapshot => {
-                    if (snapshot.exists()) {
-                        const leaderboard = Object.values(snapshot.val());
-                        const betterScores = leaderboard.filter(entry => entry.score > score).length;
-                        const totalParticipants = leaderboard.length;
-                        const percentile = ((totalParticipants - betterScores) / totalParticipants * 100).toFixed(0);
-                        
-                        rankDisplay.textContent = `Rank: #${betterScores + 1} of ${totalParticipants}`;
-                        percentileElement.textContent = percentile;
-                    } else {
-                        rankDisplay.textContent = "First participant!";
-                        percentileElement.textContent = "100";
-                    }
-                })
-                .catch(error => {
-                    console.error("Error getting leaderboard:", error);
-                    rankDisplay.textContent = "Rank: Unknown";
-                    percentileElement.textContent = "0";
-                });
-            
-            // Show question-by-question results
-            let resultsHtml = '<h4 class="mb-3">Question Breakdown</h4>';
-            
-            questions.forEach((question, index) => {
-                const userAnswer = userAnswers[index];
-                const isCorrect = userAnswer === question.correct;
-                const answered = userAnswer !== null;
-                
-                resultsHtml += `
-                    <div class="mb-4 p-3 border rounded">
-                        <h5>${index + 1}. ${question.question}</h5>
-                        <p class="mb-2 ${isCorrect ? 'text-success' : 'text-danger'}">
-                            <strong>Your answer:</strong> ${answered ? question.options[userAnswer] : 'Not answered'}
-                        </p>
-                        <p class="mb-2 text-success"><strong>Correct answer:</strong> ${question.options[question.correct]}</p>
-                        <button class="btn btn-sm btn-outline-secondary toggle-explanation">Show Explanation</button>
-                        <div class="explanation">
-                            <p class="mb-0"><strong>Explanation:</strong> ${question.explanation}</p>
-                        </div>
-                    </div>
-                `;
-            });
-            
-            questionResults.innerHTML = resultsHtml;
-            
-            // Add event listeners for explanation toggles
-            document.querySelectorAll('.toggle-explanation').forEach(button => {
-                button.addEventListener('click', function() {
-                    const explanation = this.nextElementSibling;
-                    if (explanation.style.display === 'block') {
-                        explanation.style.display = 'none';
-                        this.textContent = 'Show Explanation';
-                    } else {
-                        explanation.style.display = 'block';
-                        this.textContent = 'Hide Explanation';
-                    }
-                });
-            });
-        }
-        
-        // Show message if user has already submitted
-        function showAlreadySubmitted(submissionData) {
-            userInfoContainer.style.display = 'none';
-            quizContainer.style.display = 'none';
-            alreadySubmittedContainer.style.display = 'block';
-            
-            // Show previous score
-            previousScoreElement.textContent = submissionData.score.toFixed(2);
-        }
-        
-        // Initialize the quiz when the page loads
-        window.addEventListener('DOMContentLoaded', initQuiz);
-    </script>
+        // Show previous score
+        previousScoreElement.textContent = submissionData.score.toFixed(2);
+    }
+    
+    // Initialize the quiz when the page loads
+    window.addEventListener('DOMContentLoaded', initQuiz);
+</script>
 </body>
 </html>
