@@ -12,7 +12,6 @@ const firebaseConfig = {
 const app = firebase.initializeApp(firebaseConfig);
 const database = firebase.database();
 const auth = firebase.auth();
-const functions = firebase.functions();
 
 // Quiz state
 let quizState = {
@@ -51,7 +50,13 @@ const questions = [
         "explanation": "Sound waves cannot be polarized because they are longitudinal waves."
     },
     // Add 17 more questions following the same format
-    // ...
+    {
+        "question": "34. The SI unit of radioactivity is:",
+        "options": ["A) Gray", "B) Sievert", "C) Becquerel", "D) Curie"],
+        "correct": 2,
+        "explanation": "The becquerel (Bq) is the SI unit of radioactivity."
+    },
+    // ... (add more questions to reach 20 total)
     {
         "question": "50. The SI unit of absorbed dose is:",
         "options": ["A) Gray", "B) Sievert", "C) Becquerel", "D) Curie"],
@@ -66,13 +71,10 @@ if (questions.length !== 20) {
 }
 
 // DOM Elements
-const timeCheckScreen = document.getElementById('time-check-screen');
 const introScreen = document.getElementById('intro-screen');
 const quizScreen = document.getElementById('quiz-screen');
 const resultScreen = document.getElementById('result-screen');
 const answersScreen = document.getElementById('answers-screen');
-const availabilityMessage = document.getElementById('availability-message');
-const countdownElement = document.getElementById('countdown');
 const startQuizBtn = document.getElementById('start-quiz');
 const usernameInput = document.getElementById('username');
 const emailInput = document.getElementById('email');
@@ -103,146 +105,6 @@ backToResultsBtn.addEventListener('click', () => {
     answersScreen.classList.add('d-none');
     resultScreen.classList.remove('d-none');
 });
-
-// Initialize quiz
-document.addEventListener('DOMContentLoaded', function() {
-    checkQuizAvailability();
-});
-
-// Check quiz availability using server time
-async function checkQuizAvailability() {
-    try {
-        // First try to get server time
-        const serverTimeCheck = functions.httpsCallable('checkQuizAvailability');
-        const result = await serverTimeCheck({});
-        
-        if (result.data.is_available) {
-            // Quiz is available
-            timeCheckScreen.classList.add('d-none');
-            introScreen.classList.remove('d-none');
-            return true;
-        } else {
-            // Quiz is not available yet
-            showCountdown(new Date(result.data.open_time), new Date(result.data.server_time));
-            return false;
-        }
-    } catch (error) {
-        console.error("Error checking server availability:", error);
-        // Fallback to client-side check with database time
-        return checkDatabaseTime();
-    }
-}
-
-// Fallback to database time check
-async function checkDatabaseTime() {
-    try {
-        const snapshot = await database.ref('quiz_settings').once('value');
-        const settings = snapshot.val();
-        
-        if (!settings) {
-            throw new Error("No quiz settings found");
-        }
-        
-        const now = settings.server_time ? new Date(settings.server_time) : new Date();
-        const openTime = new Date(settings.open_time);
-        
-        if (now >= openTime) {
-            timeCheckScreen.classList.add('d-none');
-            introScreen.classList.remove('d-none');
-            return true;
-        } else {
-            showCountdown(openTime, now);
-            return false;
-        }
-    } catch (error) {
-        console.error("Error checking database time:", error);
-        // Final fallback to client time
-        return clientSideTimeCheck();
-    }
-}
-
-// Ultimate fallback to client time
-function clientSideTimeCheck() {
-    const QUIZ_OPEN_TIME = new Date("2025-06-21T20:22:00Z");
-    const now = new Date();
-    
-    if (now >= QUIZ_OPEN_TIME) {
-        timeCheckScreen.classList.add('d-none');
-        introScreen.classList.remove('d-none');
-        return true;
-    } else {
-        showCountdown(QUIZ_OPEN_TIME, now);
-        availabilityMessage.innerHTML += `<p class="text-warning mt-2">Note: Using device time as fallback</p>`;
-        return false;
-    }
-}
-
-// Show countdown timer
-function showCountdown(targetDate, currentDate) {
-    timeCheckScreen.classList.remove('d-none');
-    introScreen.classList.add('d-none');
-    
-    availabilityMessage.innerHTML = `
-        <p>The quiz will open on:</p>
-        <h4>${targetDate.toLocaleString()}</h4>
-        <p>Current server time: ${currentDate.toLocaleString()}</p>
-    `;
-    
-    updateCountdown(targetDate, currentDate);
-    const countdownInterval = setInterval(() => {
-        const now = new Date(currentDate.getTime() + 1000);
-        currentDate = now;
-        updateCountdown(targetDate, now);
-        
-        if (now >= targetDate) {
-            clearInterval(countdownInterval);
-            availabilityMessage.innerHTML += `
-                <div class="alert alert-success mt-3">
-                    The quiz is now available! <a href="#" onclick="location.reload()" class="alert-link">Refresh page</a>
-                </div>
-            `;
-        }
-    }, 1000);
-}
-
-function updateCountdown(targetDate, currentDate) {
-    const diff = targetDate - currentDate;
-    
-    if (diff <= 0) {
-        countdownElement.innerHTML = `
-            <div class="alert alert-success">
-                The quiz is now available! <a href="#" onclick="location.reload()" class="alert-link">Refresh page</a>
-            </div>
-        `;
-        return;
-    }
-    
-    const days = Math.floor(diff / (1000 * 60 * 60 * 24));
-    const hours = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
-    const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
-    const seconds = Math.floor((diff % (1000 * 60)) / 1000);
-    
-    countdownElement.innerHTML = `
-        <div class="countdown-timer">
-            <div class="countdown-item">
-                <span class="countdown-value">${days}</span>
-                <span class="countdown-label">Days</span>
-            </div>
-            <div class="countdown-item">
-                <span class="countdown-value">${hours}</span>
-                <span class="countdown-label">Hours</span>
-            </div>
-            <div class="countdown-item">
-                <span class="countdown-value">${minutes}</span>
-                <span class="countdown-label">Minutes</span>
-            </div>
-            <div class="countdown-item">
-                <span class="countdown-value">${seconds}</span>
-                <span class="countdown-label">Seconds</span>
-            </div>
-        </div>
-    `;
-}
 
 // Start the quiz
 function startQuiz() {
