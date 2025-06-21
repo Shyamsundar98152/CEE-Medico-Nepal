@@ -120,6 +120,14 @@
             font-size: 0.75rem;
             font-weight: 700;
         }
+        
+        .user-info-form {
+            background-color: white;
+            border-radius: 0.35rem;
+            box-shadow: 0 0.15rem 1.75rem 0 rgba(58, 59, 69, 0.1);
+            padding: 2rem;
+            margin-bottom: 2rem;
+        }
     </style>
 </head>
 <body>
@@ -159,8 +167,29 @@
                     <p class="lead text-muted">Test your medical knowledge with this challenging quiz. Each correct answer gives you 1 point, while incorrect answers deduct 0.25 points.</p>
                 </div>
                 
-                <!-- Quiz Container -->
-                <div id="quiz-container" class="quiz-container">
+                <!-- User Info Form (shown first) -->
+                <div id="user-info-container" class="user-info-form">
+                    <h2 class="mb-4">Enter Your Details</h2>
+                    <form id="user-info-form">
+                        <div class="mb-3">
+                            <label for="user-name" class="form-label">Full Name <span class="text-danger">*</span></label>
+                            <input type="text" class="form-control" id="user-name" required>
+                        </div>
+                        <div class="mb-3">
+                            <label for="user-email" class="form-label">Email (optional)</label>
+                            <input type="email" class="form-control" id="user-email">
+                            <div class="form-text">We'll never share your email with anyone else.</div>
+                        </div>
+                        <div class="d-grid gap-2">
+                            <button type="submit" class="btn btn-primary btn-lg">
+                                <i class="fas fa-play me-2"></i> Start Quiz
+                            </button>
+                        </div>
+                    </form>
+                </div>
+                
+                <!-- Quiz Container (initially hidden) -->
+                <div id="quiz-container" class="quiz-container" style="display: none;">
                     <div id="quiz-content">
                         <!-- Quiz questions will be loaded here -->
                         <div class="text-center">
@@ -193,10 +222,17 @@
                     <div id="question-results">
                         <!-- Question results will be loaded here -->
                     </div>
-                    
-                    <button id="retake-btn" class="btn btn-outline-primary mt-4" disabled>
-                        <i class="fas fa-sync-alt me-2"></i> Retake Quiz (Available in 24 hours)
-                    </button>
+                </div>
+                
+                <!-- Already Submitted Message (initially hidden) -->
+                <div id="already-submitted" class="result-card" style="display: none;">
+                    <h2 class="mb-4">Quiz Already Submitted</h2>
+                    <div class="alert alert-warning">
+                        <i class="fas fa-exclamation-triangle me-2"></i>
+                        You have already submitted this quiz. Each participant can only submit once.
+                    </div>
+                    <div class="score-display mb-2" id="previous-score">0</div>
+                    <p class="text-muted">Your previous score is displayed above.</p>
                 </div>
             </div>
         </div>
@@ -270,7 +306,7 @@
         const database = firebase.database();
         const auth = firebase.auth();
         
-        // Sample questions (in a real app, these would come from your Firebase database)
+        // Sample questions
         const questions = [
             {
                 "question": "What is the most common cause of chronic kidney disease worldwide?",
@@ -332,9 +368,12 @@
         // Quiz state variables
         let userAnswers = [];
         let quizSubmitted = false;
-        let userAttempts = 0;
+        let userInfo = {};
+        let userIP = '';
         
         // DOM elements
+        const userInfoContainer = document.getElementById('user-info-container');
+        const userInfoForm = document.getElementById('user-info-form');
         const quizContent = document.getElementById('quiz-content');
         const submitBtn = document.getElementById('submit-btn');
         const quizContainer = document.getElementById('quiz-container');
@@ -344,47 +383,79 @@
         const rankDisplay = document.getElementById('rank-display');
         const percentileElement = document.getElementById('percentile');
         const scoreProgress = document.getElementById('score-progress');
-        const retakeBtn = document.getElementById('retake-btn');
+        const alreadySubmittedContainer = document.getElementById('already-submitted');
+        const previousScoreElement = document.getElementById('previous-score');
         
         // Initialize the quiz
         function initQuiz() {
-            // Check if user has already attempted the quiz
-            checkAttemptStatus();
+            // Get user IP (for anonymous identification)
+            fetch('https://api.ipify.org?format=json')
+                .then(response => response.json())
+                .then(data => {
+                    userIP = data.ip;
+                    checkSubmissionStatus();
+                })
+                .catch(() => {
+                    // If IP detection fails, use a fallback (less reliable)
+                    userIP = 'unknown-' + Math.random().toString(36).substring(2, 15);
+                    checkSubmissionStatus();
+                });
+            
+            // Set up event listeners
+            userInfoForm.addEventListener('submit', startQuiz);
+            submitBtn.addEventListener('click', submitQuiz);
+        }
+        
+        // Check if user has already submitted the quiz
+        function checkSubmissionStatus() {
+            const submissionsRef = database.ref('submissions');
+            
+            submissionsRef.orderByChild('ip').equalTo(userIP).once('value')
+                .then(snapshot => {
+                    if (snapshot.exists()) {
+                        // User has already submitted
+                        const submissionData = Object.values(snapshot.val())[0];
+                        showAlreadySubmitted(submissionData);
+                    } else {
+                        // User can take the quiz
+                        userInfoContainer.style.display = 'block';
+                    }
+                })
+                .catch(error => {
+                    console.error("Error checking submission status:", error);
+                    // If there's an error, allow the user to proceed
+                    userInfoContainer.style.display = 'block';
+                });
+        }
+        
+        // Start the quiz after user info is submitted
+        function startQuiz(e) {
+            e.preventDefault();
+            
+            // Get user info
+            userInfo = {
+                name: document.getElementById('user-name').value.trim(),
+                email: document.getElementById('user-email').value.trim() || null,
+                ip: userIP,
+                timestamp: new Date().toISOString()
+            };
+            
+            // Validate name
+            if (!userInfo.name) {
+                alert('Please enter your name to continue.');
+                return;
+            }
+            
+            // Hide user info form, show quiz
+            userInfoContainer.style.display = 'none';
+            quizContainer.style.display = 'block';
             
             // Load questions
             renderQuestions();
-            
-            // Set up event listeners
-            submitBtn.addEventListener('click', submitQuiz);
-            retakeBtn.addEventListener('click', () => {
-                alert('You can retake this quiz after 24 hours from your last attempt.');
-            });
-        }
-        
-        // Check if user has already attempted the quiz
-        function checkAttemptStatus() {
-            // In a real app, you would check Firebase for the user's attempt status
-            // For this demo, we'll use localStorage
-            const lastAttempt = localStorage.getItem('lastQuizAttempt');
-            
-            if (lastAttempt) {
-                const now = new Date();
-                const lastAttemptDate = new Date(lastAttempt);
-                const hoursSinceLastAttempt = (now - lastAttemptDate) / (1000 * 60 * 60);
-                
-                if (hoursSinceLastAttempt < 24) {
-                    // User has attempted recently
-                    quizSubmitted = true;
-                    showResults(JSON.parse(localStorage.getItem('lastQuizResult')));
-                    retakeBtn.disabled = true;
-                }
-            }
         }
         
         // Render questions to the DOM
         function renderQuestions() {
-            if (quizSubmitted) return;
-            
             let html = '';
             
             questions.forEach((question, index) => {
@@ -440,7 +511,7 @@
             // Calculate score
             const score = calculateScore();
             
-            // Save attempt to Firebase (in a real app)
+            // Save submission to Firebase
             saveQuizResult(score);
             
             // Show results
@@ -449,10 +520,7 @@
             // Update UI
             quizSubmitted = true;
             submitBtn.disabled = true;
-            
-            // Store attempt in localStorage for demo purposes
-            localStorage.setItem('lastQuizAttempt', new Date().toISOString());
-            localStorage.setItem('lastQuizResult', JSON.stringify(score));
+            quizContainer.style.display = 'none';
         }
         
         // Calculate score based on answers
@@ -475,28 +543,40 @@
         
         // Save quiz result to Firebase
         function saveQuizResult(score) {
-            // In a real app, you would:
-            // 1. Authenticate the user
-            // 2. Save to their user profile
-            // 3. Update the quiz results leaderboard
+            const submissionsRef = database.ref('submissions');
+            const leaderboardRef = database.ref('leaderboard');
             
-            // For this demo, we'll simulate it with localStorage
-            const results = JSON.parse(localStorage.getItem('quizResults')) || [];
-            const timestamp = new Date().toISOString();
-            
-            results.push({
+            // Create submission data
+            const submissionData = {
+                ...userInfo,
                 score: score,
-                timestamp: timestamp,
-                // In a real app, you'd include user ID/name
-            });
+                answers: userAnswers,
+                submittedAt: new Date().toISOString()
+            };
             
-            localStorage.setItem('quizResults', JSON.stringify(results));
+            // Save to submissions
+            submissionsRef.push(submissionData)
+                .then(() => {
+                    // Also add to leaderboard (without answers)
+                    const leaderboardEntry = {
+                        name: userInfo.name,
+                        score: score,
+                        submittedAt: submissionData.submittedAt
+                    };
+                    
+                    if (userInfo.email) {
+                        leaderboardEntry.email = userInfo.email;
+                    }
+                    
+                    leaderboardRef.push(leaderboardEntry);
+                })
+                .catch(error => {
+                    console.error("Error saving quiz result:", error);
+                });
         }
         
         // Show results to the user
         function showResults(score) {
-            // Hide quiz, show results
-            quizContainer.style.display = 'none';
             resultsContainer.style.display = 'block';
             
             // Display final score
@@ -507,12 +587,27 @@
             const percentage = (score / maxScore) * 100;
             scoreProgress.style.width = `${percentage}%`;
             
-            // Simulate rank and percentile (in a real app, you'd query Firebase)
-            const simulatedRank = Math.floor(Math.random() * 50) + 1;
-            const simulatedPercentile = 100 - (simulatedRank / 100 * 100);
-            
-            rankDisplay.textContent = `Rank: #${simulatedRank}`;
-            percentileElement.textContent = simulatedPercentile.toFixed(0);
+            // Get leaderboard data for ranking
+            database.ref('leaderboard').once('value')
+                .then(snapshot => {
+                    if (snapshot.exists()) {
+                        const leaderboard = Object.values(snapshot.val());
+                        const betterScores = leaderboard.filter(entry => entry.score > score).length;
+                        const totalParticipants = leaderboard.length;
+                        const percentile = ((totalParticipants - betterScores) / totalParticipants * 100).toFixed(0);
+                        
+                        rankDisplay.textContent = `Rank: #${betterScores + 1} of ${totalParticipants}`;
+                        percentileElement.textContent = percentile;
+                    } else {
+                        rankDisplay.textContent = "First participant!";
+                        percentileElement.textContent = "100";
+                    }
+                })
+                .catch(error => {
+                    console.error("Error getting leaderboard:", error);
+                    rankDisplay.textContent = "Rank: Unknown";
+                    percentileElement.textContent = "0";
+                });
             
             // Show question-by-question results
             let resultsHtml = '<h4 class="mb-3">Question Breakdown</h4>';
@@ -552,6 +647,16 @@
                     }
                 });
             });
+        }
+        
+        // Show message if user has already submitted
+        function showAlreadySubmitted(submissionData) {
+            userInfoContainer.style.display = 'none';
+            quizContainer.style.display = 'none';
+            alreadySubmittedContainer.style.display = 'block';
+            
+            // Show previous score
+            previousScoreElement.textContent = submissionData.score.toFixed(2);
         }
         
         // Initialize the quiz when the page loads
