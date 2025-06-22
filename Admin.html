@@ -1,32 +1,3 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8">
-  <title>Admin - User Approval Panel</title>
-  <style>
-    body { font-family: Arial, sans-serif; padding: 20px; background: #f9f9f9; }
-    h1 { color: #333; }
-    table { width: 100%; border-collapse: collapse; margin-top: 20px; }
-    th, td { padding: 10px; border: 1px solid #ccc; text-align: left; }
-    .approved { color: green; font-weight: bold; }
-    .pending { color: orange; font-weight: bold; }
-  </style>
-</head>
-<body>
-
-<h1>🛡️ Admin Panel: User Approval List</h1>
-<table>
-  <thead>
-    <tr>
-      <th>Email</th>
-      <th>Approval Status</th>
-    </tr>
-  </thead>
-  <tbody id="userTableBody">
-    <!-- User rows will go here -->
-  </tbody>
-</table>
-
 <script type="module">
   import { initializeApp } from "https://www.gstatic.com/firebasejs/11.8.1/firebase-app.js";
   import {
@@ -34,6 +5,11 @@
     ref,
     get
   } from "https://www.gstatic.com/firebasejs/11.8.1/firebase-database.js";
+  import {
+    getAuth,
+    onAuthStateChanged,
+    signOut
+  } from "https://www.gstatic.com/firebasejs/11.8.1/firebase-auth.js";
 
   const firebaseConfig = {
     apiKey: "AIzaSyB66MZa0WZk3WPydcjmCDu7P_CE0FD60ug",
@@ -47,37 +23,22 @@
 
   const app = initializeApp(firebaseConfig);
   const db = getDatabase(app);
+  const auth = getAuth(app);
 
-  const userTableBody = document.getElementById("userTableBody");
-
-  async function fetchUsers() {
-    const usersRef = ref(db, "users");
-    try {
-      const snapshot = await get(usersRef);
-      if (snapshot.exists()) {
-        const users = snapshot.val();
-        userTableBody.innerHTML = ""; // Clear existing
-        Object.entries(users).forEach(([uid, user]) => {
-          const row = document.createElement("tr");
-          row.innerHTML = `
-            <td>${user.email || "No email"}</td>
-            <td class="${user.isApproved ? 'approved' : 'pending'}">
-              ${user.isApproved ? "✅ Approved" : "⏳ Pending"}
-            </td>
-          `;
-          userTableBody.appendChild(row);
-        });
+  onAuthStateChanged(auth, async (user) => {
+    if (user) {
+      const adminRef = ref(db, "admins/" + user.uid);
+      const snapshot = await get(adminRef);
+      if (snapshot.exists() && snapshot.val() === true) {
+        console.log("✅ Admin access granted.");
+        // Continue showing admin page
       } else {
-        userTableBody.innerHTML = "<tr><td colspan='2'>No users found</td></tr>";
+        alert("⛔ Access denied. You are not an admin.");
+        await signOut(auth);
+        window.location.href = "/login.html";
       }
-    } catch (error) {
-      console.error("❌ Error fetching users:", error);
-      userTableBody.innerHTML = "<tr><td colspan='2'>Error loading users</td></tr>";
+    } else {
+      window.location.href = "/login.html";
     }
-  }
-
-  fetchUsers();
+  });
 </script>
-
-</body>
-</html>
