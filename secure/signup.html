@@ -268,176 +268,168 @@
     </div>
   </main>
 
-  <!-- Firebase SDKs -->
-  <script type="module">
-    import { initializeApp } from "https://www.gstatic.com/firebasejs/11.8.1/firebase-app.js";
-    import { 
-      getAuth, 
-      createUserWithEmailAndPassword,
-      GoogleAuthProvider,
-      signInWithPopup,
-      updateProfile
-    } from "https://www.gstatic.com/firebasejs/11.8.1/firebase-auth.js";
-    import { 
-      getFirestore,
-      doc,
-      setDoc
-    } from "https://www.gstatic.com/firebasejs/11.8.1/firebase-firestore.js";
+<script type="module">
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/11.8.1/firebase-app.js";
+  import {
+    getAuth,
+    createUserWithEmailAndPassword,
+    GoogleAuthProvider,
+    signInWithPopup,
+    updateProfile
+  } from "https://www.gstatic.com/firebasejs/11.8.1/firebase-auth.js";
+  import {
+    getFirestore,
+    doc,
+    setDoc
+  } from "https://www.gstatic.com/firebasejs/11.8.1/firebase-firestore.js";
+  import {
+    getDatabase,
+    ref,
+    set
+  } from "https://www.gstatic.com/firebasejs/11.8.1/firebase-database.js";
 
-    // Firebase configuration
-    const firebaseConfig = {
-      apiKey: "AIzaSyB66MZa0WZk3WPydcjmCDu7P_CE0FD60ug",
-      authDomain: "login-2f07b.firebaseapp.com",
-      projectId: "login-2f07b",
-      storageBucket: "login-2f07b.appspot.com",
-      messagingSenderId: "709252763741",
-      appId: "1:709252763741:web:b3902697cc9c8b157a7db4",
-      measurementId: "G-G7ZY1MJ106"
-    };
+  const firebaseConfig = {
+    apiKey: "AIzaSyB66MZa0WZk3WPydcjmCDu7P_CE0FD60ug",
+    authDomain: "login-2f07b.firebaseapp.com",
+    projectId: "login-2f07b",
+    storageBucket: "login-2f07b.appspot.com",
+    messagingSenderId: "709252763741",
+    appId: "1:709252763741:web:b3902697cc9c8b157a7db4",
+    measurementId: "G-G7ZY1MJ106",
+    databaseURL: "https://login-2f07b-default-rtdb.asia-southeast1.firebasedatabase.app"
+  };
 
-    // Initialize Firebase
-    const app = initializeApp(firebaseConfig);
-    const auth = getAuth(app);
-    const db = getFirestore(app);
-    const provider = new GoogleAuthProvider();
+  const app = initializeApp(firebaseConfig);
+  const auth = getAuth(app);
+  const db = getFirestore(app);
+  const rtdb = getDatabase(app);
+  const provider = new GoogleAuthProvider();
 
-    // Helper function to show loading state
-    function setLoading(buttonId, isLoading) {
-      const button = document.getElementById(buttonId);
-      const buttonText = document.getElementById(`${buttonId}Text`);
-      
-      if (isLoading) {
-        button.disabled = true;
-        buttonText.innerHTML = `<span class="loading"></span> Processing...`;
-      } else {
-        button.disabled = false;
-        if (buttonId === 'signupBtn') {
-          buttonText.textContent = 'Sign Up';
-        } else {
-          buttonText.textContent = 'Sign up with Google';
-        }
-      }
+  function setLoading(buttonId, isLoading) {
+    const button = document.getElementById(buttonId);
+    const buttonText = document.getElementById(`${buttonId}Text`);
+    if (isLoading) {
+      button.disabled = true;
+      buttonText.innerHTML = `<span class="loading"></span> Processing...`;
+    } else {
+      button.disabled = false;
+      buttonText.textContent = buttonId === 'signupBtn' ? 'Sign Up' : 'Sign up with Google';
+    }
+  }
+
+  window.signup = async function () {
+    const name = document.getElementById("signupName").value.trim();
+    const email = document.getElementById("signupEmail").value.trim();
+    const password = document.getElementById("signupPassword").value;
+    const confirmPassword = document.getElementById("signupConfirmPassword").value;
+    const msg = document.getElementById("message");
+
+    if (!name || !email || !password || !confirmPassword) {
+      msg.textContent = "Please fill in all fields";
+      return;
+    }
+    if (password !== confirmPassword) {
+      msg.textContent = "Passwords don't match";
+      return;
+    }
+    if (password.length < 6) {
+      msg.textContent = "Password must be at least 6 characters";
+      return;
     }
 
-    // Sign up with email and password
-    window.signup = async function () {
-      const name = document.getElementById("signupName").value.trim();
-      const email = document.getElementById("signupEmail").value.trim();
-      const password = document.getElementById("signupPassword").value;
-      const confirmPassword = document.getElementById("signupConfirmPassword").value;
-      const msg = document.getElementById("message");
+    setLoading('signupBtn', true);
+    msg.textContent = "";
 
-      // Validate inputs
-      if (!name || !email || !password || !confirmPassword) {
-        msg.textContent = "Please fill in all fields";
-        return;
-      }
+    try {
+      const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+      const user = userCredential.user;
 
-      if (password !== confirmPassword) {
-        msg.textContent = "Passwords don't match";
-        return;
-      }
+      await updateProfile(user, { displayName: name });
 
-      if (password.length < 6) {
-        msg.textContent = "Password must be at least 6 characters";
-        return;
-      }
+      await setDoc(doc(db, "users", user.uid), {
+        name: name,
+        email: email,
+        createdAt: new Date(),
+        lastLogin: new Date()
+      });
 
-      setLoading('signupBtn', true);
-      msg.textContent = "";
+      await set(ref(rtdb, "users/" + user.uid), {
+        email: email,
+        name: name,
+        isApproved: false
+      });
 
-      try {
-        // Create user with email/password
-        const userCredential = await createUserWithEmailAndPassword(auth, email, password);
-        const user = userCredential.user;
-        
-        // Update user profile with display name
-        await updateProfile(user, {
-          displayName: name
-        });
-        
-        // Create user document in Firestore
-        await setDoc(doc(db, "users", user.uid), {
-          name: name,
-          email: email,
-          createdAt: new Date(),
-          lastLogin: new Date()
-        });
-        
-        msg.style.color = "green";
-        msg.textContent = "Signup successful! Redirecting...";
-        setTimeout(() => {
-          window.location.href = "login.html";
-        }, 1500);
-      } catch (error) {
-        let errorMessage = "Signup failed";
-        
-        // Handle specific error cases
-        if (error.code === "auth/email-already-in-use") {
-          errorMessage = "Email already in use";
-        } else if (error.code === "auth/invalid-email") {
-          errorMessage = "Invalid email address";
-        } else if (error.code === "auth/weak-password") {
-          errorMessage = "Password is too weak";
-        } else {
-          errorMessage = error.message;
-        }
-        
-        msg.textContent = errorMessage;
-      } finally {
-        setLoading('signupBtn', false);
+      msg.style.color = "green";
+      msg.textContent = "Signup successful! Redirecting...";
+      setTimeout(() => {
+        window.location.href = "login.html";
+      }, 1500);
+    } catch (error) {
+      let errorMessage = "Signup failed";
+      if (error.code === "auth/email-already-in-use") {
+        errorMessage = "Email already in use";
+      } else if (error.code === "auth/invalid-email") {
+        errorMessage = "Invalid email address";
+      } else if (error.code === "auth/weak-password") {
+        errorMessage = "Password is too weak";
+      } else {
+        errorMessage = error.message;
       }
-    };
-    
-    // Sign in with Google
-    window.signInWithGoogle = async function() {
-      setLoading('googleBtn', true);
-      document.getElementById("message").textContent = "";
-      
-      try {
-        const result = await signInWithPopup(auth, provider);
-        const credential = GoogleAuthProvider.credentialFromResult(result);
-        const token = credential.accessToken;
-        const user = result.user;
-        
-        // Create user document in Firestore for Google sign-in
-        await setDoc(doc(db, "users", user.uid), {
-          name: user.displayName,
-          email: user.email,
-          photoURL: user.photoURL,
-          provider: "google",
-          createdAt: new Date(),
-          lastLogin: new Date()
-        });
-        
-        document.getElementById("message").style.color = "green";
-        document.getElementById("message").textContent = "Google sign-in successful! Redirecting...";
-        setTimeout(() => {
-          window.location.href = "login.html";
-        }, 1500);
-      } catch (error) {
-        let errorMessage = "Google sign-in failed";
-        
-        if (error.code === "auth/account-exists-with-different-credential") {
-          errorMessage = "Email already in use with another method";
-        } else if (error.code === "auth/popup-closed-by-user") {
-          errorMessage = "Sign-in popup was closed";
-        } else {
-          errorMessage = error.message;
-        }
-        
-        document.getElementById("message").textContent = errorMessage;
-      } finally {
-        setLoading('googleBtn', false);
-      }
-    };
+      msg.textContent = errorMessage;
+    } finally {
+      setLoading('signupBtn', false);
+    }
+  };
 
-    // Add form submission on Enter key
-    document.addEventListener('keypress', function(e) {
-      if (e.key === 'Enter') {
-        signup();
+  window.signInWithGoogle = async function () {
+    setLoading('googleBtn', true);
+    document.getElementById("message").textContent = "";
+    try {
+      const result = await signInWithPopup(auth, provider);
+      const user = result.user;
+
+      await setDoc(doc(db, "users", user.uid), {
+        name: user.displayName,
+        email: user.email,
+        photoURL: user.photoURL,
+        provider: "google",
+        createdAt: new Date(),
+        lastLogin: new Date()
+      });
+
+      await set(ref(rtdb, "users/" + user.uid), {
+        email: user.email,
+        name: user.displayName,
+        isApproved: false
+      });
+
+      document.getElementById("message").style.color = "green";
+      document.getElementById("message").textContent = "Google sign-in successful! Redirecting...";
+      setTimeout(() => {
+        window.location.href = "login.html";
+      }, 1500);
+    } catch (error) {
+      let errorMessage = "Google sign-in failed";
+      if (error.code === "auth/account-exists-with-different-credential") {
+        errorMessage = "Email already in use with another method";
+      } else if (error.code === "auth/popup-closed-by-user") {
+        errorMessage = "Sign-in popup was closed";
+      } else {
+        errorMessage = error.message;
       }
-    });
+      document.getElementById("message").textContent = errorMessage;
+    } finally {
+      setLoading('googleBtn', false);
+    }
+  };
+
+  document.addEventListener('keypress', function(e) {
+    if (e.key === 'Enter') {
+      signup();
+    }
+  });
+</script>
+
   </script>
   <!-- Ad Popup Notice Box (Side Position) -->
 <div id="noticePopup" style="display:none; position:fixed; bottom:20px; right:20px; background:#fff; padding:15px; border:2px solid #0077cc; box-shadow:0 0 15px rgba(0,0,0,0.4); z-index:9999; border-radius:10px; max-width:300px; width:90%; text-align:center;">
