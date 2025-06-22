@@ -53,11 +53,11 @@
         if (snapshot.exists()) {
           const data = snapshot.val();
           if (data.isApproved === true) {
-            // ✅ Approved
+            // ✅ welcome to premium
             window.location.href = "/secure/protected.html";
           } else {
             // ❌ Not approved
-            alert("⛔ Not approved yet by admin!");
+            alert("⛔ Not approved yet-after payment its approved");
             await signOut(auth);
             window.location.href = "/login.html";
           }
