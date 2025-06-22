@@ -1,361 +1,83 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Admin Panel</title>
-    <!-- Tailwind CSS CDN for styling -->
-    <script src="https://cdn.tailwindcss.com"></script>
-    <style>
-        /* Custom styles can be added here if needed, but Tailwind is preferred */
-        body {
-            font-family: 'Inter', sans-serif;
-            background-color: #f3f4f6; /* Light gray background */
-        }
-        .container {
-            max-width: 90%;
-            margin: 2rem auto;
-            padding: 1.5rem;
-            background-color: #ffffff;
-            border-radius: 0.75rem; /* Rounded corners */
-            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-        }
-        th, td {
-            padding: 0.75rem 1rem;
-            text-align: left;
-            border-bottom: 1px solid #e5e7eb; /* Light gray border */
-        }
-        th {
-            background-color: #eff6ff; /* Light blue header background */
-            font-weight: 600;
-            color: #1f2937; /* Dark gray text */
-        }
-        tr:hover {
-            background-color: #f9fafb; /* Lighter background on hover */
-        }
-        .status-approved {
-            color: #10b981; /* Green for approved */
-            font-weight: 500;
-        }
-        .status-pending {
-            color: #f59e0b; /* Orange for pending */
-            font-weight: 500;
-        }
-        .form-input {
-            @apply mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm;
-        }
-        .btn-primary {
-            @apply inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500;
-        }
-        .btn-toggle {
-            @apply text-sm py-1 px-3 rounded-full font-semibold;
-        }
-        .btn-toggle.approved {
-            @apply bg-green-200 text-green-800 hover:bg-green-300;
-        }
-        .btn-toggle.pending {
-            @apply bg-yellow-200 text-yellow-800 hover:bg-yellow-300;
-        }
-    </style>
+  <meta charset="UTF-8">
+  <title>Admin - User Approval Panel</title>
+  <style>
+    body { font-family: Arial, sans-serif; padding: 20px; background: #f9f9f9; }
+    h1 { color: #333; }
+    table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+    th, td { padding: 10px; border: 1px solid #ccc; text-align: left; }
+    .approved { color: green; font-weight: bold; }
+    .pending { color: orange; font-weight: bold; }
+  </style>
 </head>
-<body class="min-h-screen flex items-start justify-center py-8">
-    <div class="container w-full lg:w-4/5 xl:w-3/4">
-        <h1 class="text-3xl font-bold text-center text-gray-800 mb-6">Admin Panel - User Management</h1>
+<body>
 
-        <!-- Add New User Form -->
-        <div class="mb-8 p-6 bg-blue-50 rounded-lg shadow-md">
-            <h2 class="text-2xl font-semibold text-gray-800 mb-4">Add New User</h2>
-            <form id="addUserForm" class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div>
-                    <label for="userName" class="block text-sm font-medium text-gray-700">Name</label>
-                    <input type="text" id="userName" name="userName" required class="form-input">
-                </div>
-                <div>
-                    <label for="userEmail" class="block text-sm font-medium text-gray-700">Email</label>
-                    <input type="email" id="userEmail" name="userEmail" required class="form-input">
-                </div>
-                <div class="flex items-center col-span-1 md:col-span-2">
-                    <input type="checkbox" id="isApproved" name="isApproved" class="h-4 w-4 text-indigo-600 border-gray-300 rounded focus:ring-indigo-500">
-                    <label for="isApproved" class="ml-2 block text-sm font-medium text-gray-900">Approved</label>
-                </div>
-                <div class="col-span-1 md:col-span-2">
-                    <button type="submit" class="btn-primary">Add User</button>
-                </div>
-            </form>
-            <div id="addUserMessage" class="mt-4 p-3 text-sm rounded-md hidden"></div>
-        </div>
+<h1>🛡️ Admin Panel: User Approval List</h1>
+<table>
+  <thead>
+    <tr>
+      <th>Email</th>
+      <th>Approval Status</th>
+    </tr>
+  </thead>
+  <tbody id="userTableBody">
+    <!-- User rows will go here -->
+  </tbody>
+</table>
 
-        <div id="loading" class="text-center text-gray-600 mb-4 p-4 rounded-md bg-blue-100 flex items-center justify-center">
-            <svg class="animate-spin -ml-1 mr-3 h-5 w-5 text-blue-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-            </svg>
-            Loading user data...
-        </div>
+<script type="module">
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/11.8.1/firebase-app.js";
+  import {
+    getDatabase,
+    ref,
+    get
+  } from "https://www.gstatic.com/firebasejs/11.8.1/firebase-database.js";
 
-        <div id="error-message" class="hidden text-center text-red-700 bg-red-100 border border-red-400 p-4 rounded-md mb-4" role="alert">
-            <span class="font-semibold">Error:</span> <span id="error-text"></span>
-            <p class="text-sm mt-2">You might not have the necessary permissions or there was an issue connecting to the database.</p>
-            <p class="text-sm mt-2">Current authenticated User ID: <span id="current-user-id" class="font-bold">Loading...</span></p>
-            <p class="text-sm mt-2 font-bold text-blue-800">Check your console for "User authenticated with UID" and ensure that exact UID is set to 'true' in your Realtime Database's '/admins' node.</p>
-        </div>
+  const firebaseConfig = {
+    apiKey: "AIzaSyB66MZa0WZk3WPydcjmCDu7P_CE0FD60ug",
+    authDomain: "login-2f07b.firebaseapp.com",
+    projectId: "login-2f07b",
+    storageBucket: "login-2f07b.appspot.com",
+    messagingSenderId: "709252763741",
+    appId: "1:709252763741:web:b3902697cc9c8b157a7db4",
+    databaseURL: "https://login-2f07b-default-rtdb.asia-southeast1.firebasedatabase.app"
+  };
 
-        <div id="user-table-container" class="overflow-x-auto hidden rounded-lg shadow">
-            <table class="min-w-full divide-y divide-gray-200">
-                <thead class="bg-gray-50">
-                    <tr>
-                        <th scope="col" class="py-3 px-6 text-xs font-medium tracking-wider text-left text-gray-700 uppercase">User ID</th>
-                        <th scope="col" class="py-3 px-6 text-xs font-medium tracking-wider text-left text-gray-700 uppercase">Name</th>
-                        <th scope="col" class="py-3 px-6 text-xs font-medium tracking-wider text-left text-gray-700 uppercase">Email</th>
-                        <th scope="col" class="py-3 px-6 text-xs font-medium tracking-wider text-left text-gray-700 uppercase">Approved Status</th>
-                        <th scope="col" class="py-3 px-6 text-xs font-medium tracking-wider text-left text-gray-700 uppercase">Actions</th>
-                    </tr>
-                </thead>
-                <tbody id="user-data" class="bg-white divide-y divide-gray-200">
-                    <!-- User data will be inserted here by JavaScript -->
-                </tbody>
-            </table>
-        </div>
-    </div>
+  const app = initializeApp(firebaseConfig);
+  const db = getDatabase(app);
 
-    <!-- Firebase SDK Imports -->
-    <script type="module">
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
-        import { getAuth, signInAnonymously, signInWithCustomToken, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
-        import { getDatabase, ref, onValue, set, update } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-database.js";
+  const userTableBody = document.getElementById("userTableBody");
 
-        // Global variables provided by the Canvas environment
-        const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
-        const firebaseConfig = JSON.parse(typeof __firebase_config !== 'undefined' ? __firebase_config : '{}');
-        const initialAuthToken = typeof __initial_auth_token !== 'undefined' ? __initial_auth_token : null;
-
-        console.log("Firebase Config being used:", firebaseConfig); // Log the config for verification
-        console.log("Initial Auth Token provided by Canvas:", initialAuthToken ? "Yes" : "No (will sign in anonymously)");
-
-        // Get UI elements
-        const loadingDiv = document.getElementById('loading');
-        const errorMessageDiv = document.getElementById('error-message');
-        const errorTextSpan = document.getElementById('error-text');
-        const currentUserIdSpan = document.getElementById('current-user-id'); // New span for current user ID
-        const userTableContainer = document.getElementById('user-table-container');
-        const userDataBody = document.getElementById('user-data');
-        const addUserForm = document.getElementById('addUserForm');
-        const addUserMessageDiv = document.getElementById('addUserMessage');
-
-        let app;
-        let auth;
-        let db;
-        let userId = null; // Variable to store the current user ID
-
-        /**
-         * Initializes Firebase and sets up authentication and data listeners.
-         */
-        async function initializeFirebaseAndLoadData() {
-            try {
-                // Check if firebaseConfig is valid before initializing
-                if (!firebaseConfig || Object.keys(firebaseConfig).length === 0) {
-                    throw new Error("Firebase configuration is missing or invalid. Please ensure __firebase_config is set.");
-                }
-
-                app = initializeApp(firebaseConfig);
-                auth = getAuth(app);
-                db = getDatabase(app);
-
-                // Authenticate the user
-                if (initialAuthToken) {
-                    await signInWithCustomToken(auth, initialAuthToken);
-                } else {
-                    await signInAnonymously(auth);
-                }
-
-                // Listen for authentication state changes
-                onAuthStateChanged(auth, (user) => {
-                    if (user) {
-                        userId = user.uid; // Set the userId once authenticated
-                        currentUserIdSpan.textContent = userId; // Display the current user ID
-                        console.log("User authenticated with UID:", userId);
-                        console.warn("IMPORTANT: For full admin access to user management (read/write others' data), ensure this UID is present in your Firebase Realtime Database under the 'admins' node, e.g., /admins/{your_uid}: true. Also, ensure your /users/$uid/.write rule allows admins.");
-                        fetchUserData(); // Fetch data once authenticated
-                    } else {
-                        console.log("No user is signed in. Attempting anonymous sign-in or waiting for token.");
-                        currentUserIdSpan.textContent = "Not Authenticated"; // Display not authenticated
-                        // If no user and no initial token, show an error that might indicate auth issues
-                        if (!initialAuthToken) {
-                            showError("Authentication failed. Please ensure Firebase configuration and authentication token are correct.");
-                        }
-                    }
-                    loadingDiv.classList.add('hidden'); // Hide loading after auth state is determined
-                });
-
-            } catch (error) {
-                console.error("Error initializing Firebase:", error);
-                loadingDiv.classList.add('hidden');
-                showError(`Failed to initialize Firebase: ${error.message}.`);
-            }
-        }
-
-        /**
-         * Fetches user data from the Firebase Realtime Database.
-         * Sets up a real-time listener using onValue.
-         */
-        function fetchUserData() {
-            // Reference to the 'users' node in the Realtime Database
-            // The security rules should grant read access to admins for this node.
-            const usersRef = ref(db, 'users');
-
-            onValue(usersRef, (snapshot) => {
-                if (snapshot.exists()) {
-                    const usersData = snapshot.val();
-                    console.log("Received user data:", usersData);
-                    console.table(usersData); // Display user data as a table in console for easy inspection
-                    renderUserData(usersData);
-                    userTableContainer.classList.remove('hidden'); // Show the table
-                    errorMessageDiv.classList.add('hidden'); // Hide any previous error
-                } else {
-                    console.log("No users data available or no permission to read.");
-                    userDataBody.innerHTML = `<tr><td colspan="5" class="text-center py-4 text-gray-500">No user data found or insufficient permissions.</td></tr>`;
-                    userTableContainer.classList.remove('hidden'); // Still show the table structure
-                    showError("No user data found or you don't have permission to view it. Ensure the current user's UID is in your 'admins' node and your rules permit admin reads.");
-                }
-                loadingDiv.classList.add('hidden'); // Always hide loading once data is processed
-            }, (error) => {
-                console.error("Error fetching user data:", error);
-                loadingDiv.classList.add('hidden');
-                showError(`Failed to fetch user data: ${error.message}. Please check your database rules and ensure the authenticated user's UID is in the 'admins' node.`);
-                userDataBody.innerHTML = `<tr><td colspan="5" class="text-center py-4 text-red-500">Error loading data.</td></tr>`;
-                userTableContainer.classList.remove('hidden');
-            });
-        }
-
-        /**
-         * Renders the user data into the HTML table.
-         * @param {Object} usersData - The user data object from Firebase snapshot.
-         */
-        function renderUserData(usersData) {
-            userDataBody.innerHTML = ''; // Clear previous data
-            if (!usersData) {
-                userDataBody.innerHTML = `<tr><td colspan="5" class="text-center py-4 text-gray-500">No user data to display.</td></tr>`;
-                return;
-            }
-
-            Object.keys(usersData).forEach(uid => {
-                const user = usersData[uid];
-                const row = document.createElement('tr');
-                const approvedStatus = user.isApproved ? 'Approved' : 'Pending'; // Use user.isApproved
-                const statusClass = user.isApproved ? 'status-approved' : 'status-pending';
-
-                row.innerHTML = `
-                    <td class="py-2 px-6 text-sm text-gray-800 break-words">${uid}</td>
-                    <td class="py-2 px-6 text-sm text-gray-800 break-words">${user.name || 'N/A'}</td>
-                    <td class="py-2 px-6 text-sm text-gray-800 break-words">${user.email || 'N/A'}</td>
-                    <td class="py-2 px-6 text-sm ${statusClass} break-words" id="status-${uid}">${approvedStatus}</td>
-                    <td class="py-2 px-6 text-sm">
-                        <button id="toggle-${uid}" data-uid="${uid}" data-approved="${user.isApproved}" class="btn-toggle ${statusClass}">
-                            ${user.isApproved ? 'Set Pending' : 'Set Approved'}
-                        </button>
-                    </td>
-                `;
-                userDataBody.appendChild(row);
-
-                // Add event listener for the toggle button
-                const toggleButton = document.getElementById(`toggle-${uid}`);
-                toggleButton.addEventListener('click', toggleUserApproval);
-            });
-        }
-
-        /**
-         * Handles toggling a user's approval status.
-         * @param {Event} event - The click event.
-         */
-        async function toggleUserApproval(event) {
-            const uid = event.target.dataset.uid;
-            const currentApprovedStatus = event.target.dataset.approved === 'true'; // Convert string to boolean
-            const newApprovedStatus = !currentApprovedStatus;
-
-            try {
-                const userRef = ref(db, `users/${uid}`);
-                await update(userRef, { isApproved: newApprovedStatus });
-                console.log(`User ${uid} approval status updated to: ${newApprovedStatus}`);
-                // The onValue listener will automatically re-render the UI
-            } catch (error) {
-                console.error("Error toggling user approval:", error);
-                showAddUserMessage(`Failed to update approval status for ${uid}: ${error.message}. Check your write permissions.`, 'error');
-            }
-        }
-
-        /**
-         * Handles adding a new user to the database.
-         * @param {Event} event - The form submit event.
-         */
-        addUserForm.addEventListener('submit', async (event) => {
-            event.preventDefault(); // Prevent default form submission
-
-            const name = document.getElementById('userName').value.trim();
-            const email = document.getElementById('userEmail').value.trim();
-            const isApproved = document.getElementById('isApproved').checked;
-
-            if (!name || !email) {
-                showAddUserMessage('Please fill in all fields.', 'warning');
-                return;
-            }
-
-            try {
-                // Generate a random unique ID for the new user, mimicking a Firebase push ID
-                // For integration with Firebase Auth, you would typically get the UID from auth.createUserWithEmailAndPassword()
-                const newUid = `user_${crypto.randomUUID().substring(0, 8)}`; // Simple unique ID
-
-                const newUserRef = ref(db, `users/${newUid}`);
-                await set(newUserRef, {
-                    name: name,
-                    email: email,
-                    isApproved: isApproved
-                });
-
-                showAddUserMessage(`User "${name}" added successfully with UID: ${newUid}`, 'success');
-                addUserForm.reset(); // Clear the form
-            } catch (error) {
-                console.error("Error adding new user:", error);
-                showAddUserMessage(`Failed to add user: ${error.message}. Please check your database write permissions for the 'users' node.`, 'error');
-            }
+  async function fetchUsers() {
+    const usersRef = ref(db, "users");
+    try {
+      const snapshot = await get(usersRef);
+      if (snapshot.exists()) {
+        const users = snapshot.val();
+        userTableBody.innerHTML = ""; // Clear existing
+        Object.entries(users).forEach(([uid, user]) => {
+          const row = document.createElement("tr");
+          row.innerHTML = `
+            <td>${user.email || "No email"}</td>
+            <td class="${user.isApproved ? 'approved' : 'pending'}">
+              ${user.isApproved ? "✅ Approved" : "⏳ Pending"}
+            </td>
+          `;
+          userTableBody.appendChild(row);
         });
+      } else {
+        userTableBody.innerHTML = "<tr><td colspan='2'>No users found</td></tr>";
+      }
+    } catch (error) {
+      console.error("❌ Error fetching users:", error);
+      userTableBody.innerHTML = "<tr><td colspan='2'>Error loading users</td></tr>";
+    }
+  }
 
+  fetchUsers();
+</script>
 
-        /**
-         * Displays an error message and hides the loading indicator and table.
-         * @param {string} message - The error message to display.
-         */
-        function showError(message) {
-            errorMessageDiv.classList.remove('hidden');
-            errorTextSpan.textContent = message;
-            loadingDiv.classList.add('hidden');
-            userTableContainer.classList.add('hidden'); // Hide the table on error
-            console.error("Displaying error:", message);
-        }
-
-        /**
-         * Displays a message for the add user form.
-         * @param {string} message - The message to display.
-         * @param {'success'|'error'|'warning'} type - The type of message.
-         */
-        function showAddUserMessage(message, type) {
-            addUserMessageDiv.textContent = message;
-            addUserMessageDiv.classList.remove('hidden', 'bg-green-100', 'text-green-800', 'bg-red-100', 'text-red-800', 'bg-yellow-100', 'text-yellow-800');
-
-            if (type === 'success') {
-                addUserMessageDiv.classList.add('bg-green-100', 'text-green-800');
-            } else if (type === 'error') {
-                addUserMessageDiv.classList.add('bg-red-100', 'text-red-800');
-            } else if (type === 'warning') {
-                addUserMessageDiv.classList.add('bg-yellow-100', 'text-yellow-800');
-            }
-            // Hide after 5 seconds
-            setTimeout(() => {
-                addUserMessageDiv.classList.add('hidden');
-            }, 5000);
-        }
-
-        // Initialize the Firebase app and load data when the window loads
-        window.onload = initializeFirebaseAndLoadData;
-    </script>
 </body>
 </html>
