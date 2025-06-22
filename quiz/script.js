@@ -171,7 +171,7 @@ const percentage = (score / total) * 100;
 }
 
 function showResults(correct, wrong, score, percentage) {
-  resultEl.innerHTML = `
+  let resultHTML = `
     <h3>Quiz Results</h3>
     <p><strong>Name:</strong> ${userNameInput.value.trim()}</p>
     <p><strong>Correct Answers:</strong> ${correct}/${questions.length}</p>
@@ -179,11 +179,57 @@ function showResults(correct, wrong, score, percentage) {
     <p><strong>Score:</strong> ${score.toFixed(2)}</p>
     <p><strong>Percentage:</strong> ${percentage.toFixed(2)}%</p>
     <div id="ranking-info">Calculating your rank...</div>
+    <hr />
+    <div class="detailed-results">
   `;
+
+  questions.forEach((q, i) => {
+    // Find selected answer for this question
+    const selected = document.querySelector(`input[name="q${i}"]:checked`);
+    const selectedIndex = selected ? parseInt(selected.value) : null;
+
+    // Check correctness
+    const isCorrect = selectedIndex === q.correct;
+    const isUnattempted = selectedIndex === null;
+
+    // Build options list with highlighting
+    let optionsHTML = '<ul class="options-list">';
+    q.options.forEach((opt, idx) => {
+      let className = '';
+
+      if (idx === q.correct) {
+        className = 'correct';  // correct answer green
+      }
+      if (selectedIndex === idx && idx !== q.correct) {
+        className = 'wrong';  // user selected wrong answer red
+      }
+      if (isUnattempted) {
+        className = ''; // no selection
+      }
+
+      optionsHTML += `<li class="${className}">${opt}</li>`;
+    });
+    optionsHTML += '</ul>';
+
+    resultHTML += `
+      <div class="question-result">
+        <p><strong>Q${i + 1}:</strong> ${q.question}</p>
+        ${optionsHTML}
+        <p><em>Explanation:</em> ${q.explanation || 'No explanation provided.'}</p>
+        <p>Status: <strong>${isUnattempted ? 'Unattempted' : isCorrect ? 'Correct' : 'Wrong'}</strong></p>
+      </div>
+      <hr />
+    `;
+  });
+
+  resultHTML += '</div>';
+
+  resultEl.innerHTML = resultHTML;
   resultEl.style.display = 'block';
-  
+
   fetchRankings(score);
 }
+
 
 async function fetchRankings(myScore) {
   try {
