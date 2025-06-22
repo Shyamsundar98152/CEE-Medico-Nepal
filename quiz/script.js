@@ -217,7 +217,7 @@ results.forEach((participant) => {
 leaderboard += '</ol></div>';
 
     
-    leaderboard += '</ol></div>';
+    
 
     document.getElementById('ranking-info').innerHTML = `
       <p><strong>Your Rank:</strong> ${rank} out of ${totalParticipants}</p>
