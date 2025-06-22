@@ -1,44 +1,179 @@
-<script type="module">
-  import { initializeApp } from "https://www.gstatic.com/firebasejs/11.8.1/firebase-app.js";
-  import {
-    getDatabase,
-    ref,
-    get
-  } from "https://www.gstatic.com/firebasejs/11.8.1/firebase-database.js";
-  import {
-    getAuth,
-    onAuthStateChanged,
-    signOut
-  } from "https://www.gstatic.com/firebasejs/11.8.1/firebase-auth.js";
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Admin Panel - User Approval</title>
+  <style>
+    body { font-family: Arial, sans-serif; max-width: 700px; margin: 30px auto; }
+    input, button { padding: 8px; margin: 5px 0; width: 100%; max-width: 300px; }
+    table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+    th, td { border: 1px solid #ddd; padding: 8px; text-align: left; }
+    th { background: #eee; }
+    .approved { color: blue; font-weight: bold; }
+    .not-approved { color: red; font-weight: bold; }
+    #logoutBtn { margin-top: 10px; width: auto; }
+  </style>
+</head>
+<body>
 
+<h1>Admin Panel</h1>
+
+<div id="loginDiv">
+  <h3>Login as Admin</h3>
+  <input type="email" id="email" placeholder="Email" required />
+  <input type="password" id="password" placeholder="Password" required />
+  <button id="loginBtn">Login</button>
+  <div id="loginError" style="color: red; margin-top: 5px;"></div>
+</div>
+
+<div id="adminContent" style="display:none;">
+  <button id="logoutBtn">Logout</button>
+  <h2>Users List</h2>
+  <table>
+    <thead>
+      <tr><th>Name</th><th>Email</th><th>Approved</th></tr>
+    </thead>
+    <tbody id="usersTableBody">
+      <tr><td colspan="3">Loading users...</td></tr>
+    </tbody>
+  </table>
+</div>
+
+<!-- Firebase SDK v8 -->
+<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
+<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
+
+<script>
   const firebaseConfig = {
     apiKey: "AIzaSyB66MZa0WZk3WPydcjmCDu7P_CE0FD60ug",
     authDomain: "login-2f07b.firebaseapp.com",
+    databaseURL: "https://login-2f07b-default-rtdb.asia-southeast1.firebasedatabase.app",
     projectId: "login-2f07b",
-    storageBucket: "login-2f07b.appspot.com",
+    storageBucket: "login-2f07b.firebasestorage.app",
     messagingSenderId: "709252763741",
     appId: "1:709252763741:web:b3902697cc9c8b157a7db4",
-    databaseURL: "https://login-2f07b-default-rtdb.asia-southeast1.firebasedatabase.app"
+    measurementId: "G-G7ZY1MJ106"
   };
 
-  const app = initializeApp(firebaseConfig);
-  const db = getDatabase(app);
-  const auth = getAuth(app);
+  firebase.initializeApp(firebaseConfig);
+  const auth = firebase.auth();
+  const db = firebase.database();
 
-  onAuthStateChanged(auth, async (user) => {
+  const loginDiv = document.getElementById('loginDiv');
+  const adminContent = document.getElementById('adminContent');
+  const loginBtn = document.getElementById('loginBtn');
+  const emailInput = document.getElementById('email');
+  const passwordInput = document.getElementById('password');
+  const loginError = document.getElementById('loginError');
+  const usersTableBody = document.getElementById('usersTableBody');
+  const logoutBtn = document.getElementById('logoutBtn');
+
+  // Login handler with admin check
+  loginBtn.addEventListener('click', () => {
+    const email = emailInput.value.trim();
+    const password = passwordInput.value.trim();
+    loginError.textContent = '';
+    if (!email || !password) {
+      loginError.textContent = "Please enter email and password.";
+      return;
+    }
+    auth.signInWithEmailAndPassword(email, password)
+      .then(({ user }) => {
+        // Check if user is admin
+        return db.ref('admins/' + user.uid).once('value')
+          .then(snapshot => {
+            if (snapshot.exists() && snapshot.val() === true) {
+              // Admin confirmed
+              loginDiv.style.display = 'none';
+              adminContent.style.display = 'block';
+              loadUsers();
+            } else {
+              // Not admin
+              auth.signOut();
+              loginError.textContent = 'Access denied: You are not an admin.';
+            }
+          });
+      })
+      .catch(err => {
+        loginError.textContent = 'Login failed: ' + err.message;
+      });
+  });
+
+  // Logout handler
+  logoutBtn.addEventListener('click', () => {
+    auth.signOut().then(() => {
+      adminContent.style.display = 'none';
+      loginDiv.style.display = 'block';
+      usersTableBody.innerHTML = '';
+      emailInput.value = '';
+      passwordInput.value = '';
+      loginError.textContent = '';
+    });
+  });
+
+  // Load users from database
+  function loadUsers() {
+    usersTableBody.innerHTML = '<tr><td colspan="3">Loading users...</td></tr>';
+    db.ref('users').once('value')
+      .then(snapshot => {
+        const users = snapshot.val();
+        if (!users) {
+          usersTableBody.innerHTML = '<tr><td colspan="3">No users found.</td></tr>';
+          return;
+        }
+        usersTableBody.innerHTML = '';
+        Object.keys(users).forEach(uid => {
+          const user = users[uid];
+          const tr = document.createElement('tr');
+
+          // Name cell
+          const tdName = document.createElement('td');
+          tdName.textContent = user.name || '(No name)';
+          tr.appendChild(tdName);
+
+          // Email cell
+          const tdEmail = document.createElement('td');
+          tdEmail.textContent = user.email || '(No email)';
+          tr.appendChild(tdEmail);
+
+          // Approved cell with tick/cross (check isApproved)
+          const tdApproved = document.createElement('td');
+          if (user.isApproved === true) {
+            tdApproved.innerHTML = '<span class="approved">&#10004;</span>'; // blue tick
+          } else {
+            tdApproved.innerHTML = '<span class="not-approved">&#10008;</span>'; // red cross
+          }
+          tr.appendChild(tdApproved);
+
+          usersTableBody.appendChild(tr);
+        });
+      })
+      .catch(err => {
+        usersTableBody.innerHTML = `<tr><td colspan="3" style="color:red;">Error loading users: ${err.message}</td></tr>`;
+      });
+  }
+
+  // On page load or auth state change: check admin
+  auth.onAuthStateChanged(user => {
     if (user) {
-      const adminRef = ref(db, "admins/" + user.uid);
-      const snapshot = await get(adminRef);
-      if (snapshot.exists() && snapshot.val() === true) {
-        console.log("✅ Admin access granted.");
-        // Continue showing admin page
-      } else {
-        alert("⛔ Access denied. You are not an admin.");
-        await signOut(auth);
-        window.location.href = "/login.html";
-      }
+      db.ref('admins/' + user.uid).once('value').then(snapshot => {
+        if (snapshot.exists() && snapshot.val() === true) {
+          loginDiv.style.display = 'none';
+          adminContent.style.display = 'block';
+          loadUsers();
+        } else {
+          auth.signOut();
+          loginDiv.style.display = 'block';
+          adminContent.style.display = 'none';
+        }
+      });
     } else {
-      window.location.href = "/login.html";
+      loginDiv.style.display = 'block';
+      adminContent.style.display = 'none';
     }
   });
 </script>
+
+</body>
+</html>
