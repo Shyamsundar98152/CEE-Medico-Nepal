@@ -1,0 +1,162 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Admin Panel - User Approval</title>
+  <style>
+    body { font-family: Arial, sans-serif; max-width: 700px; margin: 30px auto; }
+    input, button { padding: 8px; margin: 5px 0; width: 100%; max-width: 300px; }
+    table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+    th, td { border: 1px solid #ddd; padding: 8px; text-align: left; }
+    th { background: #eee; }
+    .approved { color: blue; font-weight: bold; }
+    .not-approved { color: red; font-weight: bold; }
+    #logoutBtn { margin-top: 10px; width: auto; }
+  </style>
+</head>
+<body>
+
+<h1>Admin Panel</h1>
+
+<div id="loginDiv">
+  <h3>Login as Admin</h3>
+  <input type="email" id="email" placeholder="Email" required />
+  <input type="password" id="password" placeholder="Password" required />
+  <button id="loginBtn">Login</button>
+  <div id="loginError" style="color: red; margin-top: 5px;"></div>
+</div>
+
+<div id="adminContent" style="display:none;">
+  <button id="logoutBtn">Logout</button>
+  <h2>Users List</h2>
+  <table>
+    <thead>
+      <tr><th>Name</th><th>Email</th><th>Approved</th></tr>
+    </thead>
+    <tbody id="usersTableBody">
+      <tr><td colspan="3">Loading users...</td></tr>
+    </tbody>
+  </table>
+</div>
+
+<!-- Firebase JS SDK -->
+<script src="https://www.gstatic.com/firebasejs/11.8.1/firebase-app.js"></script>
+<script src="https://www.gstatic.com/firebasejs/11.8.1/firebase-auth.js"></script>
+<script src="https://www.gstatic.com/firebasejs/11.8.1/firebase-database.js"></script>
+
+<script>
+  // Your Firebase config here
+  const firebaseConfig = {
+    apiKey: "AIzaSyB66MZa0WZk3WPydcjmCDu7P_CE0FD60ug",
+    authDomain: "login-2f07b.firebaseapp.com",
+    databaseURL: "https://login-2f07b-default-rtdb.asia-southeast1.firebasedatabase.app",
+    projectId: "login-2f07b",
+    storageBucket: "login-2f07b.firebasestorage.app",
+    messagingSenderId: "709252763741",
+    appId: "1:709252763741:web:b3902697cc9c8b157a7db4",
+    measurementId: "G-G7ZY1MJ106"
+  };
+
+  // Initialize Firebase
+  const app = firebase.initializeApp(firebaseConfig);
+  const auth = firebase.auth();
+  const db = firebase.database();
+
+  const loginDiv = document.getElementById('loginDiv');
+  const adminContent = document.getElementById('adminContent');
+  const loginBtn = document.getElementById('loginBtn');
+  const emailInput = document.getElementById('email');
+  const passwordInput = document.getElementById('password');
+  const loginError = document.getElementById('loginError');
+  const usersTableBody = document.getElementById('usersTableBody');
+  const logoutBtn = document.getElementById('logoutBtn');
+
+  // Login handler
+  loginBtn.addEventListener('click', () => {
+    const email = emailInput.value.trim();
+    const password = passwordInput.value.trim();
+    loginError.textContent = '';
+    if (!email || !password) {
+      loginError.textContent = "Please enter email and password.";
+      return;
+    }
+    auth.signInWithEmailAndPassword(email, password)
+      .then(() => {
+        loginDiv.style.display = 'none';
+        adminContent.style.display = 'block';
+        loadUsers();
+      })
+      .catch(err => {
+        loginError.textContent = 'Login failed: ' + err.message;
+      });
+  });
+
+  // Logout handler
+  logoutBtn.addEventListener('click', () => {
+    auth.signOut().then(() => {
+      adminContent.style.display = 'none';
+      loginDiv.style.display = 'block';
+      usersTableBody.innerHTML = '';
+      emailInput.value = '';
+      passwordInput.value = '';
+      loginError.textContent = '';
+    });
+  });
+
+  // Load users from database
+  function loadUsers() {
+    usersTableBody.innerHTML = '<tr><td colspan="3">Loading users...</td></tr>';
+    db.ref('users').once('value')
+      .then(snapshot => {
+        const users = snapshot.val();
+        if (!users) {
+          usersTableBody.innerHTML = '<tr><td colspan="3">No users found.</td></tr>';
+          return;
+        }
+        usersTableBody.innerHTML = '';
+        Object.keys(users).forEach(uid => {
+          const user = users[uid];
+          const tr = document.createElement('tr');
+
+          // Name cell
+          const tdName = document.createElement('td');
+          tdName.textContent = user.name || '(No name)';
+          tr.appendChild(tdName);
+
+          // Email cell
+          const tdEmail = document.createElement('td');
+          tdEmail.textContent = user.email || '(No email)';
+          tr.appendChild(tdEmail);
+
+          // Approved cell with tick/cross
+          const tdApproved = document.createElement('td');
+          if (user.approved === true) {
+            tdApproved.innerHTML = '<span class="approved">&#10004;</span>'; // blue tick
+          } else {
+            tdApproved.innerHTML = '<span class="not-approved">&#10008;</span>'; // red cross
+          }
+          tr.appendChild(tdApproved);
+
+          usersTableBody.appendChild(tr);
+        });
+      })
+      .catch(err => {
+        usersTableBody.innerHTML = `<tr><td colspan="3" style="color:red;">Error loading users: ${err.message}</td></tr>`;
+      });
+  }
+
+  // Auto check if user is logged in on page load
+  auth.onAuthStateChanged(user => {
+    if (user) {
+      loginDiv.style.display = 'none';
+      adminContent.style.display = 'block';
+      loadUsers();
+    } else {
+      loginDiv.style.display = 'block';
+      adminContent.style.display = 'none';
+    }
+  });
+</script>
+
+</body>
+</html>
