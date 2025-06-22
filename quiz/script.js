@@ -207,13 +207,15 @@ async function fetchRankings(myScore) {
     const rank = results.findIndex(r => r.id === deviceId) + 1;
     const totalParticipants = results.length;
 
-    // Show top 3 participants
-    let leaderboard = '<div class="leaderboard"><h4>Top Participants</h4><ol>';
-    const topCount = Math.min(3, totalParticipants);
-    
-    for (let i = 0; i < topCount; i++) {
-      leaderboard += `<li>${results[i].userName} - ${results[i].score.toFixed(2)}</li>`;
-    }
+    // Show all participants
+let leaderboard = '<div class="leaderboard"><h4>All Participants</h4><ol>';
+
+results.forEach((participant) => {
+  leaderboard += `<li>${participant.userName} - ${participant.score.toFixed(2)}</li>`;
+});
+
+leaderboard += '</ol></div>';
+
     
     leaderboard += '</ol></div>';
 
