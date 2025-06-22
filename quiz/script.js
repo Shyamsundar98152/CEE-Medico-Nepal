@@ -98,18 +98,33 @@ function renderQuiz() {
   questions.forEach((q, i) => {
     const qBox = document.createElement('div');
     qBox.className = 'question-box';
-    qBox.innerHTML = `
-      <p>${i + 1}. ${q.question}</p>
-      ${q.options.map((opt, j) => `
-        <label>
-          <input type="radio" name="q${i}" value="${j}">
-          ${opt}
-        </label>
-      `).join('')}
-    `;
+
+    const questionText = document.createElement('p');
+    questionText.textContent = `${i + 1}. ${q.question}`;
+    qBox.appendChild(questionText);
+
+    q.options.forEach((opt, j) => {
+      const label = document.createElement('label');
+      label.className = 'option-label'; // add this class if you want custom styling
+
+      const input = document.createElement('input');
+      input.type = 'radio';
+      input.name = `q${i}`;
+      input.value = j;
+
+      const optionText = document.createElement('span');
+      optionText.textContent = opt;
+
+      label.appendChild(input);
+      label.appendChild(optionText);
+
+      qBox.appendChild(label);
+    });
+
     quizEl.appendChild(qBox);
   });
 }
+
 
 async function submitQuiz() {
   if (!quizStarted) return;
