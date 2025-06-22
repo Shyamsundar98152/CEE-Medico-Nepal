@@ -127,15 +127,28 @@ async function submitQuiz() {
   const userName = userNameInput.value.trim();
   const userEmail = userEmailInput.value.trim();
   
-  let correct = 0;
-  const total = questions.length;
-  answers.forEach((ans, i) => {
-    if (parseInt(ans.value) === questions[i].correct) correct++;
-  });
+ let correct = 0;
+let wrong = 0;
+let unattempted = 0;
+const total = questions.length;
 
-  const wrong = total - correct;
-  score = (correct * 1) - (wrong * 0.25);
-  const percentage = (score / total) * 100;
+questions.forEach((question, index) => {
+  const selected = document.querySelector(`input[name="q${index}"]:checked`);
+  if (!selected) {
+    unattempted++;
+    return; // no effect on score
+  }
+
+  const selectedValue = parseInt(selected.value);
+  if (selectedValue === question.correct) {
+    correct++;
+  } else {
+    wrong++;
+  }
+});
+
+score = (correct * 1) - (wrong * 0.25);
+const percentage = (score / total) * 100;
 
   try {
     await set(ref(db, `responses/${deviceId}`), {
