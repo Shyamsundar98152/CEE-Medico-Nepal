@@ -372,84 +372,99 @@ background:rgba(0,0,0,0.5); z-index:9998;"></div>
     </form>
   </div>
 
-  <!-- Firebase Scripts -->
-  <script type="module">
-    // Import Firebase
-    import { initializeApp } from "https://www.gstatic.com/firebasejs/11.8.1/firebase-app.js";
-    import { 
-      getAuth, 
-      signInWithEmailAndPassword,
-      GoogleAuthProvider,
-      signInWithPopup
-    } from "https://www.gstatic.com/firebasejs/11.8.1/firebase-auth.js";
+ <script type="module">
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/11.8.1/firebase-app.js";
+  import {
+    getAuth,
+    signInWithEmailAndPassword,
+    GoogleAuthProvider,
+    signInWithPopup
+  } from "https://www.gstatic.com/firebasejs/11.8.1/firebase-auth.js";
+  import {
+    getDatabase,
+    ref,
+    set,
+    get
+  } from "https://www.gstatic.com/firebasejs/11.8.1/firebase-database.js";
 
-    // Your Firebase config
-    const firebaseConfig = {
-      apiKey: "AIzaSyB66MZa0WZk3WPydcjmCDu7P_CE0FD60ug",
-      authDomain: "login-2f07b.firebaseapp.com",
-      projectId: "login-2f07b",
-      storageBucket: "login-2f07b.appspot.com",
-      messagingSenderId: "709252763741",
-      appId: "1:709252763741:web:b3902697cc9c8b157a7db4",
-      measurementId: "G-G7ZY1MJ106"
-    };
+  // Firebase config
+  const firebaseConfig = {
+    apiKey: "AIzaSyB66MZa0WZk3WPydcjmCDu7P_CE0FD60ug",
+    authDomain: "login-2f07b.firebaseapp.com",
+    projectId: "login-2f07b",
+    storageBucket: "login-2f07b.appspot.com",
+    messagingSenderId: "709252763741",
+    appId: "1:709252763741:web:b3902697cc9c8b157a7db4",
+    databaseURL: "https://login-2f07b-default-rtdb.asia-southeast1.firebasedatabase.app"
+  };
 
-    // Initialize Firebase
-    const app = initializeApp(firebaseConfig);
-    const auth = getAuth(app);
-    const provider = new GoogleAuthProvider();
+  // Initialize Firebase
+  const app = initializeApp(firebaseConfig);
+  const auth = getAuth(app);
+  const db = getDatabase(app);
+  const provider = new GoogleAuthProvider();
 
-    // Handle Email/Password Login
-    document.getElementById("loginForm").addEventListener("submit", function (e) {
-      e.preventDefault();
-      const email = document.getElementById("email").value;
-      const password = document.getElementById("password").value;
+  // ✅ Function to check approval from DB
+  async function checkApproval(user) {
+    const userRef = ref(db, "users/" + user.uid);
+    const snapshot = await get(userRef);
+    if (snapshot.exists()) {
+      const data = snapshot.val();
+      if (data.isApproved === true) {
+        alert("✅ Access granted. Redirecting...");
+        window.location.href = "/secure/protected.html";
+      } else {
+        alert("⛔ Access denied. Not approved by admin yet.");
+        auth.signOut();
+      }
+    } else {
+      // 🆕 New user — add to DB
+      await set(userRef, {
+        email: user.email,
+        isApproved: false
+      });
+      alert("📝 Registered. Please wait for admin approval.");
+      auth.signOut();
+    }
+  }
 
-      signInWithEmailAndPassword(auth, email, password)
-        .then((userCredential) => {
-          alert("✅ Login Welcome To Premium !");
-          window.location.href = "/secure/protected.html"; // 🔒 redirect to protected page
-        })
-        .catch((error) => {
-          alert("❌ Login failed: " + error.message);
-        });
-    });
+  // 🔐 Handle Email/Password Login
+  document.getElementById("loginForm").addEventListener("submit", async function (e) {
+    e.preventDefault();
+    const email = document.getElementById("email").value;
+    const password = document.getElementById("password").value;
 
-  
-    // Handle Google Sign-In
-    document.getElementById("googleSignIn").addEventListener("click", function() {
-      signInWithPopup(auth, provider)
-        .then((result) => {
-          // This gives you a Google Access Token
-          const credential = GoogleAuthProvider.credentialFromResult(result);
-          const token = credential.accessToken;
-          // The signed-in user info
-          const user = result.user;
-          
-          alert("✅ Google login successful!");
-          window.location.href = "/secure/protected.html";
-        }).catch((error) => {
-          // Handle Errors here.
-          const errorCode = error.code;
-          const errorMessage = error.message;
-          alert("❌ Google login failed: " + errorMessage);
-        });
-    });
+    try {
+      const userCredential = await signInWithEmailAndPassword(auth, email, password);
+      await checkApproval(userCredential.user);
+    } catch (error) {
+      alert("❌ Login failed: " + error.message);
+    }
+  });
 
-    // Toggle password visibility
-    const togglePassword = document.querySelector('#togglePassword');
-    const password = document.querySelector('#password');
+  // 🔐 Handle Google Sign-In
+  document.getElementById("googleSignIn").addEventListener("click", async function () {
+    try {
+      const result = await signInWithPopup(auth, provider);
+      const user = result.user;
+      await checkApproval(user);
+    } catch (error) {
+      alert("❌ Google login failed: " + error.message);
+    }
+  });
 
-    togglePassword.addEventListener('click', function (e) {
-      // toggle the type attribute
-      const type = password.getAttribute('type') === 'password' ? 'text' : 'password';
-      password.setAttribute('type', type);
-      // toggle the eye / eye slash icon
-      this.classList.toggle('fa-eye-slash');
-      this.classList.toggle('fa-eye');
-    });
-    <!-- External Realtime DB check -->Add commentMore actions
-<script type="module" src="/scripts/realtime-check.js"></script>
-  </script>
+  // 👁 Toggle password visibility
+  const togglePassword = document.querySelector('#togglePassword');
+  const password = document.querySelector('#password');
+
+  togglePassword.addEventListener('click', function () {
+    const type = password.getAttribute('type') === 'password' ? 'text' : 'password';
+    password.setAttribute('type', type);
+    this.classList.toggle('fa-eye-slash');
+    this.classList.toggle('fa-eye');
+  });
+</script>
+
+
 </body>
 </html>
