@@ -356,7 +356,6 @@
     </style>
 </head>
 <body>
-    <!-- Header Section -->
     <header class="header">
         <div class="header-container">
             <a href="https://ceemediconepal.xyz" class="logo">Cee<span>MediConePal</span></a>
@@ -374,7 +373,6 @@
         </div>
     </header>
 
-    <!-- Main Content -->
     <main class="main-content">
         <div class="signup-container">
             <h2>Create Account</h2>
@@ -397,8 +395,7 @@
             <div class="divider">OR</div>
             
             <button class="btn-google" id="googleBtn" onclick="signInWithGoogle()">
-                <img src="https://placehold.co/20x20/white/gray?text=G" alt="Google" class="google-icon"> <!-- Placeholder Google icon -->
-                <span id="googleBtnText">Sign up with Google</span>
+                <img src="https://placehold.co/20x20/white/gray?text=G" alt="Google" class="google-icon"> <span id="googleBtnText">Sign up with Google</span>
             </button>
             
             <div class="message" id="message"></div>
@@ -409,16 +406,13 @@
         </div>
     </main>
 
-    <!-- Ad Popup Notice Box (Side Position) -->
     <div id="noticePopup" style="display:none;">
         <h3>📢 Sponsored Ad</h3>
-        <img src="/img/payment-premium.png" alt="Ad Banner"> <!-- Placeholder ad banner -->
-        <p> After register, contact +9779812240229 Whatsapp for approval!</p>
+        <img src="/img/rs-100-ceemediconepal.jpg" alt="Ad Banner"> <p> After register, contact +9779812240229 Whatsapp for approval!</p>
         <p id="countdown">Closing in 10 seconds...</p>
         <button onclick="closeNotice()">Close</button>
     </div>
 
-    <!-- WhatsApp Floating Button -->
     <a href="https://wa.me/+9779812240229?text=I%20want%20access" target="_blank" class="whatsapp-float">
         <img src="https://upload.wikimedia.org/wikipedia/commons/5/5e/WhatsApp_icon.png" alt="WhatsApp" style="width: 35px; height: 35px;">
     </a>
@@ -531,10 +525,25 @@
                 });
 
                 msg.style.color = "green";
-                msg.textContent = "Signup successful! Redirecting...";
-                setTimeout(() => {
-                    window.location.href = "login.html"; // Redirect to login page
-                }, 1500);
+                msg.textContent = "Signup successful! Please wait for approval.";
+                
+                // Show the ad popup for 30 seconds after successful signup
+                const popup = document.getElementById("noticePopup");
+                const countdown = document.getElementById("countdown");
+                let newCountdownValue = 30; // Set to 30 seconds
+
+                popup.style.display = "block"; // Show the popup
+
+                let signupCountdownInterval = setInterval(() => {
+                    newCountdownValue--;
+                    countdown.textContent = `Closing in ${newCountdownValue} second${newCountdownValue !== 1 ? 's' : ''}...`;
+                    if (newCountdownValue <= 0) {
+                        clearInterval(signupCountdownInterval);
+                        closeNotice(); // Automatically close when countdown finishes
+                        window.location.href = "login.html"; // Redirect to login page after popup closes
+                    }
+                }, 1000);
+
             } catch (error) {
                 let errorMessage = "Signup failed";
                 // Handle specific Firebase authentication errors
@@ -584,10 +593,25 @@
                 });
 
                 document.getElementById("message").style.color = "green";
-                document.getElementById("message").textContent = "Google sign-in successful! Redirecting...";
-                setTimeout(() => {
-                    window.location.href = "login.html"; // Redirect to login page
-                }, 1500);
+                document.getElementById("message").textContent = "Google sign-in successful! Please wait for approval.";
+
+                // Show the ad popup for 30 seconds after successful Google sign-in
+                const popup = document.getElementById("noticePopup");
+                const countdown = document.getElementById("countdown");
+                let newCountdownValue = 30; // Set to 30 seconds
+
+                popup.style.display = "block"; // Show the popup
+
+                let googleCountdownInterval = setInterval(() => {
+                    newCountdownValue--;
+                    countdown.textContent = `Closing in ${newCountdownValue} second${newCountdownValue !== 1 ? 's' : ''}...`;
+                    if (newCountdownValue <= 0) {
+                        clearInterval(googleCountdownInterval);
+                        closeNotice(); // Automatically close when countdown finishes
+                        window.location.href = "login.html"; // Redirect to login page after popup closes
+                    }
+                }, 1000);
+
             } catch (error) {
                 let errorMessage = "Google sign-in failed";
                 // Handle specific Firebase authentication errors
@@ -634,28 +658,13 @@
         });
 
         // Ad Popup Notice Box Logic
-        let countdownValue = 10;
-        let countdownInterval;
-
-        window.addEventListener('load', () => {
-            const popup = document.getElementById("noticePopup");
-            const countdown = document.getElementById("countdown");
-
-            popup.style.display = "block"; // Show the popup
-
-            countdownInterval = setInterval(() => {
-                countdownValue--;
-                countdown.textContent = `Closing in ${countdownValue} second${countdownValue !== 1 ? 's' : ''}...`;
-                if (countdownValue <= 0) {
-                    clearInterval(countdownInterval);
-                    closeNotice(); // Automatically close when countdown finishes
-                }
-            }, 1000);
-        });
-
+        // Removed the window.addEventListener('load') that displayed the popup initially.
+        // Now the popup will only appear after a successful signup or Google sign-in.
+        
         window.closeNotice = function() {
             document.getElementById("noticePopup").style.display = "none";
-            clearInterval(countdownInterval); // Clear interval if closed manually
+            // No need to clear countdownInterval here as they are specific to signup/google success.
+            // If there's an ongoing interval for the 30-second popup, it will be cleared within the signup/signInWithGoogle functions.
         };
     </script>
 </body>
