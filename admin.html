@@ -268,6 +268,72 @@
             background-color: #0056b3;
         }
 
+        /* Modal Styles (reused from previous version, adjusted for this page's context) */
+        .modal {
+            display: none; /* Hidden by default */
+            position: fixed; /* Stay in place */
+            z-index: 1000; /* Sit on top */
+            left: 0;
+            top: 0;
+            width: 100%; /* Full width */
+            height: 100%; /* Full height */
+            overflow: auto; /* Enable scroll if needed */
+            background-color: rgba(0,0,0,0.5); /* Black w/ opacity */
+            justify-content: center; /* Center content horizontally */
+            align-items: center; /* Center content vertically */
+        }
+
+        .modal-content {
+            background-color: #fefefe;
+            margin: auto;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+            width: 80%; /* Could be responsive */
+            max-width: 500px;
+            position: relative;
+        }
+
+        .modal-content h2 {
+            margin-top: 0;
+            color: var(--primary);
+        }
+
+        .modal-content .form-group {
+            margin-bottom: 15px;
+        }
+
+        .modal-content label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: 500;
+        }
+
+        .modal-footer {
+            display: flex;
+            justify-content: flex-end;
+            gap: 10px;
+            margin-top: 20px;
+        }
+
+        .status-message {
+            margin-top: 15px;
+            padding: 10px;
+            border-radius: 5px;
+            display: none;
+            text-align: center;
+        }
+
+        .status-message.success {
+            background-color: rgba(46, 204, 113, 0.2);
+            color: #27ae60;
+        }
+
+        .status-message.error {
+            background-color: rgba(247, 37, 133, 0.2);
+            color: var(--danger);
+        }
+
         /* --- Media Queries for Mobile Responsiveness --- */
 
         @media (max-width: 768px) {
@@ -411,9 +477,33 @@
     </div>
 </div>
 
+<!-- Email Modal -->
+<div id="emailModal" class="modal">
+    <div class="modal-content">
+        <h2><i class="fas fa-envelope"></i> Send Email</h2>
+        <div class="form-group">
+            <label>To:</label>
+            <p><strong id="recipientName"></strong> &lt;<span id="recipientEmail"></span>&gt;</p>
+        </div>
+        
+        <!-- Subject and Message input fields are intentionally removed to use EmailJS template content directly -->
+        
+        <div class="modal-footer">
+            <button id="cancelEmailBtn" class="btn">Cancel</button>
+            <button id="sendEmailBtn" class="btn btn-primary">
+                <span id="sendEmailBtnText">Send</span>
+                <span id="sendEmailSpinner" class="loading" style="display: none;"></span>
+            </button>
+        </div>
+        
+        <div id="emailStatusMessage" class="status-message"></div>
+    </div>
+</div>
+
 <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
 <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
 <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/emailjs-com@3.2.0/dist/email.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/js/all.min.js"></script>
 
 <script>
@@ -432,7 +522,12 @@
     const auth = firebase.auth();
     const db = firebase.database();
 
-    // DOM elements
+    // Initialize EmailJS with your user ID
+    // IMPORTANT: This 'LovzJI8eoKJ8O2H2e' is your EmailJS Public Key.
+    // Ensure your EmailJS Template 'template_z8piizr' has '{{to_email}}' in its 'To Email' field for the recipient.
+    emailjs.init("LovzJI8eoKJ8O2H2e"); 
+
+    // DOM elements for login and admin panel
     const loginDiv = document.getElementById('loginDiv');
     const adminContent = document.getElementById('adminContent');
     const loginBtn = document.getElementById('loginBtn');
@@ -444,8 +539,21 @@
     const usersTableBody = document.getElementById('usersTableBody');
     const logoutBtn = document.getElementById('logoutBtn');
     const totalUsersEl = document.getElementById('totalUsers');
-    const approvedUsersEl = document.getElementById('approvedUsers');
+    const approvedUsersEl = document = document.getElementById('approvedUsers');
     const pendingUsersEl = document.getElementById('pendingUsers');
+
+    // DOM elements for email modal
+    const emailModal = document.getElementById('emailModal');
+    const cancelEmailBtn = document.getElementById('cancelEmailBtn'); 
+    const sendEmailBtn = document.getElementById('sendEmailBtn');     
+    const sendEmailBtnText = document.getElementById('sendEmailBtnText'); 
+    const sendEmailSpinner = document.getElementById('sendEmailSpinner'); 
+    const emailStatusMessage = document.getElementById('emailStatusMessage'); 
+    const recipientName = document.getElementById('recipientName');
+    const recipientEmail = document.getElementById('recipientEmail');
+
+    // Current selected user for email
+    let currentUser = null;
 
     // Statistics
     let totalUsers = 0;
@@ -582,6 +690,13 @@
                         actionsDiv.appendChild(revokeBtn);
                     }
 
+                    // Add Email button
+                    const emailBtn = document.createElement('button');
+                    emailBtn.className = 'btn btn-primary btn-sm';
+                    emailBtn.innerHTML = '<i class="fas fa-envelope"></i> Email';
+                    emailBtn.onclick = () => openEmailModal(user); // Pass user data to open modal
+                    actionsDiv.appendChild(emailBtn);
+
                     // Delete button
                     const deleteBtn = document.createElement('button');
                     deleteBtn.className = 'btn btn-danger btn-sm';
@@ -611,6 +726,7 @@
 
     // Approve a user
     function approveUser(uid) {
+        // IMPORTANT: For production, replace `confirm()` with a custom modal UI.
         if (!confirm('Are you sure you want to approve this user?')) return;
         
         db.ref('users/' + uid).update({ isApproved: true })
@@ -618,12 +734,14 @@
                 console.log('User approved successfully');
             })
             .catch(err => {
+                // IMPORTANT: For production, replace `alert()` with a custom modal UI.
                 alert('Error approving user: ' + err.message);
             });
     }
 
     // Revoke approval for a user
     function revokeApproval(uid) {
+        // IMPORTANT: For production, replace `confirm()` with a custom modal UI.
         if (!confirm('Are you sure you want to revoke approval for this user?')) return;
         
         db.ref('users/' + uid).update({ isApproved: false })
@@ -631,12 +749,14 @@
                 console.log('User approval revoked successfully');
             })
             .catch(err => {
+                // IMPORTANT: For production, replace `alert()` with a custom modal UI.
                 alert('Error revoking approval: ' + err.message);
             });
     }
 
     // Delete a user
     function deleteUser(uid) {
+        // IMPORTANT: For production, replace `confirm()` with a custom modal UI.
         if (!confirm('Are you sure you want to delete this user? This action cannot be undone.')) return;
 
         // Optionally, delete from Firebase Authentication as well if you have server-side access
@@ -646,6 +766,7 @@
                 console.log('User deleted successfully from database');
             })
             .catch(err => {
+                // IMPORTANT: For production, replace `alert()` with a custom modal UI.
                 alert('Error deleting user: ' + err.message);
             });
     }
@@ -656,6 +777,110 @@
         approvedUsersEl.textContent = approvedUsers;
         pendingUsersEl.textContent = pendingUsers;
     }
+
+    /**
+     * Opens the email sending modal and populates it with the selected user's data.
+     * @param {object} user - The user object containing name and email.
+     */
+    function openEmailModal(user) {
+        currentUser = user;
+        // Ensure recipientEmail displays the actual email or a placeholder
+        recipientEmail.textContent = (user.email && user.email.trim() !== '') ? user.email : '(No email provided)'; 
+        recipientName.textContent = user.name || 'User';
+        emailStatusMessage.style.display = 'none'; // Hide any previous status messages
+        emailModal.style.display = 'flex'; // Show the modal
+        console.log("Email modal opened for user:", currentUser); // Log user data
+    }
+
+    /**
+     * Closes the email sending modal and resets the current user.
+     */
+    function closeEmailModal() {
+        emailModal.style.display = 'none'; // Hide the modal
+        currentUser = null; // Clear the current user
+        // Reset modal button state in case it was disabled during send attempt
+        sendEmailBtnText.textContent = 'Send';
+        sendEmailSpinner.style.display = 'none';
+        sendEmailBtn.disabled = false;
+        console.log("Email modal closed.");
+    }
+
+    /**
+     * Sends an email using EmailJS service.
+     * This version includes both 'to_name'/'to_email' and 'user_name'/'email' for template compatibility.
+     */
+    function sendEmail() {
+        // Essential check: Ensure a user is selected and has a valid email address
+        if (!currentUser || !currentUser.email || currentUser.email.trim() === '') {
+            emailStatusMessage.textContent = 'Cannot send email: Recipient email is missing or invalid in the database.';
+            emailStatusMessage.className = 'status-message error';
+            emailStatusMessage.style.display = 'block';
+            console.error("Email sending aborted: Recipient email is missing or invalid in Firebase.");
+            // Re-enable button
+            sendEmailBtnText.textContent = 'Send';
+            sendEmailSpinner.style.display = 'none';
+            sendEmailBtn.disabled = false;
+            return; // Stop execution if no valid recipient
+        }
+        
+        // Show loading state on the send button
+        sendEmailBtnText.textContent = 'Sending...';
+        sendEmailSpinner.style.display = 'inline-block';
+        sendEmailBtn.disabled = true; // Disable button to prevent multiple clicks
+        emailStatusMessage.style.display = 'none'; // Hide previous status message
+        
+        // Prepare parameters for EmailJS template
+        // Including both common variable names for maximum compatibility with EmailJS templates.
+        const templateParams = {
+            to_name: currentUser.name || 'User', // Standard EmailJS variable for recipient name
+            to_email: currentUser.email,       // Standard EmailJS variable for recipient email
+            user_name: currentUser.name || 'User', // Alternative variable name for recipient name (as per your query)
+            email: currentUser.email,          // Alternative variable name for recipient email (as per your query)
+            from_name: 'Admin'                 // Sender's name, can be customized
+        };
+
+        console.log("Attempting to send email with parameters:", templateParams);
+        console.log("EmailJS Service ID:", 'service_h4czyfx');
+        console.log("EmailJS Template ID:", 'template_z8piizr');
+        console.log("EmailJS User ID (Public Key):", 'LovzJI8eoKJ8O2H2e'); // This is your Public Key
+
+        // Send email using EmailJS service with the specified template
+        emailjs.send('service_h4czyfx', 'template_z8piizr', templateParams)
+            .then(function(response) {
+                console.log('EmailJS Success response:', response);
+                // Handle success
+                emailStatusMessage.textContent = 'Email sent successfully!';
+                emailStatusMessage.className = 'status-message success';
+                emailStatusMessage.style.display = 'block';
+                
+                // Reset button and close modal after a short delay
+                setTimeout(() => {
+                    closeEmailModal();
+                }, 1500);
+            }, function(error) {
+                console.error('EmailJS Failed response:', error);
+                // Handle error
+                emailStatusMessage.textContent = `Failed to send email: ${error.text || error.message || JSON.stringify(error)}`;
+                emailStatusMessage.className = 'status-message error';
+                emailStatusMessage.style.display = 'block';
+                
+                // Reset button state
+                sendEmailBtnText.textContent = 'Send';
+                sendEmailSpinner.style.display = 'none';
+                sendEmailBtn.disabled = false;
+            });
+    }
+
+    // Event listeners for email modal buttons
+    cancelEmailBtn.addEventListener('click', closeEmailModal);
+    sendEmailBtn.addEventListener('click', sendEmail);
+    
+    // Close modal when clicking outside of the modal content
+    emailModal.addEventListener('click', function(e) {
+        if (e.target === this) { // Check if the click was directly on the modal background
+            closeEmailModal();
+        }
+    });
 
     // On page load or auth state change: check admin
     auth.onAuthStateChanged(user => {
@@ -670,7 +895,14 @@
                     auth.signOut();
                     loginDiv.style.display = 'block';
                     adminContent.style.display = 'none';
+                    loginError.textContent = 'Access denied: You are not an admin.';
                 }
+            })
+            .catch(error => {
+                console.error("Firebase admin check error:", error);
+                loginDiv.style.display = 'block';
+                adminContent.style.display = 'none';
+                loginError.textContent = `Firebase error: ${error.message}. Please try again.`;
             });
         } else {
             loginDiv.style.display = 'block';
