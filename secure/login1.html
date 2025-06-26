@@ -1,4 +1,3 @@
-<!-- login.html -->
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -65,8 +64,7 @@
       getDatabase,
       ref,
       set,
-      get,
-      onValue
+      get
     } from "https://www.gstatic.com/firebasejs/11.8.1/firebase-database.js";
 
     // Firebase Config
@@ -85,33 +83,36 @@
     const db = getDatabase(app);
     const provider = new GoogleAuthProvider();
 
-    // Generate & store unique deviceId
+    // Unique device ID
     const deviceId = localStorage.getItem("deviceId") || crypto.randomUUID();
     localStorage.setItem("deviceId", deviceId);
 
     async function checkApproval(user) {
       const userRef = ref(db, "users/" + user.uid);
-      const deviceRef = ref(db, "userDevices/" + user.uid);
+      const sessionRef = ref(db, "userSessions/" + user.uid);
 
       try {
         const userSnap = await get(userRef);
+        const sessionSnap = await get(sessionRef);
+
         if (userSnap.exists()) {
           const userData = userSnap.val();
-          if (userData.isApproved === true) {
-            const deviceSnap = await get(deviceRef);
-            const oldDevice = deviceSnap.exists() ? deviceSnap.val().deviceId : null;
 
-            if (oldDevice && oldDevice !== deviceId) {
-              alert("⚠️ You were logged in on another device. It will now be logged out.");
+          if (userData.isApproved === true) {
+            const existingSession = sessionSnap.exists() ? sessionSnap.val() : null;
+
+            if (existingSession && existingSession.deviceId !== deviceId) {
+              // ❌ Already logged in elsewhere
+              alert("❌ You are already logged in from another device. Please logout from that device first.");
+              await signOut(auth);
+              return;
             }
 
-            // Save this device as current
-            await set(deviceRef, {
+            // ✅ Allow login
+            await set(sessionRef, {
               deviceId: deviceId,
               timestamp: Date.now()
             });
-
-            monitorDevice(user.uid); // Listen for future changes
 
             alert("✅ Login successful. Redirecting...");
             window.location.href = "/secure/protected.html";
@@ -120,7 +121,7 @@
             await signOut(auth);
           }
         } else {
-          // First time login — register
+          // New user registration
           await set(userRef, {
             email: user.email,
             isApproved: false
@@ -129,24 +130,10 @@
           await signOut(auth);
         }
       } catch (err) {
-        console.error("Error during approval check:", err.message);
-        alert("❌ Internal error: " + err.message);
+        console.error("Login error:", err.message);
+        alert("❌ Error: " + err.message);
         await signOut(auth);
       }
-    }
-
-    // Realtime listener: logs out if other device logs in
-    function monitorDevice(uid) {
-      const deviceRef = ref(db, "userDevices/" + uid);
-      onValue(deviceRef, (snapshot) => {
-        const data = snapshot.val();
-        if (data && data.deviceId !== deviceId) {
-          alert("🔒 You have been logged out (another device logged in).");
-          signOut(auth).then(() => {
-            window.location.href = "/";
-          });
-        }
-      });
     }
 
     // Handle Email/Password login
