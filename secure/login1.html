@@ -1,10 +1,10 @@
-<!-- START: login.html -->
+<!-- login.html -->
 <!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Ceemediconepal Login</title>
+  <title>Login | Ceemediconepal</title>
   <style>
     body {
       font-family: Arial, sans-serif;
@@ -16,7 +16,7 @@
       color: white;
     }
     .login-container {
-      background: rgba(255, 255, 255, 0.15);
+      background: rgba(255, 255, 255, 0.1);
       backdrop-filter: blur(10px);
       padding: 30px;
       border-radius: 10px;
@@ -25,7 +25,7 @@
     }
     input, button {
       width: 100%;
-      padding: 10px;
+      padding: 12px;
       margin-top: 10px;
       border: none;
       border-radius: 5px;
@@ -69,7 +69,7 @@
       onValue
     } from "https://www.gstatic.com/firebasejs/11.8.1/firebase-database.js";
 
-    // Firebase config
+    // Firebase Config
     const firebaseConfig = {
       apiKey: "AIzaSyB66MZa0WZk3WPydcjmCDu7P_CE0FD60ug",
       authDomain: "login-2f07b.firebaseapp.com",
@@ -80,56 +80,68 @@
       appId: "1:709252763741:web:b3902697cc9c8b157a7db4"
     };
 
-    // Initialize Firebase
     const app = initializeApp(firebaseConfig);
     const auth = getAuth(app);
     const db = getDatabase(app);
     const provider = new GoogleAuthProvider();
 
-    // Device ID (unique per browser/device)
+    // Generate & store unique deviceId
     const deviceId = localStorage.getItem("deviceId") || crypto.randomUUID();
     localStorage.setItem("deviceId", deviceId);
 
     async function checkApproval(user) {
       const userRef = ref(db, "users/" + user.uid);
       const deviceRef = ref(db, "userDevices/" + user.uid);
-      const snapshot = await get(userRef);
 
-      if (snapshot.exists()) {
-        const data = snapshot.val();
-        if (data.isApproved === true) {
-          // ✅ Save current device
-          await set(deviceRef, {
-            deviceId: deviceId,
-            timestamp: Date.now()
-          });
+      try {
+        const userSnap = await get(userRef);
+        if (userSnap.exists()) {
+          const userData = userSnap.val();
+          if (userData.isApproved === true) {
+            const deviceSnap = await get(deviceRef);
+            const oldDevice = deviceSnap.exists() ? deviceSnap.val().deviceId : null;
 
-          // 🔁 Monitor for other device login
-          monitorDevice(user.uid);
+            if (oldDevice && oldDevice !== deviceId) {
+              alert("⚠️ You were logged in on another device. It will now be logged out.");
+            }
 
-          alert("✅ Access granted. Redirecting...");
-          window.location.href = "/secure/protected.html";
+            // Save this device as current
+            await set(deviceRef, {
+              deviceId: deviceId,
+              timestamp: Date.now()
+            });
+
+            monitorDevice(user.uid); // Listen for future changes
+
+            alert("✅ Login successful. Redirecting...");
+            window.location.href = "/secure/protected.html";
+          } else {
+            alert("⛔ Not approved yet. Contact admin.");
+            await signOut(auth);
+          }
         } else {
-          alert("⛔ Access denied. Not approved by admin yet.");
+          // First time login — register
+          await set(userRef, {
+            email: user.email,
+            isApproved: false
+          });
+          alert("📝 Registered. Wait for admin approval.");
           await signOut(auth);
         }
-      } else {
-        // 🆕 New user
-        await set(userRef, {
-          email: user.email,
-          isApproved: false
-        });
-        alert("📝 Registered. Wait for admin approval.");
+      } catch (err) {
+        console.error("Error during approval check:", err.message);
+        alert("❌ Internal error: " + err.message);
         await signOut(auth);
       }
     }
 
+    // Realtime listener: logs out if other device logs in
     function monitorDevice(uid) {
       const deviceRef = ref(db, "userDevices/" + uid);
       onValue(deviceRef, (snapshot) => {
         const data = snapshot.val();
         if (data && data.deviceId !== deviceId) {
-          alert("🔒 Logged out: Logged in from another device.");
+          alert("🔒 You have been logged out (another device logged in).");
           signOut(auth).then(() => {
             window.location.href = "/";
           });
@@ -137,29 +149,28 @@
       });
     }
 
-    // Email/Password Login
+    // Handle Email/Password login
     document.getElementById("loginForm").addEventListener("submit", async (e) => {
       e.preventDefault();
       const email = document.getElementById("email").value;
       const password = document.getElementById("password").value;
       try {
-        const userCredential = await signInWithEmailAndPassword(auth, email, password);
-        await checkApproval(userCredential.user);
-      } catch (error) {
-        alert("❌ Login failed: " + error.message);
+        const cred = await signInWithEmailAndPassword(auth, email, password);
+        await checkApproval(cred.user);
+      } catch (err) {
+        alert("❌ Login failed: " + err.message);
       }
     });
 
-    // Google Sign-In
+    // Handle Google login
     document.getElementById("googleSignIn").addEventListener("click", async () => {
       try {
         const result = await signInWithPopup(auth, provider);
         await checkApproval(result.user);
-      } catch (error) {
-        alert("❌ Google login failed: " + error.message);
+      } catch (err) {
+        alert("❌ Google login failed: " + err.message);
       }
     });
   </script>
 </body>
 </html>
-<!-- END: login.html -->
