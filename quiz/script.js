@@ -12,7 +12,7 @@ const rulesEl = document.getElementById('rules');
 
 let questions = [];
 let score = 0;
-let timeLeft = 600; // 10 minutes in seconds
+let timeLeft = 10800; // 10 minutes in seconds
 let timerInterval;
 let quizStarted = false;
 
