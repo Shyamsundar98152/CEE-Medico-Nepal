@@ -12,7 +12,7 @@ const rulesEl = document.getElementById('rules');
 
 let questions = [];
 let score = 0;
-let timeLeft = 10800; // 10 minutes in seconds
+let timeLeft = 10800; // 10 minutes in seconds (You might want to change this if you intend for 10 hours)
 let timerInterval;
 let quizStarted = false;
 
@@ -75,7 +75,7 @@ function startTimer() {
   timerInterval = setInterval(() => {
     timeLeft--;
     updateTimerDisplay();
-    
+
     if (timeLeft <= 0) {
       clearInterval(timerInterval);
       submitQuiz();
@@ -84,10 +84,17 @@ function startTimer() {
 }
 
 function updateTimerDisplay() {
-  const minutes = Math.floor(timeLeft / 60);
+  const hours = Math.floor(timeLeft / 3600);
+  const minutes = Math.floor((timeLeft % 3600) / 60);
   const seconds = timeLeft % 60;
-  timerEl.textContent = `Time left: ${minutes}:${seconds.toString().padStart(2, '0')}`;
-  
+
+  // Pad with leading zeros if necessary
+  const formattedHours = hours.toString().padStart(2, '0');
+  const formattedMinutes = minutes.toString().padStart(2, '0');
+  const formattedSeconds = seconds.toString().padStart(2, '0');
+
+  timerEl.textContent = `Time left: ${formattedHours}:${formattedMinutes}:${formattedSeconds}`;
+
   if (timeLeft <= 60) {
     timerEl.style.color = 'red';
   }
@@ -125,12 +132,11 @@ function renderQuiz() {
   });
 }
 
-
 async function submitQuiz() {
   if (!quizStarted) return;
-  
+
   clearInterval(timerInterval);
-  
+
   const answers = [...document.querySelectorAll('input[type=radio]:checked')];
   if (answers.length !== questions.length) {
     if (!confirm('You have not answered all questions. Submit anyway?')) {
@@ -141,29 +147,29 @@ async function submitQuiz() {
 
   const userName = userNameInput.value.trim();
   const userEmail = userEmailInput.value.trim();
-  
- let correct = 0;
-let wrong = 0;
-let unattempted = 0;
-const total = questions.length;
 
-questions.forEach((question, index) => {
-  const selected = document.querySelector(`input[name="q${index}"]:checked`);
-  if (!selected) {
-    unattempted++;
-    return; // no effect on score
-  }
+  let correct = 0;
+  let wrong = 0;
+  let unattempted = 0;
+  const total = questions.length;
 
-  const selectedValue = parseInt(selected.value);
-  if (selectedValue === question.correct) {
-    correct++;
-  } else {
-    wrong++;
-  }
-});
+  questions.forEach((question, index) => {
+    const selected = document.querySelector(`input[name="q${index}"]:checked`);
+    if (!selected) {
+      unattempted++;
+      return; // no effect on score
+    }
 
-score = (correct * 1) - (wrong * 0.25);
-const percentage = (score / total) * 100;
+    const selectedValue = parseInt(selected.value);
+    if (selectedValue === question.correct) {
+      correct++;
+    } else {
+      wrong++;
+    }
+  });
+
+  score = (correct * 1) - (wrong * 0.25);
+  const percentage = (score / total) * 100;
 
   try {
     await set(ref(db, `responses/${deviceId}`), {
@@ -245,7 +251,6 @@ function showResults(correct, wrong, score, percentage) {
   fetchRankings(score);
 }
 
-
 async function fetchRankings(myScore) {
   try {
     const snapshot = await get(child(ref(db), 'responses'));
@@ -258,7 +263,7 @@ async function fetchRankings(myScore) {
       id,
       ...data
     }));
-    
+
     // Sort by score descending, then by timestamp ascending (earlier submissions rank higher if scores are equal)
     results.sort((a, b) => {
       if (b.score !== a.score) return b.score - a.score;
@@ -269,16 +274,14 @@ async function fetchRankings(myScore) {
     const totalParticipants = results.length;
 
     // Show all participants
-let leaderboard = '<div class="leaderboard"><h4>All Participants</h4><ol>';
+    let leaderboard = '<div class="leaderboard"><h4>All Participants</h4><ol>';
 
-results.forEach((participant) => {
-  leaderboard += `<li>${participant.userName} - ${participant.score.toFixed(2)}</li>`;
-});
+    results.forEach((participant) => {
+      leaderboard += `<li>${participant.userName} - ${participant.score.toFixed(2)}</li>`;
+    });
 
-leaderboard += '</ol></div>';
+    leaderboard += '</ol></div>';
 
-    
-    
 
     document.getElementById('ranking-info').innerHTML = `
       <p><strong>Your Rank:</strong> ${rank} out of ${totalParticipants}</p>
@@ -296,7 +299,7 @@ function showPreviousResults(previousData) {
   quizEl.style.display = 'none';
   submitBtn.style.display = 'none';
   rulesEl.style.display = 'none';
-  
+
   resultEl.innerHTML = `
     <h3>Your Previous Results</h3>
     <p><strong>Name:</strong> ${previousData.userName || 'Not provided'}</p>
@@ -306,7 +309,7 @@ function showPreviousResults(previousData) {
     <div id="ranking-info">Loading current rank...</div>
   `;
   resultEl.style.display = 'block';
-  
+
   fetchRankings(previousData.score);
 }
 
