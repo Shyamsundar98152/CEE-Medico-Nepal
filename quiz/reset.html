@@ -1,3 +1,8 @@
+To arrange the "Recent Responses" in descending order of score (more score at the top, then decreasing), I need to modify the `loadData` function within the `<script type="module">` block. Specifically, the sorting logic for `responseList` needs to be changed.
+
+Here's the modified `reset (1).html` file with the updated sorting logic:
+
+```html
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -314,11 +319,16 @@
                 // Update table
                 responsesTable.innerHTML = '';
                 
-                // Sort by timestamp (newest first)
-                const allResponses = responseList
-                    .sort((a, b) => b.timestamp - a.timestamp);
+                // Sort by score (descending: more score first), then by timestamp (newest first) for ties
+                const rankedResponses = responseList
+                    .sort((a, b) => {
+                        if (b.score !== a.score) {
+                            return b.score - a.score; // Sort by score descending
+                        }
+                        return b.timestamp - a.timestamp; // If scores are equal, sort by timestamp descending
+                    });
                 
-                allResponses.forEach(response => {
+                rankedResponses.forEach(response => {
                     const row = document.createElement('tr');
                     
                     const time = new Date(response.timestamp);
@@ -363,3 +373,4 @@
     </script>
 </body>
 </html>
+```
