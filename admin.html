@@ -334,6 +334,20 @@
             color: var(--danger);
         }
 
+        /* Filter buttons styling */
+        .filter-buttons {
+            display: flex;
+            gap: 10px;
+            margin-top: 20px;
+            margin-bottom: 20px; /* Added spacing below filter buttons */
+            flex-wrap: wrap;
+        }
+
+        .filter-button.active {
+            background-color: var(--secondary);
+            color: white;
+        }
+
         /* --- Media Queries for Mobile Responsiveness --- */
 
         @media (max-width: 768px) {
@@ -407,6 +421,12 @@
             .header .button, .header .btn-danger {
                 width: 100%; /* Make header buttons full width */
             }
+            .filter-buttons {
+                flex-direction: column; /* Stack filter buttons on small screens */
+            }
+            .filter-button {
+                width: 100%; /* Make filter buttons full width */
+            }
         }
     </style>
 </head>
@@ -455,6 +475,12 @@
                 <p id="pendingUsers">0</p>
             </div>
         </div>
+
+        <div class="filter-buttons">
+            <button id="showAllUsersBtn" class="btn btn-primary filter-button active"><i class="fas fa-users"></i> All Users</button>
+            <button id="showApprovedUsersBtn" class="btn btn-primary filter-button"><i class="fas fa-check-circle"></i> Approved Users</button>
+            <button id="showPendingUsersBtn" class="btn btn-primary filter-button"><i class="fas fa-hourglass-half"></i> Pending Users</button>
+        </div>
         
         <div class="card">
             <h2><i class="fas fa-users"></i> User Management</h2>
@@ -477,7 +503,6 @@
     </div>
 </div>
 
-<!-- Email Modal -->
 <div id="emailModal" class="modal">
     <div class="modal-content">
         <h2><i class="fas fa-envelope"></i> Send Email</h2>
@@ -485,8 +510,6 @@
             <label>To:</label>
             <p><strong id="recipientName"></strong> &lt;<span id="recipientEmail"></span>&gt;</p>
         </div>
-        
-        <!-- Subject and Message input fields are intentionally removed to use EmailJS template content directly -->
         
         <div class="modal-footer">
             <button id="cancelEmailBtn" class="btn">Cancel</button>
@@ -539,7 +562,7 @@
     const usersTableBody = document.getElementById('usersTableBody');
     const logoutBtn = document.getElementById('logoutBtn');
     const totalUsersEl = document.getElementById('totalUsers');
-    const approvedUsersEl = document = document.getElementById('approvedUsers');
+    const approvedUsersEl = document.getElementById('approvedUsers');
     const pendingUsersEl = document.getElementById('pendingUsers');
 
     // DOM elements for email modal
@@ -552,6 +575,11 @@
     const recipientName = document.getElementById('recipientName');
     const recipientEmail = document.getElementById('recipientEmail');
 
+    // New filter buttons
+    const showAllUsersBtn = document.getElementById('showAllUsersBtn');
+    const showApprovedUsersBtn = document.getElementById('showApprovedUsersBtn');
+    const showPendingUsersBtn = document.getElementById('showPendingUsersBtn');
+
     // Current selected user for email
     let currentUser = null;
 
@@ -559,6 +587,9 @@
     let totalUsers = 0;
     let approvedUsers = 0;
     let pendingUsers = 0;
+
+    // Filter state: 'all', 'approved', 'pending'
+    let currentFilter = 'all'; 
 
     // Login handler with admin check
     loginBtn.addEventListener('click', () => {
@@ -587,6 +618,7 @@
                             adminContent.style.display = 'block';
                             loadUsers();
                             setupRealtimeUpdates();
+                            updateFilterButtons(); // Set initial active filter button
                         } else {
                             // Not admin
                             auth.signOut();
@@ -616,6 +648,8 @@
             loginError.textContent = '';
             totalUsers = approvedUsers = pendingUsers = 0;
             updateStats();
+            currentFilter = 'all'; // Reset filter on logout
+            updateFilterButtons(); // Reset active filter button
         });
     });
 
@@ -625,17 +659,32 @@
         db.ref('users').once('value')
             .then(snapshot => {
                 const users = snapshot.val();
-                if (!users) {
-                    usersTableBody.innerHTML = '<tr><td colspan="4">No users found.</td></tr>';
-                    return;
-                }
                 
                 // Reset counters
                 totalUsers = 0;
                 approvedUsers = 0;
                 pendingUsers = 0;
                 
-                usersTableBody.innerHTML = '';
+                if (!users) {
+                    usersTableBody.innerHTML = '<tr><td colspan="4">No users found.</td></tr>';
+                    updateStats();
+                    return;
+                }
+                
+                const usersArray = Object.keys(users).map(uid => ({ ...users[uid], uid }));
+                
+                usersTableBody.innerHTML = ''; // Clear existing rows
+
+                let filteredUsers = [];
+                if (currentFilter === 'approved') {
+                    filteredUsers = usersArray.filter(user => user.isApproved === true);
+                } else if (currentFilter === 'pending') {
+                    filteredUsers = usersArray.filter(user => user.isApproved !== true);
+                } else { // 'all' filter
+                    filteredUsers = usersArray;
+                }
+
+                // Update total stats from all users, regardless of filter
                 Object.keys(users).forEach(uid => {
                     const user = users[uid];
                     totalUsers++;
@@ -644,71 +693,85 @@
                     } else {
                         pendingUsers++;
                     }
-                    
-                    const tr = document.createElement('tr');
-                    tr.setAttribute('data-uid', uid);
-
-                    // Name cell
-                    const tdName = document.createElement('td');
-                    tdName.textContent = user.name || '(No name)';
-                    tr.appendChild(tdName);
-
-                    // Email cell
-                    const tdEmail = document.createElement('td');
-                    tdEmail.textContent = user.email || '(No email)';
-                    tr.appendChild(tdEmail);
-
-                    // Status cell
-                    const tdStatus = document.createElement('td');
-                    const statusBadge = document.createElement('span');
-                    if (user.isApproved === true) {
-                        statusBadge.className = 'badge badge-success';
-                        statusBadge.innerHTML = '<i class="fas fa-check-circle"></i> Approved';
-                    } else {
-                        statusBadge.className = 'badge badge-danger';
-                        statusBadge.innerHTML = '<i class="fas fa-times-circle"></i> Pending';
-                    }
-                    tdStatus.appendChild(statusBadge);
-                    tr.appendChild(tdStatus);
-
-                    // Actions cell
-                    const tdActions = document.createElement('td');
-                    const actionsDiv = document.createElement('div');
-                    actionsDiv.className = 'action-buttons';
-                    
-                    if (user.isApproved !== true) {
-                        const approveBtn = document.createElement('button');
-                        approveBtn.className = 'btn btn-success btn-sm';
-                        approveBtn.innerHTML = '<i class="fas fa-check"></i> Approve';
-                        approveBtn.onclick = () => approveUser(uid);
-                        actionsDiv.appendChild(approveBtn);
-                    } else {
-                        const revokeBtn = document.createElement('button');
-                        revokeBtn.className = 'btn btn-danger btn-sm';
-                        revokeBtn.innerHTML = '<i class="fas fa-times"></i> Revoke';
-                        revokeBtn.onclick = () => revokeApproval(uid);
-                        actionsDiv.appendChild(revokeBtn);
-                    }
-
-                    // Add Email button
-                    const emailBtn = document.createElement('button');
-                    emailBtn.className = 'btn btn-primary btn-sm';
-                    emailBtn.innerHTML = '<i class="fas fa-envelope"></i> Email';
-                    emailBtn.onclick = () => openEmailModal(user); // Pass user data to open modal
-                    actionsDiv.appendChild(emailBtn);
-
-                    // Delete button
-                    const deleteBtn = document.createElement('button');
-                    deleteBtn.className = 'btn btn-danger btn-sm';
-                    deleteBtn.innerHTML = '<i class="fas fa-trash"></i> Delete';
-                    deleteBtn.onclick = () => deleteUser(uid);
-                    actionsDiv.appendChild(deleteBtn);
-                    
-                    tdActions.appendChild(actionsDiv);
-                    tr.appendChild(tdActions);
-
-                    usersTableBody.appendChild(tr);
                 });
+
+                if (filteredUsers.length === 0) {
+                    let message = '';
+                    if (currentFilter === 'approved') {
+                        message = 'No approved users found.';
+                    } else if (currentFilter === 'pending') {
+                        message = 'No pending users found.';
+                    } else {
+                        message = 'No users found.';
+                    }
+                    usersTableBody.innerHTML = `<tr><td colspan="4">${message}</td></tr>`;
+                } else {
+                    filteredUsers.forEach(user => {
+                        const tr = document.createElement('tr');
+                        tr.setAttribute('data-uid', user.uid);
+
+                        // Name cell
+                        const tdName = document.createElement('td');
+                        tdName.textContent = user.name || '(No name)';
+                        tr.appendChild(tdName);
+
+                        // Email cell
+                        const tdEmail = document.createElement('td');
+                        tdEmail.textContent = user.email || '(No email)';
+                        tr.appendChild(tdEmail);
+
+                        // Status cell
+                        const tdStatus = document.createElement('td');
+                        const statusBadge = document.createElement('span');
+                        if (user.isApproved === true) {
+                            statusBadge.className = 'badge badge-success';
+                            statusBadge.innerHTML = '<i class="fas fa-check-circle"></i> Approved';
+                        } else {
+                            statusBadge.className = 'badge badge-danger';
+                            statusBadge.innerHTML = '<i class="fas fa-times-circle"></i> Pending';
+                        }
+                        tdStatus.appendChild(statusBadge);
+                        tr.appendChild(tdStatus);
+
+                        // Actions cell
+                        const tdActions = document.createElement('td');
+                        const actionsDiv = document.createElement('div');
+                        actionsDiv.className = 'action-buttons';
+                        
+                        if (user.isApproved !== true) {
+                            const approveBtn = document.createElement('button');
+                            approveBtn.className = 'btn btn-success btn-sm';
+                            approveBtn.innerHTML = '<i class="fas fa-check"></i> Approve';
+                            approveBtn.onclick = () => approveUser(user.uid);
+                            actionsDiv.appendChild(approveBtn);
+                        } else {
+                            const revokeBtn = document.createElement('button');
+                            revokeBtn.className = 'btn btn-danger btn-sm';
+                            revokeBtn.innerHTML = '<i class="fas fa-times"></i> Revoke';
+                            revokeBtn.onclick = () => revokeApproval(user.uid);
+                            actionsDiv.appendChild(revokeBtn);
+                        }
+
+                        // Add Email button
+                        const emailBtn = document.createElement('button');
+                        emailBtn.className = 'btn btn-primary btn-sm';
+                        emailBtn.innerHTML = '<i class="fas fa-envelope"></i> Email';
+                        emailBtn.onclick = () => openEmailModal(user); // Pass user data to open modal
+                        actionsDiv.appendChild(emailBtn);
+
+                        // Delete button
+                        const deleteBtn = document.createElement('button');
+                        deleteBtn.className = 'btn btn-danger btn-sm';
+                        deleteBtn.innerHTML = '<i class="fas fa-trash"></i> Delete';
+                        deleteBtn.onclick = () => deleteUser(user.uid);
+                        actionsDiv.appendChild(deleteBtn);
+                        
+                        tdActions.appendChild(actionsDiv);
+                        tr.appendChild(tdActions);
+
+                        usersTableBody.appendChild(tr);
+                    });
+                }
                 
                 updateStats();
             })
@@ -871,6 +934,39 @@
             });
     }
 
+    // Function to update active state of filter buttons
+    function updateFilterButtons() {
+        document.querySelectorAll('.filter-button').forEach(button => {
+            button.classList.remove('active');
+        });
+        if (currentFilter === 'all') {
+            showAllUsersBtn.classList.add('active');
+        } else if (currentFilter === 'approved') {
+            showApprovedUsersBtn.classList.add('active');
+        } else if (currentFilter === 'pending') {
+            showPendingUsersBtn.classList.add('active');
+        }
+    }
+
+    // Event listeners for filter buttons
+    showAllUsersBtn.addEventListener('click', () => {
+        currentFilter = 'all';
+        loadUsers();
+        updateFilterButtons();
+    });
+
+    showApprovedUsersBtn.addEventListener('click', () => {
+        currentFilter = 'approved';
+        loadUsers();
+        updateFilterButtons();
+    });
+
+    showPendingUsersBtn.addEventListener('click', () => {
+        currentFilter = 'pending';
+        loadUsers();
+        updateFilterButtons();
+    });
+
     // Event listeners for email modal buttons
     cancelEmailBtn.addEventListener('click', closeEmailModal);
     sendEmailBtn.addEventListener('click', sendEmail);
@@ -891,6 +987,7 @@
                     adminContent.style.display = 'block';
                     loadUsers();
                     setupRealtimeUpdates();
+                    updateFilterButtons(); // Set initial active filter button
                 } else {
                     auth.signOut();
                     loginDiv.style.display = 'block';
