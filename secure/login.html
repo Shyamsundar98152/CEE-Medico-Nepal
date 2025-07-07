@@ -411,8 +411,7 @@ background:rgba(0,0,0,0.5); z-index:9998;"></div>
     getAuth,
     signInWithEmailAndPassword,
     GoogleAuthProvider,
-    signInWithPopup,
-    signOut
+    signInWithPopup
   } from "https://www.gstatic.com/firebasejs/11.8.1/firebase-auth.js";
   import {
     getDatabase,
@@ -421,7 +420,7 @@ background:rgba(0,0,0,0.5); z-index:9998;"></div>
     get
   } from "https://www.gstatic.com/firebasejs/11.8.1/firebase-database.js";
 
-  // 🔧 Firebase Config
+  // Firebase config
   const firebaseConfig = {
     apiKey: "AIzaSyB66MZa0WZk3WPydcjmCDu7P_CE0FD60ug",
     authDomain: "login-2f07b.firebaseapp.com",
@@ -432,56 +431,38 @@ background:rgba(0,0,0,0.5); z-index:9998;"></div>
     databaseURL: "https://login-2f07b-default-rtdb.asia-southeast1.firebasedatabase.app"
   };
 
-  // ✅ Initialize
+  // Initialize Firebase
   const app = initializeApp(firebaseConfig);
   const auth = getAuth(app);
   const db = getDatabase(app);
   const provider = new GoogleAuthProvider();
 
-  // ✅ Get or generate device ID
-  function getDeviceId() {
-    let id = localStorage.getItem("deviceId");
-    if (!id) {
-      id = crypto.randomUUID();
-      localStorage.setItem("deviceId", id);
-    }
-    return id;
-  }
-
-  // ✅ Approval and device session logic
+  // ✅ Function to check approval from DB
   async function checkApproval(user) {
-    const deviceId = getDeviceId();
     const userRef = ref(db, "users/" + user.uid);
     const snapshot = await get(userRef);
-
     if (snapshot.exists()) {
       const data = snapshot.val();
       if (data.isApproved === true) {
-        // Update device ID
-        await set(userRef, {
-          ...data,
-          email: user.email,
-          deviceId: deviceId
-        });
+        alert("✅ Access granted. Redirecting...");
         window.location.href = "/secure/protected.html";
       } else {
-        alert("⛔ Access denied. Not approved by admin.");
-        await signOut(auth);
+        alert("⛔ Access denied. Not approved by admin yet.");
+        auth.signOut();
       }
     } else {
-      // New user
+      // 🆕 New user — add to DB
       await set(userRef, {
         email: user.email,
-        isApproved: false,
-        deviceId: deviceId
+        isApproved: false
       });
-      alert("📝 Registered. Wait for admin approval.");
-      await signOut(auth);
+      alert("📝 Registered. Please wait for admin approval.");
+      auth.signOut();
     }
   }
 
-  // 🔐 Email/Password login
-  document.getElementById("loginForm").addEventListener("submit", async (e) => {
+  // 🔐 Handle Email/Password Login
+  document.getElementById("loginForm").addEventListener("submit", async function (e) {
     e.preventDefault();
     const email = document.getElementById("email").value;
     const password = document.getElementById("password").value;
@@ -494,14 +475,26 @@ background:rgba(0,0,0,0.5); z-index:9998;"></div>
     }
   });
 
-  // 🔐 Google login
-  document.getElementById("googleSignIn").addEventListener("click", async () => {
+  // 🔐 Handle Google Sign-In
+  document.getElementById("googleSignIn").addEventListener("click", async function () {
     try {
       const result = await signInWithPopup(auth, provider);
-      await checkApproval(result.user);
+      const user = result.user;
+      await checkApproval(user);
     } catch (error) {
       alert("❌ Google login failed: " + error.message);
     }
+  });
+
+  // 👁 Toggle password visibility
+  const togglePassword = document.querySelector('#togglePassword');
+  const password = document.querySelector('#password');
+
+  togglePassword.addEventListener('click', function () {
+    const type = password.getAttribute('type') === 'password' ? 'text' : 'password';
+    password.setAttribute('type', type);
+    this.classList.toggle('fa-eye-slash');
+    this.classList.toggle('fa-eye');
   });
 </script>
 
