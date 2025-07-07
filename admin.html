@@ -348,6 +348,19 @@
             color: white;
         }
 
+        /* Search bar styling */
+        .search-bar {
+            margin-bottom: 20px;
+        }
+        .search-bar .form-control {
+            width: calc(100% - 20px); /* Adjust for padding */
+            padding-right: 40px; /* Space for icon */
+            background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" fill="%236c757d"><path d="M416 208c0 45.9-14.9 88.3-40 122.7L502.6 457.4c12.5 12.5 12.5 32.8 0 45.3s-32.8 12.5-45.3 0L330.7 376c-34.4 25.2-76.8 40-122.7 40C93.1 416 0 322.9 0 208S93.1 0 208 0S416 93.1 416 208zM208 352a144 144 0 1 0 0-288 144 144 0 1 0 0 288z"/></svg>');
+            background-repeat: no-repeat;
+            background-position: right 10px center;
+            background-size: 20px;
+        }
+
         /* --- Media Queries for Mobile Responsiveness --- */
 
         @media (max-width: 768px) {
@@ -476,6 +489,10 @@
             </div>
         </div>
 
+        <div class="search-bar">
+            <input type="text" id="userSearchInput" class="form-control" placeholder="Search by name or email..." />
+        </div>
+
         <div class="filter-buttons">
             <button id="showAllUsersBtn" class="btn btn-primary filter-button active"><i class="fas fa-users"></i> All Users</button>
             <button id="showApprovedUsersBtn" class="btn btn-primary filter-button"><i class="fas fa-check-circle"></i> Approved Users</button>
@@ -530,6 +547,7 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/js/all.min.js"></script>
 
 <script>
+    // Firebase configuration (replace with your actual config)
     const firebaseConfig = {
         apiKey: "AIzaSyB66MZa0WZk3WPydcjmCDu7P_CE0FD60ug",
         authDomain: "login-2f07b.firebaseapp.com",
@@ -564,6 +582,7 @@
     const totalUsersEl = document.getElementById('totalUsers');
     const approvedUsersEl = document.getElementById('approvedUsers');
     const pendingUsersEl = document.getElementById('pendingUsers');
+    const userSearchInput = document.getElementById('userSearchInput'); // New search input
 
     // DOM elements for email modal
     const emailModal = document.getElementById('emailModal');
@@ -650,6 +669,7 @@
             updateStats();
             currentFilter = 'all'; // Reset filter on logout
             updateFilterButtons(); // Reset active filter button
+            userSearchInput.value = ''; // Clear search input on logout
         });
     });
 
@@ -675,16 +695,25 @@
                 
                 usersTableBody.innerHTML = ''; // Clear existing rows
 
-                let filteredUsers = [];
-                if (currentFilter === 'approved') {
-                    filteredUsers = usersArray.filter(user => user.isApproved === true);
-                } else if (currentFilter === 'pending') {
-                    filteredUsers = usersArray.filter(user => user.isApproved !== true);
-                } else { // 'all' filter
-                    filteredUsers = usersArray;
-                }
+                const searchQuery = userSearchInput.value.toLowerCase().trim();
 
-                // Update total stats from all users, regardless of filter
+                let filteredUsers = usersArray.filter(user => {
+                    // Apply filter based on 'currentFilter' (all, approved, pending)
+                    const filterMatch = 
+                        (currentFilter === 'all') ||
+                        (currentFilter === 'approved' && user.isApproved === true) ||
+                        (currentFilter === 'pending' && user.isApproved !== true);
+
+                    // Apply search query filter
+                    const searchMatch = 
+                        (searchQuery === '') ||
+                        (user.name && user.name.toLowerCase().includes(searchQuery)) ||
+                        (user.email && user.email.toLowerCase().includes(searchQuery));
+                    
+                    return filterMatch && searchMatch;
+                });
+
+                // Update total stats from all users, regardless of filter or search
                 Object.keys(users).forEach(uid => {
                     const user = users[uid];
                     totalUsers++;
@@ -696,14 +725,7 @@
                 });
 
                 if (filteredUsers.length === 0) {
-                    let message = '';
-                    if (currentFilter === 'approved') {
-                        message = 'No approved users found.';
-                    } else if (currentFilter === 'pending') {
-                        message = 'No pending users found.';
-                    } else {
-                        message = 'No users found.';
-                    }
+                    let message = 'No users found matching your criteria.';
                     usersTableBody.innerHTML = `<tr><td colspan="4">${message}</td></tr>`;
                 } else {
                     filteredUsers.forEach(user => {
@@ -790,6 +812,7 @@
     // Approve a user
     function approveUser(uid) {
         // IMPORTANT: For production, replace `confirm()` with a custom modal UI.
+        // For this example, we'll use a simple confirmation.
         if (!confirm('Are you sure you want to approve this user?')) return;
         
         db.ref('users/' + uid).update({ isApproved: true })
@@ -798,6 +821,7 @@
             })
             .catch(err => {
                 // IMPORTANT: For production, replace `alert()` with a custom modal UI.
+                // For this example, we'll use a simple alert.
                 alert('Error approving user: ' + err.message);
             });
     }
@@ -805,6 +829,7 @@
     // Revoke approval for a user
     function revokeApproval(uid) {
         // IMPORTANT: For production, replace `confirm()` with a custom modal UI.
+        // For this example, we'll use a simple confirmation.
         if (!confirm('Are you sure you want to revoke approval for this user?')) return;
         
         db.ref('users/' + uid).update({ isApproved: false })
@@ -813,6 +838,7 @@
             })
             .catch(err => {
                 // IMPORTANT: For production, replace `alert()` with a custom modal UI.
+                // For this example, we'll use a simple alert.
                 alert('Error revoking approval: ' + err.message);
             });
     }
@@ -820,6 +846,7 @@
     // Delete a user
     function deleteUser(uid) {
         // IMPORTANT: For production, replace `confirm()` with a custom modal UI.
+        // For this example, we'll use a simple confirmation.
         if (!confirm('Are you sure you want to delete this user? This action cannot be undone.')) return;
 
         // Optionally, delete from Firebase Authentication as well if you have server-side access
@@ -830,6 +857,7 @@
             })
             .catch(err => {
                 // IMPORTANT: For production, replace `alert()` with a custom modal UI.
+                // For this example, we'll use a simple alert.
                 alert('Error deleting user: ' + err.message);
             });
     }
@@ -965,6 +993,11 @@
         currentFilter = 'pending';
         loadUsers();
         updateFilterButtons();
+    });
+
+    // Event listener for search input
+    userSearchInput.addEventListener('keyup', () => {
+        loadUsers(); // Reload users on each key up to apply search filter
     });
 
     // Event listeners for email modal buttons
