@@ -256,7 +256,7 @@
         .whatsapp-float:hover {
             transform: scale(1.1);
         }
-
+        
         /* Media Queries for Mobile Responsiveness */
         @media (max-width: 768px) {
             .nav-menu {
@@ -307,7 +307,7 @@
             </div>
             <ul class="nav-menu" id="navMenu">
                 <li><a href="https://ceemediconepal.xyz">Home</a></li>
-                 <li><a href="https://ceemediconepal.xyz/secure/qr-redirect.html">QR For Pay</a></li>
+                <li><a href="https://ceemediconepal.xyz/secure/qr-redirect.html">QR For Pay</a></li>
                 <li><a href="https://ceemediconepal.xyz/about">About</a></li>
                 <li><a href="https://ceemediconepal.xyz/secure/protected.html">Premium</a></li>
                 <li><a href="https://ceemediconepal.xyz/contact">Contact</a></li>
@@ -337,13 +337,13 @@
             <div class="divider">OR</div>
             
             <button class="btn-google" id="googleBtn" onclick="signInWithGoogle()">
-                <img src="https://placehold.co/20x20/white/gray?text=G" alt="Google" class="google-icon"> <span id="googleBtnText">Sign up with Google</span>
+                <img src="https://upload.wikimedia.org/wikipedia/commons/4/4a/Logo_Google_2020_-_Icon.png" alt="Google" class="google-icon"> <span id="googleBtnText">Sign up with Google</span>
             </button>
             
             <div class="message" id="message"></div>
             
             <div class="login-link">
-                Already have an account? <a href="login.html">Log in</a>
+                Already have an account? <a href="/login.html">Log in</a>
             </div>
         </div>
     </main>
@@ -388,10 +388,15 @@
         // Initialize Firebase
         const app = initializeApp(firebaseConfig);
         const auth = getAuth(app);
-        const db = getFirestore(app);
-        const rtdb = getDatabase(app);
+        const db = getFirestore(app); // For Firestore
+        const rtdb = getDatabase(app); // For Realtime Database
         const provider = new GoogleAuthProvider();
 
+        /**
+         * Sets the loading state for a button, disabling it and showing a spinner.
+         * @param {string} buttonId The ID of the button element.
+         * @param {boolean} isLoading True to show loading state, false to revert.
+         */
         function setLoading(buttonId, isLoading) {
             const button = document.getElementById(buttonId);
             const buttonText = document.getElementById(`${buttonId}Text`);
@@ -404,6 +409,9 @@
             }
         }
 
+        /**
+         * Handles email/password signup.
+         */
         window.signup = async function () {
             const name = document.getElementById("signupName").value.trim();
             const email = document.getElementById("signupEmail").value.trim();
@@ -411,43 +419,48 @@
             const confirmPassword = document.getElementById("signupConfirmPassword").value;
             const msg = document.getElementById("message");
 
+            // Input validation
             if (!name || !email || !password || !confirmPassword) {
-                msg.textContent = "Please fill in all fields";
+                msg.textContent = "Please fill in all fields.";
                 return;
             }
             if (password !== confirmPassword) {
-                msg.textContent = "Passwords don't match";
+                msg.textContent = "Passwords don't match.";
                 return;
             }
             if (password.length < 6) {
-                msg.textContent = "Password must be at least 6 characters";
+                msg.textContent = "Password must be at least 6 characters.";
                 return;
             }
 
             setLoading('signupBtn', true);
-            msg.textContent = "";
+            msg.textContent = ""; // Clear previous messages
 
             try {
+                // 1. Create user with email and password
                 const userCredential = await createUserWithEmailAndPassword(auth, email, password);
                 const user = userCredential.user;
 
+                // 2. Update user profile with display name
                 await updateProfile(user, { displayName: name });
 
+                // 3. Store user data in Firestore
                 await setDoc(doc(db, "users", user.uid), {
                     name: name,
                     email: email,
                     createdAt: new Date(),
-                    lastLogin: new Date()
+                    lastLogin: new Date() // Initial login time
                 });
 
+                // 4. Store user data in Realtime Database (for approval status)
                 await set(ref(rtdb, "users/" + user.uid), {
                     email: email,
                     name: name,
-                    isApproved: false
+                    isApproved: false // New users are not approved by default
                 });
 
                 msg.style.color = "green";
-                msg.textContent = "Signup successful! Redirecting...";
+                msg.textContent = "Signup successful! Please wait for admin approval. Redirecting...";
                 
                 // Redirect to /secure/qr-redirect.html after 2 seconds
                 setTimeout(() => {
@@ -455,16 +468,17 @@
                 }, 2000);
 
             } catch (error) {
-                let errorMessage = "Signup failed";
+                let errorMessage = "Signup failed.";
                 if (error.code === "auth/email-already-in-use") {
-                    errorMessage = "Email already in use";
+                    errorMessage = "This email is already registered. Please log in or use a different email.";
                 } else if (error.code === "auth/invalid-email") {
-                    errorMessage = "Invalid email address";
+                    errorMessage = "The email address is not valid.";
                 } else if (error.code === "auth/weak-password") {
-                    errorMessage = "Password is too weak";
+                    errorMessage = "The password is too weak. Please choose a stronger one.";
                 } else {
-                    errorMessage = error.message;
+                    errorMessage = `An unexpected error occurred: ${error.message}`;
                 }
+                msg.style.color = "red";
                 msg.textContent = errorMessage;
                 console.error("Signup error:", error);
             } finally {
@@ -472,31 +486,53 @@
             }
         };
 
+        /**
+         * Handles Google Sign-In/Sign-Up.
+         */
         window.signInWithGoogle = async function () {
             setLoading('googleBtn', true);
-            document.getElementById("message").textContent = "";
+            document.getElementById("message").textContent = ""; // Clear previous messages
 
             try {
+                // 1. Sign in with Google popup
                 const result = await signInWithPopup(auth, provider);
                 const user = result.user;
 
+                // 2. Store user data in Firestore (check if user already exists to avoid overwriting)
+                // Using setDoc with merge: true for existing users, or new doc for new users
                 await setDoc(doc(db, "users", user.uid), {
-                    name: user.displayName,
+                    name: user.displayName || 'N/A',
                     email: user.email,
-                    photoURL: user.photoURL,
+                    photoURL: user.photoURL || null,
                     provider: "google",
-                    createdAt: new Date(),
+                    createdAt: new Date(), // This will be updated if user already exists, but that's fine
                     lastLogin: new Date()
-                });
+                }, { merge: true }); // Use merge to update existing fields without overwriting others
 
-                await set(ref(rtdb, "users/" + user.uid), {
-                    email: user.email,
-                    name: user.displayName,
-                    isApproved: false
-                });
+                // 3. Store user data in Realtime Database (for approval status)
+                // Check if user exists in RTDB first to preserve isApproved status if already set by admin
+                const rtdbUserRef = ref(rtdb, "users/" + user.uid);
+                const rtdbUserSnapshot = await get(rtdbUserRef);
+
+                if (!rtdbUserSnapshot.exists()) {
+                    // Only set initial data if user doesn't exist in RTDB
+                    await set(rtdbUserRef, {
+                        email: user.email,
+                        name: user.displayName || 'N/A',
+                        isApproved: false // New users are not approved by default
+                    });
+                } else {
+                    // If user exists, ensure email and name are updated if they changed (e.g., from a previous email/password signup)
+                    // But don't overwrite isApproved status
+                    await set(rtdbUserRef, {
+                        email: user.email,
+                        name: user.displayName || 'N/A',
+                        // isApproved will be preserved by not including it here, or explicitly merging if needed
+                    }, { merge: true });
+                }
 
                 document.getElementById("message").style.color = "green";
-                document.getElementById("message").textContent = "Google sign-in successful! Redirecting...";
+                document.getElementById("message").textContent = "Google sign-in successful! Please wait for admin approval. Redirecting...";
                 
                 // Redirect to /secure/qr-redirect.html after 2 seconds
                 setTimeout(() => {
@@ -504,14 +540,15 @@
                 }, 2000);
 
             } catch (error) {
-                let errorMessage = "Google sign-in failed";
+                let errorMessage = "Google sign-in failed.";
                 if (error.code === "auth/account-exists-with-different-credential") {
-                    errorMessage = "Email already in use with another method";
+                    errorMessage = "This email is already registered with another sign-in method. Please use that method to log in.";
                 } else if (error.code === "auth/popup-closed-by-user") {
-                    errorMessage = "Sign-in popup was closed";
+                    errorMessage = "Sign-in process cancelled.";
                 } else {
-                    errorMessage = error.message;
+                    errorMessage = `An unexpected error occurred: ${error.message}`;
                 }
+                document.getElementById("message").style.color = "red";
                 document.getElementById("message").textContent = errorMessage;
                 console.error("Google sign-in error:", error);
             } finally {
@@ -519,11 +556,14 @@
             }
         };
 
+        // Handle "Enter" key press for signup form submission
         document.addEventListener('keypress', function(e) {
             if (e.key === 'Enter') {
-                if (document.activeElement.id === 'signupEmail' || document.activeElement.id === 'signupPassword' || 
-                    document.activeElement.id === 'signupConfirmPassword' || document.activeElement.id === 'signupName') {
-                    signup();
+                // Check if any of the signup form input fields are focused
+                const activeElementId = document.activeElement.id;
+                if (activeElementId === 'signupEmail' || activeElementId === 'signupPassword' || 
+                    activeElementId === 'signupConfirmPassword' || activeElementId === 'signupName') {
+                    signup(); // Trigger email/password signup
                 }
             }
         });
