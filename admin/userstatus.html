@@ -1,673 +1,876 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>User Device Dashboard - ceemediconepal.xyz</title>
-    <link rel="apple-touch-icon" sizes="180x180" href="/fevicon/apple-touch-icon.png">
-    <link rel="icon" type="image/png" sizes="32x32" href="/fevicon/favicon-32x32.png">
-    <link rel="icon" type="image/png" sizes="16x16" href="/fevicon/favicon-16x16.png">
-    <link rel="manifest" href="/fevicon/site.webmanifest">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css"/>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Admin Panel</title>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
     <style>
-        /* Basic Reset & Font */
-        * {
+        /* Define CSS variables for consistent theming */
+        :root {
+            --primary: #4361ee;
+            --secondary: #3f37c9;
+            --success: #2ecc71; /* Added for online status */
+            --danger: #f72585;
+            --light: #f8f9fa;
+            --dark: #212529;
+            --gray: #6c757d;
+            --light-gray: #e9ecef;
+        }
+        
+        /* Basic body styling */
+        body {
+            font-family: 'Poppins', sans-serif;
+            background-color: #f5f7fa;
             margin: 0;
             padding: 0;
-            box-sizing: border-box;
-            font-family: 'Inter', sans-serif; /* Changed font to Inter as per guidelines */
+            color: var(--dark);
         }
-        body {
-            background: linear-gradient(135deg, #667eea, #764ba2);
-            min-height: 100vh;
-            color: #333;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            padding-top: 80px; /* Space for fixed header */
-            display: none; /* Hidden until authenticated and approved */
-        }
-        /* Header Styling */
-        header {
-            background-color: rgba(255, 255, 255, 0.9);
-            padding: 15px 0;
-            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
-            position: fixed;
-            width: 100%;
-            top: 0;
-            z-index: 1000;
-        }
-        .header-container {
+        
+        /* Container for main content, centered with max-width */
+        .container {
             max-width: 1200px;
             margin: 0 auto;
-            padding: 0 20px;
+            padding: 20px;
+        }
+        
+        /* Card styling for content blocks */
+        .card {
+            background: white;
+            border-radius: 10px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            padding: 25px;
+            margin-bottom: 30px;
+        }
+        
+        /* Heading styles */
+        h1 {
+            color: var(--primary);
+            margin-bottom: 20px;
+            font-weight: 600;
+            font-size: 2.2rem; /* Adjusted for better mobile scaling */
+        }
+        
+        h2 {
+            color: var(--secondary);
+            margin-top: 0;
+            font-weight: 500;
+            font-size: 1.8rem; /* Adjusted for better mobile scaling */
+        }
+        
+        /* Button base styles */
+        .btn {
+            padding: 10px 20px;
+            border-radius: 5px;
+            border: none;
+            cursor: pointer;
+            font-weight: 500;
+            transition: all 0.3s ease;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            width: auto; /* Default to auto width for flexibility */
+        }
+        
+        /* Primary button styling */
+        .btn-primary {
+            background-color: var(--primary);
+            color: white;
+        }
+        
+        .btn-primary:hover {
+            background-color: var(--secondary);
+            transform: translateY(-2px);
+        }
+        
+        /* Danger button styling */
+        .btn-danger {
+            background-color: var(--danger);
+            color: white;
+        }
+        
+        .btn-danger:hover {
+            opacity: 0.9;
+            transform: translateY(-2px);
+        }
+        
+        /* Form control (input) styling */
+        .form-control {
+            padding: 10px 15px;
+            border: 1px solid var(--light-gray);
+            border-radius: 5px;
+            width: 100%;
+            margin-bottom: 15px;
+            transition: border 0.3s ease;
+            box-sizing: border-box; /* Ensures padding doesn't push width over 100% */
+        }
+        
+        .form-control:focus {
+            outline: none;
+            border-color: var(--primary);
+            box-shadow: 0 0 0 2px rgba(67, 97, 238, 0.2);
+        }
+        
+        /* Text alignment utility */
+        .text-center {
+            text-align: center;
+        }
+        
+        /* Error message styling */
+        .text-error {
+            color: var(--danger);
+            margin-top: 5px;
+            font-size: 14px;
+        }
+        
+        /* Header section styling for layout */
+        .header {
             display: flex;
+            flex-wrap: wrap; /* Allow header items to wrap */
             justify-content: space-between;
             align-items: center;
+            margin-bottom: 30px;
+            gap: 15px; /* Add gap between header items when wrapped */
         }
-        .logo {
-            font-size: 24px;
-            font-weight: bold;
-            color: #667eea;
-            text-decoration: none;
+        
+        /* Login container specific styling */
+        .login-container {
+            max-width: 400px;
+            margin: 50px auto;
+            padding: 0 15px; /* Added horizontal padding for smaller screens */
+            box-sizing: border-box; /* Include padding in total width */
         }
-        .nav-links {
-            display: flex;
-            gap: 20px;
-            align-items: center;
-        }
-        .nav-links a {
-            text-decoration: none;
-            color: #333;
-            font-weight: 500;
-            transition: color 0.3s;
-        }
-        .nav-links a:hover {
-            color: #667eea;
-        }
-        #logoutBtn {
-            padding: 8px 15px;
-            background: #ff4444;
-            color: white;
-            border: none;
-            border-radius: 8px; /* Rounded corners */
-            font-weight: bold;
-            cursor: pointer;
-            transition: background 0.3s;
-        }
-        #logoutBtn:hover {
-            background: #cc0000;
-        }
-        /* Dashboard Container */
-        .dashboard-container {
-            background: rgba(255, 255, 255, 0.95);
-            border-radius: 12px; /* Rounded corners */
-            padding: 30px;
-            margin: 30px 20px;
-            box-shadow: 0 5px 20px rgba(0, 0, 0, 0.15);
-            max-width: 900px;
-            width: 100%;
-            display: flex;
-            flex-direction: column;
-            gap: 25px;
-        }
-        h1 {
-            color: #667eea;
+        
+        /* Login logo styling */
+        .login-logo {
             text-align: center;
-            margin-bottom: 20px;
+            margin-bottom: 30px;
         }
-        /* User Info & Device List Sections */
-        .user-info, .device-list, .admin-dashboard {
-            background: #f9f9f9;
-            padding: 20px;
-            border-radius: 10px; /* Rounded corners */
-            border: 1px solid #eee;
+        
+        .login-logo i {
+            font-size: 50px;
+            color: var(--primary);
         }
-        .user-info h2, .device-list h2, .admin-dashboard h2 {
-            color: #764ba2;
-            margin-bottom: 15px;
-            border-bottom: 2px solid #eee;
-            padding-bottom: 10px;
-        }
-        .user-info p {
-            margin-bottom: 8px;
-            font-size: 1.1em;
-            color: #555;
-        }
-        .user-info span {
-            font-weight: 600;
-            color: #333;
-        }
-        /* Device Card Styling */
-        .device-card {
-            background: #fff;
-            border: 1px solid #ddd;
-            border-radius: 8px; /* Rounded corners */
-            padding: 15px;
-            margin-bottom: 15px;
-            display: flex;
-            flex-direction: column;
-            gap: 8px;
-            position: relative;
-        }
-        .device-card:last-child {
-            margin-bottom: 0;
-        }
-        .device-card p {
-            margin: 0;
-            font-size: 0.95em;
-            color: #666;
-        }
-        .device-card strong {
-            color: #333;
-        }
-        .status-indicator {
-            position: absolute;
-            top: 15px;
-            right: 15px;
-            width: 12px;
-            height: 12px;
+        
+        /* Loading spinner animation */
+        .loading {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 3px solid rgba(255,255,255,.3);
             border-radius: 50%;
-            background-color: #ccc;
+            border-top-color: white;
+            animation: spin 1s ease-in-out infinite;
         }
-        .status-indicator.online {
-            background-color: #28a745; /* Green */
+        
+        @keyframes spin {
+            to { transform: rotate(360deg); }
         }
-        .status-indicator.offline {
-            background-color: #dc3545; /* Red */
+        
+        /* Custom button style for links */
+        .button {
+            display: inline-block;
+            padding: 10px 20px;
+            background-color: #007BFF;
+            color: white;
+            text-decoration: none;
+            border-radius: 5px;
+            font-size: 16px;
+            transition: background-color 0.3s ease;
+            white-space: nowrap; /* Prevent text wrapping inside the button */
         }
-        .device-count {
-            font-size: 1.2em;
-            font-weight: bold;
-            color: #764ba2;
-            text-align: right;
-            margin-top: 10px;
+        .button:hover {
+            background-color: #0056b3;
         }
 
-        /* Admin Dashboard Specific Styles */
-        .admin-dashboard {
-            margin-top: 30px;
-            display: none; /* Hidden by default, shown if admin */
-        }
-        .user-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-            gap: 20px;
+        /* Table styling */
+        table {
+            width: 100%;
+            border-collapse: collapse;
             margin-top: 20px;
         }
-        .user-card {
-            background: #fff;
-            border: 1px solid #ddd;
-            border-radius: 8px;
-            padding: 20px;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.05);
-            display: flex;
-            flex-direction: column;
-            gap: 10px;
+        
+        th, td {
+            padding: 12px 15px;
+            text-align: left;
+            border-bottom: 1px solid var(--light-gray);
+            white-space: nowrap; /* Prevent text wrapping in table cells */
         }
-        .user-card h5 {
-            color: #667eea;
-            margin-bottom: 5px;
-        }
-        .user-card p {
-            font-size: 0.9em;
-            color: #555;
-        }
-        .user-card ul {
-            list-style: none;
-            padding: 0;
-            margin-top: 10px;
-            border-top: 1px solid #eee;
-            padding-top: 10px;
-        }
-        .user-card ul li {
-            background: #f0f0f0;
-            padding: 8px;
-            border-radius: 5px;
-            margin-bottom: 5px;
-            font-size: 0.85em;
-            word-break: break-all; /* Ensure long IDs wrap */
-        }
-        .user-card ul li:last-child {
-            margin-bottom: 0;
-        }
-        .user-card .status-dot {
-            display: inline-block;
-            width: 10px;
-            height: 10px;
-            border-radius: 50%;
-            margin-right: 5px;
-            vertical-align: middle;
-        }
-        .user-card .status-dot.online { background-color: #28a745; }
-        .user-card .status-dot.offline { background-color: #dc3545; }
-
-
-        /* Footer */
-        footer {
-            background: rgba(0, 0, 0, 0.2);
+        
+        th {
+            background-color: var(--primary);
             color: white;
-            text-align: center;
-            padding: 20px;
-            margin-top: auto; /* Pushes footer to bottom */
-            width: 100%;
-            border-radius: 8px 8px 0 0; /* Rounded top corners */
+            font-weight: 500;
+        }
+        
+        tr:hover {
+            background-color: rgba(67, 97, 238, 0.05);
+        }
+        
+        /* Table responsiveness */
+        .table-responsive {
+            overflow-x: auto; /* Enables horizontal scrolling for tables */
+            -webkit-overflow-scrolling: touch; /* Improves scrolling on iOS */
         }
 
-        /* Message Box Styling */
-        .message-box-overlay {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: rgba(0, 0, 0, 0.5);
-            display: flex;
-            justify-content: center;
+        /* Badge styling for status indicators */
+        .badge {
+            padding: 5px 10px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 500;
+            display: inline-flex; /* For better icon alignment */
             align-items: center;
-            z-index: 2000;
-            visibility: hidden;
-            opacity: 0;
-            transition: visibility 0s, opacity 0.3s;
+            gap: 5px;
         }
-        .message-box-overlay.show {
-            visibility: visible;
-            opacity: 1;
+        
+        .badge-success {
+            background-color: rgba(46, 204, 113, 0.2);
+            color: var(--success);
         }
-        .message-box {
-            background: white;
-            padding: 30px;
-            border-radius: 12px;
-            box-shadow: 0 5px 20px rgba(0, 0, 0, 0.2);
-            text-align: center;
-            max-width: 400px;
-            width: 90%;
-            transform: translateY(-20px);
-            transition: transform 0.3s ease-out;
-        }
-        .message-box-overlay.show .message-box {
-            transform: translateY(0);
-        }
-        .message-box h3 {
-            margin-bottom: 20px;
-            color: #333;
-        }
-        .message-box button {
-            padding: 10px 20px;
-            background: #667eea;
-            color: white;
-            border: none;
-            border-radius: 8px;
-            cursor: pointer;
-            font-size: 1em;
-            transition: background 0.3s;
-        }
-        .message-box button:hover {
-            background: #5a6cdb;
+        
+        .badge-danger {
+            background-color: rgba(247, 37, 133, 0.2);
+            color: var(--danger);
         }
 
-        /* Responsive Design */
+        /* Modal Styles */
+        .modal {
+            display: none; /* Hidden by default */
+            position: fixed; /* Stay in place */
+            z-index: 1000; /* Sit on top */
+            left: 0;
+            top: 0;
+            width: 100%; /* Full width */
+            height: 100%; /* Full height */
+            overflow: auto; /* Enable scroll if needed */
+            background-color: rgba(0,0,0,0.5); /* Black w/ opacity */
+            justify-content: center; /* Center content horizontally */
+            align-items: center; /* Center content vertically */
+        }
+
+        .modal-content {
+            background-color: #fefefe;
+            margin: auto;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+            width: 90%; /* Responsive width */
+            max-width: 600px; /* Max width for larger screens */
+            position: relative;
+        }
+
+        .modal-close-btn {
+            color: #aaa;
+            float: right;
+            font-size: 28px;
+            font-weight: bold;
+            cursor: pointer;
+        }
+
+        .modal-close-btn:hover,
+        .modal-close-btn:focus {
+            color: black;
+            text-decoration: none;
+            cursor: pointer;
+        }
+
+        .device-list {
+            margin-top: 15px;
+        }
+
+        .device-item {
+            padding: 10px 0;
+            border-bottom: 1px solid var(--light-gray);
+            display: flex;
+            flex-wrap: wrap; /* Allow items to wrap on smaller screens */
+            justify-content: space-between;
+            align-items: center;
+            gap: 10px; /* Space between items */
+        }
+
+        .device-item:last-child {
+            border-bottom: none;
+        }
+
+        .device-item span {
+            flex-shrink: 0; /* Prevent text from shrinking too much */
+        }
+
+        /* --- Media Queries for Mobile Responsiveness --- */
+
         @media (max-width: 768px) {
-            .header-container {
-                flex-direction: column;
-                gap: 10px;
+            .container {
+                padding: 15px; /* Slightly reduced padding on medium screens */
             }
-            .nav-links {
-                flex-wrap: wrap;
-                justify-content: center;
+            h1 {
+                font-size: 2rem; /* Adjust heading size for tablets */
             }
-            .dashboard-container {
-                padding: 20px;
-                margin: 20px 10px;
+            h2 {
+                font-size: 1.6rem; /* Adjust subheading size for tablets */
             }
-            .user-grid {
-                grid-template-columns: 1fr; /* Single column on small screens */
+            .header {
+                flex-direction: column; /* Stack header items vertically */
+                align-items: flex-start; /* Align items to the start */
+            }
+            .header h1 {
+                margin-bottom: 10px; /* Reduce space below heading */
+            }
+            .modal-content {
+                width: 95%; /* More width on smaller screens */
+                padding: 15px;
+            }
+            .device-item {
+                flex-direction: column; /* Stack device details vertically */
+                align-items: flex-start;
+            }
+        }
+
+        @media (max-width: 576px) { /* Extra small devices (phones) */
+            .container {
+                padding: 10px; /* Further reduced padding on small screens */
+            }
+            .card {
+                padding: 20px; /* Reduce card padding */
+            }
+            h1 {
+                font-size: 1.8rem; /* Further adjust heading size for phones */
+            }
+            h2 {
+                font-size: 1.4rem; /* Further adjust subheading size for phones */
+            }
+            th, td {
+                padding: 8px 10px; /* Smaller padding for table cells */
+                font-size: 14px; /* Smaller font size for table text */
+            }
+            .badge {
+                font-size: 11px; /* Smaller badge font size */
+            }
+            .login-container {
+                margin: 30px auto; /* Adjust margin for smaller screens */
+            }
+            .btn {
+                padding: 8px 15px; /* Adjust button padding */
+                font-size: 15px; /* Adjust button font size */
+                width: 100%; /* Make all primary action buttons full width on small screens */
+            }
+            .header .button, .header .btn-danger {
+                width: 100%; /* Make header buttons full width */
             }
         }
     </style>
 </head>
 <body>
-    <header>
-        <div class="header-container">
-            <a href="https://ceemediconepal.xyz" class="logo">ceemediconepal.xyz</a>
-            <div class="nav-links">
-                <a href="https://ceemediconepal.xyz">Home</a>
-                <a href="/secure/200-mcq-sets.html">Premium 200 MCQ Sets</a>
-                <a href="/secure/mcq.html">Subject Wise Sets</a>
-                <button id="logoutBtn">Logout</button>
-            </div>
+
+<div class="container">
+    <!-- Login Section -->
+    <div id="loginDiv" class="login-container">
+        <div class="login-logo">
+            <i class="fas fa-user-shield"></i>
+            <h1>Admin Login</h1>
         </div>
-    </header>
-
-    <div class="dashboard-container">
-        <h1>Your Account & Devices</h1>
-
-        <div class="user-info">
-            <h2>User Information</h2>
-            <p>Email: <span id="userEmail">Loading...</span></p>
-            <p>Name: <span id="userName">Not available</span></p>
-            <p>User ID: <span id="userId">Loading...</span></p>
-        </div>
-
-        <div class="device-list">
-            <h2>Your Logged-In Devices</h2>
-            <div id="devicesContainer">
-                <p>Loading device data...</p>
-            </div>
-            <div class="device-count">
-                Total Online Devices: <span id="onlineDeviceCount">0</span>
-            </div>
-        </div>
-
-        <!-- Admin Dashboard Section -->
-        <div id="adminDashboardSection" class="admin-dashboard">
-            <h2>All Users & Devices (Admin View)</h2>
-            <div id="userList" class="user-grid">
-                <p>Loading all user data...</p>
-            </div>
+        <div class="card">
+            <input type="email" id="email" class="form-control" placeholder="Email" required />
+            <input type="password" id="password" class="form-control" placeholder="Password" required />
+            <button id="loginBtn" class="btn btn-primary">
+                <span id="loginBtnText">Login</span>
+                <span id="loginSpinner" style="display:none;" class="loading"></span>
+            </button>
+            <div id="loginError" class="text-error"></div>
         </div>
     </div>
 
-    <footer>
-        <p>&copy; 2025 ceemediconepal.xyz - All Rights Reserved</p>
-    </footer>
+    <!-- Admin Content Section (visible after successful login) -->
+    <div id="adminContent" style="display:none;">
+        <div class="header">
+            <h1><i class="fas fa-user-cog"></i> Admin Dashboard</h1>
+            <div class="d-flex flex-wrap gap-3"> 
+                <!-- Example of other admin links, if any -->
+                <a href="/quiz/reset.html" class="button">Reset Quiz-Data</a>
+                <button id="logoutBtn" class="btn btn-danger">
+                    <i class="fas fa-sign-out-alt"></i> Logout
+                </button>
+            </div>
+        </div>
+        
+        <div class="card">
+            <h2><i class="fas fa-info-circle"></i> General Information</h2>
+            <p>Welcome to the simplified Admin Panel. This section can be customized to display general administrative information or tools not related to user management or device status.</p>
+            <!-- You can add other general admin content here -->
+        </div>
 
-    <!-- Custom Message Box -->
-    <div id="messageBoxOverlay" class="message-box-overlay">
-        <div class="message-box">
-            <h3 id="messageBoxText"></h3>
-            <button id="messageBoxCloseBtn">OK</button>
+        <!-- Device Status Section -->
+        <div class="card">
+            <h2><i class="fas fa-desktop"></i> Device Status (Approved Users)</h2>
+            <div class="table-responsive">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>User Email</th>
+                            <th>Online Status</th>
+                            <th>Number of Devices</th>
+                            <th>Actions</th> <!-- New column for actions -->
+                        </tr>
+                    </thead>
+                    <tbody id="devicesTableBody">
+                        <tr><td colspan="4">Loading device data...</td></tr>
+                    </tbody>
+                </table>
+            </div>
         </div>
     </div>
+</div>
 
-    <script type="module">
-        // Import Firebase modules for Firestore and Auth
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
-        import { getAuth, signInWithCustomToken, signInAnonymously, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
-        import { getFirestore, doc, collection, onSnapshot, setDoc, getDoc, getDocs, serverTimestamp, updateDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
-        // Import Realtime Database modules
-        import { getDatabase, ref as rtdbRef, get as rtdbGet, onValue as rtdbOnValue } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-database.js";
+<!-- Device Details Modal -->
+<div id="deviceDetailsModal" class="modal">
+    <div class="modal-content">
+        <span class="modal-close-btn" id="closeDeviceDetailsModal">&times;</span>
+        <h2><i class="fas fa-info-circle"></i> Device Details for <span id="modalUserEmail"></span></h2>
+        <div id="deviceList" class="device-list">
+            <!-- Device details will be populated here -->
+        </div>
+        <p id="noDevicesMessage" style="display:none; text-align: center; margin-top: 20px;">No devices found for this user.</p>
+    </div>
+</div>
 
+<!-- Firebase and other JS libraries -->
+<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
+<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/js/all.min.js"></script>
 
-        // Global variables provided by the Canvas environment
-        const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
-        const firebaseConfig = JSON.parse(typeof __firebase_config !== 'undefined' ? __firebase_config : '{}');
-        const initialAuthToken = typeof __initial_auth_token !== 'undefined' ? __initial_auth_token : null;
+<script>
+    // Firebase configuration (replace with your actual config)
+    const firebaseConfig = {
+        apiKey: "AIzaSyB66MZa0WZk3WPydcjmCDu7P_CE0FD60ug",
+        authDomain: "login-2f07b.firebaseapp.com",
+        databaseURL: "https://login-2f07b-default-rtdb.asia-southeast1.firebasedatabase.app",
+        projectId: "login-2f07b",
+        storageBucket: "login-2f07b.firebasestorage.app",
+        messagingSenderId: "709252763741",
+        appId: "1:709252763741:web:b3902697cc9c8b157a7db4",
+        measurementId: "G-G7ZY1MJ106"
+    };
 
-        // Initialize Firebase
-        const app = initializeApp(firebaseConfig);
-        const auth = getAuth(app);
-        const db = getFirestore(app);
-        const rtdb = getDatabase(app); // Initialize Realtime Database
+    // Initialize Firebase
+    firebase.initializeApp(firebaseConfig);
+    const auth = firebase.auth();
+    const db = firebase.database();
 
-        let currentUserId = null; // To store the authenticated user's UID
-        let isAuthReady = false; // Flag to ensure Firebase operations run after auth is ready
+    // DOM elements
+    const loginDiv = document.getElementById('loginDiv');
+    const adminContent = document.getElementById('adminContent');
+    const loginBtn = document.getElementById('loginBtn');
+    const loginBtnText = document.getElementById('loginBtnText');
+    const loginSpinner = document.getElementById('loginSpinner');
+    const emailInput = document.getElementById('email');
+    const passwordInput = document.getElementById('password');
+    const loginError = document.getElementById('loginError');
+    const logoutBtn = document.getElementById('logoutBtn');
+    const devicesTableBody = document.getElementById('devicesTableBody');
 
-        // --- Custom Message Box Functions ---
-        const messageBoxOverlay = document.getElementById('messageBoxOverlay');
-        const messageBoxText = document.getElementById('messageBoxText');
-        const messageBoxCloseBtn = document.getElementById('messageBoxCloseBtn');
+    // Device Details Modal elements
+    const deviceDetailsModal = document.getElementById('deviceDetailsModal');
+    const closeDeviceDetailsModalBtn = document.getElementById('closeDeviceDetailsModal');
+    const modalUserEmailSpan = document.getElementById('modalUserEmail');
+    const deviceListDiv = document.getElementById('deviceList');
+    const noDevicesMessage = document.getElementById('noDevicesMessage');
 
-        function showMessageBox(message) {
-            messageBoxText.textContent = message;
-            messageBoxOverlay.classList.add('show');
-        }
+    // Global variables for current session's device and user
+    let currentDeviceId = null;
+    let currentUserId = null;
 
-        messageBoxCloseBtn.addEventListener('click', () => {
-            messageBoxOverlay.classList.remove('show');
+    /**
+     * Generates a UUID (Universally Unique Identifier).
+     * @returns {string} A new UUID.
+     */
+    function generateUUID() {
+        return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
+            const r = Math.random() * 16 | 0,
+                v = c == 'x' ? r : (r & 0x3 | 0x8);
+            return v.toString(16);
         });
-        // --- End Custom Message Box Functions ---
+    }
 
-        // Helper function to get the device ID (consistent with login page)
-        function getDeviceId() {
-            let deviceId = localStorage.getItem('deviceId');
-            if (!deviceId) {
-                // Fallback: generate a new one if not found (should be set on login)
-                deviceId = crypto.randomUUID(); // Use crypto.randomUUID for better uniqueness
-                localStorage.setItem('deviceId', deviceId);
-                console.warn("No deviceId found in localStorage. Generating a new one.");
-            }
-            return deviceId;
+    /**
+     * Retrieves or generates a persistent device ID.
+     * This ID is stored in localStorage to uniquely identify the browser/client.
+     * @returns {string} The persistent device ID.
+     */
+    function getPersistentDeviceId() {
+        let deviceId = localStorage.getItem('uniqueDeviceId');
+        if (!deviceId) {
+            deviceId = generateUUID();
+            localStorage.setItem('uniqueDeviceId', deviceId);
+        }
+        return deviceId;
+    }
+
+    /**
+     * Updates the online status of the current device in Firebase.
+     * This function is called on login and logout to reflect the device's session status.
+     * @param {string} uid - The user's UID.
+     * @param {string} deviceId - The unique ID of the device.
+     * @param {boolean} isOnline - True if the device is online, false if offline.
+     */
+    function updateDeviceOnlineStatus(uid, deviceId, isOnline) {
+        if (!uid || !deviceId) {
+            console.warn("Cannot update device status: UID or Device ID is missing.");
+            return;
         }
 
-        // Function to format Timestamps (handles both Firestore Timestamp objects and RTDB numbers)
-        function formatTimestamp(timestamp) {
-            if (!timestamp) return 'N/A';
-            let date;
-            if (typeof timestamp.toDate === 'function') {
-                // It's a Firestore Timestamp object
-                date = timestamp.toDate();
-            } else if (typeof timestamp === 'number') {
-                // It's a Realtime Database timestamp (milliseconds since epoch)
-                date = new Date(timestamp);
-            } else {
-                return 'N/A';
-            }
-            return date.toLocaleString(); // Formats to local date and time string
+        const deviceRef = db.ref(`userDevices/${uid}/${deviceId}`);
+        const updates = {
+            isOnline: isOnline,
+            lastSeen: firebase.database.ServerValue.TIMESTAMP, // Use server timestamp
+            userAgent: navigator.userAgent // Capture user agent string
+        };
+
+        // Attempt to get a more specific device type
+        const detectedOS = getOSFromUserAgent(navigator.userAgent);
+        if (detectedOS !== 'Other') { // Only add if a specific OS is detected
+            updates.type = detectedOS;
         }
 
-        // Function to handle initial authentication
-        async function handleInitialAuth() {
-            try {
-                if (initialAuthToken) {
-                    await signInWithCustomToken(auth, initialAuthToken);
-                    console.log("Signed in with custom token.");
-                } else {
-                    await signInAnonymously(auth);
-                    console.log("Signed in anonymously.");
-                }
-            } catch (error) {
-                console.error("Initial authentication failed:", error);
-                showMessageBox("Authentication required. Redirecting to login.");
-                window.location.href = window.location.origin + "/secure/login.html"; // Use full path for robustness
-            }
-        }
-
-        // Function to load all users for admin view (fetches devices from Realtime Database)
-        async function loadAllUsers() {
-            const userListContainer = document.getElementById("userList");
-            const usersCollectionRef = collection(db, `artifacts/${appId}/users`); // Still using Firestore for user list
-
-            onSnapshot(usersCollectionRef, async (snapshot) => {
-                if (!isAuthReady) return; // Ensure auth is ready before processing snapshot
-                userListContainer.innerHTML = ""; // Clear previous content
-
-                if (snapshot.empty) {
-                    userListContainer.innerHTML = "<p>No users found in the database.</p>";
-                    return;
-                }
-
-                const userPromises = snapshot.docs.map(async (userDocSnap) => {
-                    const uid = userDocSnap.id;
-                    const userData = userDocSnap.data();
-                    const email = userData.email || "N/A";
-                    const displayName = userData.displayName || "Not available";
-                    const isUserOnline = userData.isOnline || false; // This is from Firestore user doc
-                    const isApproved = userData.isApproved || false;
-
-                    let devicesHtml = "<ul><li>No devices.</li></ul>";
-                    // Fetch devices from Realtime Database
-                    try {
-                        const userDevicesRTDBRef = rtdbRef(rtdb, `userDevices/${uid}`); // Realtime Database path
-                        const devicesRTDBSnap = await rtdbGet(userDevicesRTDBRef); // Use rtdbGet for one-time fetch from RTDB
-
-                        if (devicesRTDBSnap.exists()) {
-                            devicesHtml = `<ul class="list-group">`;
-                            const devices = devicesRTDBSnap.val(); // .val() for Realtime Database
-                            for (const id in devices) {
-                                const info = devices[id];
-                                const deviceIsOnline = info.isOnline || false;
-                                const statusDotClass = deviceIsOnline ? 'online' : 'offline';
-                                devicesHtml += `
-                                    <li class="list-group-item">
-                                        <span class="status-dot ${statusDotClass}"></span>
-                                        <strong>ID:</strong> ${id}<br/>
-                                        <strong>Agent:</strong> ${info.userAgent || 'N/A'}<br/>
-                                        <strong>Last Login:</strong> ${formatTimestamp(info.lastLogin)}<br/>
-                                        <strong>Last Logout:</strong> ${formatTimestamp(info.lastLogout)}<br/>
-                                        <strong>Status:</strong> <span style="color: ${deviceIsOnline ? '#28a745' : '#dc3545'}; font-weight: bold;">${deviceIsOnline ? 'Online' : 'Offline'}</span>
-                                    </li>`;
-                            }
-                            devicesHtml += `</ul>`;
-                        }
-                    } catch (deviceError) {
-                        console.error(`Error fetching devices for user ${uid} from RTDB:`, deviceError);
-                        devicesHtml = "<ul><li>Error loading devices from Realtime Database.</li></ul>";
-                    }
-
-                    return `
-                        <div class="user-card">
-                            <h5>${email}</h5>
-                            <p><strong>Name:</strong> ${displayName}</p>
-                            <p><strong>UID:</strong> ${uid}</p>
-                            <p><strong>Account Status:</strong> <span style="color: ${isApproved ? '#28a745' : '#dc3545'}; font-weight: bold;">${isApproved ? 'Approved' : 'Not Approved'}</span></p>
-                            <p><strong>User Online Status:</strong> <span class="status-dot ${isUserOnline ? 'online' : 'offline'}"></span> <span style="color: ${isUserOnline ? '#28a745' : '#dc3545'}; font-weight: bold;">${isUserOnline ? 'Online' : 'Offline'}</span></p>
-                            <p><strong>Devices:</strong></p>
-                            ${devicesHtml}
-                        </div>
-                    `;
-                });
-
-                // Wait for all user cards to be generated and then append
-                const userCardsHtml = await Promise.all(userPromises);
-                userListContainer.innerHTML = userCardsHtml.join('');
-
-            }, (error) => {
-                console.error("Error listening to all users:", error);
-                showMessageBox("Error loading all user data for admin view.");
+        deviceRef.update(updates)
+            .then(() => {
+                console.log(`Device ${deviceId} status updated to ${isOnline ? 'online' : 'offline'} for user ${uid}.`);
+            })
+            .catch(error => {
+                console.error("Error updating device status:", error);
             });
+    }
+
+    // Login handler with admin check
+    loginBtn.addEventListener('click', () => {
+        const email = emailInput.value.trim();
+        const password = passwordInput.value.trim();
+        loginError.textContent = '';
+        
+        if (!email || !password) {
+            loginError.textContent = "Please enter email and password.";
+            return;
+        }
+        
+        // Show loading state
+        loginBtnText.textContent = "Logging in...";
+        loginSpinner.style.display = 'inline-block';
+        loginBtn.disabled = true;
+        
+        auth.signInWithEmailAndPassword(email, password)
+            .then(({ user }) => {
+                // Check if user is admin based on 'admins' node in Firebase Realtime Database
+                return db.ref('admins/' + user.uid).once('value')
+                    .then(snapshot => {
+                        if (snapshot.exists() && snapshot.val() === true) {
+                            // Admin confirmed: show admin content, hide login
+                            loginDiv.style.display = 'none';
+                            adminContent.style.display = 'block';
+                            
+                            // Set current user and device ID for this session
+                            currentUserId = user.uid;
+                            currentDeviceId = getPersistentDeviceId();
+                            updateDeviceOnlineStatus(currentUserId, currentDeviceId, true); // Mark device online
+                            
+                            loadDeviceStatus(); // Load device status after admin login
+                            setupRealtimeDeviceUpdates(); // Set up real-time updates for device status
+                        } else {
+                            // Not an admin: sign out and show access denied message
+                            auth.signOut();
+                            loginError.textContent = 'Access denied: You are not an non-admin.'; // Corrected message
+                        }
+                    });
+            })
+            .catch(err => {
+                // Handle login errors (e.g., wrong password, user not found)
+                loginError.textContent = 'Login failed: ' + err.message;
+            })
+            .finally(() => {
+                // Reset login button state regardless of success or failure
+                loginBtnText.textContent = "Login";
+                loginSpinner.style.display = 'none';
+                loginBtn.disabled = false;
+            });
+    });
+
+    // Logout handler
+    logoutBtn.addEventListener('click', () => {
+        // Before signing out, update the device status to offline
+        if (currentUserId && currentDeviceId) {
+            updateDeviceOnlineStatus(currentUserId, currentDeviceId, false);
         }
 
-
-        // Auth state listener
-        onAuthStateChanged(auth, async (user) => {
-            if (user) {
-                currentUserId = user.uid;
-                console.log("User authenticated:", user.uid);
-
-                // Attempt to sign in with custom token if available, otherwise anonymously
-                if (!isAuthReady) { // Only attempt initial auth if not already ready
-                    try {
-                        if (initialAuthToken) {
-                            await signInWithCustomToken(auth, initialAuthToken);
-                        } else {
-                            await signInAnonymously(auth);
-                        }
-                        console.log("Initial auth successful or already signed in.");
-                    } catch (error) {
-                        console.error("Error during initial sign-in:", error);
-                        showMessageBox("Authentication failed. Please try logging in again.");
-                        window.location.href = window.location.origin + "/secure/login.html";
-                        return;
-                    }
-                }
-
-
-                // Check user's approval status from Firestore
-                const userDocRef = doc(db, `artifacts/${appId}/users/${user.uid}`);
-                try {
-                    const userDocSnap = await getDoc(userDocRef);
-
-                    if (userDocSnap.exists() && userDocSnap.data().isApproved === true) {
-                        console.log("User is approved. Displaying dashboard.");
-                        document.body.style.display = "flex";
-                        isAuthReady = true;
-
-                        // Display user information
-                        document.getElementById('userEmail').textContent = user.email || 'N/A';
-                        document.getElementById('userName').textContent = userDocSnap.data().displayName || user.displayName || 'Not available';
-                        document.getElementById('userId').textContent = user.uid;
-
-                        // Listen for current user's device data changes (from Firestore)
-                        const userDevicesCollectionRef = collection(db, `artifacts/${appId}/users/${user.uid}/userDevices`);
-                        onSnapshot(userDevicesCollectionRef, (snapshot) => {
-                            if (!isAuthReady) return; // Ensure auth is ready before processing snapshot
-                            console.log("Fetching current user's device data snapshot.");
-
-                            const devicesContainer = document.getElementById('devicesContainer');
-                            const onlineDeviceCountSpan = document.getElementById('onlineDeviceCount');
-                            devicesContainer.innerHTML = ''; // Clear previous content
-                            let onlineCount = 0;
-
-                            if (!snapshot.empty) {
-                                snapshot.forEach((docSnap) => {
-                                    const deviceId = docSnap.id;
-                                    const device = docSnap.data();
-                                    const deviceCard = document.createElement('div');
-                                    deviceCard.className = 'device-card';
-
-                                    const isOnline = device.isOnline || false;
-                                    if (isOnline) {
-                                        onlineCount++;
-                                    }
-
-                                    deviceCard.innerHTML = `
-                                        <span class="status-indicator ${isOnline ? 'online' : 'offline'}"></span>
-                                        <p><strong>Device ID:</strong> ${deviceId}</p>
-                                        <p><strong>User Agent:</b> ${device.userAgent || 'N/A'}</p>
-                                        <p><strong>Last Login:</strong> ${formatTimestamp(device.lastLogin)}</p>
-                                        <p><strong>Last Logout:</strong> ${formatTimestamp(device.lastLogout)}</p>
-                                        <p><strong>Status:</strong> <span style="color: ${isOnline ? '#28a745' : '#dc3545'}; font-weight: bold;">${isOnline ? 'Online' : 'Offline'}</span></p>
-                                    `;
-                                    devicesContainer.appendChild(deviceCard);
-                                });
-                            } else {
-                                devicesContainer.innerHTML = '<p>No device data found for this user.</p>';
-                            }
-                            onlineDeviceCountSpan.textContent = onlineCount;
-                        }, (error) => {
-                            console.error("Error listening to current user devices:", error);
-                            showMessageBox("Error loading your device data.");
-                        });
-
-                        // Check if the user is an admin
-                        const adminDocRef = doc(db, `artifacts/${appId}/admins/${user.uid}`);
-                        const adminDocSnap = await getDoc(adminDocRef);
-
-                        if (adminDocSnap.exists() && adminDocSnap.data().isAdmin === true) {
-                            console.log("User is an admin. Loading admin dashboard.");
-                            document.getElementById('adminDashboardSection').style.display = 'block';
-                            loadAllUsers(); // Load all users for the admin view
-                        } else {
-                            console.log("User is not an admin. Hiding admin dashboard.");
-                            document.getElementById('adminDashboardSection').style.display = 'none';
-                        }
-
-                    } else {
-                        // User is logged in but not approved or user document doesn't exist
-                        console.warn("User not approved or document missing:", user.uid);
-                        showMessageBox("⛔ Access Denied: Your account is not approved or does not exist. Please contact support.");
-                        await signOut(auth); // Sign them out
-                        window.location.href = window.location.origin + "/secure/login.html";
-                    }
-                } catch (error) {
-                    console.error("Error fetching user approval status:", error);
-                    showMessageBox("Error checking account status. Please try again.");
-                    await signOut(auth);
-                    window.location.href = window.location.origin + "/secure/login.html";
-                }
-
-            } else {
-                // User is not signed in
-                console.log("No user signed in. Redirecting to login.");
-                // If auth was ready and now user is null, it means logout or session expired
-                // Or if it's the very first load and no user, attempt initial auth
-                if (!isAuthReady) {
-                     handleInitialAuth();
-                } else {
-                    window.location.href = window.location.origin + "/secure/login.html";
-                }
-            }
+        auth.signOut().then(() => {
+            // After logout, hide admin content and show login form
+            adminContent.style.display = 'none';
+            loginDiv.style.display = 'block';
+            // Clear input fields and error messages
+            emailInput.value = '';
+            passwordInput.value = '';
+            loginError.textContent = '';
+            devicesTableBody.innerHTML = '<tr><td colspan="4">Loading device data...</td></tr>'; // Reset device table
+            closeDeviceDetailsModal(); // Close modal on logout
+            
+            // Clear current session variables
+            currentUserId = null;
+            currentDeviceId = null;
         });
+    });
 
-        // Logout functionality
-        document.getElementById("logoutBtn").addEventListener("click", async () => {
-            if (!currentUserId) {
-                showMessageBox("No user is currently logged in.");
+    /**
+     * Formats a timestamp into a readable date and time string.
+     * @param {number} timestamp - The timestamp in milliseconds.
+     * @returns {string} Formatted date and time string, or 'N/A' if invalid.
+     */
+    function formatTimestamp(timestamp) {
+        if (!timestamp) return 'N/A';
+        const date = new Date(timestamp);
+        if (isNaN(date.getTime())) return 'N/A'; // Check for invalid date
+        return date.toLocaleString(); // Uses user's locale for formatting
+    }
+
+    /**
+     * Loads and displays the online/offline status and device count for each APPROVED user.
+     * Data is fetched from the 'userDevices' and 'users' nodes in Firebase Realtime Database.
+     */
+    async function loadDeviceStatus() {
+        devicesTableBody.innerHTML = '<tr><td colspan="4">Loading device data...</td></tr>'; // Show loading message
+
+        try {
+            // Fetch all user device data
+            const userDevicesSnapshot = await db.ref('userDevices').once('value');
+            const userDevices = userDevicesSnapshot.val();
+
+            // Fetch all user profile data to get emails and approval status
+            const usersSnapshot = await db.ref('users').once('value');
+            const users = usersSnapshot.val();
+            
+            if (!userDevices && !users) {
+                devicesTableBody.innerHTML = '<tr><td colspan="4">No user or device data found.</td></tr>';
+                return;
+            }
+            
+            devicesTableBody.innerHTML = ''; // Clear existing rows
+
+            // Combine data and populate the table
+            const allUserIds = new Set([...Object.keys(userDevices || {}), ...Object.keys(users || {})]);
+
+            if (allUserIds.size === 0) {
+                devicesTableBody.innerHTML = '<tr><td colspan="4">No user data found.</td></tr>';
                 return;
             }
 
-            // Note: This part still updates Firestore for the *current user's* device status
-            // because the main user dashboard uses Firestore for its own device tracking.
-            const currentDeviceId = getDeviceId(); // Get the device ID for the current session
-            const deviceDocRef = doc(db, `artifacts/${appId}/users/${currentUserId}/userDevices/${currentDeviceId}`);
+            let approvedUsersFound = false;
 
-            try {
-                // Update the current device's status to offline and record logout time
-                await updateDoc(deviceDocRef, {
-                    lastLogout: serverTimestamp(),
-                    isOnline: false
-                });
+            allUserIds.forEach(uid => {
+                const userProfile = users ? users[uid] : null;
+                const devices = userDevices ? userDevices[uid] : null;
 
-                await signOut(auth); // Sign out from Firebase
-                localStorage.removeItem('deviceId'); // Clear device ID from local storage
-                showMessageBox("👋 Logged out successfully.");
-                window.location.href = window.location.origin + "/secure/login.html";
-            } catch (error) {
-                console.error("Logout error:", error);
-                showMessageBox("❌ Logout failed: " + error.message);
+                // ONLY process if user is approved
+                if (userProfile && userProfile.isApproved === true) {
+                    approvedUsersFound = true;
+                    const userEmail = userProfile.email ? userProfile.email : '(No Email)';
+                    let isUserOnline = false;
+                    let deviceCount = 0;
+
+                    // Check each device for the user
+                    if (devices) {
+                        deviceCount = Object.keys(devices).length;
+                        for (const deviceId in devices) {
+                            if (devices[deviceId].isOnline === true) {
+                                isUserOnline = true; // If any device is online, the user is considered online
+                                break; // No need to check further devices for this user
+                            }
+                        }
+                    }
+
+                    // Create table row for the user
+                    const tr = document.createElement('tr');
+
+                    // User Email cell
+                    const tdEmail = document.createElement('td');
+                    tdEmail.textContent = userEmail;
+                    tr.appendChild(tdEmail);
+
+                    // Online Status cell
+                    const tdStatus = document.createElement('td');
+                    const statusBadge = document.createElement('span');
+                    if (isUserOnline) {
+                        statusBadge.className = 'badge badge-success';
+                        statusBadge.innerHTML = '<i class="fas fa-circle"></i> Online';
+                    } else {
+                        statusBadge.className = 'badge badge-danger';
+                        statusBadge.innerHTML = '<i class="fas fa-circle"></i> Offline';
+                    }
+                    tdStatus.appendChild(statusBadge);
+                    tr.appendChild(tdStatus);
+
+                    // Number of Devices cell
+                    const tdDeviceCount = document.createElement('td');
+                    tdDeviceCount.textContent = deviceCount;
+                    tr.appendChild(tdDeviceCount);
+
+                    // Actions cell for "Show Devices" button
+                    const tdActions = document.createElement('td');
+                    const showDevicesBtn = document.createElement('button');
+                    showDevicesBtn.className = 'btn btn-primary btn-sm';
+                    showDevicesBtn.innerHTML = '<i class="fas fa-eye"></i> Show Devices';
+                    // Pass the user's email and their device data to the modal function
+                    showDevicesBtn.onclick = () => showDeviceDetailsModal(userEmail, devices);
+                    tdActions.appendChild(showDevicesBtn);
+                    tr.appendChild(tdActions);
+
+                    devicesTableBody.appendChild(tr);
+                }
+            });
+
+            if (!approvedUsersFound) {
+                devicesTableBody.innerHTML = '<tr><td colspan="4">No approved users with device data found.</td></tr>';
             }
+
+        } catch (err) {
+            devicesTableBody.innerHTML = `<tr><td colspan="4" style="color:var(--danger);">Error loading device data: ${err.message}</td></tr>`;
+            console.error("Error loading device data:", err);
+        }
+    }
+
+    /**
+     * Sets up a real-time listener for changes in the 'userDevices' and 'users' nodes.
+     * This will automatically update the device status table when data changes.
+     */
+    function setupRealtimeDeviceUpdates() {
+        // Listen to changes in userDevices
+        db.ref('userDevices').on('value', snapshot => {
+            console.log("Realtime update detected for userDevices. Reloading table.");
+            loadDeviceStatus(); // Reload device status whenever data changes
+        }, error => {
+            console.error("Error setting up realtime userDevices updates:", error);
         });
-    </script>
+
+        // Listen to changes in users (in case email/name changes or approval status changes)
+        db.ref('users').on('value', snapshot => {
+            console.log("Realtime update detected for users. Reloading table.");
+            loadDeviceStatus(); // Reload device status whenever user data changes
+        }, error => {
+            console.error("Error setting up realtime users updates:", error);
+        });
+    }
+
+    /**
+     * Attempts to determine the OS from a user agent string.
+     * @param {string} userAgent - The user agent string.
+     * @returns {string} Detected OS (e.g., 'Windows', 'Android', 'iOS', 'Mac', 'Linux', 'Other').
+     */
+    function getOSFromUserAgent(userAgent) {
+        if (!userAgent) return 'Unknown';
+        userAgent = userAgent.toLowerCase();
+        if (userAgent.includes('windows')) return 'Windows';
+        if (userAgent.includes('android')) return 'Android';
+        if (userAgent.includes('iphone') || userAgent.includes('ipad') || userAgent.includes('ipod')) return 'iOS';
+        if (userAgent.includes('mac')) return 'Mac';
+        if (userAgent.includes('linux')) return 'Linux';
+        return 'Other';
+    }
+
+    /**
+     * Displays the device details modal for a specific user.
+     * @param {string} userEmail - The email of the user whose devices are being displayed.
+     * @param {object} devices - An object containing device IDs as keys and device data (e.g., { isOnline: true, type: 'Windows', lastSeen: 1678886400000, userAgent: '...' }) as values.
+     */
+    function showDeviceDetailsModal(userEmail, devices) {
+        modalUserEmailSpan.textContent = userEmail;
+        deviceListDiv.innerHTML = ''; // Clear previous device list
+
+        if (devices && Object.keys(devices).length > 0) {
+            noDevicesMessage.style.display = 'none';
+            Object.keys(devices).forEach(deviceId => {
+                const device = devices[deviceId];
+                const deviceItem = document.createElement('div');
+                deviceItem.className = 'device-item';
+                
+                const statusIcon = device.isOnline ? 
+                    '<i class="fas fa-circle" style="color: var(--success);"></i>' : 
+                    '<i class="fas fa-circle" style="color: var(--danger);"></i>';
+                const statusText = device.isOnline ? 'Online' : 'Offline';
+                
+                // Prioritize device.type if it exists, otherwise infer from userAgent
+                const deviceOS = device.type ? device.type : getOSFromUserAgent(device.userAgent);
+                const lastSeenTime = formatTimestamp(device.lastSeen); // Format timestamp
+                const userAgentString = device.userAgent ? device.userAgent : 'N/A';
+
+                deviceItem.innerHTML = `
+                    <span>Device ID: <strong>device_${deviceId}</strong></span>
+                    <span>OS: <strong>${deviceOS}</strong></span>
+                    <span>Status: ${statusIcon} ${statusText}</span>
+                    <span>Last Seen: <strong>${lastSeenTime}</strong></span>
+                    <span>User Agent: <small>${userAgentString}</small></span>
+                `;
+                deviceListDiv.appendChild(deviceItem);
+            });
+        } else {
+            noDevicesMessage.style.display = 'block';
+        }
+
+        deviceDetailsModal.style.display = 'flex'; // Show the modal
+    }
+
+    /**
+     * Closes the device details modal.
+     */
+    function closeDeviceDetailsModal() {
+        deviceDetailsModal.style.display = 'none'; // Hide the modal
+    }
+
+    // Event listeners for modal close button and clicking outside the modal
+    closeDeviceDetailsModalBtn.addEventListener('click', closeDeviceDetailsModal);
+    deviceDetailsModal.addEventListener('click', function(e) {
+        if (e.target === this) { // Check if the click was directly on the modal background
+            closeDeviceDetailsModal();
+        }
+    });
+
+    // On page load or auth state change: check admin status
+    // This ensures the correct section is displayed if the user is already logged in
+    auth.onAuthStateChanged(user => {
+        if (user) {
+            // If a user is logged in, check if they are an admin
+            db.ref('admins/' + user.uid).once('value').then(snapshot => {
+                if (snapshot.exists() && snapshot.val() === true) {
+                    // If admin, show admin content
+                    loginDiv.style.display = 'none';
+                    adminContent.style.display = 'block';
+                    
+                    // Set current user and device ID for this session
+                    currentUserId = user.uid;
+                    currentDeviceId = getPersistentDeviceId();
+                    updateDeviceOnlineStatus(currentUserId, currentDeviceId, true); // Mark device online
+
+                    loadDeviceStatus(); // Load device status on initial admin content display
+                    setupRealtimeDeviceUpdates(); // Set up real-time updates
+                } else {
+                    // If not admin, sign out and show login with access denied message
+                    auth.signOut();
+                    loginDiv.style.display = 'block';
+                    adminContent.style.display = 'none';
+                    loginError.textContent = 'Access denied: You are not an admin.';
+                }
+            })
+            .catch(error => {
+                // Handle any errors during the admin check
+                console.error("Firebase admin check error:", error);
+                loginDiv.style.display = 'block';
+                adminContent.style.display = 'none';
+                loginError.textContent = `Firebase error: ${error.message}. Please try again.`;
+            });
+        } else {
+            // If no user is logged in, show the login form
+            loginDiv.style.display = 'block';
+            adminContent.style.display = 'none';
+        }
+    });
+</script>
+
 </body>
 </html>
