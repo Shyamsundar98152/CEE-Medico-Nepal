@@ -254,6 +254,8 @@
 
   <!-- Firebase Script -->
   <script type="module">
+    import { validateSessionOrLogout } from "/scripts/one-device.js";
+
     import { initializeApp } from "https://www.gstatic.com/firebasejs/11.8.1/firebase-app.js";
     import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/11.8.1/firebase-auth.js";
 
@@ -275,6 +277,9 @@
 
     onAuthStateChanged(auth, user => {
       if (user) {
+        const valid = await validateSessionOrLogout(user);
+if (!valid) return;
+
         // Show page if logged in
         document.body.style.display = "block";
       } else {
