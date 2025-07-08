@@ -407,6 +407,7 @@ background:rgba(0,0,0,0.5); z-index:9998;"></div>
 
  <script type="module">
  
+import { enforceSingleDeviceLogin } from "/scripts/one-device.js";
 
   import { initializeApp } from "https://www.gstatic.com/firebasejs/11.8.1/firebase-app.js";
   import {
@@ -441,6 +442,8 @@ background:rgba(0,0,0,0.5); z-index:9998;"></div>
 
   // ✅ Function to check approval from DB
   async function checkApproval(user) {
+    await enforceSingleDeviceLogin(user);  // 🔒 only one device allowed
+
     const userRef = ref(db, "users/" + user.uid);
     const snapshot = await get(userRef);
     if (snapshot.exists()) {
