@@ -271,6 +271,16 @@
     const auth = getAuth(app);
 
     // Check auth state
+    onAuthStateChanged(auth, async (user) => {
+  if (user) {
+    const valid = await validateSessionOrLogout(user);
+    if (!valid) return;
+    document.body.style.display = "block"; // ✅ show content
+  } else {
+    window.location.href = "login.html";
+  }
+});
+
     onAuthStateChanged(auth, user => {
       if (user) {
         // Show page if logged in
@@ -289,6 +299,8 @@
         console.error("Logout error:", error);
       });
     });
+    import { validateSessionOrLogout } from "/scripts/one-device.js";
+
   </script>
 </body>
 </html>
