@@ -1,0 +1,354 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>User Device Dashboard - ceemediconepal.xyz</title>
+    <link rel="apple-touch-icon" sizes="180x180" href="/fevicon/apple-touch-icon.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="/fevicon/favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="/fevicon/favicon-16x16.png">
+    <link rel="manifest" href="/fevicon/site.webmanifest">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css"/>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', sans-serif;
+        }
+        body {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            min-height: 100vh;
+            color: #333;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding-top: 80px; /* Space for fixed header */
+            display: none; /* Hidden until authenticated and approved */
+        }
+        header {
+            background-color: rgba(255, 255, 255, 0.9);
+            padding: 15px 0;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+            position: fixed;
+            width: 100%;
+            top: 0;
+            z-index: 1000;
+        }
+        .header-container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .logo {
+            font-size: 24px;
+            font-weight: bold;
+            color: #667eea;
+            text-decoration: none;
+        }
+        .nav-links {
+            display: flex;
+            gap: 20px;
+            align-items: center;
+        }
+        .nav-links a {
+            text-decoration: none;
+            color: #333;
+            font-weight: 500;
+            transition: color 0.3s;
+        }
+        .nav-links a:hover {
+            color: #667eea;
+        }
+        #logoutBtn {
+            padding: 8px 15px;
+            background: #ff4444;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: background 0.3s;
+        }
+        #logoutBtn:hover {
+            background: #cc0000;
+        }
+        .dashboard-container {
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 12px;
+            padding: 30px;
+            margin: 30px 20px;
+            box-shadow: 0 5px 20px rgba(0, 0, 0, 0.15);
+            max-width: 900px;
+            width: 100%;
+            display: flex;
+            flex-direction: column;
+            gap: 25px;
+        }
+        h1 {
+            color: #667eea;
+            text-align: center;
+            margin-bottom: 20px;
+        }
+        .user-info, .device-list {
+            background: #f9f9f9;
+            padding: 20px;
+            border-radius: 10px;
+            border: 1px solid #eee;
+        }
+        .user-info h2, .device-list h2 {
+            color: #764ba2;
+            margin-bottom: 15px;
+            border-bottom: 2px solid #eee;
+            padding-bottom: 10px;
+        }
+        .user-info p {
+            margin-bottom: 8px;
+            font-size: 1.1em;
+            color: #555;
+        }
+        .user-info span {
+            font-weight: 600;
+            color: #333;
+        }
+        .device-card {
+            background: #fff;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            padding: 15px;
+            margin-bottom: 15px;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            position: relative;
+        }
+        .device-card:last-child {
+            margin-bottom: 0;
+        }
+        .device-card p {
+            margin: 0;
+            font-size: 0.95em;
+            color: #666;
+        }
+        .device-card strong {
+            color: #333;
+        }
+        .status-indicator {
+            position: absolute;
+            top: 15px;
+            right: 15px;
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            background-color: #ccc;
+        }
+        .status-indicator.online {
+            background-color: #28a745; /* Green */
+        }
+        .status-indicator.offline {
+            background-color: #dc3545; /* Red */
+        }
+        .device-count {
+            font-size: 1.2em;
+            font-weight: bold;
+            color: #764ba2;
+            text-align: right;
+            margin-top: 10px;
+        }
+
+        /* Footer */
+        footer {
+            background: rgba(0, 0, 0, 0.2);
+            color: white;
+            text-align: center;
+            padding: 20px;
+            margin-top: auto; /* Pushes footer to bottom */
+            width: 100%;
+        }
+
+        @media (max-width: 768px) {
+            .header-container {
+                flex-direction: column;
+                gap: 10px;
+            }
+            .nav-links {
+                flex-wrap: wrap;
+                justify-content: center;
+            }
+            .dashboard-container {
+                padding: 20px;
+                margin: 20px 10px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <div class="header-container">
+            <a href="https://ceemediconepal.xyz" class="logo">ceemediconepal.xyz</a>
+            <div class="nav-links">
+                <a href="https://ceemediconepal.xyz">Home</a>
+                <a href="/secure/200-mcq-sets.html">Premium 200 MCQ Sets</a>
+                <a href="/secure/mcq.html">Subject Wise Sets</a>
+                <button id="logoutBtn">Logout</button>
+            </div>
+        </div>
+    </header>
+
+    <div class="dashboard-container">
+        <h1>Your Account & Devices</h1>
+
+        <div class="user-info">
+            <h2>User Information</h2>
+            <p>Email: <span id="userEmail">Loading...</span></p>
+            <p>Name: <span id="userName">Not available</span></p>
+            <p>User ID: <span id="userId">Loading...</span></p>
+        </div>
+
+        <div class="device-list">
+            <h2>Your Logged-In Devices</h2>
+            <div id="devicesContainer">
+                <p>Loading device data...</p>
+            </div>
+            <div class="device-count">
+                Total Online Devices: <span id="onlineDeviceCount">0</span>
+            </div>
+        </div>
+    </div>
+
+    <footer>
+        <p>&copy; 2025 ceemediconepal.xyz - All Rights Reserved</p>
+    </footer>
+
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.8.1/firebase-app.js";
+        import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/11.8.1/firebase-auth.js";
+        import { getDatabase, ref, onValue, set, serverTimestamp, get } from "https://www.gstatic.com/firebasejs/11.8.1/firebase-database.js"; // Added 'get'
+
+        // Firebase config (ensure this matches your project's config)
+        const firebaseConfig = {
+            apiKey: "AIzaSyB66MZa0WZk3WPydcjmCDu7P_CE0FD60ug",
+            authDomain: "login-2f07b.firebaseapp.com",
+            projectId: "login-2f07b",
+            storageBucket: "login-2f07b.firebasestorage.app",
+            messagingSenderId: "709252763741",
+            appId: "1:709252763741:web:b3902697cc9c8b157a7db4",
+            databaseURL: "https://login-2f07b-default-rtdb.asia-southeast1.firebasedatabase.app",
+            measurementId: "G-G7ZY1MJ106"
+        };
+
+        // Initialize Firebase
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+        const db = getDatabase(app);
+
+        // Helper function to get the device ID (must be consistent with login page)
+        function getDeviceId() {
+            let deviceId = localStorage.getItem('deviceId');
+            if (!deviceId) {
+                // This case should ideally not happen if login correctly set it,
+                // but as a fallback, generate one.
+                console.warn("No deviceId found in localStorage. Generating a temporary one for display.");
+                deviceId = 'unknown_device_' + Date.now();
+            }
+            return deviceId;
+        }
+
+        // Function to format Firebase timestamps
+        function formatTimestamp(timestamp) {
+            if (!timestamp) return 'N/A';
+            const date = new Date(timestamp);
+            return date.toLocaleString(); // Formats to local date and time string
+        }
+
+        // Auth state listener
+        onAuthStateChanged(auth, async user => { // Made the callback async
+            if (user) {
+                // User is signed in, now check if they are an admin
+                const userRef = ref(db, `users/${user.uid}`);
+                const userSnapshot = await get(userRef); // Fetch user data once
+
+                if (userSnapshot.exists() && userSnapshot.val().isApproved === true) {
+                    // User is an admin and approved, show the page
+                    document.body.style.display = "flex";
+
+                    // Display user information
+                    document.getElementById('userEmail').textContent = user.email || 'N/A';
+                    document.getElementById('userName').textContent = user.displayName || 'Not available';
+                    document.getElementById('userId').textContent = user.uid;
+
+                    // Listen for device data changes for this user
+                    const userDevicesRef = ref(db, `userDevices/${user.uid}`);
+                    onValue(userDevicesRef, (snapshot) => {
+                        const devicesContainer = document.getElementById('devicesContainer');
+                        const onlineDeviceCountSpan = document.getElementById('onlineDeviceCount');
+                        devicesContainer.innerHTML = ''; // Clear previous content
+                        let onlineCount = 0;
+
+                        if (snapshot.exists()) {
+                            const devices = snapshot.val();
+                            for (const deviceId in devices) {
+                                const device = devices[deviceId];
+                                const deviceCard = document.createElement('div');
+                                deviceCard.className = 'device-card';
+
+                                const isOnline = device.isOnline || false;
+                                if (isOnline) {
+                                    onlineCount++;
+                                }
+
+                                deviceCard.innerHTML = `
+                                    <span class="status-indicator ${isOnline ? 'online' : 'offline'}"></span>
+                                    <p><strong>Device ID:</strong> ${deviceId}</p>
+                                    <p><strong>User Agent:</strong> ${device.userAgent || 'N/A'}</p>
+                                    <p><strong>Last Login:</strong> ${formatTimestamp(device.lastLogin)}</p>
+                                    <p><strong>Last Logout:</strong> ${formatTimestamp(device.lastLogout)}</p>
+                                    <p><strong>Status:</strong> <span style="color: ${isOnline ? '#28a745' : '#dc3545'}; font-weight: bold;">${isOnline ? 'Online' : 'Offline'}</span></p>
+                                `;
+                                devicesContainer.appendChild(deviceCard);
+                            }
+                        } else {
+                            devicesContainer.innerHTML = '<p>No device data found for this user.</p>';
+                        }
+                        onlineDeviceCountSpan.textContent = onlineCount;
+                    });
+
+                    // Logout functionality
+                    document.getElementById("logoutBtn").addEventListener("click", async () => {
+                        const currentDeviceId = getDeviceId(); // Get the device ID for the current session
+                        try {
+                            // Update the current device's status to offline and record logout time
+                            const deviceRef = ref(db, `userDevices/${user.uid}/${currentDeviceId}`);
+                            await set(deviceRef, {
+                                userAgent: navigator.userAgent,
+                                lastLogout: serverTimestamp(),
+                                isOnline: false
+                            }, { merge: true });
+
+                            await signOut(auth); // Sign out from Firebase
+                            localStorage.removeItem('deviceId'); // Clear device ID from local storage
+                            alert("👋 Logged out successfully.");
+                            window.location.href = "/login.html"; // Changed to absolute path
+                        } catch (error) {
+                            console.error("Logout error:", error);
+                            alert("❌ Logout failed: " + error.message);
+                        }
+                    });
+
+                } else {
+                    // User is logged in but not an admin (or not approved)
+                    alert("⛔ Access Denied: You do not have administrative privileges.");
+                    await signOut(auth); // Sign them out
+                    window.location.href = "/login.html"; // Changed to absolute path
+                }
+            } else {
+                // User is not signed in, redirect to login page
+                window.location.href = "/login.html"; // Changed to absolute path
+            }
+        });
+    </script>
+</body>
+</html>
