@@ -4,7 +4,7 @@
   <link rel="apple-touch-icon" sizes="180x180" href="/fevicon/apple-touch-icon.png">
   <link rel="icon" type="image/png" sizes="32x32" href="/fevicon/favicon-32x32.png">
   <link rel="icon" type="image/png" sizes="16x16" href="/fevicon/favicon-16x16.png">
-  <link rel="manifest" href="/fevicon/site.webmanifest">  
+  <link rel="manifest" href="/fevicon/site.webmanifest"> 
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Premium Medical Resources - ceemediconepal.xyz</title>
@@ -200,7 +200,6 @@
   </style>
 </head>
 <body>
-  <!-- Header Section -->
   <header>
     <div class="header-container">
       <a href="https://ceemediconepal.xyz" class="logo">ceemediconepal.xyz</a>
@@ -213,14 +212,12 @@
     </div>
   </header>
 
-  <!-- Hero Section -->
   <section class="hero">
     <h1>Premium Medical Resources for Nepali Students</h1>
     <p>Access high-quality MCQ and comprehensive MCQ sets designed to help you excel in your medical studies and entrance examinations.</p>
     <a href="#features" class="btn">Explore Resources</a>
   </section>
 
-  <!-- Features Section -->
   <section class="features" id="features">
     <div class="feature-card">
       <h3>Premium 200 mcq Set</h3>
@@ -247,17 +244,14 @@
     </div>
   </section>
 
-  <!-- Footer -->
   <footer>
     <p>&copy; 2025 ceemediconepal.xyz - All Rights Reserved</p>
   </footer>
 
-  <!-- Firebase Script -->
   <script type="module">
-    
-
     import { initializeApp } from "https://www.gstatic.com/firebasejs/11.8.1/firebase-app.js";
     import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/11.8.1/firebase-auth.js";
+    import { getDatabase, ref, set, serverTimestamp } from "https://www.gstatic.com/firebasejs/11.8.1/firebase-database.js"; // Import Realtime Database functions
 
     const firebaseConfig = {
       apiKey: "AIzaSyB66MZa0WZk3WPydcjmCDu7P_CE0FD60ug",
@@ -266,14 +260,25 @@
       storageBucket: "login-2f07b.firebasestorage.app",
       messagingSenderId: "709252763741",
       appId: "1:709252763741:web:b3902697cc9c8b157a7db4",
+      databaseURL: "https://login-2f07b-default-rtdb.asia-southeast1.firebasedatabase.app", // Ensure this is present
       measurementId: "G-G7ZY1MJ106"
     };
 
     const app = initializeApp(firebaseConfig);
     const auth = getAuth(app);
+    const db = getDatabase(app); // Initialize Database instance
 
-    // Check auth state
-   
+    // Helper function to get the device ID (must be consistent with login page)
+    function getDeviceId() {
+      let deviceId = localStorage.getItem('deviceId');
+      if (!deviceId) {
+        // This case should ideally not happen if login correctly set it,
+        // but as a fallback, generate one or indicate an issue.
+        console.warn("No deviceId found in localStorage for logout.");
+        deviceId = 'unknown_device_' + Date.now(); // Fallback for logging
+      }
+      return deviceId;
+    }
 
     onAuthStateChanged(auth, user => {
       if (user) {
@@ -286,14 +291,34 @@
     });
 
     // Logout functionality
-    document.getElementById("logoutBtn").addEventListener("click", () => {
-      signOut(auth).then(() => {
+    document.getElementById("logoutBtn").addEventListener("click", async () => {
+      const user = auth.currentUser;
+      if (user) {
+        const deviceId = getDeviceId();
+        const userAgent = navigator.userAgent;
+
+        try {
+          // Update device status to offline and record logout time
+          const deviceRef = ref(db, `userDevices/${user.uid}/${deviceId}`);
+          await set(deviceRef, {
+            userAgent: userAgent,
+            lastLogout: serverTimestamp(), // Use server timestamp for accuracy
+            isOnline: false
+          }, { merge: true }); // Use merge to update existing fields without overwriting
+
+          await signOut(auth); // Sign out from Firebase
+          localStorage.removeItem('deviceId'); // Clear device ID from local storage
+          alert("👋 Logged out successfully.");
+          window.location.href = "login.html"; // Redirect to login page
+        } catch (error) {
+          console.error("Logout error:", error);
+          alert("❌ Logout failed: " + error.message);
+        }
+      } else {
+        // No user logged in, just redirect
         window.location.href = "login.html";
-      }).catch((error) => {
-        console.error("Logout error:", error);
-      });
+      }
     });
-    
   </script>
 </body>
 </html>
