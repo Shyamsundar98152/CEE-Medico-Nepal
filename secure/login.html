@@ -302,22 +302,19 @@
         height: 35px;
     }
   </style>
-   <!-- Ad Popup Notice Box -->
-<div id="noticePopup" style="display:none; position:fixed; top:50%; left:50%; transform:translate(-50%, -50%);
+    <div id="noticePopup" style="display:none; position:fixed; top:50%; left:50%; transform:translate(-50%, -50%);
 background:#fff; padding:20px; border:2px solid #0077cc; box-shadow:0 0 15px rgba(0,0,0,0.4); 
 z-index:9999; border-radius:10px; max-width:90%; width:320px; text-align:center;">
   <h3 style="margin-top:0; color:#0077cc;">📢 Sponsored Ad</h3>
   <img src="/img/payment-premium.png" alt="Ad Banner" style="width:100%; height:auto; border-radius:5px; margin:10px 0;">
- <p style="margin:10px 0; color:green;">Only 100 rupees and get your premium subscription & After register Contact Given Number  !</p>
+ <p style="margin:10px 0; color:green;">Only 100 rupees and get your premium subscription & After register Contact Given Number !</p>
   <p id="countdown" style="color:#cc0000; font-weight:bold;">Closing in 10 seconds...</p>
   <button onclick="closeNotice()" style="margin-top:10px; padding:5px 15px; background:#0077cc; color:#fff; border:none; border-radius:5px;">Close</button>
 </div>
 
-<!-- Dark Overlay Background -->
 <div id="overlay" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; 
 background:rgba(0,0,0,0.5); z-index:9998;"></div>
 
-<!-- JavaScript -->
 <script>
   let countdownValue = 10;
   let countdownInterval;
@@ -400,27 +397,26 @@ background:rgba(0,0,0,0.5); z-index:9998;"></div>
     </form>
   </div>
 
-  <!-- WhatsApp Floating Button -->
   <a href="https://wa.me/+9779812240229?text=I%20want%20access" target="_blank" class="whatsapp-float">
     <img src="https://upload.wikimedia.org/wikipedia/commons/5/5e/WhatsApp_icon.png" alt="WhatsApp">
   </a>
 
- <script type="module">
- 
-
-
+<script type="module">
   import { initializeApp } from "https://www.gstatic.com/firebasejs/11.8.1/firebase-app.js";
   import {
     getAuth,
     signInWithEmailAndPassword,
     GoogleAuthProvider,
-    signInWithPopup
+    signInWithPopup,
+    signOut
   } from "https://www.gstatic.com/firebasejs/11.8.1/firebase-auth.js";
   import {
     getDatabase,
     ref,
     set,
-    get
+    get,
+    remove, // Import remove for deleting device data
+    serverTimestamp // Import serverTimestamp for accurate timestamps
   } from "https://www.gstatic.com/firebasejs/11.8.1/firebase-database.js";
 
   // Firebase config
@@ -440,29 +436,57 @@ background:rgba(0,0,0,0.5); z-index:9998;"></div>
   const db = getDatabase(app);
   const provider = new GoogleAuthProvider();
 
-  // ✅ Function to check approval from DB
-  async function checkApproval(user) {
-   
+  // Helper function to generate a simple unique ID for the device
+  function getDeviceId() {
+    let deviceId = localStorage.getItem('deviceId');
+    if (!deviceId) {
+      deviceId = 'device_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
+      localStorage.setItem('deviceId', deviceId);
+    }
+    return deviceId;
+  }
 
+  // ✅ Function to check approval and log device data
+  async function checkApproval(user) {
     const userRef = ref(db, "users/" + user.uid);
     const snapshot = await get(userRef);
+    const deviceId = getDeviceId();
+    const userAgent = navigator.userAgent;
+
     if (snapshot.exists()) {
       const data = snapshot.val();
       if (data.isApproved === true) {
+        // Log device data upon successful login
+        const deviceRef = ref(db, `userDevices/${user.uid}/${deviceId}`);
+        await set(deviceRef, {
+          userAgent: userAgent,
+          lastLogin: serverTimestamp(),
+          isOnline: true
+        });
         alert("✅ Access granted. Redirecting...");
         window.location.href = "/secure/protected.html";
       } else {
         alert("⛔ Access denied. Not approved by admin yet.");
-        auth.signOut();
+        // If not approved, sign out and clear device info for this session
+        await signOut(auth);
+        const deviceRef = ref(db, `userDevices/${user.uid}/${deviceId}`);
+        await remove(deviceRef); // Remove device data if not approved
       }
     } else {
-      // 🆕 New user — add to DB
+      // 🆕 New user — add to DB and log initial device data
       await set(userRef, {
         email: user.email,
         isApproved: false
       });
+      // Also log the device for the new user, even if not yet approved
+      const deviceRef = ref(db, `userDevices/${user.uid}/${deviceId}`);
+      await set(deviceRef, {
+        userAgent: userAgent,
+        lastLoginAttempt: serverTimestamp(), // Log the attempt
+        isOnline: false // Not online until approved
+      });
       alert("📝 Registered. Please wait for admin approval.");
-      auth.signOut();
+      await signOut(auth); // Sign out new users until approved
     }
   }
 
@@ -501,7 +525,45 @@ background:rgba(0,0,0,0.5); z-index:9998;"></div>
     this.classList.toggle('fa-eye-slash');
     this.classList.toggle('fa-eye');
   });
-   
+
+  // 🔒 Logout functionality (assuming this is on protected.html or similar)
+  // This part would typically be on the page the user lands on after logging in.
+  // I've included it here as it was part of your request.
+  // You should ensure a button with id="logoutBtn" exists on that page.
+  auth.onAuthStateChanged(user => {
+    if (user) {
+      // User is signed in. We can attach the logout listener.
+      const logoutBtn = document.getElementById("logoutBtn");
+      if (logoutBtn) {
+        logoutBtn.addEventListener("click", async () => {
+          const deviceId = getDeviceId();
+          const userRef = ref(db, `userDevices/${user.uid}/${deviceId}`);
+          
+          try {
+            // Update device status to offline and record logout time
+            await set(userRef, {
+              userAgent: navigator.userAgent, // Keep user agent
+              lastLogout: serverTimestamp(),
+              isOnline: false
+            }, { merge: true }); // Use merge to update existing fields without overwriting
+            
+            await signOut(auth);
+            localStorage.removeItem('deviceId'); // Clear device ID on logout
+            alert("👋 Logged out successfully.");
+            window.location.href = "login.html";
+          } catch (error) {
+            console.error("Logout error:", error);
+            alert("❌ Logout failed: " + error.message);
+          }
+        });
+      }
+    } else {
+      // User is signed out. If they are on a protected page, redirect to login.
+      if (window.location.pathname === "/secure/protected.html") {
+        window.location.href = "login.html";
+      }
+    }
+  });
 </script>
 
 </body>
