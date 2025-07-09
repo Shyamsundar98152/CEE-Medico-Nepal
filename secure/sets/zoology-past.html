@@ -307,7 +307,7 @@
             display: flex;
             flex-direction: column;
             gap: 15px;
-            margin-bottom: 30px;
+            margin-bottom: 20px; /* Reduced margin to make space for explanation */
         }
 
         .option {
@@ -342,9 +342,30 @@
             color: var(--danger-color);
         }
 
+        /* New: Explanation styles */
+        .explanation-container {
+            background-color: #f0f8ff; /* Light blue background */
+            border-left: 5px solid var(--primary-color);
+            padding: 15px;
+            border-radius: 5px;
+            margin-bottom: 30px;
+            display: none; /* Hidden by default */
+        }
+
+        .explanation-container p {
+            font-size: 0.95rem;
+            color: var(--text-color);
+        }
+        
+        .explanation-container strong {
+            color: var(--secondary-color);
+        }
+
         .quiz-navigation {
             display: flex;
             justify-content: space-between;
+            flex-wrap: wrap; /* Allow wrapping on smaller screens */
+            gap: 10px; /* Gap between buttons */
         }
 
         .quiz-navigation button {
@@ -352,14 +373,16 @@
             border-radius: 5px;
             font-weight: 500;
             border: none;
+            flex-grow: 1; /* Allow buttons to grow */
+            min-width: 120px; /* Minimum width for buttons */
         }
 
-        #prev-btn {
+        #prev-btn, #exit-quiz-btn { /* Added exit-quiz-btn */
             background-color: var(--light-color);
             color: var(--text-color);
         }
 
-        #prev-btn:hover {
+        #prev-btn:hover, #exit-quiz-btn:hover {
             background-color: #ddd;
         }
 
@@ -703,7 +726,8 @@
         <section class="quiz-categories">
             <h2>Quiz Categories</h2>
             <div class="category-grid" id="category-container">
-                </div>
+                <!-- Categories will be loaded dynamically from JSON files -->
+            </div>
         </section>
 
         <section class="quiz-container" id="quiz-section" style="display: none;">
@@ -722,11 +746,17 @@
                     <p id="question-text">Question text goes here...</p>
                 </div>
                 <div class="options-container" id="options-container">
-                    </div>
+                    <!-- Options will be loaded dynamically -->
+                </div>
+                <!-- New: Explanation Container -->
+                <div class="explanation-container" id="explanation-container">
+                    <p><strong>Explanation:</strong> <span id="explanation-text"></span></p>
+                </div>
                 <div class="quiz-navigation">
                     <button id="prev-btn" disabled><i class="fas fa-arrow-left"></i> Previous</button>
+                    <button id="exit-quiz-btn"><i class="fas fa-times-circle"></i> Exit Quiz</button> <!-- New button -->
                     <button id="next-btn">Next <i class="fas fa-arrow-right"></i></button>
-                    <button id="submit-btn" style="display: none;">Submit Quiz</button>
+                    <button id="submit-btn">Submit Quiz</button> <!-- Always visible now -->
                 </div>
             </div>
         </section>
@@ -740,7 +770,8 @@
                 <p>You scored <span id="correct-answers">0</span> out of <span id="total-questions-result">0</span></p>
             </div>
             <div class="result-details" id="result-details">
-                </div>
+                <!-- Result details will be loaded here -->
+            </div>
             <button id="retake-btn">Retake Quiz</button>
             <button id="choose-another-btn">Choose Another Quiz</button>
         </section>
@@ -803,12 +834,15 @@
             const quizTitle = document.getElementById('quiz-title');
             const questionText = document.getElementById('question-text');
             const optionsContainer = document.getElementById('options-container');
+            const explanationContainer = document.getElementById('explanation-container');
+            const explanationText = document.getElementById('explanation-text');
             const currentQuestion = document.getElementById('current-question');
             const totalQuestions = document.getElementById('total-questions');
             const timeDisplay = document.getElementById('time');
             const prevBtn = document.getElementById('prev-btn');
             const nextBtn = document.getElementById('next-btn');
             const submitBtn = document.getElementById('submit-btn');
+            const exitQuizBtn = document.getElementById('exit-quiz-btn');
             const scorePercentage = document.getElementById('score-percentage');
             const correctAnswers = document.getElementById('correct-answers');
             const totalQuestionsResult = document.getElementById('total-questions-result');
@@ -822,14 +856,14 @@
             let currentQuiz = null;
             let currentQuizIndex = 0;
             let currentQuestionIndex = 0;
-            let userAnswers = [];
+            let userAnswers = []; // Stores the index of the selected option for each question
             let score = 0;
             let timer = null;
             let seconds = 0;
             
             // Mobile Menu Toggle
-            const mobileMenuBtn = document.querySelector('.mobile-menu-icon'); /* Updated selector */
-            const nav = document.querySelector('.main-nav'); /* Updated selector */
+            const mobileMenuBtn = document.querySelector('.mobile-menu-icon');
+            const nav = document.querySelector('.main-nav');
             
             mobileMenuBtn.addEventListener('click', function() {
                 nav.classList.toggle('active');
@@ -838,21 +872,21 @@
             // Load Quiz Categories from JSON files
             function loadQuizCategories() {
                 const quizFiles = [
+                    { name: 'Endocrine System', file: 'endocrine_system.txt' },
+                    { name: 'Human Disease', file: 'human_disease.txt' },
+                    { name: 'Origin', file: 'origin.txt' },
+                    { name: 'Reproductive System', file: 'reproductive_system.txt' },
+                    { name: 'Respiratory System', file: 'respiratory.txt' },
                     { name: 'Cardiac System', file: 'cardiac.txt' },
                     { name: 'Developmental Biology', file: 'developmental_biology.txt' },
-                    { name: 'Reproductive System', file: 'reproductive_system.txt' },
+                    { name: 'Earthworm', file: 'earthworm.txt' },
+                    { name: 'Embryonic Development', file: 'embryonic_development.txt' },
+                    { name: 'Excretory System', file: 'excretory.txt' },
+                    { name: 'Frog', file: 'frog.txt' },
+                    { name: 'Phylum', file: 'phylum.txt' },
+                    { name: 'Plasmodium and Paramecium', file: 'plasmodium_and_paramecium.txt' },
                     { name: 'Sense Organs', file: 'sense_organ.txt' },
-                    { name: 'Skeletal System', file: 'skeletal_system.txt' },
-                    { name: 'Endocrine System', file: 'endocrine_system.txt' }, /* Added */
-                    { name: 'Human Disease', file: 'human_disease.txt' }, /* Added */
-                    { name: 'Origin', file: 'origin.txt' }, /* Added */
-                    { name: 'Respiratory System', file: 'respiratory.txt' }, /* Added */
-                    { name: 'Earthworm', file: 'earthworm.txt' }, /* Added */
-                    { name: 'Embryonic Development', file: 'embryonic_development.txt' }, /* Added */
-                    { name: 'Excretory System', file: 'excretory.txt' }, /* Added */
-                    { name: 'Frog', file: 'frog.txt' }, /* Added */
-                    { name: 'Phylum', file: 'phylum.txt' }, /* Added */
-                    { name: 'Plasmodium and Paramecium', file: 'plasmodium_and_paramecium.txt' } /* Added */
+                    { name: 'Skeletal System', file: 'skeletal_system.txt' }
                 ];
                 
                 categoryContainer.innerHTML = ''; /* Clear existing categories to prevent duplicates on retake */
@@ -876,7 +910,6 @@
                     else if (quiz.name.includes('Frog')) iconClass = 'fas fa-frog';
                     else if (quiz.name.includes('Phylum')) iconClass = 'fas fa-dna';
                     else if (quiz.name.includes('Plasmodium') || quiz.name.includes('Paramecium')) iconClass = 'fas fa-microscope';
-
 
                     categoryCard.innerHTML = `
                         <i class="${iconClass}"></i>
@@ -906,9 +939,10 @@
             // Load quiz data from text file
             async function loadQuizData(quizName, quizFile) {
                 try {
-                    const response = await fetch(`data/${quizFile}`); /* Assuming files are in a 'data' folder */
+                    const response = await fetch(`data/${quizFile}`); // Assuming files are in a 'data' folder
                     if (!response.ok) {
-                        throw new Error('Failed to load quiz data');
+                        // If the file is not found, throw an error with a specific message
+                        throw new Error(`Quiz data file not found: data/${quizFile}. Please ensure your quiz data files are in a 'data' folder.`);
                     }
                     const textData = await response.text();
                     
@@ -918,7 +952,7 @@
                         quizData = JSON.parse(textData);
                     } catch (e) {
                         console.error('Error parsing quiz data:', e);
-                        alert('Error loading quiz data. Please check the file format.');
+                        alert(`Error loading quiz data for ${quizName}. Please check the file format of 'data/${quizFile}'.`);
                         return;
                     }
                     
@@ -928,7 +962,7 @@
                     };
                     
                     currentQuestionIndex = 0;
-                    userAnswers = new Array(quizData.length).fill(null);
+                    userAnswers = new Array(quizData.length).fill(null); // Initialize with null for unanswered questions
                     score = 0;
                     seconds = 0;
                     
@@ -936,7 +970,12 @@
                     displayQuestion();
                 } catch (error) {
                     console.error('Error loading quiz data:', error);
-                    alert('Failed to load quiz data. Please try again.');
+                    alert(`Failed to load quiz data: ${error.message}`);
+                    // Redirect back to categories if data loading fails
+                    document.querySelector('.quiz-categories').style.display = 'block';
+                    quizSection.style.display = 'none';
+                    resultsSection.style.display = 'none';
+                    document.querySelector('.quiz-categories').scrollIntoView({ behavior: 'smooth' });
                 }
             }
             
@@ -953,29 +992,79 @@
                 questionText.textContent = question.question;
                 
                 optionsContainer.innerHTML = '';
+                explanationContainer.style.display = 'none'; // Hide explanation by default
+                explanationText.textContent = ''; // Clear explanation text
+
                 question.options.forEach((option, index) => {
                     const optionElement = document.createElement('div');
                     optionElement.className = 'option';
-                    if (userAnswers[currentQuestionIndex] === index) {
-                        optionElement.classList.add('selected');
-                    }
                     optionElement.textContent = option;
-                    optionElement.addEventListener('click', () => selectOption(index));
+                    optionElement.dataset.index = index; // Store index for easy access
+
+                    // Add event listener only if the question hasn't been answered yet
+                    if (userAnswers[currentQuestionIndex] === null) {
+                        optionElement.addEventListener('click', () => selectOption(index));
+                    }
+                    
                     optionsContainer.appendChild(optionElement);
                 });
+
+                // If the question has already been answered, show feedback immediately
+                if (userAnswers[currentQuestionIndex] !== null) {
+                    applyFeedbackToOptions(userAnswers[currentQuestionIndex], question.correct, question.explanation);
+                }
                 
                 prevBtn.disabled = currentQuestionIndex === 0;
+                // Next button is always visible unless it's the very last question (then submit takes over its role)
                 nextBtn.style.display = currentQuestionIndex < currentQuiz.questions.length - 1 ? 'block' : 'none';
-                submitBtn.style.display = currentQuestionIndex === currentQuiz.questions.length - 1 ? 'block' : 'none';
+                // Submit button is always visible
+                submitBtn.style.display = 'block';
             }
             
-            // Select an option
+            // Select an option and provide immediate feedback
             function selectOption(optionIndex) {
-                const options = document.querySelectorAll('.option');
-                options.forEach(option => option.classList.remove('selected'));
+                const question = currentQuiz.questions[currentQuestionIndex];
                 
-                options[optionIndex].classList.add('selected');
-                userAnswers[currentQuestionIndex] = optionIndex;
+                // If the question has already been answered, do nothing
+                if (userAnswers[currentQuestionIndex] !== null) {
+                    return;
+                }
+
+                userAnswers[currentQuestionIndex] = optionIndex; // Store the user's answer
+
+                applyFeedbackToOptions(optionIndex, question.correct, question.explanation);
+
+                // Disable further clicks on options for this question
+                const options = document.querySelectorAll('.option');
+                options.forEach(option => {
+                    option.removeEventListener('click', () => selectOption(parseInt(option.dataset.index)));
+                    option.style.cursor = 'default'; // Change cursor to indicate non-clickable
+                });
+            }
+
+            // Helper function to apply correct/incorrect classes and show explanation
+            function applyFeedbackToOptions(selectedOptionIndex, correctOptionIndex, explanation) {
+                const options = document.querySelectorAll('.option');
+                options.forEach((optionElement, index) => {
+                    optionElement.classList.remove('selected', 'correct', 'incorrect'); // Clear previous states
+
+                    if (index === selectedOptionIndex) {
+                        optionElement.classList.add('selected'); // Mark as selected
+                        if (index === correctOptionIndex) {
+                            optionElement.classList.add('correct');
+                        } else {
+                            optionElement.classList.add('incorrect');
+                        }
+                    }
+                    // Always show the correct answer if it's different from the selected one
+                    if (index === correctOptionIndex && selectedOptionIndex !== correctOptionIndex) {
+                        optionElement.classList.add('correct');
+                    }
+                });
+
+                // Display explanation
+                explanationText.textContent = explanation;
+                explanationContainer.style.display = 'block';
             }
             
             // Navigate to previous question
@@ -998,6 +1087,19 @@
             submitBtn.addEventListener('click', () => {
                 submitQuiz();
             });
+
+            // New: Exit Quiz button functionality
+            exitQuizBtn.addEventListener('click', () => {
+                // Confirm with the user before exiting
+                // Using a custom modal/message box is recommended for production, not confirm()
+                if (confirm('Are you sure you want to exit this quiz? Your current progress will be lost.')) {
+                    stopTimer();
+                    document.querySelector('.quiz-categories').style.display = 'block';
+                    quizSection.style.display = 'none';
+                    resultsSection.style.display = 'none';
+                    document.querySelector('.quiz-categories').scrollIntoView({ behavior: 'smooth' });
+                }
+            });
             
             // Calculate and display results
             function submitQuiz() {
@@ -1005,7 +1107,8 @@
                 
                 score = 0;
                 currentQuiz.questions.forEach((question, index) => {
-                    if (userAnswers[index] === question.correct) {
+                    // Only count if an answer was selected and it's correct
+                    if (userAnswers[index] !== null && userAnswers[index] === question.correct) {
                         score++;
                     }
                 });
@@ -1029,7 +1132,7 @@
                 
                 resultDetails.innerHTML = '';
                 currentQuiz.questions.forEach((question, index) => {
-                    const isCorrect = userAnswers[index] === question.correct;
+                    const isCorrect = userAnswers[index] !== null && userAnswers[index] === question.correct;
                     const resultItem = document.createElement('div');
                     resultItem.className = `result-item ${isCorrect ? 'correct' : 'incorrect'}`;
                     
@@ -1037,24 +1140,25 @@
                     resultQuestion.className = 'result-question';
                     resultQuestion.textContent = `${index + 1}. ${question.question}`;
                     
-                    const userAnswer = document.createElement('div');
-                    userAnswer.className = `result-answer ${isCorrect ? 'correct' : 'incorrect'}`;
-                    userAnswer.textContent = `Your answer: ${question.options[userAnswers[index]] || 'Not answered'}`;
+                    const userAnswerDisplay = userAnswers[index] !== null ? question.options[userAnswers[index]] : 'Not answered';
+                    const userAnswerElement = document.createElement('div');
+                    userAnswerElement.className = `result-answer ${isCorrect ? 'correct' : 'incorrect'}`;
+                    userAnswerElement.textContent = `Your answer: ${userAnswerDisplay}`;
                     
-                    const correctAnswer = document.createElement('div');
-                    correctAnswer.className = 'result-answer correct';
-                    correctAnswer.textContent = `Correct answer: ${question.options[question.correct]}`;
+                    const correctAnswerElement = document.createElement('div');
+                    correctAnswerElement.className = 'result-answer correct';
+                    correctAnswerElement.textContent = `Correct answer: ${question.options[question.correct]}`;
                     
-                    const explanation = document.createElement('div');
-                    explanation.className = 'result-answer';
-                    explanation.textContent = `Explanation: ${question.explanation}`;
+                    const explanationElement = document.createElement('div');
+                    explanationElement.className = 'result-answer';
+                    explanationElement.textContent = `Explanation: ${question.explanation}`;
                     
                     resultItem.appendChild(resultQuestion);
-                    resultItem.appendChild(userAnswer);
-                    if (!isCorrect) {
-                        resultItem.appendChild(correctAnswer);
+                    resultItem.appendChild(userAnswerElement);
+                    if (!isCorrect) { // Only show correct answer if user got it wrong
+                        resultItem.appendChild(correctAnswerElement);
                     }
-                    resultItem.appendChild(explanation);
+                    resultItem.appendChild(explanationElement);
                     
                     resultDetails.appendChild(resultItem);
                 });
@@ -1076,7 +1180,7 @@
                 displayQuestion();
             });
             
-            // Choose another quiz
+            // Choose another quiz (from results page)
             chooseAnotherBtn.addEventListener('click', () => {
                 document.querySelector('.quiz-categories').style.display = 'block';
                 quizSection.style.display = 'none';
@@ -1085,7 +1189,7 @@
                 document.querySelector('.quiz-categories').scrollIntoView({ behavior: 'smooth' });
             });
             
-            // Start Quiz button
+            // Start Quiz button (from hero section)
             startQuizBtn.addEventListener('click', () => {
                 document.querySelector('.quiz-categories').scrollIntoView({ behavior: 'smooth' });
             });
