@@ -39,7 +39,7 @@ onAuthStateChanged(auth, user => {
   if (user) {
     document.body.style.display = "block";
   } else {
-    window.location.href = "login.html";
+    window.location.href = "/secure/login.html";
   }
 });
 
@@ -62,7 +62,7 @@ if (logoutBtn) {
 
         await signOut(auth);
         alert("👋 Logged out successfully.");
-        window.location.href = "login.html";
+        window.location.href = "/secure/login.html";
       } catch (error) {
         alert("❌ Logout failed: " + error.message);
       }
