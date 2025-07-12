@@ -1,0 +1,497 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>CEE Medico Premium Videos</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <style>
+    :root {
+      --primary-color: #0d6efd;
+      --primary-dark: #0b5ed7;
+      --secondary-color: #6c757d;
+    }
+
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background-color: #f8f9fa;
+      color: #212529;
+    }
+
+    .navbar-brand {
+      font-weight: bold;
+    }
+
+    .video-container {
+      position: relative;
+      padding-bottom: 56.25%; /* 16:9 Aspect Ratio */
+      height: 0;
+      overflow: hidden;
+      background: #000;
+      border-radius: 8px;
+      margin-bottom: 20px;
+    }
+
+    .video-container iframe {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      border: none;
+    }
+
+    .video-card {
+      background: white;
+      border-radius: 10px;
+      overflow: hidden;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+      transition: transform 0.3s, box-shadow 0.3s;
+      margin-bottom: 25px;
+    }
+
+    .video-card:hover {
+      transform: translateY(-5px);
+      box-shadow: 0 10px 20px rgba(0, 0, 0, 0.15);
+    }
+
+    .video-thumbnail {
+      width: 100%;
+      height: 180px;
+      object-fit: cover;
+      cursor: pointer;
+    }
+
+    .premium-badge {
+      position: absolute;
+      top: 10px;
+      right: 10px;
+      background-color: gold;
+      color: black;
+      padding: 3px 8px;
+      border-radius: 4px;
+      font-size: 12px;
+      font-weight: bold;
+    }
+
+    .auth-btn {
+      min-width: 100px;
+    }
+
+    .video-player-modal .modal-dialog {
+      max-width: 900px;
+    }
+
+    /* Prevent text selection on video elements */
+    .video-thumbnail, .video-card {
+      user-select: none;
+    }
+
+    footer {
+      background-color: #212529;
+      color: white;
+      padding: 30px 0;
+      margin-top: 50px;
+    }
+
+    @media (max-width: 768px) {
+      .video-thumbnail {
+        height: 150px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <!-- Header (similar to ceemediconepal.xyz) -->
+  <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
+    <div class="container">
+      <a class="navbar-brand" href="#">
+        <i class="fas fa-graduation-cap me-2"></i>CEE Medico Nepal
+      </a>
+      <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+        <span class="navbar-toggler-icon"></span>
+      </button>
+      <div class="collapse navbar-collapse" id="navbarNav">
+        <ul class="navbar-nav me-auto">
+          <li class="nav-item">
+            <a class="nav-link" href="#">Home</a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link" href="#">Courses</a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link" href="#">Videos</a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link" href="#">About</a>
+          </li>
+        </ul>
+        <div class="d-flex" id="auth-section">
+          <button id="login-btn" class="btn btn-outline-light auth-btn me-2">
+            <i class="fas fa-sign-in-alt me-1"></i> Login
+          </button>
+          <button id="logout-btn" class="btn btn-outline-light auth-btn d-none">
+            <i class="fas fa-sign-out-alt me-1"></i> Logout
+          </button>
+        </div>
+      </div>
+    </div>
+  </nav>
+
+  <!-- Main Content -->
+  <div class="container my-5">
+    <div class="row mb-4">
+      <div class="col-12">
+        <h2 class="fw-bold">Premium Medical Lectures</h2>
+        <p class="text-muted">Access high-quality medical education content</p>
+      </div>
+    </div>
+
+    <div class="row" id="video-list">
+      <div class="col-12 text-center my-5">
+        <div class="spinner-border text-primary" role="status">
+          <span class="visually-hidden">Loading...</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Video Player Modal -->
+  <div class="modal fade video-player-modal" id="videoModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title" id="videoModalTitle">Video Player</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <div class="modal-body">
+          <div class="video-container">
+            <!-- Loading spinner for the video player -->
+            <div class="d-flex justify-content-center align-items-center position-absolute w-100 h-100 bg-dark" id="videoLoadingSpinner" style="z-index: 10;">
+              <div class="spinner-border text-light" role="status">
+                <span class="visually-hidden">Loading video...</span>
+              </div>
+            </div>
+            <iframe id="videoPlayerFrame" allowfullscreen></iframe>
+          </div>
+          <div class="mt-3">
+            <p id="videoModalDescription"></p>
+            <p class="text-muted small" id="videoModalDate"></p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Custom Message Modal (replaces alert()) -->
+  <div class="modal fade" id="messageModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-sm">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title" id="messageModalTitle"></h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <div class="modal-body" id="messageModalBody">
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-primary" data-bs-dismiss="modal">OK</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Footer (similar to ceemediconepal.xyz) -->
+  <footer>
+    <div class="container">
+      <div class="row">
+        <div class="col-md-4 mb-4">
+          <h5>CEE Medico Nepal</h5>
+          <p>Providing quality medical education for aspiring healthcare professionals in Nepal.</p>
+        </div>
+        <div class="col-md-2 mb-4">
+          <h5>Quick Links</h5>
+          <ul class="list-unstyled">
+            <li><a href="#" class="text-white">Home</a></li>
+            <li><a href="#" class="text-white">Courses</a></li>
+            <li><a href="#" class="text-white">Videos</a></li>
+            <li><a href="#" class="text-white">About Us</a></li>
+          </ul>
+        </div>
+        <div class="col-md-3 mb-4">
+          <h5>Contact</h5>
+          <ul class="list-unstyled">
+            <li><i class="fas fa-envelope me-2"></i> info@ceemediconepal.com</li>
+            <li><i class="fas fa-phone me-2"></i> +977 1 1234567</li>
+            <li><i class="fas fa-map-marker-alt me-2"></i> Kathmandu, Nepal</li>
+          </ul>
+        </div>
+        <div class="col-md-3 mb-4">
+          <h5>Follow Us</h5>
+          <div class="social-links">
+            <a href="#" class="text-white me-3"><i class="fab fa-facebook-f"></i></a>
+            <a href="#" class="text-white me-3"><i class="fab fa-twitter"></i></a>
+            <a href="#" class="text-white me-3"><i class="fab fa-instagram"></i></a>
+            <a href="#" class="text-white me-3"><i class="fab fa-youtube"></i></a>
+          </div>
+        </div>
+      </div>
+      <hr class="bg-light">
+      <div class="text-center">
+        <p class="mb-0">&copy; 2023 CEE Medico Nepal. All rights reserved.</p>
+      </div>
+    </div>
+  </footer>
+
+  <!-- Firebase and other scripts -->
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/11.8.1/firebase-app.js";
+    import { getFirestore, collection, getDocs, query, orderBy } from "https://www.gstatic.com/firebasejs/11.8.1/firebase-firestore.js";
+    import { getAuth, onAuthStateChanged, signInWithPopup, GoogleAuthProvider, signOut } from "https://www.gstatic.com/firebasejs/11.8.1/firebase-auth.js";
+
+    // Firebase configuration (replace with your actual config if different)
+    const firebaseConfig = {
+      apiKey: "AIzaSyBFQd9m9Tm2jo8z8M-62HyDvN9uV3488C0", // Replace with your actual API Key
+      authDomain: "ceemediconepal-lecture.firebaseapp.com",
+      projectId: "ceemediconepal-lecture",
+      storageBucket: "ceemediconepal-lecture.firebasestorage.app",
+      messagingSenderId: "1026053876979",
+      appId: "1:1026053876979:web:afbcb06fd04ea6e2dd1b86"
+    };
+
+    // Initialize Firebase
+    const app = initializeApp(firebaseConfig);
+    const db = getFirestore(app);
+    const auth = getAuth(app);
+    const provider = new GoogleAuthProvider();
+
+    // DOM elements
+    const videoList = document.getElementById('video-list');
+    const loginBtn = document.getElementById('login-btn');
+    const logoutBtn = document.getElementById('logout-btn');
+    const videoModal = new bootstrap.Modal(document.getElementById('videoModal'));
+    const videoPlayerFrame = document.getElementById('videoPlayerFrame');
+    const videoModalTitle = document.getElementById('videoModalTitle');
+    const videoModalDescription = document.getElementById('videoModalDescription');
+    const videoModalDate = document.getElementById('videoModalDate');
+    const videoLoadingSpinner = document.getElementById('videoLoadingSpinner');
+
+    let userLoggedIn = false;
+    // Map to store video data securely, keyed by document ID
+    const videoDataMap = new Map();
+
+    /**
+     * Displays a custom message in a Bootstrap modal.
+     * @param {string} title - The title of the message modal.
+     * @param {string} message - The content of the message modal.
+     */
+    function showMessage(title, message) {
+      document.getElementById('messageModalTitle').textContent = title;
+      document.getElementById('messageModalBody').textContent = message;
+      new bootstrap.Modal(document.getElementById('messageModal')).show();
+    }
+
+    // Auth state observer: Updates UI based on user login status and reloads videos
+    onAuthStateChanged(auth, user => {
+      userLoggedIn = !!user;
+      loginBtn.classList.toggle('d-none', userLoggedIn);
+      logoutBtn.classList.toggle('d-none', !userLoggedIn);
+      loadVideos(); // Reload videos to show/hide premium content based on login status
+    });
+
+    // Event listeners for login and logout buttons
+    loginBtn.onclick = () => {
+      signInWithPopup(auth, provider)
+        .catch(error => {
+          console.error("Login error:", error);
+          if (error.code === 'auth/unauthorized-domain') {
+            showMessage(
+              "Login Failed: Unauthorized Domain",
+              `The domain "${window.location.origin}" is not authorized for Firebase authentication. ` +
+              `Please add this domain to the "Authorized domains" list in your Firebase project's Authentication settings.`
+            );
+          } else {
+            showMessage("Login Failed", "Could not log in. Please try again.");
+          }
+        });
+    };
+
+    logoutBtn.onclick = () => {
+      signOut(auth)
+        .catch(error => {
+          console.error("Logout error:", error);
+          showMessage("Logout Failed", "Could not log out. Please try again.");
+        });
+    };
+
+    /**
+     * Loads video data from Firestore and displays them.
+     * Handles premium content visibility based on user login status.
+     */
+    async function loadVideos() {
+      // Show loading spinner while fetching videos
+      videoList.innerHTML = `
+        <div class="col-12 text-center my-5">
+          <div class="spinner-border text-primary" role="status">
+            <span class="visually-hidden">Loading...</span>
+          </div>
+        </div>
+      `;
+      videoDataMap.clear(); // Clear previous video data
+
+      try {
+        // Query videos ordered by creation date
+        const q = query(collection(db, "videos"), orderBy("createdAt", "desc"));
+        const snapshot = await getDocs(q);
+
+        if (snapshot.empty) {
+          // Display message if no videos are available
+          videoList.innerHTML = `
+            <div class="col-12 text-center py-5">
+              <i class="fas fa-video-slash fa-3x mb-3 text-muted"></i>
+              <h5>No videos available yet</h5>
+              <p class="text-muted">Check back later for new content</p>
+            </div>
+          `;
+          return;
+        }
+
+        let html = '';
+        snapshot.forEach(doc => {
+          const data = doc.data();
+          const videoId = data.youtubeId;
+          const isPremium = data.isPremium || false;
+
+          // Store video data in the map using doc.id as key
+          videoDataMap.set(doc.id, {
+            videoId: videoId,
+            title: data.title,
+            description: data.description || '',
+            createdAt: data.createdAt ? new Date(data.createdAt.seconds * 1000).toLocaleDateString() : 'Date not available',
+            isPremium: isPremium
+          });
+
+          // Skip premium videos for non-logged in users
+          if (isPremium && !userLoggedIn) return;
+
+          html += `
+            <div class="col-md-6 col-lg-4">
+              <div class="video-card h-100">
+                <div class="position-relative">
+                  <img src="https://img.youtube.com/vi/${videoId}/mqdefault.jpg"
+                       alt="${data.title}"
+                       class="video-thumbnail w-100">
+                  ${isPremium ? '<span class="premium-badge"><i class="fas fa-crown me-1"></i> Premium</span>' : ''}
+                </div>
+                <div class="p-3">
+                  <h5 class="mb-1">${data.title}</h5>
+                  <p class="text-muted small mb-2">${videoDataMap.get(doc.id).createdAt}</p>
+                  <p class="text-truncate">${data.description || ''}</p>
+                  <!-- Pass doc.id to the watch button to retrieve video data securely -->
+                  <button class="btn btn-sm btn-primary watch-btn" data-doc-id="${doc.id}">Watch Now</button>
+                </div>
+              </div>
+            </div>
+          `;
+        });
+
+        // If no videos are displayed (e.g., all are premium and user is logged out)
+        videoList.innerHTML = html || `
+          <div class="col-12 text-center py-5">
+            <i class="fas fa-lock fa-3x mb-3 text-muted"></i>
+            <h5>Login to access premium content</h5>
+            <button class="btn btn-primary mt-2" id="login-prompt-btn">Login Now</button>
+          </div>
+        `;
+
+        // Add event listeners to watch buttons using event delegation for efficiency
+        document.querySelectorAll('.watch-btn').forEach(btn => {
+          btn.addEventListener('click', function(e) {
+            e.stopPropagation(); // Prevent event from bubbling up to parent elements
+            const docId = this.dataset.docId; // Get the document ID from the button's data attribute
+            const videoData = videoDataMap.get(docId); // Retrieve full video data from the map
+
+            if (!videoData) {
+              console.error("Video data not found for docId:", docId);
+              showMessage("Error", "Video data could not be loaded.");
+              return;
+            }
+
+            // Check if premium and user is not logged in
+            if (videoData.isPremium && !userLoggedIn) {
+              showMessage("Premium Content", "Please login to access premium content.");
+              return;
+            }
+
+            // Play the video using the retrieved data
+            playVideo(videoData);
+          });
+        });
+
+        // Add event listener for login prompt button if it exists
+        const loginPromptBtn = document.getElementById('login-prompt-btn');
+        if (loginPromptBtn) {
+          loginPromptBtn.addEventListener('click', () => {
+            loginBtn.click(); // Simulate a click on the main login button
+          });
+        }
+
+      } catch (error) {
+        console.error("Error loading videos:", error);
+        videoList.innerHTML = `
+          <div class="col-12 text-center py-5">
+            <i class="fas fa-exclamation-triangle fa-3x mb-3 text-danger"></i>
+            <h5>Error loading videos</h5>
+            <p class="text-muted">Please try again later</p>
+          </div>
+        `;
+      }
+    }
+
+    /**
+     * Plays a video in the modal.
+     * @param {object} videoData - An object containing video details (videoId, title, description, createdAt).
+     */
+    function playVideo(videoData) {
+      // Set modal content
+      videoModalTitle.textContent = videoData.title;
+      videoModalDescription.textContent = videoData.description;
+      videoModalDate.textContent = `Uploaded: ${videoData.createdAt}`;
+
+      // Show spinner before loading iframe
+      videoLoadingSpinner.classList.remove('d-none');
+
+      // Set iframe source with autoplay, no related videos, and modest branding
+      videoPlayerFrame.src = `https://www.youtube.com/embed/${videoData.videoId}?autoplay=1&rel=0&modestbranding=1`;
+
+      // Hide spinner once iframe content loads
+      videoPlayerFrame.onload = () => {
+        videoLoadingSpinner.classList.add('d-none');
+      };
+
+      // Show modal
+      videoModal.show();
+
+      // Clear iframe source and hide spinner when modal is hidden to prevent background playback
+      videoModal._element.addEventListener('hidden.bs.modal', () => {
+        videoPlayerFrame.src = '';
+        videoLoadingSpinner.classList.add('d-none'); // Ensure spinner is hidden
+      }, { once: true }); // Use { once: true } to ensure this listener runs only once per modal show
+    }
+
+    // Prevent right-click and text selection on specific elements for content protection
+    document.addEventListener('contextmenu', function(e) {
+      // Check if the right-click occurred on elements related to video display
+      if (e.target.classList.contains('video-thumbnail') ||
+          e.target.closest('.video-card') || // Covers the entire video card
+          e.target.closest('.video-player-modal')) { // Covers the entire video player modal
+        e.preventDefault(); // Prevent default right-click behavior
+        showMessage("Content Protection", "Right-click is disabled to protect content.");
+      }
+    }, false);
+
+    // Initial load of videos when the page loads
+    loadVideos();
+  </script>
+</body>
+</html>
