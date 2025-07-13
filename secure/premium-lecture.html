@@ -14,7 +14,7 @@
     }
 
     body {
-      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      font-family: 'Inter', sans-serif; /* Changed font to Inter as per instructions */
       background-color: #f8f9fa;
       color: #212529;
     }
@@ -75,10 +75,6 @@
       font-weight: bold;
     }
 
-    .auth-btn {
-      min-width: 100px;
-    }
-
     .video-player-modal .modal-dialog {
       max-width: 900px;
     }
@@ -121,19 +117,16 @@
             <a class="nav-link" href="#">Courses</a>
           </li>
           <li class="nav-item">
-            <a class="nav-link" href="#">Videos</a>
+            <a class="nav-link active" href="#">Videos</a>
           </li>
           <li class="nav-item">
             <a class="nav-link" href="#">About</a>
           </li>
         </ul>
-        <div class="d-flex" id="auth-section">
-          <button id="login-btn" class="btn btn-outline-light auth-btn me-2">
-            <i class="fas fa-sign-in-alt me-1"></i> Login
-          </button>
-          <button id="logout-btn" class="btn btn-outline-light auth-btn d-none">
-            <i class="fas fa-sign-out-alt me-1"></i> Logout
-          </button>
+        <!-- Search bar added to the navbar -->
+        <div class="d-flex">
+          <input class="form-control me-2" type="search" placeholder="Search videos..." aria-label="Search" id="videoSearchInput">
+          <button class="btn btn-outline-light" type="button" id="searchButton">Search</button>
         </div>
       </div>
     </div>
@@ -168,7 +161,7 @@
         <div class="modal-body">
           <div class="video-container">
             <!-- Loading spinner for the video player -->
-            <div class="d-flex justify-content-center align-items-center position-absolute w-100 h-100 bg-dark" id="videoLoadingSpinner" style="z-index: 10;">
+            <div class="d-flex justify-content-center align-items-center position-absolute w-100 h-100 bg-dark rounded" id="videoLoadingSpinner" style="z-index: 10;">
               <div class="spinner-border text-light" role="status">
                 <span class="visually-hidden">Loading video...</span>
               </div>
@@ -244,10 +237,10 @@
   </footer>
 
   <!-- Firebase and other scripts -->
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/11.8.1/firebase-app.js";
     import { getFirestore, collection, getDocs, query, orderBy } from "https://www.gstatic.com/firebasejs/11.8.1/firebase-firestore.js";
-    import { getAuth, onAuthStateChanged, signInWithPopup, GoogleAuthProvider, signOut } from "https://www.gstatic.com/firebasejs/11.8.1/firebase-auth.js";
 
     // Firebase configuration (replace with your actual config if different)
     const firebaseConfig = {
@@ -262,74 +255,48 @@
     // Initialize Firebase
     const app = initializeApp(firebaseConfig);
     const db = getFirestore(app);
-    const auth = getAuth(app);
-    const provider = new GoogleAuthProvider();
+
+    // Declare modal variables globally
+    let videoModal;
+    let messageModalInstance;
 
     // DOM elements
     const videoList = document.getElementById('video-list');
-    const loginBtn = document.getElementById('login-btn');
-    const logoutBtn = document.getElementById('logout-btn');
-    const videoModal = new bootstrap.Modal(document.getElementById('videoModal'));
     const videoPlayerFrame = document.getElementById('videoPlayerFrame');
     const videoModalTitle = document.getElementById('videoModalTitle');
     const videoModalDescription = document.getElementById('videoModalDescription');
     const videoModalDate = document.getElementById('videoModalDate');
     const videoLoadingSpinner = document.getElementById('videoLoadingSpinner');
+    const messageModalElement = document.getElementById('messageModal');
+    const videoSearchInput = document.getElementById('videoSearchInput'); // New search input element
+    const searchButton = document.getElementById('searchButton'); // New search button element
 
-    let userLoggedIn = false;
     // Map to store video data securely, keyed by document ID
     const videoDataMap = new Map();
+    // Array to store all fetched video data for client-side filtering
+    let allVideos = [];
 
     /**
      * Displays a custom message in a Bootstrap modal.
+     * 
      * @param {string} title - The title of the message modal.
      * @param {string} message - The content of the message modal.
      */
     function showMessage(title, message) {
       document.getElementById('messageModalTitle').textContent = title;
       document.getElementById('messageModalBody').textContent = message;
-      new bootstrap.Modal(document.getElementById('messageModal')).show();
+      // Ensure the modal instance is created only once and is available
+      if (!messageModalInstance) {
+        messageModalInstance = new bootstrap.Modal(messageModalElement);
+      }
+      messageModalInstance.show();
     }
 
-    // Auth state observer: Updates UI based on user login status and reloads videos
-    onAuthStateChanged(auth, user => {
-      userLoggedIn = !!user;
-      loginBtn.classList.toggle('d-none', userLoggedIn);
-      logoutBtn.classList.toggle('d-none', !userLoggedIn);
-      loadVideos(); // Reload videos to show/hide premium content based on login status
-    });
-
-    // Event listeners for login and logout buttons
-    loginBtn.onclick = () => {
-      signInWithPopup(auth, provider)
-        .catch(error => {
-          console.error("Login error:", error);
-          if (error.code === 'auth/unauthorized-domain') {
-            showMessage(
-              "Login Failed: Unauthorized Domain",
-              `The domain "${window.location.origin}" is not authorized for Firebase authentication. ` +
-              `Please add this domain to the "Authorized domains" list in your Firebase project's Authentication settings.`
-            );
-          } else {
-            showMessage("Login Failed", "Could not log in. Please try again.");
-          }
-        });
-    };
-
-    logoutBtn.onclick = () => {
-      signOut(auth)
-        .catch(error => {
-          console.error("Logout error:", error);
-          showMessage("Logout Failed", "Could not log out. Please try again.");
-        });
-    };
-
     /**
-     * Loads video data from Firestore and displays them.
-     * Handles premium content visibility based on user login status.
+     * Fetches all video data from Firestore and stores it.
+     * Then, it calls displayVideos to render the filtered list.
      */
-    async function loadVideos() {
-      // Show loading spinner while fetching videos
+    async function fetchAndStoreVideos() {
       videoList.innerHTML = `
         <div class="col-12 text-center my-5">
           <div class="spinner-border text-primary" role="status">
@@ -338,14 +305,13 @@
         </div>
       `;
       videoDataMap.clear(); // Clear previous video data
+      allVideos = []; // Clear previous all videos array
 
       try {
-        // Query videos ordered by creation date
         const q = query(collection(db, "videos"), orderBy("createdAt", "desc"));
         const snapshot = await getDocs(q);
 
         if (snapshot.empty) {
-          // Display message if no videos are available
           videoList.innerHTML = `
             <div class="col-12 text-center py-5">
               <i class="fas fa-video-slash fa-3x mb-3 text-muted"></i>
@@ -356,88 +322,27 @@
           return;
         }
 
-        let html = '';
         snapshot.forEach(doc => {
           const data = doc.data();
           const videoId = data.youtubeId;
           const isPremium = data.isPremium || false;
 
-          // Store video data in the map using doc.id as key
-          videoDataMap.set(doc.id, {
+          const videoEntry = {
+            docId: doc.id,
             videoId: videoId,
             title: data.title,
             description: data.description || '',
             createdAt: data.createdAt ? new Date(data.createdAt.seconds * 1000).toLocaleDateString() : 'Date not available',
             isPremium: isPremium
-          });
-
-          // Skip premium videos for non-logged in users
-          if (isPremium && !userLoggedIn) return;
-
-          html += `
-            <div class="col-md-6 col-lg-4">
-              <div class="video-card h-100">
-                <div class="position-relative">
-                  <img src="https://img.youtube.com/vi/${videoId}/mqdefault.jpg"
-                       alt="${data.title}"
-                       class="video-thumbnail w-100">
-                  ${isPremium ? '<span class="premium-badge"><i class="fas fa-crown me-1"></i> Premium</span>' : ''}
-                </div>
-                <div class="p-3">
-                  <h5 class="mb-1">${data.title}</h5>
-                  <p class="text-muted small mb-2">${videoDataMap.get(doc.id).createdAt}</p>
-                  <p class="text-truncate">${data.description || ''}</p>
-                  <!-- Pass doc.id to the watch button to retrieve video data securely -->
-                  <button class="btn btn-sm btn-primary watch-btn" data-doc-id="${doc.id}">Watch Now</button>
-                </div>
-              </div>
-            </div>
-          `;
+          };
+          videoDataMap.set(doc.id, videoEntry);
+          allVideos.push(videoEntry); // Store all videos for filtering
         });
 
-        // If no videos are displayed (e.g., all are premium and user is logged out)
-        videoList.innerHTML = html || `
-          <div class="col-12 text-center py-5">
-            <i class="fas fa-lock fa-3x mb-3 text-muted"></i>
-            <h5>Login to access premium content</h5>
-            <button class="btn btn-primary mt-2" id="login-prompt-btn">Login Now</button>
-          </div>
-        `;
-
-        // Add event listeners to watch buttons using event delegation for efficiency
-        document.querySelectorAll('.watch-btn').forEach(btn => {
-          btn.addEventListener('click', function(e) {
-            e.stopPropagation(); // Prevent event from bubbling up to parent elements
-            const docId = this.dataset.docId; // Get the document ID from the button's data attribute
-            const videoData = videoDataMap.get(docId); // Retrieve full video data from the map
-
-            if (!videoData) {
-              console.error("Video data not found for docId:", docId);
-              showMessage("Error", "Video data could not be loaded.");
-              return;
-            }
-
-            // Check if premium and user is not logged in
-            if (videoData.isPremium && !userLoggedIn) {
-              showMessage("Premium Content", "Please login to access premium content.");
-              return;
-            }
-
-            // Play the video using the retrieved data
-            playVideo(videoData);
-          });
-        });
-
-        // Add event listener for login prompt button if it exists
-        const loginPromptBtn = document.getElementById('login-prompt-btn');
-        if (loginPromptBtn) {
-          loginPromptBtn.addEventListener('click', () => {
-            loginBtn.click(); // Simulate a click on the main login button
-          });
-        }
-
+        displayVideos(); // Display all videos initially
+        
       } catch (error) {
-        console.error("Error loading videos:", error);
+        console.error("Error fetching videos:", error);
         videoList.innerHTML = `
           <div class="col-12 text-center py-5">
             <i class="fas fa-exclamation-triangle fa-3x mb-3 text-danger"></i>
@@ -446,6 +351,71 @@
           </div>
         `;
       }
+    }
+
+    /**
+     * Displays videos based on the current search term.
+     */
+    function displayVideos() {
+      const searchTerm = videoSearchInput.value.toLowerCase().trim();
+      let filteredVideos = allVideos;
+
+      if (searchTerm) {
+        filteredVideos = allVideos.filter(video =>
+          video.title.toLowerCase().includes(searchTerm) ||
+          video.description.toLowerCase().includes(searchTerm)
+        );
+      }
+
+      let html = '';
+      if (filteredVideos.length === 0) {
+        html = `
+          <div class="col-12 text-center py-5">
+            <i class="fas fa-search fa-3x mb-3 text-muted"></i>
+            <h5>No videos found for "${videoSearchInput.value}"</h5>
+            <p class="text-muted">Try a different search term.</p>
+          </div>
+        `;
+      } else {
+        filteredVideos.forEach(video => {
+          html += `
+            <div class="col-md-6 col-lg-4">
+              <div class="video-card h-100">
+                <div class="position-relative">
+                  <img src="https://img.youtube.com/vi/${video.videoId}/mqdefault.jpg"
+                       alt="${video.title}"
+                       class="video-thumbnail w-100">
+                  ${video.isPremium ? '<span class="premium-badge"><i class="fas fa-crown me-1"></i> Premium</span>' : ''}
+                </div>
+                <div class="p-3">
+                  <h5 class="mb-1">${video.title}</h5>
+                  <p class="text-muted small mb-2">${video.createdAt}</p>
+                  <p class="text-truncate">${video.description}</p>
+                  <button class="btn btn-sm btn-primary watch-btn" data-doc-id="${video.docId}">Watch Now</button>
+                </div>
+              </div>
+            </div>
+          `;
+        });
+      }
+      
+      videoList.innerHTML = html;
+
+      // Add event listeners to watch buttons after rendering
+      document.querySelectorAll('.watch-btn').forEach(btn => {
+        btn.addEventListener('click', function(e) {
+          e.stopPropagation();
+          const docId = this.dataset.docId;
+          const videoData = videoDataMap.get(docId);
+
+          if (!videoData) {
+            console.error("Video data not found for docId:", docId);
+            showMessage("Error", "Video data could not be loaded.");
+            return;
+          }
+          playVideo(videoData);
+        });
+      });
     }
 
     /**
@@ -476,22 +446,33 @@
       videoModal._element.addEventListener('hidden.bs.modal', () => {
         videoPlayerFrame.src = '';
         videoLoadingSpinner.classList.add('d-none'); // Ensure spinner is hidden
-      }, { once: true }); // Use { once: true } to ensure this listener runs only once per modal show
+      }, { once: true });
     }
 
     // Prevent right-click and text selection on specific elements for content protection
     document.addEventListener('contextmenu', function(e) {
-      // Check if the right-click occurred on elements related to video display
       if (e.target.classList.contains('video-thumbnail') ||
-          e.target.closest('.video-card') || // Covers the entire video card
-          e.target.closest('.video-player-modal')) { // Covers the entire video player modal
-        e.preventDefault(); // Prevent default right-click behavior
+          e.target.closest('.video-card') ||
+          e.target.closest('.video-player-modal')) {
+        e.preventDefault();
         showMessage("Content Protection", "Right-click is disabled to protect content.");
       }
     }, false);
 
-    // Initial load of videos when the page loads
-    loadVideos();
+    // Initialize Bootstrap modals after the DOM is fully loaded
+    document.addEventListener('DOMContentLoaded', () => {
+      videoModal = new bootstrap.Modal(document.getElementById('videoModal'));
+      // messageModalInstance will be created on first call to showMessage
+    });
+
+    // Event listener for search input (live search)
+    videoSearchInput.addEventListener('input', displayVideos);
+
+    // Event listener for search button click (optional, as input event handles live search)
+    searchButton.addEventListener('click', displayVideos);
+
+    // Initial fetch and display of videos when the page loads
+    fetchAndStoreVideos();
   </script>
 </body>
 </html>
