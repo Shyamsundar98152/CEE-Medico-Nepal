@@ -1,0 +1,399 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Admin - Manage Videos</title>
+<style>
+  body {
+    font-family: Arial, sans-serif;
+    margin: 20px;
+    max-width: 800px; /* Increased max-width for video list */
+    margin-left: auto;
+    margin-right: auto;
+    background-color: #f4f7f6;
+    color: #333;
+  }
+  h2 {
+    text-align: center;
+    color: #4CAF50;
+    margin-bottom: 30px;
+  }
+  form {
+    background-color: #ffffff;
+    padding: 25px;
+    border-radius: 8px;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+    margin-bottom: 40px;
+  }
+  label {
+    display: block;
+    margin-top: 15px;
+    font-weight: bold;
+    color: #555;
+  }
+  input[type="text"], textarea {
+    width: 100%;
+    padding: 10px;
+    margin-top: 8px;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    box-sizing: border-box;
+    font-size: 16px;
+  }
+  input[type="checkbox"] {
+    margin-top: 10px;
+    transform: scale(1.2); /* Slightly larger checkbox */
+    margin-right: 8px;
+  }
+  button[type="submit"] {
+    margin-top: 25px;
+    background-color: #4CAF50;
+    color: white;
+    padding: 12px 20px;
+    border: none;
+    width: 100%;
+    font-size: 18px;
+    cursor: pointer;
+    border-radius: 5px;
+    transition: background-color 0.3s ease;
+  }
+  button[type="submit"]:hover {
+    background-color: #45a049;
+  }
+  .message {
+    margin-top: 20px;
+    padding: 10px;
+    border-radius: 4px;
+    text-align: center;
+    font-weight: bold;
+  }
+  .message.success {
+    background-color: #d4edda;
+    color: #155724;
+    border-color: #c3e6cb;
+  }
+  .message.error {
+    background-color: #f8d7da;
+    color: #721c24;
+    border-color: #f5c6cb;
+  }
+
+  /* Video List Styling */
+  #videoListContainer {
+    background-color: #ffffff;
+    padding: 25px;
+    border-radius: 8px;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+  }
+  #videoListContainer h3 {
+    text-align: center;
+    color: #337ab7;
+    margin-bottom: 25px;
+  }
+  .video-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 12px 0;
+    border-bottom: 1px solid #eee;
+  }
+  .video-item:last-child {
+    border-bottom: none;
+  }
+  .video-info {
+    flex-grow: 1;
+    margin-right: 15px;
+  }
+  .video-info h4 {
+    margin: 0;
+    font-size: 18px;
+    color: #333;
+  }
+  .video-info p {
+    margin: 5px 0 0;
+    font-size: 14px;
+    color: #666;
+  }
+  .delete-btn {
+    background-color: #f44336;
+    color: white;
+    border: none;
+    padding: 8px 12px;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 14px;
+    transition: background-color 0.3s ease;
+  }
+  .delete-btn:hover {
+    background-color: #da190b;
+  }
+  .empty-list-message {
+    text-align: center;
+    color: #888;
+    padding: 20px;
+  }
+
+  /* Modal Styling (for confirmation) */
+  .modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.5);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 1000;
+    visibility: hidden;
+    opacity: 0;
+    transition: visibility 0s, opacity 0.3s ease;
+  }
+  .modal-overlay.visible {
+    visibility: visible;
+    opacity: 1;
+  }
+  .modal-content {
+    background-color: #fff;
+    padding: 30px;
+    border-radius: 8px;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
+    width: 90%;
+    max-width: 400px;
+    text-align: center;
+  }
+  .modal-content h4 {
+    margin-top: 0;
+    color: #333;
+  }
+  .modal-buttons {
+    margin-top: 20px;
+    display: flex;
+    justify-content: space-around;
+    gap: 10px;
+  }
+  .modal-buttons button {
+    padding: 10px 20px;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    font-size: 16px;
+    transition: background-color 0.3s ease;
+  }
+  .modal-buttons .confirm-delete {
+    background-color: #f44336;
+    color: white;
+  }
+  .modal-buttons .confirm-delete:hover {
+    background-color: #da190b;
+  }
+  .modal-buttons .cancel-delete {
+    background-color: #ccc;
+    color: #333;
+  }
+  .modal-buttons .cancel-delete:hover {
+    background-color: #bbb;
+  }
+</style>
+</head>
+<body>
+
+<h2>Admin Panel - Manage Videos</h2>
+
+<form id="videoForm">
+  <label for="title">Video Title</label>
+  <input type="text" id="title" name="title" placeholder="Enter video title" required />
+
+  <label for="youtubeId">YouTube Video ID</label>
+  <input type="text" id="youtubeId" name="youtubeId" placeholder="e.g. dQw4w9WgXcQ" required />
+
+  <label for="description">Description</label>
+  <textarea id="description" name="description" placeholder="Enter video description" rows="4" required></textarea>
+
+  <label><input type="checkbox" id="isPremium" /> Premium Video</label>
+
+  <button type="submit">Add Video</button>
+</form>
+
+<div class="message" id="message"></div>
+
+<div id="videoListContainer">
+  <h3>Existing Videos</h3>
+  <div id="videoList">
+    <!-- Videos will be loaded here -->
+    <div class="empty-list-message">Loading videos...</div>
+  </div>
+</div>
+
+<!-- Custom Confirmation Modal -->
+<div class="modal-overlay" id="confirmationModal">
+  <div class="modal-content">
+    <h4>Confirm Deletion</h4>
+    <p>Are you sure you want to delete this video?</p>
+    <div class="modal-buttons">
+      <button class="confirm-delete" id="confirmDeleteBtn">Delete</button>
+      <button class="cancel-delete" id="cancelDeleteBtn">Cancel</button>
+    </div>
+  </div>
+</div>
+
+<script type="module">
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/11.8.1/firebase-app.js";
+  import { getFirestore, collection, addDoc, serverTimestamp, getDocs, query, where, deleteDoc, doc } from "https://www.gstatic.com/firebasejs/11.8.1/firebase-firestore.js";
+
+  // Firebase configuration (ensure this matches your project)
+  const firebaseConfig = {
+    apiKey: "AIzaSyBFQd9m9Tm2jo8z8M-62HyDvN9uV3488C0",
+    authDomain: "ceemediconepal-lecture.firebaseapp.com",
+    projectId: "ceemediconepal-lecture",
+    storageBucket: "ceemediconepal-lecture.firebasestorage.app",
+    messagingSenderId: "1026053876979",
+    appId: "1:1026053876979:web:afbcb06fd04ea6e2dd1b86"
+  };
+
+  // Initialize Firebase app and Firestore
+  const app = initializeApp(firebaseConfig);
+  const db = getFirestore(app);
+
+  // DOM Elements
+  const form = document.getElementById('videoForm');
+  const messageDiv = document.getElementById('message');
+  const videoListDiv = document.getElementById('videoList');
+  const confirmationModal = document.getElementById('confirmationModal');
+  const confirmDeleteBtn = document.getElementById('confirmDeleteBtn');
+  const cancelDeleteBtn = document.getElementById('cancelDeleteBtn');
+
+  let videoToDeleteId = null; // Variable to store the ID of the video to be deleted
+
+  /**
+   * Displays a message in the messageDiv.
+   * @param {string} text - The message text.
+   * @param {string} type - 'success' or 'error'.
+   */
+  function displayMessage(text, type) {
+    messageDiv.textContent = text;
+    messageDiv.className = `message ${type}`;
+    setTimeout(() => {
+      messageDiv.textContent = '';
+      messageDiv.className = 'message';
+    }, 5000); // Clear message after 5 seconds
+  }
+
+  /**
+   * Loads and displays all videos from Firestore.
+   */
+  async function loadVideos() {
+    videoListDiv.innerHTML = '<div class="empty-list-message">Loading videos...</div>';
+    try {
+      const videosCollection = collection(db, "videos");
+      const snapshot = await getDocs(videosCollection);
+
+      if (snapshot.empty) {
+        videoListDiv.innerHTML = '<div class="empty-list-message">No videos registered yet.</div>';
+        return;
+      }
+
+      let videoHtml = '';
+      snapshot.forEach(docItem => {
+        const data = docItem.data();
+        videoHtml += `
+          <div class="video-item" data-id="${docItem.id}">
+            <div class="video-info">
+              <h4>${data.title}</h4>
+              <p>ID: ${data.youtubeId} ${data.isPremium ? '(Premium)' : ''}</p>
+            </div>
+            <button class="delete-btn" data-id="${docItem.id}">Delete</button>
+          </div>
+        `;
+      });
+      videoListDiv.innerHTML = videoHtml;
+
+      // Add event listeners to delete buttons
+      document.querySelectorAll('.delete-btn').forEach(button => {
+        button.addEventListener('click', (e) => {
+          videoToDeleteId = e.target.dataset.id;
+          confirmationModal.classList.add('visible'); // Show the modal
+        });
+      });
+
+    } catch (error) {
+      console.error("Error loading videos: ", error);
+      videoListDiv.innerHTML = '<div class="empty-list-message error">Error loading videos.</div>';
+    }
+  }
+
+  /**
+   * Handles video deletion after confirmation.
+   */
+  async function deleteVideo() {
+    if (!videoToDeleteId) return;
+
+    try {
+      await deleteDoc(doc(db, "videos", videoToDeleteId));
+      displayMessage("Video deleted successfully!", "success");
+      videoToDeleteId = null; // Reset ID
+      confirmationModal.classList.remove('visible'); // Hide modal
+      loadVideos(); // Reload the list
+    } catch (error) {
+      console.error("Error deleting video: ", error);
+      displayMessage("Error deleting video. Check console.", "error");
+      confirmationModal.classList.remove('visible'); // Hide modal
+    }
+  }
+
+  // Event listener for form submission
+  form.addEventListener('submit', async (e) => {
+    e.preventDefault();
+
+    const title = form.title.value.trim();
+    const youtubeId = form.youtubeId.value.trim();
+    const description = form.description.value.trim();
+    const isPremium = form.isPremium.checked;
+
+    if (!title || !youtubeId || !description) {
+      displayMessage("Please fill in all required fields.", "error");
+      return;
+    }
+
+    try {
+      // Check for duplicate YouTube ID
+      const videosRef = collection(db, "videos");
+      const q = query(videosRef, where("youtubeId", "==", youtubeId));
+      const querySnapshot = await getDocs(q);
+
+      if (!querySnapshot.empty) {
+        displayMessage("A video with this YouTube ID already exists.", "error");
+        return;
+      }
+
+      // Add new video if no duplicate is found
+      await addDoc(videosRef, {
+        title,
+        youtubeId,
+        description,
+        isPremium,
+        createdAt: serverTimestamp()
+      });
+      displayMessage("Video added successfully!", "success");
+      form.reset(); // Clear form fields
+      loadVideos(); // Reload the list to show the new video
+    } catch (error) {
+      console.error("Error adding video: ", error);
+      displayMessage("Error adding video. Check console.", "error");
+    }
+  });
+
+  // Confirmation modal button event listeners
+  confirmDeleteBtn.addEventListener('click', deleteVideo);
+  cancelDeleteBtn.addEventListener('click', () => {
+    confirmationModal.classList.remove('visible'); // Hide modal
+    videoToDeleteId = null; // Clear the ID
+  });
+
+  // Initial load of videos when the page loads
+  loadVideos();
+</script>
+
+</body>
+</html>
