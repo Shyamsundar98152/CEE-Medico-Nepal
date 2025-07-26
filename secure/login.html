@@ -575,6 +575,8 @@
     <img src="https://upload.wikimedia.org/wikipedia/commons/5/5e/WhatsApp_icon.png" alt="WhatsApp">
   </a>
 
+
+
 <script type="module">
   import { initializeApp } from "https://www.gstatic.com/firebasejs/11.8.1/firebase-app.js";
   import {
@@ -589,12 +591,10 @@
     ref,
     set,
     get,
-    remove,
-    serverTimestamp,
-    update // Import update for partial updates
+    update,
+    serverTimestamp
   } from "https://www.gstatic.com/firebasejs/11.8.1/firebase-database.js";
 
-  // Firebase config
   const firebaseConfig = {
     apiKey: "AIzaSyB66MZa0WZk3WPydcjmCDu7P_CE0FD60ug",
     authDomain: "login-2f07b.firebaseapp.com",
@@ -605,20 +605,16 @@
     databaseURL: "https://login-2f07b-default-rtdb.asia-southeast1.firebasedatabase.app"
   };
 
-  // Initialize Firebase
   const app = initializeApp(firebaseConfig);
   const auth = getAuth(app);
   const db = getDatabase(app);
   const provider = new GoogleAuthProvider();
 
-  // Helper function to generate a truly unique and persistent ID for the device
   function getDeviceId() {
     let deviceId = localStorage.getItem('uniqueDeviceId');
     if (!deviceId) {
-      // Generate a UUID if no deviceId exists in localStorage
       deviceId = 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
-        const r = Math.random() * 16 | 0,
-              v = c == 'x' ? r : (r & 0x3 | 0x8);
+        const r = Math.random() * 16 | 0, v = c === 'x' ? r : (r & 0x3 | 0x8);
         return v.toString(16);
       });
       localStorage.setItem('uniqueDeviceId', deviceId);
@@ -626,54 +622,62 @@
     return deviceId;
   }
 
-  /**
-   * Attempts to determine the OS from a user agent string.
-   * @param {string} userAgent - The user agent string.
-   * @returns {string} Detected OS (e.g., 'Windows', 'Android', 'iOS', 'Mac', 'Linux', 'Unknown').
-   */
-  function getOSFromUserAgent(userAgent) {
-      if (!userAgent) return 'Unknown';
-      userAgent = userAgent.toLowerCase();
-      if (userAgent.includes('windows')) return 'Windows';
-      if (userAgent.includes('android')) return 'Android';
-      if (userAgent.includes('iphone') || userAgent.includes('ipad') || userAgent.includes('ipod')) return 'iOS';
-      if (userAgent.includes('mac')) return 'Mac';
-      if (userAgent.includes('linux')) return 'Linux';
-      return 'Unknown';
+  function getOSFromUserAgent(ua) {
+    ua = ua.toLowerCase();
+    if (ua.includes('windows')) return 'Windows';
+    if (ua.includes('android')) return 'Android';
+    if (ua.includes('iphone') || ua.includes('ipad')) return 'iOS';
+    if (ua.includes('mac')) return 'Mac';
+    if (ua.includes('linux')) return 'Linux';
+    return 'Unknown';
   }
 
-  // Function to check approval and log/update device data
   async function checkApproval(user) {
     const userRef = ref(db, "users/" + user.uid);
     const snapshot = await get(userRef);
-    const deviceId = getDeviceId(); // Get the persistent device ID
+    const deviceId = getDeviceId();
     const userAgent = navigator.userAgent;
     const deviceOS = getOSFromUserAgent(userAgent);
 
     if (snapshot.exists()) {
       const userData = snapshot.val();
       if (userData.isApproved === true) {
-        // User is approved: update device data
+        const devicesRef = ref(db, `userDevices/${user.uid}`);
+        const devicesSnapshot = await get(devicesRef);
+        let onlineCount = 0;
+
+        if (devicesSnapshot.exists()) {
+          const devices = devicesSnapshot.val();
+          for (const key in devices) {
+            if (devices[key].isOnline === true) {
+              onlineCount++;
+            }
+          }
+        }
+
+        if (onlineCount >= 2 && !(devicesSnapshot.val()?.[deviceId]?.isOnline)) {
+          alert("🚫 You are already logged in on 2 devices.");
+          await signOut(auth);
+          return;
+        }
+
         const deviceRef = ref(db, `userDevices/${user.uid}/${deviceId}`);
         const deviceSnapshot = await get(deviceRef);
         const updates = {
           userAgent: userAgent,
           lastLogin: serverTimestamp(),
           isOnline: true,
-          type: deviceOS // Store detected OS
+          type: deviceOS
         };
-
         if (!deviceSnapshot.exists() || !deviceSnapshot.val().createdAt) {
-          // Only set createdAt if the device entry is new or createdAt is missing
           updates.createdAt = serverTimestamp();
         }
 
-        await update(deviceRef, updates); // Use update for partial updates
+        await update(deviceRef, updates);
         alert("✅ Access granted. Redirecting...");
         window.location.href = "/secure/protected.html";
       } else {
         alert("⛔ Access denied. Not approved by admin yet.");
-        // If not approved, sign out and update device info to offline
         const deviceRef = ref(db, `userDevices/${user.uid}/${deviceId}`);
         await update(deviceRef, {
           isOnline: false,
@@ -682,31 +686,27 @@
         await signOut(auth);
       }
     } else {
-      // 🆕 New user — add to DB and log initial device data
       await set(userRef, {
         email: user.email,
         isApproved: false
       });
-      // Also log the device for the new user
       const deviceRef = ref(db, `userDevices/${user.uid}/${deviceId}`);
       await set(deviceRef, {
         userAgent: userAgent,
-        createdAt: serverTimestamp(), // Set creation time for new device
+        createdAt: serverTimestamp(),
         lastLoginAttempt: serverTimestamp(),
-        isOnline: false, // Not online until approved
-        type: deviceOS // Store detected OS
+        isOnline: false,
+        type: deviceOS
       });
       alert("📝 Registered. Please wait for admin approval.");
-      await signOut(auth); // Sign out new users until approved
+      await signOut(auth);
     }
   }
 
-  // 🔐 Handle Email/Password Login
   document.getElementById("loginForm").addEventListener("submit", async function (e) {
     e.preventDefault();
     const email = document.getElementById("email").value;
     const password = document.getElementById("password").value;
-
     try {
       const userCredential = await signInWithEmailAndPassword(auth, email, password);
       await checkApproval(userCredential.user);
@@ -715,7 +715,6 @@
     }
   });
 
-  // 🔐 Handle Google Sign-In
   document.getElementById("googleSignIn").addEventListener("click", async function () {
     try {
       const result = await signInWithPopup(auth, provider);
@@ -725,68 +724,9 @@
       alert("❌ Google login failed: " + error.message);
     }
   });
-
-  // 👁 Toggle password visibility
-  const togglePassword = document.querySelector('#togglePassword');
-  const passwordInput = document.querySelector('#password'); // Renamed to avoid conflict
-
-  togglePassword.addEventListener('click', function () {
-    const type = passwordInput.getAttribute('type') === 'password' ? 'text' : 'password';
-    passwordInput.setAttribute('type', type);
-    this.classList.toggle('fa-eye-slash');
-    this.classList.toggle('fa-eye');
-  });
-
-  // 🔒 Logout functionality (This part is typically on protected.html or similar)
-  // This listener will ensure that when a user logs out from *any* page,
-  // their specific device's status is updated to offline.
-  auth.onAuthStateChanged(user => {
-    if (user) {
-      const logoutBtn = document.getElementById("logoutBtn"); // Assuming this button exists on protected.html
-      if (logoutBtn) {
-        logoutBtn.addEventListener("click", async () => {
-          const deviceId = getDeviceId();
-          const userDeviceRef = ref(db, `userDevices/${user.uid}/${deviceId}`);
-          
-          try {
-            // Update device status to offline and record logout time
-            await update(userDeviceRef, {
-              lastLogout: serverTimestamp(),
-              isOnline: false
-            });
-            
-            await signOut(auth);
-            // localStorage.removeItem('uniqueDeviceId'); // Keep deviceId for persistent tracking
-            alert("👋 Logged out successfully.");
-            window.location.href = "login.html";
-          } catch (error) {
-            console.error("Logout error:", error);
-            alert("❌ Logout failed: " + error.message);
-          }
-        });
-      }
-
-      // If the user is signed in but on the login page (e.g., navigated back),
-      // redirect them to the protected page if approved.
-      // This prevents approved users from seeing the login page unnecessarily.
-      get(ref(db, `users/${user.uid}`)).then(snapshot => {
-        if (snapshot.exists() && snapshot.val().isApproved === true) {
-          if (window.location.pathname === "/login.html" || window.location.pathname === "/secure/login.html") {
-            window.location.href = "/secure/protected.html";
-          }
-        }
-      }).catch(error => {
-        console.error("Error checking user approval status on login page:", error);
-      });
-
-    } else {
-      // User is signed out. If they are on a protected page, redirect to login.
-      if (window.location.pathname === "/secure/protected.html") {
-        window.location.href = "login.html";
-      }
-    }
-  });
 </script>
+</body>
+</html>
 
 </body>
 </html>
