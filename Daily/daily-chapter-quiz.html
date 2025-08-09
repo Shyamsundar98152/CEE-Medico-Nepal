@@ -5,32 +5,163 @@
 <meta name="viewport" content="width=device-width,initial-scale=1" />
 <title>Daily Quiz — CEE Medico Nepal</title>
 <meta name="description" content="Daily scheduled chapter quiz — auto loads chapter by time and saves participant results locally" />
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
 <style>
-  :root{--blue:#003366;--accent:#0056b3;--card:#fff;--muted:#6b7280}
+  /* Base Styles */
+  :root{
+    --blue: #003366;
+    --accent: #0056b3;
+    --card: #ffffff;
+    --muted: #6b7280;
+    --green: #16a34a;
+    --red: #ef4444;
+    --light-green: #d1fae5;
+    --light-red: #ffe4e6;
+    --border-color: #e6eef8;
+  }
   *{box-sizing:border-box}
-  body{font-family:Inter, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial; margin:0; background:#f3f6fb; color:#0f172a}
-  header,footer{background:var(--blue); color:#fff; padding:14px 18px; text-align:center}
-  main{max-width:980px; margin:20px auto; padding:18px}
-  .card{background:var(--card); border-radius:12px; padding:18px; box-shadow:0 6px 18px rgba(2,6,23,0.06); margin-bottom:16px}
-  h1{margin:0;font-size:1.3rem}
-  h2{color:var(--blue); margin:6px 0 14px}
-  .row{display:flex;gap:12px;align-items:center}
-  .col{flex:1}
-  #chapter-title{font-weight:600}
+  body{
+    font-family: 'Inter', system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    margin:0;
+    background:#f3f6fb;
+    color:#0f172a;
+    line-height: 1.6;
+  }
+  header, footer{
+    background:var(--blue);
+    color:#fff;
+    padding:14px 18px;
+    text-align:center;
+  }
+  main{
+    max-width:980px;
+    margin:20px auto;
+    padding:18px;
+  }
+  .card{
+    background:var(--card);
+    border-radius:12px;
+    padding:18px;
+    box-shadow:0 6px 18px rgba(2,6,23,0.06);
+    margin-bottom:16px;
+  }
+  h1{margin:0;font-size:1.6rem}
+  h2{color:var(--blue); margin:6px 0 14px; font-size:1.4rem}
+  h3{margin-top:0; font-size:1.2rem; color:var(--blue);}
+
+  /* Layout and Controls */
+  .row{
+    display:flex;
+    gap:12px;
+    align-items:center;
+    flex-wrap: wrap; /* Allows wrapping on smaller screens */
+  }
+  .col{flex:1; min-width: 150px;} /* Ensure column has minimum width */
+  #chapter-title{font-weight:600; font-size:1.1rem;}
   .meta{color:var(--muted); font-size:0.95rem}
-  .controls{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}
-  input[type="text"], button, select {padding:10px;border-radius:8px;border:1px solid #e6eef8;font-size:1rem}
-  button{background:var(--accent); color:white; border:0; cursor:pointer}
-  button[disabled]{opacity:.6;cursor:not-allowed}
-  .option-btn{display:block;width:100%;text-align:left;padding:12px;border-radius:10px;border:1px solid #e6eef8;margin:8px 0;background:#f8fcff;cursor:pointer}
-  .option-btn:hover{background:#e8f6ff}
-  #options-container{margin-top:8px}
-  #quiz-results{display:flex;flex-direction:column;gap:8px;align-items:center}
-  .participant{display:flex;justify-content:space-between;padding:6px 8px;border-radius:6px}
+  .controls{
+    display:flex;
+    gap:8px;
+    flex-wrap:wrap;
+    margin-top:10px;
+    justify-content: center; /* Center buttons horizontally */
+  }
+  input[type="text"], button, select {
+    padding:10px 15px;
+    border-radius:8px;
+    border:1px solid var(--border-color);
+    font-size:1rem;
+    width: 100%; /* Full width for inputs */
+    max-width: 100%;
+  }
+  button{
+    background:var(--accent);
+    color:white;
+    border:0;
+    cursor:pointer;
+    transition: background-color 0.2s ease;
+  }
+  button:hover:not([disabled]){
+    background: #004085;
+  }
+  button[disabled]{
+    opacity:.6;
+    cursor:not-allowed;
+  }
+  .option-btn{
+    display:block;
+    width:100%;
+    text-align:left;
+    padding:12px;
+    border-radius:10px;
+    border:1px solid var(--border-color);
+    margin:8px 0;
+    background:#f8fcff;
+    cursor:pointer;
+    transition: background-color 0.2s ease, border-color 0.2s ease;
+  }
+  .option-btn:hover:not([data-answered="true"]){ /* Prevent hover effect after answer */
+    background:#e8f6ff;
+  }
+  #options-container{margin-top:8px;}
+  #quiz-results{
+    display:flex;
+    flex-direction:column;
+    gap:8px;
+    align-items:center;
+    text-align: center;
+  }
+  .participant{
+    display:flex;
+    justify-content:space-between;
+    padding:8px 10px;
+    border-radius:6px;
+    background: #fdfefe;
+    border: 1px solid var(--border-color);
+    width: 100%;
+    margin-bottom: 5px;
+  }
   .small{font-size:.9rem;color:var(--muted)}
   .center{text-align:center}
   .hidden{display:none !important;} /* Ensures hidden elements are truly hidden */
-  @media (max-width:640px){.row{flex-direction:column;align-items:stretch}}
+
+  /* Specific Button Styles */
+  #submit-btn{background:var(--green);}
+  #submit-btn:hover:not([disabled]){background:#137f3a;}
+  #restart-btn{background:var(--red);}
+  #restart-btn:hover:not([disabled]){background:#b91c1c;}
+  #save-result-btn {background: var(--blue);}
+  #save-result-btn:hover:not([disabled]) {background: #002244;}
+
+  /* Quiz Area Specifics */
+  #countdown {
+    font-size: 1.1rem;
+    font-weight: bold;
+    color: var(--blue);
+    margin-bottom: 10px;
+  }
+  #explanation {
+    margin-top: 15px;
+    font-style: italic;
+    color: #333;
+    padding: 10px;
+    background: #eaf1f8;
+    border-radius: 8px;
+    border: 1px solid #d0e0f0;
+  }
+
+  /* Responsive Adjustments */
+  @media (max-width:640px){
+    main{padding:10px;}
+    .row{flex-direction:column;align-items:stretch;}
+    .col{min-width: unset;}
+    input[type="text"], button{width: 100%;}
+    .controls button{width: calc(50% - 4px);} /* Two buttons per row on small screens */
+    .controls button:last-child:nth-child(odd) { width: 100%; } /* Last button full width if odd count */
+    h1{font-size:1.3rem;}
+    h2{font-size:1.2rem;}
+    .option-btn{padding:10px;}
+  }
 
   /* Modal Styles */
   .modal-overlay {
@@ -50,6 +181,21 @@
     max-width: 400px;
     width: 90%;
     text-align: center;
+    position: relative; /* For the close button */
+  }
+  .modal-close-btn {
+    position: absolute;
+    top: 10px;
+    right: 15px;
+    font-size: 1.5rem;
+    cursor: pointer;
+    background: none;
+    border: none;
+    color: var(--muted);
+    padding: 0;
+  }
+  .modal-close-btn:hover {
+    color: var(--accent);
   }
   .modal-content button {
     margin-top: 20px;
@@ -59,6 +205,7 @@
     border: none;
     border-radius: 8px;
     cursor: pointer;
+    width: auto; /* Reset width for modal buttons */
   }
 </style>
 </head>
@@ -95,7 +242,6 @@
     </div>
   </div>
 
-
   <div id="quiz-area" class="card hidden">
     <div id="countdown" class="small center"></div>
     <div id="question-num" class="small"></div>
@@ -107,7 +253,7 @@
       <button id="prev-btn">Previous</button>
       <button id="skip-btn">Skip</button>
       <button id="next-btn">Next</button>
-      <button id="submit-btn" style="background:#16a34a">Submit</button>
+      <button id="submit-btn">Submit Quiz</button>
     </div>
   </div>
 
@@ -115,22 +261,25 @@
     <div id="quiz-results">
       <h2 class="center">Quiz Result</h2>
       <div class="center">
-        <div>Total: <span id="res-total">0</span></div>
-        <div>Correct: <span id="res-correct">0</span></div>
-        <div>Wrong: <span id="res-wrong">0</span></div>
-        <div>Skipped: <span id="res-skipped">0</span></div>
+        <div>Total Questions: <span id="res-total">0</span></div>
+        <div>Correct Answers: <span id="res-correct">0</span></div>
+        <div>Wrong Answers: <span id="res-wrong">0</span></div>
+        <div>Skipped Questions: <span id="res-skipped">0</span></div>
       </div>
       <div style="margin-top:12px" class="center">
         <button id="save-result-btn">Save Result (Local)</button>
-        <button id="restart-btn" style="background:#ef4444">Restart Quiz</button>
+        <button id="restart-btn">Restart Quiz</button>
       </div>
 
-      <!-- Leaderboard section removed as it's not applicable for local-only results -->
+      <h3 style="margin-top:20px; margin-bottom: 10px;">Your Local History</h3>
+      <div id="local-history-display" style="width:100%;">
+        <div class="small center">No previous results saved locally.</div>
+      </div>
     </div>
   </div>
 
   <div class="card small" id="notes">
-    <strong>Notes:</strong> The schedule is read from <code>chapters.txt</code> (as an uploaded file). The site uses your **local device's time** for scheduling. Quiz results are **only stored locally** within your browser and are not shared or saved to any external database.
+    <strong>Notes:</strong> The schedule is embedded within this file. The site uses your **local device's time** for scheduling. Quiz results are **only stored locally** within your browser and are not shared or saved to any external database.
   </div>
 </main>
 
@@ -141,77 +290,127 @@
 <!-- Modal for messages -->
 <div id="modal-message-overlay" class="modal-overlay hidden">
   <div class="modal-content">
+    <button class="modal-close-btn" id="modal-message-close">&times;</button>
     <p id="modal-message-text"></p>
-    <button id="modal-message-close">OK</button>
+    <button id="modal-message-ok">OK</button>
   </div>
 </div>
 
-<script type="module">
+<script>
 /* =========================
-   Firebase Imports (ALL REMOVED)
+   EMBEDDED CHAPTERS.TXT CONTENT
    ========================= */
-// No Firebase imports are needed as there is no external linking or authentication.
+const EMBEDDED_CHAPTERS_TXT = `
+2025-08-09 20:25|Biology - Cell Structure and Function
+2025-08-09 20:12|Chemistry - Chemical Bonding
+2025-08-09 20:35|Physics - Thermodynamics
+2025-08-09 21:00|Mathematics - Calculus Fundamentals
+2025-08-09 21:30|History - World War II Overview
+2025-08-10 09:00|English - Literary Devices
+2025-08-10 10:00|Computer Science - Data Structures
+`;
+
 
 /* =========================
    CONFIG
    ========================= */
-// TIME_API removed, using local time
-const SCHEDULE_TXT_FILENAME = "chapters.txt"; // Reference to the uploaded file by its name
 const GEMINI_API_KEY = ""; // Canvas environment will provide it at runtime.
 const GEMINI_URL = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-05-20:generateContent?key=${GEMINI_API_KEY}`;
+const LOCAL_STORAGE_KEY_RESULTS = "ceeMedicoQuizResults";
+const LOCAL_STORAGE_KEY_NAME = "ceeMedicoParticipantName";
 
 /* =========================
-   GLOBAL STATE & CANVAS VARS
+   GLOBAL STATE
    ========================= */
-// app, auth, dbInstance removed
-const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id'; // Kept for consistency, but not strictly used
-let userId = crypto.randomUUID(); // Used as a purely local unique ID for this session
-
 let schedule = [];             // array of {time:Date, chapter:string}
 let currentChapter = null;     // {time, chapter}
-let quizData = [];             // array of questions from Gemini or data file
-let index = 0;
+let quizData = [];             // array of questions from Gemini
+let currentQuestionIndex = 0;
 let countdownTimer = null;
 let questionTimer = null;
 let participantName = "";
-// leaderboardListener removed
 
 /* =========================
    Helpers
    ========================= */
-function sanitizeKey(s){
-  return String(s).replace(/[^a-z0-9]/gi, '_').toLowerCase();
-}
 function el(id){ return document.getElementById(id); }
 function show(q){ q.classList.remove('hidden'); q.style.display = ''; }
 function hide(q){ q.classList.add('hidden'); q.style.display = 'none'; }
 
-function showMessage(msg) {
+function showMessage(msg, callback = null) {
     el('modal-message-text').innerText = msg;
     show(el('modal-message-overlay'));
+    el('modal-message-ok').onclick = () => {
+        hide(el('modal-message-overlay'));
+        if (callback) callback();
+    };
+    el('modal-message-close').onclick = () => {
+        hide(el('modal-message-overlay'));
+        if (callback) callback();
+    };
 }
-el('modal-message-close').onclick = () => {
-    hide(el('modal-message-overlay'));
-};
 
 /* =========================
-   Firebase Initialization & Auth (REMOVED)
+   Local Storage Management
    ========================= */
-// This function is no longer needed as there's no Firebase integration.
-// async function initFirebase() { ... }
+function saveParticipantNameLocally(name) {
+    localStorage.setItem(LOCAL_STORAGE_KEY_NAME, name);
+}
+
+function getParticipantNameLocally() {
+    return localStorage.getItem(LOCAL_STORAGE_KEY_NAME) || "";
+}
+
+function saveQuizResultLocally(result) {
+    const results = getQuizResultsLocally();
+    results.push(result);
+    localStorage.setItem(LOCAL_STORAGE_KEY_RESULTS, JSON.stringify(results));
+    renderLocalHistory(); // Re-render history after saving
+}
+
+function getQuizResultsLocally() {
+    try {
+        return JSON.parse(localStorage.getItem(LOCAL_STORAGE_KEY_RESULTS) || "[]");
+    } catch (e) {
+        console.error("Error parsing local results:", e);
+        return [];
+    }
+}
+
+function renderLocalHistory() {
+    const historyDisplayEl = el('local-history-display');
+    const results = getQuizResultsLocally();
+
+    if (results.length === 0) {
+        historyDisplayEl.innerHTML = '<div class="small center">No previous results saved locally.</div>';
+        return;
+    }
+
+    // Sort by date descending
+    results.sort((a, b) => new Date(b.date) - new Date(a.date));
+
+    historyDisplayEl.innerHTML = results.map(r => {
+        const dateStr = new Date(r.date).toLocaleString('en-NP', {
+            year: 'numeric', month: 'short', day: 'numeric',
+            hour: '2-digit', minute: '2-digit', hour12: true
+        });
+        return `
+            <div class="participant">
+                <div><strong>${escapeHtml(r.name || 'Anonymous')}</strong> on ${dateStr}</div>
+                <div>${r.correct} / ${r.total} Correct (${r.skipped} skipped)</div>
+            </div>
+        `;
+    }).join('');
+}
 
 
 /* =========================
-   Load schedule (chapters.txt)
+   Load schedule from embedded text
    ========================= */
 async function loadSchedule(){
   try{
-    // Use content_fetcher to directly get the content of the uploaded chapters.txt file
-    // The content_fetcher is a Canvas-specific tool that allows accessing uploaded files by their name.
-    const fileContentRef = {id: 'chapters.txt', type: 'text/plain'}; // Assuming it's a plain text file
-    const txt = await content_fetcher.fetch(fileContentRef);
-
-    if(!txt) throw new Error("Schedule file content is empty or could not be retrieved. Please ensure 'chapters.txt' is uploaded.");
+    const txt = EMBEDDED_CHAPTERS_TXT;
+    if(!txt) throw new Error("Embedded schedule content is empty.");
 
     schedule = txt.trim().split('\n').map(l=>{
       const parts = l.split('|');
@@ -220,12 +419,12 @@ async function loadSchedule(){
       const m = dt.match(/(\d{4})-(\d{2})-(\d{2})\s+(\d{2}):(\d{2})/);
       if(!m) return null;
       const [_,y,mo,d,h,mi] = m;
+      // Note: Month is 0-indexed in Date constructor
       const dateObj = new Date(Number(y), Number(mo)-1, Number(d), Number(h), Number(mi), 0, 0);
       return {time: dateObj, chapter: ch};
     }).filter(Boolean).sort((a,b)=>a.time - b.time);
 
-    // Display schedule on the page
-    renderSchedule();
+    renderSchedule(); // Display schedule after loading
 
   }catch(e){
     console.error("Error loading schedule:", e);
@@ -261,7 +460,6 @@ function renderSchedule() {
   }).join('');
 }
 
-
 /* =========================
    Get accurate Nepal time (local device time)
    ========================= */
@@ -282,27 +480,47 @@ function pickCurrentChapter(now){
 }
 
 /* =========================
-   Database functions (ALL REMOVED)
+   Exponential Backoff for API calls
    ========================= */
-// resetParticipantsInDB, pushParticipantResult, loadLeaderboard are no longer needed.
-
+async function fetchWithExponentialBackoff(url, options, retries = 3, delay = 1000) {
+    for (let i = 0; i < retries; i++) {
+        try {
+            const response = await fetch(url, options);
+            if (response.status === 429 || !response.ok) { // Too Many Requests or other non-OK status
+                if (i < retries - 1) {
+                    await new Promise(resolve => setTimeout(resolve, delay * Math.pow(2, i)));
+                    continue;
+                }
+            }
+            return response;
+        } catch (error) {
+            if (i < retries - 1) {
+                await new Promise(resolve => setTimeout(resolve, delay * Math.pow(2, i)));
+                continue;
+            }
+            throw error; // Re-throw if all retries fail
+        }
+    }
+}
 
 /* =========================
    Gemini generate (50 MCQs)
    ========================= */
 async function generateMCQs(chapter){
-  el('chapter-title').innerText = `Generating questions for "${chapter}" — please wait...`;
+  el('chapter-title').innerText = `Generating questions for "${chapter}" — please wait... (This may take a moment)`;
   const prompt = `
-Generate 50 NEET / CEE-level multiple choice questions in JSON (array) on the chapter "${chapter}" based on NEB / MEC syllabus Nepal. Use exactly this schema:
+Generate 10 NEET / CEE-level multiple choice questions in JSON (array) on the chapter "${chapter}" based on NEB / MEC syllabus Nepal. Each question must have exactly 4 options. Ensure the correct option is clearly indicated by its index (0-3).
+
+Use exactly this JSON schema:
 [
   {
-    "question": "text",
-    "options": ["A","B","C","D"],
-    "correct": 0, // index 0..3
-    "explanation": "short explanation"
+    "question": "text of the question",
+    "options": ["Option A","Option B","Option C","Option D"],
+    "correct": 0, // index of the correct option (0 for A, 1 for B, etc.)
+    "explanation": "short explanation for the correct answer"
   }
 ]
-Return JSON only.
+Return JSON array only. Do not include any other text or markdown outside the JSON.
 `.trim();
 
   const payload = {
@@ -311,11 +529,12 @@ Return JSON only.
   };
 
   try{
-    const r = await fetch(`${GEMINI_URL}`, {
+    const r = await fetchWithExponentialBackoff(GEMINI_URL, {
       method: 'POST',
       headers: { 'Content-Type':'application/json' },
       body: JSON.stringify(payload)
     });
+
     if(!r.ok){
       const errText = await r.text();
       throw new Error(`Gemini API failed: ${r.status} - ${errText}`);
@@ -323,6 +542,18 @@ Return JSON only.
     const json = await r.json();
     const raw = json?.candidates?.[0]?.content?.parts?.[0]?.text || '';
     const parsed = JSON.parse(raw);
+
+    // Basic validation of the parsed quiz data
+    if (!Array.isArray(parsed) || parsed.length === 0) {
+        throw new Error("Gemini returned an empty or invalid quiz data structure.");
+    }
+    parsed.forEach((q, idx) => {
+        if (!q.question || !Array.isArray(q.options) || q.options.length !== 4 || typeof q.correct !== 'number' || q.correct < 0 || q.correct > 3 || !q.explanation) {
+            console.warn(`Question ${idx} failed schema validation:`, q);
+            // Optionally, remove malformed questions or throw a harder error
+        }
+    });
+
     return parsed;
   }catch(e){
     console.error("Gemini error", e);
@@ -335,8 +566,8 @@ Return JSON only.
    ========================= */
 function renderQuestion(){
   if(!quizData.length) return;
-  const q = quizData[index];
-  el('question-num').innerText = `Question ${index+1} / ${quizData.length}`;
+  const q = quizData[currentQuestionIndex];
+  el('question-num').innerText = `Question ${currentQuestionIndex + 1} / ${quizData.length}`;
   el('question-text').innerText = q.question || '';
   el('explanation').innerText = ''; // Clear previous explanation
   const cont = el('options-container'); cont.innerHTML = ''; // Clear previous options
@@ -345,67 +576,87 @@ function renderQuestion(){
     const btn = document.createElement('button');
     btn.className = 'option-btn';
     btn.innerText = opt;
+    btn.dataset.index = i; // Store index for easy lookup
+    btn.dataset.answered = q.answered ? 'true' : 'false'; // Mark if already answered
+
+    if (q.answered) {
+        // If question was answered, apply styles
+        if (i === q.userAnswer) {
+            btn.style.background = i === q.correct ? var_light_green : var_light_red;
+            btn.style.border = i === q.correct ? `1px solid ${var_green}` : `1px solid ${var_red}`;
+        } else if (i === q.correct) {
+            // Highlight correct answer if user answered incorrectly
+            btn.style.background = var_light_green;
+            btn.style.border = `1px solid ${var_green}`;
+        }
+        el('explanation').innerText = (q.userAnswer === q.correct ? '✅ Correct. ' : '❌ Incorrect. Correct answer: ' + (q.options && q.options[q.correct] ? q.options[q.correct] : '')) + (q.explanation ? ' — ' + q.explanation : '');
+    }
+
     btn.onclick = ()=>{
       if(q.answered) return; // Prevent re-answering
       q.answered = true;
       q.userAnswer = i;
+      btn.dataset.answered = 'true'; // Mark as answered
 
-      // Visually mark chosen option
+      // Visually mark chosen option and correct answer
       Array.from(cont.children).forEach(optionBtn => {
-        optionBtn.style.background = '#f8fcff'; // Reset all to default
-        optionBtn.style.border = '1px solid #e6eef8';
-      });
-
-      // Mark correct/incorrect choice
-      if (i === q.correct) {
-        btn.style.background = '#d1fae5'; // Light green for correct
-        btn.style.border = '1px solid #34d399';
-      } else {
-        btn.style.background = '#ffe4e6'; // Light red for incorrect
-        btn.style.border = '1px solid #ef4444';
-        // Also highlight the correct answer if incorrect choice was made
-        if (q.correct !== undefined && q.correct !== null && Array.from(cont.children)[q.correct]) {
-            Array.from(cont.children)[q.correct].style.background = '#d1fae5';
-            Array.from(cont.children)[q.correct].style.border = '1px solid #34d399';
+        const optionIndex = parseInt(optionBtn.dataset.index);
+        if (optionIndex === i) { // User's choice
+          optionBtn.style.background = i === q.correct ? 'var(--light-green)' : 'var(--light-red)';
+          optionBtn.style.border = i === q.correct ? `1px solid var(--green)` : `1px solid var(--red)`;
+        } else if (optionIndex === q.correct) { // The actual correct answer
+          optionBtn.style.background = 'var(--light-green)';
+          optionBtn.style.border = `1px solid var(--green)`;
+        } else { // Other options
+          optionBtn.style.background = '#f8fcff';
+          optionBtn.style.border = '1px solid var(--border-color)';
         }
-      }
+      });
 
       el('explanation').innerText = (i === q.correct ? '✅ Correct. ' : '❌ Incorrect. Correct answer: ' + (q.options && q.options[q.correct] ? q.options[q.correct] : '')) + (q.explanation ? ' — ' + q.explanation : '');
       clearInterval(questionTimer); // Stop timer after answer
     };
     cont.appendChild(btn);
   });
-  startQuestionTimer(); // Start timer for the new question
+  if (!q.answered) { // Only start timer if not already answered
+      startQuestionTimer();
+  } else {
+      clearInterval(questionTimer); // Ensure timer is stopped if re-rendering an answered question
+      el('countdown').innerText = 'Time: 0s'; // Show timer as finished
+  }
 }
 
 function nextQuestion(){
-  if(index < quizData.length -1){
-    // If current question wasn't answered, mark as skipped
-    if (!quizData[index].answered) {
-      quizData[index].skipped = true;
-    }
-    index++; renderQuestion();
+  // If current question wasn't answered when moving next, mark as skipped
+  if (!quizData[currentQuestionIndex].answered) {
+    quizData[currentQuestionIndex].skipped = true;
+    quizData[currentQuestionIndex].answered = true; // Mark as answered to prevent re-interaction
+    quizData[currentQuestionIndex].userAnswer = null; // No answer
   }
-  else submitQuiz();
-}
-function prevQuestion(){
-  if(index>0){
-    index--; renderQuestion();
+
+  if(currentQuestionIndex < quizData.length -1){
+    currentQuestionIndex++; renderQuestion();
   }
-}
-function skipQuestion(){
-  quizData[index].skipped = true;
-  if (!quizData[index].answered) { // Only mark as skipped if not already answered
-    quizData[index].answered = true; // Mark as answered to prevent re-interaction
-    quizData[index].userAnswer = null; // No answer
-  }
-  index++;
-  if(index<quizData.length) { renderQuestion(); }
   else submitQuiz();
 }
 
+function prevQuestion(){
+  if(currentQuestionIndex > 0){
+    currentQuestionIndex--; renderQuestion();
+  }
+}
+
+function skipQuestion(){
+  if (!quizData[currentQuestionIndex].answered) { // Only mark as skipped if not already answered
+    quizData[currentQuestionIndex].skipped = true;
+    quizData[currentQuestionIndex].answered = true; // Mark as answered to prevent re-interaction
+    quizData[currentQuestionIndex].userAnswer = null; // No answer
+  }
+  nextQuestion(); // Move to next question after skipping
+}
+
 function startQuestionTimer(){
-  let timeLeft = 30;
+  let timeLeft = 30; // 30 seconds per question
   el('countdown').innerText = `Time: ${timeLeft}s`;
   if(questionTimer) clearInterval(questionTimer);
   questionTimer = setInterval(()=> {
@@ -413,36 +664,46 @@ function startQuestionTimer(){
     el('countdown').innerText = `Time: ${timeLeft}s`;
     if(timeLeft<=0){
       clearInterval(questionTimer);
-      // auto-skip
-      if (!quizData[index].answered) { // Only mark as skipped if not already answered
-        quizData[index].skipped = true;
-        quizData[index].answered = true;
-        quizData[index].userAnswer = null;
+      // auto-skip and move to next
+      if (!quizData[currentQuestionIndex].answered) {
+        quizData[currentQuestionIndex].skipped = true;
+        quizData[currentQuestionIndex].answered = true;
+        quizData[currentQuestionIndex].userAnswer = null;
       }
-      if(index < quizData.length -1){ index++; renderQuestion(); }
-      else submitQuiz();
+      if(currentQuestionIndex < quizData.length -1){ currentQuestionIndex++; renderQuestion(); }
+      else submitQuiz(); // If last question, submit quiz
     }
   },1000);
 }
 
 function submitQuiz(){
   if(questionTimer) clearInterval(questionTimer);
-  // tally
+
+  // Ensure the last question is marked as skipped if not answered
+  if (!quizData[currentQuestionIndex].answered) {
+    quizData[currentQuestionIndex].skipped = true;
+    quizData[currentQuestionIndex].answered = true;
+    quizData[currentQuestionIndex].userAnswer = null;
+  }
+
+  // Tally results
   let correct=0, wrong=0, skipped=0;
   quizData.forEach(q=>{
     if(q.answered && q.userAnswer !== null && q.userAnswer === q.correct) correct++;
     else if(q.answered && q.userAnswer !== null && q.userAnswer !== q.correct) wrong++;
-    else if(q.skipped || (!q.answered && q.userAnswer === null)) skipped++; // Count as skipped if explicitly skipped or not answered
+    else if(q.skipped) skipped++;
   });
+
   el('res-total').innerText = quizData.length;
   el('res-correct').innerText = correct;
   el('res-wrong').innerText = wrong;
   el('res-skipped').innerText = skipped;
-  // show results area
+
+  // Show results area
   hide(el('quiz-area'));
   show(el('results-area'));
-  // "Save Result" button's functionality changed to local feedback
-  el('save-result-btn').disabled = false; // Always enabled for local feedback
+  el('save-result-btn').disabled = false;
+  renderLocalHistory(); // Display updated local history
 }
 
 /* =========================
@@ -451,11 +712,11 @@ function submitQuiz(){
 document.addEventListener('click', (e) => {
   if(e.target && e.target.id === 'join-button'){
     participantName = el('participant-name').value.trim();
-    // No strict requirement for name if not saving to DB, but keep for local reference if user enters it
-    
+    saveParticipantNameLocally(participantName); // Save name locally
+
     hide(el('results-area'));
     show(el('quiz-area'));
-    if(quizData.length) { index=0; renderQuestion(); }
+    if(quizData.length) { currentQuestionIndex=0; renderQuestion(); }
   }
 });
 el('prev-btn').onclick = prevQuestion;
@@ -463,12 +724,22 @@ el('next-btn').onclick = nextQuestion;
 el('skip-btn').onclick = skipQuestion;
 el('submit-btn').onclick = submitQuiz;
 el('restart-btn').onclick = ()=>{
-  location.reload();
+  location.reload(); // Simple reload to restart the quiz entirely
 };
 el('save-result-btn').onclick = async ()=>{
-  // Modified to just show a local message, no database interaction
-  showMessage('Your quiz result has been processed locally!');
+  const result = {
+      name: participantName,
+      date: new Date().toISOString(),
+      total: quizData.length,
+      correct: parseInt(el('res-correct').innerText),
+      wrong: parseInt(el('res-wrong').innerText),
+      skipped: parseInt(el('res-skipped').innerText)
+  };
+  saveQuizResultLocally(result);
+  showMessage('Your quiz result has been saved locally!');
+  el('save-result-btn').disabled = true; // Disable after saving
 };
+el('participant-name').value = getParticipantNameLocally(); // Load name on startup
 
 /* =========================
    Main routine: load schedule, pick chapter, generate or load MCQs
@@ -503,6 +774,7 @@ async function main(){
     el('join-button').disabled = false;
     el('join-button').onclick = ()=> location.reload();
   }
+  renderLocalHistory(); // Display existing local history on load
 }
 
 // Start the main application logic when the page loads
