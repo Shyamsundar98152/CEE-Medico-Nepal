@@ -6,6 +6,12 @@
 <title>Daily Quiz — CEE Medico Nepal</title>
 <meta name="description" content="Daily scheduled chapter quiz — auto loads chapter by time and saves participant results locally" />
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+<!-- Resource Hints for Faster Connections -->
+<link rel="preconnect" href="https://generativelanguage.googleapis.com">
+<link rel="preconnect" href="https://www.gstatic.com">
+<link rel="preconnect" href="https://firestore.googleapis.com">
+<link rel="preconnect" href="https://securetoken.googleapis.com">
+
 <style>
   /* Base Styles */
   :root{
@@ -380,18 +386,6 @@ let userId; // To store the current user's ID
 // Get app ID from Canvas environment
 const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
 
-/* Your web app's Firebase configuration */
-// This firebaseConfig will be populated by the Canvas environment, so we remove the hardcoded one.
-// const firebaseConfig = {
-//   apiKey: "AIzaSyBjm8uaVMdylGg3-YKdEKKV6DDbRkaxjiE",
-//   authDomain: "daily-quiz-a29e8.firebaseapp.com",
-//   databaseURL: "https://daily-quiz-a29e8-default-rtdb.asia-southeast1.firebasedatabase.app",
-//   projectId: "daily-quiz-a29e8",
-//   storageBucket: "daily-quiz-a29e8.firebasestorage.app",
-//   messagingSenderId: "886784418732",
-//   appId: "1:886784418732:web:0ad368df36f7187d2b1009"
-// };
-
 
 /* =========================
    Helpers
@@ -640,7 +634,16 @@ Return JSON array only. Do not include any other text or markdown outside the JS
       throw new Error(`Gemini API failed: ${r.status} - ${errText}`);
     }
     const json = await r.json();
-    const raw = json?.candidates?.[0]?.content?.parts?.[0]?.text || '';
+    let raw = json?.candidates?.[0]?.content?.parts?.[0]?.text || '';
+
+    // Remove problematic control characters (e.g., unescaped newlines)
+    // This regex matches any control character (U+0000 to U+001F) except for
+    // tabs (\t), newlines (\n), and carriage returns (\r), which are valid
+    // within JSON strings if escaped. We also include a check for the common
+    // unescaped newline within strings.
+    raw = raw.replace(/[\x00-\x1F\x7F-\x9F]/g, ""); // Strip most control characters
+    raw = raw.replace(/\\n/g, '\\n').replace(/\\r/g, '\\r').replace(/\\t/g, '\\t'); // Re-escape already escaped valid ones just in case
+
     const parsed = JSON.parse(raw);
 
     // Basic validation of the parsed quiz data
@@ -944,5 +947,3 @@ function escapeHtml(str){
   return String(str).replace(/[&<>"']/g, s=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[s]));
 }
 </script>
-</body>
-</html>
