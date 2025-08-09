@@ -6,12 +6,6 @@
 <title>Daily Quiz — CEE Medico Nepal</title>
 <meta name="description" content="Daily scheduled chapter quiz — auto loads chapter by time and saves participant results locally" />
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
-<!-- Resource Hints for Faster Connections -->
-<link rel="preconnect" href="https://generativelanguage.googleapis.com">
-<link rel="preconnect" href="https://www.gstatic.com">
-<link rel="preconnect" href="https://firestore.googleapis.com">
-<link rel="preconnect" href="https://securetoken.googleapis.com">
-
 <style>
   /* Base Styles */
   :root{
@@ -305,11 +299,31 @@
 </div>
 
 <script type="module">
-  // Firebase SDK imports
-  import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
-  import { getAuth, signInAnonymously, signInWithCustomToken, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
-  import { getFirestore, doc, getDoc, setDoc, collection, query, where, getDocs } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+/* =========================
+   Firebase Imports & Setup
+   ========================= */
+import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+import { getAuth, signInAnonymously, signInWithCustomToken, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+import { getFirestore, doc, getDoc, setDoc, collection } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
+// Global Firebase instances
+let app;
+let db;
+let auth;
+let userId; // Will store the authenticated user's ID
+
+// Firebase configuration (provided by Canvas environment or hardcoded if not available)
+const firebaseConfig = {
+  apiKey: "AIzaSyBjm8uaVMdylGg3-YKdEKKV6DDbRkaxjiE", // This is the specific API key you provided
+  authDomain: "daily-quiz-a29e8.firebaseapp.com",
+  databaseURL: "https://daily-quiz-a29e8-default-rtdb.asia-southeast1.firebasedatabase.app",
+  projectId: "daily-quiz-a29e8",
+  storageBucket: "daily-quiz-a29e8.firebasestorage.app",
+  messagingSenderId: "886784418732",
+  appId: "1:886784418732:web:0ad368df36f7187d2b1009"
+};
+const initialAuthToken = typeof __initial_auth_token !== 'undefined' ? __initial_auth_token : null;
+const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id'; // Use default if not available
 
 /* =========================
    EMBEDDED CHAPTERS.TXT CONTENT
@@ -361,31 +375,24 @@ const EMBEDDED_CHAPTERS_TXT = `
 /* =========================
    CONFIG
    ========================= */
-const GEMINI_API_KEY = ""; // Canvas environment will provide it at runtime.
+const GEMINI_API_KEY = "AIzaSyD8HWf_Zp0WsS14RJ2vxTUxjXvPCyiNpDo"; // Canvas environment will provide it at runtime.
 const GEMINI_URL = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-05-20:generateContent?key=${GEMINI_API_KEY}`;
 const LOCAL_STORAGE_KEY_RESULTS = "ceeMedicoQuizResults";
 const LOCAL_STORAGE_KEY_NAME = "ceeMedicoParticipantName";
+
+// Firestore collection paths for public data
+const QUIZZES_COLLECTION_PATH = `artifacts/${appId}/public/data/quizzes`;
 
 /* =========================
    GLOBAL STATE
    ========================= */
 let schedule = [];             // array of {time:Date, chapter:string}
 let currentChapter = null;     // {time, chapter}
-let quizData = [];             // array of questions from Gemini
+let quizData = [];             // array of questions from Gemini or Firestore
 let currentQuestionIndex = 0;
 let countdownTimer = null;
 let questionTimer = null;
 let participantName = "";
-
-// Firebase variables
-let app;
-let db;
-let auth;
-let userId; // To store the current user's ID
-
-// Get app ID from Canvas environment
-const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
-
 
 /* =========================
    Helpers
@@ -513,7 +520,7 @@ function renderSchedule() {
       year: 'numeric', month: 'short', day: 'numeric',
       hour: '2-digit', minute: '2-digit', hour12: true
     });
-    return `<div class="participant"><div><strong>${escapeHtml(entry.chapter)}</strong></div><div>${timeStr}</div></div>`;
+    return `<div class="participant"><div>${escapeHtml(entry.chapter)}</div><div>${timeStr}</div></div>`;
   }).join('');
 }
 
@@ -561,46 +568,56 @@ async function fetchWithExponentialBackoff(url, options, retries = 3, delay = 10
 }
 
 /* =========================
-   Firebase Operations
+   Firestore Functions
    ========================= */
-// Function to fetch quiz from Firestore
-async function fetchQuizFromFirestore(chapterName) {
-  try {
-    const quizDocRef = doc(db, `artifacts/${appId}/public/data/quizzes`, chapterName);
-    const quizDocSnap = await getDoc(quizDocRef);
 
-    if (quizDocSnap.exists()) {
-      console.log("Quiz fetched from Firestore:", chapterName);
-      return JSON.parse(quizDocSnap.data().quizData); // Parse the stored JSON string
-    } else {
-      console.log("Quiz not found in Firestore for chapter:", chapterName);
-      return null;
-    }
-  } catch (e) {
-    console.error("Error fetching quiz from Firestore:", e);
-    return null;
-  }
+// Helper to get a clean chapter ID for Firestore document names
+function getChapterDocId(chapterName) {
+    // Replace non-alphanumeric characters with underscores, convert to lowercase
+    return chapterName.replace(/[^a-zA-Z0-9]/g, '_').toLowerCase();
 }
 
-// Function to save quiz to Firestore
-async function saveQuizToFirestore(chapterName, quizData) {
-  try {
-    const quizDocRef = doc(db, `artifacts/${appId}/public/data/quizzes`, chapterName);
-    await setDoc(quizDocRef, {
-      chapter: chapterName,
-      quizData: JSON.stringify(quizData), // Store as JSON string
-      generatedAt: new Date().toISOString()
-    });
-    console.log("Quiz saved to Firestore:", chapterName);
-  } catch (e) {
-    console.error("Error saving quiz to Firestore:", e);
-  }
+async function getQuizFromFirestore(chapterName) {
+    el('chapter-title').innerText = `Checking for existing questions for "${chapterName}"...`;
+    try {
+        const chapterDocId = getChapterDocId(chapterName);
+        const docRef = doc(db, QUIZZES_COLLECTION_PATH, chapterDocId);
+        const docSnap = await getDoc(docRef);
+
+        if (docSnap.exists()) {
+            console.log("Quiz data found in Firestore:", docSnap.data());
+            return docSnap.data().quizData; // Assuming quiz data is stored under 'quizData' field
+        } else {
+            console.log("No quiz data found in Firestore for:", chapterName);
+            return null;
+        }
+    } catch (e) {
+        console.error("Error fetching quiz from Firestore:", e);
+        showMessage(`Error fetching quiz from database: ${e.message}`);
+        return null;
+    }
+}
+
+async function saveQuizToFirestore(chapterName, quizQuestions) {
+    try {
+        const chapterDocId = getChapterDocId(chapterName);
+        const docRef = doc(db, QUIZZES_COLLECTION_PATH, chapterDocId);
+        await setDoc(docRef, {
+            chapter: chapterName,
+            quizData: quizQuestions,
+            generatedAt: new Date().toISOString() // Timestamp for when it was generated
+        });
+        console.log("Quiz data saved to Firestore for:", chapterName);
+    } catch (e) {
+        console.error("Error saving quiz to Firestore:", e);
+        showMessage(`Error saving quiz to database: ${e.message}`);
+    }
 }
 
 /* =========================
-   Gemini generate (30 MCQs)
+   Gemini generate (50 MCQs)
    ========================= */
-async function generateMCQsFromGemini(chapter){
+async function generateMCQs(chapter){
   el('chapter-title').innerText = `Generating questions for "${chapter}" — please wait... (This may take a moment)`;
   const prompt = `
 Generate 30 NEET / CEE-level multiple choice questions in JSON (array) on the chapter "${chapter}" based on NEB / MEC syllabus Nepal. Each question must have exactly 4 options. Ensure the correct option is clearly indicated by its index (0-3).
@@ -634,16 +651,7 @@ Return JSON array only. Do not include any other text or markdown outside the JS
       throw new Error(`Gemini API failed: ${r.status} - ${errText}`);
     }
     const json = await r.json();
-    let raw = json?.candidates?.[0]?.content?.parts?.[0]?.text || '';
-
-    // Remove problematic control characters (e.g., unescaped newlines)
-    // This regex matches any control character (U+0000 to U+001F) except for
-    // tabs (\t), newlines (\n), and carriage returns (\r), which are valid
-    // within JSON strings if escaped. We also include a check for the common
-    // unescaped newline within strings.
-    raw = raw.replace(/[\x00-\x1F\x7F-\x9F]/g, ""); // Strip most control characters
-    raw = raw.replace(/\\n/g, '\\n').replace(/\\r/g, '\\r').replace(/\\t/g, '\\t'); // Re-escape already escaped valid ones just in case
-
+    const raw = json?.candidates?.[0]?.content?.parts?.[0]?.text || '';
     const parsed = JSON.parse(raw);
 
     // Basic validation of the parsed quiz data
@@ -663,26 +671,6 @@ Return JSON array only. Do not include any other text or markdown outside the JS
     throw e;
   }
 }
-
-/* =========================
-   Get or Create MCQs (Firestore first, then Gemini)
-   ========================= */
-async function getOrCreateMCQs(chapter) {
-  // Try to load from Firestore first
-  let loadedQuizData = await fetchQuizFromFirestore(chapter);
-
-  if (loadedQuizData) {
-    el('chapter-title').innerText = `Loading questions for "${chapter}" from database...`;
-    return loadedQuizData;
-  } else {
-    // If not found, generate using Gemini
-    const generatedData = await generateMCQsFromGemini(chapter);
-    // Save to Firestore for future use
-    await saveQuizToFirestore(chapter, generatedData);
-    return generatedData;
-  }
-}
-
 
 /* =========================
    Quiz UI functions
@@ -877,30 +865,29 @@ el('participant-name').value = getParticipantNameLocally(); // Load name on star
    Main routine: load schedule, pick chapter, generate or load MCQs
    ========================= */
 async function main(){
-  // Initialize Firebase App
-  // Use the firebaseConfig provided by the Canvas environment.
-  const firebaseConfig = JSON.parse(typeof __firebase_config !== 'undefined' ? __firebase_config : '{}');
-  app = initializeApp(firebaseConfig);
-  auth = getAuth(app);
-  db = getFirestore(app);
-
-  // Authenticate user
+  // Initialize Firebase
   try {
-    const initialAuthToken = typeof __initial_auth_token !== 'undefined' ? __initial_auth_token : null;
-    if (initialAuthToken) {
-        await signInWithCustomToken(auth, initialAuthToken);
-    } else {
-        await signInAnonymously(auth);
-    }
-    userId = auth.currentUser?.uid || crypto.randomUUID(); // Set userId after auth
-    console.log("Firebase initialized and user authenticated:", userId);
-  } catch (e) {
-    console.error("Firebase authentication failed:", e);
-    el('chapter-title').innerText = `Authentication failed: ${e.message}. Quiz features might be limited.`;
-    el('join-button').disabled = true;
-    hide(el('quiz-area'));
-    return;
+      // Use the provided Firebase configuration directly
+      app = initializeApp(firebaseConfig);
+      auth = getAuth(app);
+      db = getFirestore(app);
+
+      // Sign in user (even if rules allow unauthenticated, it's good practice for tracking user IDs)
+      if (initialAuthToken) {
+          await signInWithCustomToken(auth, initialAuthToken);
+      } else {
+          await signInAnonymously(auth);
+      }
+      userId = auth.currentUser?.uid || crypto.randomUUID(); // Get user ID after sign-in
+      console.log("Firebase initialized and user signed in. User ID:", userId);
+
+  } catch (error) {
+      console.error("Error initializing Firebase or signing in:", error);
+      el('chapter-title').innerText = `Error initializing app: ${error.message}`;
+      el('join-button').disabled = true;
+      return; // Stop execution if Firebase setup fails
   }
+
 
   // Load schedule first
   await loadSchedule();
@@ -919,16 +906,31 @@ async function main(){
   }
   el('chapter-title').innerText = `Scheduled: ${currentChapter.chapter} (starts ${currentChapter.time.toLocaleString('en-NP', {dateStyle: 'medium', timeStyle: 'short'})})`;
 
-  // Get or Generate MCQs (Firestore first, then Gemini)
+  // Try to load MCQs from Firestore first
   try{
-    quizData = await getOrCreateMCQs(currentChapter.chapter);
-    // Ensure structure and add initial state for each question
-    quizData = quizData.map(q => ({ ...q, answered:false, userAnswer:null, skipped:false }));
-    el('join-button').innerText = 'Join Quiz';
-    el('join-button').disabled = false;
+    el('chapter-title').innerText = `Scheduled: ${currentChapter.chapter} (starts ${currentChapter.time.toLocaleString('en-NP', {dateStyle: 'medium', timeStyle: 'short'})}) - Loading questions...`;
+    quizData = await getQuizFromFirestore(currentChapter.chapter);
+
+    if (quizData) {
+        el('chapter-title').innerText = `Scheduled: ${currentChapter.chapter} (starts ${currentChapter.time.toLocaleString('en-NP', {dateStyle: 'medium', timeStyle: 'short'})})`;
+        // Ensure structure and add initial state for each question
+        quizData = quizData.map(q => ({ ...q, answered:false, userAnswer:null, skipped:false }));
+        el('join-button').innerText = 'Join Quiz (Loaded from Cache)';
+        el('join-button').disabled = false;
+    } else {
+        // If not found in Firestore, generate using Gemini
+        quizData = await generateMCQs(currentChapter.chapter);
+        // Ensure structure and add initial state for each question
+        quizData = quizData.map(q => ({ ...q, answered:false, userAnswer:null, skipped:false }));
+        // Save the newly generated quiz data to Firestore
+        await saveQuizToFirestore(currentChapter.chapter, quizData);
+        el('join-button').innerText = 'Join Quiz (Generated & Cached)';
+        el('join-button').disabled = false;
+    }
+
     // Do NOT show quiz area here, it will be shown when 'Join Quiz' is clicked.
   }catch(e){
-    el('chapter-title').innerText = `Error getting questions: ${e.message || e}`;
+    el('chapter-title').innerText = `Error processing questions: ${e.message || e}`;
     el('join-button').innerText = 'Retry';
     el('join-button').disabled = false;
     el('join-button').onclick = ()=> location.reload();
@@ -947,3 +949,5 @@ function escapeHtml(str){
   return String(str).replace(/[&<>"']/g, s=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[s]));
 }
 </script>
+</body>
+</html>
