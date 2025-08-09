@@ -24,7 +24,7 @@
     font-family: 'Inter', system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
     margin:0;
     background:#f3f6fb;
-    color:#0f172a;
+    color:#0f172a; /* Default text color (dark/black-ish) */
     line-height: 1.6;
   }
   header, footer{
@@ -39,7 +39,7 @@
     padding:18px;
   }
   .card{
-    background:var(--card);
+    background:var(--card); /* White background for cards */
     border-radius:12px;
     padding:18px;
     box-shadow:0 6px 18px rgba(2,6,23,0.06);
@@ -96,12 +96,13 @@
     border-radius:10px;
     border:1px solid var(--border-color);
     margin:8px 0;
-    background:#f8fcff;
+    background:var(--card); /* Ensures options background is white */
+    color: inherit; /* Inherit body's text color (dark/black-ish) */
     cursor:pointer;
     transition: background-color 0.2s ease, border-color 0.2s ease;
   }
   .option-btn:hover:not([data-answered="true"]){ /* Prevent hover effect after answer */
-    background:#e8f6ff;
+    background:#f0f0f0; /* Subtle light gray on hover for white background */
   }
   #options-container{margin-top:8px;}
   #quiz-results{
@@ -234,14 +235,7 @@
     </div>
   </div>
 
-  <!-- Display Schedule -->
-  <div class="card">
-    <h3 style="margin-top:0">Upcoming Chapters</h3>
-    <div id="schedule-display" class="leaderboard">
-      No schedule loaded.
-    </div>
-  </div>
-
+  <!-- Quiz Area - Now hidden by default, shown when 'Join Quiz' is clicked -->
   <div id="quiz-area" class="card hidden">
     <div id="countdown" class="small center"></div>
     <div id="question-num" class="small"></div>
@@ -254,6 +248,14 @@
       <button id="skip-btn">Skip</button>
       <button id="next-btn">Next</button>
       <button id="submit-btn">Submit Quiz</button>
+    </div>
+  </div>
+
+  <!-- Display Schedule -->
+  <div class="card">
+    <h3 style="margin-top:0">Upcoming Chapters</h3>
+    <div id="schedule-display" class="leaderboard">
+      No schedule loaded.
     </div>
   </div>
 
@@ -347,7 +349,7 @@ const EMBEDDED_CHAPTERS_TXT = `
 /* =========================
    CONFIG
    ========================= */
-const GEMINI_API_KEY = "AIzaSyD8HWf_Zp0WsS14RJ2vxTUxjXvPCyiNpDo"; // Canvas environment will provide it at runtime.
+const GEMINI_API_KEY = ""; // Canvas environment will provide it at runtime.
 const GEMINI_URL = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-05-20:generateContent?key=${GEMINI_API_KEY}`;
 const LOCAL_STORAGE_KEY_RESULTS = "ceeMedicoQuizResults";
 const LOCAL_STORAGE_KEY_NAME = "ceeMedicoParticipantName";
@@ -605,6 +607,15 @@ function renderQuestion(){
   el('explanation').innerText = ''; // Clear previous explanation
   const cont = el('options-container'); cont.innerHTML = ''; // Clear previous options
 
+  // Get CSS variables for consistent styling
+  const rootStyles = getComputedStyle(document.documentElement);
+  const cssVarLightGreen = rootStyles.getPropertyValue('--light-green');
+  const cssVarLightRed = rootStyles.getPropertyValue('--light-red');
+  const cssVarGreen = rootStyles.getPropertyValue('--green');
+  const cssVarRed = rootStyles.getPropertyValue('--red');
+  const cssVarCard = rootStyles.getPropertyValue('--card');
+  const cssVarBorderColor = rootStyles.getPropertyValue('--border-color');
+
   (q.options||[]).forEach((opt,i)=>{
     const btn = document.createElement('button');
     btn.className = 'option-btn';
@@ -615,12 +626,12 @@ function renderQuestion(){
     if (q.answered) {
         // If question was answered, apply styles
         if (i === q.userAnswer) {
-            btn.style.background = i === q.correct ? var_light_green : var_light_red;
-            btn.style.border = i === q.correct ? `1px solid ${var_green}` : `1px solid ${var_red}`;
+            btn.style.background = i === q.correct ? cssVarLightGreen : cssVarLightRed;
+            btn.style.border = i === q.correct ? `1px solid ${cssVarGreen}` : `1px solid ${cssVarRed}`;
         } else if (i === q.correct) {
             // Highlight correct answer if user answered incorrectly
-            btn.style.background = var_light_green;
-            btn.style.border = `1px solid ${var_green}`;
+            btn.style.background = cssVarLightGreen;
+            btn.style.border = `1px solid ${cssVarGreen}`;
         }
         el('explanation').innerText = (q.userAnswer === q.correct ? '✅ Correct. ' : '❌ Incorrect. Correct answer: ' + (q.options && q.options[q.correct] ? q.options[q.correct] : '')) + (q.explanation ? ' — ' + q.explanation : '');
     }
@@ -635,14 +646,14 @@ function renderQuestion(){
       Array.from(cont.children).forEach(optionBtn => {
         const optionIndex = parseInt(optionBtn.dataset.index);
         if (optionIndex === i) { // User's choice
-          optionBtn.style.background = i === q.correct ? 'var(--light-green)' : 'var(--light-red)';
-          optionBtn.style.border = i === q.correct ? `1px solid var(--green)` : `1px solid var(--red)`;
+          optionBtn.style.background = i === q.correct ? cssVarLightGreen : cssVarLightRed;
+          optionBtn.style.border = i === q.correct ? `1px solid ${cssVarGreen}` : `1px solid ${cssVarRed}`;
         } else if (optionIndex === q.correct) { // The actual correct answer
-          optionBtn.style.background = 'var(--light-green)';
-          optionBtn.style.border = `1px solid var(--green)`;
+          optionBtn.style.background = cssVarLightGreen;
+          optionBtn.style.border = `1px solid ${cssVarGreen}`;
         } else { // Other options
-          optionBtn.style.background = '#f8fcff';
-          optionBtn.style.border = '1px solid var(--border-color)';
+          optionBtn.style.background = cssVarCard; /* Ensure background is white for non-selected */
+          optionBtn.style.border = `1px solid ${cssVarBorderColor}`;
         }
       });
 
@@ -748,7 +759,7 @@ document.addEventListener('click', (e) => {
     saveParticipantNameLocally(participantName); // Save name locally
 
     hide(el('results-area'));
-    show(el('quiz-area'));
+    show(el('quiz-area')); // Explicitly show quiz area when join button is clicked
     if(quizData.length) { currentQuestionIndex=0; renderQuestion(); }
   }
 });
@@ -790,6 +801,7 @@ async function main(){
   if(!currentChapter){
     el('chapter-title').innerText = 'No chapter scheduled yet (or schedule missing/future).';
     el('join-button').disabled = true;
+    hide(el('quiz-area')); // Ensure quiz area is hidden if no chapter
     return;
   }
   el('chapter-title').innerText = `Scheduled: ${currentChapter.chapter} (starts ${currentChapter.time.toLocaleString('en-NP', {dateStyle: 'medium', timeStyle: 'short'})})`;
@@ -801,11 +813,13 @@ async function main(){
     quizData = quizData.map(q => ({ ...q, answered:false, userAnswer:null, skipped:false }));
     el('join-button').innerText = 'Join Quiz';
     el('join-button').disabled = false;
+    // Do NOT show quiz area here, it will be shown when 'Join Quiz' is clicked.
   }catch(e){
     el('chapter-title').innerText = `Error generating questions: ${e.message || e}`;
     el('join-button').innerText = 'Retry';
     el('join-button').disabled = false;
     el('join-button').onclick = ()=> location.reload();
+    hide(el('quiz-area')); // Hide quiz area on error
   }
   renderLocalHistory(); // Display existing local history on load
 }
