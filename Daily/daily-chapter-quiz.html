@@ -4,7 +4,7 @@
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width,initial-scale=1" />
 <title>Daily Quiz — CEE Medico Nepal</title>
-<meta name="description" content="Daily scheduled chapter quiz — auto loads chapter by time and saves participant results to Realtime DB" />
+<meta name="description" content="Daily scheduled chapter quiz — auto loads chapter by time and saves participant results locally" />
 <style>
   :root{--blue:#003366;--accent:#0056b3;--card:#fff;--muted:#6b7280}
   *{box-sizing:border-box}
@@ -26,7 +26,6 @@
   .option-btn:hover{background:#e8f6ff}
   #options-container{margin-top:8px}
   #quiz-results{display:flex;flex-direction:column;gap:8px;align-items:center}
-  .leaderboard{max-height:220px; overflow-y:auto; margin-top:10px;border-radius:8px;padding:8px;border:1px dashed #e6eef8}
   .participant{display:flex;justify-content:space-between;padding:6px 8px;border-radius:6px}
   .small{font-size:.9rem;color:var(--muted)}
   .center{text-align:center}
@@ -66,25 +65,25 @@
 <body>
 <header>
   <h1>CEE Medico — Daily Chapter Quiz</h1>
-  <div class="small">Auto-load by schedule (Nepal time) • Results saved to Realtime DB</div>
+  <div class="small">Auto-load by schedule (Local time) • Results stored locally only</div>
 </header>
 
 <main>
   <div class="card">
     <div id="status">
       <div id="chapter-title">Loading schedule...</div>
-      <div class="meta" id="schedule-info">Checking time…</div>
+      <div class="meta" id="schedule-info">Checking local time…</div>
     </div>
     <div style="margin-top:12px" id="controls-area">
       <div class="row">
         <div class="col">
-          <input id="participant-name" type="text" placeholder="Your name (required to save result)" />
+          <input id="participant-name" type="text" placeholder="Your name (optional for local result)" />
         </div>
         <div>
           <button id="join-button" disabled>Wait for quiz</button>
         </div>
       </div>
-      <div class="small" style="margin-top:8px">Participant name will be stored with score. If empty, result won't be saved.</div>
+      <div class="small" style="margin-top:8px">Participant name is for your local reference only. Results are not saved externally.</div>
     </div>
   </div>
 
@@ -122,17 +121,16 @@
         <div>Skipped: <span id="res-skipped">0</span></div>
       </div>
       <div style="margin-top:12px" class="center">
-        <button id="save-result-btn">Save Result</button>
+        <button id="save-result-btn">Save Result (Local)</button>
         <button id="restart-btn" style="background:#ef4444">Restart Quiz</button>
       </div>
 
-      <h3 style="margin-top:10px">Leaderboard — Current Quiz <span id="current-user-id" class="small"></span></h3>
-      <div class="leaderboard" id="leaderboard"></div>
+      <!-- Leaderboard section removed as it's not applicable for local-only results -->
     </div>
   </div>
 
   <div class="card small" id="notes">
-    <strong>Notes:</strong> The schedule is read from <code>data/chapters.txt</code>. The site uses <code>timezoneapi.io</code> for Nepal time. Realtime DB updates are sent to your database root under <code>/artifacts/&lt;appId&gt;/public/data/quizzes/{chapterKey}/participants</code>.
+    <strong>Notes:</strong> The schedule is read from <code>chapters.txt</code> (as an uploaded file). The site uses your **local device's time** for scheduling. Quiz results are **only stored locally** within your browser and are not shared or saved to any external database.
   </div>
 </main>
 
@@ -150,30 +148,24 @@
 
 <script type="module">
 /* =========================
-   Firebase Imports
+   Firebase Imports (ALL REMOVED)
    ========================= */
-import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
-import { getAuth, signInAnonymously, signInWithCustomToken, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
-import { getDatabase, ref, push, set, onValue, off } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-database.js";
+// No Firebase imports are needed as there is no external linking or authentication.
 
 /* =========================
-   CONFIG - EDIT IF NEEDED
+   CONFIG
    ========================= */
-// Using timezoneapi.io as an alternative to worldtimeapi.org
-// Note: timezoneapi.io requires an API key for most usages.
-// For simplicity in a public demo, I'm using an endpoint that doesn't strictly require one
-// but for production, you'd get a free key from their website.
-const TIME_API = "https://timezoneapi.io/api/timezone/?tz=Asia/Kathmandu&token=YOUR_API_TOKEN"; // Placeholder for API token if needed for higher usage
-const SCHEDULE_TXT = "./data/chapters.txt"; // Changed path to include ./ for better resolution
-const GEMINI_API_KEY = ""; // Leave this empty. Canvas environment will provide it at runtime.
+// TIME_API removed, using local time
+const SCHEDULE_TXT_FILENAME = "chapters.txt"; // Reference to the uploaded file by its name
+const GEMINI_API_KEY = ""; // Canvas environment will provide it at runtime.
 const GEMINI_URL = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-05-20:generateContent?key=${GEMINI_API_KEY}`;
 
 /* =========================
    GLOBAL STATE & CANVAS VARS
    ========================= */
-let app, auth, dbInstance;
-const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
-let userId = crypto.randomUUID(); // Temporary, will be updated by auth listener
+// app, auth, dbInstance removed
+const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id'; // Kept for consistency, but not strictly used
+let userId = crypto.randomUUID(); // Used as a purely local unique ID for this session
 
 let schedule = [];             // array of {time:Date, chapter:string}
 let currentChapter = null;     // {time, chapter}
@@ -182,7 +174,7 @@ let index = 0;
 let countdownTimer = null;
 let questionTimer = null;
 let participantName = "";
-let leaderboardListener = null; // To manage the Realtime DB listener for leaderboard
+// leaderboardListener removed
 
 /* =========================
    Helpers
@@ -203,47 +195,10 @@ el('modal-message-close').onclick = () => {
 };
 
 /* =========================
-   Firebase Initialization & Auth
+   Firebase Initialization & Auth (REMOVED)
    ========================= */
-async function initFirebase() {
-    try {
-        const firebaseConfig = typeof __firebase_config !== 'undefined' ? JSON.parse(__firebase_config) : null;
-        if (!firebaseConfig) {
-            console.error("Firebase config not available. Cannot initialize Firebase.");
-            el('chapter-title').innerText = "Error: Firebase not configured. Please ensure Firebase is setup.";
-            return;
-        }
-        app = initializeApp(firebaseConfig);
-        auth = getAuth(app);
-        dbInstance = getDatabase(app);
-
-        // Sign in with custom token if available, otherwise anonymously
-        if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
-            await signInWithCustomToken(auth, __initial_auth_token);
-            console.log("Signed in with custom token.");
-        } else {
-            await signInAnonymously(auth);
-            console.log("Signed in anonymously.");
-        }
-
-        // Listen for auth state changes and set the userId
-        onAuthStateChanged(auth, (user) => {
-            if (user) {
-                console.log("User is signed in:", user.uid);
-                userId = user.uid;
-                el('current-user-id').innerText = `(User: ${userId})`;
-            } else {
-                console.log("No user is signed in. Using anonymous ID.");
-                userId = crypto.randomUUID(); // Fallback to random if not signed in
-            }
-            // Once authentication state is determined, proceed with the main application logic
-            main();
-        });
-    } catch (e) {
-        console.error("Firebase initialization or authentication error:", e);
-        el('chapter-title').innerText = `Error: Firebase init failed (${e.message}). Check console.`;
-    }
-}
+// This function is no longer needed as there's no Firebase integration.
+// async function initFirebase() { ... }
 
 
 /* =========================
@@ -251,9 +206,13 @@ async function initFirebase() {
    ========================= */
 async function loadSchedule(){
   try{
-    const res = await fetch(SCHEDULE_TXT);
-    if(!res.ok) throw new Error("Schedule file not found or inaccessible. Status: " + res.status);
-    const txt = await res.text();
+    // Use content_fetcher to directly get the content of the uploaded chapters.txt file
+    // The content_fetcher is a Canvas-specific tool that allows accessing uploaded files by their name.
+    const fileContentRef = {id: 'chapters.txt', type: 'text/plain'}; // Assuming it's a plain text file
+    const txt = await content_fetcher.fetch(fileContentRef);
+
+    if(!txt) throw new Error("Schedule file content is empty or could not be retrieved. Please ensure 'chapters.txt' is uploaded.");
+
     schedule = txt.trim().split('\n').map(l=>{
       const parts = l.split('|');
       const dt = parts[0].trim(); // "YYYY-MM-DD HH:MM"
@@ -271,7 +230,7 @@ async function loadSchedule(){
   }catch(e){
     console.error("Error loading schedule:", e);
     schedule = [];
-    el('chapter-title').innerText = `Error loading schedule: ${e.message}. Make sure 'data/chapters.txt' exists.`;
+    el('chapter-title').innerText = `Error loading schedule: ${e.message}.`;
     el('schedule-display').innerHTML = `<div class="small">Error loading schedule: ${e.message}</div>`;
   }
 }
@@ -304,36 +263,11 @@ function renderSchedule() {
 
 
 /* =========================
-   Get accurate Nepal time using timezoneapi.io (fallback to local)
+   Get accurate Nepal time (local device time)
    ========================= */
 async function getAccurateTime(){
-  try{
-    // timezoneapi.io response structure for tz=Asia/Kathmandu
-    // { "data": { "datetime": { "date_time": "2025-08-08 17:30:00", ... } } }
-    const r = await fetch(TIME_API, {cache:"no-store"});
-    if(!r.ok) throw new Error("Time API failed. Status: " + r.status);
-    const j = await r.json();
-    if(j.data && j.data.datetime && j.data.datetime.date_time) {
-      // timezoneapi.io returns date_time as "YYYY-MM-DD HH:MM:SS"
-      // Convert it to a Date object, respecting that it's Nepal time
-      const dateTimeStr = j.data.datetime.date_time;
-      // Manually parse to avoid timezone interpretation issues
-      const [datePart, timePart] = dateTimeStr.split(' ');
-      const [year, month, day] = datePart.split('-').map(Number);
-      const [hour, minute, second] = timePart.split(':').map(Number);
-
-      // Create a Date object assuming it's UTC and then convert to local,
-      // or construct directly as local time if timezoneapi.io gives local time for the TZ
-      // Since it's specific to Asia/Kathmandu, we can construct it directly:
-      // Note: Month is 0-indexed in Date constructor
-      return new Date(year, month - 1, day, hour, minute, second);
-    } else {
-      throw new Error("Invalid response from time API.");
-    }
-  }catch(e){
-    console.warn("Time API failed; using local clock", e);
-    return new Date();
-  }
+  // Using local device time as per request
+  return new Date();
 }
 
 /* =========================
@@ -348,74 +282,10 @@ function pickCurrentChapter(now){
 }
 
 /* =========================
-   Reset participants in DB for new chapter
+   Database functions (ALL REMOVED)
    ========================= */
-async function resetParticipantsInDB(chapterKey){
-  try{
-    // Path: /artifacts/{appId}/public/data/quizzes/{chapterKey}/participants
-    const path = `artifacts/${appId}/public/data/quizzes/${chapterKey}/participants`;
-    const dbRef = ref(dbInstance, path);
-    await set(dbRef, {}); // Set to empty object to clear all participants
-    console.log("Participants reset for", chapterKey, "in Realtime DB.");
-  }catch(e){
-    console.error("Reset error in Realtime DB", e);
-  }
-}
+// resetParticipantsInDB, pushParticipantResult, loadLeaderboard are no longer needed.
 
-/* =========================
-   Push participant result to DB
-   ========================= */
-async function pushParticipantResult(chapterKey, name, scoreObj){
-  try{
-    // Path: /artifacts/{appId}/public/data/quizzes/{chapterKey}/participants
-    const path = `artifacts/${appId}/public/data/quizzes/${chapterKey}/participants`;
-    const dbRef = ref(dbInstance, path);
-
-    const payload = {
-      name: name,
-      score: scoreObj.correct,
-      correct: scoreObj.correct,
-      wrong: scoreObj.wrong,
-      skipped: scoreObj.skipped,
-      timestamp: new Date().toISOString(),
-      userId: userId // Store the user ID with the result
-    };
-    await push(dbRef, payload); // Use push for adding new entry
-    console.log("Participant result saved to Realtime DB.");
-    return true;
-  }catch(e){
-    console.error("Push participant error to Realtime DB", e);
-    throw e;
-  }
-}
-
-/* =========================
-   Read participants and render leaderboard (Realtime updates)
-   ========================= */
-async function loadLeaderboard(chapterKey){
-  // Path: /artifacts/{appId}/public/data/quizzes/{chapterKey}/participants
-  const path = `artifacts/${appId}/public/data/quizzes/${chapterKey}/participants`;
-  const dbRef = ref(dbInstance, path);
-
-  // Remove previous listener if any to avoid multiple listeners
-  if (leaderboardListener) {
-      off(dbRef, 'value', leaderboardListener);
-  }
-
-  leaderboardListener = onValue(dbRef, (snapshot) => {
-      const data = snapshot.val();
-      if (!data){
-        el('leaderboard').innerHTML = '<div class="small">No participants yet</div>';
-        return;
-      }
-      const rows = Object.values(data);
-      rows.sort((a,b)=> (b.score||0) - (a.score||0) ); // Sort by score descending
-      el('leaderboard').innerHTML = rows.map(p=>`<div class="participant"><div>${escapeHtml(p.name||'—')}</div><div>${p.score||0}</div></div>`).join('');
-  }, (error) => {
-      console.error("Leaderboard Realtime DB error", error);
-      el('leaderboard').innerHTML = '<div class="small">Error loading leaderboard</div>';
-  });
-}
 
 /* =========================
    Gemini generate (50 MCQs)
@@ -571,12 +441,8 @@ function submitQuiz(){
   // show results area
   hide(el('quiz-area'));
   show(el('results-area'));
-  // enable save result if name provided
-  el('save-result-btn').disabled = !el('participant-name').value.trim();
-  // show leaderboard
-  if (currentChapter) { // Ensure currentChapter is not null
-    loadLeaderboard(sanitizeKey(currentChapter.chapter));
-  }
+  // "Save Result" button's functionality changed to local feedback
+  el('save-result-btn').disabled = false; // Always enabled for local feedback
 }
 
 /* =========================
@@ -585,11 +451,10 @@ function submitQuiz(){
 document.addEventListener('click', (e) => {
   if(e.target && e.target.id === 'join-button'){
     participantName = el('participant-name').value.trim();
-    if(!participantName){ showMessage('Enter your name to join and save result.'); return; }
-    // enable quiz UI (if quizData already ready)
+    // No strict requirement for name if not saving to DB, but keep for local reference if user enters it
+    
     hide(el('results-area'));
     show(el('quiz-area'));
-    // if quizData is empty, it will be generated already; otherwise render first q
     if(quizData.length) { index=0; renderQuestion(); }
   }
 });
@@ -598,34 +463,23 @@ el('next-btn').onclick = nextQuestion;
 el('skip-btn').onclick = skipQuestion;
 el('submit-btn').onclick = submitQuiz;
 el('restart-btn').onclick = ()=>{
-  // reload page to allow re-join
   location.reload();
 };
 el('save-result-btn').onclick = async ()=>{
-  try{
-    const correct = Number(el('res-correct').innerText||0);
-    const wrong = Number(el('res-wrong').innerText||0);
-    const skipped = Number(el('res-skipped').innerText||0);
-    const chapterKey = sanitizeKey(currentChapter.chapter);
-    await pushParticipantResult(chapterKey, el('participant-name').value.trim(), {correct,wrong,skipped});
-    showMessage('Result saved ✅');
-    // leaderboard will auto-refresh due to onValue listener
-  }catch(e){
-    showMessage('Failed to save result. Check console for details.');
-  }
+  // Modified to just show a local message, no database interaction
+  showMessage('Your quiz result has been processed locally!');
 };
 
 /* =========================
-   Main routine: load schedule, pick chapter, generate or load MCQs,
-   reset participants if new chapter
+   Main routine: load schedule, pick chapter, generate or load MCQs
    ========================= */
 async function main(){
   // Load schedule first
   await loadSchedule();
 
-  // Get accurate time (Nepal time)
+  // Get accurate time (local device time)
   const now = await getAccurateTime();
-  el('schedule-info').innerText = `Current Nepal time: ${now.toLocaleString('en-NP', {dateStyle: 'full', timeStyle: 'medium'})}`;
+  el('schedule-info').innerText = `Current local time: ${now.toLocaleString('en-NP', {dateStyle: 'full', timeStyle: 'medium'})}`;
 
   // Pick appropriate chapter based on current time
   currentChapter = pickCurrentChapter(now);
@@ -636,20 +490,6 @@ async function main(){
   }
   el('chapter-title').innerText = `Scheduled: ${currentChapter.chapter} (starts ${currentChapter.time.toLocaleString('en-NP', {dateStyle: 'medium', timeStyle: 'short'})})`;
 
-  // Detect if we've already initialized this chapter earlier (localStorage)
-  const storedKey = localStorage.getItem('current_chapter_key') || '';
-  const thisKey = sanitizeKey(currentChapter.chapter);
-
-  if(storedKey !== thisKey){
-    // New chapter activated — reset participants in DB for clean start
-    try{
-      await resetParticipantsInDB(thisKey);
-    }catch(e){
-      console.warn("Could not reset participants in DB:", e);
-    }
-    localStorage.setItem('current_chapter_key', thisKey);
-  }
-
   // Generate MCQs (Gemini) — this can take a few seconds
   try{
     quizData = await generateMCQs(currentChapter.chapter);
@@ -657,8 +497,6 @@ async function main(){
     quizData = quizData.map(q => ({ ...q, answered:false, userAnswer:null, skipped:false }));
     el('join-button').innerText = 'Join Quiz';
     el('join-button').disabled = false;
-    // Show initial leaderboard (it will be updated in realtime)
-    loadLeaderboard(thisKey);
   }catch(e){
     el('chapter-title').innerText = `Error generating questions: ${e.message || e}`;
     el('join-button').innerText = 'Retry';
@@ -667,8 +505,8 @@ async function main(){
   }
 }
 
-// Initialize Firebase and then call main
-initFirebase();
+// Start the main application logic when the page loads
+document.addEventListener('DOMContentLoaded', main);
 
 /* =========================
    small helper: escape html
