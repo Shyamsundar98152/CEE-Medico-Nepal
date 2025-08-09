@@ -26,11 +26,40 @@
   .option-btn:hover{background:#e8f6ff}
   #options-container{margin-top:8px}
   #quiz-results{display:flex;flex-direction:column;gap:8px;align-items:center}
-  .leaderboard{max-height:220px; overflow:auto; margin-top:10px;border-radius:8px;padding:8px;border:1px dashed #e6eef8}
+  .leaderboard{max-height:220px; overflow-y:auto; margin-top:10px;border-radius:8px;padding:8px;border:1px dashed #e6eef8}
   .participant{display:flex;justify-content:space-between;padding:6px 8px;border-radius:6px}
   .small{font-size:.9rem;color:var(--muted)}
   .center{text-align:center}
   @media (max-width:640px){.row{flex-direction:column;align-items:stretch}}
+
+  /* Modal Styles */
+  .modal-overlay {
+    position: fixed;
+    top: 0; left: 0; right: 0; bottom: 0;
+    background: rgba(0,0,0,0.6);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 1000;
+  }
+  .modal-content {
+    background: var(--card);
+    padding: 25px;
+    border-radius: 12px;
+    box-shadow: 0 8px 25px rgba(0,0,0,0.2);
+    max-width: 400px;
+    width: 90%;
+    text-align: center;
+  }
+  .modal-content button {
+    margin-top: 20px;
+    padding: 10px 20px;
+    background: var(--accent);
+    color: white;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+  }
 </style>
 </head>
 <body>
@@ -87,13 +116,13 @@
         <button id="restart-btn" style="background:#ef4444">Restart Quiz</button>
       </div>
 
-      <h3 style="margin-top:10px">Leaderboard — Current Quiz</h3>
+      <h3 style="margin-top:10px">Leaderboard — Current Quiz <span id="current-user-id" class="small"></span></h3>
       <div class="leaderboard" id="leaderboard"></div>
     </div>
   </div>
 
   <div class="card small" id="notes">
-    <strong>Notes:</strong> The schedule is read from <code>data/chapters.txt</code>. The site uses <code>worldtimeapi.org</code> for Nepal time. Realtime DB updates are sent to your database root under <code>/quizzes/{chapterKey}/participants</code>.
+    <strong>Notes:</strong> The schedule is read from <code>data/chapters.txt</code>. The site uses <code>worldtimeapi.org</code> for Nepal time. Realtime DB updates are sent to your database root under <code>/artifacts/&lt;appId&gt;/public/data/quizzes/{chapterKey}/participants</code>.
   </div>
 </main>
 
@@ -101,19 +130,38 @@
   <div class="small">© 2025 CEE Medico Nepal</div>
 </footer>
 
-<script>
+<!-- Modal for messages -->
+<div id="modal-message-overlay" class="modal-overlay hidden">
+  <div class="modal-content">
+    <p id="modal-message-text"></p>
+    <button id="modal-message-close">OK</button>
+  </div>
+</div>
+
+<script type="module">
+/* =========================
+   Firebase Imports
+   ========================= */
+import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+import { getAuth, signInAnonymously, signInWithCustomToken, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+import { getDatabase, ref, push, set, onValue, off } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-database.js";
+
 /* =========================
    CONFIG - EDIT IF NEEDED
    ========================= */
 const TIME_API = "https://worldtimeapi.org/api/timezone/Asia/Kathmandu";
-const SCHEDULE_TXT = "data/chapters.txt";
-const GEMINI_API_KEY = "AIzaSyA3ASMxIv3OwlLmAFvO1pSGJe6U1PdvH2E"; // YOUR provided key
-const GEMINI_URL = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${GEMINI_API_KEY}`;
-const FIREBASE_DB_ROOT = "https://daily-quiz-a29e8-default-rtdb.asia-southeast1.firebasedatabase.app";
+const SCHEDULE_TXT = "./data/chapters.txt"; // Changed path to include ./ for better resolution
+const GEMINI_API_KEY = ""; // Leave this empty. Canvas environment will provide it at runtime.
+const GEMINI_URL = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-05-20:generateContent?key=${GEMINI_API_KEY}`;
+// const FIREBASE_DB_ROOT is not directly used for URLs; firebase SDK handles it with config
 
 /* =========================
-   STATE
+   GLOBAL STATE & CANVAS VARS
    ========================= */
+let app, auth, dbInstance;
+const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
+let userId = crypto.randomUUID(); // Temporary, will be updated by auth listener
+
 let schedule = [];             // array of {time:Date, chapter:string}
 let currentChapter = null;     // {time, chapter}
 let quizData = [];             // array of questions from Gemini or data file
@@ -121,17 +169,69 @@ let index = 0;
 let countdownTimer = null;
 let questionTimer = null;
 let participantName = "";
-let participantsPath = "";     // DB path where current participants are stored
+let leaderboardListener = null; // To manage the Realtime DB listener for leaderboard
 
 /* =========================
    Helpers
    ========================= */
 function sanitizeKey(s){
-  return s.replace(/[^a-z0-9]/gi, '_').toLowerCase();
+  return String(s).replace(/[^a-z0-9]/gi, '_').toLowerCase();
 }
 function el(id){ return document.getElementById(id); }
 function show(q){ q.classList.remove('hidden'); q.style.display = ''; }
 function hide(q){ q.classList.add('hidden'); q.style.display = 'none'; }
+
+function showMessage(msg) {
+    el('modal-message-text').innerText = msg;
+    show(el('modal-message-overlay'));
+}
+el('modal-message-close').onclick = () => {
+    hide(el('modal-message-overlay'));
+};
+
+/* =========================
+   Firebase Initialization & Auth
+   ========================= */
+async function initFirebase() {
+    try {
+        const firebaseConfig = typeof __firebase_config !== 'undefined' ? JSON.parse(__firebase_config) : null;
+        if (!firebaseConfig) {
+            console.error("Firebase config not available. Cannot initialize Firebase.");
+            el('chapter-title').innerText = "Error: Firebase not configured. Please ensure Firebase is setup.";
+            return;
+        }
+        app = initializeApp(firebaseConfig);
+        auth = getAuth(app);
+        dbInstance = getDatabase(app);
+
+        // Sign in with custom token if available, otherwise anonymously
+        if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
+            await signInWithCustomToken(auth, __initial_auth_token);
+            console.log("Signed in with custom token.");
+        } else {
+            await signInAnonymously(auth);
+            console.log("Signed in anonymously.");
+        }
+
+        // Listen for auth state changes and set the userId
+        onAuthStateChanged(auth, (user) => {
+            if (user) {
+                console.log("User is signed in:", user.uid);
+                userId = user.uid;
+                el('current-user-id').innerText = `(User: ${userId})`;
+            } else {
+                console.log("No user is signed in. Using anonymous ID.");
+                userId = crypto.randomUUID(); // Fallback to random if not signed in
+            }
+            // Once authentication state is determined, proceed with the main application logic
+            main();
+        });
+    } catch (e) {
+        console.error("Firebase initialization or authentication error:", e);
+        el('chapter-title').innerText = `Error: Firebase init failed (${e.message}). Check console.`;
+    }
+}
+
 
 /* =========================
    Load schedule (chapters.txt)
@@ -139,15 +239,15 @@ function hide(q){ q.classList.add('hidden'); q.style.display = 'none'; }
 async function loadSchedule(){
   try{
     const res = await fetch(SCHEDULE_TXT);
-    if(!res.ok) throw new Error("Schedule file not found");
+    if(!res.ok) throw new Error("Schedule file not found or inaccessible. Status: " + res.status);
     const txt = await res.text();
-    schedule = txt.trim().split('\\n').map(l=>{
+    schedule = txt.trim().split('\n').map(l=>{ // Use \n instead of \\n for actual newline
       const parts = l.split('|');
       const dt = parts[0].trim(); // "YYYY-MM-DD HH:MM"
       const ch = (parts[1]||"").trim();
       // treat dt as local time: construct using parts to avoid timezone shift
       // dt is in "YYYY-MM-DD HH:MM"
-      const m = dt.match(/(\\d{4})-(\\d{2})-(\\d{2})\\s+(\\d{2}):(\\d{2})/);
+      const m = dt.match(/(\d{4})-(\d{2})-(\d{2})\s+(\d{2}):(\d{2})/); // Use correct regex for parsing
       if(!m) return null;
       const [_,y,mo,d,h,mi] = m;
       // Create a Date object in local timezone with those components
@@ -157,6 +257,7 @@ async function loadSchedule(){
   }catch(e){
     console.error("Error loading schedule:", e);
     schedule = [];
+    el('chapter-title').innerText = `Error loading schedule: ${e.message}. Make sure 'data/chapters.txt' exists.`;
   }
 }
 
@@ -166,7 +267,7 @@ async function loadSchedule(){
 async function getAccurateTime(){
   try{
     const r = await fetch(TIME_API, {cache:"no-store"});
-    if(!r.ok) throw new Error("Time API failed");
+    if(!r.ok) throw new Error("Time API failed. Status: " + r.status);
     const j = await r.json();
     return new Date(j.datetime);
   }catch(e){
@@ -191,13 +292,13 @@ function pickCurrentChapter(now){
    ========================= */
 async function resetParticipantsInDB(chapterKey){
   try{
-    const path = `/quizzes/${chapterKey}/participants.json`;
-    const url = FIREBASE_DB_ROOT.replace(/\\/$/,'') + path;
-    // PUT empty object (reset)
-    await fetch(url, { method: 'PUT', headers:{ 'Content-Type':'application/json' }, body: JSON.stringify({}) });
-    console.log("Participants reset for", chapterKey);
+    // Path: /artifacts/{appId}/public/data/quizzes/{chapterKey}/participants
+    const path = `artifacts/${appId}/public/data/quizzes/${chapterKey}/participants`;
+    const dbRef = ref(dbInstance, path);
+    await set(dbRef, {}); // Set to empty object to clear all participants
+    console.log("Participants reset for", chapterKey, "in Realtime DB.");
   }catch(e){
-    console.error("Reset error", e);
+    console.error("Reset error in Realtime DB", e);
   }
 }
 
@@ -206,43 +307,54 @@ async function resetParticipantsInDB(chapterKey){
    ========================= */
 async function pushParticipantResult(chapterKey, name, scoreObj){
   try{
-    const path = `/quizzes/${chapterKey}/participants.json`;
-    const url = FIREBASE_DB_ROOT.replace(/\\/$/,'') + path;
+    // Path: /artifacts/{appId}/public/data/quizzes/{chapterKey}/participants
+    const path = `artifacts/${appId}/public/data/quizzes/${chapterKey}/participants`;
+    const dbRef = ref(dbInstance, path);
+
     const payload = {
       name: name,
       score: scoreObj.correct,
       correct: scoreObj.correct,
       wrong: scoreObj.wrong,
       skipped: scoreObj.skipped,
-      timestamp: new Date().toISOString()
+      timestamp: new Date().toISOString(),
+      userId: userId // Store the user ID with the result
     };
-    const res = await fetch(url, { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify(payload) });
-    if(!res.ok) throw new Error("Failed to save result");
-    return await res.json();
+    await push(dbRef, payload); // Use push for adding new entry
+    console.log("Participant result saved to Realtime DB.");
+    return true;
   }catch(e){
-    console.error("Push participant error", e);
+    console.error("Push participant error to Realtime DB", e);
     throw e;
   }
 }
 
 /* =========================
-   Read participants and render leaderboard
+   Read participants and render leaderboard (Realtime updates)
    ========================= */
 async function loadLeaderboard(chapterKey){
-  try{
-    const path = `/quizzes/${chapterKey}/participants.json`;
-    const url = FIREBASE_DB_ROOT.replace(/\\/$/,'') + path;
-    const r = await fetch(url);
-    if(!r.ok) { el('leaderboard').innerHTML = '<div class="small">No data</div>'; return; }
-    const data = await r.json();
-    if(!data){ el('leaderboard').innerHTML = '<div class="small">No participants yet</div>'; return; }
-    const rows = Object.values(data);
-    rows.sort((a,b)=> (b.score||0) - (a.score||0) );
-    el('leaderboard').innerHTML = rows.map(p=>`<div class="participant"><div>${escapeHtml(p.name||'—')}</div><div>${p.score||0}</div></div>`).join('');
-  }catch(e){
-    console.error("Leaderboard load error", e);
-    el('leaderboard').innerHTML = '<div class="small">Error loading leaderboard</div>';
+  // Path: /artifacts/{appId}/public/data/quizzes/{chapterKey}/participants
+  const path = `artifacts/${appId}/public/data/quizzes/${chapterKey}/participants`;
+  const dbRef = ref(dbInstance, path);
+
+  // Remove previous listener if any to avoid multiple listeners
+  if (leaderboardListener) {
+      off(dbRef, 'value', leaderboardListener);
   }
+
+  leaderboardListener = onValue(dbRef, (snapshot) => {
+      const data = snapshot.val();
+      if (!data){
+        el('leaderboard').innerHTML = '<div class="small">No participants yet</div>';
+        return;
+      }
+      const rows = Object.values(data);
+      rows.sort((a,b)=> (b.score||0) - (a.score||0) ); // Sort by score descending
+      el('leaderboard').innerHTML = rows.map(p=>`<div class="participant"><div>${escapeHtml(p.name||'—')}</div><div>${p.score||0}</div></div>`).join('');
+  }, (error) => {
+      console.error("Leaderboard Realtime DB error", error);
+      el('leaderboard').innerHTML = '<div class="small">Error loading leaderboard</div>';
+  });
 }
 
 /* =========================
@@ -275,8 +387,8 @@ Return JSON only.
       body: JSON.stringify(payload)
     });
     if(!r.ok){
-      const err = await r.text();
-      throw new Error('Gemini API failed: ' + (err||r.status));
+      const errText = await r.text();
+      throw new Error(`Gemini API failed: ${r.status} - ${errText}`);
     }
     const json = await r.json();
     // The response usually contains result.candidates[0].content.parts[0].text
@@ -297,31 +409,62 @@ function renderQuestion(){
   const q = quizData[index];
   el('question-num').innerText = `Question ${index+1} / ${quizData.length}`;
   el('question-text').innerText = q.question || '';
-  el('explanation').innerText = '';
-  const cont = el('options-container'); cont.innerHTML = '';
+  el('explanation').innerText = ''; // Clear previous explanation
+  const cont = el('options-container'); cont.innerHTML = ''; // Clear previous options
+
   (q.options||[]).forEach((opt,i)=>{
     const btn = document.createElement('button');
     btn.className = 'option-btn';
     btn.innerText = opt;
     btn.onclick = ()=>{
-      if(q.answered) return;
+      if(q.answered) return; // Prevent re-answering
       q.answered = true;
       q.userAnswer = i;
-      // mark
-      btn.style.background = (i === q.correct)?'#d1fae5':'#ffe4e6';
-      el('explanation').innerText = (i===q.correct? '✅ Correct. ':'❌ Incorrect. Correct: ' + (q.options[q.correct] || '')) + (q.explanation? ' — '+q.explanation:'');
-      clearInterval(questionTimer);
+      
+      // Visually mark chosen option
+      Array.from(cont.children).forEach(optionBtn => {
+        optionBtn.style.background = '#f8fcff'; // Reset all to default
+        optionBtn.style.border = '1px solid #e6eef8';
+      });
+
+      // Mark correct/incorrect choice
+      if (i === q.correct) {
+        btn.style.background = '#d1fae5'; // Light green for correct
+        btn.style.border = '1px solid #34d399';
+      } else {
+        btn.style.background = '#ffe4e6'; // Light red for incorrect
+        btn.style.border = '1px solid #ef4444';
+        // Also highlight the correct answer if incorrect choice was made
+        Array.from(cont.children)[q.correct].style.background = '#d1fae5';
+        Array.from(cont.children)[q.correct].style.border = '1px solid #34d399';
+      }
+
+      el('explanation').innerText = (i === q.correct ? '✅ Correct. ' : '❌ Incorrect. Correct answer: ' + (q.options[q.correct] || '')) + (q.explanation ? ' — ' + q.explanation : '');
+      clearInterval(questionTimer); // Stop timer after answer
     };
     cont.appendChild(btn);
   });
+  startQuestionTimer(); // Start timer for the new question
 }
 
 function nextQuestion(){
-  if(index < quizData.length -1){ index++; renderQuestion(); startQuestionTimer(); }
+  if(index < quizData.length -1){ 
+    quizData[index].skipped = quizData[index].answered ? quizData[index].skipped : true; // Mark as skipped if not answered
+    index++; renderQuestion(); 
+  }
   else submitQuiz();
 }
-function prevQuestion(){ if(index>0){ index--; renderQuestion(); startQuestionTimer(); } }
-function skipQuestion(){ quizData[index].skipped = true; index++; if(index<quizData.length) { renderQuestion(); startQuestionTimer(); } else submitQuiz(); }
+function prevQuestion(){ 
+  if(index>0){ 
+    index--; renderQuestion(); 
+  } 
+}
+function skipQuestion(){ 
+  quizData[index].skipped = true; 
+  index++; 
+  if(index<quizData.length) { renderQuestion(); } 
+  else submitQuiz(); 
+}
 
 function startQuestionTimer(){
   let timeLeft = 30;
@@ -334,7 +477,7 @@ function startQuestionTimer(){
       clearInterval(questionTimer);
       // auto-skip
       quizData[index].skipped = true;
-      if(index < quizData.length -1){ index++; renderQuestion(); startQuestionTimer(); }
+      if(index < quizData.length -1){ index++; renderQuestion(); }
       else submitQuiz();
     }
   },1000);
@@ -347,7 +490,8 @@ function submitQuiz(){
   quizData.forEach(q=>{
     if(q.answered && q.userAnswer === q.correct) correct++;
     else if(q.answered && q.userAnswer !== q.correct) wrong++;
-    else skipped++;
+    else if(q.skipped) skipped++; // Count as skipped if explicitly skipped or auto-skipped by timer
+    else skipped++; // If not answered and not explicitly skipped, count as skipped
   });
   el('res-total').innerText = quizData.length;
   el('res-correct').innerText = correct;
@@ -368,12 +512,12 @@ function submitQuiz(){
 document.addEventListener('click', (e) => {
   if(e.target && e.target.id === 'join-button'){
     participantName = el('participant-name').value.trim();
-    if(!participantName){ alert('Enter your name to join and save result.'); return; }
+    if(!participantName){ showMessage('Enter your name to join and save result.'); return; }
     // enable quiz UI (if quizData already ready)
     hide(el('results-area'));
     show(el('quiz-area'));
     // if quizData is empty, it will be generated already; otherwise render first q
-    if(quizData.length) { index=0; renderQuestion(); startQuestionTimer(); }
+    if(quizData.length) { index=0; renderQuestion(); }
   }
 });
 el('prev-btn').onclick = prevQuestion;
@@ -391,11 +535,10 @@ el('save-result-btn').onclick = async ()=>{
     const skipped = Number(el('res-skipped').innerText||0);
     const chapterKey = sanitizeKey(currentChapter.chapter);
     await pushParticipantResult(chapterKey, el('participant-name').value.trim(), {correct,wrong,skipped});
-    alert('Result saved ✅');
-    // refresh leaderboard
-    await loadLeaderboard(chapterKey);
+    showMessage('Result saved ✅');
+    // leaderboard will auto-refresh due to onValue listener
   }catch(e){
-    alert('Failed to save result. Check console for details.');
+    showMessage('Failed to save result. Check console for details.');
   }
 };
 
@@ -404,22 +547,25 @@ el('save-result-btn').onclick = async ()=>{
    reset participants if new chapter
    ========================= */
 async function main(){
+  // Load schedule first
   await loadSchedule();
+
+  // Get accurate time (Nepal time)
   const now = await getAccurateTime();
   el('schedule-info').innerText = `Current Nepal time: ${now.toLocaleString()}`;
-  // pick appropriate chapter
+
+  // Pick appropriate chapter based on current time
   currentChapter = pickCurrentChapter(now);
   if(!currentChapter){
-    el('chapter-title').innerText = 'No chapter scheduled yet (or schedule missing)';
+    el('chapter-title').innerText = 'No chapter scheduled yet (or schedule missing/future).';
     el('join-button').disabled = true;
     return;
   }
   el('chapter-title').innerText = `Scheduled: ${currentChapter.chapter} (starts ${currentChapter.time.toLocaleString()})`;
 
-  // detect if we've already initialized this chapter earlier (localStorage)
+  // Detect if we've already initialized this chapter earlier (localStorage)
   const storedKey = localStorage.getItem('current_chapter_key') || '';
   const thisKey = sanitizeKey(currentChapter.chapter);
-  participantsPath = `/quizzes/${thisKey}/participants`;
 
   if(storedKey !== thisKey){
     // New chapter activated — reset participants in DB for clean start
@@ -431,16 +577,14 @@ async function main(){
     localStorage.setItem('current_chapter_key', thisKey);
   }
 
-  // If chapter scheduled time is in future (but was picked because schedule date/time <= now),
-  // The pickCurrentChapter already ensures time <= now. So quiz is ready.
-  // Now generate MCQs (Gemini) — this can take a few seconds
+  // Generate MCQs (Gemini) — this can take a few seconds
   try{
     quizData = await generateMCQs(currentChapter.chapter);
-    // ensure structure
+    // Ensure structure and add initial state for each question
     quizData = quizData.map(q => ({ ...q, answered:false, userAnswer:null, skipped:false }));
     el('join-button').innerText = 'Join Quiz';
     el('join-button').disabled = false;
-    // show leaderboard initial
+    // Show initial leaderboard (it will be updated in realtime)
     loadLeaderboard(thisKey);
   }catch(e){
     el('chapter-title').innerText = `Error generating questions: ${e.message || e}`;
@@ -450,8 +594,9 @@ async function main(){
   }
 }
 
-main();
- 
+// Initialize Firebase and then call main
+initFirebase();
+
 /* =========================
    small helper: escape html
    ========================= */
