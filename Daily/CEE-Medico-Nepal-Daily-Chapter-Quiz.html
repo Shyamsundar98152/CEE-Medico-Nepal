@@ -1,0 +1,582 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CEE Medico Nepal Daily Chapter Quiz</title>
+    <!-- Tailwind CSS CDN for styling -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        /* Custom styles for the app */
+        body {
+            font-family: 'Inter', sans-serif;
+            background: #e0f2f7; /* Light blue background */
+            margin: 0;
+            display: flex;
+            flex-direction: column;
+            min-height: 100vh;
+        }
+        header, footer {
+            background: #003366; /* Dark blue header/footer */
+            color: white;
+            text-align: center;
+            padding: 1rem;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        main {
+            flex-grow: 1;
+            max-width: 900px;
+            margin: 1.25rem auto;
+            background: white;
+            padding: 1.25rem;
+            border-radius: 0.5rem;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+        }
+        h2 {
+            text-align: center;
+            color: #003366;
+            margin-bottom: 1.25rem;
+        }
+        .option-btn {
+            display: block;
+            width: 100%;
+            margin: 0.3125rem 0;
+            padding: 0.625rem;
+            border-radius: 0.3125rem;
+            border: 1px solid #ccc;
+            background: #e0f2f7; /* Light blue for options */
+            cursor: pointer;
+            transition: background-color 0.3s ease;
+        }
+        .option-btn:hover {
+            background: #b3e5fc; /* Lighter blue on hover */
+        }
+        .option-btn.selected {
+            background-color: #a7d9f7; /* Slightly darker when selected */
+            border-color: #003366;
+            font-weight: bold;
+        }
+        .option-btn.correct {
+            background-color: #d4edda; /* Green for correct answer */
+            border-color: #28a745;
+            font-weight: bold;
+        }
+        .option-btn.wrong {
+            background-color: #f8d7da; /* Red for wrong answer */
+            border-color: #dc3545;
+            font-weight: bold;
+        }
+        .hidden {
+            display: none;
+        }
+        #quiz-container, #quiz-results, #loading-spinner, #auth-info, #saved-results {
+            margin-top: 1.25rem;
+            padding: 1.25rem;
+            background-color: #f9f9f9;
+            border-radius: 0.5rem;
+            border: 1px solid #eee;
+        }
+        .spinner {
+            border: 4px solid rgba(0, 0, 0, 0.1);
+            border-left-color: #003366;
+            border-radius: 50%;
+            width: 50px;
+            height: 50px;
+            animation: spin 1s linear infinite;
+            margin: 20px auto;
+        }
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body>
+
+    <header>
+        <h1>CEE Medico Nepal - Daily Chapter Quiz</h1>
+    </header>
+
+    <main>
+        <div id="auth-info" class="text-sm text-gray-700 p-4 border rounded-md mb-4 hidden">
+            <p><strong>User ID:</strong> <span id="user-id">Loading...</span></p>
+            <p>Sign in to save results.</p>
+        </div>
+
+        <h2 id="chapter-title">Loading today's chapter...</h2>
+
+        <div id="loading-spinner" class="spinner hidden"></div>
+
+        <div id="quiz-container" class="hidden">
+            <div id="question-num" class="text-lg font-semibold mb-2 text-gray-700"></div>
+            <div id="question-text" class="text-xl font-bold mb-4 text-gray-800"></div>
+            <div id="options-container"></div>
+            <p id="explanation" class="mt-4 p-3 bg-blue-100 border border-blue-300 rounded-md hidden text-sm"></p>
+            <div class="flex justify-between mt-6">
+                <button onclick="previousQuestion()" class="bg-gray-300 hover:bg-gray-400 text-gray-800 font-bold py-2 px-4 rounded-lg shadow-md transition duration-300 ease-in-out">Previous</button>
+                <button onclick="nextQuestion()" class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-lg shadow-md transition duration-300 ease-in-out">Next</button>
+                <button onclick="submitQuiz()" class="bg-green-600 hover:bg-green-700 text-white font-bold py-2 px-4 rounded-lg shadow-md transition duration-300 ease-in-out">Submit</button>
+            </div>
+        </div>
+
+        <div id="quiz-results" class="hidden">
+            <h3 class="text-2xl font-bold text-center text-blue-800 mb-4">Quiz Results</h3>
+            <p class="text-lg text-gray-700 mb-2">Total Questions: <span id="total-questions" class="font-semibold"></span></p>
+            <p class="text-lg text-green-700 mb-2">Correct Answers: <span id="correct" class="font-semibold"></span></p>
+            <p class="text-lg text-red-700 mb-2">Wrong Answers: <span id="wrong" class="font-semibold"></span></p>
+            <p class="text-lg text-yellow-700 mb-4">Skipped Questions: <span id="skipped" class="font-semibold"></span></p>
+            <button onclick="retryQuiz()" class="bg-purple-600 hover:bg-purple-700 text-white font-bold py-2 px-4 rounded-lg shadow-md w-full transition duration-300 ease-in-out">Retry Quiz</button>
+        </div>
+
+        <div id="saved-results" class="hidden mt-8">
+            <h3 class="text-2xl font-bold text-center text-blue-800 mb-4">Your Saved Quiz Results</h3>
+            <div id="saved-results-list" class="space-y-4">
+                <!-- Saved quiz results will be loaded here -->
+            </div>
+        </div>
+
+        <!-- Custom Modal for Alerts -->
+        <div id="custom-alert-modal" class="hidden fixed inset-0 bg-gray-600 bg-opacity-50 flex items-center justify-center z-50">
+            <div class="bg-white p-6 rounded-lg shadow-xl max-w-sm w-full text-center">
+                <p id="custom-alert-message" class="text-lg font-semibold mb-4 text-gray-800"></p>
+                <button onclick="closeCustomAlert()" class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-6 rounded-lg shadow-md">OK</button>
+            </div>
+        </div>
+
+    </main>
+
+    <footer>
+        <p>&copy; 2025 CEE Medico Nepal</p>
+    </footer>
+
+    <script type="module">
+        // Firebase imports
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+        import { getAuth, signInAnonymously, signInWithCustomToken, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { getFirestore, doc, getDoc, addDoc, collection, query, onSnapshot, orderBy, serverTimestamp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+
+        // Global Firebase variables
+        let app;
+        let db;
+        let auth;
+        let userId;
+
+        // Mandate Canvas global variables
+        const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
+        const firebaseConfig = typeof __firebase_config !== 'undefined' ? JSON.parse(__firebase_config) : {};
+        const initialAuthToken = typeof __initial_auth_token !== 'undefined' ? __initial_auth_token : null;
+
+        // Quiz specific variables
+        const timeApiUrl = "https://worldtimeapi.org/api/timezone/Asia/Kathmandu";
+        // To simulate fetching a local file in the Canvas environment, we will directly embed its content.
+        // In a real deployment, you would serve this file from your web server.
+        const chaptersTxtContent = `2025-08-09 09:00|Kinematics
+2025-08-10 09:00|Laws of Motion
+2025-08-11 09:00|Work, Energy and Power
+2025-08-12 09:00|Gravitation
+2025-08-13 09:00|Oscillations
+2025-08-14 09:00|Waves`;
+
+        let quizData = [];
+        let currentIndex = 0;
+        let chapterToday = null;
+
+        // NOTE: If you want to use models other than gemini-2.5-flash-preview-05-20 or imagen-3.0-generate-002, provide an API key here. Otherwise, leave this as-is.
+        const API_KEY = ""; 
+
+        // Initialize Firebase and set up authentication
+        async function initializeFirebase() {
+            try {
+                app = initializeApp(firebaseConfig);
+                db = getFirestore(app);
+                auth = getAuth(app);
+
+                // Sign in the user using the custom token provided by the environment, or anonymously if not available
+                if (initialAuthToken) {
+                    await signInWithCustomToken(auth, initialAuthToken);
+                } else {
+                    await signInAnonymously(auth);
+                }
+
+                // Listen for authentication state changes
+                onAuthStateChanged(auth, (user) => {
+                    if (user) {
+                        userId = user.uid;
+                        document.getElementById('user-id').innerText = userId;
+                        document.getElementById('auth-info').classList.remove('hidden');
+                        loadSavedResults(); // Load saved results once authenticated
+                    } else {
+                        userId = crypto.randomUUID(); // Fallback for unauthenticated users
+                        document.getElementById('user-id').innerText = 'Anonymous User (' + userId.substring(0, 8) + '...)'; // Display partial ID for anonymity
+                        document.getElementById('auth-info').classList.remove('hidden');
+                    }
+                    startDailyRoutine(); // Start routine after auth is ready
+                });
+            } catch (error) {
+                console.error("Error initializing Firebase or authenticating:", error);
+                showCustomAlert("Failed to initialize the app. Please try again later.");
+            }
+        }
+
+        // --- Custom Alert Modal Functions ---
+        function showCustomAlert(message) {
+            document.getElementById('custom-alert-message').innerText = message;
+            document.getElementById('custom-alert-modal').classList.remove('hidden');
+        }
+
+        function closeCustomAlert() {
+            document.getElementById('custom-alert-modal').classList.add('hidden');
+        }
+
+        // Function to get accurate time from WorldTimeAPI or fall back to local time
+        async function getAccurateTime() {
+            try {
+                const res = await fetch(timeApiUrl);
+                const data = await res.json();
+                return new Date(data.datetime);
+            } catch (e) {
+                console.error("Time API failed, falling back to local time.", e);
+                return new Date();
+            }
+        }
+
+        // Function to load chapter schedule from the embedded content
+        async function loadChapterSchedule() {
+            return chaptersTxtContent.trim().split("\n").map(line => {
+                const [datetime, chapter] = line.split("|");
+                // Ensure date parsing handles potential timezone issues
+                const date = new Date(datetime + 'Z'); // Treat as UTC and convert to local time
+                return { time: date, chapter: chapter.trim() };
+            });
+        }
+
+        // Main function to start the daily quiz routine
+        async function startDailyRoutine() {
+            document.getElementById('loading-spinner').classList.remove('hidden');
+            try {
+                const chapters = await loadChapterSchedule();
+                const now = await getAccurateTime();
+                
+                // Find the chapter for today or the most recent past one
+                chapterToday = null;
+                for (let entry of chapters) {
+                    // Compare dates only, ignoring time for chapter selection logic if needed
+                    // For now, it compares full datetime. If daily quiz always starts at 9AM, this is fine.
+                    if (now >= entry.time) {
+                        chapterToday = entry;
+                    }
+                }
+
+                if (!chapterToday) {
+                    document.getElementById("chapter-title").innerText = "No chapter available yet. Please check back later!";
+                    document.getElementById('loading-spinner').classList.add('hidden');
+                    return;
+                }
+
+                document.getElementById("chapter-title").innerText = `📘 Today's Chapter: ${chapterToday.chapter}`;
+                await generateQuiz(chapterToday.chapter);
+
+            } catch (err) {
+                console.error("Error starting daily routine:", err);
+                showCustomAlert("Failed to load today's chapter or generate quiz: " + err.message);
+            } finally {
+                document.getElementById('loading-spinner').classList.add('hidden');
+            }
+        }
+
+        // Function to generate quiz questions using Gemini API with exponential backoff
+        async function generateQuiz(chapter) {
+            const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-05-20:generateContent?key=${API_KEY}`;
+            const prompt = `Generate 10 NEET and CEE-level multiple choice questions in JSON format on the chapter "${chapter}" based on NEB and MEC syllabus Nepal. Each question must have exactly 4 options (A, B, C, D) and one correct answer index (0-3). Provide a concise explanation for each answer. Ensure the questions cover key concepts and formulas relevant to the chapter. Use this exact JSON format:
+[
+  {
+    "question": "1. What is the SI unit of force?",
+    "options": ["A) Joule", "B) Newton", "C) Watt", "D) Pascal"],
+    "correct": 1,
+    "explanation": "The SI unit of force is Newton (N)."
+  }
+]`;
+
+            const payload = {
+                contents: [{ role: "user", parts: [{ text: prompt }] }],
+                generationConfig: {
+                    responseMimeType: "application/json",
+                    responseSchema: {
+                        type: "ARRAY",
+                        items: {
+                            type: "OBJECT",
+                            properties: {
+                                "question": { "type": "STRING" },
+                                "options": { "type": "ARRAY", "items": { "type": "STRING" } },
+                                "correct": { "type": "NUMBER" },
+                                "explanation": { "type": "STRING" }
+                            },
+                            required: ["question", "options", "correct", "explanation"]
+                        }
+                    }
+                }
+            };
+
+            let retries = 0;
+            const maxRetries = 5;
+            let delay = 1000; // 1 second
+
+            while (retries < maxRetries) {
+                try {
+                    const response = await fetch(apiUrl, {
+                        method: "POST",
+                        headers: { "Content-Type": "application/json" },
+                        body: JSON.stringify(payload)
+                    });
+
+                    if (response.status === 429) { // Too Many Requests
+                        retries++;
+                        await new Promise(res => setTimeout(res, delay));
+                        delay *= 2; // Exponential backoff
+                        continue;
+                    }
+                    if (!response.ok) {
+                        const errorData = await response.json();
+                        throw new Error(`API error: ${response.statusText} - ${JSON.stringify(errorData)}`);
+                    }
+
+                    const result = await response.json();
+                    if (!result.candidates || result.candidates.length === 0 || !result.candidates[0].content || !result.candidates[0].content.parts || result.candidates[0].content.parts.length === 0) {
+                        throw new Error("Invalid response structure from Gemini API.");
+                    }
+
+                    const rawJson = result.candidates[0].content.parts[0].text;
+                    const parsedData = JSON.parse(rawJson);
+
+                    if (!Array.isArray(parsedData) || parsedData.length === 0) {
+                        throw new Error("Parsed quiz data is not an array or is empty.");
+                    }
+
+                    quizData = parsedData.map(q => ({
+                        ...q,
+                        userAnswerIndex: null,
+                        isAnswered: false,
+                        isSkipped: false
+                    }));
+
+                    currentIndex = 0;
+                    document.getElementById("quiz-results").classList.add("hidden");
+                    showQuestion();
+                    document.getElementById("quiz-container").classList.remove("hidden");
+                    return; // Successfully generated quiz, exit loop
+                } catch (err) {
+                    console.error("Error generating quiz attempt " + (retries + 1) + ":", err);
+                    retries++;
+                    if (retries < maxRetries) {
+                        await new Promise(res => setTimeout(res, delay));
+                        delay *= 2;
+                    } else {
+                        showCustomAlert("Error generating quiz after multiple retries: " + err.message);
+                        document.getElementById("quiz-container").classList.add("hidden");
+                    }
+                }
+            }
+        }
+
+
+        // Function to display the current question
+        function showQuestion() {
+            document.getElementById("explanation").classList.add("hidden"); // Hide explanation for new question
+            const q = quizData[currentIndex];
+            document.getElementById("question-num").innerText = `Question ${currentIndex + 1} of ${quizData.length}`;
+            document.getElementById("question-text").innerText = q.question;
+            const optionsBox = document.getElementById("options-container");
+            optionsBox.innerHTML = "";
+            q.options.forEach((opt, i) => {
+                const btn = document.createElement("button");
+                btn.className = "option-btn";
+                btn.innerText = opt;
+                btn.onclick = () => selectOption(i);
+                optionsBox.appendChild(btn);
+
+                // If already answered, show the selected and correct/wrong options
+                if (q.isAnswered) {
+                    if (i === q.userAnswerIndex) {
+                        btn.classList.add("selected");
+                        if (q.userAnswerIndex === q.correct) {
+                            btn.classList.add("correct");
+                        } else {
+                            btn.classList.add("wrong");
+                        }
+                    }
+                    // Always show the correct answer if question is answered
+                    if (i === q.correct && q.userAnswerIndex !== q.correct) { // Only highlight if not the user's correct choice
+                         btn.classList.add("correct");
+                    }
+                    btn.disabled = true; // Disable buttons after answering
+                    document.getElementById("explanation").innerText = q.explanation;
+                    document.getElementById("explanation").classList.remove("hidden");
+                }
+            });
+        }
+
+        // Function to handle option selection
+        function selectOption(selectedIndex) {
+            const q = quizData[currentIndex];
+            if (q.isAnswered) return; // Prevent re-answering
+
+            q.isAnswered = true;
+            q.userAnswerIndex = selectedIndex;
+
+            // Update button styles immediately
+            const optionsBox = document.getElementById("options-container");
+            Array.from(optionsBox.children).forEach((btn, i) => {
+                btn.disabled = true; // Disable all options once answered
+                if (i === selectedIndex) {
+                    btn.classList.add("selected");
+                    if (selectedIndex === q.correct) {
+                        btn.classList.add("correct");
+                    } else {
+                        btn.classList.add("wrong");
+                    }
+                }
+                // Highlight the correct answer if the user got it wrong
+                if (i === q.correct && selectedIndex !== q.correct) {
+                    btn.classList.add("correct");
+                }
+            });
+
+            // Show explanation
+            document.getElementById("explanation").innerText = q.explanation;
+            document.getElementById("explanation").classList.remove("hidden");
+        }
+
+        // Function to navigate to the next question
+        function nextQuestion() {
+            if (currentIndex < quizData.length - 1) {
+                currentIndex++;
+                showQuestion();
+            } else {
+                submitQuiz();
+            }
+        }
+
+        // Function to navigate to the previous question
+        function previousQuestion() {
+            if (currentIndex > 0) {
+                currentIndex--;
+                showQuestion();
+            }
+        }
+
+        // Function to submit the quiz and show results
+        async function submitQuiz() {
+            let correct = 0, wrong = 0, skipped = 0;
+            quizData.forEach(q => {
+                if (!q.isAnswered) skipped++;
+                else if (q.userAnswerIndex === q.correct) correct++;
+                else wrong++;
+            });
+
+            document.getElementById("total-questions").innerText = quizData.length;
+            document.getElementById("correct").innerText = correct;
+            document.getElementById("wrong").innerText = wrong;
+            document.getElementById("skipped").innerText = skipped;
+
+            document.getElementById("quiz-container").classList.add("hidden");
+            document.getElementById("quiz-results").classList.remove("hidden");
+
+            // Save results to Firestore
+            if (userId && chapterToday) {
+                try {
+                    const docRef = await addDoc(collection(db, `artifacts/${appId}/users/${userId}/quiz_results`), {
+                        chapter: chapterToday.chapter,
+                        totalQuestions: quizData.length,
+                        correct: correct,
+                        wrong: wrong,
+                        skipped: skipped,
+                        timestamp: serverTimestamp()
+                    });
+                    console.log("Quiz results saved with ID: ", docRef.id);
+                    loadSavedResults(); // Reload saved results after saving
+                } catch (e) {
+                    console.error("Error adding document: ", e);
+                    showCustomAlert("Failed to save quiz results. Please try again.");
+                }
+            } else {
+                console.warn("User ID or chapterToday is not available, cannot save results.");
+                showCustomAlert("Cannot save results. Please ensure you are authenticated and a chapter is loaded.");
+            }
+        }
+
+        // Function to retry the quiz (reset state)
+        function retryQuiz() {
+            quizData.forEach(q => {
+                q.userAnswerIndex = null;
+                q.isAnswered = false;
+                q.isSkipped = false;
+            });
+            currentIndex = 0;
+            document.getElementById("quiz-results").classList.add("hidden");
+            document.getElementById("quiz-container").classList.remove("hidden");
+            showQuestion();
+        }
+
+        // Function to load and display saved quiz results from Firestore
+        async function loadSavedResults() {
+            if (!userId) {
+                console.warn("User ID not available, cannot load saved results.");
+                return;
+            }
+
+            const savedResultsList = document.getElementById("saved-results-list");
+            savedResultsList.innerHTML = '<p class="text-center text-gray-500">Loading saved results...</p>';
+            document.getElementById("saved-results").classList.remove("hidden");
+
+            try {
+                // Query the quiz_results collection for the current user
+                const q = query(
+                    collection(db, `artifacts/${appId}/users/${userId}/quiz_results`),
+                    // No orderBy to avoid needing indexes. Sorting will be done in memory.
+                );
+
+                // Use onSnapshot for real-time updates
+                onSnapshot(q, (querySnapshot) => {
+                    const results = [];
+                    querySnapshot.forEach((doc) => {
+                        results.push({ id: doc.id, ...doc.data() });
+                    });
+
+                    // Sort results by timestamp in descending order (most recent first)
+                    results.sort((a, b) => (b.timestamp?.toDate() || 0) - (a.timestamp?.toDate() || 0));
+
+                    if (results.length === 0) {
+                        savedResultsList.innerHTML = '<p class="text-center text-gray-500">No saved quiz results found.</p>';
+                        return;
+                    }
+
+                    savedResultsList.innerHTML = ''; // Clear existing
+                    results.forEach(result => {
+                        const date = result.timestamp ? result.timestamp.toDate().toLocaleString() : 'N/A';
+                        const resultCard = `
+                            <div class="bg-white p-4 rounded-lg shadow-md border border-gray-200">
+                                <p class="text-md font-semibold text-blue-700 mb-1">Chapter: ${result.chapter}</p>
+                                <p class="text-sm text-gray-600 mb-2">Completed on: ${date}</p>
+                                <p class="text-sm text-gray-700">Total: ${result.totalQuestions} | Correct: <span class="text-green-600">${result.correct}</span> | Wrong: <span class="text-red-600">${result.wrong}</span> | Skipped: <span class="text-yellow-600">${result.skipped}</span></p>
+                            </div>
+                        `;
+                        savedResultsList.innerHTML += resultCard;
+                    });
+                }, (error) => {
+                    console.error("Error listening to saved results:", error);
+                    savedResultsList.innerHTML = '<p class="text-center text-red-500">Error loading saved results.</p>';
+                });
+
+            } catch (e) {
+                console.error("Error loading saved results:", e);
+                savedResultsList.innerHTML = '<p class="text-center text-red-500">Error loading saved results.</p>';
+                showCustomAlert("Failed to load saved quiz results.");
+            }
+        }
+
+
+        // Start the Firebase initialization process when the window loads
+        window.onload = initializeFirebase;
+    </script>
+
+</body>
+</html>
