@@ -6,6 +6,8 @@
 <title>Daily Quiz — CEE Medico Nepal</title>
 <meta name="description" content="Daily scheduled chapter quiz — auto loads chapter by time and saves participant results locally" />
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+<!-- Font Awesome for icons -->
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
 <style>
   /* Base Styles */
   :root{
@@ -27,12 +29,7 @@
     color:#0f172a; /* Default text color (dark/black-ish) */
     line-height: 1.6;
   }
-  header, footer{
-    background:var(--blue);
-    color:#fff;
-    padding:14px 18px;
-    text-align:center;
-  }
+  /* Original header/footer styles removed or overridden for new design */
   main{
     max-width:980px;
     margin:20px auto;
@@ -151,19 +148,6 @@
     border: 1px solid #d0e0f0;
   }
 
-  /* Responsive Adjustments */
-  @media (max-width:640px){
-    main{padding:10px;}
-    .row{flex-direction:column;align-items:stretch;}
-    .col{min-width: unset;}
-    input[type="text"], button{width: 100%;}
-    .controls button{width: calc(50% - 4px);} /* Two buttons per row on small screens */
-    .controls button:last-child:nth-child(odd) { width: 100%; } /* Last button full width if odd count */
-    h1{font-size:1.3rem;}
-    h2{font-size:1.2rem;}
-    .option-btn{padding:10px;}
-  }
-
   /* Modal Styles */
   .modal-overlay {
     position: fixed;
@@ -208,12 +192,367 @@
     cursor: pointer;
     width: auto; /* Reset width for modal buttons */
   }
+
+  /* New Header Styles */
+  header {
+    background: var(--blue);
+    color: #fff;
+    padding: 10px 0;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+    position: relative; /* Needed for mobile menu positioning */
+    z-index: 50; /* Ensure header is above other content */
+  }
+
+  .header-container {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 0 20px;
+  }
+
+  .logo {
+    display: flex;
+    align-items: center;
+    flex-shrink: 0; /* Prevent logo from shrinking */
+  }
+
+  .logo img {
+    height: 50px; /* Adjust as needed */
+    margin-right: 10px;
+    border-radius: 8px; /* Slightly rounded corners for the logo image */
+  }
+
+  .logo-text h1 {
+    font-size: 1.5rem;
+    margin: 0;
+  }
+
+  .logo-text p {
+    font-size: 0.9rem;
+    margin: 0;
+    color: rgba(255, 255, 255, 0.8);
+  }
+
+  nav ul {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: flex;
+  }
+
+  nav ul li {
+    position: relative;
+    margin-left: 25px;
+  }
+
+  nav ul li a {
+    color: #fff;
+    text-decoration: none;
+    font-weight: 600;
+    padding: 10px 0;
+    display: block;
+    transition: color 0.3s ease;
+  }
+
+  nav ul li a:hover {
+    color: var(--accent);
+  }
+
+  .dropdown-menu {
+    display: none;
+    position: absolute;
+    top: 100%;
+    left: 0;
+    background: var(--blue);
+    min-width: 160px;
+    box-shadow: 0 8px 16px rgba(0, 0, 0, 0.2);
+    z-index: 1;
+    border-radius: 8px;
+    overflow: hidden; /* Ensures child elements respect border-radius */
+  }
+
+  .dropdown:hover .dropdown-menu {
+    display: block;
+  }
+
+  .dropdown-menu li {
+    margin: 0;
+    padding: 0;
+  }
+
+  .dropdown-menu li a {
+    padding: 12px 15px;
+    white-space: nowrap;
+    transition: background-color 0.3s ease;
+  }
+
+  .dropdown-menu li a:hover {
+    background: rgba(255, 255, 255, 0.1);
+    color: #fff;
+  }
+
+  .mobile-menu-btn {
+    display: none; /* Hidden by default on desktop */
+    background: none;
+    border: none;
+    color: #fff;
+    font-size: 1.8rem;
+    cursor: pointer;
+  }
+
+  /* New Footer Styles */
+  footer {
+    background: var(--blue);
+    color: #fff;
+    padding: 40px 0 20px;
+    font-size: 0.9rem;
+    margin-top: 40px;
+  }
+
+  .footer-container {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: space-between;
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 0 20px;
+    gap: 30px; /* Gap between columns */
+  }
+
+  .footer-col {
+    flex: 1;
+    min-width: 200px;
+    margin-bottom: 20px;
+  }
+
+  .footer-col .logo img {
+    height: 40px;
+    margin-right: 8px;
+  }
+
+  .footer-col .logo-text h3 {
+    font-size: 1.3rem;
+    margin: 0;
+    color: #fff;
+  }
+
+  .footer-col p {
+    color: rgba(255, 255, 255, 0.7);
+    line-height: 1.5;
+    margin-top: 10px;
+  }
+
+  .social-links {
+    margin-top: 15px;
+  }
+
+  .social-links a {
+    color: #fff;
+    font-size: 1.2rem;
+    margin-right: 15px;
+    transition: color 0.3s ease;
+  }
+
+  .social-links a:hover {
+    color: var(--accent);
+  }
+
+  .footer-links {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+  }
+
+  .footer-links li {
+    margin-bottom: 8px;
+  }
+
+  .footer-links li a {
+    color: rgba(255, 255, 255, 0.7);
+    text-decoration: none;
+    transition: color 0.3s ease;
+  }
+
+  .footer-links li a:hover {
+    color: #fff;
+  }
+
+  .footer-col h3 {
+    font-size: 1.1rem;
+    margin-bottom: 15px;
+    color: #fff;
+    position: relative;
+    padding-bottom: 5px;
+  }
+
+  .footer-col h3::after {
+    content: '';
+    position: absolute;
+    left: 0;
+    bottom: 0;
+    width: 40px;
+    height: 2px;
+    background: var(--accent);
+  }
+
+  .footer-bottom {
+    text-align: center;
+    margin-top: 30px;
+    padding-top: 20px;
+    border-top: 1px solid rgba(255, 255, 255, 0.1);
+    color: rgba(255, 255, 255, 0.6);
+  }
+
+  .footer-col .fa-map-marker-alt,
+  .footer-col .fa-phone,
+  .footer-col .fa-envelope {
+    margin-right: 8px;
+    color: var(--accent);
+  }
+
+  /* Responsive Adjustments */
+  @media (max-width: 992px) {
+    .header-container {
+      flex-wrap: wrap;
+      justify-content: center;
+      text-align: center;
+    }
+
+    .logo {
+      margin-bottom: 15px;
+    }
+
+    nav {
+      width: 100%;
+      order: 3; /* Push nav to the next line */
+    }
+
+    nav ul {
+      justify-content: center;
+    }
+  }
+
+  @media (max-width:640px){
+    main{padding:10px;}
+    .row{flex-direction:column;align-items:stretch;}
+    .col{min-width: unset;}
+    input[type="text"], button{width: 100%;}
+    .controls button{width: calc(50% - 4px);} /* Two buttons per row on small screens */
+    .controls button:last-child:nth-child(odd) { width: 100%; } /* Last button full width if odd count */
+    h1{font-size:1.3rem;}
+    h2{font-size:1.2rem;}
+    .option-btn{padding:10px;}
+
+    /* Mobile Menu for Header */
+    .mobile-menu-btn {
+      display: block; /* Show on mobile */
+      position: absolute;
+      right: 20px;
+      top: 25px;
+    }
+
+    nav {
+      display: none; /* Hide by default on mobile */
+      width: 100%;
+      background: var(--blue);
+      position: absolute;
+      top: 70px; /* Below the header content */
+      left: 0;
+      padding-bottom: 10px;
+      box-shadow: 0 8px 16px rgba(0, 0, 0, 0.2);
+    }
+
+    nav.active {
+      display: block; /* Show when active */
+    }
+
+    nav ul {
+      flex-direction: column;
+      text-align: center;
+      padding-top: 10px;
+    }
+
+    nav ul li {
+      margin: 0;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    }
+
+    nav ul li:last-child {
+      border-bottom: none;
+    }
+
+    nav ul li a {
+      padding: 15px 0;
+    }
+
+    .dropdown-menu {
+      position: static; /* Make dropdown expand inline */
+      box-shadow: none;
+      border-radius: 0;
+      background: rgba(0, 0, 0, 0.1); /* Slightly different background for sub-menu */
+    }
+
+    .dropdown:hover .dropdown-menu {
+        display: block;
+    }
+
+    /* Footer adjustments for small screens */
+    .footer-container {
+      flex-direction: column;
+      align-items: center;
+      text-align: center;
+    }
+    .footer-col {
+      min-width: unset;
+      width: 100%;
+      margin-bottom: 30px;
+    }
+    .footer-col h3::after {
+      left: 50%;
+      transform: translateX(-50%);
+    }
+    .footer-col .logo {
+        justify-content: center;
+    }
+  }
 </style>
 </head>
 <body>
 <header>
-  <h1>CEE Medico — Daily Chapter Quiz</h1>
-  <div class="small">Auto-load by schedule (Local time) • Results stored locally only</div>
+    <div class="container header-container">
+        <div class="logo">
+            <img src="https://placehold.co/50x50/003366/ffffff?text=Logo" alt="CEE Medico Nepal Logo">
+            <div class="logo-text">
+                <h1>CEE Medico Nepal</h1>
+                <p>MBBS Entrance Preparation</p>
+            </div>
+        </div>
+        <button class="mobile-menu-btn" id="mobileMenuBtn">
+            <i class="fas fa-bars"></i>
+        </button>
+        <nav id="mainNav">
+            <ul>
+                <li><a href="index.html">Home</a></li>
+                <li class="dropdown">
+                    <a href="#">Subjects <i class="fas fa-chevron-down"></i></a>
+                    <ul class="dropdown-menu">
+                        <li><a href="physics.html">Physics</a></li>
+                        <li><a href="chemistry.html">Chemistry</a></li>
+                        <li><a href="botany.html">Botany</a></li>
+                        <li><a href="zoology.html">Zoology</a></li>
+                        <li><a href="mat.html">MAT</a></li>
+                    </ul>
+                </li>
+                <li><a href="about.html">About Us</a></li>
+                <li><a href="privacy.html">Privacy</a></li>
+                <li><a href="Blog/blog.html">Blog</a></li>
+                <li><a href="contact.html">Contact</a></li>
+                <li><a href="/secure/login.html">Login</a></li>
+            </ul>
+        </nav>
+    </div>
 </header>
 
 <main>
@@ -286,7 +625,56 @@
 </main>
 
 <footer>
-  <div class="small">© 2025 CEE Medico Nepal</div>
+    <div id="container-0e0ce27e977000960a615021af2cd0e3"></div>
+    <div class="container">
+        <div class="footer-container">
+            <div class="footer-col">
+                <div class="logo">
+                    <img src="https://placehold.co/40x40/003366/ffffff?text=Logo" alt="CEE Medico Nepal Logo">
+                    <div class="logo-text">
+                        <h3>CEE Medico Nepal</h3>
+                    </div>
+                </div>
+                <p>Your comprehensive platform for MBBS entrance exam preparation in Nepal.</p>
+                <div class="social-links">
+                    <a href="https://www.facebook.com/techgy.shyamsundar"><i class="fab fa-facebook-f"></i></a>
+                    <a href="#"><i class="fab fa-twitter"></i></a>
+                    <a href="https://www.instagram.com/shyamsundar98122/"><i class="fab fa-instagram"></i></a>
+                    <a href="https://www.youtube.com/@ceemediconepal"><i class="fab fa-youtube"></i></a>
+                </div>
+            </div>
+            <div class="footer-col">
+                <h3>Quick Links</h3>
+                <ul class="footer-links">
+                    <li><a href="index.html">Home</a></li>
+                    <li><a href="#subjects-grid">Subjects</a></li>
+                    <li><a href="about.html">About Us</a></li>
+                    <li><a href="privacy.html">Privacy</a></li>
+                    <li><a href="#">Blog</a></li>
+                    <li><a href="contact.html">Contact</a></li>
+                </ul>
+            </div>
+            <div class="footer-col">
+                <h3>Subjects</h3>
+                <ul class="footer-links">
+                    <li><a href="physics.html">Physics</a></li>
+                    <li><a href="chemistry.html">Chemistry</a></li>
+                    <li><a href="botany.html">Botany</a></li>
+                    <li><a href="zoology.html">Zoology</a></li>
+                    <li><a href="mat.html">MAT</a></li>
+                </ul>
+            </div>
+            <div class="footer-col">
+                <h3>Contact Us</h3>
+                <p><i class="fas fa-map-marker-alt"></i> Kathmandu, Nepal</p>
+                <p><i class="fas fa-phone"></i> +977 9812240229</p>
+                <p><i class="fas fa-envelope"></i> avik96045@gmail.com</p>
+            </div>
+        </div>
+        <div class="footer-bottom">
+            <p>© 2025 CEE Medico Nepal. All Rights Reserved.</p>
+        </div>
+    </div>
 </footer>
 
 <!-- Modal for messages -->
@@ -860,6 +1248,20 @@ el('save-result-btn').onclick = async ()=>{
   el('save-result-btn').disabled = true; // Disable after saving
 };
 el('participant-name').value = getParticipantNameLocally(); // Load name on startup
+
+
+// Mobile menu toggle
+document.addEventListener('DOMContentLoaded', () => {
+  const mobileMenuBtn = el('mobileMenuBtn');
+  const mainNav = el('mainNav');
+
+  if (mobileMenuBtn && mainNav) {
+    mobileMenuBtn.addEventListener('click', () => {
+      mainNav.classList.toggle('active');
+    });
+  }
+});
+
 
 /* =========================
    Main routine: load schedule, pick chapter, generate or load MCQs
