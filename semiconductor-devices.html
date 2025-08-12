@@ -24,102 +24,285 @@
 
    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css"/>
    <style>
-      /* Media Queries for Responsiveness */
-@media (max-width: 768px) {
+     
+ /* CSS for common styles (from your original file, ensure these are present) */
+    :root {
+        --primary-color: #2c3e50;
+        --secondary-color: #3498db;
+        --accent-color: #e74c3c;
+        --light-color: #ecf0f1;
+        --text-color: #333;
+        --botany-color: #2ecc71;
+        --physics-color: #f39c12; /* Example color */
+        --chemistry-color: #9b59b6; /* Example color */
+        --zoology-color: #1abc9c; /* Example color */
+        --mat-color: #e67e22; /* Example color */
+    }
+
+    * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+        font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    }
+    
+    body {
+        line-height: 1.6;
+        color: var(--text-color);
+        background-color: #f9f9f9;
+    }
+    
+    .container {
+        width: 100%;
+        max-width: 1200px;
+        margin: 0 auto;
+        padding: 0 20px;
+    }
+    
+    a {
+        text-decoration: none;
+        color: inherit;
+    }
+    
+    img {
+        max-width: 100%;
+        height: auto;
+    }
+    
+    /* Header Styles - Default for Desktop */
+    header {
+        background-color: var(--primary-color);
+        color: white;
+        padding: 1rem 0;
+        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+        position: sticky;
+        top: 0;
+        z-index: 100;
+    }
+    
     .header-container {
-        flex-wrap: wrap;
-        justify-content: center;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+    
+    .logo {
+        display: flex;
+        align-items: center;
+    }
+    
+    .logo img {
+        height: 50px;
+        margin-right: 10px;
+    }
+    
+    .logo-text h1 {
+        font-size: 1.8rem;
+        font-weight: 700;
+        margin-bottom: 0.2rem;
+        color: white;
+    }
+    
+    .logo-text p {
+        font-size: 0.9rem;
+        color: var(--light-color);
+        opacity: 0.8;
+    }
+    
+    nav ul {
+        display: flex; /* This makes the menu horizontal on desktop */
+        list-style: none;
+    }
+    
+    nav ul li {
+        position: relative;
+        margin-left: 1.5rem;
+    }
+    
+    nav ul li a {
+        color: white;
+        text-decoration: none;
+        font-weight: 500;
+        transition: color 0.3s;
+        font-size: 1.1rem;
+        display: flex;
+        align-items: center;
+        gap: 5px;
+    }
+    
+    nav ul li a:hover {
+        color: var(--secondary-color);
+    }
+    
+    .dropdown-menu {
+        position: absolute;
+        top: 100%;
+        left: 0;
+        background-color: white;
+        min-width: 200px;
+        box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+        border-radius: 5px;
+        padding: 10px 0;
+        opacity: 0;
+        visibility: hidden;
+        transition: all 0.3s;
+        z-index: 10;
+    }
+    
+    .dropdown:hover .dropdown-menu {
+        opacity: 1;
+        visibility: visible;
+    }
+    
+    .dropdown-menu li {
+        margin: 0;
+        padding: 0;
+    }
+    
+    .dropdown-menu li a {
+        color: var(--text-color);
+        padding: 8px 20px;
+        display: block;
+        font-size: 1rem;
+    }
+    
+    .dropdown-menu li a:hover {
+        background-color: var(--light-color);
+        color: var(--primary-color);
+    }
+    
+    .mobile-menu-btn {
+        display: none; /* Hidden by default on desktop */
+        background: none;
+        border: none;
+        color: white;
+        font-size: 1.5rem;
+        cursor: pointer;
+    }
+
+    /* Mobile navigation menu - Hidden by default on mobile, shown when 'mobile-active' */
+    nav.mobile-active ul {
+        display: flex;
+        flex-direction: column;
+        position: absolute;
+        top: 100%; /* Position below header */
+        left: 0;
+        width: 100%;
+        background-color: var(--primary-color);
+        box-shadow: 0 5px 10px rgba(0, 0, 0, 0.2);
+        padding: 1rem 0;
+        max-height: 500px; /* Max height to allow transition */
+        overflow: hidden; /* Hide overflow when not fully open */
+        transition: max-height 0.3s ease-out;
+        box-sizing: border-box; /* Include padding and border in the element's total width and height */
+    }
+
+    nav.mobile-active ul li {
+        margin: 0;
+        width: 100%;
         text-align: center;
     }
 
-    .logo {
-        margin-bottom: 1rem;
-    }
-
-    nav {
-        display: none; /* Hide desktop nav by default */
-        width: 100%;
-    }
-
-    .mobile-menu-btn {
-        display: block; /* Show mobile menu button */
-        position: absolute;
-        right: 20px;
-        top: 1.5rem;
-    }
-
-    /* Show mobile menu when active */
-    nav.mobile-active {
+    nav.mobile-active ul li a {
+        padding: 12px 20px;
         display: block;
-    }
-    nav.mobile-active ul {
-        max-height: 500px; /* Adjust as needed to show all menu items */
+        color: white;
     }
 
-    nav ul li {
-        margin: 0.5rem 0; /* Stack menu items vertically */
+    nav.mobile-active ul li a:hover {
+        background-color: var(--secondary-color);
     }
 
-    .hero h1 {
-        font-size: 2rem;
+    /* Media Queries for Responsiveness */
+    @media (max-width: 768px) {
+        .header-container {
+            flex-wrap: wrap;
+            justify-content: space-between; /* Keep logo left, button right */
+            align-items: center;
+            padding: 0 20px; /* Add padding for smaller screens */
+        }
+
+        .logo {
+            margin-bottom: 0; /* Remove margin-bottom from logo for better alignment */
+        }
+
+        /* Hide the default desktop navigation and show the mobile menu button */
+        nav {
+            display: none; /* Hide the full navigation on mobile */
+            position: relative; /* Needed for dropdown within nav */
+        }
+
+        .mobile-menu-btn {
+            display: block; /* Show hamburger button on mobile */
+            margin-left: auto; /* Push button to the right */
+        }
+        
+        /* When mobile menu is active, make the nav element visible */
+        nav.mobile-active {
+            display: block; /* Make the navigation container visible */
+        }
+
+        /* Further adjustments for mobile layout */
+        .hero h1 {
+            font-size: 2rem;
+        }
+
+        .hero p {
+            font-size: 1rem;
+            padding: 0 10px;
+        }
+
+        .cta-buttons {
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .btn {
+            width: 80%;
+            max-width: 300px;
+        }
+
+        .section-title h2 {
+            font-size: 1.8rem;
+        }
+
+        .posts-grid, .subjects-grid {
+            grid-template-columns: 1fr;
+        }
+
+        .quiz-navigation button {
+            width: 100%;
+            max-width: none;
+            margin: 0.5rem 0; /* Add margin between stacked buttons */
+        }
     }
 
-    .hero p {
-        font-size: 1rem;
-        padding: 0 10px;
-    }
+    @media (max-width: 480px) {
+        .logo-text h1 {
+            font-size: 1.5rem;
+        }
 
-    .cta-buttons {
-        flex-direction: column;
-        align-items: center;
-    }
+        .logo-text p {
+            font-size: 0.8rem;
+        }
 
-    .btn {
-        width: 80%; /* Make buttons wider on mobile */
-        max-width: 300px;
-    }
+        .quiz-hero h2 {
+            font-size: 1.5rem;
+        }
 
-    .section-title h2 {
-        font-size: 1.8rem;
-    }
+        .quiz-hero p {
+            font-size: 0.9rem;
+        }
 
-    .posts-grid, .subjects-grid {
-        grid-template-columns: 1fr; /* Single column layout for grids */
-    }
+        .quiz-question h3 {
+            font-size: 1rem;
+        }
 
-    .quiz-navigation button {
-        width: 100%; /* Make quiz navigation buttons full width */
-        max-width: none;
+        .quiz-option {
+            font-size: 0.9rem;
+            padding: 0.8rem;
+        }
     }
-}
-
-@media (max-width: 480px) {
-    .logo-text h1 {
-        font-size: 1.5rem;
-    }
-
-    .logo-text p {
-        font-size: 0.8rem;
-    }
-
-    .quiz-hero h2 {
-        font-size: 1.5rem;
-    }
-
-    .quiz-hero p {
-        font-size: 0.9rem;
-    }
-
-    .quiz-question h3 {
-        font-size: 1rem;
-    }
-
-    .quiz-option {
-        font-size: 0.9rem;
-        padding: 0.8rem;
-    }
-}
-
 
 
      :root {
@@ -1055,16 +1238,24 @@
     }
 
     renderQuestion();
- // Mobile menu toggle functionality
-const mobileMenuBtn = document.getElementById('mobileMenuBtn');
-const mainNav = document.getElementById('mainNav');
+ 
+    // Mobile menu toggle functionality
+    const mobileMenuBtn = document.getElementById('mobileMenuBtn');
+    const mainNav = document.getElementById('mainNav');
 
-mobileMenuBtn.addEventListener('click', () => {
-    mainNav.classList.toggle('mobile-active');
-});
+    if (mobileMenuBtn && mainNav) { // Ensure elements exist before adding listener
+        mobileMenuBtn.addEventListener('click', () => {
+            mainNav.classList.toggle('mobile-active');
+        });
+    } else {
+        console.error("Mobile menu button or main navigation element not found.");
+    }
+
+
   </script>
 </body>
 </html>
+
 
 
 
