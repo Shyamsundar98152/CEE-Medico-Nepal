@@ -1,8 +1,7 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-   <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-3108357597736981"
-     crossorigin="anonymous"></script>
+  
 
 
 
@@ -32,6 +31,7 @@
 <title>Daily Quiz — CEE Medico Nepal</title>
 <meta name="description" content="Daily scheduled chapter quiz — auto loads chapter by time and saves participant results locally" />
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+<!-- Font Awesome for icons -->
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
 <style>
   /* Base Styles */
@@ -599,6 +599,7 @@
     </div>
   </div>
 
+  <!-- Quiz Area - Now hidden by default, shown when 'Join Quiz' is clicked -->
   <div id="quiz-area" class="card hidden">
     <div id="countdown" class="small center"></div>
     <div id="question-num" class="small"></div>
@@ -633,17 +634,8 @@
       </div>
     </div>
   </div>
-   <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-3108357597736981"
-     crossorigin="anonymous"></script>
-<ins class="adsbygoogle"
-     style="display:block"
-     data-ad-format="fluid"
-     data-ad-layout-key="-fb+5w+4e-db+86"
-     data-ad-client="ca-pub-3108357597736981"
-     data-ad-slot="9545179847"></ins>
-<script>
-     (adsbygoogle = window.adsbygoogle || []).push({});
-</script>
+   
+  <!-- Display Schedule -->
   <div class="card">
     <h3 style="margin-top:0">Upcoming Chapters</h3>
     <div id="schedule-display" class="leaderboard">
@@ -656,24 +648,14 @@
     <strong>Notes:</strong> The schedule is embedded within this file. The site uses your **local device's time** for scheduling. Quiz results are **only stored locally** within your browser and are not shared or saved to any external database.
   </div>
 </main>
-<script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-3108357597736981"
-     crossorigin="anonymous"></script>
-<ins class="adsbygoogle"
-     style="display:block"
-     data-ad-format="fluid"
-     data-ad-layout-key="-fb+5w+4e-db+86"
-     data-ad-client="ca-pub-3108357597736981"
-     data-ad-slot="9545179847"></ins>
-<script>
-     (adsbygoogle = window.adsbygoogle || []).push({});
-</script>
+
 <footer>
     <div id="container-0e0ce27e977000960a615021af2cd0e3"></div>
     <div class="container">
         <div class="footer-container">
             <div class="footer-col">
                 <div class="logo">
-                    <img src="https://placehold.co/40x40/003366/ffffff?text=Logo" alt="CEE Medico Nepal Logo">
+                    <img src="/img/Logo.png" alt="CEE Medico Nepal Logo">
                     <div class="logo-text">
                         <h3>CEE Medico Nepal</h3>
                     </div>
@@ -720,6 +702,7 @@
     </div>
 </footer>
 
+<!-- Modal for messages -->
 <div id="modal-message-overlay" class="modal-overlay hidden">
   <div class="modal-content">
     <button class="modal-close-btn" id="modal-message-close">&times;</button>
@@ -752,15 +735,13 @@ const firebaseConfig = {
   messagingSenderId: "886784418732",
   appId: "1:886784418732:web:0ad368df36f7187d2b1009"
 };
-
 const initialAuthToken = typeof __initial_auth_token !== 'undefined' ? __initial_auth_token : null;
 const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id'; // Use default if not available
 
-/* ========================= EMBEDDED CHAPTERS.TXT CONTENT ========================= */
-const EMBEDDED_CHAPTERS_TXT = `2025-08-17 10:00 | Chemistry - Atomic Structure
-2025-08-17 13:00 | Physics - Oscillations & Waves
-2025-08-17 15:00 | Botany - Biotechnology
-2025-08-17 18:00 | Zoology - Biomolecules
+/* =========================
+   EMBEDDED CHAPTERS.TXT CONTENT
+   ========================= */
+const EMBEDDED_CHAPTERS_TXT = `
 2025-08-18 10:00 | Chemistry - Chemical Bonding
 2025-08-18 13:00 | Zoology - Human Reproduction
 2025-08-18 15:00 | Botany - Plant Kingdom
@@ -925,520 +906,568 @@ const EMBEDDED_CHAPTERS_TXT = `2025-08-17 10:00 | Chemistry - Atomic Structure
 2025-09-27 13:00 | Zoology - Human Physiology - Nervous System
 2025-09-27 15:00 | Botany - Genetics
 2025-09-27 18:00 | Chemistry - Chemical Kinetics
+
 `;
 
-/* =========================
-   Quiz Question Data
-   ========================= */
-const QUIZ_DATA = {};
-const LAST_QUIZ_DATA = {}; // To cache the last quiz data fetched/generated
-
 
 /* =========================
-   HELPER FUNCTIONS
+   CONFIG
    ========================= */
-const el = id => document.getElementById(id);
-const show = el => el.classList.remove('hidden');
-const hide = el => el.classList.add('hidden');
-const hasClass = (el, cls) => el.classList.contains(cls);
+const GEMINI_API_KEY = "AIzaSyD8HWf_Zp0WsS14RJ2vxTUxjXvPCyiNpDo"; // Canvas environment will provide it at runtime.
+const GEMINI_URL = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-05-20:generateContent?key=${GEMINI_API_KEY}`;
+const LOCAL_STORAGE_KEY_RESULTS = "ceeMedicoQuizResults";
+const LOCAL_STORAGE_KEY_NAME = "ceeMedicoParticipantName";
 
-function showMessage(message, isError = false) {
-    const modalTextEl = el('modal-message-text');
-    modalTextEl.innerText = message;
-    if (isError) {
-        modalTextEl.style.color = 'var(--red)';
-    } else {
-        modalTextEl.style.color = 'inherit';
-    }
+// Firestore collection paths for public data
+const QUIZZES_COLLECTION_PATH = `artifacts/${appId}/public/data/quizzes`;
+
+/* =========================
+   GLOBAL STATE
+   ========================= */
+let schedule = [];             // array of {time:Date, chapter:string}
+let currentChapter = null;     // {time, chapter}
+let quizData = [];             // array of questions from Gemini or Firestore
+let currentQuestionIndex = 0;
+let countdownTimer = null;
+let questionTimer = null;
+let participantName = "";
+
+/* =========================
+   Helpers
+   ========================= */
+function el(id){ return document.getElementById(id); }
+function show(q){ q.classList.remove('hidden'); q.style.display = ''; }
+function hide(q){ q.classList.add('hidden'); q.style.display = 'none'; }
+
+function showMessage(msg, callback = null) {
+    el('modal-message-text').innerText = msg;
     show(el('modal-message-overlay'));
-}
-
-function parseSchedule(scheduleText) {
-  const schedule = {};
-  const lines = scheduleText.split('\n').filter(line => line.trim() !== '');
-  lines.forEach(line => {
-    const parts = line.split('|').map(p => p.trim());
-    if (parts.length === 2) {
-      const dateTime = parts[0].trim();
-      const chapter = parts[1].trim();
-      schedule[dateTime] = chapter;
-    }
-  });
-  return schedule;
-}
-
-// Function to find the next scheduled chapter
-function findCurrentChapter(schedule) {
-    const now = new Date();
-    const sortedDates = Object.keys(schedule).sort();
-    let currentChapter = null;
-    let nextChapterTime = null;
-
-    for (let i = 0; i < sortedDates.length; i++) {
-        const dateTimeStr = sortedDates[i];
-        const scheduleTime = new Date(dateTimeStr.replace(' ', 'T'));
-        if (scheduleTime > now) {
-            currentChapter = {
-                chapter: schedule[dateTimeStr],
-                time: scheduleTime
-            };
-            nextChapterTime = scheduleTime;
-            break;
-        }
-    }
-    return currentChapter;
-}
-
-
-let countdownInterval;
-function startCountdown(endTime) {
-  const countdownEl = el('countdown');
-  clearInterval(countdownInterval);
-
-  function updateCountdown() {
-    const now = new Date();
-    const timeLeft = endTime - now;
-    if (timeLeft <= 0) {
-      countdownEl.innerText = 'Quiz is Live!';
-      clearInterval(countdownInterval);
-      el('join-button').disabled = false;
-      el('join-button').innerText = 'Join Quiz';
-      return;
-    }
-    const days = Math.floor(timeLeft / (1000 * 60 * 60 * 24));
-    const hours = Math.floor((timeLeft % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
-    const minutes = Math.floor((timeLeft % (1000 * 60 * 60)) / (1000 * 60));
-    const seconds = Math.floor((timeLeft % (1000 * 60)) / 1000);
-
-    let countdownText = "Quiz starts in ";
-    if (days > 0) countdownText += `${days}d `;
-    if (hours > 0 || days > 0) countdownText += `${hours}h `;
-    countdownText += `${minutes}m ${seconds}s`;
-    countdownEl.innerText = countdownText;
-  }
-  updateCountdown();
-  countdownInterval = setInterval(updateCountdown, 1000);
-}
-
-// Render the entire schedule table
-function renderScheduleTable(schedule) {
-  const scheduleDisplayEl = el('schedule-display');
-  const sortedDates = Object.keys(schedule).sort();
-  if (sortedDates.length === 0) {
-    scheduleDisplayEl.innerHTML = '<div class="small center">No upcoming schedule found.</div>';
-    return;
-  }
-
-  const tableHtml = `
-    <table style="width:100%; border-collapse: collapse; margin-top: 10px;">
-      <thead>
-        <tr style="background-color: var(--blue); color: white;">
-          <th style="padding: 10px; text-align: left; border-radius: 8px 0 0 0;">Date</th>
-          <th style="padding: 10px; text-align: left; border-radius: 0 8px 0 0;">Chapter & Time</th>
-        </tr>
-      </thead>
-      <tbody>
-        ${sortedDates.map((date, index) => {
-          const rowClass = index % 2 === 0 ? 'even' : 'odd';
-          const [dateStr, timeStr] = date.split(' ');
-          const formattedDate = new Date(dateStr).toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric', year: 'numeric' });
-          const formattedTime = new Date(`1970/01/01 ${timeStr}`).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: true });
-
-          return `
-            <tr style="background-color: var(--card); border-bottom: 1px solid var(--border-color);">
-              <td style="padding: 10px; vertical-align: top; font-weight: bold; white-space: nowrap;">${formattedDate}</td>
-              <td style="padding: 10px;">${schedule[date]} <div class="small" style="color:var(--muted)">at ${formattedTime}</div></td>
-            </tr>
-          `;
-        }).join('')}
-      </tbody>
-    </table>
-  `;
-
-  scheduleDisplayEl.innerHTML = tableHtml;
+    el('modal-message-ok').onclick = () => {
+        hide(el('modal-message-overlay'));
+        if (callback) callback();
+    };
+    el('modal-message-close').onclick = () => {
+        hide(el('modal-message-overlay'));
+        if (callback) callback();
+    };
 }
 
 /* =========================
-   Quiz Logic
+   Local Storage Management
    ========================= */
-
-let currentQuizState = {
-  questions: [],
-  currentQuestionIndex: 0,
-  score: 0,
-  skipped: 0
-};
-
-function renderQuiz(questions, index) {
-  const question = questions[index];
-  if (!question) return;
-
-  el('question-num').innerText = `Question ${index + 1} of ${questions.length}`;
-  el('question-text').innerText = question.question;
-
-  const optionsContainer = el('options-container');
-  optionsContainer.innerHTML = '';
-  question.options.forEach((option, i) => {
-    const btn = document.createElement('button');
-    btn.className = 'option-btn';
-    btn.dataset.index = i;
-    btn.innerHTML = option;
-    btn.onclick = () => selectOption(i);
-    optionsContainer.appendChild(btn);
-  });
-  
-  el('explanation').innerText = ''; // Clear previous explanation
-  el('submit-btn').disabled = true; // Disable submit until all questions are answered
-
-  // Update navigation button states
-  el('prev-btn').disabled = index === 0;
-  el('next-btn').disabled = index === questions.length - 1;
-  el('skip-btn').disabled = (index === questions.length - 1) && !currentQuizState.questions.some(q => q.skipped);
+function saveParticipantNameLocally(name) {
+    localStorage.setItem(LOCAL_STORAGE_KEY_NAME, name);
 }
 
-function selectOption(selectedIndex) {
-  const currentQuestion = currentQuizState.questions[currentQuizState.currentQuestionIndex];
-  if (currentQuestion.answered) {
-    return; // Do nothing if already answered
-  }
-
-  currentQuestion.answered = true;
-  currentQuestion.userAnswer = selectedIndex;
-
-  const optionBtns = el('options-container').querySelectorAll('.option-btn');
-  optionBtns.forEach((btn, i) => {
-    btn.dataset.answered = 'true'; // Lock all buttons
-    if (i === selectedIndex) {
-      if (selectedIndex === currentQuestion.correctAnswer) {
-        btn.style.backgroundColor = 'var(--light-green)';
-        btn.style.borderColor = 'var(--green)';
-        currentQuizState.score++;
-      } else {
-        btn.style.backgroundColor = 'var(--light-red)';
-        btn.style.borderColor = 'var(--red)';
-        // Highlight correct answer
-        optionBtns[currentQuestion.correctAnswer].style.backgroundColor = 'var(--light-green)';
-        optionBtns[currentQuestion.correctAnswer].style.borderColor = 'var(--green)';
-      }
-    }
-  });
-
-  // Display explanation if available
-  if (currentQuestion.explanation) {
-    const explanationEl = el('explanation');
-    explanationEl.innerHTML = `<strong>Explanation:</strong> ${currentQuestion.explanation}`;
-    show(explanationEl);
-  }
-
-  updateQuizControls();
+function getParticipantNameLocally() {
+    return localStorage.getItem(LOCAL_STORAGE_KEY_NAME) || "";
 }
 
-function updateQuizControls() {
-  const currentQuestion = currentQuizState.questions[currentQuizState.currentQuestionIndex];
-  const allAnswered = currentQuizState.questions.every(q => q.answered || q.skipped);
-
-  el('submit-btn').disabled = !allAnswered;
-
-  if (currentQuestion.answered) {
-    el('skip-btn').disabled = true;
-  } else {
-    el('skip-btn').disabled = false;
-  }
+function saveQuizResultLocally(result) {
+    const results = getQuizResultsLocally();
+    results.push(result);
+    localStorage.setItem(LOCAL_STORAGE_KEY_RESULTS, JSON.stringify(results));
+    renderLocalHistory(); // Re-render history after saving
 }
 
-function showResult() {
-  hide(el('quiz-area'));
-  show(el('results-area'));
-
-  el('res-total').innerText = currentQuizState.questions.length;
-  el('res-correct').innerText = currentQuizState.score;
-  el('res-wrong').innerText = currentQuizState.questions.length - currentQuizState.score - currentQuizState.skipped;
-  el('res-skipped').innerText = currentQuizState.skipped;
-}
-
-function restartQuiz() {
-  hide(el('results-area'));
-  show(el('controls-area'));
-  hide(el('quiz-area'));
-  currentQuizState = { questions: [], currentQuestionIndex: 0, score: 0, skipped: 0 };
-}
-
-
-function generateMCQs(chapterName){
-  // This is a placeholder for generating questions based on chapter name.
-  // In a real application, this would call an API (e.g., Gemini API) to generate questions.
-  // For this demo, we'll return a static set of questions based on a simple check.
-  console.log(`Generating MCQs for: ${chapterName}`);
-  return Promise.resolve([
-    {
-      "question": "What is the primary function of an HTML file?",
-      "options": [
-        "To define the structure and content of a web page.",
-        "To style a web page.",
-        "To add interactivity to a web page.",
-        "To manage a server's database."
-      ],
-      "correctAnswer": 0,
-      "explanation": "HTML stands for HyperText Markup Language and is used to create the basic structure and elements of a web page, such as headings, paragraphs, and links."
-    },
-    {
-      "question": "Which tag is used to create a hyperlink in HTML?",
-      "options": [
-        "<a>",
-        "<link>",
-        "<hlink>",
-        "<href>"
-      ],
-      "correctAnswer": 0,
-      "explanation": "The `<a>` tag defines a hyperlink. The `href` attribute within the `<a>` tag specifies the URL the link goes to."
-    },
-    {
-      "question": "What does CSS stand for?",
-      "options": [
-        "Computer Style Sheets",
-        "Creative Style Syntax",
-        "Cascading Style Sheets",
-        "Custom Style Standards"
-      ],
-      "correctAnswer": 2,
-      "explanation": "CSS (Cascading Style Sheets) is a stylesheet language used to describe the presentation of a document written in a markup language like HTML."
-    },
-    {
-      "question": "How do you include JavaScript in an HTML file?",
-      "options": [
-        "Using the `<js>` tag",
-        "Using the `<script>` tag",
-        "Using the `<javascript>` tag",
-        "Using the `<src>` tag"
-      ],
-      "correctAnswer": 1,
-      "explanation": "The `<script>` tag is used to embed or reference executable code, most commonly JavaScript, within an HTML document."
-    }
-  ]);
-}
-
-/* =========================
-   Firestore and Authentication
-   ========================= */
-async function initializeFirebaseAndAuth() {
+function getQuizResultsLocally() {
     try {
-        if (!app) {
-            app = initializeApp(firebaseConfig, 'default-app-id');
-            auth = getAuth(app);
-            db = getFirestore(app);
-        }
-
-        if (initialAuthToken) {
-            await signInWithCustomToken(auth, initialAuthToken);
-        } else {
-            const userCredential = await signInAnonymously(auth);
-            userId = userCredential.user.uid;
-        }
-
-        return new Promise((resolve) => {
-            const unsubscribe = onAuthStateChanged(auth, (user) => {
-                if (user) {
-                    userId = user.uid;
-                    console.log("Firebase Auth State Changed: User is signed in with UID", userId);
-                    unsubscribe();
-                    resolve(user);
-                } else {
-                    console.log("Firebase Auth State Changed: No user is signed in.");
-                    resolve(null);
-                }
-            });
-        });
+        return JSON.parse(localStorage.getItem(LOCAL_STORAGE_KEY_RESULTS) || "[]");
     } catch (e) {
-        console.error("Firebase Auth or Firestore Initialization Error:", e);
-        throw e;
+        console.error("Error parsing local results:", e);
+        return [];
     }
-}
-
-
-async function saveQuizToFirestore(chapter, quizData) {
-    if (!userId) {
-        console.warn("User not authenticated. Cannot save quiz to Firestore.");
-        return;
-    }
-    const quizDocRef = doc(db, 'quizzes', chapter.replace(/[^a-zA-Z0-9]/g, '_'));
-    try {
-        await setDoc(quizDocRef, {
-            data: quizData,
-            createdAt: new Date(),
-            source: 'gemini'
-        });
-        console.log("Quiz data successfully written to Firestore!");
-    } catch (e) {
-        console.error("Error writing document: ", e);
-    }
-}
-
-async function getQuizFromFirestore(chapter) {
-    if (!userId) {
-        console.warn("User not authenticated. Cannot fetch quiz from Firestore.");
-        return null;
-    }
-    const quizDocRef = doc(db, 'quizzes', chapter.replace(/[^a-zA-Z0-9]/g, '_'));
-    try {
-        const docSnap = await getDoc(quizDocRef);
-        if (docSnap.exists()) {
-            console.log("Found quiz data in Firestore.");
-            return docSnap.data().data;
-        } else {
-            console.log("No such quiz document in Firestore!");
-            return null;
-        }
-    } catch (e) {
-        console.error("Error getting document:", e);
-        return null;
-    }
-}
-
-
-/* =========================
-   Local Storage Management for History
-   ========================= */
-
-const LOCAL_HISTORY_KEY = 'cee-medico-quiz-history';
-
-function saveResultLocally(result) {
-    let history = JSON.parse(localStorage.getItem(LOCAL_HISTORY_KEY) || '[]');
-    history.push(result);
-    localStorage.setItem(LOCAL_HISTORY_KEY, JSON.stringify(history));
-    renderLocalHistory();
-    showMessage('Your result has been saved locally!', false);
 }
 
 function renderLocalHistory() {
     const historyDisplayEl = el('local-history-display');
-    const history = JSON.parse(localStorage.getItem(LOCAL_HISTORY_KEY) || '[]');
+    const results = getQuizResultsLocally();
 
-    if (history.length === 0) {
+    if (results.length === 0) {
         historyDisplayEl.innerHTML = '<div class="small center">No previous results saved locally.</div>';
         return;
     }
-    
-    // Reverse the order to show most recent first
-    const sortedHistory = history.reverse();
-    const listHtml = sortedHistory.map(entry => `
-        <div class="participant">
-            <div>
-                <strong>${entry.name || 'Anonymous'}</strong>
-                <div class="small">${entry.chapter}</div>
-            </div>
-            <div>
-                <strong style="color:var(--green)">${entry.score}/${entry.total}</strong>
-                <div class="small">${new Date(entry.timestamp).toLocaleDateString()}</div>
-            </div>
-        </div>
-    `).join('');
 
-    historyDisplayEl.innerHTML = listHtml;
+    // Sort by date descending
+    results.sort((a, b) => new Date(b.date) - new Date(a.date));
+
+    historyDisplayEl.innerHTML = results.map(r => {
+        const dateStr = new Date(r.date).toLocaleString('en-NP', {
+            year: 'numeric', month: 'short', day: 'numeric',
+            hour: '2-digit', minute: '2-digit', hour12: true
+        });
+        return `
+            <div class="participant">
+                <div><strong>${escapeHtml(r.name || 'Anonymous')}</strong> on ${dateStr}</div>
+                <div>${r.correct} / ${r.total} Correct (${r.skipped} skipped)</div>
+            </div>
+        `;
+    }).join('');
 }
 
 
 /* =========================
-   Event Listeners
+   Load schedule from embedded text
    ========================= */
-el('join-button').onclick = () => {
-  hide(el('controls-area'));
-  show(el('quiz-area'));
-  currentQuizState.questions = [...LAST_QUIZ_DATA]; // Use a fresh copy
-  currentQuizState.currentQuestionIndex = 0;
-  currentQuizState.score = 0;
-  currentQuizState.skipped = 0;
-  renderQuiz(currentQuizState.questions, currentQuizState.currentQuestionIndex);
-};
+async function loadSchedule(){
+  try{
+    const txt = EMBEDDED_CHAPTERS_TXT;
+    if(!txt) throw new Error("Embedded schedule content is empty.");
 
-el('prev-btn').onclick = () => {
-  if (currentQuizState.currentQuestionIndex > 0) {
-    currentQuizState.currentQuestionIndex--;
-    renderQuiz(currentQuizState.questions, currentQuizState.currentQuestionIndex);
+    schedule = txt.trim().split('\n').map(l=>{
+      const parts = l.split('|');
+      const dt = parts[0].trim(); // "YYYY-MM-DD HH:MM"
+      const ch = (parts[1]||"").trim();
+      const m = dt.match(/(\d{4})-(\d{2})-(\d{2})\s+(\d{2}):(\d{2})/);
+      if(!m) return null;
+      const [_,y,mo,d,h,mi] = m;
+      // Note: Month is 0-indexed in Date constructor
+      const dateObj = new Date(Number(y), Number(mo)-1, Number(d), Number(h), Number(mi), 0, 0);
+      return {time: dateObj, chapter: ch};
+    }).filter(Boolean).sort((a,b)=>a.time - b.time);
+
+    renderSchedule(); // Display schedule after loading
+
+  }catch(e){
+    console.error("Error loading schedule:", e);
+    schedule = [];
+    el('chapter-title').innerText = `Error loading schedule: ${e.message}.`;
+    el('schedule-display').innerHTML = `<div class="small">Error loading schedule: ${e.message}</div>`;
   }
-};
-
-el('next-btn').onclick = () => {
-  if (currentQuizState.currentQuestionIndex < currentQuizState.questions.length - 1) {
-    currentQuizState.currentQuestionIndex++;
-    renderQuiz(currentQuizState.questions, currentQuizState.currentQuestionIndex);
-  } else {
-    // If it's the last question, show results
-    showResult();
-  }
-};
-
-el('skip-btn').onclick = () => {
-  const currentQuestion = currentQuizState.questions[currentQuizState.currentQuestionIndex];
-  if (!currentQuestion.answered) {
-    currentQuestion.skipped = true;
-    currentQuizState.skipped++;
-    currentQuizState.currentQuestionIndex++;
-    if (currentQuizState.currentQuestionIndex < currentQuizState.questions.length) {
-      renderQuiz(currentQuizState.questions, currentQuizState.currentQuestionIndex);
-    } else {
-      showResult();
-    }
-  }
-};
-
-el('submit-btn').onclick = () => showResult();
-el('restart-btn').onclick = restartQuiz;
-
-el('save-result-btn').onclick = () => {
-    const name = el('participant-name').value || 'Anonymous';
-    const result = {
-        name,
-        chapter: el('chapter-title').innerText,
-        score: currentQuizState.score,
-        total: currentQuizState.questions.length,
-        timestamp: new Date().toISOString()
-    };
-    saveResultLocally(result);
-};
-
-el('modal-message-close').onclick = () => hide(el('modal-message-overlay'));
-el('modal-message-ok').onclick = () => hide(el('modal-message-overlay'));
-
-el('mobileMenuBtn').addEventListener('click', () => {
-  el('mainNav').classList.toggle('active');
-});
+}
 
 /* =========================
-   MAIN APPLICATION LOGIC
+   Render Schedule on the page
+   ========================= */
+function renderSchedule() {
+  const scheduleDisplayEl = el('schedule-display');
+  if (schedule.length === 0) {
+    scheduleDisplayEl.innerHTML = '<div class="small">No upcoming chapters scheduled.</div>';
+    return;
+  }
+  const now = new Date();
+  const upcomingSchedule = schedule.filter(entry => entry.time >= now);
+
+  if (upcomingSchedule.length === 0) {
+    scheduleDisplayEl.innerHTML = '<div class="small">All scheduled quizzes have passed.</div>';
+    return;
+  }
+
+  scheduleDisplayEl.innerHTML = upcomingSchedule.map(entry => {
+    const timeStr = entry.time.toLocaleString('en-NP', {
+      year: 'numeric', month: 'short', day: 'numeric',
+      hour: '2-digit', minute: '2-digit', hour12: true
+    });
+    return `<div class="participant"><div>${escapeHtml(entry.chapter)}</div><div>${timeStr}</div></div>`;
+  }).join('');
+}
+
+/* =========================
+   Get accurate Nepal time (local device time)
+   ========================= */
+async function getAccurateTime(){
+  // Using local device time as per request
+  return new Date();
+}
+
+/* =========================
+   Find latest chapter <= now
+   ========================= */
+function pickCurrentChapter(now){
+  let picked = null;
+  for(const entry of schedule){
+    if(now >= entry.time) picked = entry;
+  }
+  return picked;
+}
+
+/* =========================
+   Exponential Backoff for API calls
+   ========================= */
+async function fetchWithExponentialBackoff(url, options, retries = 3, delay = 1000) {
+    for (let i = 0; i < retries; i++) {
+        try {
+            const response = await fetch(url, options);
+            if (response.status === 429 || !response.ok) { // Too Many Requests or other non-OK status
+                if (i < retries - 1) {
+                    await new Promise(resolve => setTimeout(resolve, delay * Math.pow(2, i)));
+                    continue;
+                }
+            }
+            return response;
+        } catch (error) {
+            if (i < retries - 1) {
+                await new Promise(resolve => setTimeout(resolve, delay * Math.pow(2, i)));
+                continue;
+            }
+            throw error; // Re-throw if all retries fail
+        }
+    }
+}
+
+/* =========================
+   Firestore Functions
    ========================= */
 
-async function main() {
-  try{
-    const schedule = parseSchedule(EMBEDDED_CHAPTERS_TXT);
-    renderScheduleTable(schedule);
-    const currentChapter = findCurrentChapter(schedule);
+// Helper to get a clean chapter ID for Firestore document names
+function getChapterDocId(chapterName) {
+    // Replace non-alphanumeric characters with underscores, convert to lowercase
+    return chapterName.replace(/[^a-zA-Z0-9]/g, '_').toLowerCase();
+}
 
-    if (!currentChapter) {
-        el('chapter-title').innerText = 'No upcoming quizzes scheduled.';
-        el('schedule-info').innerText = 'Please check back later for new schedules.';
-        el('join-button').disabled = true;
-        el('join-button').innerText = 'No Quiz Available';
-        hide(el('quiz-area'));
-        hide(el('results-area'));
-        renderLocalHistory();
-        return;
+async function getQuizFromFirestore(chapterName) {
+    el('chapter-title').innerText = `Checking for existing questions for "${chapterName}"...`;
+    try {
+        const chapterDocId = getChapterDocId(chapterName);
+        const docRef = doc(db, QUIZZES_COLLECTION_PATH, chapterDocId);
+        const docSnap = await getDoc(docRef);
+
+        if (docSnap.exists()) {
+            console.log("Quiz data found in Firestore:", docSnap.data());
+            return docSnap.data().quizData; // Assuming quiz data is stored under 'quizData' field
+        } else {
+            console.log("No quiz data found in Firestore for:", chapterName);
+            return null;
+        }
+    } catch (e) {
+        console.error("Error fetching quiz from Firestore:", e);
+        showMessage(`Error fetching quiz from database: ${e.message}`);
+        return null;
+    }
+}
+
+async function saveQuizToFirestore(chapterName, quizQuestions) {
+    try {
+        const chapterDocId = getChapterDocId(chapterName);
+        const docRef = doc(db, QUIZZES_COLLECTION_PATH, chapterDocId);
+        await setDoc(docRef, {
+            chapter: chapterName,
+            quizData: quizQuestions,
+            generatedAt: new Date().toISOString() // Timestamp for when it was generated
+        });
+        console.log("Quiz data saved to Firestore for:", chapterName);
+    } catch (e) {
+        console.error("Error saving quiz to Firestore:", e);
+        showMessage(`Error saving quiz to database: ${e.message}`);
+    }
+}
+
+/* =========================
+   Gemini generate (50 MCQs)
+   ========================= */
+async function generateMCQs(chapter){
+  el('chapter-title').innerText = `Generating questions for "${chapter}" — please wait... (This may take a moment)`;
+  const prompt = `
+Generate 30 NEET / CEE-level multiple choice questions in JSON (array) on the chapter "${chapter}" based on NEB / MEC syllabus Nepal. Each question must have exactly 4 options. Ensure the correct option is clearly indicated by its index (0-3).
+
+Use exactly this JSON schema:
+[
+  {
+    "question": "text of the question",
+    "options": ["Option A","Option B","Option C","Option D"],
+    "correct": 0, // index of the correct option (0 for A, 1 for B, etc.)
+    "explanation": "short explanation for the correct answer"
+  }
+]
+Return JSON array only. Do not include any other text or markdown outside the JSON.
+`.trim();
+
+  const payload = {
+    contents: [{ role: "user", parts: [{ text: prompt }] }],
+    generationConfig: { responseMimeType: "application/json" }
+  };
+
+  try{
+    const r = await fetchWithExponentialBackoff(GEMINI_URL, {
+      method: 'POST',
+      headers: { 'Content-Type':'application/json' },
+      body: JSON.stringify(payload)
+    });
+
+    if(!r.ok){
+      const errText = await r.text();
+      throw new Error(`Gemini API failed: ${r.status} - ${errText}`);
+    }
+    const json = await r.json();
+    const raw = json?.candidates?.[0]?.content?.parts?.[0]?.text || '';
+    const parsed = JSON.parse(raw);
+
+    // Basic validation of the parsed quiz data
+    if (!Array.isArray(parsed) || parsed.length === 0) {
+        throw new Error("Gemini returned an empty or invalid quiz data structure.");
+    }
+    parsed.forEach((q, idx) => {
+        if (!q.question || !Array.isArray(q.options) || q.options.length !== 4 || typeof q.correct !== 'number' || q.correct < 0 || q.correct > 3 || !q.explanation) {
+            console.warn(`Question ${idx} failed schema validation:`, q);
+            // Optionally, remove malformed questions or throw a harder error
+        }
+    });
+
+    return parsed;
+  }catch(e){
+    console.error("Gemini error", e);
+    throw e;
+  }
+}
+
+/* =========================
+   Quiz UI functions
+   ========================= */
+function renderQuestion(){
+  if(!quizData.length) return;
+  const q = quizData[currentQuestionIndex];
+  el('question-num').innerText = `Question ${currentQuestionIndex + 1} / ${quizData.length}`;
+  el('question-text').innerText = q.question || '';
+  el('explanation').innerText = ''; // Clear previous explanation
+  const cont = el('options-container'); cont.innerHTML = ''; // Clear previous options
+
+  // Get CSS variables for consistent styling
+  const rootStyles = getComputedStyle(document.documentElement);
+  const cssVarLightGreen = rootStyles.getPropertyValue('--light-green');
+  const cssVarLightRed = rootStyles.getPropertyValue('--light-red');
+  const cssVarGreen = rootStyles.getPropertyValue('--green');
+  const cssVarRed = rootStyles.getPropertyValue('--red');
+  const cssVarCard = rootStyles.getPropertyValue('--card');
+  const cssVarBorderColor = rootStyles.getPropertyValue('--border-color');
+
+  (q.options||[]).forEach((opt,i)=>{
+    const btn = document.createElement('button');
+    btn.className = 'option-btn';
+    btn.innerText = opt;
+    btn.dataset.index = i; // Store index for easy lookup
+    btn.dataset.answered = q.answered ? 'true' : 'false'; // Mark if already answered
+
+    if (q.answered) {
+        // If question was answered, apply styles
+        if (i === q.userAnswer) {
+            btn.style.background = i === q.correct ? cssVarLightGreen : cssVarLightRed;
+            btn.style.border = i === q.correct ? `1px solid ${cssVarGreen}` : `1px solid ${cssVarRed}`;
+        } else if (i === q.correct) {
+            // Highlight correct answer if user answered incorrectly
+            btn.style.background = cssVarLightGreen;
+            btn.style.border = `1px solid ${cssVarGreen}`;
+        }
+        el('explanation').innerText = (q.userAnswer === q.correct ? '✅ Correct. ' : '❌ Incorrect. Correct answer: ' + (q.options && q.options[q.correct] ? q.options[q.correct] : '')) + (q.explanation ? ' — ' + q.explanation : '');
     }
 
-    el('chapter-title').innerText = currentChapter.chapter;
-    el('schedule-info').innerText = `Scheduled for: ${currentChapter.time.toLocaleDateString()} at ${currentChapter.time.toLocaleTimeString()}`;
+    btn.onclick = ()=>{
+      if(q.answered) return; // Prevent re-answering
+      q.answered = true;
+      q.userAnswer = i;
+      btn.dataset.answered = 'true'; // Mark as answered
 
-    // Show countdown timer
-    startCountdown(currentChapter.time);
+      // Visually mark chosen option and correct answer
+      Array.from(cont.children).forEach(optionBtn => {
+        const optionIndex = parseInt(optionBtn.dataset.index);
+        if (optionIndex === i) { // User's choice
+          optionBtn.style.background = i === q.correct ? cssVarLightGreen : cssVarLightRed;
+          optionBtn.style.border = i === q.correct ? `1px solid ${cssVarGreen}` : `1px solid ${cssVarRed}`;
+        } else if (optionIndex === q.correct) { // The actual correct answer
+          optionBtn.style.background = cssVarLightGreen;
+          optionBtn.style.border = `1px solid ${cssVarGreen}`;
+        } else { // Other options
+          optionBtn.style.background = cssVarCard; /* Ensure background is white for non-selected */
+          optionBtn.style.border = `1px solid ${cssVarBorderColor}`;
+        }
+      });
+
+      el('explanation').innerText = (i === q.correct ? '✅ Correct. ' : '❌ Incorrect. Correct answer: ' + (q.options && q.options[q.correct] ? q.options[q.correct] : '')) + (q.explanation ? ' — ' + q.explanation : '');
+      clearInterval(questionTimer); // Stop timer after answer
+    };
+    cont.appendChild(btn);
+  });
+  if (!q.answered) { // Only start timer if not already answered
+      startQuestionTimer();
+  } else {
+      clearInterval(questionTimer); // Ensure timer is stopped if re-rendering an answered question
+      el('countdown').innerText = 'Time: 0s'; // Show timer as finished
+  }
+}
+
+function nextQuestion(){
+  // If current question wasn't answered when moving next, mark as skipped
+  if (!quizData[currentQuestionIndex].answered) {
+    quizData[currentQuestionIndex].skipped = true;
+    quizData[currentQuestionIndex].answered = true; // Mark as answered to prevent re-interaction
+    quizData[currentQuestionIndex].userAnswer = null; // No answer
+  }
+
+  if(currentQuestionIndex < quizData.length -1){
+    currentQuestionIndex++; renderQuestion();
+  }
+  else submitQuiz();
+}
+
+function prevQuestion(){
+  if(currentQuestionIndex > 0){
+    currentQuestionIndex--; renderQuestion();
+  }
+}
+
+function skipQuestion(){
+  if (!quizData[currentQuestionIndex].answered) { // Only mark as skipped if not already answered
+    quizData[currentQuestionIndex].skipped = true;
+    quizData[currentQuestionIndex].answered = true; // Mark as answered to prevent re-interaction
+    quizData[currentQuestionIndex].userAnswer = null; // No answer
+  }
+  nextQuestion(); // Move to next question after skipping
+}
+
+function startQuestionTimer(){
+  let timeLeft = 30; // 30 seconds per question
+  el('countdown').innerText = `Time: ${timeLeft}s`;
+  if(questionTimer) clearInterval(questionTimer);
+  questionTimer = setInterval(()=> {
+    timeLeft--;
+    el('countdown').innerText = `Time: ${timeLeft}s`;
+    if(timeLeft<=0){
+      clearInterval(questionTimer);
+      // auto-skip and move to next
+      if (!quizData[currentQuestionIndex].answered) {
+        quizData[currentQuestionIndex].skipped = true;
+        quizData[currentQuestionIndex].answered = true;
+        quizData[currentQuestionIndex].userAnswer = null;
+      }
+      if(currentQuestionIndex < quizData.length -1){ currentQuestionIndex++; renderQuestion(); }
+      else submitQuiz(); // If last question, submit quiz
+    }
+  },1000);
+}
+
+function submitQuiz(){
+  if(questionTimer) clearInterval(questionTimer);
+
+  // Ensure the last question is marked as skipped if not answered
+  if (!quizData[currentQuestionIndex].answered) {
+    quizData[currentQuestionIndex].skipped = true;
+    quizData[currentQuestionIndex].answered = true;
+    quizData[currentQuestionIndex].userAnswer = null;
+  }
+
+  // Tally results
+  let correct=0, wrong=0, skipped=0;
+  quizData.forEach(q=>{
+    if(q.answered && q.userAnswer !== null && q.userAnswer === q.correct) correct++;
+    else if(q.answered && q.userAnswer !== null && q.userAnswer !== q.correct) wrong++;
+    else if(q.skipped) skipped++;
+  });
+
+  el('res-total').innerText = quizData.length;
+  el('res-correct').innerText = correct;
+  el('res-wrong').innerText = wrong;
+  el('res-skipped').innerText = skipped;
+
+  // Show results area
+  hide(el('quiz-area'));
+  show(el('results-area'));
+  el('save-result-btn').disabled = false;
+  renderLocalHistory(); // Display updated local history
+}
+
+/* =========================
+   Event wiring
+   ========================= */
+document.addEventListener('click', (e) => {
+  if(e.target && e.target.id === 'join-button'){
+    participantName = el('participant-name').value.trim();
+    saveParticipantNameLocally(participantName); // Save name locally
+
+    hide(el('results-area'));
+    show(el('quiz-area')); // Explicitly show quiz area when join button is clicked
+    if(quizData.length) { currentQuestionIndex=0; renderQuestion(); }
+  }
+});
+el('prev-btn').onclick = prevQuestion;
+el('next-btn').onclick = nextQuestion;
+el('skip-btn').onclick = skipQuestion;
+el('submit-btn').onclick = submitQuiz;
+el('restart-btn').onclick = ()=>{
+  location.reload(); // Simple reload to restart the quiz entirely
+};
+el('save-result-btn').onclick = async ()=>{
+  const result = {
+      name: participantName,
+      date: new Date().toISOString(),
+      total: quizData.length,
+      correct: parseInt(el('res-correct').innerText),
+      wrong: parseInt(el('res-wrong').innerText),
+      skipped: parseInt(el('res-skipped').innerText)
+  };
+  saveQuizResultLocally(result);
+  showMessage('Your quiz result has been saved locally!');
+  el('save-result-btn').disabled = true; // Disable after saving
+};
+el('participant-name').value = getParticipantNameLocally(); // Load name on startup
+
+
+// Mobile menu toggle
+document.addEventListener('DOMContentLoaded', () => {
+  const mobileMenuBtn = el('mobileMenuBtn');
+  const mainNav = el('mainNav');
+
+  if (mobileMenuBtn && mainNav) {
+    mobileMenuBtn.addEventListener('click', () => {
+      mainNav.classList.toggle('active');
+    });
+  }
+});
+
+
+/* =========================
+   Main routine: load schedule, pick chapter, generate or load MCQs
+   ========================= */
+async function main(){
+  // Initialize Firebase
+  try {
+      // Use the provided Firebase configuration directly
+      app = initializeApp(firebaseConfig);
+      auth = getAuth(app);
+      db = getFirestore(app);
+
+      // Sign in user (even if rules allow unauthenticated, it's good practice for tracking user IDs)
+      if (initialAuthToken) {
+          await signInWithCustomToken(auth, initialAuthToken);
+      } else {
+          await signInAnonymously(auth);
+      }
+      userId = auth.currentUser?.uid || crypto.randomUUID(); // Get user ID after sign-in
+      console.log("Firebase initialized and user signed in. User ID:", userId);
+
+  } catch (error) {
+      console.error("Error initializing Firebase or signing in:", error);
+      el('chapter-title').innerText = `Error initializing app: ${error.message}`;
+      el('join-button').disabled = true;
+      return; // Stop execution if Firebase setup fails
+  }
+
+
+  // Load schedule first
+  await loadSchedule();
+
+  // Get accurate time (local device time)
+  const now = await getAccurateTime();
+  el('schedule-info').innerText = `Current local time: ${now.toLocaleString('en-NP', {dateStyle: 'full', timeStyle: 'medium'})}`;
+
+  // Pick appropriate chapter based on current time
+  currentChapter = pickCurrentChapter(now);
+  if(!currentChapter){
+    el('chapter-title').innerText = 'No chapter scheduled yet (or schedule missing/future).';
     el('join-button').disabled = true;
+    hide(el('quiz-area')); // Ensure quiz area is hidden if no chapter
+    return;
+  }
+  el('chapter-title').innerText = `Scheduled: ${currentChapter.chapter} (starts ${currentChapter.time.toLocaleString('en-NP', {dateStyle: 'medium', timeStyle: 'short'})})`;
 
-    // Initialize Firebase and Auth
-    await initializeFirebaseAndAuth();
+  // Try to load MCQs from Firestore first
+  try{
+    el('chapter-title').innerText = `Scheduled: ${currentChapter.chapter} (starts ${currentChapter.time.toLocaleString('en-NP', {dateStyle: 'medium', timeStyle: 'short'})}) - Loading questions...`;
+    quizData = await getQuizFromFirestore(currentChapter.chapter);
 
-    // Fetch quiz questions from Firestore
-    let quizData = await getQuizFromFirestore(currentChapter.chapter);
     if (quizData) {
-        LAST_QUIZ_DATA = quizData.map(q => ({ ...q, answered:false, userAnswer:null, skipped:false }));
-        el('join-button').innerText = 'Join Quiz (Loaded from Firestore)';
+        el('chapter-title').innerText = `Scheduled: ${currentChapter.chapter} (starts ${currentChapter.time.toLocaleString('en-NP', {dateStyle: 'medium', timeStyle: 'short'})})`;
+        // Ensure structure and add initial state for each question
+        quizData = quizData.map(q => ({ ...q, answered:false, userAnswer:null, skipped:false }));
+        el('join-button').innerText = 'Join Quiz (Loaded from Cache)';
         el('join-button').disabled = false;
     } else {
         // If not found in Firestore, generate using Gemini
@@ -1447,7 +1476,6 @@ async function main() {
         quizData = quizData.map(q => ({ ...q, answered:false, userAnswer:null, skipped:false }));
         // Save the newly generated quiz data to Firestore
         await saveQuizToFirestore(currentChapter.chapter, quizData);
-        LAST_QUIZ_DATA = quizData;
         el('join-button').innerText = 'Join Quiz (Generated & Cached)';
         el('join-button').disabled = false;
     }
@@ -1470,9 +1498,8 @@ document.addEventListener('DOMContentLoaded', main);
    small helper: escape html
    ========================= */
 function escapeHtml(str){
-  return String(str).replace(/[&<>\"']/g, s=>({'&':'&amp;','<':'&lt;','>':'&gt;','\"':'&quot;',"'":'&#39;'})[s]);
+  return String(str).replace(/[&<>"']/g, s=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[s]));
 }
-
 </script>
 </body>
 </html>
