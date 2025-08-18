@@ -1,0 +1,564 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Daily Quiz — CEE Medico Nepal</title>
+  <meta name="description" content="Daily scheduled chapter quiz — auto loads chapters from Firestore and saves participant results locally.">
+  <meta name="keywords" content="CEE Medico Nepal, CEE Nepal quiz, medical quiz Nepal, ceemediconepal, NEET-level mock test, MBBS entrance Nepal">
+
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&family=Montserrat:wght@500;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
+
+  <style>
+    body {
+      font-family: 'Inter', sans-serif;
+      background: #e9eff7;
+      margin: 0;
+      color: #1a202c;
+      transition: background-color 0.3s ease;
+    }
+
+    header, footer {
+      background: #003366;
+      color: #fff;
+    }
+
+    header .header-container {
+      padding: 15px 20px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      max-width: 1200px;
+      margin: 0 auto;
+    }
+
+    .logo img {
+      height: 50px;
+      border-radius: 50%;
+    }
+
+    .logo h1 {
+      font-family: 'Montserrat', sans-serif;
+      font-size: 1.5rem;
+      margin: 0;
+    }
+
+    .logo p {
+      font-size: 0.8rem;
+      color: rgba(255, 255, 255, 0.8);
+      margin: 0;
+    }
+
+    nav ul {
+      list-style: none;
+      display: flex;
+      gap: 25px;
+      margin: 0;
+      padding: 0;
+    }
+
+    nav a {
+      color: #fff;
+      text-decoration: none;
+      font-weight: 600;
+      position: relative;
+      transition: color 0.3s ease;
+    }
+
+    nav a::after {
+      content: '';
+      position: absolute;
+      width: 0;
+      height: 2px;
+      bottom: -5px;
+      left: 0;
+      background-color: #f7a048;
+      transition: width 0.3s ease;
+    }
+
+    nav a:hover {
+      color: #f7a048;
+    }
+
+    nav a:hover::after {
+      width: 100%;
+    }
+
+    .search-container {
+      background: #003366;
+      padding: 10px 20px;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+    }
+
+    .search-container input[type="text"] {
+      padding: 10px 15px;
+      border-radius: 25px;
+      border: 1px solid #f7a048;
+      width: 60%;
+      max-width: 500px;
+      font-size: 1rem;
+      background-color: #fff;
+      color: #333;
+      box-shadow: inset 0 1px 3px rgba(0,0,0,0.1);
+      transition: border-color 0.3s ease;
+    }
+
+    .search-container input[type="text"]:focus {
+      outline: none;
+      border-color: #e09139;
+      box-shadow: 0 0 0 3px rgba(247, 160, 72, 0.3);
+    }
+
+    main {
+      max-width: 980px;
+      margin: 30px auto;
+      padding: 18px;
+    }
+
+    .card {
+      background: #ffffff;
+      border-radius: 16px;
+      padding: 24px;
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.08);
+      margin-bottom: 24px;
+      transition: transform 0.3s ease, box-shadow 0.3s ease;
+      animation: fadeIn 0.8s ease-in-out;
+    }
+
+    .card:hover {
+      transform: translateY(-5px);
+      box-shadow: 0 15px 40px rgba(0, 0, 0, 0.12);
+    }
+
+    h2 {
+      color: #003366;
+      border-bottom: 2px solid #f7a048;
+      padding-bottom: 10px;
+      font-family: 'Montserrat', sans-serif;
+    }
+
+    .participant {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 15px 20px;
+      border: 1px solid #e2e8f0;
+      border-radius: 10px;
+      margin-bottom: 12px;
+      background-color: #f8fafc;
+      transition: background-color 0.2s ease, transform 0.2s ease;
+      cursor: pointer;
+    }
+
+    .participant:hover {
+      background-color: #edf2f7;
+      transform: translateX(5px);
+    }
+
+    .chapter-info {
+      font-weight: 600;
+      color: #003366;
+    }
+
+    .subject-info {
+      font-size: 0.9em;
+      color: #4a5568;
+    }
+
+    button {
+      padding: 12px 20px;
+      border-radius: 8px;
+      border: none;
+      cursor: pointer;
+      font-weight: 700;
+      transition: transform 0.2s ease, box-shadow 0.2s ease;
+    }
+
+    button:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+    }
+
+    #schedule-display button {
+      background: #f7a048;
+      color: #fff;
+    }
+
+    #schedule-display button:hover {
+      background: #e09139;
+    }
+
+    .option-btn {
+      display: block;
+      width: 100%;
+      text-align: left;
+      padding: 15px;
+      margin: 10px 0;
+      border: 1px solid #e2e8f0;
+      border-radius: 12px;
+      background: #fff;
+      transition: background-color 0.2s ease, transform 0.2s ease;
+      font-size: 1rem;
+    }
+
+    .option-btn:hover {
+      background: #f0f4f8;
+      transform: translateY(-2px);
+    }
+
+    .option-btn.correct {
+      background-color: #dcfce7;
+      border-color: #16a34a;
+    }
+
+    .option-btn.wrong {
+      background-color: #fee2e2;
+      border-color: #ef4444;
+    }
+
+    #quiz-area button {
+      margin-right: 10px;
+    }
+
+    #submit-btn {
+      background: #16a34a;
+      color: #fff;
+    }
+
+    #restart-btn {
+      background: #ef4444;
+      color: #fff;
+    }
+
+    .hidden {
+      display: none !important;
+    }
+
+    #results-area div {
+      font-size: 1.2rem;
+      margin-bottom: 8px;
+    }
+
+    footer {
+      padding: 20px;
+      text-align: center;
+      background: #003366;
+      color: rgba(255, 255, 255, 0.7);
+    }
+
+    @keyframes fadeIn {
+      from {
+        opacity: 0;
+        transform: translateY(20px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+  </style>
+</head>
+<body>
+<header>
+  <div class="header-container">
+    <div class="logo">
+      <img src="/img/Logo.png" alt="CEE Medico Nepal Logo">
+      <div>
+        <h1>CEE Medico Nepal</h1>
+        <p>MBBS Entrance Preparation</p>
+      </div>
+    </div>
+    <nav>
+      <ul>
+        <li><a href="index.html">Home</a></li>
+        <li><a href="about.html">About</a></li>
+        <li><a href="privacy.html">Privacy</a></li>
+        <li><a href="contact.html">Contact</a></li>
+      </ul>
+    </nav>
+  </div>
+  <div class="search-container">
+    <input type="text" id="search-input" placeholder="Search by chapter or subject name...">
+  </div>
+</header>
+
+<main>
+  <!-- Chapter list -->
+  <div class="card">
+    <h2>Available Quizzes</h2>
+    <div id="schedule-display">Loading chapters...</div>
+  </div>
+
+  <!-- Quiz Area -->
+  <div id="quiz-area" class="card hidden">
+    <div id="question-header" style="display:flex;justify-content:space-between;align-items:center;">
+      <div id="question-num"></div>
+      <div id="subject-name" style="font-weight:600; color: #f7a048;"></div>
+    </div>
+    <h3 id="question-text" style="font-size:1.4rem;"></h3>
+    <div id="options-container"></div>
+    <div id="explanation" style="margin-top:10px;font-style:italic;color:#4a5568;"></div>
+    <div style="margin-top:20px;display:flex;justify-content:space-between;">
+      <div>
+        <button id="prev-btn" style="background:#e2e8f0;color:#2d3748;">Previous</button>
+        <button id="skip-btn" style="background:#f7a048;color:#fff;">Skip</button>
+        <button id="next-btn" style="background:#e2e8f0;color:#2d3748;">Next</button>
+      </div>
+      <button id="submit-btn" style="background:#16a34a;color:#fff;">Submit Quiz</button>
+    </div>
+  </div>
+
+  <!-- Results -->
+  <div id="results-area" class="card hidden">
+    <h2>Quiz Results <i class="fas fa-chart-bar" style="color:#f7a048;"></i></h2>
+    <div style="font-size:1.5rem;font-weight:bold;margin-bottom:15px;">Your Score: <span id="res-correct-percentage"></span>%</div>
+    <div class="score-breakdown">
+      <div>Total Questions: <span id="res-total">0</span></div>
+      <div>Correct Answers: <span id="res-correct">0</span></div>
+      <div>Wrong Answers: <span id="res-wrong">0</span></div>
+      <div>Skipped Questions: <span id="res-skipped">0</span></div>
+    </div>
+    <div style="margin-top:20px;">
+      <button id="restart-btn" style="background:#ef4444;color:#fff;">Restart Quiz</button>
+    </div>
+  </div>
+</main>
+
+<footer>
+  <div>
+    <p>© 2025 CEE Medico Nepal. All Rights Reserved.</p>
+  </div>
+</footer>
+
+<script type="module">
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+  import { getFirestore, collection, getDocs, doc, getDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+
+  const firebaseConfig = {
+    apiKey: "AIzaSyBjm8uaVMdylGg3-YKdEKKV6DDbRkaxjiE",
+    authDomain: "daily-quiz-a29e8.firebaseapp.com",
+    projectId: "daily-quiz-a29e8",
+    storageBucket: "daily-quiz-a29e8.firebasestorage.app",
+    messagingSenderId: "886784418732",
+    appId: "1:886784418732:web:0ad368df36f7187d2b1009"
+  };
+
+  const app = initializeApp(firebaseConfig);
+  const db = getFirestore(app);
+  const appId = "default-app-id";
+  const QUIZZES_COLLECTION_PATH = `artifacts/${appId}/public/data/quizzes`;
+
+  let quizData = [];
+  let currentQuestionIndex = 0;
+  let userAnswers = [];
+  let allQuizzes = []; // Store all quizzes for filtering
+
+  /* Load chapters */
+  async function loadChapters() {
+    try {
+      const colRef = collection(db, QUIZZES_COLLECTION_PATH);
+      const snapshot = await getDocs(colRef);
+      if (snapshot.empty) {
+        document.getElementById('schedule-display').innerHTML = '<div>No quizzes found.</div>';
+        return;
+      }
+      allQuizzes = []; // Clear previous data
+      snapshot.forEach(docSnap => {
+        const data = docSnap.data();
+        allQuizzes.push({ id: docSnap.id, ...data });
+      });
+      renderChapterList(allQuizzes); // Render all quizzes initially
+    } catch (e) {
+      console.error("Error loading chapters: ", e);
+      document.getElementById('schedule-display').innerHTML = '<div>Error loading quizzes. Please try again later.</div>';
+    }
+  }
+
+  /* Render chapter list based on filtered data */
+  function renderChapterList(quizzesToRender) {
+    let html = '';
+    if (quizzesToRender.length === 0) {
+      html = '<div>No matching quizzes found.</div>';
+    } else {
+      quizzesToRender.forEach(quiz => {
+        const chapterName = quiz.chapter || quiz.id;
+        const subjectName = quiz.subject || 'General Science'; // Assuming 'subject' is a field in the quiz data
+        html += `
+          <div class="participant" onclick="startQuiz('${chapterName}')">
+            <div class="chapter-info">${chapterName}</div>
+            <div class="subject-info">${subjectName}</div>
+            <div>
+              <button>Start Quiz <i class="fas fa-play"></i></button>
+            </div>
+          </div>`;
+      });
+    }
+    document.getElementById('schedule-display').innerHTML = html;
+  }
+
+  /* Filter chapters based on search input */
+  document.getElementById('search-input').addEventListener('input', (event) => {
+    const searchTerm = event.target.value.toLowerCase();
+    const filteredQuizzes = allQuizzes.filter(quiz => {
+      const chapterName = (quiz.chapter || quiz.id).toLowerCase();
+      const subjectName = (quiz.subject || 'general science').toLowerCase();
+      return chapterName.includes(searchTerm) || subjectName.includes(searchTerm);
+    });
+    renderChapterList(filteredQuizzes);
+  });
+
+  /* Start quiz and scroll to view */
+  window.startQuiz = async function(chapterName) {
+    const docId = chapterName.replace(/[^a-zA-Z0-9]/g, '_').toLowerCase();
+    const docRef = doc(db, QUIZZES_COLLECTION_PATH, docId);
+    try {
+      const docSnap = await getDoc(docRef);
+      if (!docSnap.exists()) {
+        // Use a custom modal or message box instead of alert()
+        console.warn("No quiz found for " + chapterName);
+        return;
+      }
+      const data = docSnap.data();
+      quizData = data.quizData || [];
+      userAnswers = new Array(quizData.length).fill(null);
+      currentQuestionIndex = 0;
+      
+      document.getElementById('quiz-area').classList.remove('hidden');
+      document.getElementById('results-area').classList.add('hidden');
+      document.getElementById('schedule-display').closest('.card').classList.add('hidden');
+      document.getElementById('search-input').classList.add('hidden'); // Hide search bar when quiz starts
+
+      renderQuestion();
+      
+      // Auto-scroll to quiz section
+      document.getElementById('quiz-area').scrollIntoView({ behavior: 'smooth' });
+
+    } catch (e) {
+      console.error("Error starting quiz: ", e);
+      // Use a custom modal or message box instead of alert()
+      console.error("An error occurred. Please try again.");
+    }
+  };
+
+  /* Render question */
+  function renderQuestion() {
+    const q = quizData[currentQuestionIndex];
+    document.getElementById('question-num').innerText = `Question ${currentQuestionIndex+1} of ${quizData.length}`;
+    document.getElementById('subject-name').innerText = q.subject || 'General Science';
+    document.getElementById('question-text').innerText = q.question;
+    const cont = document.getElementById('options-container');
+    cont.innerHTML = '';
+    document.getElementById('explanation').innerText = '';
+
+    q.options.forEach((opt, i) => {
+      const btn = document.createElement('button');
+      btn.className = 'option-btn';
+      btn.innerText = opt;
+      if (userAnswers[currentQuestionIndex] !== null) {
+        if (i === q.correct) {
+          btn.classList.add('correct');
+        } else if (i === userAnswers[currentQuestionIndex]) {
+          btn.classList.add('wrong');
+        }
+        btn.disabled = true;
+      }
+      btn.onclick = () => {
+        userAnswers[currentQuestionIndex] = i;
+        showFeedback(i === q.correct);
+        updateUI();
+      };
+      cont.appendChild(btn);
+    });
+  }
+
+  function updateUI() {
+    const q = quizData[currentQuestionIndex];
+    const options = document.querySelectorAll('.option-btn');
+    options.forEach((btn, i) => {
+      btn.disabled = true;
+      if (userAnswers[currentQuestionIndex] === i) {
+        if (i === q.correct) {
+          btn.classList.add('correct');
+        } else {
+          btn.classList.add('wrong');
+          // Highlight correct answer if wrong answer was chosen
+          options[q.correct].classList.add('correct');
+        }
+      }
+    });
+    const explanationText = (userAnswers[currentQuestionIndex] !== null) ? q.explanation : '';
+    document.getElementById('explanation').innerText = explanationText;
+  }
+
+  function showFeedback(isCorrect) {
+    const feedback = document.getElementById('explanation');
+    feedback.innerText = isCorrect ? "✅ Correct. " : `❌ Wrong. Correct answer is: ${quizData[currentQuestionIndex].options[quizData[currentQuestionIndex].correct]}.`;
+    feedback.style.color = isCorrect ? '#16a34a' : '#ef4444';
+    feedback.innerText += " — " + quizData[currentQuestionIndex].explanation;
+  }
+
+  /* Navigation */
+  document.getElementById('next-btn').onclick = () => {
+    if (currentQuestionIndex < quizData.length - 1) {
+      currentQuestionIndex++;
+      renderQuestion();
+    }
+  };
+
+  document.getElementById('prev-btn').onclick = () => {
+    if (currentQuestionIndex > 0) {
+      currentQuestionIndex--;
+      renderQuestion();
+    }
+  };
+
+  document.getElementById('skip-btn').onclick = () => {
+    userAnswers[currentQuestionIndex] = -1; // -1 for skipped
+    if (currentQuestionIndex < quizData.length - 1) {
+      currentQuestionIndex++;
+      renderQuestion();
+    }
+  };
+
+  document.getElementById('submit-btn').onclick = submitQuiz;
+  document.getElementById('restart-btn').onclick = () => location.reload();
+
+  /* Submit */
+  function submitQuiz() {
+    let correct = 0;
+    let wrong = 0;
+    let skipped = 0;
+
+    for (let i = 0; i < quizData.length; i++) {
+      if (userAnswers[i] === quizData[i].correct) {
+        correct++;
+      } else if (userAnswers[i] !== null && userAnswers[i] !== -1) {
+        wrong++;
+      } else {
+        skipped++;
+      }
+    }
+
+    const totalQuestions = quizData.length;
+    const percentage = (totalQuestions > 0) ? ((correct / totalQuestions) * 100).toFixed(2) : 0;
+
+    document.getElementById('res-total').innerText = totalQuestions;
+    document.getElementById('res-correct').innerText = correct;
+    document.getElementById('res-wrong').innerText = wrong;
+    document.getElementById('res-skipped').innerText = skipped;
+    document.getElementById('res-correct-percentage').innerText = percentage;
+
+    document.getElementById('quiz-area').classList.add('hidden');
+    document.getElementById('results-area').classList.remove('hidden');
+    document.getElementById('results-area').scrollIntoView({ behavior: 'smooth' });
+  }
+
+  /* Run */
+  loadChapters();
+</script>
+</body>
+</html>
