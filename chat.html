@@ -1,0 +1,351 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Group Chat</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <script type="module">
+    // 🔹 Firebase SDK
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+    import { 
+      getAuth, 
+      GoogleAuthProvider, 
+      signInWithPopup, 
+      onAuthStateChanged, 
+      signOut, 
+      createUserWithEmailAndPassword, 
+      signInWithEmailAndPassword 
+    } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+    import { getDatabase, ref, push, onChildAdded, set, query, limitToLast } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js";
+    import { getStorage, ref as sRef, uploadBytesResumable, getDownloadURL } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-storage.js";
+
+    // 🔹 Firebase Config
+    const firebaseConfig = {
+      apiKey: "AIzaSyAvDLQZvlzJVeLaIAgntPiCit65DeeBgYQ",
+      authDomain: "cee-medico-nepal-chat.firebaseapp.com",
+      databaseURL: "https://cee-medico-nepal-chat-default-rtdb.asia-southeast1.firebasedatabase.app/",
+      projectId: "cee-medico-nepal-chat",
+      storageBucket: "cee-medico-nepal-chat.appspot.com",
+      messagingSenderId: "97605756433",
+      appId: "1:97605756433:web:0fd8c595f66dfa18f00f3b0",
+      measurementId: "G-QFJPC7489G"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const auth = getAuth(app);
+    const db = getDatabase(app);
+    const storage = getStorage(app);
+
+    let currentUser = null;
+    let isListenerAttached = false;
+    const chatHistory = [];
+    const apiKey = "YOUR_API_KEY_HERE"; // Gemini API key
+
+    // 🔹 DOM Elements
+    const loginBtn = document.getElementById("login");
+    const logoutBtn = document.getElementById("logout");
+    const signupBtn = document.getElementById("signup");
+    const loginEmailBtn = document.getElementById("loginEmail");
+    const emailInput = document.getElementById("email");
+    const passwordInput = document.getElementById("password");
+    const msgInput = document.getElementById("message");
+    const sendBtn = document.getElementById("send");
+    const chatBox = document.getElementById("chat");
+    const typingLabel = document.getElementById("typing");
+    const controlsContainer = document.getElementById("controls");
+    const fileInput = document.getElementById("fileInput");
+    const imageLoadingIndicator = document.getElementById("image-loading-indicator");
+    const summarizeBtn = document.getElementById("summarizeBtn");
+    const ttsBtn = document.getElementById("ttsBtn");
+    const summaryLoading = document.getElementById("summary-loading");
+    const ttsLoading = document.getElementById("tts-loading");
+    const messageBox = document.getElementById("messageBox");
+    const messageText = document.getElementById("messageText");
+    const closeMessageBtn = document.getElementById("closeMessage");
+
+    // 🔹 Helper Functions
+    function showMessage(message) {
+      messageText.textContent = message;
+      messageBox.style.display = "block";
+    }
+    closeMessageBtn.onclick = () => messageBox.style.display = "none";
+
+    function renderMessage(msg) {
+      const div = document.createElement("div");
+      div.classList.add("message");
+      if (currentUser && msg.uid === currentUser.uid) div.classList.add("me");
+
+      let content = `<div class="msg-header"><b>${msg.sender}</b></div><div class="msg-body">`;
+
+      if (msg.text) {
+        const linkRegex = /(https?:\/\/[^\s]+)/g;
+        const textWithLinks = msg.text.replace(linkRegex, '<a href="$1" target="_blank">$1</a>');
+        content += textWithLinks;
+      }
+      if (msg.image) {
+        content += `<br><img src="${msg.image}" class="chat-img" loading="lazy">`;
+      }
+      content += `</div><div class="msg-time">${new Date(msg.time).toLocaleTimeString()}</div>`;
+
+      div.innerHTML = content;
+      chatBox.appendChild(div);
+      chatBox.scrollTop = chatBox.scrollHeight;
+    }
+
+    // 🔹 Auth Handlers
+    loginBtn.onclick = async () => {
+      try {
+        const provider = new GoogleAuthProvider();
+        await signInWithPopup(auth, provider);
+      } catch (err) {
+        showMessage(err.message);
+      }
+    };
+
+    logoutBtn.onclick = () => signOut(auth);
+
+    signupBtn.onclick = async () => {
+      try {
+        await createUserWithEmailAndPassword(auth, emailInput.value, passwordInput.value);
+        showMessage("Account created! You are now logged in.");
+      } catch (err) { showMessage(err.message); }
+    };
+
+    loginEmailBtn.onclick = async () => {
+      try {
+        await signInWithEmailAndPassword(auth, emailInput.value, passwordInput.value);
+      } catch (err) { showMessage(err.message); }
+    };
+
+    onAuthStateChanged(auth, (user) => {
+      if (user) {
+        currentUser = user;
+        loginBtn.style.display = "none";
+        logoutBtn.style.display = "inline-block";
+        loginEmailBtn.style.display = "none";
+        signupBtn.style.display = "none";
+        emailInput.style.display = "none";
+        passwordInput.style.display = "none";
+        chatBox.style.display = "block";
+        typingLabel.style.display = "block";
+        controlsContainer.style.display = "flex";
+
+        if (!isListenerAttached) {
+          chatBox.innerHTML = "";
+          chatHistory.length = 0;
+          const chatQuery = query(ref(db, 'chat'), limitToLast(25));
+          onChildAdded(chatQuery, (snapshot) => {
+            const msg = snapshot.val();
+            chatHistory.push(msg);
+            renderMessage(msg);
+          });
+          isListenerAttached = true;
+        }
+      } else {
+        currentUser = null;
+        loginBtn.style.display = "inline-block";
+        logoutBtn.style.display = "none";
+        loginEmailBtn.style.display = "inline-block";
+        signupBtn.style.display = "inline-block";
+        emailInput.style.display = "inline-block";
+        passwordInput.style.display = "inline-block";
+        chatBox.style.display = "none";
+        typingLabel.style.display = "none";
+        controlsContainer.style.display = "none";
+        isListenerAttached = false;
+        chatHistory.length = 0;
+      }
+    });
+
+    // 🔹 Typing Indicator
+    let typingTimeout;
+    msgInput.addEventListener("input", () => {
+      if (currentUser) {
+        const typingRef = ref(db, "typing/" + currentUser.uid);
+        set(typingRef, currentUser.displayName + " is typing...");
+        if (typingTimeout) clearTimeout(typingTimeout);
+        typingTimeout = setTimeout(() => set(typingRef, null), 2000);
+      }
+    });
+
+    // Display typing
+    onChildAdded(ref(db, "typing"), (snap) => {
+      if (snap.val()) {
+        typingLabel.innerText = snap.val();
+        setTimeout(() => {
+          if (typingLabel.innerText === snap.val()) typingLabel.innerText = "";
+        }, 2000);
+      }
+    });
+
+    // 🔹 Send Message
+    msgInput.addEventListener("keypress", (e) => { if (e.key === "Enter") sendMessage(); });
+    sendBtn.onclick = sendMessage;
+
+    function sendMessage() {
+      if (!msgInput.value.trim() || !currentUser) return;
+      const newMsg = {
+        text: msgInput.value,
+        sender: currentUser.displayName || currentUser.email,
+        uid: currentUser.uid,
+        time: Date.now()
+      };
+      push(ref(db, "chat"), newMsg);
+      msgInput.value = "";
+    }
+
+    // 🔹 Upload Image
+    fileInput.onchange = (e) => {
+      if (!currentUser) { showMessage("You must be logged in to upload an image."); return; }
+      const file = e.target.files[0];
+      if (!file) return;
+      if (!file.type.startsWith('image/')) { showMessage("Please select an image."); fileInput.value = ""; return; }
+
+      fileInput.disabled = true;
+      const storageRef = sRef(storage, `chatImages/${Date.now()}_${file.name}`);
+      const uploadTask = uploadBytesResumable(storageRef, file);
+
+      uploadTask.on('state_changed',
+        (snapshot) => {
+          const progress = (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
+          imageLoadingIndicator.textContent = `Uploading... ${Math.round(progress)}%`;
+        },
+        (error) => {
+          console.error(error);
+          showMessage("Failed to upload image: " + error.message);
+          imageLoadingIndicator.textContent = "";
+          fileInput.disabled = false;
+          fileInput.value = "";
+        },
+        async () => {
+          try {
+            const downloadURL = await getDownloadURL(uploadTask.snapshot.ref);
+            push(ref(db, "chat"), {
+              image: downloadURL,
+              sender: currentUser.displayName || currentUser.email,
+              uid: currentUser.uid,
+              time: Date.now()
+            });
+            imageLoadingIndicator.textContent = "";
+            fileInput.disabled = false;
+            fileInput.value = "";
+          } catch (err) {
+            console.error(err);
+            showMessage("Upload failed. Try again.");
+            imageLoadingIndicator.textContent = "";
+            fileInput.disabled = false;
+            fileInput.value = "";
+          }
+        }
+      );
+    };
+
+    // 🔹 Summarize Chat
+    summarizeBtn.onclick = async () => {
+      if (!currentUser || chatHistory.length === 0) { showMessage("No messages to summarize."); return; }
+      summaryLoading.textContent = "Summarizing..."; summarizeBtn.disabled = true;
+
+      try {
+        const textMessages = chatHistory.filter(m => m.text);
+        if (textMessages.length === 0) { showMessage("No text messages to summarize."); return; }
+        const chatText = textMessages.map(m => `${m.sender}: ${m.text}`).join('\n');
+        const userQuery = `Summarize the chat into one paragraph:\n\n${chatText}`;
+        if (!apiKey || apiKey === "YOUR_API_KEY_HERE") { showMessage("API key missing."); summaryLoading.textContent=""; summarizeBtn.disabled=false; return; }
+
+        const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent?key=${apiKey}`;
+        const payload = { contents: [{ parts: [{ text: userQuery }] }] };
+        const response = await fetch(apiUrl, { method: 'POST', headers: { 'Content-Type':'application/json' }, body: JSON.stringify(payload) });
+        const result = await response.json();
+        const summary = result.candidates?.[0]?.content?.parts?.[0]?.text;
+
+        if (summary) {
+          push(ref(db, "chat"), { text: `Chat Summary: ${summary}`, sender: "Gemini Bot", uid: "gemini-bot", time: Date.now() });
+        } else { showMessage("Failed to generate summary."); }
+
+      } catch (err) { showMessage("Error: " + err.message); }
+      finally { summaryLoading.textContent = ""; summarizeBtn.disabled = false; }
+    };
+
+    // 🔹 Text-to-Speech
+    ttsBtn.onclick = () => {
+      if (!msgInput.value.trim() || !currentUser) { showMessage("Type a message first."); return; }
+      const textToSpeak = msgInput.value;
+      if ('speechSynthesis' in window) {
+        ttsLoading.textContent = "Speaking..."; ttsBtn.disabled = true;
+        const utterance = new SpeechSynthesisUtterance(textToSpeak);
+        utterance.onend = () => { ttsLoading.textContent=""; ttsBtn.disabled=false; };
+        utterance.onerror = () => { showMessage("Error with speech synthesis."); ttsLoading.textContent=""; ttsBtn.disabled=false; };
+        speechSynthesis.speak(utterance);
+      } else { showMessage("Your browser doesn't support TTS."); }
+    };
+  </script>
+
+  <style>
+    body { font-family: Arial,sans-serif; margin:0; background:#e0f2f7; }
+    h2 { text-align:center;margin:10px;color:#2196f3;padding:10px;background:#fff;border-radius:8px;box-shadow:0 2px 4px rgba(0,0,0,0.1); }
+    #chat { height: calc(100vh-250px); overflow-y:auto; padding:10px; background:#fff; border-radius:8px; margin:10px; box-shadow:0 2px 4px rgba(0,0,0,0.1); }
+    .message { margin:10px 5px; padding:8px 12px; border-radius:15px; max-width:75%; background:#bbdefb; box-shadow:0 1px 2px rgba(0,0,0,0.1); }
+    .message.me { background:#90caf9; margin-left:auto; margin-right:5px; }
+    .msg-header { font-weight:bold; font-size:0.9em; margin-bottom:5px; }
+    .msg-body { margin-top:5px; word-wrap:break-word; }
+    .chat-img { max-width:100%; max-height:300px; border-radius:8px; margin-top:5px; border:1px solid #ddd; }
+    .msg-time { font-size:0.7em; color:#616161; text-align:right; margin-top:5px; }
+    #controls { display:flex; padding:10px; background:#e3f2fd; border-radius:8px; margin:10px; box-shadow:0 2px 4px rgba(0,0,0,0.1); align-items:center; }
+    #message { flex:1; padding:12px 15px; border-radius:24px; border:1px solid #90caf9; outline:none; font-size:1em; }
+    #send, .file-label, #summarizeBtn, #ttsBtn { margin-left:8px; background:#2196f3; color:white; border:none; border-radius:24px; padding:10px 16px; cursor:pointer; font-size:0.9em; display:flex; align-items:center; justify-content:center; transition:0.3s; }
+    #send:hover, .file-label:hover, #summarizeBtn:hover, #ttsBtn:hover { background:#1976d2; }
+    #login, #logout, #signup, #loginEmail { margin:5px; background:#42a5f5; color:white; border:none; border-radius:24px; padding:10px 16px; cursor:pointer; transition:0.3s; }
+    #login:hover, #logout:hover, #signup:hover, #loginEmail:hover { background:#2196f3; }
+    #authBox { padding:15px; text-align:center; background:#bbdefb; border-radius:8px; margin:10px; box-shadow:0 2px 4px rgba(0,0,0,0.1); }
+    #authBox input { margin:5px; padding:10px 15px; border-radius:24px; border:1px solid #90caf9; outline:none; width:200px; }
+    #typing { text-align:center; font-style:italic; font-size:0.9em; color:#616161; height:20px; margin:0 10px; }
+    #image-loading-indicator, #summary-loading, #tts-loading { font-style:italic; font-size:0.9em; color:#2196f3; margin-left:10px; }
+    #fileInput { display:none; }
+    .file-label { display:flex; align-items:center; justify-content:center; padding:10px; width:20px; height:20px; }
+    .file-label svg { width:20px; height:20px; }
+    #messageBox { display:none; position:fixed; top:50%; left:50%; transform:translate(-50%,-50%); background:#fff; padding:20px; border:1px solid #ccc; box-shadow:0 4px 8px rgba(0,0,0,0.2); z-index:1000; border-radius:8px; text-align:center; max-width:80%; width:300px; }
+    #messageBox button { margin-top:15px; padding:8px 15px; background:#2196f3; color:white; border:none; border-radius:5px; cursor:pointer; }
+    #chat::-webkit-scrollbar { width:8px; }
+    #chat::-webkit-scrollbar-track { background:#f1f1f1; border-radius:4px; }
+    #chat::-webkit-scrollbar-thumb { background:#bbdefb; border-radius:4px; }
+    #chat::-webkit-scrollbar-thumb:hover { background:#90caf9; }
+    @media (max-width:768px) { #chat { height:calc(100vh-280px); } .message { max-width:85%; font-size:0.9em; } #controls { flex-wrap:wrap; } #summarizeBtn, #ttsBtn { margin-top:5px; } }
+  </style>
+</head>
+
+<body>
+  <h2>Group Chat App</h2>
+
+  <div id="authBox">
+    <input type="email" id="email" placeholder="Email">
+    <input type="password" id="password" placeholder="Password">
+    <br>
+    <button id="signup">Sign Up</button>
+    <button id="loginEmail">Login Email</button>
+    <button id="login">Login with Google</button>
+    <button id="logout" style="display:none;">Logout</button>
+  </div>
+
+  <div id="chat" style="display:none;"></div>
+  <div id="typing" style="display:none;"></div>
+
+  <div id="controls" style="display:none;">
+    <input type="text" id="message" placeholder="Type a message...">
+    <button id="send">Send</button>
+    <label class="file-label" for="fileInput">
+      📎
+    </label>
+    <input type="file" id="fileInput" accept="image/*">
+    <span id="image-loading-indicator"></span>
+    <button id="summarizeBtn">Summarize Chat</button>
+    <span id="summary-loading"></span>
+    <button id="ttsBtn">Text to Speech</button>
+    <span id="tts-loading"></span>
+  </div>
+
+  <div id="messageBox">
+    <div id="messageText"></div>
+    <button id="closeMessage">Close</button>
+  </div>
+</body>
+</html>
