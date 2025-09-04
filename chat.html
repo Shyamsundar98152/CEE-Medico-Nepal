@@ -1,717 +1,441 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>WhatsApp-Style Group Chat</title>
-    <style>
-        /* General Body Styles */
-        body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            margin: 0;
-            background-color: #f0f2f5; /* Light, modern background */
-            color: #1c1e21;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            min-height: 100vh;
-        }
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Cee Medico Nepal Group Chat</title>
+  <style>
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      margin: 0;
+      background-color: #f0f2f5;
+      color: #1c1e21;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      min-height: 100vh;
+    }
+    h1 {
+      color: #075e54;
+      padding: 15px 0;
+      margin-top: 0;
+      font-size: 2.5em;
+      text-align: center;
+      width: 100%;
+      background-color: #ffffff;
+      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+    }
+    .auth-forms {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      width: 100%;
+      max-width: 400px;
+      margin-top: 20px;
+      padding: 20px;
+      background-color: #ffffff;
+      border-radius: 10px;
+      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    }
+    .auth-forms h2 {
+      color: #075e54;
+      margin-bottom: 20px;
+      font-size: 1.8em;
+    }
+    .auth-forms input[type="text"],
+    .auth-forms input[type="email"],
+    .auth-forms input[type="password"] {
+      width: calc(100% - 20px);
+      padding: 12px 10px;
+      margin-bottom: 15px;
+      border: 1px solid #dcf8c6;
+      border-radius: 25px;
+      font-size: 1em;
+      outline: none;
+      box-sizing: border-box;
+    }
+    .auth-forms input:focus {
+      border-color: #28a745;
+    }
+    .auth-forms button {
+      width: 100%;
+      padding: 12px;
+      background-color: #28a745;
+      color: white;
+      border: none;
+      border-radius: 25px;
+      font-size: 1.1em;
+      cursor: pointer;
+      transition: background-color 0.3s ease;
+    }
+    .auth-forms button:hover { background-color: #218838; }
 
-        /* Header */
-        h1 {
-            color: #075e54; /* WhatsApp green */
-            padding: 15px 0;
-            margin-top: 0;
-            font-size: 2.5em;
-            text-align: center;
-            width: 100%;
-            background-color: #ffffff;
-            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
-        }
+    #chat-container {
+      display: none;
+      width: 100%;
+      max-width: 600px;
+      height: 75vh;
+      margin: 20px auto;
+      background-color: #ffffff;
+      border-radius: 10px;
+      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+    #chat-box {
+      flex-grow: 1;
+      overflow-y: auto;
+      padding: 15px;
+      background-color: #ece5dd;
+      border-bottom: 1px solid #e0e0e0;
+      display: flex;
+      flex-direction: column;
+    }
+    .message {
+      margin-bottom: 12px;
+      padding: 10px 15px;
+      border-radius: 18px;
+      max-width: 70%;
+      word-wrap: break-word;
+      position: relative;
+      box-shadow: 0 1px 2px rgba(0, 0, 0, 0.07);
+    }
+    .message.me {
+      background-color: #dcf8c6;
+      margin-left: auto;
+      border-bottom-right-radius: 5px;
+    }
+    .message.other {
+      background-color: #ffffff;
+      margin-right: auto;
+      border-bottom-left-radius: 5px;
+    }
+    .msg-header {
+      font-weight: 600;
+      font-size: 0.9em;
+      margin-bottom: 6px;
+      color: #075e54;
+    }
+    .msg-body { font-size: 1em; }
+    .chat-img {
+      max-width: 100%;
+      max-height: 200px;
+      border-radius: 10px;
+      margin-top: 8px;
+      border: 1px solid #e0e0e0;
+      display: block;
+    }
+    .msg-time {
+      font-size: 0.7em;
+      color: #888;
+      margin-top: 6px;
+      text-align: right;
+      opacity: 0.7;
+    }
+    .msg-actions {
+      margin-top: 8px;
+      text-align: right;
+      font-size: 0.8em;
+      display: flex;
+      justify-content: flex-end;
+      align-items: center;
+      gap: 5px;
+    }
+    .msg-actions button {
+      background: none;
+      border: none;
+      color: #075e54;
+      cursor: pointer;
+      padding: 3px 6px;
+      border-radius: 5px;
+      transition: background-color 0.2s ease;
+    }
+    .msg-actions button:hover { background-color: #e0f2f7; }
 
-        /* Forms */
-        .auth-forms {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            width: 100%;
-            max-width: 400px;
-            margin-top: 20px;
-            padding: 20px;
-            background-color: #ffffff;
-            border-radius: 10px;
-            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-        }
+    #typing-indicator {
+      font-style: italic;
+      font-size: 0.9em;
+      color: #888;
+      padding: 8px 15px;
+      height: 25px;
+      text-align: center;
+    }
+    #controls {
+      display: flex;
+      align-items: center;
+      padding: 10px 15px;
+      background-color: #ffffff;
+      width: 100%;
+      max-width: 600px;
+      margin: 10px auto;
+      border-radius: 25px;
+      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+    }
+    #message-input {
+      flex-grow: 1;
+      padding: 12px 15px;
+      border: none;
+      border-radius: 25px;
+      font-size: 1em;
+      outline: none;
+      background-color: #f0f2f5;
+      margin-right: 10px;
+    }
+    #controls label {
+      font-size: 1.5em;
+      color: #075e54;
+      cursor: pointer;
+      margin-right: 10px;
+      padding: 5px;
+    }
+    #controls label:hover { color: #28a745; }
+    #file-input { display: none; }
+    #send-button {
+      padding: 10px 20px;
+      background-color: #28a745;
+      color: white;
+      border: none;
+      border-radius: 25px;
+      font-size: 1em;
+      cursor: pointer;
+    }
+    #send-button:hover { background-color: #218838; }
 
-        .auth-forms h2 {
-            color: #075e54;
-            margin-bottom: 20px;
-            font-size: 1.8em;
-        }
+    #logout-button {
+      position: absolute;
+      top: 15px;
+      right: 15px;
+      padding: 8px 15px;
+      background-color: #dc3545;
+      color: white;
+      border: none;
+      border-radius: 20px;
+      font-size: 0.9em;
+      cursor: pointer;
+    }
+    #logout-button:hover { background-color: #c82333; }
 
-        .auth-forms input[type="text"],
-        .auth-forms input[type="email"],
-        .auth-forms input[type="password"] {
-            width: calc(100% - 20px); /* Adjust for padding */
-            padding: 12px 10px;
-            margin-bottom: 15px;
-            border: 1px solid #dcf8c6; /* Light green border */
-            border-radius: 25px;
-            font-size: 1em;
-            outline: none;
-            box-sizing: border-box; /* Include padding in width */
-        }
-
-        .auth-forms input[type="text"]:focus,
-        .auth-forms input[type="email"]:focus,
-        .auth-forms input[type="password"]:focus {
-            border-color: #28a745; /* Green on focus */
-        }
-
-        .auth-forms button {
-            width: 100%;
-            padding: 12px;
-            background-color: #28a745; /* WhatsApp green */
-            color: white;
-            border: none;
-            border-radius: 25px;
-            font-size: 1.1em;
-            cursor: pointer;
-            transition: background-color 0.3s ease;
-        }
-
-        .auth-forms button:hover {
-            background-color: #218838; /* Darker green on hover */
-        }
-
-        /* Chat Area */
-        #chat-container {
-            display: none; /* Hidden by default, shown after login */
-            width: 100%;
-            max-width: 600px;
-            height: 75vh; /* Responsive height */
-            margin: 20px auto;
-            background-color: #ffffff;
-            border-radius: 10px;
-            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-            display: flex;
-            flex-direction: column;
-            overflow: hidden; /* Ensures children respect border-radius */
-        }
-
-        #chat-box {
-            flex-grow: 1; /* Takes available space */
-            overflow-y: auto; /* Scrollable */
-            padding: 15px;
-            background-color: #ece5dd; /* WhatsApp chat background */
-            border-bottom: 1px solid #e0e0e0;
-            display: flex;
-            flex-direction: column;
-        }
-
-        .message {
-            margin-bottom: 12px;
-            padding: 10px 15px;
-            border-radius: 18px;
-            max-width: 70%;
-            word-wrap: break-word;
-            position: relative; /* For absolute positioning of time */
-            box-shadow: 0 1px 2px rgba(0, 0, 0, 0.07);
-        }
-
-        .message.me {
-            background-color: #dcf8c6; /* Light green for sender */
-            margin-left: auto; /* Pushed to the right */
-            border-bottom-right-radius: 5px; /* WhatsApp bubble shape */
-        }
-
-        .message.other {
-            background-color: #ffffff; /* White for receiver */
-            margin-right: auto; /* Pushed to the left */
-            border-bottom-left-radius: 5px; /* WhatsApp bubble shape */
-        }
-
-        .msg-header {
-            font-weight: 600;
-            font-size: 0.9em;
-            margin-bottom: 6px;
-            color: #075e54; /* Dark green sender name */
-        }
-
-        .msg-body {
-            font-size: 1em;
-        }
-
-        .chat-img {
-            max-width: 100%;
-            max-height: 200px; /* Constrain image height */
-            border-radius: 10px;
-            margin-top: 8px;
-            border: 1px solid #e0e0e0;
-            display: block; /* Ensure it takes its own line */
-        }
-
-        .msg-time {
-            font-size: 0.7em;
-            color: #888;
-            margin-top: 6px;
-            text-align: right;
-            opacity: 0.7;
-        }
-
-        .message.me .msg-time {
-            margin-right: 5px;
-        }
-
-        .message.other .msg-time {
-            margin-left: 5px;
-        }
-
-        /* Message Actions (for sender's messages) */
-        .msg-actions {
-            margin-top: 8px;
-            text-align: right;
-            font-size: 0.8em;
-            display: flex;
-            justify-content: flex-end;
-            align-items: center;
-            gap: 5px; /* Space between buttons */
-        }
-
-        .msg-actions button {
-            background: none;
-            border: none;
-            color: #075e54; /* Dark green for action buttons */
-            cursor: pointer;
-            padding: 3px 6px;
-            border-radius: 5px;
-            transition: background-color 0.2s ease;
-        }
-
-        .msg-actions button:hover {
-            background-color: #e0f2f7; /* Light blue background on hover */
-        }
-
-        /* Typing Indicator */
-        #typing-indicator {
-            font-style: italic;
-            font-size: 0.9em;
-            color: #888;
-            padding: 8px 15px;
-            height: 25px; /* Reserve space */
-            text-align: center;
-        }
-
-        /* Input Controls */
-        #controls {
-            display: flex;
-            align-items: center;
-            padding: 10px 15px;
-            background-color: #ffffff;
-            width: 100%;
-            max-width: 600px;
-            margin: 10px auto;
-            border-radius: 25px;
-            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
-        }
-
-        #message-input {
-            flex-grow: 1;
-            padding: 12px 15px;
-            border: none;
-            border-radius: 25px;
-            font-size: 1em;
-            outline: none;
-            background-color: #f0f2f5; /* Light background for input */
-            margin-right: 10px;
-        }
-
-        #controls label {
-            font-size: 1.5em;
-            color: #075e54;
-            cursor: pointer;
-            margin-right: 10px;
-            padding: 5px;
-            transition: color 0.2s ease;
-        }
-        #controls label:hover {
-            color: #28a745;
-        }
-
-        #file-input {
-            display: none; /* Hidden, activated by label */
-        }
-
-        #send-button {
-            padding: 10px 20px;
-            background-color: #28a745; /* WhatsApp green */
-            color: white;
-            border: none;
-            border-radius: 25px;
-            font-size: 1em;
-            cursor: pointer;
-            transition: background-color 0.3s ease;
-        }
-
-        #send-button:hover {
-            background-color: #218838;
-        }
-
-        /* Logout Button */
-        #logout-button {
-            position: absolute;
-            top: 15px;
-            right: 15px;
-            padding: 8px 15px;
-            background-color: #dc3545; /* Red for logout */
-            color: white;
-            border: none;
-            border-radius: 20px;
-            font-size: 0.9em;
-            cursor: pointer;
-            transition: background-color 0.3s ease;
-        }
-        #logout-button:hover {
-            background-color: #c82333;
-        }
-
-        /* Responsive adjustments */
-        @media (max-width: 600px) {
-            h1 {
-                font-size: 1.8em;
-            }
-            .auth-forms, #chat-container, #controls {
-                width: 95%;
-                margin: 15px auto;
-            }
-            #chat-container {
-                height: 85vh;
-            }
-            .message {
-                max-width: 85%;
-            }
-            .auth-forms input[type="text"],
-            .auth-forms input[type="email"],
-            .auth-forms input[type="password"],
-            #message-input {
-                font-size: 0.95em;
-            }
-            #send-button, .auth-forms button {
-                font-size: 1em;
-            }
-        }
-    </style>
+    @media (max-width: 600px) {
+      h1 { font-size: 1.8em; }
+      .auth-forms, #chat-container, #controls {
+        width: 95%; margin: 15px auto;
+      }
+      #chat-container { height: 85vh; }
+      .message { max-width: 85%; }
+    }
+  </style>
 </head>
 <body>
-    <h1>📢 Group Chat</h1>
+  <h1>📢 Group Chat</h1>
 
-    <div id="auth-container" class="auth-forms">
-        <form id="signupForm">
-            <h2>Create Account</h2>
-            <input id="name" type="text" placeholder="Your Name" required>
-            <input id="signupEmail" type="email" placeholder="Email Address" required>
-            <input id="signupPassword" type="password" placeholder="Password" required>
-            <button type="submit">Sign Up</button>
-        </form>
+  <div id="auth-container" class="auth-forms">
+    <form id="signupForm">
+      <h2>Create Account</h2>
+      <input id="name" type="text" placeholder="Your Name" required>
+      <input id="signupEmail" type="email" placeholder="Email Address" required>
+      <input id="signupPassword" type="password" placeholder="Password" required>
+      <button type="submit">Sign Up</button>
+    </form>
 
-        <hr style="width: 80%; margin: 20px 0; border: none; border-top: 1px solid #e0e0e0;">
+    <hr style="width:80%;margin:20px 0;border:none;border-top:1px solid #e0e0e0;">
 
-        <form id="loginForm">
-            <h2>Already have an account?</h2>
-            <input id="loginEmail" type="email" placeholder="Email Address" required>
-            <input id="loginPassword" type="password" placeholder="Password" required>
-            <button type="submit">Log In</button>
-        </form>
+    <form id="loginForm">
+      <h2>Already have an account?</h2>
+      <input id="loginEmail" type="email" placeholder="Email Address" required>
+      <input id="loginPassword" type="password" placeholder="Password" required>
+      <button type="submit">Log In</button>
+    </form>
+  </div>
+
+  <div id="chat-container">
+    <button id="logout-button">Logout</button>
+    <div id="chat-box"></div>
+    <div id="typing-indicator"></div>
+    <div id="controls">
+      <input id="message-input" type="text" placeholder="Type a message...">
+      <label for="file-input">📎</label>
+      <input type="file" id="file-input" accept="image/*">
+      <button id="send-button">Send</button>
     </div>
+  </div>
 
-    <div id="chat-container">
-        <button id="logout-button">Logout</button>
-        <div id="chat-box">
-            </div>
-        <div id="typing-indicator"></div>
-        <div id="controls">
-            <input id="message-input" type="text" placeholder="Type a message...">
-            <label for="file-input">📎</label>
-            <input type="file" id="file-input" accept="image/*">
-            <button id="send-button">Send</button>
-        </div>
-    </div>
+  <script type="module">
+    // Firebase config
+    const firebaseConfig = {
+      apiKey: "AIzaSyAvDLQZvlzJVeLaIAgntPiCit65DeeBgYQ",
+      authDomain: "cee-medico-nepal-chat.firebaseapp.com",
+      databaseURL: "https://cee-medico-nepal-chat-default-rtdb.asia-southeast1.firebasedatabase.app/",
+      projectId: "cee-medico-nepal-chat",
+      storageBucket: "cee-medico-nepal-chat.appspot.com",
+      messagingSenderId: "97605756433",
+      appId: "1:97605756433:web:0fd8c595f66dfa18f00f3b0"
+    };
 
-    <script type="module">
-        // Firebase configuration
-        const firebaseConfig = {
-            apiKey: "AIzaSyAvDLQZvlzJVeLaIAgntPiCit65DeeBgYQ",
-            authDomain: "cee-medico-nepal-chat.firebaseapp.com",
-            databaseURL: "https://cee-medico-nepal-chat-default-rtdb.asia-southeast1.firebasedatabase.app/",
-            projectId: "cee-medico-nepal-chat",
-            storageBucket: "cee-medico-nepal-chat.appspot.com",
-            messagingSenderId: "97605756433",
-            appId: "1:97605756433:web:0fd8c595f66dfa18f00f3b0"
-        };
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+    import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+    import { getDatabase, ref, push, onChildAdded, set, onChildChanged, onChildRemoved, query, limitToLast, get, onValue } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js";
+    import { getStorage, ref as sRef, uploadBytesResumable, getDownloadURL } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-storage.js";
 
-        // Initialize Firebase
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
-        import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
-        import { getDatabase, ref, push, onChildAdded, set, query, limitToLast, onValue, onDisconnect } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js";
-        import { getStorage, ref as sRef, uploadBytesResumable, getDownloadURL } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-storage.js";
+    const app = initializeApp(firebaseConfig);
+    const auth = getAuth(app);
+    const db = getDatabase(app);
+    const storage = getStorage(app);
 
-        const app = initializeApp(firebaseConfig);
-        const auth = getAuth(app);
-        const db = getDatabase(app);
-        const storage = getStorage(app);
+    const signupForm = document.getElementById("signupForm");
+    const loginForm = document.getElementById("loginForm");
+    const authContainer = document.getElementById("auth-container");
+    const chatContainer = document.getElementById("chat-container");
+    const chatBox = document.getElementById("chat-box");
+    const messageInput = document.getElementById("message-input");
+    const sendBtn = document.getElementById("send-button");
+    const fileInput = document.getElementById("file-input");
+    const typingIndicator = document.getElementById("typing-indicator");
+    const logoutBtn = document.getElementById("logout-button");
 
-        // DOM Elements
-        const signupForm = document.getElementById("signupForm");
-        const loginForm = document.getElementById("loginForm");
-        const authContainer = document.getElementById("auth-container");
-        const chatContainer = document.getElementById("chat-container");
-        const chatBox = document.getElementById("chat-box");
-        const messageInput = document.getElementById("message-input");
-        const sendBtn = document.getElementById("send-button");
-        const fileInput = document.getElementById("file-input");
-        const typingIndicator = document.getElementById("typing-indicator");
-        const logoutBtn = document.getElementById("logout-button");
+    let currentUser = null;
 
-        let currentUser = null;
-        const CHAT_HISTORY_LIMIT = 50; // Number of messages to load initially
-
-        // --- Authentication ---
-
-        // Signup
-        signupForm.addEventListener("submit", async (e) => {
-            e.preventDefault();
-            const name = document.getElementById("name").value.trim();
-            const email = document.getElementById("signupEmail").value.trim();
-            const password = document.getElementById("signupPassword").value;
-
-            if (!name || !email || !password) return alert("Please fill in all fields.");
-
-            try {
-                const userCredential = await createUserWithEmailAndPassword(auth, email, password);
-                // Store user profile info (name)
-                await set(ref(db, 'users/' + userCredential.user.uid), {
-                    name: name,
-                    email: email,
-                    uid: userCredential.user.uid
-                });
-                alert("Signup successful! Please log in below.");
-                signupForm.reset();
-                // Optionally switch to login form automatically
-                // loginForm.style.display = "block";
-                // signupForm.style.display = "none";
-            } catch (err) {
-                alert("Signup failed: " + err.message);
-            }
+    // --- Authentication ---
+    signupForm.addEventListener("submit", async (e) => {
+      e.preventDefault();
+      const name = document.getElementById("name").value.trim();
+      const email = document.getElementById("signupEmail").value.trim();
+      const password = document.getElementById("signupPassword").value;
+      try {
+        const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+        await set(ref(db, 'users/' + userCredential.user.uid), {
+          name: name,
+          email: email,
+          uid: userCredential.user.uid
         });
+        alert("Signup successful! Please log in below.");
+        signupForm.reset();
+      } catch (err) { alert("Signup failed: " + err.message); }
+    });
 
-        // Login
-        loginForm.addEventListener("submit", async (e) => {
-            e.preventDefault();
-            const email = document.getElementById("loginEmail").value.trim();
-            const password = document.getElementById("loginPassword").value;
+    loginForm.addEventListener("submit", async (e) => {
+      e.preventDefault();
+      const email = document.getElementById("loginEmail").value.trim();
+      const password = document.getElementById("loginPassword").value;
+      try { await signInWithEmailAndPassword(auth, email, password); }
+      catch (err) { alert("Login failed: " + err.message); }
+    });
 
-            if (!email || !password) return alert("Please enter your email and password.");
+    logoutBtn.addEventListener("click", async () => { await signOut(auth); });
 
-            try {
-                await signInWithEmailAndPassword(auth, email, password);
-                // Auth state listener will handle UI change
-            } catch (err) {
-                alert("Login failed: " + err.message);
-            }
-        });
+    onAuthStateChanged(auth, async (user) => {
+      if (user) {
+        currentUser = user;
+        authContainer.style.display = "none";
+        chatContainer.style.display = "flex";
+        loadChat();
+      } else {
+        currentUser = null;
+        chatContainer.style.display = "none";
+        authContainer.style.display = "flex";
+        chatBox.innerHTML = "";
+      }
+    });
 
-        // Logout
-        logoutBtn.addEventListener("click", async () => {
-            try {
-                await signOut(auth);
-                // Auth state listener will handle UI change
-            } catch (err) {
-                alert("Logout failed: " + err.message);
-            }
-        });
+    // --- Chat realtime updates ---
+    function loadChat() {
+      chatBox.innerHTML = "";
+      const chatRef = ref(db, 'chat');
+      const chatQuery = query(chatRef, limitToLast(50));
 
-        // --- Auth State Management ---
-        onAuthStateChanged(auth, async (user) => {
-            if (user) {
-                currentUser = user;
-                // Fetch user's display name or use email if name is not set
-                const userProfileRef = ref(db, 'users/' + user.uid);
-                const userProfileSnapshot = await get(userProfileRef); // Need to import get from firebase/database
-                const displayName = userProfileSnapshot.exists() ? userProfileSnapshot.val().name : user.displayName || user.email;
+      // New messages
+      onChildAdded(chatQuery, (snap) => { renderMessage(snap.val(), snap.key); });
 
-                // Update UI for logged-in state
-                authContainer.style.display = "none";
-                chatContainer.style.display = "flex"; // Changed to flex for layout
-                loadChatHistory(); // Load messages
-                setupTypingIndicator(); // Setup typing indicator listeners
-            } else {
-                currentUser = null;
-                // Update UI for logged-out state
-                chatContainer.style.display = "none";
-                authContainer.style.display = "flex"; // Show forms
-                chatBox.innerHTML = ""; // Clear chat messages
-                typingIndicator.innerText = ""; // Clear typing indicator
-            }
-        });
+      // Message edits
+      onChildChanged(chatRef, (snap) => {
+        const msgEl = document.getElementById("msg-" + snap.key);
+        if (msgEl) msgEl.replaceWith(createMessageElement(snap.val(), snap.key));
+      });
 
-        // --- Chat Functionality ---
+      // Message deletes
+      onChildRemoved(chatRef, (snap) => {
+        const msgEl = document.getElementById("msg-" + snap.key);
+        if (msgEl) msgEl.remove();
+      });
+    }
 
-        // Load recent chat history
-        function loadChatHistory() {
-            chatBox.innerHTML = ""; // Clear existing messages before loading history
-            const chatRef = ref(db, 'chat');
-            // Query for the last N messages
-            const recentChatQuery = query(chatRef, limitToLast(CHAT_HISTORY_LIMIT));
+    function createMessageElement(msg, msgId) {
+      const div = document.createElement("div");
+      div.id = "msg-" + msgId;
+      div.classList.add("message");
+      if (msg.uid === currentUser?.uid) div.classList.add("me"); else div.classList.add("other");
 
-            onChildAdded(recentChatQuery, (snap) => {
-                const msgData = snap.val();
-                const msgId = snap.key;
-                renderMessage(msgData, msgId);
-            });
-        }
+      let content = `<div class="msg-header"><b>${msg.sender || "Unknown"}</b></div><div class="msg-body">`;
+      if (msg.text) content += msg.text;
+      if (msg.image) content += `<br><img src="${msg.image}" class="chat-img">`;
+      content += `</div><div class="msg-time">${new Date(msg.time).toLocaleTimeString([], {hour:"2-digit",minute:"2-digit"})}</div>`;
 
-        // Render a single message
-        function renderMessage(msg, msgId) {
-            const div = document.createElement("div");
-            div.classList.add("message");
-
-            // Determine if message is from current user
-            if (currentUser && msg.uid === currentUser.uid) {
-                div.classList.add("me");
-            } else {
-                div.classList.add("other");
-            }
-
-            let content = `<div class="msg-header"><b>${msg.sender}</b></div><div class="msg-body">`;
-            if (msg.text) {
-                content += msg.text;
-            }
-            if (msg.image) {
-                content += `<br><img src="${msg.image}" alt="Chat Image" class="chat-img" loading="lazy">`;
-            }
-            content += `</div><div class="msg-time">${new Date(msg.time).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</div>`;
-
-            // Add edit/unsend buttons for the current user's messages
-            if (currentUser && msg.uid === currentUser.uid) {
-                content += `
-                    <div class="msg-actions">
-                        <button class="edit-btn">Edit</button>
-                        <button class="delete-btn">Unsend</button>
-                        <button class="delete-all-btn">Unsend All</button>
+      if (msg.uid === currentUser?.uid) {
+        content += `<div class="msg-actions">
+                      <button class="edit-btn">Edit</button>
+                      <button class="delete-all-btn">Unsend All</button>
                     </div>`;
-            }
+      }
 
-            div.innerHTML = content;
-            chatBox.appendChild(div);
-            chatBox.scrollTop = chatBox.scrollHeight; // Auto-scroll to bottom
+      div.innerHTML = content;
+      setupMessageActions(div, msgId, msg);
+      return div;
+    }
 
-            // Add event listeners for message actions
-            setupMessageActions(div, msgId, msg);
+    function renderMessage(msg, msgId) {
+      chatBox.appendChild(createMessageElement(msg, msgId));
+      chatBox.scrollTop = chatBox.scrollHeight;
+    }
+
+    function setupMessageActions(messageElement, msgId, msgData) {
+      messageElement.querySelector(".edit-btn")?.addEventListener("click", () => {
+        const newText = prompt("Edit your message:", msgData.text || "");
+        if (newText !== null) {
+          set(ref(db, 'chat/' + msgId), {
+            ...msgData,
+            text: newText.trim(),
+            edited: true,
+            time: msgData.time
+          });
         }
+      });
 
-        // Setup event listeners for message actions (edit, unsend)
-        function setupMessageActions(messageElement, msgId, msgData) {
-            const editBtn = messageElement.querySelector(".edit-btn");
-            const deleteBtn = messageElement.querySelector(".delete-btn");
-            const deleteAllBtn = messageElement.querySelector(".delete-all-btn");
+      messageElement.querySelector(".delete-all-btn")?.addEventListener("click", () => {
+        if (confirm("Delete for everyone?")) set(ref(db, 'chat/' + msgId), null);
+      });
+    }
 
-            // Edit
-            editBtn?.addEventListener("click", () => {
-                const newText = prompt("Edit your message:", msgData.text);
-                if (newText !== null && newText.trim() !== "") { // Allow empty text if user wants to clear
-                    const messageRef = ref(db, 'chat/' + msgId);
-                    set(messageRef, {
-                        ...msgData,
-                        text: newText,
-                        edited: true,
-                        editedTimestamp: Date.now() // Optional: track edits
-                    });
-                } else if (newText === "") { // Handle clearing message text
-                    const messageRef = ref(db, 'chat/' + msgId);
-                    set(messageRef, {
-                        ...msgData,
-                        text: "", // Clear text
-                        edited: true,
-                        editedTimestamp: Date.now()
-                    });
-                }
-            });
+    // --- Sending messages ---
+    sendBtn.addEventListener("click", sendMessage);
+    messageInput.addEventListener("keypress", (e) => { if (e.key === "Enter") { e.preventDefault(); sendMessage(); } });
 
-            // Unsend (for sender only)
-            deleteBtn?.addEventListener("click", () => {
-                if (confirm("Are you sure you want to unsend this message?")) {
-                    const messageRef = ref(db, 'chat/' + msgId);
-                    set(messageRef, null); // Removes the message from the database
-                }
-            });
+    function sendMessage() {
+      const text = messageInput.value.trim();
+      if (!text || !currentUser) return;
+      const userProfileRef = ref(db, 'users/' + currentUser.uid);
+      get(userProfileRef).then(snapshot => {
+        const name = snapshot.val()?.name || currentUser.email;
+        push(ref(db, 'chat'), { text, sender: name, uid: currentUser.uid, time: Date.now() });
+      });
+      messageInput.value = "";
+    }
 
-            // Unsend All (for sender only) - Note: This is typically for admin or specific group features.
-            // For a simple group chat, 'Unsend' usually means "delete for me".
-            // If 'Unsend All' means deleting all messages FROM this user, that would be complex.
-            // Assuming it means "delete this specific message for everyone".
-            deleteAllBtn?.addEventListener("click", () => {
-                if (confirm("Are you sure you want to delete this message for everyone?")) {
-                    const messageRef = ref(db, 'chat/' + msgId);
-                    set(messageRef, null); // Removes the message from the database
-                }
-            });
-        }
-
-
-        // Send text message
-        sendBtn.addEventListener("click", () => {
-            sendMessage();
-        });
-
-        // Allow sending with Enter key
-        messageInput.addEventListener("keypress", (e) => {
-            if (e.key === "Enter") {
-                e.preventDefault(); // Prevent default form submission
-                sendMessage();
-            }
-        });
-
-        function sendMessage() {
-            const text = messageInput.value.trim();
-            if (!text || !currentUser) return;
-
-            const senderName = currentUser.displayName || currentUser.email; // Use display name if available
-
-            push(ref(db, 'chat'), {
-                text: text,
-                sender: senderName,
-                uid: currentUser.uid,
-                time: Date.now()
-            });
-            messageInput.value = ""; // Clear input after sending
-            updateTypingStatus(false); // Indicate user is no longer typing
-        }
-
-        // Upload image
-        fileInput.addEventListener("change", (e) => {
-            if (!currentUser) return alert("Please log in to send images.");
-            const file = e.target.files[0];
-
-            if (!file) return;
-            if (!file.type.match('image.*')) return alert("Please select an image file.");
-
-            const storageRef = sRef(storage, `chatImages/${currentUser.uid}/${Date.now()}_${file.name}`);
-            const uploadTask = uploadBytesResumable(storageRef, file);
-
-            // Listen for upload progress (optional)
-            uploadTask.on('state_changed',
-                (snapshot) => {
-                    const progress = (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
-                    console.log('Upload is ' + progress + '% done');
-                    // You could display this progress to the user
-                },
-                (err) => {
-                    alert("Image upload failed: " + err.message);
-                },
-                () => {
-                    // Upload completed successfully, get the download URL
-                    getDownloadURL(uploadTask.snapshot.ref).then((url) => {
-                        const senderName = currentUser.displayName || currentUser.email;
-                        push(ref(db, 'chat'), {
-                            image: url,
-                            sender: senderName,
-                            uid: currentUser.uid,
-                            time: Date.now()
-                        });
-                        fileInput.value = ""; // Clear file input
-                    });
-                }
-            );
-        });
-
-        // --- Typing Indicator ---
-        let typingTimeout;
-        messageInput.addEventListener("input", () => {
-            if (!currentUser) return;
-            updateTypingStatus(true);
-            clearTimeout(typingTimeout);
-            typingTimeout = setTimeout(() => updateTypingStatus(false), 2000); // Stop typing after 2 seconds of inactivity
-        });
-
-        function updateTypingStatus(isTyping) {
-            if (!currentUser) return;
-            const typingRef = ref(db, `typing/${currentUser.uid}`);
-            if (isTyping) {
-                // Use user's name if available, otherwise email
-                const userName = currentUser.displayName || currentUser.email || 'A user';
-                set(typingRef, userName + " is typing...");
-            } else {
-                set(typingRef, null); // Remove typing status
-            }
-        }
-
-        // Listen for typing indicators from others
-        const typingIndicatorRef = ref(db, "typing");
-        onChildAdded(typingIndicatorRef, (snap) => {
-            const typingUser = snap.val();
-            if (typingUser && snap.key !== currentUser.uid) { // Don't show own typing status
-                typingIndicator.innerText = typingUser;
-            }
-        });
-        // Listen for removed typing indicators
-        onChildAdded(typingIndicatorRef, (snap) => {
-             if (!snap.exists() && snap.key !== currentUser.uid) {
-                 typingIndicator.innerText = ""; // Clear if no one is typing
-             }
-        });
-        // Re-implement onChildAdded correctly for both added and removed typing indicators
-        const typingListeners = {}; // Keep track of listeners to avoid duplicates
-
-        onChildAdded(ref(db, "typing"), (snap) => {
-            const typingUser = snap.val();
-            const userId = snap.key;
-
-            if (typingUser && userId !== currentUser.uid) {
-                typingIndicator.innerText = typingUser;
-                // Set a timeout to clear the indicator after some time if no further updates
-                typingListeners[userId] = setTimeout(() => {
-                    if (typingIndicator.innerText.startsWith(typingUser.split(" ")[0])) { // Basic check to ensure it's the correct message
-                        typingIndicator.innerText = "";
-                    }
-                    delete typingListeners[userId];
-                }, 3000); // Clear after 3 seconds of inactivity from this user
-            }
-        });
-
-        // Also listen for direct removal/update to null
-        onValue(ref(db, "typing"), (snapshot) => {
-            let anyoneTyping = false;
-            snapshot.forEach((childSnapshot) => {
-                if (childSnapshot.key !== currentUser.uid && childSnapshot.val()) {
-                    anyoneTyping = true;
-                    // Ensure the displayed typing text is still relevant
-                    if (typingIndicator.innerText.includes(childSnapshot.key) || typingIndicator.innerText === "") {
-                         typingIndicator.innerText = childSnapshot.val();
-                    }
-                     // Reset timeout if user is still typing
-                    if (typingListeners[childSnapshot.key]) {
-                        clearTimeout(typingListeners[childSnapshot.key]);
-                        typingListeners[childSnapshot.key] = setTimeout(() => {
-                           if (typingIndicator.innerText.startsWith(childSnapshot.val().split(" ")[0])) {
-                                typingIndicator.innerText = "";
-                           }
-                           delete typingListeners[childSnapshot.key];
-                        }, 3000);
-                    }
-                }
-            });
-            if (!anyoneTyping) {
-                typingIndicator.innerText = "";
-                // Clear all pending timeouts if everyone stops typing
-                Object.values(typingListeners).forEach(timeoutId => clearTimeout(timeoutId));
-                typingListeners = {};
-            }
-        });
-
-
-        // Import 'get' for user profile retrieval
-        import { get } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js";
-
-    </script>
+    // --- Image upload ---
+    fileInput.addEventListener("change", (e) => {
+      if (!currentUser) return alert("Please log in first.");
+      const file = e.target.files[0];
+      if (!file) return;
+      const storageRef = sRef(storage, `chatImages/${currentUser.uid}/${Date.now()}_${file.name}`);
+      const uploadTask = uploadBytesResumable(storageRef, file);
+      uploadTask.on('state_changed', null, (err) => alert("Upload failed: " + err.message),
+        () => getDownloadURL(uploadTask.snapshot.ref).then(url => {
+          get(ref(db, 'users/' + currentUser.uid)).then(snapshot => {
+            const name = snapshot.val()?.name || currentUser.email;
+            push(ref(db, 'chat'), { image: url, sender: name, uid: currentUser.uid, time: Date.now() });
+          });
+        })
+      );
+    });
+  </script>
 </body>
 </html>
