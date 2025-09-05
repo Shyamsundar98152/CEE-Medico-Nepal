@@ -1,226 +1,347 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>CeeMedico Group Chat</title>
-<script src="https://cdn.tailwindcss.com"></script>
-<style>
-  body { font-family: 'Inter', sans-serif; }
-  .chat-message { max-width: 70%; padding: 0.5rem 1rem; border-radius: 1rem; margin: 0.2rem 0; word-break: break-word; }
-  .self { background-color: #2563eb; color: white; margin-left: auto; }
-  .other { background-color: #374151; color: white; margin-right: auto; }
-  .loading-spinner { border: 4px solid rgba(255,255,255,0.3); border-radius: 50%; border-top: 4px solid white; width: 1rem; height: 1rem; animation: spin 1s linear infinite; }
-  @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
-  .profile { display: flex; align-items: center; gap: 0.5rem; margin-bottom: 1rem; }
-  .profile img { width: 40px; height: 40px; border-radius: 50%; }
-</style>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>CeeMedico WhatsApp Chat</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    body { font-family: 'Inter', sans-serif; background-image: url('https://cloud.githubusercontent.com/assets/398893/15136779/4e765036-1639-11e6-9201-67e728e86f39.jpg'); background-size: cover; }
+    .chat-message { max-width: 70%; padding: 0.75rem 1.25rem; border-radius: 0.5rem; margin: 0.5rem 1rem; position: relative; }
+    .self { background-color: #d9fdd3; color: black; margin-left: auto; border-bottom-right-radius: 0; }
+    .other { background-color: #ffffff; color: black; margin-right: auto; border-bottom-left-radius: 0; }
+    .loading-spinner { border: 4px solid rgba(0,0,0,0.3); border-radius: 50%; border-top: 4px solid #075e54; width: 1.5rem; height: 1.5rem; animation: spin 1s linear infinite; }
+    @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+    .timestamp { font-size: 0.75rem; color: #666; margin-top: 0.25rem; }
+    .status-ticks { font-size: 0.75rem; color: #4fc3f7; }
+    .typing-indicator { font-size: 0.875rem; color: #666; background: #f0f0f0; padding: 0.5rem; border-radius: 0.5rem; }
+    .msg-actions { opacity: 0; transition: opacity 0.2s; position: absolute; right: 0.5rem; top: 0.5rem; }
+    .chat-message:hover .msg-actions { opacity: 1; }
+    .edited { font-style: italic; font-size: 0.75rem; color: #666; margin-left: 0.5rem; }
+    #load-more-btn { background: #075e54; color: white; }
+  </style>
 </head>
-<body class="bg-gray-900 text-white min-h-screen flex items-center justify-center p-4">
-
-<!-- Login Page -->
-<div id="login-page" class="w-full max-w-sm">
-  <div class="bg-gray-800 p-8 rounded-2xl shadow-xl">
-    <h2 class="text-3xl font-bold mb-6 text-center text-teal-300">👋 Welcome!</h2>
-    <button id="google-login-btn" class="w-full py-3 px-4 rounded-xl font-semibold bg-gray-700 hover:bg-gray-600 flex items-center justify-center space-x-2">
-      <span id="google-login-text">Sign in with Google</span>
-      <div id="google-login-spinner" class="loading-spinner hidden"></div>
-    </button>
-    <p id="status" class="mt-6 text-center text-gray-400 text-sm"></p>
+<body class="bg-gray-100 text-black min-h-screen flex items-center justify-center p-4">
+  <!-- Login Page -->
+  <div id="login-page" class="w-full max-w-md">
+    <div class="bg-white p-8 rounded-2xl shadow-2xl border border-gray-200">
+      <h2 class="text-3xl font-extrabold mb-6 text-center text-green-600">CeeMedico Chat</h2>
+      <button id="google-login-btn" class="w-full py-3 px-4 rounded-xl font-semibold bg-green-600 hover:bg-green-500 transition-colors flex items-center justify-center space-x-2">
+        <svg class="w-5 h-5" viewBox="0 0 24 24"><path fill="white" d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8zm4.59-12.42L17 9.17c-.06.2-.1.41-.1.62 0 .83.67 1.5 1.5 1.5s1.5-.67 1.5-1.5-1.5-2.25-1.5-2.25l-2.25 2.25zM6.5 9.75c.83 0 1.5.67 1.5 1.5s-.67 1.5-1.5 1.5-1.5-.67-1.5-1.5.67-1.5 1.5-1.5zm5.5 3.5c1.66 0 3-1.34 3-3s-1.34-3-3-3-3 1.34-3 3 1.34 3 3 3z"/></svg>
+        <span id="google-login-text">Sign in with Google</span>
+        <div id="google-login-spinner" class="loading-spinner hidden"></div>
+      </button>
+      <p id="status" class="mt-6 text-center text-gray-600 text-sm"></p>
+    </div>
   </div>
-</div>
 
-<!-- Chat Page -->
-<div id="chat-page" class="hidden w-full max-w-4xl flex gap-4">
-  <!-- Member List -->
-  <div class="w-1/4 bg-gray-800 p-4 rounded-xl overflow-y-auto h-[80vh]">
-    <div class="profile">
-      <img id="user-photo" src="" alt="User Photo">
-      <div>
-        <div id="user-name" class="font-bold"></div>
-        <div id="user-email" class="text-sm text-gray-400"></div>
+  <!-- Chat Page -->
+  <div id="chat-page" class="hidden w-full max-w-5xl flex gap-6 h-[85vh]">
+    <!-- Member List -->
+    <div class="w-1/4 bg-white p-6 rounded-xl shadow-lg border border-gray-200 overflow-y-auto">
+      <h2 class="text-xl font-bold mb-4 text-green-600">Online Members</h2>
+      <ul id="member-list" class="space-y-3"></ul>
+    </div>
+
+    <!-- Chat Area -->
+    <div class="w-3/4 flex flex-col bg-white p-6 rounded-xl shadow-lg border border-gray-200">
+      <div id="messages" class="flex-1 overflow-y-auto mb-4 space-y-3 pr-2"></div>
+      <button id="load-more-btn" class="hidden p-2 rounded-xl font-semibold mb-2">Load More Messages</button>
+      <div id="typing-indicator" class="typing-indicator mb-2 hidden">Someone is typing...</div>
+      <div class="flex gap-3">
+        <input id="message-input" type="text" placeholder="Type a message..." class="flex-1 p-3 rounded-3xl bg-gray-100 focus:outline-none focus:ring-2 focus:ring-green-500"/>
+        <button id="send-btn" class="bg-green-600 hover:bg-green-500 p-3 rounded-full font-semibold transition-colors">
+          <svg class="w-6 h-6" fill="white" viewBox="0 0 24 24"><path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"/></svg>
+        </button>
       </div>
     </div>
-    <button id="logout-btn" class="w-full bg-red-600 p-2 rounded-xl mb-4">Logout</button>
-    <h2 class="text-lg font-bold mb-4">Members</h2>
-    <ul id="member-list" class="space-y-2"></ul>
   </div>
 
-  <!-- Chat Area -->
-  <div class="w-3/4 flex flex-col bg-gray-800 p-4 rounded-xl h-[80vh]">
-    <div id="messages" class="flex-1 overflow-y-auto mb-4 space-y-2"></div>
-    <div class="flex gap-2">
-      <input id="message-input" type="text" placeholder="Type a message..." class="flex-1 p-2 rounded-xl text-black"/>
-      <button id="send-btn" class="bg-blue-600 p-2 rounded-xl">Send</button>
-    </div>
-  </div>
-</div>
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+    import { getAuth, GoogleAuthProvider, signInWithPopup, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+    import { getDatabase, ref, set, onValue, push, update, query, orderByChild, limitToLast, startAfter } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-database.js";
 
-<script type="module">
-import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
-import { getAuth, GoogleAuthProvider, signInWithPopup, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
-import { getDatabase, ref, set, onChildAdded, onChildChanged, push, update } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-database.js";
+    // Firebase Config
+    const firebaseConfig = {
+      apiKey: "AIzaSyAvDLQZvlzJVeLaIAgntPiCit65DeeBgYQ",
+      authDomain: "cee-medico-nepal-chat.firebaseapp.com",
+      databaseURL: "https://cee-medico-nepal-chat-default-rtdb.asia-southeast1.firebasedatabase.app",
+      projectId: "cee-medico-nepal-chat",
+      storageBucket: "cee-medico-nepal-chat.appspot.com",
+      messagingSenderId: "97605756433",
+      appId: "1:97605756433:web:0fd8c595f6dfa18f00f3b0",
+      measurementId: "G-QFJPC7489G"
+    };
 
-// Firebase Config
-const firebaseConfig = {
-  apiKey: "AIzaSyAvDLQZvlzJVeLaIAgntPiCit65DeeBgYQ",
-  authDomain: "cee-medico-nepal-chat.firebaseapp.com",
-  databaseURL: "https://cee-medico-nepal-chat-default-rtdb.asia-southeast1.firebasedatabase.app",
-  projectId: "cee-medico-nepal-chat",
-  storageBucket: "cee-medico-nepal-chat.appspot.com",
-  messagingSenderId: "97605756433",
-  appId: "1:97605756433:web:0fd8c595f6dfa18f00f3b0",
-  measurementId: "G-QFJPC7489G"
-};
+    // Initialize Firebase
+    const app = initializeApp(firebaseConfig);
+    const auth = getAuth(app);
+    const db = getDatabase(app);
 
-// Initialize Firebase
-const app = initializeApp(firebaseConfig);
-const auth = getAuth(app);
-const db = getDatabase(app, firebaseConfig.databaseURL);
+    // DOM Elements
+    const loginPage = document.getElementById("login-page");
+    const chatPage = document.getElementById("chat-page");
+    const googleLoginBtn = document.getElementById("google-login-btn");
+    const googleLoginText = document.getElementById("google-login-text");
+    const googleLoginSpinner = document.getElementById("google-login-spinner");
+    const statusMessage = document.getElementById("status");
+    const memberListEl = document.getElementById("member-list");
+    const messagesEl = document.getElementById("messages");
+    const messageInput = document.getElementById("message-input");
+    const sendBtn = document.getElementById("send-btn");
+    const typingIndicator = document.getElementById("typing-indicator");
+    const loadMoreBtn = document.getElementById("load-more-btn");
 
-// DOM Elements
-const loginPage = document.getElementById("login-page");
-const chatPage = document.getElementById("chat-page");
-const googleLoginBtn = document.getElementById("google-login-btn");
-const googleLoginText = document.getElementById("google-login-text");
-const googleLoginSpinner = document.getElementById("google-login-spinner");
-const statusMessage = document.getElementById("status");
-const memberListEl = document.getElementById("member-list");
-const messagesEl = document.getElementById("messages");
-const messageInput = document.getElementById("message-input");
-const sendBtn = document.getElementById("send-btn");
-const userPhoto = document.getElementById("user-photo");
-const userName = document.getElementById("user-name");
-const userEmail = document.getElementById("user-email");
-const logoutBtn = document.getElementById("logout-btn");
+    let currentUser = null;
+    let typingTimeout = null;
+    let lastMessageKey = null;
+    const messagesPerPage = 20;
 
-let currentUser = null;
+    // Loading function
+    function setLoading(isLoading) {
+      googleLoginBtn.disabled = isLoading;
+      googleLoginText.classList.toggle('hidden', isLoading);
+      googleLoginSpinner.classList.toggle('hidden', !isLoading);
+    }
 
-// Loading function
-function setLoading(isLoading){
-  googleLoginBtn.disabled = isLoading;
-  googleLoginText.classList.toggle('hidden', isLoading);
-  googleLoginSpinner.classList.toggle('hidden', !isLoading);
-}
+    // Format timestamp
+    function formatTimestamp(timestamp) {
+      const date = new Date(timestamp);
+      const today = new Date();
+      const isToday = date.toDateString() === today.toDateString();
+      return isToday
+        ? date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+        : `${date.toLocaleDateString()} ${date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`;
+    }
 
-// Google Sign-In
-googleLoginBtn.addEventListener('click', async () => {
-  setLoading(true);
-  statusMessage.textContent = "Signing in...";
-  const provider = new GoogleAuthProvider();
-  try {
-    const result = await signInWithPopup(auth, provider);
-    currentUser = result.user;
-    // Save user in DB
-    set(ref(db, 'users/' + currentUser.uid), {
-      name: currentUser.displayName,
-      email: currentUser.email,
-      photoURL: currentUser.photoURL
+    // Google Sign-In
+    googleLoginBtn.addEventListener('click', async () => {
+      setLoading(true);
+      statusMessage.textContent = "Signing in...";
+      const provider = new GoogleAuthProvider();
+      try {
+        const result = await signInWithPopup(auth, provider);
+        currentUser = result.user;
+        await set(ref(db, 'users/' + currentUser.uid), {
+          name: currentUser.displayName,
+          email: currentUser.email,
+          photoURL: currentUser.photoURL,
+          lastActive: Date.now()
+        });
+        statusMessage.textContent = "Signed in successfully!";
+      } catch (err) {
+        statusMessage.textContent = `Error: ${err.message}`;
+      } finally {
+        setLoading(false);
+      }
     });
-  } catch (err) {
-    statusMessage.textContent = `Error: ${err.message}`;
-  } finally {
-    setLoading(false);
-  }
-});
 
-// Logout
-logoutBtn.addEventListener('click', async () => {
-  await signOut(auth);
-  currentUser = null;
-});
+    // Auth state change
+    onAuthStateChanged(auth, user => {
+      if (user) {
+        currentUser = user;
+        loginPage.classList.add('hidden');
+        chatPage.classList.remove('hidden');
+        loadMembers();
+        loadMessages();
+        updateUserStatus();
+      } else {
+        loginPage.classList.remove('hidden');
+        chatPage.classList.add('hidden');
+        memberListEl.innerHTML = '';
+        messagesEl.innerHTML = '';
+      }
+    });
 
-// Auth state change
-onAuthStateChanged(auth, user => {
-  if(user){
-    currentUser = user;
-    loginPage.classList.add('hidden');
-    chatPage.classList.remove('hidden');
-    userPhoto.src = user.photoURL || '';
-    userName.textContent = user.displayName || 'User';
-    userEmail.textContent = user.email || '';
-    loadMembers();
-    loadMessages();
-  } else {
-    loginPage.classList.remove('hidden');
-    chatPage.classList.add('hidden');
-    messagesEl.innerHTML = '';
-    memberListEl.innerHTML = '';
-  }
-});
+    // Update user status
+    function updateUserStatus() {
+      setInterval(() => {
+        if (currentUser) {
+          update(ref(db, 'users/' + currentUser.uid), { lastActive: Date.now() });
+        }
+      }, 30000);
+    }
 
-// Load members
-function loadMembers(){
-  memberListEl.innerHTML = '';
-  const usersRef = ref(db, 'users/');
-  onChildAdded(usersRef, snapshot => {
-    const user = snapshot.val();
-    const li = document.createElement('li');
-    li.textContent = user.name;
-    li.className = "p-2 rounded hover:bg-gray-700 cursor-pointer";
-    memberListEl.appendChild(li);
-  });
-}
+    // Load members
+    function loadMembers() {
+      const usersRef = ref(db, 'users/');
+      onValue(usersRef, snapshot => {
+        memberListEl.innerHTML = '';
+        const users = snapshot.val();
+        for (const uid in users) {
+          const user = users[uid];
+          const isOnline = Date.now() - user.lastActive < 60000;
+          const li = document.createElement('li');
+          li.className = `p-3 rounded-lg hover:bg-gray-100 transition-colors flex items-center space-x-3 ${isOnline ? 'text-green-600' : 'text-gray-600'}`;
+          li.innerHTML = `
+            <img src="${user.photoURL || 'https://via.placeholder.com/32'}" class="w-10 h-10 rounded-full" alt="Avatar">
+            <div>
+              <span class="font-semibold">${user.name}</span>
+              <div class="text-sm ${isOnline ? 'text-green-500' : 'text-gray-400'}">${isOnline ? 'Online' : 'Offline'}</div>
+            </div>`;
+          memberListEl.appendChild(li);
+        }
+      });
+    }
 
-// Load messages
-function loadMessages(){
-  const messagesRef = ref(db, 'messages/');
-  onChildAdded(messagesRef, snapshot => {
-    displayMessage(snapshot.key, snapshot.val());
-  });
-  onChildChanged(messagesRef, snapshot => {
-    displayMessage(snapshot.key, snapshot.val(), true);
-  });
-}
+    // Typing indicator
+    messageInput.addEventListener('input', () => {
+      if (!currentUser) return;
+      clearTimeout(typingTimeout);
+      update(ref(db, 'typing/' + currentUser.uid), { isTyping: true });
+      typingTimeout = setTimeout(() => {
+        update(ref(db, 'typing/' + currentUser.uid), { isTyping: false });
+      }, 2000);
+    });
 
-// Display message
-function displayMessage(id, msg, isUpdate=false){
-  let msgEl = document.getElementById(id);
-  if(!msgEl){
-    msgEl = document.createElement('div');
-    msgEl.id = id;
-    msgEl.className = "chat-message " + (msg.uid===currentUser.uid ? 'self' : 'other');
-    msgEl.innerHTML = `<strong>${msg.name||'User'}:</strong> <span>${msg.deleted ? 'This message was unsent' : msg.text}</span>
-      <button onclick="editMessage('${id}')" class="ml-2 text-yellow-300">✏️</button>
-      <button onclick="unsendMessage('${id}')" class="ml-1 text-red-400">🗑️</button>`;
-    messagesEl.appendChild(msgEl);
-  } else if(isUpdate){
-    msgEl.querySelector('span').textContent = msg.deleted ? 'This message was unsent' : msg.text;
-  }
-  messagesEl.scrollTop = messagesEl.scrollHeight;
-}
+    // Listen for typing users
+    onValue(ref(db, 'typing/'), snapshot => {
+      const typingData = snapshot.val();
+      let typingUsers = [];
+      for (const uid in typingData) {
+        if (typingData[uid].isTyping && uid !== currentUser?.uid) {
+          typingUsers.push(uid);
+        }
+      }
+      typingIndicator.classList.toggle('hidden', typingUsers.length === 0);
+      typingIndicator.textContent = typingUsers.length > 0 ? `${typingUsers.length} user${typingUsers.length > 1 ? 's' : ''} typing...` : '';
+    });
 
-// Send message
-sendBtn.addEventListener('click', () => {
-  const text = messageInput.value.trim();
-  if(!text) return;
-  const newMsgRef = push(ref(db, 'messages/'));
-  set(newMsgRef, {
-    uid: currentUser.uid,
-    name: currentUser.displayName,
-    text: text,
-    timestamp: Date.now(),
-    edited: false,
-    deleted: false
-  });
-  messageInput.value = '';
-});
+    // Load messages with pagination
+    function loadMessages() {
+      const messagesRef = query(ref(db, 'messages/'), orderByChild('timestamp'), limitToLast(messagesPerPage));
+      onValue(messagesRef, snapshot => {
+        messagesEl.innerHTML = '';
+        const messages = [];
+        snapshot.forEach(child => {
+          messages.push({ key: child.key, ...child.val() });
+        });
+        messages.reverse().forEach(msg => displayMessage(msg.key, msg));
+        lastMessageKey = messages.length > 0 ? messages[messages.length - 1].key : null;
+        loadMoreBtn.classList.toggle('hidden', messages.length < messagesPerPage);
+        messagesEl.scrollTop = messagesEl.scrollHeight;
+      }, { onlyOnce: true });
 
-// Edit message
-window.editMessage = function(id){
-  const msgEl = document.getElementById(id);
-  const newText = prompt("Edit message:", msgEl.querySelector('span').textContent);
-  if(newText !== null){
-    update(ref(db, 'messages/' + id), { text: newText, edited: true });
-  }
-}
+      // Real-time updates for new messages
+      const realTimeRef = query(ref(db, 'messages/'), orderByChild('timestamp'));
+      onValue(realTimeRef, snapshot => {
+        snapshot.forEach(child => {
+          const msg = child.val();
+          if (document.getElementById(child.key)) {
+            displayMessage(child.key, msg, true);
+          } else if (msg.timestamp > (messages[messages.length - 1]?.timestamp || 0)) {
+            displayMessage(child.key, msg);
+            messagesEl.scrollTop = messagesEl.scrollHeight;
+          }
+        });
+      });
+    }
 
-// Unsend message
-window.unsendMessage = function(id){
-  if(confirm("Are you sure you want to unsend this message?")){
-    update(ref(db, 'messages/' + id), { deleted: true });
-  }
-}
-</script>
+    // Load more messages
+    loadMoreBtn.addEventListener('click', () => {
+      if (!lastMessageKey) return;
+      const messagesRef = query(ref(db, 'messages/'), orderByChild('timestamp'), limitToLast(messagesPerPage), startAfter(lastMessageKey));
+      onValue(messagesRef, snapshot => {
+        const messages = [];
+        snapshot.forEach(child => {
+          messages.push({ key: child.key, ...child.val() });
+        });
+        messages.reverse().forEach(msg => displayMessage(msg.key, msg, false, true));
+        lastMessageKey = messages.length > 0 ? messages[messages.length - 1].key : null;
+        loadMoreBtn.classList.toggle('hidden', messages.length < messagesPerPage);
+      }, { onlyOnce: true });
+    });
+
+    // Display message
+    function displayMessage(id, msg, isUpdate = false, prepend = false) {
+      if (!msg || !msg.uid) return;
+      let msgEl = document.getElementById(id);
+      const isSelf = msg.uid === currentUser?.uid;
+      if (!msgEl) {
+        msgEl = document.createElement('div');
+        msgEl.id = id;
+        msgEl.className = `chat-message ${isSelf ? 'self' : 'other'}`;
+        prepend ? messagesEl.prepend(msgEl) : messagesEl.appendChild(msgEl);
+      }
+      const status = msg.read ? '✔✔' : msg.delivered ? '✔✔' : '✔';
+      msgEl.innerHTML = `
+        <div class="flex items-start">
+          <div>
+            <div class="flex items-center">
+              <strong>${msg.name || 'User'}</strong>
+              ${msg.edited ? '<span class="edited">(edited)</span>' : ''}
+            </div>
+            <span>${msg.deleted ? 'This message was unsent' : msg.text}</span>
+            <div class="timestamp flex items-center">
+              ${formatTimestamp(msg.timestamp)}
+              ${isSelf && !msg.deleted ? `<span class="status-ticks ml-2">${status}</span>` : ''}
+            </div>
+          </div>
+          ${isSelf && !msg.deleted ? `
+            <div class="msg-actions flex space-x-2">
+              <button onclick="editMessage('${id}')" class="text-yellow-600 hover:text-yellow-700">✏️</button>
+              <button onclick="unsendMessage('${id}')" class="text-red-600 hover:text-red-700">🗑️</button>
+            </div>` : ''}
+        </div>`;
+      if (isUpdate) {
+        msgEl.querySelector('span').textContent = msg.deleted ? 'This message was unsent' : msg.text;
+      }
+      if (!prepend) messagesEl.scrollTop = messagesEl.scrollHeight;
+
+      // Update message status to delivered/read
+      if (!isSelf && !msg.read) {
+        update(ref(db, 'messages/' + id), { delivered: true, read: true });
+      }
+    }
+
+    // Send message
+    sendBtn.addEventListener('click', () => {
+      const text = messageInput.value.trim();
+      if (!text) return;
+      const newMsgRef = push(ref(db, 'messages/'));
+      set(newMsgRef, {
+        uid: currentUser.uid,
+        name: currentUser.displayName,
+        text: text,
+        timestamp: Date.now(),
+        edited: false,
+        deleted: false,
+        delivered: false,
+        read: false
+      }).then(() => {
+        messageInput.value = '';
+      }).catch(err => {
+        console.error('Error sending message:', err);
+      });
+    });
+
+    // Edit message
+    window.editMessage = function(id) {
+      const msgEl = document.getElementById(id);
+      const currentText = msgEl.querySelector('span').textContent;
+      if (currentText === 'This message was unsent') return;
+      const newText = prompt("Edit message:", currentText);
+      if (newText !== null && newText.trim()) {
+        update(ref(db, 'messages/' + id), { text: newText.trim(), edited: true })
+          .catch(err => console.error('Error editing message:', err));
+      }
+    }
+
+    // Unsend message
+    window.unsendMessage = function(id) {
+      if (confirm("Are you sure you want to unsend this message?")) {
+        update(ref(db, 'messages/' + id), { deleted: true })
+          .catch(err => console.error('Error unsending message:', err));
+      }
+    }
+
+    // Send message on Enter key
+    messageInput.addEventListener('keypress', e => {
+      if (e.key === 'Enter') {
+        sendBtn.click();
+      }
+    });
+  </script>
 </body>
 </html>
