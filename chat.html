@@ -210,10 +210,16 @@
       if (!currentUser) return;
       clearTimeout(typingTimeout);
       update(ref(db, 'typing/' + currentUser.uid), { isTyping: true })
-        .catch(err => console.error('Error updating typing status:', err));
+        .catch(err => {
+          showError('Error updating typing status: ' + err.message);
+          console.error('Error updating typing status:', err);
+        });
       typingTimeout = setTimeout(() => {
         update(ref(db, 'typing/' + currentUser.uid), { isTyping: false })
-          .catch(err => console.error('Error clearing typing status:', err));
+          .catch(err => {
+            showError('Error clearing typing status: ' + err.message);
+            console.error('Error clearing typing status:', err);
+          });
       }, 2000);
     });
 
@@ -229,6 +235,7 @@
       typingIndicator.classList.toggle('hidden', typingUsers.length === 0);
       typingIndicator.textContent = typingUsers.length > 0 ? `${typingUsers.length} user${typingUsers.length > 1 ? 's' : ''} typing...` : '';
     }, err => {
+      showError('Failed to load typing status: ' + err.message);
       console.error('Typing indicator error:', err);
     });
 
@@ -336,7 +343,10 @@
       // Update message status to delivered/read
       if (!isSelf && !msg.read) {
         update(ref(db, 'messages/' + id), { delivered: true, read: true })
-          .catch(err => console.error('Error updating message status:', err));
+          .catch(err => {
+            showError('Error updating message status: ' + err.message);
+            console.error('Error updating message status:', err);
+          });
       }
     }
 
