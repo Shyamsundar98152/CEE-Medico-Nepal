@@ -12,6 +12,8 @@
   .other { background-color: #374151; color: white; margin-right: auto; }
   .loading-spinner { border: 4px solid rgba(255,255,255,0.3); border-radius: 50%; border-top: 4px solid white; width: 1rem; height: 1rem; animation: spin 1s linear infinite; }
   @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+  .profile { display: flex; align-items: center; gap: 0.5rem; margin-bottom: 1rem; }
+  .profile img { width: 40px; height: 40px; border-radius: 50%; }
 </style>
 </head>
 <body class="bg-gray-900 text-white min-h-screen flex items-center justify-center p-4">
@@ -19,7 +21,7 @@
 <!-- Login Page -->
 <div id="login-page" class="w-full max-w-sm">
   <div class="bg-gray-800 p-8 rounded-2xl shadow-xl">
-    <h2 class="text-3xl font-bold mb-6 text-center text-teal-300">👋 Welcome!</h2>
+    <h2 class="text-3xl font-bold mb-6 text-center text-teal-300">👋 1 Welcome!</h2>
     <button id="google-login-btn" class="w-full py-3 px-4 rounded-xl font-semibold bg-gray-700 hover:bg-gray-600 flex items-center justify-center space-x-2">
       <span id="google-login-text">Sign in with Google</span>
       <div id="google-login-spinner" class="loading-spinner hidden"></div>
@@ -32,6 +34,14 @@
 <div id="chat-page" class="hidden w-full max-w-4xl flex gap-4">
   <!-- Member List -->
   <div class="w-1/4 bg-gray-800 p-4 rounded-xl overflow-y-auto h-[80vh]">
+    <div class="profile">
+      <img id="user-photo" src="" alt="User Photo">
+      <div>
+        <div id="user-name" class="font-bold"></div>
+        <div id="user-email" class="text-sm text-gray-400"></div>
+      </div>
+    </div>
+    <button id="logout-btn" class="w-full bg-red-600 p-2 rounded-xl mb-4">Logout</button>
     <h2 class="text-lg font-bold mb-4">Members</h2>
     <ul id="member-list" class="space-y-2"></ul>
   </div>
@@ -48,7 +58,7 @@
 
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
-import { getAuth, GoogleAuthProvider, signInWithPopup, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+import { getAuth, GoogleAuthProvider, signInWithPopup, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
 import { getDatabase, ref, set, onChildAdded, onChildChanged, push, update } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-database.js";
 
 // Firebase Config
@@ -80,6 +90,11 @@ const messagesEl = document.getElementById("messages");
 const messageInput = document.getElementById("message-input");
 const sendBtn = document.getElementById("send-btn");
 
+const userPhoto = document.getElementById("user-photo");
+const userName = document.getElementById("user-name");
+const userEmail = document.getElementById("user-email");
+const logoutBtn = document.getElementById("logout-btn");
+
 let currentUser = null;
 
 // Loading function
@@ -110,12 +125,21 @@ googleLoginBtn.addEventListener('click', async () => {
   }
 });
 
+// Logout
+logoutBtn.addEventListener('click', async () => {
+  await signOut(auth);
+  currentUser = null;
+});
+
 // Auth state change
 onAuthStateChanged(auth, user => {
   if(user){
     currentUser = user;
     loginPage.classList.add('hidden');
     chatPage.classList.remove('hidden');
+    userPhoto.src = user.photoURL || '';
+    userName.textContent = user.displayName || 'User';
+    userEmail.textContent = user.email || '';
     loadMembers();
     loadMessages();
   } else {
@@ -126,6 +150,7 @@ onAuthStateChanged(auth, user => {
 
 // Load members
 function loadMembers(){
+  memberListEl.innerHTML = '';
   const usersRef = ref(db, 'users/');
   onChildAdded(usersRef, snapshot => {
     const user = snapshot.val();
