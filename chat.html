@@ -3,19 +3,19 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Real-time Group Chat</title>
+<title>CeeMedico Group Chat</title>
 <script src="https://cdn.tailwindcss.com"></script>
 <style>
   body { font-family: 'Inter', sans-serif; }
   .chat-message { max-width: 70%; padding: 0.5rem 1rem; border-radius: 1rem; margin: 0.2rem 0; }
-  .self { background-color: #2563eb; color: white; margin-left: auto; border-top-right-radius: 0; }
-  .other { background-color: #374151; color: white; margin-right: auto; border-top-left-radius: 0; }
+  .self { background-color: #2563eb; color: white; margin-left: auto; }
+  .other { background-color: #374151; color: white; margin-right: auto; }
   .loading-spinner {
     border: 4px solid rgba(255,255,255,0.3);
     border-radius: 50%;
     border-top: 4px solid white;
-    width: 1.5rem;
-    height: 1.5rem;
+    width: 1rem;
+    height: 1rem;
     animation: spin 1s linear infinite;
   }
   @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
@@ -25,376 +25,185 @@
 
 <!-- Login Page -->
 <div id="login-page" class="w-full max-w-sm">
-  <div class="bg-gray-800 p-8 rounded-2xl shadow-xl flex flex-col items-center">
+  <div class="bg-gray-800 p-8 rounded-2xl shadow-xl">
     <h2 class="text-3xl font-bold mb-6 text-center text-teal-300">👋 Welcome!</h2>
-    <p class="text-center text-gray-400 mb-4">Sign in to join the chat.</p>
-    <button id="login-btn" class="w-full py-3 px-4 rounded-xl font-semibold bg-gray-700 hover:bg-gray-600 flex items-center justify-center space-x-2">
-      <span id="login-text">Sign In</span>
-      <div id="login-spinner" class="loading-spinner hidden"></div>
+    <button id="google-login-btn" class="w-full py-3 px-4 rounded-xl font-semibold bg-gray-700 hover:bg-gray-600 flex items-center justify-center space-x-2">
+      <span id="google-login-text">Sign in with Google</span>
+      <div id="google-login-spinner" class="loading-spinner hidden"></div>
     </button>
-    <p id="status-message" class="mt-6 text-center text-gray-400 text-sm"></p>
+    <p id="status" class="mt-6 text-center text-gray-400 text-sm"></p>
   </div>
 </div>
 
 <!-- Chat Page -->
-<div id="chat-page" class="hidden w-full max-w-4xl flex flex-col md:flex-row gap-4 h-[90vh]">
-  
-  <!-- Member List & User Info -->
-  <div class="w-full md:w-1/4 bg-gray-800 p-4 rounded-xl flex flex-col">
-    <div class="flex-grow overflow-y-auto">
-      <h2 class="text-lg font-bold mb-4">Members</h2>
-      <ul id="member-list" class="space-y-2"></ul>
-    </div>
-    <div class="mt-4 pt-4 border-t border-gray-700">
-      <p class="text-sm">Logged in as:</p>
-      <p id="user-info" class="font-semibold text-sm break-all"></p>
-      <button id="logout-btn" class="mt-2 w-full py-2 px-4 rounded-xl font-semibold bg-red-600 hover:bg-red-500">
-        Log Out
-      </button>
-    </div>
+<div id="chat-page" class="hidden w-full max-w-4xl flex gap-4">
+  <!-- Member List -->
+  <div class="w-1/4 bg-gray-800 p-4 rounded-xl overflow-y-auto h-[80vh]">
+    <h2 class="text-lg font-bold mb-4">Members</h2>
+    <ul id="member-list" class="space-y-2"></ul>
   </div>
 
   <!-- Chat Area -->
-  <div class="w-full md:w-3/4 flex flex-col bg-gray-800 p-4 rounded-xl">
-    <div class="flex-1 overflow-y-auto mb-4 p-2 space-y-4" id="messages-container">
-      <div id="messages" class="flex flex-col space-y-2"></div>
-      <div id="no-messages-placeholder" class="text-center text-gray-500 hidden mt-4">No messages yet. Say hi!</div>
-    </div>
+  <div class="w-3/4 flex flex-col bg-gray-800 p-4 rounded-xl h-[80vh]">
+    <div id="messages" class="flex-1 overflow-y-auto mb-4 space-y-2"></div>
     <div class="flex gap-2">
-      <input id="message-input" type="text" placeholder="Type a message..." class="flex-1 p-3 rounded-xl text-gray-900 border border-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500"/>
-      <button id="send-btn" class="bg-blue-600 hover:bg-blue-500 text-white p-3 rounded-xl font-semibold flex items-center justify-center">
-        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-6 h-6 transform rotate-90">
-          <path stroke-linecap="round" stroke-linejoin="round" d="M6 12L3.269 3.126A59.768 59.768 0 0121.485 12 59.77 59.77 0 013.27 20.876L5.999 12zm0 0h7.5" />
-        </svg>
-      </button>
-    </div>
-  </div>
-</div>
-
-<!-- Custom Modals -->
-<!-- Edit Modal -->
-<div id="edit-modal" class="fixed inset-0 bg-gray-900 bg-opacity-75 z-50 hidden flex items-center justify-center p-4">
-  <div class="bg-gray-800 p-6 rounded-xl shadow-xl w-full max-w-md">
-    <h3 class="text-xl font-bold mb-4">Edit Message</h3>
-    <input id="edit-input" type="text" class="w-full p-3 rounded-xl text-gray-900 mb-4 focus:outline-none focus:ring-2 focus:ring-blue-500" />
-    <div class="flex justify-end gap-2">
-      <button id="edit-cancel-btn" class="py-2 px-4 rounded-xl bg-gray-700 hover:bg-gray-600">Cancel</button>
-      <button id="edit-save-btn" class="py-2 px-4 rounded-xl bg-blue-600 hover:bg-blue-500">Save</button>
-    </div>
-  </div>
-</div>
-
-<!-- Unsend Modal -->
-<div id="unsend-modal" class="fixed inset-0 bg-gray-900 bg-opacity-75 z-50 hidden flex items-center justify-center p-4">
-  <div class="bg-gray-800 p-6 rounded-xl shadow-xl w-full max-w-md">
-    <h3 class="text-xl font-bold mb-4">Unsend Message</h3>
-    <p class="text-gray-300 mb-4">Are you sure you want to unsend this message? It will be removed for everyone.</p>
-    <div class="flex justify-end gap-2">
-      <button id="unsend-cancel-btn" class="py-2 px-4 rounded-xl bg-gray-700 hover:bg-gray-600">Cancel</button>
-      <button id="unsend-confirm-btn" class="py-2 px-4 rounded-xl bg-red-600 hover:bg-red-500">Unsend</button>
+      <input id="message-input" type="text" placeholder="Type a message..." class="flex-1 p-2 rounded-xl text-black"/>
+      <button id="send-btn" class="bg-blue-600 p-2 rounded-xl">Send</button>
     </div>
   </div>
 </div>
 
 <script type="module">
-  import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
-  import { getAuth, signInWithCustomToken, signInAnonymously, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
-  import { getFirestore, doc, getDoc, setDoc, addDoc, onSnapshot, collection, query, updateDoc, deleteDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
-  import { setLogLevel } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
-  
-  // Disable logging for production
-  setLogLevel('debug');
+import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+import { getAuth, GoogleAuthProvider, signInWithPopup, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+import { getDatabase, ref, set, onChildAdded, onChildChanged, push, update } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-database.js";
 
-  // Firestore setup
-  const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
-  const firebaseConfig = JSON.parse(typeof __firebase_config !== 'undefined' ? __firebase_config : '{}');
+// Firebase Config
+const firebaseConfig = {
+  apiKey: "AIzaSyAvDLQZvlzJVeLaIAgntPiCit65DeeBgYQ",
+  authDomain: "cee-medico-nepal-chat.firebaseapp.com",
+  databaseURL: "https://cee-medico-nepal-chat-default-rtdb.asia-southeast1.firebasedatabase.app",
+  projectId: "cee-medico-nepal-chat",
+  storageBucket: "cee-medico-nepal-chat.appspot.com",
+  messagingSenderId: "97605756433",
+  appId: "1:97605756433:web:0fd8c595f6dfa18f00f3b0",
+  measurementId: "G-QFJPC7489G"
+};
 
-  const app = initializeApp(firebaseConfig);
-  const auth = getAuth(app);
-  const db = getFirestore(app);
+// Initialize Firebase
+const app = initializeApp(firebaseConfig);
+const auth = getAuth(app);
+const db = getDatabase(app);
 
-  let userId = null;
-  let currentUser = null;
-  let messagesRef = null;
-  let usersRef = null;
-  let lastSeenUpdateInterval = null;
+// DOM Elements
+const loginPage = document.getElementById("login-page");
+const chatPage = document.getElementById("chat-page");
+const googleLoginBtn = document.getElementById("google-login-btn");
+const googleLoginText = document.getElementById("google-login-text");
+const googleLoginSpinner = document.getElementById("google-login-spinner");
+const statusMessage = document.getElementById("status");
+const memberListEl = document.getElementById("member-list");
+const messagesEl = document.getElementById("messages");
+const messageInput = document.getElementById("message-input");
+const sendBtn = document.getElementById("send-btn");
 
-  // DOM Elements
-  const loginPage = document.getElementById("login-page");
-  const chatPage = document.getElementById("chat-page");
-  const loginBtn = document.getElementById("login-btn");
-  const loginText = document.getElementById("login-text");
-  const loginSpinner = document.getElementById("login-spinner");
-  const statusMessage = document.getElementById("status-message");
-  const memberListEl = document.getElementById("member-list");
-  const userInfoEl = document.getElementById("user-info");
-  const logoutBtn = document.getElementById("logout-btn");
-  const messagesEl = document.getElementById("messages");
-  const noMessagesPlaceholder = document.getElementById("no-messages-placeholder");
-  const messageInput = document.getElementById("message-input");
-  const sendBtn = document.getElementById("send-btn");
+let currentUser = null;
 
-  // Modal elements
-  const editModal = document.getElementById("edit-modal");
-  const editInput = document.getElementById("edit-input");
-  const editSaveBtn = document.getElementById("edit-save-btn");
-  const editCancelBtn = document.getElementById("edit-cancel-btn");
-  const unsendModal = document.getElementById("unsend-modal");
-  const unsendConfirmBtn = document.getElementById("unsend-confirm-btn");
-  const unsendCancelBtn = document.getElementById("unsend-cancel-btn");
+// Loading function
+function setLoading(isLoading){
+  googleLoginBtn.disabled = isLoading;
+  googleLoginText.classList.toggle('hidden', isLoading);
+  googleLoginSpinner.classList.toggle('hidden', !isLoading);
+}
 
-  let messageToEditId = null;
-  let messageToUnsendId = null;
-
-  // --- Auth & User State Management ---
-  onAuthStateChanged(auth, async (user) => {
-    try {
-      if (user) {
-        currentUser = user;
-        userId = user.uid;
-
-        // Set up Firestore collections
-        messagesRef = collection(db, 'artifacts', appId, 'public', 'data', 'messages');
-        usersRef = collection(db, 'artifacts', appId, 'public', 'data', 'users');
-
-        // Update user presence
-        await setDoc(doc(db, 'artifacts', appId, 'public', 'data', 'users', userId), {
-          name: currentUser.displayName || 'Anonymous User',
-          photoURL: currentUser.photoURL || null,
-          lastSeen: Date.now()
-        }, { merge: true });
-
-        // Periodically update last seen
-        lastSeenUpdateInterval = setInterval(() => {
-          updateDoc(doc(db, 'artifacts', appId, 'public', 'data', 'users', userId), {
-            lastSeen: Date.now()
-          }).catch(console.error);
-        }, 15000); // every 15 seconds
-
-        userInfoEl.textContent = `UID: ${userId}`;
-        loginPage.classList.add('hidden');
-        chatPage.classList.remove('hidden');
-
-        // Start listeners
-        listenForMembers();
-        listenForMessages();
-        
-      } else {
-        // User logged out
-        userId = null;
-        currentUser = null;
-        if(lastSeenUpdateInterval) clearInterval(lastSeenUpdateInterval);
-        loginPage.classList.remove('hidden');
-        chatPage.classList.add('hidden');
-      }
-    } catch (e) {
-      console.error("Error during auth state change:", e);
-    }
-  });
-
-  loginBtn.addEventListener('click', async () => {
-    try {
-      loginText.classList.add('hidden');
-      loginSpinner.classList.remove('hidden');
-      statusMessage.textContent = "Signing in...";
-      const authToken = typeof __initial_auth_token !== 'undefined' ? __initial_auth_token : null;
-      if (authToken) {
-        await signInWithCustomToken(auth, authToken);
-      } else {
-        await signInAnonymously(auth);
-      }
-    } catch (error) {
-      statusMessage.textContent = `Sign-in failed. Error: ${error.message}`;
-      console.error("Firebase Auth Error:", error);
-    } finally {
-      loginText.classList.remove('hidden');
-      loginSpinner.classList.add('hidden');
-    }
-  });
-
-  logoutBtn.addEventListener('click', async () => {
-    try {
-      if (userId) {
-         await updateDoc(doc(db, 'artifacts', appId, 'public', 'data', 'users', userId), {
-            lastSeen: Date.now(),
-            isOnline: false,
-         }).catch(console.error);
-      }
-      await signOut(auth);
-    } catch (error) {
-      console.error("Sign out error:", error);
-    }
-  });
-
-  // --- Firestore Listeners ---
-
-  function listenForMembers() {
-    onSnapshot(usersRef, (snapshot) => {
-      memberListEl.innerHTML = ''; // Clear the list
-      snapshot.docs.forEach(doc => {
-        const user = doc.data();
-        const li = document.createElement('li');
-        li.className = "p-2 rounded hover:bg-gray-700 cursor-pointer flex items-center gap-2";
-        
-        // Check if user is online (within the last 30 seconds)
-        const isOnline = (Date.now() - user.lastSeen) < 30000;
-        const statusColor = isOnline ? 'bg-green-500' : 'bg-gray-500';
-
-        li.innerHTML = `
-          <div class="w-2 h-2 rounded-full ${statusColor}"></div>
-          <span>${user.name}</span>
-        `;
-        memberListEl.appendChild(li);
-      });
-    }, (error) => {
-      console.error("Error listening to members:", error);
+// Google Sign-In
+googleLoginBtn.addEventListener('click', async () => {
+  setLoading(true);
+  statusMessage.textContent = "Signing in...";
+  const provider = new GoogleAuthProvider();
+  try {
+    const result = await signInWithPopup(auth, provider);
+    currentUser = result.user;
+    // Save user in DB
+    set(ref(db, 'users/' + currentUser.uid), {
+      name: currentUser.displayName,
+      email: currentUser.email,
+      photoURL: currentUser.photoURL
     });
+  } catch (err) {
+    statusMessage.textContent = `Error: ${err.message}`;
+  } finally {
+    setLoading(false);
   }
+});
 
-  function listenForMessages() {
-    onSnapshot(messagesRef, (snapshot) => {
-      const messages = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-      
-      // Sort messages by timestamp
-      messages.sort((a, b) => a.timestamp - b.timestamp);
-      
-      messagesEl.innerHTML = ''; // Clear and redraw
-      
-      if (messages.length === 0) {
-          noMessagesPlaceholder.classList.remove('hidden');
-      } else {
-          noMessagesPlaceholder.classList.add('hidden');
-      }
-
-      messages.forEach(msg => displayMessage(msg));
-      
-      // Scroll to bottom
-      messagesEl.scrollTop = messagesEl.scrollHeight;
-
-    }, (error) => {
-      console.error("Error listening to messages:", error);
-    });
+// Auth state change
+onAuthStateChanged(auth, user => {
+  if(user){
+    currentUser = user;
+    loginPage.classList.add('hidden');
+    chatPage.classList.remove('hidden');
+    loadMembers();
+    loadMessages();
+  } else {
+    loginPage.classList.remove('hidden');
+    chatPage.classList.add('hidden');
   }
+});
 
-  // --- Message Actions ---
-
-  sendBtn.addEventListener('click', async () => {
-    const text = messageInput.value.trim();
-    if (!text || !userId) return;
-
-    try {
-      await addDoc(messagesRef, {
-        uid: userId,
-        name: currentUser.displayName || 'Anonymous User',
-        text: text,
-        timestamp: Date.now(),
-        edited: false,
-        deleted: false
-      });
-      messageInput.value = '';
-    } catch (e) {
-      console.error("Error sending message:", e);
-    }
+// Load members
+function loadMembers(){
+  const usersRef = ref(db, 'users/');
+  onChildAdded(usersRef, snapshot => {
+    const user = snapshot.val();
+    const li = document.createElement('li');
+    li.textContent = user.name;
+    li.className = "p-2 rounded hover:bg-gray-700 cursor-pointer";
+    memberListEl.appendChild(li);
   });
+}
 
-  function displayMessage(msg) {
-    const msgEl = document.createElement('div');
-    const isSelf = msg.uid === userId;
-    
-    msgEl.className = `chat-message ${isSelf ? 'self' : 'other'}`;
-    let content = msg.text;
+// Load messages
+function loadMessages(){
+  const messagesRef = ref(db, 'messages/');
+  onChildAdded(messagesRef, snapshot => {
+    const msg = snapshot.val();
+    displayMessage(snapshot.key, msg);
+  });
+  onChildChanged(ref(db, 'messages/'), snapshot => {
+    const msg = snapshot.val();
+    displayMessage(snapshot.key, msg, true);
+  });
+}
 
-    if (msg.deleted) {
-      content = 'This message was unsent';
-    } else if (msg.edited) {
-      content += ' <span class="text-xs text-gray-400 italic">(edited)</span>';
-    }
-
-    let buttons = '';
-    if (isSelf && !msg.deleted) {
-      buttons = `
-        <button onclick="window.editMessage('${msg.id}')" class="ml-2 text-yellow-300 hover:text-yellow-200">
-          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-4 h-4">
-            <path stroke-linecap="round" stroke-linejoin="round" d="M16.862 4.487l1.687-1.688a1.875 1.875 0 112.652 2.652L10.582 16.07a4.5 4.5 0 01-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 011.13-1.897l8.932-8.931zm0 0L19.5 7.125M18 14v4.75A2.25 2.25 0 0115.75 21H5.25A2.25 2.25 0 013 18.75V8.25A2.25 2.25 0 015.25 6H10" />
-          </svg>
-        </button>
-        <button onclick="window.unsendMessage('${msg.id}')" class="ml-1 text-red-400 hover:text-red-300">
-          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-4 h-4">
-            <path stroke-linecap="round" stroke-linejoin="round" d="M14.74 9l-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 01-2.244 2.077H8.084a2.25 2.25 0 01-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 00-3.478-.397m-12 .583a48.11 48.11 0 003.478.397m7.5 0v-4.5a2.25 2.25 0 00-2.25-2.25H9.75A2.25 2.25 0 007.5 5.25v4.5m4.5-4.5h2.25m-2.25 0h-2.25" />
-          </svg>
-        </button>
-      `;
-    }
-
-    msgEl.innerHTML = `
-      <div class="flex items-center gap-2 mb-1">
-        <span class="font-bold text-sm">${isSelf ? 'You' : msg.name}:</span>
-      </div>
-      <div class="flex items-end">
-        <span>${content}</span>
-        ${buttons}
-      </div>
-    `;
+// Display message
+function displayMessage(id, msg, isUpdate=false){
+  let msgEl = document.getElementById(id);
+  if(!msgEl){
+    msgEl = document.createElement('div');
+    msgEl.id = id;
+    msgEl.className = "chat-message " + (msg.uid===currentUser.uid ? 'self' : 'other');
+    msgEl.innerHTML = `<strong>${msg.name||'User'}:</strong> <span>${msg.deleted ? 'This message was unsent' : msg.text}</span>
+      <button onclick="editMessage('${id}')" class="ml-2 text-yellow-300">✏️</button>
+      <button onclick="unsendMessage('${id}')" class="ml-1 text-red-400">🗑️</button>`;
     messagesEl.appendChild(msgEl);
+  } else if(isUpdate){
+    msgEl.querySelector('span').textContent = msg.deleted ? 'This message was unsent' : msg.text;
   }
+  messagesEl.scrollTop = messagesEl.scrollHeight;
+}
 
-  // --- Modal Logic ---
+// Send message
+sendBtn.addEventListener('click', () => {
+  const text = messageInput.value.trim();
+  if(!text) return;
+  const newMsgRef = push(ref(db, 'messages/'));
+  set(newMsgRef, {
+    uid: currentUser.uid,
+    name: currentUser.displayName,
+    text: text,
+    timestamp: Date.now(),
+    edited: false,
+    deleted: false
+  });
+  messageInput.value = '';
+});
 
-  // Edit
-  window.editMessage = function(id) {
-    messageToEditId = id;
-    const msgEl = document.getElementById(id);
-    const textContent = msgEl ? msgEl.querySelector('span').textContent.replace(' (edited)', '') : '';
-    editInput.value = textContent;
-    editModal.classList.remove('hidden');
+// Edit message
+window.editMessage = function(id){
+  const msgEl = document.getElementById(id);
+  const newText = prompt("Edit message:", msgEl.querySelector('span').textContent);
+  if(newText !== null){
+    update(ref(db, 'messages/' + id), { text: newText, edited: true });
   }
+}
 
-  editCancelBtn.addEventListener('click', () => {
-    editModal.classList.add('hidden');
-    messageToEditId = null;
-  });
-
-  editSaveBtn.addEventListener('click', async () => {
-    if (messageToEditId && editInput.value.trim()) {
-      try {
-        await updateDoc(doc(messagesRef, messageToEditId), {
-          text: editInput.value.trim(),
-          edited: true
-        });
-      } catch (e) {
-        console.error("Error editing message:", e);
-      } finally {
-        editModal.classList.add('hidden');
-        messageToEditId = null;
-      }
-    }
-  });
-
-  // Unsend
-  window.unsendMessage = function(id) {
-    messageToUnsendId = id;
-    unsendModal.classList.remove('hidden');
+// Unsend message
+window.unsendMessage = function(id){
+  if(confirm("Are you sure you want to unsend this message?")){
+    update(ref(db, 'messages/' + id), { deleted: true });
   }
-
-  unsendCancelBtn.addEventListener('click', () => {
-    unsendModal.classList.add('hidden');
-    messageToUnsendId = null;
-  });
-
-  unsendConfirmBtn.addEventListener('click', async () => {
-    if (messageToUnsendId) {
-      try {
-        await updateDoc(doc(messagesRef, messageToUnsendId), {
-          deleted: true
-        });
-      } catch (e) {
-        console.error("Error unsending message:", e);
-      } finally {
-        unsendModal.classList.add('hidden');
-        messageToUnsendId = null;
-      }
-    }
-  });
+}
 </script>
 </body>
 </html>
