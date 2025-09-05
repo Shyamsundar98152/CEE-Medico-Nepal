@@ -111,13 +111,16 @@
 
     // Display error message
     function showError(message) {
-      errorMessageEl.textContent = message;
+      const errorText = message || 'An unknown error occurred';
+      errorMessageEl.textContent = errorText;
       errorMessageEl.classList.remove('hidden');
       setTimeout(() => errorMessageEl.classList.add('hidden'), 5000);
+      console.error('Error displayed:', errorText);
     }
 
     // Format timestamp
     function formatTimestamp(timestamp) {
+      if (!timestamp) return 'Unknown time';
       const date = new Date(timestamp);
       const today = new Date();
       const isToday = date.toDateString() === today.toDateString();
@@ -135,14 +138,15 @@
         const result = await signInWithPopup(auth, provider);
         currentUser = result.user;
         await set(ref(db, 'users/' + currentUser.uid), {
-          name: currentUser.displayName,
-          email: currentUser.email,
-          photoURL: currentUser.photoURL,
+          name: currentUser.displayName || 'Unknown User',
+          email: currentUser.email || '',
+          photoURL: currentUser.photoURL || 'https://via.placeholder.com/32',
           lastActive: Date.now()
         });
         statusMessage.textContent = "Signed in successfully!";
       } catch (err) {
-        statusMessage.textContent = `Error: ${err.message}`;
+        const errorMsg = err.message || 'Authentication failed';
+        showError(`Sign-in failed: ${errorMsg}`);
         console.error('Sign-in error:', err);
       } finally {
         setLoading(false);
@@ -171,7 +175,11 @@
       setInterval(() => {
         if (currentUser) {
           update(ref(db, 'users/' + currentUser.uid), { lastActive: Date.now() })
-            .catch(err => console.error('Error updating user status:', err));
+            .catch(err => {
+              const errorMsg = err.message || 'Failed to update user status';
+              showError(`Error updating user status: ${errorMsg}`);
+              console.error('Error updating user status:', err);
+            });
         }
       }, 30000);
     }
@@ -188,19 +196,20 @@
         }
         for (const uid in users) {
           const user = users[uid];
-          const isOnline = Date.now() - user.lastActive < 60000;
+          const isOnline = Date.now() - (user.lastActive || 0) < 60000;
           const li = document.createElement('li');
           li.className = `p-3 rounded-lg hover:bg-gray-100 transition-colors flex items-center space-x-3 ${isOnline ? 'text-green-600' : 'text-gray-600'}`;
           li.innerHTML = `
             <img src="${user.photoURL || 'https://via.placeholder.com/32'}" class="w-10 h-10 rounded-full" alt="Avatar">
             <div>
-              <span class="font-semibold">${user.name}</span>
+              <span class="font-semibold">${user.name || 'Unknown User'}</span>
               <div class="text-sm ${isOnline ? 'text-green-500' : 'text-gray-400'}">${isOnline ? 'Online' : 'Offline'}</div>
             </div>`;
           memberListEl.appendChild(li);
         }
       }, err => {
-        showError('Failed to load members: ' + err.message);
+        const errorMsg = err.message || 'Failed to load members';
+        showError(`Failed to load members: ${errorMsg}`);
         console.error('Member load error:', err);
       });
     }
@@ -211,13 +220,15 @@
       clearTimeout(typingTimeout);
       update(ref(db, 'typing/' + currentUser.uid), { isTyping: true })
         .catch(err => {
-          showError('Error updating typing status: ' + err.message);
+          const errorMsg = err.message || 'Failed to update typing status';
+          showError(`Error updating typing status: ${errorMsg}`);
           console.error('Error updating typing status:', err);
         });
       typingTimeout = setTimeout(() => {
         update(ref(db, 'typing/' + currentUser.uid), { isTyping: false })
           .catch(err => {
-            showError('Error clearing typing status: ' + err.message);
+            const errorMsg = err.message || 'Failed to clear typing status';
+            showError(`Error clearing typing status: ${errorMsg}`);
             console.error('Error clearing typing status:', err);
           });
       }, 2000);
@@ -225,7 +236,7 @@
 
     // Listen for typing users
     onValue(ref(db, 'typing/'), snapshot => {
-      const typingData = snapshot.val();
+      const typingData = snapshot.val() || {};
       let typingUsers = [];
       for (const uid in typingData) {
         if (typingData[uid].isTyping && uid !== currentUser?.uid) {
@@ -235,7 +246,8 @@
       typingIndicator.classList.toggle('hidden', typingUsers.length === 0);
       typingIndicator.textContent = typingUsers.length > 0 ? `${typingUsers.length} user${typingUsers.length > 1 ? 's' : ''} typing...` : '';
     }, err => {
-      showError('Failed to load typing status: ' + err.message);
+      const errorMsg = err.message || 'Failed to load typing status';
+      showError(`Failed to load typing status: ${errorMsg}`);
       console.error('Typing indicator error:', err);
     });
 
@@ -246,18 +258,23 @@
         messagesEl.innerHTML = '';
         const messages = [];
         snapshot.forEach(child => {
-          messages.push({ key: child.key, ...child.val() });
+          const msg = child.val();
+          if (msg && msg.uid && msg.timestamp) {
+            messages.push({ key: child.key, ...msg });
+          }
         });
         if (messages.length === 0) {
           showError('No messages found.');
+        } else {
+          messages.reverse().forEach(msg => displayMessage(msg.key, msg));
+          lastMessageKey = messages[messages.length - 1].key;
+          lastMessageTimestamp = messages[messages.length - 1].timestamp;
+          loadMoreBtn.classList.toggle('hidden', messages.length < messagesPerPage);
+          messagesEl.scrollTop = messagesEl.scrollHeight;
         }
-        messages.reverse().forEach(msg => displayMessage(msg.key, msg));
-        lastMessageKey = messages.length > 0 ? messages[messages.length - 1].key : null;
-        lastMessageTimestamp = messages.length > 0 ? messages[messages.length - 1].timestamp : null;
-        loadMoreBtn.classList.toggle('hidden', messages.length < messagesPerPage);
-        messagesEl.scrollTop = messagesEl.scrollHeight;
       }, err => {
-        showError('Failed to load messages: ' + err.message);
+        const errorMsg = err.message || 'Failed to load messages';
+        showError(`Failed to load messages: ${errorMsg}`);
         console.error('Message load error:', err);
       });
 
@@ -266,28 +283,38 @@
       onValue(realTimeRef, snapshot => {
         snapshot.forEach(child => {
           const msg = child.val();
+          if (!msg || !msg.uid || !msg.timestamp) return;
           const existingMsg = document.getElementById(child.key);
           if (existingMsg) {
             displayMessage(child.key, msg, true);
           } else if (msg.timestamp > (lastMessageTimestamp || 0)) {
             displayMessage(child.key, msg);
+            lastMessageTimestamp = msg.timestamp;
+            lastMessageKey = child.key;
             messagesEl.scrollTop = messagesEl.scrollHeight;
           }
         });
       }, err => {
-        showError('Failed to listen for new messages: ' + err.message);
+        const errorMsg = err.message || 'Failed to listen for new messages';
+        showError(`Failed to listen for new messages: ${errorMsg}`);
         console.error('Real-time message error:', err);
       });
     }
 
     // Load more messages
     loadMoreBtn.addEventListener('click', () => {
-      if (!lastMessageKey || !lastMessageTimestamp) return;
+      if (!lastMessageKey || !lastMessageTimestamp) {
+        showError('No more messages to load.');
+        return;
+      }
       const messagesRef = query(ref(db, 'messages/'), orderByChild('timestamp'), limitToLast(messagesPerPage), startAfter(lastMessageTimestamp));
       onValue(messagesRef, snapshot => {
         const messages = [];
         snapshot.forEach(child => {
-          messages.push({ key: child.key, ...child.val() });
+          const msg = child.val();
+          if (msg && msg.uid && msg.timestamp) {
+            messages.push({ key: child.key, ...msg });
+          }
         });
         if (messages.length === 0) {
           showError('No more messages to load.');
@@ -295,11 +322,12 @@
           return;
         }
         messages.reverse().forEach(msg => displayMessage(msg.key, msg, false, true));
-        lastMessageKey = messages.length > 0 ? messages[messages.length - 1].key : null;
-        lastMessageTimestamp = messages.length > 0 ? messages[messages.length - 1].timestamp : null;
+        lastMessageKey = messages[messages.length - 1].key;
+        lastMessageTimestamp = messages[messages.length - 1].timestamp;
         loadMoreBtn.classList.toggle('hidden', messages.length < messagesPerPage);
       }, { onlyOnce: true }, err => {
-        showError('Failed to load more messages: ' + err.message);
+        const errorMsg = err.message || 'Failed to load more messages';
+        showError(`Failed to load more messages: ${errorMsg}`);
         console.error('Load more error:', err);
       });
     });
@@ -320,7 +348,7 @@
         <div class="flex items-start">
           <div>
             <div class="flex items-center">
-              <strong>${msg.name || 'User'}</strong>
+              <strong>${msg.name || 'Unknown User'}</strong>
               ${msg.edited ? '<span class="edited">(edited)</span>' : ''}
             </div>
             <span>${msg.deleted ? 'This message was unsent' : msg.text}</span>
@@ -344,7 +372,8 @@
       if (!isSelf && !msg.read) {
         update(ref(db, 'messages/' + id), { delivered: true, read: true })
           .catch(err => {
-            showError('Error updating message status: ' + err.message);
+            const errorMsg = err.message || 'Failed to update message status';
+            showError(`Error updating message status: ${errorMsg}`);
             console.error('Error updating message status:', err);
           });
       }
@@ -357,7 +386,7 @@
       const newMsgRef = push(ref(db, 'messages/'));
       set(newMsgRef, {
         uid: currentUser.uid,
-        name: currentUser.displayName,
+        name: currentUser.displayName || 'Unknown User',
         text: text,
         timestamp: Date.now(),
         edited: false,
@@ -367,7 +396,8 @@
       }).then(() => {
         messageInput.value = '';
       }).catch(err => {
-        showError('Error sending message: ' + err.message);
+        const errorMsg = err.message || 'Failed to send message';
+        showError(`Error sending message: ${errorMsg}`);
         console.error('Error sending message:', err);
       });
     });
@@ -381,7 +411,8 @@
       if (newText !== null && newText.trim()) {
         update(ref(db, 'messages/' + id), { text: newText.trim(), edited: true })
           .catch(err => {
-            showError('Error editing message: ' + err.message);
+            const errorMsg = err.message || 'Failed to edit message';
+            showError(`Error editing message: ${errorMsg}`);
             console.error('Error editing message:', err);
           });
       }
@@ -392,7 +423,8 @@
       if (confirm("Are you sure you want to unsend this message?")) {
         update(ref(db, 'messages/' + id), { deleted: true })
           .catch(err => {
-            showError('Error unsending message: ' + err.message);
+            const errorMsg = err.message || 'Failed to unsend message';
+            showError(`Error unsending message: ${errorMsg}`);
             console.error('Error unsending message:', err);
           });
       }
