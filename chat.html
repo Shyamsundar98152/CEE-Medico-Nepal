@@ -100,9 +100,30 @@
             opacity: 1;
         }
 
-        /* Modals */
+        /* Modals and Overlay for mobile member list */
         .modal {
             background-color: rgba(0, 0, 0, 0.6);
+        }
+
+        #member-list-overlay {
+            z-index: 40;
+            background-color: #f0f2f5;
+            transition: transform 0.3s ease-in-out;
+            transform: translateX(-100%);
+        }
+
+        #member-list-overlay.active {
+            transform: translateX(0);
+        }
+
+        /* Full height for messages container on mobile */
+        @media (max-width: 768px) {
+            #chat-page .flex {
+                flex-direction: column;
+            }
+            #member-list-container {
+                display: none;
+            }
         }
     </style>
 </head>
@@ -125,9 +146,9 @@
     </div>
 
     <!-- Chat Page -->
-    <div id="chat-page" class="hidden w-full max-w-5xl flex gap-6 h-[85vh]">
-        <!-- Member List -->
-        <div class="w-1/4 bg-white p-6 rounded-xl shadow-lg border border-gray-200 flex flex-col">
+    <div id="chat-page" class="hidden w-full max-w-5xl flex flex-col md:flex-row gap-6 h-[85vh]">
+        <!-- Member List Container for Desktop -->
+        <div id="member-list-container" class="md:block w-full md:w-1/4 bg-white p-6 rounded-xl shadow-lg border border-gray-200 flex flex-col">
             <h2 class="text-xl font-bold mb-4 text-green-600">Online Members</h2>
             <ul id="member-list" class="space-y-3 overflow-y-auto flex-grow"></ul>
             <div class="mt-4 pt-4 border-t border-gray-200">
@@ -138,7 +159,15 @@
         </div>
 
         <!-- Chat Area -->
-        <div class="w-3/4 flex flex-col bg-white p-6 rounded-xl shadow-lg border border-gray-200">
+        <div id="chat-area" class="w-full md:w-3/4 flex flex-col bg-white p-6 rounded-xl shadow-lg border border-gray-200">
+            <!-- Header for mobile -->
+            <div class="md:hidden flex items-center justify-between mb-4">
+                <h2 class="text-xl font-bold text-green-600">Chat</h2>
+                <button id="members-btn" class="py-2 px-4 rounded-xl font-semibold bg-green-600 hover:bg-green-500 text-white">
+                    Members
+                </button>
+            </div>
+            
             <div id="error-message" class="text-center hidden mb-2 text-red-500"></div>
             <div id="messages-container" class="flex-1 overflow-y-auto mb-4 p-2 flex flex-col space-y-3">
                 <div id="messages" class="flex flex-col space-y-3"></div>
@@ -152,6 +181,21 @@
                     </svg>
                 </button>
             </div>
+        </div>
+    </div>
+    
+    <!-- Mobile Member List Overlay -->
+    <div id="member-list-overlay" class="fixed inset-0 hidden">
+        <div class="bg-white p-6 rounded-xl shadow-lg border border-gray-200 flex flex-col h-full w-3/4">
+            <div class="flex items-center justify-between mb-4">
+                <h2 class="text-xl font-bold text-green-600">Online Members</h2>
+                <button id="close-members-btn" class="text-gray-500 hover:text-gray-700">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                    </svg>
+                </button>
+            </div>
+            <ul id="member-list-mobile" class="space-y-3 overflow-y-auto flex-grow"></ul>
         </div>
     </div>
 
@@ -210,6 +254,7 @@
         const googleLoginSpinner = document.getElementById("google-login-spinner");
         const statusMessage = document.getElementById("status");
         const memberListEl = document.getElementById("member-list");
+        const memberListMobileEl = document.getElementById("member-list-mobile");
         const messagesEl = document.getElementById("messages");
         const messagesContainer = document.getElementById("messages-container");
         const messageInput = document.getElementById("message-input");
@@ -217,6 +262,9 @@
         const typingIndicator = document.getElementById("typing-indicator");
         const errorEl = document.getElementById("error-message");
         const logoutBtn = document.getElementById("logout-btn");
+        const membersBtn = document.getElementById("members-btn");
+        const closeMembersBtn = document.getElementById("close-members-btn");
+        const memberListOverlay = document.getElementById("member-list-overlay");
 
         // Modal elements
         const editModal = document.getElementById("edit-modal");
@@ -282,6 +330,7 @@
             const messageContent = msg.deleted ? 'This message was unsent' : msg.text;
 
             msgEl.innerHTML = `
+                ${!isSelf ? `<div class="font-bold text-sm text-gray-800 mb-1">${msg.name || 'Unknown User'}</div>` : ''}
                 <div class="flex items-end">
                     <span>${messageContent}</span>
                     <div class="message-footer ml-2">
@@ -318,6 +367,7 @@
                 loginPage.classList.remove('hidden');
                 chatPage.classList.add('hidden');
                 memberListEl.innerHTML = '';
+                memberListMobileEl.innerHTML = '';
                 messagesEl.innerHTML = '';
                 currentUser = null;
             }
@@ -334,6 +384,7 @@
                 await set(userRef, {
                     name: result.user.displayName || 'Unknown User',
                     photoURL: result.user.photoURL || '',
+                    email: result.user.email || '', // Added email to the user data
                     lastActive: Date.now()
                 });
                 statusMessage.textContent = "Signed in successfully!";
@@ -370,6 +421,7 @@
         function loadMembers() {
             onValue(ref(db, 'users/'), snapshot => {
                 memberListEl.innerHTML = '';
+                memberListMobileEl.innerHTML = '';
                 const users = snapshot.val() || {};
                 for (const uid in users) {
                     const user = users[uid];
@@ -377,21 +429,25 @@
                     const li = document.createElement('li');
                     li.className = `p-3 rounded-lg hover:bg-gray-100 transition-colors flex items-center space-x-3 ${isOnline ? 'text-green-600' : 'text-gray-600'}`;
                     li.innerHTML = `
-                        <img src="${user.photoURL || 'https://via.placeholder.com/32'}" class="w-10 h-10 rounded-full" alt="Avatar">
+                        <img src="${user.photoURL || 'https://via.placeholder.com/40x40.png?text=User'}" class="w-10 h-10 rounded-full" alt="Avatar">
                         <div>
                             <span class="font-semibold">${user.name || 'Unknown User'}</span>
+                            <div class="text-xs text-gray-500">${user.email || ''}</div>
                             <div class="text-sm ${isOnline ? 'text-green-500' : 'text-gray-400'}">${isOnline ? 'Online' : 'Offline'}</div>
                         </div>
                     `;
-                    memberListEl.appendChild(li);
+                    memberListEl.appendChild(li.cloneNode(true));
+                    memberListMobileEl.appendChild(li);
                 }
-            }, { onlyOnce: false });
+            }, (err) => {
+                showError(`Failed to load members: ${err.message}`);
+                console.error('Member load error:', err);
+            });
         }
 
         // Loads all messages and listens for real-time changes
         function loadMessages() {
-            const messagesRef = ref(db, 'messages/');
-            onValue(messagesRef, (snapshot) => {
+            onValue(ref(db, 'messages/'), (snapshot) => {
                 const allMessages = [];
                 snapshot.forEach(child => {
                     allMessages.push({ key: child.key, ...child.val() });
@@ -483,6 +539,22 @@
             if (e.key === 'Enter') {
                 sendBtn.click();
             }
+        });
+
+        // --- Mobile-specific logic ---
+
+        // Show member list overlay
+        membersBtn.addEventListener('click', () => {
+            memberListOverlay.classList.remove('hidden');
+            memberListOverlay.classList.add('flex');
+            // Give it a small delay to allow the `display: flex` to apply before the transition starts
+            setTimeout(() => memberListOverlay.classList.add('active'), 10);
+        });
+
+        // Close member list overlay
+        closeMembersBtn.addEventListener('click', () => {
+            memberListOverlay.classList.remove('active');
+            setTimeout(() => memberListOverlay.classList.remove('flex', 'hidden'), 300);
         });
     </script>
 </body>
