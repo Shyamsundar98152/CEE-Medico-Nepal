@@ -10,7 +10,7 @@
     body { font-family: 'Inter', sans-serif; }
     .chat-message { 
       max-width: 70%; padding: 0.5rem 1rem; border-radius: 1rem; margin: 0.2rem 0; 
-      word-wrap: break-word; /* Ensure long words break */
+      word-wrap: break-word; 
     }
     .self { background-color: #2563eb; color: white; margin-left: auto; }
     .other { background-color: #374151; color: white; margin-right: auto; }
@@ -87,20 +87,20 @@
 
 <script type="module">
   import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
-  import { getAuth, GoogleAuthProvider, signInWithPopup, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
-  import { getDatabase, ref, set, onChildAdded, onChildChanged, onDisconnect, onValue, push, update } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-database.js";
+  import { getAuth, signInWithCustomToken, signInAnonymously, onAuthStateChanged, GoogleAuthProvider, signInWithPopup } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+  import { getFirestore, collection, doc, addDoc, onSnapshot, setDoc, updateDoc, deleteDoc, query, orderBy, serverTimestamp, getDocs } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
   // Global variables from the environment
   const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
   const firebaseConfig = JSON.parse(__firebase_config);
   const initialAuthToken = typeof __initial_auth_token !== 'undefined' ? __initial_auth_token : null;
 
-  // Initialize
+  // Initialize Firebase
   const app = initializeApp(firebaseConfig);
   const auth = getAuth(app);
-  const db = getDatabase(app);
+  const db = getFirestore(app);
 
-  // DOM
+  // DOM elements
   const loginPage = document.getElementById("login-page");
   const chatPage = document.getElementById("chat-page");
   const googleLoginBtn = document.getElementById("google-login-btn");
@@ -119,26 +119,39 @@
   const modalTitle = document.getElementById("modal-title");
   const modalInput = document.getElementById("modal-input");
   const modalText = document.getElementById("modal-text");
-  const modalCancelBtn = document.getElementById("modal-cancel-btn");
+  const modalCancelBtn = document = document.getElementById("modal-cancel-btn");
   const modalConfirmBtn = document.getElementById("modal-confirm-btn");
 
   let currentUser = null;
+  let isAuthReady = false;
 
-  // Loading function
+  // --- Utility Functions ---
+
   function setLoading(isLoading) {
     googleLoginBtn.disabled = isLoading;
     googleLoginText.classList.toggle('hidden', isLoading);
     googleLoginSpinner.classList.toggle('hidden', !isLoading);
   }
 
-  // Google Sign-In
+  // --- Authentication ---
+
+  // Handle Firebase auth using the provided custom token
+  if (initialAuthToken) {
+    signInWithCustomToken(auth, initialAuthToken).catch((error) => {
+      console.error("Error signing in with custom token:", error);
+      signInAnonymously(auth); // Fallback to anonymous if custom token fails
+    });
+  } else {
+    signInAnonymously(auth);
+  }
+
+  // Handle Google Sign-In for an existing authenticated user
   googleLoginBtn.addEventListener('click', async () => {
     setLoading(true);
-    statusMessage.textContent = "Signing in...";
-    const provider = new GoogleAuthProvider();
+    statusMessage.textContent = "Signing in with Google...";
     try {
+      const provider = new GoogleAuthProvider();
       await signInWithPopup(auth, provider);
-      // Auth state change listener handles the rest
     } catch (err) {
       statusMessage.textContent = `Error: ${err.message}`;
     } finally {
@@ -146,117 +159,107 @@
     }
   });
 
-  // Auth state change
-  onAuthStateChanged(auth, user => {
+  onAuthStateChanged(auth, async (user) => {
     if (user) {
       currentUser = user;
+      isAuthReady = true;
       loginPage.classList.add('hidden');
       chatPage.classList.remove('hidden');
+      userNameEl.textContent = currentUser.displayName || 'Anonymous User';
+      userAvatarEl.src = currentUser.photoURL || `https://placehold.co/40x40/4b5563/ffffff?text=${(currentUser.displayName || 'A').charAt(0)}`;
+      
+      const userDocRef = doc(db, 'artifacts', appId, 'users', currentUser.uid);
+      await setDoc(userDocRef, {
+        name: currentUser.displayName || 'Anonymous',
+        photoURL: currentUser.photoURL || null,
+        lastActive: serverTimestamp()
+      }, { merge: true });
 
-      // Set user info in the chat header
-      userNameEl.textContent = currentUser.displayName;
-      userAvatarEl.src = currentUser.photoURL || `https://placehold.co/40x40/4b5563/ffffff?text=${currentUser.displayName.charAt(0)}`;
-
-      // Setup user presence and load data
-      setupUserPresence();
+      // Load initial members and messages
       loadMembers();
       loadMessages();
     } else {
       currentUser = null;
+      isAuthReady = true;
       loginPage.classList.remove('hidden');
       chatPage.classList.add('hidden');
     }
   });
 
-  // Setup user presence
-  function setupUserPresence() {
-    const userRef = ref(db, 'users/' + currentUser.uid);
-    // Set user data including online status
-    set(userRef, {
-      name: currentUser.displayName,
-      email: currentUser.email,
-      photoURL: currentUser.photoURL,
-      online: true,
-    });
-    // Set online status to false when the user disconnects
-    onDisconnect(userRef).update({ online: false });
-  }
+  // --- Firestore Functions ---
 
-  // Load members and listen for real-time changes
+  // Load members from Firestore
   function loadMembers() {
-    const usersRef = ref(db, 'users/');
-    onValue(usersRef, (snapshot) => {
-      memberListEl.innerHTML = ''; // Clear the list
-      snapshot.forEach(childSnapshot => {
-        const user = childSnapshot.val();
+    if (!isAuthReady || !currentUser) return;
+    const usersCollectionRef = collection(db, 'artifacts', appId, 'users');
+    onSnapshot(usersCollectionRef, (snapshot) => {
+      memberListEl.innerHTML = '';
+      snapshot.docs.forEach(doc => {
+        const user = doc.data();
         const li = document.createElement('li');
         li.className = "p-2 rounded hover:bg-gray-700 cursor-pointer flex items-center gap-2 transition";
         li.innerHTML = `
-          <div class="w-2 h-2 rounded-full ${user.online ? 'bg-green-400' : 'bg-gray-500'}"></div>
-          <span>${user.name}</span>
+          <div class="w-2 h-2 rounded-full bg-green-400"></div>
+          <span>${user.name || 'Anonymous'}</span>
         `;
         memberListEl.appendChild(li);
       });
     });
   }
 
-  // Load messages and listen for real-time changes
+  // Load messages from Firestore in real-time
   function loadMessages() {
-    const messagesRef = ref(db, 'messages/');
-    onChildAdded(messagesRef, snapshot => {
-      const msg = snapshot.val();
-      displayMessage(snapshot.key, msg);
-    });
-    onChildChanged(messagesRef, snapshot => {
-      const msg = snapshot.val();
-      displayMessage(snapshot.key, msg, true);
+    if (!isAuthReady || !currentUser) return;
+    const messagesCollectionRef = collection(db, 'artifacts', appId, 'public', 'messages');
+    const q = query(messagesCollectionRef, orderBy('timestamp'));
+    
+    // Listen for real-time changes
+    onSnapshot(q, (snapshot) => {
+      messagesEl.innerHTML = ''; // Clear and re-render for simplicity
+      snapshot.docs.forEach(doc => {
+        const msg = doc.data();
+        const id = doc.id;
+        displayMessage(id, msg);
+      });
+      messagesEl.scrollTop = messagesEl.scrollHeight;
     });
   }
 
   // Display message
-  function displayMessage(id, msg, isUpdate = false) {
-    let msgEl = document.getElementById(id);
-    if (isUpdate) {
-      if (msgEl) {
-        msgEl.querySelector('span').textContent = msg.deleted ? 'This message was unsent' : msg.text;
-        const editedTag = msgEl.querySelector('.edited-tag');
-        if (msg.edited && !editedTag) {
-            const span = document.createElement('span');
-            span.textContent = ' (edited)';
-            span.className = "text-xs text-gray-400 italic edited-tag";
-            msgEl.appendChild(span);
-        }
-      }
-    } else {
-      msgEl = document.createElement('div');
-      msgEl.id = id;
-      msgEl.className = "chat-message " + (msg.uid === currentUser.uid ? 'self' : 'other');
-      
-      const content = `<strong>${msg.name || 'User'}:</strong> <span>${msg.deleted ? 'This message was unsent' : msg.text}</span>`;
-      
-      let actions = '';
-      if (msg.uid === currentUser.uid && !msg.deleted) {
-        actions = `<div class="mt-1 space-x-2">
-            <button onclick="editMessage('${id}')" class="text-yellow-300 hover:text-yellow-400 transition">✏️</button>
-            <button onclick="unsendMessage('${id}')" class="text-red-400 hover:text-red-500 transition">🗑️</button>
-          </div>`;
-      }
-      msgEl.innerHTML = `${content} ${actions}`;
-      messagesEl.appendChild(msgEl);
+  function displayMessage(id, msg) {
+    const msgEl = document.createElement('div');
+    msgEl.id = id;
+    msgEl.className = "chat-message " + (msg.uid === currentUser.uid ? 'self' : 'other');
+    
+    let content = `<strong>${msg.name || 'User'}:</strong> <span>${msg.text}</span>`;
+    if (msg.deleted) {
+      content = `<strong>${msg.name || 'User'}:</strong> <span>This message was unsent</span>`;
     }
-    messagesEl.scrollTop = messagesEl.scrollHeight;
+    if (msg.edited && !msg.deleted) {
+      content += `<span class="text-xs text-gray-400 italic"> (edited)</span>`;
+    }
+
+    let actions = '';
+    if (msg.uid === currentUser.uid && !msg.deleted) {
+      actions = `<div class="mt-1 space-x-2">
+          <button onclick="editMessage('${id}')" class="text-yellow-300 hover:text-yellow-400 transition">✏️</button>
+          <button onclick="unsendMessage('${id}')" class="text-red-400 hover:text-red-500 transition">🗑️</button>
+        </div>`;
+    }
+    msgEl.innerHTML = `${content} ${actions}`;
+    messagesEl.appendChild(msgEl);
   }
 
   // Send message
-  const sendMessage = () => {
+  const sendMessage = async () => {
     const text = messageInput.value.trim();
     if (!text || !currentUser) return;
-    const newMsgRef = push(ref(db, 'messages/'));
-    set(newMsgRef, {
+    const messagesCollectionRef = collection(db, 'artifacts', appId, 'public', 'messages');
+    await addDoc(messagesCollectionRef, {
       uid: currentUser.uid,
       name: currentUser.displayName,
       text: text,
-      timestamp: Date.now(),
+      timestamp: serverTimestamp(),
       edited: false,
       deleted: false
     });
@@ -270,46 +273,38 @@
     }
   });
 
-  // Custom modal to replace prompt()
+  // Custom modal for editing message
   window.editMessage = function(id) {
     modalTitle.textContent = "Edit Message";
     modalText.classList.add('hidden');
     modalInput.classList.remove('hidden');
     modalInput.value = document.getElementById(id).querySelector('span').textContent;
     modalConfirmBtn.textContent = "Save";
-
-    modalConfirmBtn.onclick = () => {
+    modalConfirmBtn.onclick = async () => {
       const newText = modalInput.value.trim();
       if (newText) {
-        update(ref(db, 'messages/' + id), { text: newText, edited: true });
+        const msgDocRef = doc(db, 'artifacts', appId, 'public', 'messages', id);
+        await updateDoc(msgDocRef, { text: newText, edited: true });
       }
       actionModal.classList.add('hidden');
     };
-
-    modalCancelBtn.onclick = () => {
-      actionModal.classList.add('hidden');
-    };
-
+    modalCancelBtn.onclick = () => { actionModal.classList.add('hidden'); };
     actionModal.classList.remove('hidden');
   }
 
-  // Custom modal to replace confirm()
+  // Custom modal for unsending message
   window.unsendMessage = function(id) {
     modalTitle.textContent = "Unsend Message";
     modalText.textContent = "Are you sure you want to unsend this message?";
     modalText.classList.remove('hidden');
     modalInput.classList.add('hidden');
     modalConfirmBtn.textContent = "Unsend";
-
-    modalConfirmBtn.onclick = () => {
-      update(ref(db, 'messages/' + id), { deleted: true });
+    modalConfirmBtn.onclick = async () => {
+      const msgDocRef = doc(db, 'artifacts', appId, 'public', 'messages', id);
+      await updateDoc(msgDocRef, { deleted: true });
       actionModal.classList.add('hidden');
     };
-
-    modalCancelBtn.onclick = () => {
-      actionModal.classList.add('hidden');
-    };
-
+    modalCancelBtn.onclick = () => { actionModal.classList.add('hidden'); };
     actionModal.classList.remove('hidden');
   }
 </script>
