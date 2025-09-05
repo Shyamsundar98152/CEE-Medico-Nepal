@@ -1,562 +1,412 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <link rel="apple-touch-icon" sizes="180x180" href="/fevicon/apple-touch-icon.png">
-    <link rel="icon" type="image/png" sizes="32x32" href="/fevicon/favicon-32x32.png">
-    <link rel="icon" type="image/png" sizes="16x16" href="/fevicon/favicon-16x16.png">
-    <link rel="manifest" href="/fevicon/site.webmanifest">
-    
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Cee Medico Nepal Group Chat</title>
-
-    <style>
-        body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            margin: 0;
-            background-color: #f0f2f5;
-            color: #1c1e21;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            min-height: 100vh;
-        }
-
-        h1 {
-            color: #075e54;
-            padding: 15px 0;
-            margin-top: 0;
-            font-size: 2.5em;
-            text-align: center;
-            width: 100%;
-            background-color: #ffffff;
-            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
-        }
-
-        .auth-forms {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            width: 100%;
-            max-width: 400px;
-            margin-top: 20px;
-            padding: 20px;
-            background-color: #ffffff;
-            border-radius: 10px;
-            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-        }
-
-        .auth-forms h2 {
-            color: #075e54;
-            margin-bottom: 20px;
-            font-size: 1.8em;
-            text-align: center;
-        }
-
-        .auth-forms p {
-            color: #555;
-            margin-bottom: 20px;
-            text-align: center;
-        }
-
-        .auth-forms input[type="text"],
-        .auth-forms input[type="tel"] {
-            width: calc(100% - 20px);
-            padding: 12px 10px;
-            margin-bottom: 15px;
-            border: 1px solid #dcf8c6;
-            border-radius: 25px;
-            font-size: 1em;
-            outline: none;
-            box-sizing: border-box;
-        }
-
-        .auth-forms input:focus { border-color: #28a745; }
-
-        .auth-forms button {
-            width: 100%;
-            padding: 12px;
-            background-color: #28a745;
-            color: white;
-            border: none;
-            border-radius: 25px;
-            font-size: 1.1em;
-            cursor: pointer;
-            transition: background-color 0.3s ease;
-        }
-
-        .auth-forms button:hover { background-color: #218838; }
-
-        #chat-container {
-            display: none;
-            width: 100%;
-            max-width: 600px;
-            height: 75vh;
-            margin: 20px auto;
-            background-color: #ffffff;
-            border-radius: 10px;
-            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-            flex-direction: column;
-            overflow: hidden;
-        }
-
-        #chat-box {
-            flex-grow: 1;
-            overflow-y: auto;
-            padding: 15px;
-            background-color: #ece5dd;
-            border-bottom: 1px solid #e0e0e0;
-            display: flex;
-            flex-direction: column;
-        }
-
-        .message {
-            margin-bottom: 12px;
-            padding: 10px 15px;
-            border-radius: 18px;
-            max-width: 70%;
-            word-wrap: break-word;
-            position: relative;
-            box-shadow: 0 1px 2px rgba(0, 0, 0, 0.07);
-        }
-
-        .message.me {
-            background-color: #dcf8c6;
-            margin-left: auto;
-            border-bottom-right-radius: 5px;
-        }
-
-        .message.other {
-            background-color: #ffffff;
-            margin-right: auto;
-            border-bottom-left-radius: 5px;
-        }
-
-        .msg-header {
-            font-weight: 600;
-            font-size: 0.9em;
-            margin-bottom: 6px;
-            color: #075e54;
-        }
-
-        .msg-body { font-size: 1em; }
-
-        .chat-img {
-            max-width: 100%;
-            max-height: 200px;
-            border-radius: 10px;
-            margin-top: 8px;
-            border: 1px solid #e0e0e0;
-            display: block;
-        }
-
-        .msg-time {
-            font-size: 0.7em;
-            color: #888;
-            margin-top: 6px;
-            text-align: right;
-            opacity: 0.7;
-        }
-
-        .msg-actions {
-            margin-top: 8px;
-            text-align: right;
-            font-size: 0.8em;
-            display: flex;
-            justify-content: flex-end;
-            align-items: center;
-            gap: 5px;
-        }
-
-        .msg-actions button {
-            background: none;
-            border: none;
-            color: #075e54;
-            cursor: pointer;
-            padding: 3px 6px;
-            border-radius: 5px;
-            transition: background-color 0.2s ease;
-        }
-
-        .msg-actions button:hover { background-color: #e0f2f7; }
-
-        #typing-indicator {
-            font-style: italic;
-            font-size: 0.9em;
-            color: #888;
-            padding: 8px 15px;
-            height: 25px;
-            text-align: center;
-            visibility: hidden;
-            opacity: 0;
-            transition: opacity 0.3s ease, visibility 0s;
-        }
-
-        #typing-indicator.active {
-            visibility: visible;
-            opacity: 1;
-        }
-
-        #controls {
-            display: flex;
-            align-items: center;
-            padding: 10px 15px;
-            background-color: #ffffff;
-            width: 100%;
-            max-width: 600px;
-            margin: 10px auto;
-            border-radius: 25px;
-            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
-        }
-
-        #message-input {
-            flex-grow: 1;
-            padding: 12px 15px;
-            border: none;
-            border-radius: 25px;
-            font-size: 1em;
-            outline: none;
-            background-color: #f0f2f5;
-            margin-right: 10px;
-        }
-
-        #controls label {
-            font-size: 1.5em;
-            color: #075e54;
-            cursor: pointer;
-            margin-right: 10px;
-            padding: 5px;
-        }
-
-        #controls label:hover { color: #28a745; }
-        #file-input { display: none; }
-
-        #send-button {
-            padding: 10px 20px;
-            background-color: #28a745;
-            color: white;
-            border: none;
-            border-radius: 25px;
-            font-size: 1em;
-            cursor: pointer;
-        }
-
-        #send-button:hover { background-color: #218838; }
-
-        #logout-button {
-            position: absolute;
-            top: 15px;
-            right: 15px;
-            padding: 8px 15px;
-            background-color: #dc3545;
-            color: white;
-            border: none;
-            border-radius: 20px;
-            font-size: 0.9em;
-            cursor: pointer;
-        }
-
-        #logout-button:hover { background-color: #c82333; }
-
-        #recaptcha-container { margin-bottom: 15px; }
-
-        @media (max-width: 600px) {
-            h1 { font-size: 1.8em; }
-            .auth-forms, #chat-container, #controls {
-                width: 95%; margin: 15px auto;
-            }
-            #chat-container { height: 85vh; }
-            .message { max-width: 85%; }
-        }
-    </style>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Realtime Group Chat — Phone Auth (debug-friendly)</title>
+  <style>
+    :root{--accent:#0b93f6;--muted:#f3f5f7}
+    body{font-family:Inter,system-ui,Arial;margin:0;background:#fafafa;color:#111}
+    header{background:#fff;border-bottom:1px solid #e6e9ee;padding:12px 16px;display:flex;align-items:center;gap:12px}
+    .container{max-width:980px;margin:18px auto;padding:12px}
+    .card{background:#fff;border-radius:12px;box-shadow:0 6px 18px rgba(30,41,59,0.06);padding:16px}
+    .row{display:flex;gap:12px}
+    .col{flex:1}
+    input,select,button,textarea{font-size:14px;padding:10px;border-radius:8px;border:1px solid #e3e7ee}
+    button{cursor:pointer;background:var(--accent);color:#fff;border:0}
+    .chat{height:420px;overflow:auto;border:1px solid #eef2f6;border-radius:8px;padding:12px;background:linear-gradient(180deg,#fff,#fbfdff)}
+    .msg{margin:8px 0;padding:8px 10px;border-radius:10px;display:inline-block;max-width:76%}
+    .me{background:#dcf8c6;align-self:flex-end}
+    .other{background:#fff}
+    .groups{max-height:200px;overflow:auto;border:1px solid #eef2f6;padding:8px;border-radius:8px}
+    .group-item{padding:8px;border-radius:8px;margin:6px 0;border:1px dashed #e6eef7;cursor:pointer}
+    .hidden{display:none}
+    small{color:#64748b}
+    .alert{background:#fff3cd;border:1px solid #ffeeba;padding:10px;border-radius:8px;margin-bottom:12px}
+    .error{background:#ffe6e6;border:1px solid #ffb3b3}
+    pre.debug{background:#0b0b0b;color:#e6e6e6;padding:8px;border-radius:6px;overflow:auto;max-height:120px}
+  </style>
 </head>
 <body>
-    <h1>📢 Group Chat</h1>
+  <header>
+    <h3 style="margin:0">Realtime Group Chat (Phone Auth)</h3>
+    <div style="margin-left:auto"><button id="btnSignOut" class="hidden">Sign out</button></div>
+  </header>
 
-    <div id="auth-container" class="auth-forms">
-        <form id="phoneAuthForm">
-            <h2>Enter Your Phone Number</h2>
-            <p>A verification code will be sent to this number.</p>
-            <input id="nameInput" type="text" placeholder="Your Name" required>
-            <input id="phoneInput" type="tel" placeholder="+1234567890" required>
-            <div id="recaptcha-container"></div>
-            <button id="sendCodeBtn" type="submit">Send Verification Code</button>
-        </form>
+  <div class="container">
+    <div id="alertArea"></div>
 
-        <form id="verifyCodeForm" style="display:none;">
-            <h2>Verify Code</h2>
-            <input id="codeInput" type="text" placeholder="Enter the code" required>
-            <button id="verifyBtn" type="submit">Verify</button>
-        </form>
+    <div id="authCard" class="card">
+      <h4>Sign in with phone number (one-time OTP)</h4>
+
+      <div class="alert">
+        <strong>Debug / common causes:</strong>
+        <ul>
+          <li>If you opened this page with <code>file://</code> the reCAPTCHA will fail — serve the file via <code>http://localhost</code> (e.g. <code>npx http-server</code> or <code>python -m http.server</code>).</li>
+          <li>Make sure Phone Authentication is enabled in your Firebase Console (Authentication → Sign-in method → Phone).</li>
+          <li>Check your Firebase project authorized domains (Authentication → Settings → Authorized domains) for your localhost or hosting domain.</li>
+        </ul>
+      </div>
+
+      <div style="display:flex;gap:8px;align-items:center">
+        <select id="countryCode">
+          <option value="+977">Nepal +977</option>
+          <option value="+91">India +91</option>
+          <option value="+1">USA +1</option>
+          <option value="+44">UK +44</option>
+          <option value="+61">Australia +61</option>
+        </select>
+        <input id="phoneNumber" placeholder="7XXXXXXXX" style="flex:1" />
+        <button id="sendOtpBtn">Send OTP</button>
+      </div>
+
+      <div id="otpSection" class="hidden" style="margin-top:12px">
+        <input id="otpInput" placeholder="Enter OTP" />
+        <button id="verifyOtpBtn">Verify OTP</button>
+      </div>
+
+      <div id="nameSection" class="hidden" style="margin-top:12px">
+        <input id="displayName" placeholder="Display name (will appear in chats)" />
+        <button id="saveProfileBtn">Save Profile</button>
+      </div>
+
+      <div id="recaptcha-container" style="margin-top:12px"></div>
+      <p style="margin-top:10px"><small>Note: This uses Firebase Phone Auth and requires a real phone number to receive OTP. Use a real phone for testing or use the Firebase Auth emulator for development.</small></p>
+
+      <div style="margin-top:12px"><strong>Debug output:</strong><pre id="debug" class="debug"></pre></div>
     </div>
 
-    <div id="chat-container">
-        <button id="logout-button">Logout</button>
-        <div id="chat-box"></div>
-        <div id="typing-indicator">...</div>
-        <div id="controls">
-            <input id="message-input" type="text" placeholder="Type a message...">
-            <label for="file-input">📎</label>
-            <input type="file" id="file-input" accept="image/*">
-            <button id="send-button">Send</button>
+    <div id="appCard" class="card hidden" style="margin-top:16px">
+      <div class="row">
+        <div style="width:320px">
+          <h4>Groups</h4>
+          <div style="display:flex;gap:8px;margin-bottom:8px">
+            <input id="newGroupName" placeholder="New group name" />
+            <button id="createGroupBtn">Create</button>
+          </div>
+          <div id="groupsList" class="groups"></div>
         </div>
+
+        <div class="col" style="display:flex;flex-direction:column">
+          <div style="display:flex;align-items:center;gap:12px">
+            <h4 id="currentGroupName">Select a group</h4>
+            <small id="groupMembersCount"></small>
+          </div>
+
+          <div id="chatArea" class="chat" style="display:flex;flex-direction:column"></div>
+
+          <div style="display:flex;gap:8px;margin-top:8px;align-items:center">
+            <input id="messageInput" placeholder="Type a message" style="flex:1" />
+            <button id="sendMsgBtn">Send</button>
+          </div>
+        </div>
+      </div>
     </div>
 
-    <script type="module">
-        // Firebase config
-        const firebaseConfig = {
-            apiKey: "AIzaSyAvDLQZvlzJVeLaIAgntPiCit65DeeBgYQ",
-            authDomain: "cee-medico-nepal-chat.firebaseapp.com",
-            databaseURL: "https://cee-medico-nepal-chat-default-rtdb.asia-southeast1.firebasedatabase.app/",
-            projectId: "cee-medico-nepal-chat",
-            storageBucket: "cee-medico-nepal-chat.appspot.com",
-            messagingSenderId: "97605756433",
-            appId: "1:97605756433:web:0fd8c595f66dfa18f00f3b0"
-        };
+  </div>
 
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
-        import { getAuth, signInWithPhoneNumber, onAuthStateChanged, signOut, RecaptchaVerifier } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
-        import { getDatabase, ref, push, onChildAdded, onChildChanged, onChildRemoved, query, limitToLast, get, set, onDisconnect, onValue } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js";
-        import { getStorage, ref as sRef, uploadBytesResumable, getDownloadURL } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-storage.js";
+  <!-- Firebase modular SDK via CDN (ES modules) -->
+  <script type="module">
+    import { initializeApp } from 'https://www.gstatic.com/firebasejs/9.22.2/firebase-app.js';
+    import {
+      getAuth,
+      RecaptchaVerifier,
+      signInWithPhoneNumber,
+      signOut as fbSignOut,
+      onAuthStateChanged
+    } from 'https://www.gstatic.com/firebasejs/9.22.2/firebase-auth.js';
 
-        const app = initializeApp(firebaseConfig);
-        const auth = getAuth(app);
-        const db = getDatabase(app);
-        const storage = getStorage(app);
+    import {
+      getDatabase,
+      ref,
+      push,
+      set,
+      onChildAdded,
+      onValue,
+      get
+    } from 'https://www.gstatic.com/firebasejs/9.22.2/firebase-database.js';
 
-        const phoneAuthForm = document.getElementById("phoneAuthForm");
-        const verifyCodeForm = document.getElementById("verifyCodeForm");
-        const authContainer = document.getElementById("auth-container");
-        const chatContainer = document.getElementById("chat-container");
-        const chatBox = document.getElementById("chat-box");
-        const messageInput = document.getElementById("message-input");
-        const sendBtn = document.getElementById("send-button");
-        const fileInput = document.getElementById("file-input");
-        const typingIndicator = document.getElementById("typing-indicator");
-        const logoutBtn = document.getElementById("logout-button");
+    // ---------- YOUR FIREBASE CONFIG ----------
+    const firebaseConfig = {
+      apiKey: "AIzaSyAvDLQZvlzJVeLaIAgntPiCit65DeeBgYQ",
+      authDomain: "cee-medico-nepal-chat.firebaseapp.com",
+      databaseURL: "https://cee-medico-nepal-chat-default-rtdb.asia-southeast1.firebasedatabase.app",
+      projectId: "cee-medico-nepal-chat",
+      storageBucket: "cee-medico-nepal-chat.appspot.com",
+      messagingSenderId: "97605756433",
+      appId: "1:97605756433:web:0fd8c595f6dfa18f00f3b0",
+      measurementId: "G-QFJPC7489G"
+    };
 
-        const phoneInput = document.getElementById("phoneInput");
-        const nameInput = document.getElementById("nameInput");
-        const codeInput = document.getElementById("codeInput");
-        const sendCodeBtn = document.getElementById("sendCodeBtn");
-        const verifyBtn = document.getElementById("verifyBtn");
+    // Initialize
+    const app = initializeApp(firebaseConfig);
+    const auth = getAuth(app);
+    const db = getDatabase(app);
 
-        let currentUser = null;
-        let verificationId = null;
-        let recaptchaVerifier = null;
-        let typingTimeout;
+    // UI refs
+    const alertArea = document.getElementById('alertArea');
+    const debugEl = document.getElementById('debug');
+    const countryCode = document.getElementById('countryCode');
+    const phoneNumber = document.getElementById('phoneNumber');
+    const sendOtpBtn = document.getElementById('sendOtpBtn');
+    const otpSection = document.getElementById('otpSection');
+    const otpInput = document.getElementById('otpInput');
+    const verifyOtpBtn = document.getElementById('verifyOtpBtn');
+    const nameSection = document.getElementById('nameSection');
+    const displayName = document.getElementById('displayName');
+    const saveProfileBtn = document.getElementById('saveProfileBtn');
 
-        // --- Authentication ---
-        window.onload = function () {
-            recaptchaVerifier = new RecaptchaVerifier(auth, 'recaptcha-container', {
-                'size': 'normal',
-                'callback': (response) => {
-                    // reCAPTCHA solved, allow signInWithPhoneNumber.
-                },
-                'expired-callback': () => {
-                    alert('reCAPTCHA expired. Please try again.');
-                }
-            });
-        };
+    const authCard = document.getElementById('authCard');
+    const appCard = document.getElementById('appCard');
+    const btnSignOut = document.getElementById('btnSignOut');
 
-        phoneAuthForm.addEventListener("submit", async (e) => {
-            e.preventDefault();
-            const phoneNumber = phoneInput.value.trim();
-            if (!phoneNumber) return;
-            try {
-                const confirmationResult = await signInWithPhoneNumber(auth, phoneNumber, recaptchaVerifier);
-                window.confirmationResult = confirmationResult;
-                verificationId = confirmationResult.verificationId;
-                alert("Verification code sent!");
-                phoneAuthForm.style.display = "none";
-                verifyCodeForm.style.display = "block";
-            } catch (err) {
-                recaptchaVerifier.render().then(widgetId => grecaptcha.reset(widgetId));
-                alert("Failed to send code: " + err.message);
-            }
+    const groupsList = document.getElementById('groupsList');
+    const newGroupName = document.getElementById('newGroupName');
+    const createGroupBtn = document.getElementById('createGroupBtn');
+    const currentGroupName = document.getElementById('currentGroupName');
+    const chatArea = document.getElementById('chatArea');
+    const messageInput = document.getElementById('messageInput');
+    const sendMsgBtn = document.getElementById('sendMsgBtn');
+    const groupMembersCount = document.getElementById('groupMembersCount');
+
+    let confirmationResult = null;
+    let currentUser = null;
+    let currentGroupId = null;
+
+    function logDebug(...args){
+      console.log(...args);
+      debugEl.textContent += args.map(a => (typeof a === 'object' ? JSON.stringify(a,null,2) : String(a))).join(' ') + '\n';
+    }
+
+    function showAlert(message, isError=false){
+      alertArea.innerHTML = `<div class="alert ${isError?'error':''}">${message}</div>`;
+      logDebug('ALERT:', message);
+    }
+
+    // If the page is served via file://, phone auth + reCAPTCHA will fail. Detect and warn.
+    if(location.protocol === 'file:'){
+      showAlert('You opened the page via <code>file://</code>. Phone auth requires serving the page from http(s) or localhost. Run a local server (e.g. `npx http-server` or `python -m http.server`) and open via http://localhost:8080', true);
+    }
+
+    // create/ensure recaptcha verifier. tries invisible first, falls back to visible.
+    async function ensureRecaptcha(invisible = true){
+      try{
+        if(window.recaptchaVerifier && window.recaptchaVerifier.clear){
+          try{ window.recaptchaVerifier.clear(); } catch(e){}
+        }
+      }catch(e){ /* ignore */ }
+
+      const size = invisible ? 'invisible' : 'normal';
+      try{
+        window.recaptchaVerifier = new RecaptchaVerifier('recaptcha-container', { size }, auth);
+        const widgetId = await window.recaptchaVerifier.render();
+        logDebug('reCAPTCHA rendered, widgetId=', widgetId, 'size=', size);
+        return true;
+      }catch(err){
+        console.error('ensureRecaptcha error:', err);
+        logDebug('ensureRecaptcha error:', err && err.code, err && err.message);
+        if(invisible){
+          logDebug('Falling back to visible reCAPTCHA...');
+          return ensureRecaptcha(false);
+        }
+        showAlert('reCAPTCHA initialization failed. See debug output for details and ensure you are serving the page over http(s) and that your Firebase project allows this domain.', true);
+        return false;
+      }
+    }
+
+    // Send OTP (phone auth)
+    sendOtpBtn.addEventListener('click', async () => {
+      const raw = phoneNumber.value.trim();
+      if(!raw) return alert('Enter your phone number');
+      const full = (countryCode.value || '+977') + raw;
+
+      // make sure reCAPTCHA is ready
+      sendOtpBtn.disabled = true;
+      try{
+        const ok = await ensureRecaptcha(true);
+        if(!ok) { sendOtpBtn.disabled = false; return; }
+
+        const appVerifier = window.recaptchaVerifier;
+        try{
+          confirmationResult = await signInWithPhoneNumber(auth, full, appVerifier);
+          otpSection.classList.remove('hidden');
+          showAlert('OTP sent to ' + full + '. If you do not receive OTP, check browser console and Firebase Console sign-in method settings.');
+          logDebug('confirmationResult:', confirmationResult && typeof confirmationResult === 'object' ? 'ok' : String(confirmationResult));
+        }catch(err){
+          console.error('signInWithPhoneNumber error:', err);
+          logDebug('signInWithPhoneNumber error:', err && err.code, err && err.message);
+
+          // Specific helpful messages for common auth errors
+          if(err && err.code === 'auth/internal-error'){
+            showAlert('Firebase auth/internal-error: Often caused by reCAPTCHA failing or page served insecurely. Ensure you are on http(s)/localhost and reCAPTCHA is allowed. Check console for details.', true);
+          } else if(err && err.code === 'auth/operation-not-allowed'){
+            showAlert('Phone Auth is not enabled for this Firebase project. Enable it in Firebase Console → Authentication → Sign-in method → Phone.', true);
+          } else if(err && err.code === 'auth/too-many-requests'){
+            showAlert('Too many attempts. Try again later or use the Firebase Auth emulator for development.', true);
+          } else {
+            showAlert('Error sending OTP: ' + (err && err.message ? err.message : String(err)), true);
+          }
+        }
+      }finally{ sendOtpBtn.disabled = false }
+    });
+
+    // Verify OTP
+    verifyOtpBtn.addEventListener('click', async () => {
+      const code = otpInput.value.trim();
+      if(!code) return alert('Enter OTP');
+      if(!confirmationResult) return alert('No confirmation result found. Try sending OTP again.');
+      try{
+        const result = await confirmationResult.confirm(code);
+        currentUser = result.user;
+        nameSection.classList.remove('hidden');
+        otpSection.classList.add('hidden');
+        authCard.classList.add('hidden');
+        btnSignOut.classList.remove('hidden');
+        showAlert('Phone number verified. Please save a display name to continue.');
+        logDebug('User signed in:', currentUser && currentUser.uid);
+      }catch(err){
+        console.error('OTP confirm error:', err);
+        logDebug('OTP confirm error:', err && err.code, err && err.message);
+        showAlert('Invalid or expired OTP. Try again.', true);
+      }
+    });
+
+    // Save profile to realtime DB
+    saveProfileBtn.addEventListener('click', async () => {
+      const name = displayName.value.trim() || 'Anonymous';
+      if(!currentUser) return alert('User not signed in');
+      const uid = currentUser.uid;
+      try{
+        await set(ref(db, 'users/' + uid), { uid, phone: currentUser.phoneNumber, name, createdAt: Date.now() });
+        appCard.classList.remove('hidden');
+        nameSection.classList.add('hidden');
+        loadGroups();
+      }catch(err){
+        console.error('Save profile error:', err);
+        showAlert('Error saving profile: ' + (err && err.message ? err.message : String(err)), true);
+      }
+    });
+
+    // Sign out
+    btnSignOut.addEventListener('click', async () => {
+      await fbSignOut(auth);
+      location.reload();
+    });
+
+    // Create group
+    createGroupBtn.addEventListener('click', async () => {
+      const name = newGroupName.value.trim();
+      if(!name) return;
+      if(!currentUser) return showAlert('Sign in first to create a group.', true);
+      try{
+        const groupRef = push(ref(db, 'groups'));
+        await set(groupRef, { name, createdBy: currentUser.uid, createdAt: Date.now() });
+        newGroupName.value = '';
+      }catch(err){
+        console.error('Create group error:', err);
+        showAlert('Could not create group: ' + (err && err.message ? err.message : String(err)), true);
+      }
+    });
+
+    // Load and listen groups
+    function loadGroups(){
+      groupsList.innerHTML = '';
+      const groupsRef = ref(db, 'groups');
+      onChildAdded(groupsRef, (snap) => {
+        const g = snap.val();
+        const id = snap.key;
+        const el = document.createElement('div');
+        el.className = 'group-item';
+        el.textContent = g.name || 'Unnamed group';
+        el.onclick = () => selectGroup(id, g.name || 'Group');
+        groupsList.prepend(el);
+      });
+    }
+
+    // Select group and attach messages listener
+    async function selectGroup(groupId, name){
+      if(!currentUser) return showAlert('Sign in first to join a group.', true);
+      currentGroupId = groupId;
+      currentGroupName.textContent = name;
+      chatArea.innerHTML = '';
+
+      try{
+        const userSnap = await get(ref(db, 'users/' + currentUser.uid));
+        const username = userSnap.exists() ? userSnap.val().name : 'User';
+        const membersRef = ref(db, `groupMembers/${groupId}/${currentUser.uid}`);
+        await set(membersRef, { uid: currentUser.uid, name: username, joinedAt: Date.now() });
+
+        const countRef = ref(db, 'groupMembers/' + groupId);
+        onValue(countRef, snap => {
+          const v = snap.val() || {};
+          const count = Object.keys(v).length;
+          groupMembersCount.textContent = ` · ${count} members`;
         });
 
-        verifyCodeForm.addEventListener("submit", async (e) => {
-            e.preventDefault();
-            const code = codeInput.value.trim();
-            if (!code) return;
-            try {
-                const userCredential = await window.confirmationResult.confirm(code);
-                const user = userCredential.user;
-                const name = nameInput.value.trim() || user.phoneNumber;
-
-                await set(ref(db, 'users/' + user.uid), {
-                    name: name,
-                    phoneNumber: user.phoneNumber,
-                    uid: user.uid
-                });
-
-                alert("Login successful!");
-                verifyCodeForm.reset();
-            } catch (err) {
-                alert("Verification failed: " + err.message);
-            }
+        const messagesRef = ref(db, `messages/${groupId}`);
+        onChildAdded(messagesRef, (snap) => {
+          const msg = snap.val();
+          appendMessage(msg);
         });
+      }catch(err){
+        console.error('selectGroup error:', err);
+        showAlert('Could not join group: ' + (err && err.message ? err.message : String(err)), true);
+      }
+    }
 
-        logoutBtn.addEventListener("click", async () => { await signOut(auth); });
+    // Append message to chat area
+    function appendMessage(msg){
+      if(!msg) return;
+      const div = document.createElement('div');
+      div.className = 'msg ' + (msg.uid === (currentUser && currentUser.uid) ? 'me' : 'other');
+      div.innerHTML = `<strong>${msg.name || 'User'}</strong><div>${escapeHtml(msg.text)}</div><small style='display:block;margin-top:4px'>${new Date(msg.ts).toLocaleString()}</small>`;
+      chatArea.appendChild(div);
+      chatArea.scrollTop = chatArea.scrollHeight;
+    }
 
-        onAuthStateChanged(auth, async (user) => {
-            if (user) {
-                currentUser = user;
-                authContainer.style.display = "none";
-                chatContainer.style.display = "flex";
-                setupTypingIndicator();
-                loadChat();
-            } else {
-                currentUser = null;
-                chatContainer.style.display = "none";
-                authContainer.style.display = "flex";
-                phoneAuthForm.style.display = "block";
-                verifyCodeForm.style.display = "none";
-                chatBox.innerHTML = "";
-            }
-        });
+    // Send message
+    sendMsgBtn.addEventListener('click', async () => {
+      const text = messageInput.value.trim();
+      if(!text || !currentGroupId) return;
+      try{
+        const userSnap = await get(ref(db, 'users/' + currentUser.uid));
+        const name = userSnap.exists() ? userSnap.val().name : 'User';
+        const msgRef = push(ref(db, `messages/${currentGroupId}`));
+        await set(msgRef, { text, uid: currentUser.uid, name, ts: Date.now() });
+        messageInput.value = '';
+      }catch(err){
+        console.error('Send message error:', err);
+        showAlert('Could not send message: ' + (err && err.message ? err.message : String(err)), true);
+      }
+    });
 
-        // --- Chat realtime updates ---
-        function loadChat() {
-            chatBox.innerHTML = "";
-            const chatRef = ref(db, 'chat');
-            const chatQuery = query(chatRef, limitToLast(50));
-            onChildAdded(chatQuery, (snap) => { renderMessage(snap.val(), snap.key); });
-            onChildChanged(chatRef, (snap) => {
-                const msgEl = document.getElementById("msg-" + snap.key);
-                if (msgEl) msgEl.replaceWith(createMessageElement(snap.val(), snap.key));
-            });
-            onChildRemoved(chatRef, (snap) => {
-                const msgEl = document.getElementById("msg-" + snap.key);
-                if (msgEl) msgEl.remove();
-            });
+    // Utility escape
+    function escapeHtml(s){ return String(s).replace(/[&<>"']/g, (c)=>({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' })[c]) }
+
+    // Listen for auth state changes
+    onAuthStateChanged(auth, async (user) => {
+      if(user){
+        currentUser = user;
+        const snap = await get(ref(db, 'users/' + user.uid));
+        if(snap.exists()){
+          appCard.classList.remove('hidden');
+          authCard.classList.add('hidden');
+          btnSignOut.classList.remove('hidden');
+          loadGroups();
+        }else{
+          nameSection.classList.remove('hidden');
+          authCard.classList.add('hidden');
         }
+      }else{
+        // not signed in
+        logDebug('No user signed in');
+      }
+    });
 
-        function createMessageElement(msg, msgId) {
-            const div = document.createElement("div");
-            div.id = "msg-" + msgId;
-            div.classList.add("message");
-            if (msg.uid === currentUser?.uid) {
-                div.classList.add("me");
-            } else {
-                div.classList.add("other");
-            }
-            let content = `<div class="msg-header"><b>${msg.sender || "Unknown"}</b></div><div class="msg-body">`;
-            if (msg.text) content += msg.text;
-            if (msg.image) content += `<br><img src="${msg.image}" class="chat-img">`;
-            content += `</div><div class="msg-time">${new Date(msg.time).toLocaleTimeString([], {hour:"2-digit",minute:"2-digit"})}</div>`;
-            if (msg.uid === currentUser?.uid) {
-                content += `<div class="msg-actions">
-                    <button class="edit-btn">Edit</button>
-                    <button class="delete-all-btn">Unsend All</button>
-                </div>`;
-            }
-            div.innerHTML = content;
-            setupMessageActions(div, msgId, msg);
-            return div;
-        }
+    // Helpful dev note shown in debug output
+    logDebug('Script loaded. To debug phone auth issues: check console, ensure page not opened with file://, verify Firebase Phone Auth enabled, and verify authorized domains.');
 
-        function renderMessage(msg, msgId) {
-            chatBox.appendChild(createMessageElement(msg, msgId));
-            chatBox.scrollTop = chatBox.scrollHeight;
-        }
+  </script>
 
-        function setupMessageActions(messageElement, msgId, msgData) {
-            messageElement.querySelector(".edit-btn")?.addEventListener("click", () => {
-                const newText = prompt("Edit your message:", msgData.text || "");
-                if (newText !== null && newText.trim() !== "") {
-                    set(ref(db, 'chat/' + msgId), {
-                        ...msgData,
-                        text: newText.trim(),
-                        edited: true,
-                        time: msgData.time
-                    });
-                }
-            });
-
-            messageElement.querySelector(".delete-all-btn")?.addEventListener("click", () => {
-                if (confirm("Delete this message for everyone?")) {
-                    set(ref(db, 'chat/' + msgId), null);
-                }
-            });
-        }
-
-        // --- Sending messages ---
-        sendBtn.addEventListener("click", sendMessage);
-        messageInput.addEventListener("keypress", (e) => {
-            if (e.key === "Enter") {
-                e.preventDefault();
-                sendMessage();
-            }
-        });
-        messageInput.addEventListener("input", () => {
-            const typingRef = ref(db, `typing/${currentUser.uid}`);
-            set(typingRef, { name: nameInput.value || currentUser.phoneNumber, typing: true });
-            clearTimeout(typingTimeout);
-            typingTimeout = setTimeout(() => {
-                set(typingRef, { name: nameInput.value || currentUser.phoneNumber, typing: false });
-            }, 2000);
-        });
-
-        function sendMessage() {
-            const text = messageInput.value.trim();
-            if (!text && fileInput.files.length === 0) return;
-            const userProfileRef = ref(db, 'users/' + currentUser.uid);
-            get(userProfileRef).then(snapshot => {
-                const name = snapshot.val()?.name || currentUser.phoneNumber;
-                push(ref(db, 'chat'), { text, sender: name, uid: currentUser.uid, time: Date.now() });
-            });
-            messageInput.value = "";
-            clearTimeout(typingTimeout);
-            set(ref(db, `typing/${currentUser.uid}`), { name: nameInput.value || currentUser.phoneNumber, typing: false });
-        }
-
-        // --- Image upload ---
-        fileInput.addEventListener("change", (e) => {
-            if (!currentUser) return alert("Please log in first.");
-            const file = e.target.files[0];
-            if (!file) return;
-            const storageRef = sRef(storage, `chatImages/${currentUser.uid}/${Date.now()}_${file.name}`);
-            const uploadTask = uploadBytesResumable(storageRef, file);
-            uploadTask.on('state_changed', null, (err) => alert("Upload failed: " + err.message),
-                () => getDownloadURL(uploadTask.snapshot.ref).then(url => {
-                    get(ref(db, 'users/' + currentUser.uid)).then(snapshot => {
-                        const name = snapshot.val()?.name || currentUser.phoneNumber;
-                        push(ref(db, 'chat'), { image: url, sender: name, uid: currentUser.uid, time: Date.now() });
-                    });
-                })
-            );
-        });
-
-        // --- Typing indicator logic ---
-        function setupTypingIndicator() {
-            const typingRef = ref(db, 'typing');
-            onValue(typingRef, (snapshot) => {
-                const typers = snapshot.val() || {};
-                const typingUsers = Object.keys(typers)
-                    .filter(uid => typers[uid].typing && uid !== currentUser.uid)
-                    .map(uid => typers[uid].name);
-
-                if (typingUsers.length > 0) {
-                    typingIndicator.classList.add('active');
-                    let typersText = typingUsers.length === 1 ?
-                        `${typingUsers[0]} is typing...` :
-                        `${typingUsers.slice(0, 2).join(', ')} and ${typingUsers.length - 2} others are typing...`;
-                    if (typingUsers.length === 2) {
-                         typersText = `${typingUsers[0]} and ${typingUsers[1]} are typing...`;
-                    }
-                    typingIndicator.textContent = typersText;
-                } else {
-                    typingIndicator.classList.remove('active');
-                }
-            });
-
-            onDisconnect(ref(db, `typing/${currentUser.uid}`)).set({
-                name: nameInput.value || currentUser.phoneNumber,
-                typing: false
-            });
-        }
-    </script>
 </body>
 </html>
