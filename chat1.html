@@ -1,290 +1,226 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>CeeMedico Group Chat</title>
-  <script src="https://cdn.tailwindcss.com"></script>
-  <style>
-    body { font-family: 'Inter', sans-serif; }
-    .chat-message { max-width: 70%; padding: 0.75rem 1.25rem; border-radius: 1rem; margin: 0.5rem 1rem; position: relative; }
-    .self { background-color: #3b82f6; color: white; margin-left: auto; }
-    .other { background-color: #4b5563; color: white; margin-right: auto; }
-    .loading-spinner { border: 4px solid rgba(255,255,255,0.3); border-radius: 50%; border-top: 4px solid white; width: 1.5rem; height: 1.5rem; animation: spin 1s linear infinite; }
-    @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
-    .timestamp { font-size: 0.75rem; opacity: 0.7; margin-top: 0.25rem; }
-    .typing-indicator { font-size: 0.875rem; color: #9ca3af; }
-    .msg-actions { opacity: 0; transition: opacity 0.2s; }
-    .chat-message:hover .msg-actions { opacity: 1; }
-    .edited { font-style: italic; font-size: 0.75rem; margin-left: 0.5rem; }
-  </style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CeeMedico Group Chat</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<style>
+  body { font-family: 'Inter', sans-serif; }
+  .chat-message { max-width: 70%; padding: 0.5rem 1rem; border-radius: 1rem; margin: 0.2rem 0; word-break: break-word; }
+  .self { background-color: #2563eb; color: white; margin-left: auto; }
+  .other { background-color: #374151; color: white; margin-right: auto; }
+  .loading-spinner { border: 4px solid rgba(255,255,255,0.3); border-radius: 50%; border-top: 4px solid white; width: 1rem; height: 1rem; animation: spin 1s linear infinite; }
+  @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+  .profile { display: flex; align-items: center; gap: 0.5rem; margin-bottom: 1rem; }
+  .profile img { width: 40px; height: 40px; border-radius: 50%; }
+</style>
 </head>
 <body class="bg-gray-900 text-white min-h-screen flex items-center justify-center p-4">
-  <!-- Login Page -->
-  <div id="login-page" class="w-full max-w-md">
-    <div class="bg-gray-800 p-8 rounded-2xl shadow-2xl border border-gray-700">
-      <h2 class="text-3xl font-extrabold mb-6 text-center text-teal-400">CeeMedico Chat</h2>
-      <button id="google-login-btn" class="w-full py-3 px-4 rounded-xl font-semibold bg-blue-600 hover:bg-blue-500 transition-colors flex items-center justify-center space-x-2">
-        <svg class="w-5 h-5" viewBox="0 0 24 24"><path fill="white" d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8zm4.59-12.42L17 9.17c-.06.2-.1.41-.1.62 0 .83.67 1.5 1.5 1.5s1.5-.67 1.5-1.5-1.5-2.25-1.5-2.25l-2.25 2.25zM6.5 9.75c.83 0 1.5.67 1.5 1.5s-.67 1.5-1.5 1.5-1.5-.67-1.5-1.5.67-1.5 1.5-1.5zm5.5 3.5c1.66 0 3-1.34 3-3s-1.34-3-3-3-3 1.34-3 3 1.34 3 3 3z"/></svg>
-        <span id="google-login-text">Sign in with Google</span>
-        <div id="google-login-spinner" class="loading-spinner hidden"></div>
-      </button>
-      <p id="status" class="mt-6 text-center text-gray-300 text-sm"></p>
-    </div>
+
+<!-- Login Page -->
+<div id="login-page" class="w-full max-w-sm">
+  <div class="bg-gray-800 p-8 rounded-2xl shadow-xl">
+    <h2 class="text-3xl font-bold mb-6 text-center text-teal-300">👋 Welcome!</h2>
+    <button id="google-login-btn" class="w-full py-3 px-4 rounded-xl font-semibold bg-gray-700 hover:bg-gray-600 flex items-center justify-center space-x-2">
+      <span id="google-login-text">Sign in with Google</span>
+      <div id="google-login-spinner" class="loading-spinner hidden"></div>
+    </button>
+    <p id="status" class="mt-6 text-center text-gray-400 text-sm"></p>
   </div>
+</div>
 
-  <!-- Chat Page -->
-  <div id="chat-page" class="hidden w-full max-w-5xl flex gap-6 h-[85vh]">
-    <!-- Member List -->
-    <div class="w-1/4 bg-gray-800 p-6 rounded-xl shadow-lg border border-gray-700 overflow-y-auto">
-      <h2 class="text-xl font-bold mb-4 text-teal-400">Online Members</h2>
-      <ul id="member-list" class="space-y-3"></ul>
-    </div>
-
-    <!-- Chat Area -->
-    <div class="w-3/4 flex flex-col bg-gray-800 p-6 rounded-xl shadow-lg border border-gray-700">
-      <div id="messages" class="flex-1 overflow-y-auto mb-4 space-y-3 pr-2"></div>
-      <div id="typing-indicator" class="typing-indicator mb-2 hidden">Someone is typing...</div>
-      <div class="flex gap-3">
-        <input id="message-input" type="text" placeholder="Type a message..." class="flex-1 p-3 rounded-xl text-black bg-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500"/>
-        <button id="send-btn" class="bg-blue-600 hover:bg-blue-500 p-3 rounded-xl font-semibold transition-colors">Send</button>
+<!-- Chat Page -->
+<div id="chat-page" class="hidden w-full max-w-4xl flex gap-4">
+  <!-- Member List -->
+  <div class="w-1/4 bg-gray-800 p-4 rounded-xl overflow-y-auto h-[80vh]">
+    <div class="profile">
+      <img id="user-photo" src="" alt="User Photo">
+      <div>
+        <div id="user-name" class="font-bold"></div>
+        <div id="user-email" class="text-sm text-gray-400"></div>
       </div>
     </div>
+    <button id="logout-btn" class="w-full bg-red-600 p-2 rounded-xl mb-4">Logout</button>
+    <h2 class="text-lg font-bold mb-4">Members</h2>
+    <ul id="member-list" class="space-y-2"></ul>
   </div>
 
-  <script type="module">
-    import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
-    import { getAuth, GoogleAuthProvider, signInWithPopup, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
-    import { getDatabase, ref, set, onChildAdded, onChildChanged, push, update, onValue } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-database.js";
+  <!-- Chat Area -->
+  <div class="w-3/4 flex flex-col bg-gray-800 p-4 rounded-xl h-[80vh]">
+    <div id="messages" class="flex-1 overflow-y-auto mb-4 space-y-2"></div>
+    <div class="flex gap-2">
+      <input id="message-input" type="text" placeholder="Type a message..." class="flex-1 p-2 rounded-xl text-black"/>
+      <button id="send-btn" class="bg-blue-600 p-2 rounded-xl">Send</button>
+    </div>
+  </div>
+</div>
 
-    // Firebase Config
-    const firebaseConfig = {
-      apiKey: "AIzaSyAvDLQZvlzJVeLaIAgntPiCit65DeeBgYQ",
-      authDomain: "cee-medico-nepal-chat.firebaseapp.com",
-      databaseURL: "https://cee-medico-nepal-chat-default-rtdb.asia-southeast1.firebasedatabase.app",
-      projectId: "cee-medico-nepal-chat",
-      storageBucket: "cee-medico-nepal-chat.appspot.com",
-      messagingSenderId: "97605756433",
-      appId: "1:97605756433:web:0fd8c595f6dfa18f00f3b0",
-      measurementId: "G-QFJPC7489G"
-    };
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+import { getAuth, GoogleAuthProvider, signInWithPopup, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+import { getDatabase, ref, set, onChildAdded, onChildChanged, push, update } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-database.js";
 
-    // Initialize Firebase
-    const app = initializeApp(firebaseConfig);
-    const auth = getAuth(app);
-    const db = getDatabase(app);
+// Firebase Config
+const firebaseConfig = {
+  apiKey: "AIzaSyAvDLQZvlzJVeLaIAgntPiCit65DeeBgYQ",
+  authDomain: "cee-medico-nepal-chat.firebaseapp.com",
+  databaseURL: "https://cee-medico-nepal-chat-default-rtdb.asia-southeast1.firebasedatabase.app",
+  projectId: "cee-medico-nepal-chat",
+  storageBucket: "cee-medico-nepal-chat.appspot.com",
+  messagingSenderId: "97605756433",
+  appId: "1:97605756433:web:0fd8c595f6dfa18f00f3b0",
+  measurementId: "G-QFJPC7489G"
+};
 
-    // DOM Elements
-    const loginPage = document.getElementById("login-page");
-    const chatPage = document.getElementById("chat-page");
-    const googleLoginBtn = document.getElementById("google-login-btn");
-    const googleLoginText = document.getElementById("google-login-text");
-    const googleLoginSpinner = document.getElementById("google-login-spinner");
-    const statusMessage = document.getElementById("status");
-    const memberListEl = document.getElementById("member-list");
-    const messagesEl = document.getElementById("messages");
-    const messageInput = document.getElementById("message-input");
-    const sendBtn = document.getElementById("send-btn");
-    const typingIndicator = document.getElementById("typing-indicator");
+// Initialize Firebase
+const app = initializeApp(firebaseConfig);
+const auth = getAuth(app);
+const db = getDatabase(app, firebaseConfig.databaseURL);
 
-    let currentUser = null;
-    let typingTimeout = null;
+// DOM Elements
+const loginPage = document.getElementById("login-page");
+const chatPage = document.getElementById("chat-page");
+const googleLoginBtn = document.getElementById("google-login-btn");
+const googleLoginText = document.getElementById("google-login-text");
+const googleLoginSpinner = document.getElementById("google-login-spinner");
+const statusMessage = document.getElementById("status");
+const memberListEl = document.getElementById("member-list");
+const messagesEl = document.getElementById("messages");
+const messageInput = document.getElementById("message-input");
+const sendBtn = document.getElementById("send-btn");
+const userPhoto = document.getElementById("user-photo");
+const userName = document.getElementById("user-name");
+const userEmail = document.getElementById("user-email");
+const logoutBtn = document.getElementById("logout-btn");
 
-    // Loading function
-    function setLoading(isLoading) {
-      googleLoginBtn.disabled = isLoading;
-      googleLoginText.classList.toggle('hidden', isLoading);
-      googleLoginSpinner.classList.toggle('hidden', !isLoading);
-    }
+let currentUser = null;
 
-    // Format timestamp
-    function formatTimestamp(timestamp) {
-      const date = new Date(timestamp);
-      return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-    }
+// Loading function
+function setLoading(isLoading){
+  googleLoginBtn.disabled = isLoading;
+  googleLoginText.classList.toggle('hidden', isLoading);
+  googleLoginSpinner.classList.toggle('hidden', !isLoading);
+}
 
-    // Google Sign-In
-    googleLoginBtn.addEventListener('click', async () => {
-      setLoading(true);
-      statusMessage.textContent = "Signing in...";
-      const provider = new GoogleAuthProvider();
-      try {
-        const result = await signInWithPopup(auth, provider);
-        currentUser = result.user;
-        await set(ref(db, 'users/' + currentUser.uid), {
-          name: currentUser.displayName,
-          email: currentUser.email,
-          photoURL: currentUser.photoURL,
-          lastActive: Date.now()
-        });
-        statusMessage.textContent = "Signed in successfully!";
-      } catch (err) {
-        statusMessage.textContent = `Error: ${err.message}`;
-      } finally {
-        setLoading(false);
-      }
+// Google Sign-In
+googleLoginBtn.addEventListener('click', async () => {
+  setLoading(true);
+  statusMessage.textContent = "Signing in...";
+  const provider = new GoogleAuthProvider();
+  try {
+    const result = await signInWithPopup(auth, provider);
+    currentUser = result.user;
+    // Save user in DB
+    set(ref(db, 'users/' + currentUser.uid), {
+      name: currentUser.displayName,
+      email: currentUser.email,
+      photoURL: currentUser.photoURL
     });
+  } catch (err) {
+    statusMessage.textContent = `Error: ${err.message}`;
+  } finally {
+    setLoading(false);
+  }
+});
 
-    // Auth state change
-    onAuthStateChanged(auth, user => {
-      if (user) {
-        currentUser = user;
-        loginPage.classList.add('hidden');
-        chatPage.classList.remove('hidden');
-        loadMembers();
-        loadMessages();
-        updateUserStatus();
-      } else {
-        loginPage.classList.remove('hidden');
-        chatPage.classList.add('hidden');
-        memberListEl.innerHTML = '';
-        messagesEl.innerHTML = '';
-      }
-    });
+// Logout
+logoutBtn.addEventListener('click', async () => {
+  await signOut(auth);
+  currentUser = null;
+});
 
-    // Update user status
-    function updateUserStatus() {
-      setInterval(() => {
-        if (currentUser) {
-          update(ref(db, 'users/' + currentUser.uid), { lastActive: Date.now() });
-        }
-      }, 30000); // Update every 30 seconds
-    }
+// Auth state change
+onAuthStateChanged(auth, user => {
+  if(user){
+    currentUser = user;
+    loginPage.classList.add('hidden');
+    chatPage.classList.remove('hidden');
+    userPhoto.src = user.photoURL || '';
+    userName.textContent = user.displayName || 'User';
+    userEmail.textContent = user.email || '';
+    loadMembers();
+    loadMessages();
+  } else {
+    loginPage.classList.remove('hidden');
+    chatPage.classList.add('hidden');
+    messagesEl.innerHTML = '';
+    memberListEl.innerHTML = '';
+  }
+});
 
-    // Load members
-    function loadMembers() {
-      const usersRef = ref(db, 'users/');
-      onValue(usersRef, snapshot => {
-        memberListEl.innerHTML = '';
-        const users = snapshot.val();
-        for (const uid in users) {
-          const user = users[uid];
-          const isOnline = Date.now() - user.lastActive < 60000; // Online if active in last 60s
-          const li = document.createElement('li');
-          li.className = `p-3 rounded-lg hover:bg-gray-700 transition-colors flex items-center space-x-3 ${isOnline ? 'text-teal-300' : 'text-gray-400'}`;
-          li.innerHTML = `
-            <img src="${user.photoURL || 'https://via.placeholder.com/32'}" class="w-8 h-8 rounded-full" alt="Avatar">
-            <span>${user.name}</span>
-            ${isOnline ? '<span class="w-2 h-2 bg-green-500 rounded-full"></span>' : ''}`;
-          memberListEl.appendChild(li);
-        }
-      });
-    }
+// Load members
+function loadMembers(){
+  memberListEl.innerHTML = '';
+  const usersRef = ref(db, 'users/');
+  onChildAdded(usersRef, snapshot => {
+    const user = snapshot.val();
+    const li = document.createElement('li');
+    li.textContent = user.name;
+    li.className = "p-2 rounded hover:bg-gray-700 cursor-pointer";
+    memberListEl.appendChild(li);
+  });
+}
 
-    // Typing indicator
-    messageInput.addEventListener('input', () => {
-      if (!currentUser) return;
-      clearTimeout(typingTimeout);
-      update(ref(db, 'typing/' + currentUser.uid), { isTyping: true });
-      typingTimeout = setTimeout(() => {
-        update(ref(db, 'typing/' + currentUser.uid), { isTyping: false });
-      }, 2000);
-    });
+// Load messages
+function loadMessages(){
+  const messagesRef = ref(db, 'messages/');
+  onChildAdded(messagesRef, snapshot => {
+    displayMessage(snapshot.key, snapshot.val());
+  });
+  onChildChanged(messagesRef, snapshot => {
+    displayMessage(snapshot.key, snapshot.val(), true);
+  });
+}
 
-    // Listen for typing users
-    onValue(ref(db, 'typing/'), snapshot => {
-      const typingData = snapshot.val();
-      let typingUsers = [];
-      for (const uid in typingData) {
-        if (typingData[uid].isTyping && uid !== currentUser?.uid) {
-          typingUsers.push(uid);
-        }
-      }
-      typingIndicator.classList.toggle('hidden', typingUsers.length === 0);
-      typingIndicator.textContent = typingUsers.length > 0 ? `${typingUsers.length} user${typingUsers.length > 1 ? 's' : ''} typing...` : '';
-    });
+// Display message
+function displayMessage(id, msg, isUpdate=false){
+  let msgEl = document.getElementById(id);
+  if(!msgEl){
+    msgEl = document.createElement('div');
+    msgEl.id = id;
+    msgEl.className = "chat-message " + (msg.uid===currentUser.uid ? 'self' : 'other');
+    msgEl.innerHTML = `<strong>${msg.name||'User'}:</strong> <span>${msg.deleted ? 'This message was unsent' : msg.text}</span>
+      <button onclick="editMessage('${id}')" class="ml-2 text-yellow-300">✏️</button>
+      <button onclick="unsendMessage('${id}')" class="ml-1 text-red-400">🗑️</button>`;
+    messagesEl.appendChild(msgEl);
+  } else if(isUpdate){
+    msgEl.querySelector('span').textContent = msg.deleted ? 'This message was unsent' : msg.text;
+  }
+  messagesEl.scrollTop = messagesEl.scrollHeight;
+}
 
-    // Load messages
-    function loadMessages() {
-      const messagesRef = ref(db, 'messages/');
-      onChildAdded(messagesRef, snapshot => {
-        const msg = snapshot.val();
-        displayMessage(snapshot.key, msg);
-      });
-      onChildChanged(messagesRef, snapshot => {
-        const msg = snapshot.val();
-        displayMessage(snapshot.key, msg, true);
-      });
-    }
+// Send message
+sendBtn.addEventListener('click', () => {
+  const text = messageInput.value.trim();
+  if(!text) return;
+  const newMsgRef = push(ref(db, 'messages/'));
+  set(newMsgRef, {
+    uid: currentUser.uid,
+    name: currentUser.displayName,
+    text: text,
+    timestamp: Date.now(),
+    edited: false,
+    deleted: false
+  });
+  messageInput.value = '';
+});
 
-    // Display message
-    function displayMessage(id, msg, isUpdate = false) {
-      if (!msg || !msg.uid) return;
-      let msgEl = document.getElementById(id);
-      const isSelf = msg.uid === currentUser?.uid;
-      if (!msgEl) {
-        msgEl = document.createElement('div');
-        msgEl.id = id;
-        msgEl.className = `chat-message ${isSelf ? 'self' : 'other'}`;
-        messagesEl.appendChild(msgEl);
-      }
-      msgEl.innerHTML = `
-        <div class="flex items-start">
-          <div>
-            <div class="flex items-center">
-              <strong>${msg.name || 'User'}</strong>
-              ${msg.edited ? '<span class="edited">(edited)</span>' : ''}
-            </div>
-            <span>${msg.deleted ? 'This message was unsent' : msg.text}</span>
-            <div class="timestamp">${formatTimestamp(msg.timestamp)}</div>
-          </div>
-          ${isSelf && !msg.deleted ? `
-            <div class="msg-actions ml-2 flex space-x-2">
-              <button onclick="editMessage('${id}')" class="text-yellow-300 hover:text-yellow-400">✏️</button>
-              <button onclick="unsendMessage('${id}')" class="text-red-400 hover:text-red-500">🗑️</button>
-            </div>` : ''}
-        </div>`;
-      if (isUpdate) {
-        msgEl.querySelector('span').textContent = msg.deleted ? 'This message was unsent' : msg.text;
-      }
-      messagesEl.scrollTop = messagesEl.scrollHeight;
-    }
+// Edit message
+window.editMessage = function(id){
+  const msgEl = document.getElementById(id);
+  const newText = prompt("Edit message:", msgEl.querySelector('span').textContent);
+  if(newText !== null){
+    update(ref(db, 'messages/' + id), { text: newText, edited: true });
+  }
+}
 
-    // Send message
-    sendBtn.addEventListener('click', () => {
-      const text = messageInput.value.trim();
-      if (!text) return;
-      const newMsgRef = push(ref(db, 'messages/'));
-      set(newMsgRef, {
-        uid: currentUser.uid,
-        name: currentUser.displayName,
-        text: text,
-        timestamp: Date.now(),
-        edited: false,
-        deleted: false
-      }).then(() => {
-        messageInput.value = '';
-      }).catch(err => {
-        console.error('Error sending message:', err);
-      });
-    });
-
-    // Edit message
-    window.editMessage = function(id) {
-      const msgEl = document.getElementById(id);
-      const currentText = msgEl.querySelector('span').textContent;
-      if (currentText === 'This message was unsent') return;
-      const newText = prompt("Edit message:", currentText);
-      if (newText !== null && newText.trim()) {
-        update(ref(db, 'messages/' + id), { text: newText.trim(), edited: true })
-          .catch(err => console.error('Error editing message:', err));
-      }
-    }
-
-    // Unsend message
-    window.unsendMessage = function(id) {
-      if (confirm("Are you sure you want to unsend this message?")) {
-        update(ref(db, 'messages/' + id), { deleted: true })
-          .catch(err => console.error('Error unsending message:', err));
-      }
-    }
-
-    // Send message on Enter key
-    messageInput.addEventListener('keypress', e => {
-      if (e.key === 'Enter') {
-        sendBtn.click();
-      }
-    });
-  </script>
+// Unsend message
+window.unsendMessage = function(id){
+  if(confirm("Are you sure you want to unsend this message?")){
+    update(ref(db, 'messages/' + id), { deleted: true });
+  }
+}
+</script>
 </body>
 </html>
