@@ -1,135 +1,73 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Simple Phone Auth Demo</title>
-  <style>
-    body{font-family:Arial,Helvetica,sans-serif;background:#f7fafc;padding:24px}
-    .card{max-width:460px;margin:24px auto;background:#fff;padding:18px;border-radius:8px;box-shadow:0 6px 20px rgba(11,22,39,0.06)}
-    input,select,button{width:100%;padding:10px;margin-top:8px;border-radius:6px;border:1px solid #e2e8f0}
-    button{background:#0b93f6;color:#fff;border:0}
-    .small{font-size:13px;color:#475569}
-    .debug{white-space:pre-wrap;background:#0f1724;color:#e6eef8;padding:8px;border-radius:6px;margin-top:10px}
-  </style>
+  <meta charset="UTF-8">
+  <title>Phone Login</title>
+  <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-auth.js"></script>
 </head>
 <body>
-  <div class="card">
-    <h3>Simple Phone Auth (Firebase)</h3>
-    <p class="small">Serve this page via <code>http://localhost</code> (do not open with <code>file://</code>). Add <strong>localhost</strong> to Firebase Console → Authentication → Authorized domains.</p>
+  <h2>📱 Login with Phone</h2>
+  <input type="text" id="phone" placeholder="+9779812345678"><br><br>
+  <button onclick="sendOTP()">Send OTP</button><br><br>
 
-    <label>Country code</label>
-    <select id="countryCode"><option value="+977">+977 Nepal</option><option value="+91">+91 India</option><option value="+1">+1 USA</option></select>
-    <label>Phone number (digits only)</label>
-    <input id="phoneNumber" placeholder="9812345678" />
-    <label><input type="checkbox" id="testMode" /> Use test mode (no SMS) — enter test number +9779999999999</label>
-    <button id="sendOtp">Send OTP</button>
+  <input type="text" id="otp" placeholder="Enter OTP"><br><br>
+  <button onclick="verifyOTP()">Verify OTP</button>
 
-    <div id="otpSection" style="display:none">
-      <label>Enter OTP</label>
-      <input id="otp" placeholder="123456" />
-      <button id="verifyOtp">Verify OTP</button>
-    </div>
+  <!-- Invisible recaptcha lives here (hidden) -->
+  <div id="recaptcha-container"></div>
 
-    <div id="recaptcha" style="margin-top:12px"></div>
+  <p id="status"></p>
 
-    <div id="debug" class="debug"></div>
-  </div>
-
-  <script type="module">
-    import { initializeApp } from 'https://www.gstatic.com/firebasejs/9.22.2/firebase-app.js';
-    import { getAuth, RecaptchaVerifier, signInWithPhoneNumber } from 'https://www.gstatic.com/firebasejs/9.22.2/firebase-auth.js';
-
-    // Paste your firebaseConfig here (kept from your earlier message)
+  <script>
+    // ✅ Your Firebase Config
     const firebaseConfig = {
       apiKey: "AIzaSyAvDLQZvlzJVeLaIAgntPiCit65DeeBgYQ",
       authDomain: "cee-medico-nepal-chat.firebaseapp.com",
-      databaseURL: "https://cee-medico-nepal-chat-default-rtdb.asia-southeast1.firebasedatabase.app",
       projectId: "cee-medico-nepal-chat",
       storageBucket: "cee-medico-nepal-chat.appspot.com",
       messagingSenderId: "97605756433",
-      appId: "1:97605756433:web:0fd8c595f6dfa18f00f3b0",
-      measurementId: "G-QFJPC7489G"
+      appId: "1:97605756433:web:0fd8c595f6dfa18f00f3b0"
     };
 
-    const TEST_PHONE = '+9779999999999';
-    const TEST_CODE = '123456';
+    // ✅ Initialize Firebase
+    const app = firebase.initializeApp(firebaseConfig);
+    const auth = firebase.getAuth(app);
 
-    const app = initializeApp(firebaseConfig);
-    const auth = getAuth(app);
+    let confirmationResult;
 
-    const countryCode = document.getElementById('countryCode');
-    const phoneNumber = document.getElementById('phoneNumber');
-    const sendOtpBtn = document.getElementById('sendOtp');
-    const otpSection = document.getElementById('otpSection');
-    const otpInput = document.getElementById('otp');
-    const verifyBtn = document.getElementById('verifyOtp');
-    const debug = document.getElementById('debug');
-    const testModeCheckbox = document.getElementById('testMode');
+    // ✅ Setup invisible recaptcha
+    window.recaptchaVerifier = new firebase.RecaptchaVerifier('recaptcha-container', {
+      'size': 'invisible'
+    }, auth);
 
-    let confirmationResult = null;
+    function sendOTP() {
+      const phoneNumber = document.getElementById("phone").value;
+      const appVerifier = window.recaptchaVerifier;
 
-    function log(...args){ debug.textContent += args.join(' ') + '
-'; console.log(...args); }
-
-    // Render visible reCAPTCHA
-    let recaptcha;
-    function renderRecaptcha(){
-      try{
-        if(window.recaptchaVerifier && window.recaptchaVerifier.clear) window.recaptchaVerifier.clear();
-      }catch(e){}
-      window.recaptchaVerifier = new RecaptchaVerifier('recaptcha', { size: 'normal' }, auth);
-      window.recaptchaVerifier.render().then(id => log('reCAPTCHA rendered, id=', id));
+      firebase.signInWithPhoneNumber(auth, phoneNumber, appVerifier)
+        .then((result) => {
+          confirmationResult = result;
+          document.getElementById("status").innerText = "OTP sent!";
+        })
+        .catch((error) => {
+          console.error(error);
+          document.getElementById("status").innerText = error.message;
+        });
     }
 
-    renderRecaptcha();
-
-    sendOtpBtn.addEventListener('click', async () => {
-      const raw = phoneNumber.value.trim();
-      if(!raw){ alert('Enter phone number'); return; }
-      const full = (countryCode.value || '+977') + raw;
-
-      // Test mode shortcut
-      if(testModeCheckbox.checked && full === TEST_PHONE){
-        log('TEST MODE: skipping SMS. Use code:', TEST_CODE);
-        // create a mock confirmationResult
-        confirmationResult = { confirm: (code) => new Promise((res, rej) => {
-          if(code === TEST_CODE) res({ user: { uid: 'test-user', phoneNumber: TEST_PHONE }});
-          else rej({ message: 'Invalid test code' });
-        }) };
-        otpSection.style.display = 'block';
-        return;
-      }
-
-      sendOtpBtn.disabled = true;
-      try{
-        const appVerifier = window.recaptchaVerifier;
-        log('Calling signInWithPhoneNumber for', full);
-        confirmationResult = await signInWithPhoneNumber(auth, full, appVerifier);
-        log('OTP sent. confirmationResult set.');
-        otpSection.style.display = 'block';
-      }catch(err){
-        log('Error sending OTP:', err && err.code, err && err.message || err);
-        alert('Error sending OTP. See debug area or console.');
-        // Sometimes re-rendering recaptcha helps
-        renderRecaptcha();
-      }finally{ sendOtpBtn.disabled = false; }
-    });
-
-    verifyBtn.addEventListener('click', async () => {
-      const code = otpInput.value.trim();
-      if(!code) return alert('Enter OTP');
-      if(!confirmationResult) return alert('No OTP request found. Send OTP first.');
-      try{
-        const result = await confirmationResult.confirm(code);
-        log('Phone verified! user:', result.user || result);
-        alert('Phone verified: ' + (result.user && result.user.phoneNumber));
-      }catch(err){
-        log('OTP verify error:', err && err.code, err && err.message || err);
-        alert('Invalid OTP. See debug area.');
-      }
-    });
-
+    function verifyOTP() {
+      const code = document.getElementById("otp").value;
+      confirmationResult.confirm(code)
+        .then((result) => {
+          const user = result.user;
+          document.getElementById("status").innerText = "✅ Login success: " + user.phoneNumber;
+        })
+        .catch((error) => {
+          console.error(error);
+          document.getElementById("status").innerText = "❌ Wrong code: " + error.message;
+        });
+    }
   </script>
 </body>
 </html>
