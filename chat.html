@@ -3,130 +3,44 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Realtime Group Chat — Phone Auth (debug-friendly)</title>
+  <title>Simple Phone Auth Demo</title>
   <style>
-    :root{--accent:#0b93f6;--muted:#f3f5f7}
-    body{font-family:Inter,system-ui,Arial;margin:0;background:#fafafa;color:#111}
-    header{background:#fff;border-bottom:1px solid #e6e9ee;padding:12px 16px;display:flex;align-items:center;gap:12px}
-    .container{max-width:980px;margin:18px auto;padding:12px}
-    .card{background:#fff;border-radius:12px;box-shadow:0 6px 18px rgba(30,41,59,0.06);padding:16px}
-    .row{display:flex;gap:12px}
-    .col{flex:1}
-    input,select,button,textarea{font-size:14px;padding:10px;border-radius:8px;border:1px solid #e3e7ee}
-    button{cursor:pointer;background:var(--accent);color:#fff;border:0}
-    .chat{height:420px;overflow:auto;border:1px solid #eef2f6;border-radius:8px;padding:12px;background:linear-gradient(180deg,#fff,#fbfdff)}
-    .msg{margin:8px 0;padding:8px 10px;border-radius:10px;display:inline-block;max-width:76%}
-    .me{background:#dcf8c6;align-self:flex-end}
-    .other{background:#fff}
-    .groups{max-height:200px;overflow:auto;border:1px solid #eef2f6;padding:8px;border-radius:8px}
-    .group-item{padding:8px;border-radius:8px;margin:6px 0;border:1px dashed #e6eef7;cursor:pointer}
-    .hidden{display:none}
-    small{color:#64748b}
-    .alert{background:#fff3cd;border:1px solid #ffeeba;padding:10px;border-radius:8px;margin-bottom:12px}
-    .error{background:#ffe6e6;border:1px solid #ffb3b3}
-    pre.debug{background:#0b0b0b;color:#e6e6e6;padding:8px;border-radius:6px;overflow:auto;max-height:120px}
+    body{font-family:Arial,Helvetica,sans-serif;background:#f7fafc;padding:24px}
+    .card{max-width:460px;margin:24px auto;background:#fff;padding:18px;border-radius:8px;box-shadow:0 6px 20px rgba(11,22,39,0.06)}
+    input,select,button{width:100%;padding:10px;margin-top:8px;border-radius:6px;border:1px solid #e2e8f0}
+    button{background:#0b93f6;color:#fff;border:0}
+    .small{font-size:13px;color:#475569}
+    .debug{white-space:pre-wrap;background:#0f1724;color:#e6eef8;padding:8px;border-radius:6px;margin-top:10px}
   </style>
 </head>
 <body>
-  <header>
-    <h3 style="margin:0">Realtime Group Chat (Phone Auth)</h3>
-    <div style="margin-left:auto"><button id="btnSignOut" class="hidden">Sign out</button></div>
-  </header>
+  <div class="card">
+    <h3>Simple Phone Auth (Firebase)</h3>
+    <p class="small">Serve this page via <code>http://localhost</code> (do not open with <code>file://</code>). Add <strong>localhost</strong> to Firebase Console → Authentication → Authorized domains.</p>
 
-  <div class="container">
-    <div id="alertArea"></div>
+    <label>Country code</label>
+    <select id="countryCode"><option value="+977">+977 Nepal</option><option value="+91">+91 India</option><option value="+1">+1 USA</option></select>
+    <label>Phone number (digits only)</label>
+    <input id="phoneNumber" placeholder="9812345678" />
+    <label><input type="checkbox" id="testMode" /> Use test mode (no SMS) — enter test number +9779999999999</label>
+    <button id="sendOtp">Send OTP</button>
 
-    <div id="authCard" class="card">
-      <h4>Sign in with phone number (one-time OTP)</h4>
-
-      <div class="alert">
-        <strong>Debug / common causes:</strong>
-        <ul>
-          <li>If you opened this page with <code>file://</code> the reCAPTCHA will fail — serve the file via <code>http://localhost</code> (e.g. <code>npx http-server</code> or <code>python -m http.server</code>).</li>
-          <li>Make sure Phone Authentication is enabled in your Firebase Console (Authentication → Sign-in method → Phone).</li>
-          <li>Check your Firebase project authorized domains (Authentication → Settings → Authorized domains) for your localhost or hosting domain.</li>
-        </ul>
-      </div>
-
-      <div style="display:flex;gap:8px;align-items:center">
-        <select id="countryCode">
-          <option value="+977">Nepal +977</option>
-          <option value="+91">India +91</option>
-          <option value="+1">USA +1</option>
-          <option value="+44">UK +44</option>
-          <option value="+61">Australia +61</option>
-        </select>
-        <input id="phoneNumber" placeholder="7XXXXXXXX" style="flex:1" />
-        <button id="sendOtpBtn">Send OTP</button>
-      </div>
-
-      <div id="otpSection" class="hidden" style="margin-top:12px">
-        <input id="otpInput" placeholder="Enter OTP" />
-        <button id="verifyOtpBtn">Verify OTP</button>
-      </div>
-
-      <div id="nameSection" class="hidden" style="margin-top:12px">
-        <input id="displayName" placeholder="Display name (will appear in chats)" />
-        <button id="saveProfileBtn">Save Profile</button>
-      </div>
-
-      <div id="recaptcha-container" style="margin-top:12px"></div>
-      <p style="margin-top:10px"><small>Note: This uses Firebase Phone Auth and requires a real phone number to receive OTP. Use a real phone for testing or use the Firebase Auth emulator for development.</small></p>
-
-      <div style="margin-top:12px"><strong>Debug output:</strong><pre id="debug" class="debug"></pre></div>
+    <div id="otpSection" style="display:none">
+      <label>Enter OTP</label>
+      <input id="otp" placeholder="123456" />
+      <button id="verifyOtp">Verify OTP</button>
     </div>
 
-    <div id="appCard" class="card hidden" style="margin-top:16px">
-      <div class="row">
-        <div style="width:320px">
-          <h4>Groups</h4>
-          <div style="display:flex;gap:8px;margin-bottom:8px">
-            <input id="newGroupName" placeholder="New group name" />
-            <button id="createGroupBtn">Create</button>
-          </div>
-          <div id="groupsList" class="groups"></div>
-        </div>
+    <div id="recaptcha" style="margin-top:12px"></div>
 
-        <div class="col" style="display:flex;flex-direction:column">
-          <div style="display:flex;align-items:center;gap:12px">
-            <h4 id="currentGroupName">Select a group</h4>
-            <small id="groupMembersCount"></small>
-          </div>
-
-          <div id="chatArea" class="chat" style="display:flex;flex-direction:column"></div>
-
-          <div style="display:flex;gap:8px;margin-top:8px;align-items:center">
-            <input id="messageInput" placeholder="Type a message" style="flex:1" />
-            <button id="sendMsgBtn">Send</button>
-          </div>
-        </div>
-      </div>
-    </div>
-
+    <div id="debug" class="debug"></div>
   </div>
 
-  <!-- Firebase modular SDK via CDN (ES modules) -->
   <script type="module">
     import { initializeApp } from 'https://www.gstatic.com/firebasejs/9.22.2/firebase-app.js';
-    import {
-      getAuth,
-      RecaptchaVerifier,
-      signInWithPhoneNumber,
-      signOut as fbSignOut,
-      onAuthStateChanged
-    } from 'https://www.gstatic.com/firebasejs/9.22.2/firebase-auth.js';
+    import { getAuth, RecaptchaVerifier, signInWithPhoneNumber } from 'https://www.gstatic.com/firebasejs/9.22.2/firebase-auth.js';
 
-    import {
-      getDatabase,
-      ref,
-      push,
-      set,
-      onChildAdded,
-      onValue,
-      get
-    } from 'https://www.gstatic.com/firebasejs/9.22.2/firebase-database.js';
-
-    // ---------- YOUR FIREBASE CONFIG ----------
+    // Paste your firebaseConfig here (kept from your earlier message)
     const firebaseConfig = {
       apiKey: "AIzaSyAvDLQZvlzJVeLaIAgntPiCit65DeeBgYQ",
       authDomain: "cee-medico-nepal-chat.firebaseapp.com",
@@ -138,275 +52,84 @@
       measurementId: "G-QFJPC7489G"
     };
 
-    // Initialize
+    const TEST_PHONE = '+9779999999999';
+    const TEST_CODE = '123456';
+
     const app = initializeApp(firebaseConfig);
     const auth = getAuth(app);
-    const db = getDatabase(app);
 
-    // UI refs
-    const alertArea = document.getElementById('alertArea');
-    const debugEl = document.getElementById('debug');
     const countryCode = document.getElementById('countryCode');
     const phoneNumber = document.getElementById('phoneNumber');
-    const sendOtpBtn = document.getElementById('sendOtpBtn');
+    const sendOtpBtn = document.getElementById('sendOtp');
     const otpSection = document.getElementById('otpSection');
-    const otpInput = document.getElementById('otpInput');
-    const verifyOtpBtn = document.getElementById('verifyOtpBtn');
-    const nameSection = document.getElementById('nameSection');
-    const displayName = document.getElementById('displayName');
-    const saveProfileBtn = document.getElementById('saveProfileBtn');
-
-    const authCard = document.getElementById('authCard');
-    const appCard = document.getElementById('appCard');
-    const btnSignOut = document.getElementById('btnSignOut');
-
-    const groupsList = document.getElementById('groupsList');
-    const newGroupName = document.getElementById('newGroupName');
-    const createGroupBtn = document.getElementById('createGroupBtn');
-    const currentGroupName = document.getElementById('currentGroupName');
-    const chatArea = document.getElementById('chatArea');
-    const messageInput = document.getElementById('messageInput');
-    const sendMsgBtn = document.getElementById('sendMsgBtn');
-    const groupMembersCount = document.getElementById('groupMembersCount');
+    const otpInput = document.getElementById('otp');
+    const verifyBtn = document.getElementById('verifyOtp');
+    const debug = document.getElementById('debug');
+    const testModeCheckbox = document.getElementById('testMode');
 
     let confirmationResult = null;
-    let currentUser = null;
-    let currentGroupId = null;
 
-    function logDebug(...args){
-      console.log(...args);
-      debugEl.textContent += args.map(a => (typeof a === 'object' ? JSON.stringify(a,null,2) : String(a))).join(' ') + '\n';
-    }
+    function log(...args){ debug.textContent += args.join(' ') + '
+'; console.log(...args); }
 
-    function showAlert(message, isError=false){
-      alertArea.innerHTML = `<div class="alert ${isError?'error':''}">${message}</div>`;
-      logDebug('ALERT:', message);
-    }
-
-    // If the page is served via file://, phone auth + reCAPTCHA will fail. Detect and warn.
-    if(location.protocol === 'file:'){
-      showAlert('You opened the page via <code>file://</code>. Phone auth requires serving the page from http(s) or localhost. Run a local server (e.g. `npx http-server` or `python -m http.server`) and open via http://localhost:8080', true);
-    }
-
-    // create/ensure recaptcha verifier. tries invisible first, falls back to visible.
-    async function ensureRecaptcha(invisible = true){
+    // Render visible reCAPTCHA
+    let recaptcha;
+    function renderRecaptcha(){
       try{
-        if(window.recaptchaVerifier && window.recaptchaVerifier.clear){
-          try{ window.recaptchaVerifier.clear(); } catch(e){}
-        }
-      }catch(e){ /* ignore */ }
-
-      const size = invisible ? 'invisible' : 'normal';
-      try{
-        window.recaptchaVerifier = new RecaptchaVerifier('recaptcha-container', { size }, auth);
-        const widgetId = await window.recaptchaVerifier.render();
-        logDebug('reCAPTCHA rendered, widgetId=', widgetId, 'size=', size);
-        return true;
-      }catch(err){
-        console.error('ensureRecaptcha error:', err);
-        logDebug('ensureRecaptcha error:', err && err.code, err && err.message);
-        if(invisible){
-          logDebug('Falling back to visible reCAPTCHA...');
-          return ensureRecaptcha(false);
-        }
-        showAlert('reCAPTCHA initialization failed. See debug output for details and ensure you are serving the page over http(s) and that your Firebase project allows this domain.', true);
-        return false;
-      }
+        if(window.recaptchaVerifier && window.recaptchaVerifier.clear) window.recaptchaVerifier.clear();
+      }catch(e){}
+      window.recaptchaVerifier = new RecaptchaVerifier('recaptcha', { size: 'normal' }, auth);
+      window.recaptchaVerifier.render().then(id => log('reCAPTCHA rendered, id=', id));
     }
 
-    // Send OTP (phone auth)
+    renderRecaptcha();
+
     sendOtpBtn.addEventListener('click', async () => {
       const raw = phoneNumber.value.trim();
-      if(!raw) return alert('Enter your phone number');
+      if(!raw){ alert('Enter phone number'); return; }
       const full = (countryCode.value || '+977') + raw;
 
-      // make sure reCAPTCHA is ready
+      // Test mode shortcut
+      if(testModeCheckbox.checked && full === TEST_PHONE){
+        log('TEST MODE: skipping SMS. Use code:', TEST_CODE);
+        // create a mock confirmationResult
+        confirmationResult = { confirm: (code) => new Promise((res, rej) => {
+          if(code === TEST_CODE) res({ user: { uid: 'test-user', phoneNumber: TEST_PHONE }});
+          else rej({ message: 'Invalid test code' });
+        }) };
+        otpSection.style.display = 'block';
+        return;
+      }
+
       sendOtpBtn.disabled = true;
       try{
-        const ok = await ensureRecaptcha(true);
-        if(!ok) { sendOtpBtn.disabled = false; return; }
-
         const appVerifier = window.recaptchaVerifier;
-        try{
-          confirmationResult = await signInWithPhoneNumber(auth, full, appVerifier);
-          otpSection.classList.remove('hidden');
-          showAlert('OTP sent to ' + full + '. If you do not receive OTP, check browser console and Firebase Console sign-in method settings.');
-          logDebug('confirmationResult:', confirmationResult && typeof confirmationResult === 'object' ? 'ok' : String(confirmationResult));
-        }catch(err){
-          console.error('signInWithPhoneNumber error:', err);
-          logDebug('signInWithPhoneNumber error:', err && err.code, err && err.message);
-
-          // Specific helpful messages for common auth errors
-          if(err && err.code === 'auth/internal-error'){
-            showAlert('Firebase auth/internal-error: Often caused by reCAPTCHA failing or page served insecurely. Ensure you are on http(s)/localhost and reCAPTCHA is allowed. Check console for details.', true);
-          } else if(err && err.code === 'auth/operation-not-allowed'){
-            showAlert('Phone Auth is not enabled for this Firebase project. Enable it in Firebase Console → Authentication → Sign-in method → Phone.', true);
-          } else if(err && err.code === 'auth/too-many-requests'){
-            showAlert('Too many attempts. Try again later or use the Firebase Auth emulator for development.', true);
-          } else {
-            showAlert('Error sending OTP: ' + (err && err.message ? err.message : String(err)), true);
-          }
-        }
-      }finally{ sendOtpBtn.disabled = false }
+        log('Calling signInWithPhoneNumber for', full);
+        confirmationResult = await signInWithPhoneNumber(auth, full, appVerifier);
+        log('OTP sent. confirmationResult set.');
+        otpSection.style.display = 'block';
+      }catch(err){
+        log('Error sending OTP:', err && err.code, err && err.message || err);
+        alert('Error sending OTP. See debug area or console.');
+        // Sometimes re-rendering recaptcha helps
+        renderRecaptcha();
+      }finally{ sendOtpBtn.disabled = false; }
     });
 
-    // Verify OTP
-    verifyOtpBtn.addEventListener('click', async () => {
+    verifyBtn.addEventListener('click', async () => {
       const code = otpInput.value.trim();
       if(!code) return alert('Enter OTP');
-      if(!confirmationResult) return alert('No confirmation result found. Try sending OTP again.');
+      if(!confirmationResult) return alert('No OTP request found. Send OTP first.');
       try{
         const result = await confirmationResult.confirm(code);
-        currentUser = result.user;
-        nameSection.classList.remove('hidden');
-        otpSection.classList.add('hidden');
-        authCard.classList.add('hidden');
-        btnSignOut.classList.remove('hidden');
-        showAlert('Phone number verified. Please save a display name to continue.');
-        logDebug('User signed in:', currentUser && currentUser.uid);
+        log('Phone verified! user:', result.user || result);
+        alert('Phone verified: ' + (result.user && result.user.phoneNumber));
       }catch(err){
-        console.error('OTP confirm error:', err);
-        logDebug('OTP confirm error:', err && err.code, err && err.message);
-        showAlert('Invalid or expired OTP. Try again.', true);
+        log('OTP verify error:', err && err.code, err && err.message || err);
+        alert('Invalid OTP. See debug area.');
       }
     });
-
-    // Save profile to realtime DB
-    saveProfileBtn.addEventListener('click', async () => {
-      const name = displayName.value.trim() || 'Anonymous';
-      if(!currentUser) return alert('User not signed in');
-      const uid = currentUser.uid;
-      try{
-        await set(ref(db, 'users/' + uid), { uid, phone: currentUser.phoneNumber, name, createdAt: Date.now() });
-        appCard.classList.remove('hidden');
-        nameSection.classList.add('hidden');
-        loadGroups();
-      }catch(err){
-        console.error('Save profile error:', err);
-        showAlert('Error saving profile: ' + (err && err.message ? err.message : String(err)), true);
-      }
-    });
-
-    // Sign out
-    btnSignOut.addEventListener('click', async () => {
-      await fbSignOut(auth);
-      location.reload();
-    });
-
-    // Create group
-    createGroupBtn.addEventListener('click', async () => {
-      const name = newGroupName.value.trim();
-      if(!name) return;
-      if(!currentUser) return showAlert('Sign in first to create a group.', true);
-      try{
-        const groupRef = push(ref(db, 'groups'));
-        await set(groupRef, { name, createdBy: currentUser.uid, createdAt: Date.now() });
-        newGroupName.value = '';
-      }catch(err){
-        console.error('Create group error:', err);
-        showAlert('Could not create group: ' + (err && err.message ? err.message : String(err)), true);
-      }
-    });
-
-    // Load and listen groups
-    function loadGroups(){
-      groupsList.innerHTML = '';
-      const groupsRef = ref(db, 'groups');
-      onChildAdded(groupsRef, (snap) => {
-        const g = snap.val();
-        const id = snap.key;
-        const el = document.createElement('div');
-        el.className = 'group-item';
-        el.textContent = g.name || 'Unnamed group';
-        el.onclick = () => selectGroup(id, g.name || 'Group');
-        groupsList.prepend(el);
-      });
-    }
-
-    // Select group and attach messages listener
-    async function selectGroup(groupId, name){
-      if(!currentUser) return showAlert('Sign in first to join a group.', true);
-      currentGroupId = groupId;
-      currentGroupName.textContent = name;
-      chatArea.innerHTML = '';
-
-      try{
-        const userSnap = await get(ref(db, 'users/' + currentUser.uid));
-        const username = userSnap.exists() ? userSnap.val().name : 'User';
-        const membersRef = ref(db, `groupMembers/${groupId}/${currentUser.uid}`);
-        await set(membersRef, { uid: currentUser.uid, name: username, joinedAt: Date.now() });
-
-        const countRef = ref(db, 'groupMembers/' + groupId);
-        onValue(countRef, snap => {
-          const v = snap.val() || {};
-          const count = Object.keys(v).length;
-          groupMembersCount.textContent = ` · ${count} members`;
-        });
-
-        const messagesRef = ref(db, `messages/${groupId}`);
-        onChildAdded(messagesRef, (snap) => {
-          const msg = snap.val();
-          appendMessage(msg);
-        });
-      }catch(err){
-        console.error('selectGroup error:', err);
-        showAlert('Could not join group: ' + (err && err.message ? err.message : String(err)), true);
-      }
-    }
-
-    // Append message to chat area
-    function appendMessage(msg){
-      if(!msg) return;
-      const div = document.createElement('div');
-      div.className = 'msg ' + (msg.uid === (currentUser && currentUser.uid) ? 'me' : 'other');
-      div.innerHTML = `<strong>${msg.name || 'User'}</strong><div>${escapeHtml(msg.text)}</div><small style='display:block;margin-top:4px'>${new Date(msg.ts).toLocaleString()}</small>`;
-      chatArea.appendChild(div);
-      chatArea.scrollTop = chatArea.scrollHeight;
-    }
-
-    // Send message
-    sendMsgBtn.addEventListener('click', async () => {
-      const text = messageInput.value.trim();
-      if(!text || !currentGroupId) return;
-      try{
-        const userSnap = await get(ref(db, 'users/' + currentUser.uid));
-        const name = userSnap.exists() ? userSnap.val().name : 'User';
-        const msgRef = push(ref(db, `messages/${currentGroupId}`));
-        await set(msgRef, { text, uid: currentUser.uid, name, ts: Date.now() });
-        messageInput.value = '';
-      }catch(err){
-        console.error('Send message error:', err);
-        showAlert('Could not send message: ' + (err && err.message ? err.message : String(err)), true);
-      }
-    });
-
-    // Utility escape
-    function escapeHtml(s){ return String(s).replace(/[&<>"']/g, (c)=>({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' })[c]) }
-
-    // Listen for auth state changes
-    onAuthStateChanged(auth, async (user) => {
-      if(user){
-        currentUser = user;
-        const snap = await get(ref(db, 'users/' + user.uid));
-        if(snap.exists()){
-          appCard.classList.remove('hidden');
-          authCard.classList.add('hidden');
-          btnSignOut.classList.remove('hidden');
-          loadGroups();
-        }else{
-          nameSection.classList.remove('hidden');
-          authCard.classList.add('hidden');
-        }
-      }else{
-        // not signed in
-        logDebug('No user signed in');
-      }
-    });
-
-    // Helpful dev note shown in debug output
-    logDebug('Script loaded. To debug phone auth issues: check console, ensure page not opened with file://, verify Firebase Phone Auth enabled, and verify authorized domains.');
 
   </script>
-
 </body>
 </html>
