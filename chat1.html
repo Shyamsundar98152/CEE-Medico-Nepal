@@ -1,0 +1,173 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Phone Login</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+  <style>
+    body { font-family: 'Inter', sans-serif; }
+    .bg-dots {
+      background-image: radial-gradient(#4b5563 1px, transparent 1px);
+      background-size: 16px 16px;
+    }
+    .loading-spinner {
+      border: 4px solid rgba(255, 255, 255, 0.3);
+      border-radius: 50%;
+      border-top: 4px solid white;
+      width: 1rem;
+      height: 1rem;
+      animation: spin 1s linear infinite;
+    }
+    @keyframes spin {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
+  </style>
+</head>
+<body class="bg-gray-900 text-white min-h-screen flex items-center justify-center p-4 bg-dots">
+
+  <div class="bg-gray-800 p-8 rounded-2xl shadow-xl w-full max-w-sm">
+    <h2 class="text-3xl font-bold mb-6 text-center text-teal-300">📱 Phone Login</h2>
+    <p class="text-sm text-gray-400 mb-6 text-center">
+      Enter your phone number to receive a one-time password (OTP).
+    </p>
+
+    <!-- Phone Number Input Section -->
+    <div id="phone-section" class="space-y-4">
+      <div class="relative">
+        <input type="tel" id="phone" class="w-full p-3 pl-12 rounded-xl bg-gray-700 text-white border border-gray-600 focus:outline-none focus:border-teal-400 transition" placeholder="+9779812345678" pattern="\+[0-9]{10,14}" required>
+        <span class="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400">
+          <i class="fas fa-phone"></i>
+        </span>
+      </div>
+      <button id="send-otp-btn" class="w-full py-3 px-4 rounded-xl font-semibold bg-teal-500 hover:bg-teal-600 focus:outline-none focus:ring-2 focus:ring-teal-500 focus:ring-offset-2 focus:ring-offset-gray-800 transition transform hover:scale-105">
+        <span id="send-otp-text">Send OTP</span>
+        <div id="send-otp-spinner" class="loading-spinner hidden mx-auto"></div>
+      </button>
+    </div>
+
+    <!-- OTP Input Section (Initially Hidden) -->
+    <div id="otp-section" class="space-y-4 hidden">
+      <div class="relative">
+        <input type="text" id="otp" class="w-full p-3 pl-12 rounded-xl bg-gray-700 text-white border border-gray-600 focus:outline-none focus:border-teal-400 transition" placeholder="Enter OTP" required>
+        <span class="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400">
+          <i class="fas fa-key"></i>
+        </span>
+      </div>
+      <button id="verify-otp-btn" class="w-full py-3 px-4 rounded-xl font-semibold bg-purple-500 hover:bg-purple-600 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:ring-offset-2 focus:ring-offset-gray-800 transition transform hover:scale-105">
+        <span id="verify-otp-text">Verify OTP</span>
+        <div id="verify-otp-spinner" class="loading-spinner hidden mx-auto"></div>
+      </button>
+    </div>
+
+    <!-- Status Message -->
+    <p id="status" class="mt-6 text-center text-gray-400 text-sm"></p>
+
+    <!-- Invisible recaptcha lives here -->
+    <div id="recaptcha-container"></div>
+  </div>
+
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+    import { getAuth, signInWithPhoneNumber, RecaptchaVerifier } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+
+    // Global variables from the environment
+    const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
+    const firebaseConfig = JSON.parse(__firebase_config);
+    const initialAuthToken = typeof __initial_auth_token !== 'undefined' ? __initial_auth_token : null;
+
+    // Initialize Firebase
+    const app = initializeApp(firebaseConfig);
+    const auth = getAuth(app);
+
+    // DOM Elements
+    const phoneInput = document.getElementById("phone");
+    const sendOtpBtn = document.getElementById("send-otp-btn");
+    const sendOtpText = document.getElementById("send-otp-text");
+    const sendOtpSpinner = document.getElementById("send-otp-spinner");
+    const otpInput = document.getElementById("otp");
+    const verifyOtpBtn = document.getElementById("verify-otp-btn");
+    const verifyOtpText = document.getElementById("verify-otp-text");
+    const verifyOtpSpinner = document.getElementById("verify-otp-spinner");
+    const phoneSection = document.getElementById("phone-section");
+    const otpSection = document.getElementById("otp-section");
+    const statusMessage = document.getElementById("status");
+
+    let confirmationResult;
+    let recaptchaVerifier;
+
+    // Helper function to set loading state on a button
+    function setLoading(button, textElement, spinnerElement, isLoading) {
+      if (isLoading) {
+        button.disabled = true;
+        textElement.classList.add('hidden');
+        spinnerElement.classList.remove('hidden');
+      } else {
+        button.disabled = false;
+        textElement.classList.remove('hidden');
+        spinnerElement.classList.add('hidden');
+      }
+    }
+
+    // Function to send the OTP
+    const sendOTP = async () => {
+      const phoneNumber = phoneInput.value;
+      if (!phoneNumber) {
+        statusMessage.textContent = 'Please enter a valid phone number.';
+        return;
+      }
+      setLoading(sendOtpBtn, sendOtpText, sendOtpSpinner, true);
+      statusMessage.textContent = 'Sending OTP...';
+
+      try {
+        confirmationResult = await signInWithPhoneNumber(auth, phoneNumber, recaptchaVerifier);
+        statusMessage.textContent = '✅ OTP has been sent! Please check your phone.';
+        phoneSection.classList.add('hidden');
+        otpSection.classList.remove('hidden');
+      } catch (error) {
+        console.error("Error sending OTP:", error);
+        statusMessage.textContent = `❌ Error: ${error.message}`;
+      } finally {
+        setLoading(sendOtpBtn, sendOtpText, sendOtpSpinner, false);
+      }
+    };
+
+    // Function to verify the OTP
+    const verifyOTP = async () => {
+      const code = otpInput.value;
+      if (!code) {
+        statusMessage.textContent = 'Please enter the OTP code.';
+        return;
+      }
+      setLoading(verifyOtpBtn, verifyOtpText, verifyOtpSpinner, true);
+      statusMessage.textContent = 'Verifying OTP...';
+
+      try {
+        const result = await confirmationResult.confirm(code);
+        const user = result.user;
+        statusMessage.innerHTML = `<span class="text-green-400">✅ Login successful!</span><br>User: ${user.phoneNumber}`;
+        console.log("Login successful:", user);
+      } catch (error) {
+        console.error("Error verifying OTP:", error);
+        statusMessage.textContent = `❌ Wrong code. Please try again.`;
+      } finally {
+        setLoading(verifyOtpBtn, verifyOtpText, verifyOtpSpinner, false);
+      }
+    };
+
+    // Attach event listeners after the DOM is loaded
+    window.onload = () => {
+      // Initialize the invisible reCAPTCHA verifier
+      recaptchaVerifier = new RecaptchaVerifier('recaptcha-container', {
+        'size': 'invisible'
+      }, auth);
+      recaptchaVerifier.render(); // This is optional but can help ensure it's ready.
+
+      sendOtpBtn.addEventListener('click', sendOTP);
+      verifyOtpBtn.addEventListener('click', verifyOTP);
+    };
+  </script>
+</body>
+</html>
