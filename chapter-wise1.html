@@ -2,47 +2,19 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
     <title>CEE Medico Chapter Backup System</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
-        :root {
-            --primary-blue: #003366;
-            --secondary-blue: #004488;
-            --light-bg: #f1f5f9;
-            --text-dark: #1f2937;
-        }
-        body {
-            font-family: 'Inter', sans-serif;
-            margin: 0;
-            background: var(--light-bg);
-            color: var(--text-dark);
-            line-height: 1.6;
-        }
-        header {
-            background-color: var(--primary-blue);
-            color: white;
-            padding: 15px 20px;
-            text-align: center;
-            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
-        }
-        .header-title { margin: 0; font-size: 2.25em; font-weight: 700; }
-        nav { display: flex; justify-content: center; gap: 20px; margin-top: 10px; flex-wrap: wrap; }
-        nav a { color: white; text-decoration: none; font-weight: 600; padding: 8px 15px; border-radius: 6px; transition: background-color 0.3s ease; }
-        nav a:hover { background-color: var(--secondary-blue); }
-        main {
-            max-width: 900px;
-            margin: 25px auto;
-            background: white;
-            padding: 30px;
-            border-radius: 12px;
-            box-shadow: 0 10px 25px rgba(0,0,0,0.1);
-        }
-        @media (max-width: 768px) {
-            .header-title { font-size: 1.8em; }
-            main { margin: 15px; padding: 20px; }
-            nav { flex-direction: column; gap: 8px; }
-        }
+        body { font-family: 'Inter', sans-serif; background: #f1f5f9; margin:0; color:#1f2937; }
+        header { background:#003366; color:white; padding:15px 20px; text-align:center; box-shadow:0 4px 6px rgba(0,0,0,0.1);}
+        .header-title { font-size:2.25em; font-weight:700; margin:0;}
+        nav { display:flex; justify-content:center; gap:20px; flex-wrap:wrap; margin-top:10px;}
+        nav a { color:white; text-decoration:none; font-weight:600; padding:8px 15px; border-radius:6px; transition:0.3s;}
+        nav a:hover { background:#004488;}
+        main { max-width:900px; margin:25px auto; background:white; padding:30px; border-radius:12px; box-shadow:0 10px 25px rgba(0,0,0,0.1);}
+        #output { min-height:200px; padding:20px; background:#f9fafb; border:1px solid #e5e7eb; border-radius:8px; white-space:pre-wrap; }
+        #message-box { display:none; padding:12px; border-radius:8px; text-align:center; margin-bottom:10px; }
     </style>
 </head>
 <body>
@@ -57,159 +29,122 @@
     </header>
 
     <main>
-        <div id="auth-status" class="text-xs text-right text-gray-500 mb-4">
-            Initializing secure session...
-        </div>
-
-        <h2 class="text-2xl font-bold text-center text-gray-800 mb-6 border-b-2 border-blue-600 pb-2">
-            📚 Secure Chapter Backup & Notes
-        </h2>
+        <div id="message-box"></div>
 
         <div class="flex flex-col md:flex-row gap-4 mb-6">
             <input type="text" id="chapterInput" placeholder="Enter Chapter Name (e.g., Human Anatomy)"
-                   class="flex-1 p-3 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 shadow-sm" />
+                   class="flex-1 p-3 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 shadow-sm"/>
             <button onclick="handleChapter()" id="action-button"
-                    class="bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 px-6 rounded-lg shadow-md transition duration-200 w-full md:w-auto">
+                    class="bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 px-6 rounded-lg shadow-md w-full md:w-auto">
                 Generate/Load Chapter
             </button>
         </div>
 
-        <div id="message-box" class="hidden p-4 rounded-lg font-medium text-center shadow-md mb-4" role="alert"></div>
-
-        <div id="output" class="min-h-[200px] mt-6 p-4 bg-gray-50 border border-gray-200 rounded-lg whitespace-pre-wrap leading-relaxed shadow-inner">
+        <div id="output">
             <p class="text-gray-500 italic">Enter a chapter name above to load existing notes or generate new AI content.</p>
         </div>
     </main>
 
     <footer class="text-center p-4 text-sm text-gray-600 border-t mt-8">
-        <p>&copy; 2025 CEE Medico Nepal. All rights reserved. | <a href="#" class="text-blue-600 hover:underline">Privacy Policy</a></p>
+        &copy; 2025 CEE Medico Nepal
     </footer>
 
+    <!-- Firebase -->
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
-        import { getAuth, signInAnonymously, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
         import { getFirestore, doc, getDoc, setDoc } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
         import { getStorage, ref, uploadString } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-storage.js";
 
+        // FIREBASE CONFIG
         const firebaseConfig = {
-            apiKey: "AIzaSyD4LvNNfulaLae9h80STIjNVnjR1_XcVfU",
-            authDomain: "chapter-wise-backup.firebaseapp.com",
-            projectId: "chapter-wise-backup",
-            storageBucket: "chapter-wise-backup.appspot.com",
-            messagingSenderId: "864698641587",
-            appId: "1:864698641587:web:d0b550579c6eb7709ed4c6"
+          apiKey: "AIzaSyDD5xBrSkX_YXzSnsKxjW8-K6W4rBfV3rg",
+          authDomain: "chapter-wise-backup.firebaseapp.com",
+          projectId: "chapter-wise-backup",
+          storageBucket: "chapter-wise-backup.firebasestorage.app",
+          messagingSenderId: "864698641587",
+          appId: "1:864698641587:web:d0b550579c6eb7709ed4c6"
         };
 
-        let app, auth, db, storage, userId = null;
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
+        const storage = getStorage(app);
 
-        function displayMessage(message, type = 'info') {
+        // Utility function for messages
+        function displayMessage(msg, type='info') {
             const box = document.getElementById("message-box");
-            box.innerText = message;
-            box.classList.remove('hidden', 'bg-red-100', 'text-red-700', 'bg-green-100', 'text-green-700', 'bg-blue-100', 'text-blue-700');
-            switch(type) {
-                case 'error': box.classList.add('bg-red-100', 'text-red-700'); break;
-                case 'success': box.classList.add('bg-green-100', 'text-green-700'); break;
-                default: box.classList.add('bg-blue-100', 'text-blue-700');
-            }
-            setTimeout(() => box.classList.add('hidden'), 5000);
+            box.innerText = msg;
+            box.style.display = "block";
+            box.style.background = type==='error' ? '#fee2e2' : type==='success' ? '#dcfce7' : '#bfdbfe';
+            box.style.color = type==='error' ? '#b91c1c' : type==='success' ? '#166534' : '#1e3a8a';
+            setTimeout(()=>box.style.display="none", 5000);
         }
 
-        async function initializeFirebase() {
-            document.getElementById("auth-status").innerText = "Connecting to Firebase...";
-            try {
-                app = initializeApp(firebaseConfig);
-                auth = getAuth(app);
-                db = getFirestore(app);
-                storage = getStorage(app);
-
-                await signInAnonymously(auth);
-
-                onAuthStateChanged(auth, (user) => {
-                    if (user) {
-                        userId = user.uid;
-                        document.getElementById("auth-status").innerHTML = `✅ Session ready. User ID: <span class="font-mono text-xs">${userId}</span>`;
-                    } else {
-                        document.getElementById("auth-status").innerText = "Authentication failed or not ready.";
-                    }
-                });
-            } catch(error) {
-                console.error(error);
-                document.getElementById("auth-status").innerText = `🚨 Firebase connection failed: ${error.message}`;
-            }
-        }
-
-        window.onload = initializeFirebase;
-
+        // Firestore doc ref
         function getChapterDocRef(chapterName) {
-            if (!userId || !db) throw new Error("App not initialized or user not authenticated.");
-            return doc(db, `artifacts/users/${userId}/chapters`, chapterName.toLowerCase().replace(/[^a-z0-9]+/g, '-'));
+            const chapterId = chapterName.toLowerCase().replace(/[^a-z0-9]+/g, '-');
+            return doc(db, "chapters", chapterId);
         }
 
+        // Hugging Face AI Content Generator
         async function generateAIContent(chapterName) {
+            const HF_TOKEN = "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";
             try {
-                const response = await fetch("https://generativeai.googleapis.com/v1beta/models/text-bison-001:generate", {
+                const response = await fetch("https://api-inference.huggingface.co/models/gpt2", {
                     method: "POST",
                     headers: {
-                        "Authorization": "Bearer AIzaSyD4LvNNfulaLae9h80STIjNVnjR1_XcVfU",
+                        "Authorization": `Bearer ${HF_TOKEN}`,
                         "Content-Type": "application/json"
                     },
-                    body: JSON.stringify({
-                        prompt: `Write detailed study notes for the CEE Medico Nepal chapter: ${chapterName}.`,
-                        temperature: 0.7,
-                        maxOutputTokens: 800
-                    })
+                    body: JSON.stringify({ inputs: `Write detailed study notes for the CEE Medico Nepal chapter: ${chapterName}.` })
                 });
-                if (!response.ok) throw new Error(`Gemini API error: ${response.status}`);
+                if(!response.ok) throw new Error(`HF API failed: ${response.status}`);
                 const data = await response.json();
-                return data?.candidates?.[0]?.content || "⚠️ AI failed to generate content.";
-            } catch (error) {
-                console.error("AI Generation Error:", error);
-                displayMessage(`AI generation failed: ${error.message}`, 'error');
-                return "⚠️ AI content generation failed.";
+                return data[0]?.generated_text || "AI failed to generate content.";
+            } catch(e) {
+                displayMessage("AI generation failed: "+e.message,'error');
+                return "⚠️ AI generation failed.";
             }
         }
 
         async function handleChapter() {
             const chapterInput = document.getElementById("chapterInput");
-            const chapterName = chapterInput.value.trim();
             const output = document.getElementById("output");
+            const chapterName = chapterInput.value.trim();
             const actionButton = document.getElementById("action-button");
 
-            if (!chapterName) { displayMessage("Please enter a chapter name.", 'error'); return; }
-            if (!userId) { displayMessage("Authentication not ready. Please wait.", 'error'); return; }
+            if(!chapterName) { displayMessage("Please enter chapter name.",'error'); return; }
 
             output.innerHTML = `<p class="text-blue-500 italic">⏳ Checking Firebase for ${chapterName}...</p>`;
             actionButton.disabled = true;
 
-            try {
-                const docRef = getChapterDocRef(chapterName);
-                const docSnap = await getDoc(docRef);
+            const docRef = getChapterDocRef(chapterName);
 
-                if (docSnap.exists()) {
-                    output.innerHTML = `<p class="text-green-600 font-semibold">📂 Loaded from Secure Backup:</p><br>` + (docSnap.data().content || 'No content found.');
-                    displayMessage(`Loaded chapter notes for "${chapterName}".`, 'success');
+            try {
+                const docSnap = await getDoc(docRef);
+                if(docSnap.exists()) {
+                    const content = docSnap.data().content || "No content found.";
+                    output.innerHTML = `<p class="text-green-600 font-semibold">📂 Loaded from backup:</p><br>` + content;
+                    displayMessage(`Loaded chapter "${chapterName}" from Firebase.`,'success');
                 } else {
                     output.innerHTML = `<p class="text-yellow-600 font-semibold">🤖 Generating new content for ${chapterName}...</p>`;
                     const aiText = await generateAIContent(chapterName);
 
-                    if (aiText.includes("⚠️ AI content generation failed.")) {
-                        output.innerHTML = `<p class="text-red-600">${aiText}</p>`;
-                        return;
-                    }
+                    // Save to Firestore
+                    await setDoc(docRef, { chapter: chapterName, content: aiText, timestamp: Date.now() });
 
-                    await setDoc(docRef, { chapter: chapterName, content: aiText, timestamp: Date.now(), userId });
-
-                    const backupRef = ref(storage, `artifacts/users/${userId}/backups/${chapterName.toLowerCase().replace(/[^a-z0-9]+/g, '-')}.json`);
+                    // Backup to Storage
+                    const backupRef = ref(storage, `backups/${chapterName.toLowerCase().replace(/[^a-z0-9]+/g,'-')}.json`);
                     await uploadString(backupRef, JSON.stringify({ chapter: chapterName, content: aiText }), 'raw');
 
-                    output.innerHTML = `<p class="text-green-600 font-semibold">✅ Generated & Secured:</p><br>` + aiText;
-                    displayMessage(`Notes generated and saved securely for "${chapterName}".`, 'success');
+                    output.innerHTML = `<p class="text-green-600 font-semibold">✅ Generated & backed up:</p><br>` + aiText;
+                    displayMessage(`Generated and backed up "${chapterName}" successfully.`,'success');
                 }
-            } catch(error) {
-                console.error(error);
-                output.innerHTML = `<p class="text-red-600">🚨 An error occurred: ${error.message}</p>`;
-                displayMessage(`Operation failed: ${error.message}`, 'error');
-            } finally { actionButton.disabled = false; }
+            } catch(e) {
+                output.innerHTML = `<p class="text-red-600">🚨 Error: ${e.message}</p>`;
+                displayMessage(`Operation failed: ${e.message}`,'error');
+            } finally {
+                actionButton.disabled = false;
+            }
         }
         window.handleChapter = handleChapter;
     </script>
