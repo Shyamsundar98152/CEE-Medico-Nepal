@@ -1,13 +1,13 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <script src="https://cdn.tailwindcss.com"></script>
+    <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
     <title>CEE Medico Chapter Backup System</title>
+    <script src="https://cdn.tailwindcss.com"></script>
     <style>
-        /* Define the CEE Medico color palette and font */
         :root {
-            --primary-blue: #003366; /* Deep Blue */
+            --primary-blue: #003366;
             --secondary-blue: #004488;
             --light-bg: #f1f5f9;
             --text-dark: #1f2937;
@@ -16,10 +16,9 @@
             font-family: 'Inter', sans-serif;
             margin: 0;
             background: var(--light-bg);
-            line-height: 1.6;
             color: var(--text-dark);
+            line-height: 1.6;
         }
-        /* Custom Header Styling for CEE Medico Look */
         header {
             background-color: var(--primary-blue);
             color: white;
@@ -39,7 +38,6 @@
             border-radius: 12px;
             box-shadow: 0 10px 25px rgba(0,0,0,0.1);
         }
-        /* Responsive adjustments */
         @media (max-width: 768px) {
             .header-title { font-size: 1.8em; }
             main { margin: 15px; padding: 20px; }
@@ -48,7 +46,6 @@
     </style>
 </head>
 <body>
-
     <header>
         <div class="header-title">CEE Medico Nepal</div>
         <nav>
@@ -77,13 +74,11 @@
             </button>
         </div>
 
-        <!-- Custom Modal/Message Box (Replaces alert()) -->
         <div id="message-box" class="hidden p-4 rounded-lg font-medium text-center shadow-md mb-4" role="alert"></div>
 
         <div id="output" class="min-h-[200px] mt-6 p-4 bg-gray-50 border border-gray-200 rounded-lg whitespace-pre-wrap leading-relaxed shadow-inner">
             <p class="text-gray-500 italic">Enter a chapter name above to load existing notes or generate new AI content.</p>
         </div>
-
     </main>
 
     <footer class="text-center p-4 text-sm text-gray-600 border-t mt-8">
@@ -91,126 +86,82 @@
     </footer>
 
     <script type="module">
-        // Standard Firebase Imports (using CDN paths for modular use in a single HTML file)
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
-        import { getAuth, signInAnonymously, signInWithCustomToken, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+        import { getAuth, signInAnonymously, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
         import { getFirestore, doc, getDoc, setDoc } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
         import { getStorage, ref, uploadString } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-storage.js";
 
-        // --- MANDATORY CANVAS GLOBAL VARIABLE INITIALIZATION ---
-        const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
-        const firebaseConfig = typeof __firebase_config !== 'undefined' ? JSON.parse(__firebase_config) : null;
-        const initialAuthToken = typeof __initial_auth_token !== 'undefined' ? __initial_auth_token : null;
+        const firebaseConfig = {
+            apiKey: "AIzaSyD4LvNNfulaLae9h80STIjNVnjR1_XcVfU",
+            authDomain: "chapter-wise-backup.firebaseapp.com",
+            projectId: "chapter-wise-backup",
+            storageBucket: "chapter-wise-backup.appspot.com",
+            messagingSenderId: "864698641587",
+            appId: "1:864698641587:web:d0b550579c6eb7709ed4c6"
+        };
 
         let app, auth, db, storage, userId = null;
 
-        /**
-         * Utility to display non-blocking messages (replacing alert()).
-         * @param {string} message - The message content.
-         * @param {string} type - 'error', 'success', or 'info'.
-         */
         function displayMessage(message, type = 'info') {
             const box = document.getElementById("message-box");
             box.innerText = message;
             box.classList.remove('hidden', 'bg-red-100', 'text-red-700', 'bg-green-100', 'text-green-700', 'bg-blue-100', 'text-blue-700');
-
-            switch (type) {
-                case 'error':
-                    box.classList.add('bg-red-100', 'text-red-700');
-                    break;
-                case 'success':
-                    box.classList.add('bg-green-100', 'text-green-700');
-                    break;
-                default: // info
-                    box.classList.add('bg-blue-100', 'text-blue-700');
+            switch(type) {
+                case 'error': box.classList.add('bg-red-100', 'text-red-700'); break;
+                case 'success': box.classList.add('bg-green-100', 'text-green-700'); break;
+                default: box.classList.add('bg-blue-100', 'text-blue-700');
             }
             setTimeout(() => box.classList.add('hidden'), 5000);
         }
 
-        /**
-         * Initializes Firebase and authenticates the user using the provided token or anonymously.
-         */
         async function initializeFirebase() {
-            const authStatus = document.getElementById("auth-status");
-            authStatus.innerText = "Connecting to Firebase...";
-
-            if (!firebaseConfig) {
-                authStatus.innerText = "Error: Firebase configuration missing.";
-                return;
-            }
-
+            document.getElementById("auth-status").innerText = "Connecting to Firebase...";
             try {
                 app = initializeApp(firebaseConfig);
                 auth = getAuth(app);
                 db = getFirestore(app);
                 storage = getStorage(app);
 
-                authStatus.innerText = "Authenticating user...";
+                await signInAnonymously(auth);
 
-                if (initialAuthToken) {
-                    await signInWithCustomToken(auth, initialAuthToken);
-                } else {
-                    // Fallback to anonymous sign-in if no custom token is available
-                    await signInAnonymously(auth);
-                }
-
-                // Listener to capture the authenticated user ID (UID)
                 onAuthStateChanged(auth, (user) => {
                     if (user) {
                         userId = user.uid;
-                        authStatus.innerHTML = `✅ Session ready. User ID: <span class="font-mono text-xs">${userId}</span>`;
+                        document.getElementById("auth-status").innerHTML = `✅ Session ready. User ID: <span class="font-mono text-xs">${userId}</span>`;
                     } else {
-                        userId = null;
-                        authStatus.innerText = "Authentication failed or not ready.";
+                        document.getElementById("auth-status").innerText = "Authentication failed or not ready.";
                     }
                 });
-
-            } catch (error) {
-                console.error("Firebase Initialization Error:", error);
-                authStatus.innerText = `🚨 Firebase connection failed: ${error.message}`;
+            } catch(error) {
+                console.error(error);
+                document.getElementById("auth-status").innerText = `🚨 Firebase connection failed: ${error.message}`;
             }
         }
-        
+
         window.onload = initializeFirebase;
 
-
-        /**
-         * Constructs the secure, private Firestore document reference path.
-         * Path: /artifacts/{appId}/users/{userId}/chapters/{chapterName}
-         */
         function getChapterDocRef(chapterName) {
-            if (!userId || !db) {
-                throw new Error("Application not fully initialized or user not authenticated.");
-            }
-            // Use the secure private path structure
-            const securePath = `artifacts/${appId}/users/${userId}/chapters`;
-            return doc(db, securePath, chapterName);
+            if (!userId || !db) throw new Error("App not initialized or user not authenticated.");
+            return doc(db, `artifacts/users/${userId}/chapters`, chapterName.toLowerCase().replace(/[^a-z0-9]+/g, '-'));
         }
 
-
-        // AI Generator (Hugging Face Free Model)
         async function generateAIContent(chapterName) {
-            // NOTE: The Authorization token below is a placeholder and should be replaced 
-            // with a valid, secure token in a production environment.
-            const HF_TOKEN = "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"; 
-
             try {
-                const response = await fetch("https://api-inference.huggingface.co/models/gpt2", {
+                const response = await fetch("https://generativeai.googleapis.com/v1beta/models/text-bison-001:generate", {
                     method: "POST",
                     headers: {
-                        "Authorization": `Bearer ${HF_TOKEN}`, 
+                        "Authorization": "Bearer AIzaSyD4LvNNfulaLae9h80STIjNVnjR1_XcVfU",
                         "Content-Type": "application/json"
                     },
-                    body: JSON.stringify({ inputs: `Write detailed study notes for the CEE Medico Nepal chapter: ${chapterName}.` })
+                    body: JSON.stringify({
+                        prompt: `Write detailed study notes for the CEE Medico Nepal chapter: ${chapterName}.`,
+                        temperature: 0.7,
+                        maxOutputTokens: 800
+                    })
                 });
-
-                if (!response.ok) {
-                    throw new Error(`Hugging Face API failed with status: ${response.status}`);
-                }
-
+                if (!response.ok) throw new Error(`Gemini API error: ${response.status}`);
                 const data = await response.json();
-                return data[0]?.generated_text || "⚠️ AI failed to generate content.";
-
+                return data?.candidates?.[0]?.content || "⚠️ AI failed to generate content.";
             } catch (error) {
                 console.error("AI Generation Error:", error);
                 displayMessage(`AI generation failed: ${error.message}`, 'error');
@@ -218,41 +169,27 @@
             }
         }
 
-
-        // Handle Chapter Load/Generate
         async function handleChapter() {
             const chapterInput = document.getElementById("chapterInput");
             const chapterName = chapterInput.value.trim();
             const output = document.getElementById("output");
             const actionButton = document.getElementById("action-button");
-            
-            if (!chapterName) {
-                displayMessage("Please enter a chapter name.", 'error');
-                return;
-            }
-            if (!userId) {
-                displayMessage("Authentication not ready. Please wait a moment.", 'error');
-                return;
-            }
+
+            if (!chapterName) { displayMessage("Please enter a chapter name.", 'error'); return; }
+            if (!userId) { displayMessage("Authentication not ready. Please wait.", 'error'); return; }
 
             output.innerHTML = `<p class="text-blue-500 italic">⏳ Checking Firebase for ${chapterName}...</p>`;
             actionButton.disabled = true;
 
-            const chapterId = chapterName.toLowerCase().replace(/[^a-z0-9]+/g, '-');
-
             try {
-                const docRef = getChapterDocRef(chapterId);
+                const docRef = getChapterDocRef(chapterName);
                 const docSnap = await getDoc(docRef);
 
                 if (docSnap.exists()) {
-                    // Load from Firestore
-                    const content = docSnap.data().content || 'No content found.';
-                    output.innerHTML = `<p class="text-green-600 font-semibold">📂 Loaded from Secure Backup:</p><br>` + content;
+                    output.innerHTML = `<p class="text-green-600 font-semibold">📂 Loaded from Secure Backup:</p><br>` + (docSnap.data().content || 'No content found.');
                     displayMessage(`Loaded chapter notes for "${chapterName}".`, 'success');
                 } else {
-                    // Generate new AI content
                     output.innerHTML = `<p class="text-yellow-600 font-semibold">🤖 Generating new content for ${chapterName}...</p>`;
-                    
                     const aiText = await generateAIContent(chapterName);
 
                     if (aiText.includes("⚠️ AI content generation failed.")) {
@@ -260,28 +197,19 @@
                         return;
                     }
 
-                    // 1. Save to Firestore (Primary private storage)
-                    await setDoc(docRef, { 
-                        chapter: chapterName,
-                        content: aiText, 
-                        timestamp: Date.now(),
-                        userId: userId 
-                    });
+                    await setDoc(docRef, { chapter: chapterName, content: aiText, timestamp: Date.now(), userId });
 
-                    // 2. Backup to Storage as JSON (Secondary backup - useful for large content)
-                    const backupRef = ref(storage, `artifacts/${appId}/users/${userId}/backups/${chapterId}.json`);
+                    const backupRef = ref(storage, `artifacts/users/${userId}/backups/${chapterName.toLowerCase().replace(/[^a-z0-9]+/g, '-')}.json`);
                     await uploadString(backupRef, JSON.stringify({ chapter: chapterName, content: aiText }), 'raw');
 
                     output.innerHTML = `<p class="text-green-600 font-semibold">✅ Generated & Secured:</p><br>` + aiText;
-                    displayMessage(`Notes generated and saved securely to Firestore and Storage for "${chapterName}".`, 'success');
+                    displayMessage(`Notes generated and saved securely for "${chapterName}".`, 'success');
                 }
-            } catch (error) {
-                console.error("Chapter processing error:", error);
-                output.innerHTML = `<p class="text-red-600">🚨 An error occurred: ${error.message}. Check console for details.</p>`;
+            } catch(error) {
+                console.error(error);
+                output.innerHTML = `<p class="text-red-600">🚨 An error occurred: ${error.message}</p>`;
                 displayMessage(`Operation failed: ${error.message}`, 'error');
-            } finally {
-                actionButton.disabled = false;
-            }
+            } finally { actionButton.disabled = false; }
         }
         window.handleChapter = handleChapter;
     </script>
