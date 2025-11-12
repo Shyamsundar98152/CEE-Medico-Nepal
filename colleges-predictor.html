@@ -1,0 +1,257 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CEE Nepal Rank Predictor (Multi-Round)</title>
+    <!-- Load Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        /* Custom styles for a clean, modern look */
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f3f4f6;
+        }
+    </style>
+</head>
+<body class="min-h-screen flex items-start justify-center p-4 sm:p-8">
+
+    <div class="w-full max-w-2xl space-y-8">
+
+        <!-- Header/Input Card -->
+        <div class="bg-white p-6 sm:p-8 rounded-xl shadow-2xl border-t-8 border-blue-600">
+            <h1 class="text-3xl sm:text-4xl font-extrabold text-gray-800 mb-2 text-center">
+                CEE Medico Nepal College Predictor (Paying Quota)
+            </h1>
+            <p class="text-md text-gray-500 mb-6 text-center">
+                Check your admission chances into MBBS colleges based on official paying quota cut-offs.
+            </p>
+
+            <div class="flex flex-col gap-4">
+                
+                <!-- Rank Input -->
+                <div class="w-full">
+                    <label for="cee-rank" class="block text-sm font-medium text-gray-700 mb-2">
+                        Enter Your CEE Rank (e.g., 3200)
+                    </label>
+                    <input type="number" id="cee-rank" placeholder="Your CEE Rank"
+                           class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition duration-150 shadow-inner"
+                           min="1" required>
+                </div>
+                
+
+                <!-- Prediction Button -->
+                <button id="predict-button" onclick="predictCollege()"
+                        class="w-full px-6 py-3 bg-blue-600 text-white font-semibold rounded-lg shadow-lg hover:bg-blue-700 transition duration-300 transform hover:scale-[1.01] active:scale-100 focus:outline-none focus:ring-4 focus:ring-blue-300">
+                    <div class="flex items-center justify-center">
+                        <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path></svg>
+                        Predict Colleges
+                    </div>
+                </button>
+            </div>
+            
+            <p id="error-message" class="text-red-600 text-sm mt-4 hidden">Please enter a valid rank.</p>
+        </div>
+
+        <!-- Results Area -->
+        <div id="results-container" class="hidden bg-white p-6 sm:p-8 rounded-xl shadow-xl">
+            <h2 class="text-2xl font-bold text-gray-800 mb-4 border-b-2 border-green-500 pb-2">
+                Prediction Results by Round
+            </h2>
+            
+            <div id="prediction-list" class="space-y-6">
+                <!-- Dynamic results grouped by round will be inserted here -->
+            </div>
+            
+            <div id="no-results" class="hidden bg-red-50 border border-red-200 text-red-700 p-4 rounded-lg mt-6">
+                <p class="font-semibold">No admission predicted in the listed rounds for the MBBS Paying Quota.</p>
+                <p class="text-sm">Based on the provided data, your rank does not meet the final cutoff.</p>
+            </div>
+        </div>
+        
+        <!-- Data Disclaimer -->
+        <div class="text-center p-4 rounded-xl bg-yellow-50 border border-yellow-200 shadow-md">
+            <p class="text-xs text-yellow-800 font-medium">
+                Data Source: The cutoffs used are the **last admission ranks (Wrap-up Round)** for the MBBS Paying Quota, as provided by the user. Earlier round cutoffs are estimated based on typical rank movement.
+            </p>
+        </div>
+
+    </div>
+
+    <script>
+        // --- CEE College Data (Based on User-Provided Official Paying Quota Cut-offs) ---
+        // The user provided the final CEE Cut-off Rank, which is used as the 'Wrap-up Round' cutoff.
+        // Earlier rounds (1st and 2nd Matching) are estimated to be slightly stricter.
+        
+        const collegeCutoffData = [
+            { name: "Maharajgunj Medical Campus (IOM), Kathmandu", cutoff: 554 },
+            { name: "Patan Academy of Health Sciences, Lalitpur", cutoff: 567 },
+            { name: "Nepalese Army Institute of Health Sciences", cutoff: 905 },
+            { name: "K.U. School of Medical Sciences, Dhulikhel", cutoff: 934 },
+            { name: "B.P. Koirala Institute of Health Sciences, Dharan", cutoff: 1222 },
+            { name: "Kathmandu Medical College", cutoff: 2161 },
+            { name: "Nepal Medical College", cutoff: 2203 },
+            { name: "KIST Medical College", cutoff: 2294 },
+            { name: "Manipal Medical College", cutoff: 2517 },
+            { name: "Chitwan Medical College", cutoff: 2970 },
+            { name: "College of Medical Sciences, Bharatpur", cutoff: 2976 },
+            { name: "Universal College of Medical Sciences", cutoff: 3312 },
+            { name: "Nobel Medical College", cutoff: 3372 },
+            { name: "Nepalgunj Medical College", cutoff: 3475 },
+            { name: "Birat Medical College", cutoff: 3588 },
+            { name: "Devdaha Medical College", cutoff: 3743 },
+            { name: "Gandaki Medical College", cutoff: 3773 },
+            { name: "National Medical College", cutoff: 3812 },
+            { name: "Lumbini Medical College", cutoff: 3837 },
+            { name: "Karnali Academy of Health Sciences", cutoff: 3860 },
+            { name: "Janaki Medical College", cutoff: 3899 },
+        ];
+        
+        // Function to approximate cutoffs for earlier rounds
+        const calculateRoundCutoffs = (finalCutoff) => {
+            // Estimate Round 1 (Strictest): Approx 10% tighter than final or a fixed margin for top colleges
+            let r1Margin = 0;
+            if (finalCutoff <= 1000) {
+                r1Margin = 30; // Top colleges have smaller rank jumps
+            } else if (finalCutoff <= 2500) {
+                r1Margin = 150;
+            } else {
+                r1Margin = 300; // Lower ranked colleges see bigger jumps
+            }
+            
+            const round1 = Math.max(1, finalCutoff - r1Margin);
+            
+            // Estimate Round 2: Somewhere between Round 1 and the final cutoff
+            const round2 = Math.floor(round1 + ((finalCutoff - round1) * 0.5));
+            
+            return {
+                "1st Matching": round1,
+                "2nd Matching": round2,
+                "Wrap-up Round": finalCutoff,
+            };
+        };
+
+        const COLLEGE_DATA = collegeCutoffData.map(data => ({
+            name: data.name,
+            category: "MBBS (Paying Quota)",
+            program: "MBBS",
+            cutoffs: calculateRoundCutoffs(data.cutoff)
+        }));
+
+
+        // Define the order of rounds for processing and display
+        const ROUND_ORDER = ["1st Matching", "2nd Matching", "Wrap-up Round"];
+
+        function predictCollege() {
+            const rankInput = document.getElementById('cee-rank');
+            const userRank = parseInt(rankInput.value.trim());
+            
+            const resultsContainer = document.getElementById('results-container');
+            const predictionList = document.getElementById('prediction-list');
+            const errorMessage = document.getElementById('error-message');
+            const noResults = document.getElementById('no-results');
+
+            // 1. Input Validation
+            if (isNaN(userRank) || userRank <= 0) {
+                errorMessage.classList.remove('hidden');
+                resultsContainer.classList.add('hidden');
+                return;
+            }
+            errorMessage.classList.add('hidden');
+            
+            // Clear previous results
+            predictionList.innerHTML = '';
+            noResults.classList.add('hidden');
+            
+            // 2. Filtering Logic: No filtering needed as the data is only for MBBS Paying Quota
+            const filteredColleges = COLLEGE_DATA;
+
+
+            // 3. Prediction Logic: Determine the EARLIEST round of admission
+            const roundPredictions = {
+                "1st Matching": [],
+                "2nd Matching": [],
+                "Wrap-up Round": [],
+            };
+            
+            filteredColleges.forEach(college => {
+                let predictedRound = null;
+                let predictedCutoff = null;
+
+                // Check rounds in order: 1st -> 2nd -> Wrap-up
+                for (const round of ROUND_ORDER) {
+                    const cutoff = college.cutoffs[round];
+                    // A lower rank number is better (higher merit), so rank <= cutoff means a chance.
+                    if (userRank <= cutoff) {
+                        predictedRound = round;
+                        predictedCutoff = cutoff;
+                        break; // Found the earliest round, stop checking
+                    }
+                }
+
+                if (predictedRound) {
+                    roundPredictions[predictedRound].push({
+                        ...college,
+                        predictedRound,
+                        predictedCutoff
+                    });
+                }
+            });
+
+            // 4. Render Results
+            let totalCollegesPredicted = 0;
+
+            ROUND_ORDER.forEach(round => {
+                const collegesInRound = roundPredictions[round];
+                
+                if (collegesInRound.length > 0) {
+                    totalCollegesPredicted += collegesInRound.length;
+
+                    // Create the round header
+                    const roundHeader = document.createElement('h3');
+                    roundHeader.className = 'text-xl font-semibold text-blue-800 border-l-4 border-blue-500 pl-3 pt-2 mt-4 mb-2';
+                    roundHeader.textContent = `Predicted in ${round}`;
+                    predictionList.appendChild(roundHeader);
+
+                    // Create list container for colleges in this round
+                    const roundCollegesContainer = document.createElement('div');
+                    roundCollegesContainer.className = 'space-y-3';
+                    
+                    // Sort for readability (hardest to easiest)
+                    collegesInRound.sort((a, b) => a.predictedCutoff - b.predictedCutoff); 
+                    
+                    // Render individual college cards
+                    collegesInRound.forEach(college => {
+                        const listItem = document.createElement('div');
+                        listItem.className = `border border-gray-200 p-4 rounded-xl shadow-md transition duration-300 bg-white hover:bg-gray-50`;
+                        
+                        listItem.innerHTML = `
+                            <p class="font-bold text-lg text-green-700">${college.name}</p>
+                            <div class="flex flex-col sm:flex-row sm:items-center justify-between text-sm text-gray-600 mt-1">
+                                <span class="font-medium text-blue-700">${college.category}</span>
+                                <span class="mt-1 sm:mt-0">
+                                    Cutoff Rank (for this round): <span class="font-semibold text-green-700 bg-green-200 px-2 py-0.5 rounded-md">${college.predictedCutoff}</span>
+                                </span>
+                            </div>
+                            <p class="text-xs text-gray-500 mt-1">
+                                Your Rank (${userRank}) is eligible for admission in this round.
+                            </p>
+                        `;
+                        roundCollegesContainer.appendChild(listItem);
+                    });
+                    predictionList.appendChild(roundCollegesContainer);
+                }
+            });
+
+            // 5. Show/Hide Results Container
+            if (totalCollegesPredicted > 0) {
+                resultsContainer.classList.remove('hidden');
+                noResults.classList.add('hidden');
+            } else {
+                resultsContainer.classList.remove('hidden');
+                noResults.classList.remove('hidden');
+            }
+        }
+    </script>
+</body>
+</html>
