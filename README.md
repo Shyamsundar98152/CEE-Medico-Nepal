@@ -41,7 +41,7 @@
 
 - `/physics`, `/chemistry`, `/zoology`, `/botany`, `/mat` – Chapterwise question sets
 - `mock-test/` – Full-length timed **CEE Mock Tests**
-- `sitemap.xml` – SEO Sitemap for better indexing
+- `sitemap-new.xml` – SEO Sitemap for better indexing
 - `ads.txt` – For ad configuration
 - `robots.txt` – Search engine crawling management
 
