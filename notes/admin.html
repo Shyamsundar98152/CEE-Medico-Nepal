@@ -2,7 +2,11 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<title>Admin Login</title>
+<title>Admin Panel Login</title>
+
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap" rel="stylesheet">
 
 <script type="importmap">
 {
@@ -16,104 +20,307 @@
 
 <style>
 body{
-  font-family:Arial;
+  font-family:Inter;
   background:#f1f5f9;
+  margin:0;
+  padding:0;
+}
+
+.center{
   display:flex;
   justify-content:center;
   align-items:center;
   height:100vh;
 }
 
-.box{
+.card{
   background:white;
-  padding:30px;
+  padding:25px;
   border-radius:16px;
   width:320px;
-  box-shadow:0 10px 30px rgba(0,0,0,0.1);
+  box-shadow:0 10px 25px rgba(0,0,0,0.1);
 }
 
 input{
   width:100%;
   padding:12px;
   margin:10px 0;
-  border:1px solid #ccc;
   border-radius:10px;
+  border:1px solid #ccc;
 }
 
 button{
   width:100%;
   padding:12px;
   border:none;
+  border-radius:10px;
   background:#0ea5e9;
   color:white;
-  border-radius:10px;
+  font-weight:600;
   cursor:pointer;
-  font-weight:bold;
 }
+
+.hidden{
+  display:none;
+}
+
+.container{
+  max-width:1100px;
+  margin:auto;
+  padding:20px;
+}
+
+.topbar{
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+}
+
+.logout{
+  background:#ef4444;
+  width:auto;
+  padding:8px 12px;
+}
+
+.note{
+  background:white;
+  padding:15px;
+  margin-top:10px;
+  border-radius:12px;
+  display:flex;
+  justify-content:space-between;
+}
+
+.small{
+  font-size:13px;
+  color:#666;
+}
+
+.actions button{
+  width:auto;
+  margin-left:5px;
+}
+
+.edit{background:#facc15;color:black;}
+.delete{background:#ef4444;}
 </style>
 </head>
 
 <body>
 
-<div class="box">
-<h2>Admin Login</h2>
+<!-- 🔐 LOGIN SCREEN -->
+<div class="center" id="loginBox">
+  <div class="card">
+    <h2>Admin Login</h2>
 
-<input type="email" id="email" placeholder="Email">
-<input type="password" id="password" placeholder="Password">
+    <input id="email" type="email" placeholder="Email">
+    <input id="password" type="password" placeholder="Password">
 
-<button id="loginBtn">Login</button>
+    <button id="loginBtn">Login</button>
 
-<p id="msg"></p>
+    <p id="msg"></p>
+  </div>
+</div>
+
+
+<!-- 📊 ADMIN DASHBOARD -->
+<div id="dashboard" class="hidden">
+
+<div class="container">
+
+<div class="topbar">
+  <h2>Admin Dashboard</h2>
+  <button class="logout" id="logoutBtn">Logout</button>
+</div>
+
+<br>
+
+<!-- ADD NOTE -->
+<div class="card">
+  <h3>Add Note</h3>
+
+  <input id="className" placeholder="Class">
+  <input id="subject" placeholder="Subject">
+  <input id="topic" placeholder="Topic">
+  <input id="pdf" placeholder="PDF Link">
+
+  <button id="addBtn">Add Note</button>
+</div>
+
+<!-- NOTES -->
+<div id="notes"></div>
+
+</div>
+
 </div>
 
 <script type="module">
 
 import { initializeApp } from "firebase/app";
-import { getAuth, signInWithEmailAndPassword } from "firebase/auth";
-import { getDatabase, ref, get } from "firebase/database";
+import {
+  getAuth,
+  signInWithEmailAndPassword,
+  onAuthStateChanged,
+  signOut
+} from "firebase/auth";
 
-const firebaseConfig = {
-  apiKey: "YOUR_API_KEY",
-  authDomain: "YOUR_PROJECT.firebaseapp.com",
-  databaseURL: "https://live-quiz-6e77b-default-rtdb.asia-southeast1.firebasedatabase.app",
-  projectId: "live-quiz-6e77b",
-  storageBucket: "YOUR_BUCKET",
-  messagingSenderId: "YOUR_ID",
-  appId: "YOUR_APP_ID"
-};
+import {
+  getDatabase,
+  ref,
+  get,
+  push,
+  set,
+  onValue,
+  remove,
+  update
+} from "firebase/database";
+
+ const firebaseConfig = {
+    apiKey: "AIzaSyDfCO-xxHPpgSfE-I6KTmsw35Lo9n2v56s",
+    authDomain: "live-quiz-6e77b.firebaseapp.com",
+    databaseURL: "https://live-quiz-6e77b-default-rtdb.asia-southeast1.firebasedatabase.app",
+    projectId: "live-quiz-6e77b",
+    storageBucket: "live-quiz-6e77b.firebasestorage.app",
+    messagingSenderId: "50057610341",
+    appId: "1:50057610341:web:d4e88673a20757d4c9328c"
+  };
+
 
 const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
 const db = getDatabase(app);
 
+const loginBox = document.getElementById("loginBox");
+const dashboard = document.getElementById("dashboard");
 const msg = document.getElementById("msg");
 
-document.getElementById("loginBtn").addEventListener("click", async () => {
+
+// 🔐 LOGIN
+document.getElementById("loginBtn").addEventListener("click", async()=>{
 
   const email = document.getElementById("email").value;
   const password = document.getElementById("password").value;
 
-  try {
+  try{
 
-    const userCred = await signInWithEmailAndPassword(auth, email, password);
-    const user = userCred.user;
+    const cred = await signInWithEmailAndPassword(auth,email,password);
+    const user = cred.user;
 
-    // CHECK ADMIN STATUS
-    const adminRef = ref(db, `admins/${user.uid}`);
-    const snap = await get(adminRef);
+    // CHECK ADMIN
+    const snap = await get(ref(db,`admins/${user.uid}`));
 
-    if (snap.exists()) {
-      msg.innerText = "Login Success... Redirecting";
-      window.location.href = "admin.html";
-    } else {
-      msg.innerText = "Access Denied (Not Admin)";
-      await auth.signOut();
+    if(!snap.exists()){
+      msg.innerText = "Not Admin Access";
+      await signOut(auth);
+      return;
     }
 
-  } catch (err) {
+    loginBox.classList.add("hidden");
+    dashboard.classList.remove("hidden");
+
+    loadNotes();
+
+  }catch(err){
     msg.innerText = err.message;
   }
 
+});
+
+
+// 🔐 AUTO CHECK
+onAuthStateChanged(auth, async(user)=>{
+
+  if(user){
+
+    const snap = await get(ref(db,`admins/${user.uid}`));
+
+    if(snap.exists()){
+      loginBox.classList.add("hidden");
+      dashboard.classList.remove("hidden");
+      loadNotes();
+    }
+
+  }
+
+});
+
+
+// ➕ ADD NOTE
+document.getElementById("addBtn").addEventListener("click", async()=>{
+
+  const className = document.getElementById("className").value;
+  const subject = document.getElementById("subject").value;
+  const topic = document.getElementById("topic").value;
+  const pdf = document.getElementById("pdf").value;
+
+  const newRef = push(ref(db,"notes"));
+
+  await set(newRef,{
+    class:className,
+    subject,
+    topic,
+    pdfUrl:pdf,
+    downloads:0,
+    createdAt:Date.now()
+  });
+
+});
+
+
+// 📄 LOAD NOTES
+function loadNotes(){
+
+  onValue(ref(db,"notes"),(snap)=>{
+
+    const notesDiv = document.getElementById("notes");
+    notesDiv.innerHTML="";
+
+    snap.forEach(child=>{
+
+      const n = child.val();
+
+      notesDiv.innerHTML += `
+      <div class="note">
+        <div>
+          <b>${n.topic}</b><br>
+          <span class="small">${n.class} • ${n.subject}</span>
+        </div>
+
+        <div class="actions">
+          <button class="edit" onclick="editNote('${child.key}')">Edit</button>
+          <button class="delete" onclick="deleteNote('${child.key}')">Delete</button>
+        </div>
+      </div>
+      `;
+
+    });
+
+  });
+
+}
+
+
+// 🗑 DELETE
+window.deleteNote = async(id)=>{
+  await remove(ref(db,`notes/${id}`));
+}
+
+
+// ✏ EDIT
+window.editNote = async(id)=>{
+  const t = prompt("New Topic");
+  if(!t) return;
+
+  await update(ref(db,`notes/${id}`),{
+    topic:t
+  });
+}
+
+
+// 🚪 LOGOUT
+document.getElementById("logoutBtn").addEventListener("click",async()=>{
+  await signOut(auth);
+  location.reload();
 });
 
 </script>
