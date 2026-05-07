@@ -1,0 +1,386 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CEE Medico Admin</title>
+
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+
+<link rel="stylesheet"
+href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css"/>
+
+<script type="importmap">
+{
+"imports": {
+"firebase/app": "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js",
+"firebase/auth": "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js",
+"firebase/database": "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js"
+}
+}
+</script>
+
+<style>
+
+*{
+margin:0;
+padding:0;
+box-sizing:border-box;
+font-family:'Inter',sans-serif;
+}
+
+body{
+background:#f1f5f9;
+padding:30px;
+}
+
+.container{
+max-width:1300px;
+margin:auto;
+}
+
+.topbar{
+display:flex;
+justify-content:space-between;
+align-items:center;
+margin-bottom:30px;
+}
+
+.title{
+font-size:34px;
+font-weight:800;
+}
+
+.grid{
+display:grid;
+grid-template-columns:400px 1fr;
+gap:25px;
+}
+
+.card{
+background:white;
+padding:25px;
+border-radius:24px;
+}
+
+.input{
+width:100%;
+padding:14px;
+margin-bottom:15px;
+border-radius:14px;
+border:1px solid #cbd5e1;
+}
+
+.btn{
+padding:14px 18px;
+border:none;
+border-radius:14px;
+cursor:pointer;
+font-weight:700;
+}
+
+.btn-primary{
+background:#0ea5e9;
+color:white;
+width:100%;
+}
+
+.notes{
+display:grid;
+gap:18px;
+}
+
+.note{
+background:white;
+padding:20px;
+border-radius:22px;
+display:flex;
+justify-content:space-between;
+align-items:center;
+}
+
+.note-info h3{
+margin-bottom:8px;
+}
+
+.actions{
+display:flex;
+gap:10px;
+}
+
+.btn-edit{
+background:#facc15;
+}
+
+.btn-delete{
+background:#ef4444;
+color:white;
+}
+
+.small{
+font-size:14px;
+color:#64748b;
+}
+
+@media(max-width:900px){
+
+.grid{
+grid-template-columns:1fr;
+}
+
+}
+
+</style>
+</head>
+
+<body>
+
+<div class="container">
+
+<div class="topbar">
+
+<div class="title">
+<i class="fa-solid fa-user-shield"></i>
+Admin Panel
+</div>
+
+<button class="btn btn-delete" id="logoutBtn">
+Logout
+</button>
+
+</div>
+
+<div class="grid">
+
+<div class="card">
+
+<h2>Add New Note</h2>
+
+<br>
+
+<input type="text" id="className" class="input" placeholder="Class">
+
+<input type="text" id="subjectName" class="input" placeholder="Subject">
+
+<input type="text" id="topicName" class="input" placeholder="Topic Name">
+
+<input type="text" id="pdfUrl" class="input" placeholder="Drive Preview URL">
+
+<button class="btn btn-primary" id="addBtn">
+Add Note
+</button>
+
+</div>
+
+<div>
+
+<div class="notes" id="notesContainer"></div>
+
+</div>
+
+</div>
+
+</div>
+
+<script type="module">
+
+import { initializeApp } from "firebase/app";
+
+import {
+getAuth,
+onAuthStateChanged,
+signOut
+} from "firebase/auth";
+
+import {
+getDatabase,
+ref,
+push,
+set,
+onValue,
+remove,
+update,
+get
+} from "firebase/database";
+
+const firebaseConfig = {
+    apiKey: "AIzaSyDfCO-xxHPpgSfE-I6KTmsw35Lo9n2v56s",
+    authDomain: "live-quiz-6e77b.firebaseapp.com",
+    databaseURL: "https://live-quiz-6e77b-default-rtdb.asia-southeast1.firebasedatabase.app",
+    projectId: "live-quiz-6e77b",
+    storageBucket: "live-quiz-6e77b.firebasestorage.app",
+    messagingSenderId: "50057610341",
+    appId: "1:50057610341:web:d4e88673a20757d4c9328c"
+  
+};
+
+const app = initializeApp(firebaseConfig);
+
+const auth = getAuth(app);
+
+const db = getDatabase(app);
+
+const notesContainer = document.getElementById('notesContainer');
+
+onAuthStateChanged(auth, async(user)=>{
+
+if(!user){
+
+window.location.href='index.html';
+
+return;
+
+}
+
+const adminRef = ref(db,`admins/${user.uid}`);
+
+const snap = await get(adminRef);
+
+if(!snap.exists()){
+
+alert("Access Denied");
+
+window.location.href='dashboard.html';
+
+return;
+
+}
+
+loadNotes();
+
+});
+
+document.getElementById('addBtn').addEventListener('click',async()=>{
+
+const className = document.getElementById('className').value;
+
+const subject = document.getElementById('subjectName').value;
+
+const topic = document.getElementById('topicName').value;
+
+const pdfUrl = document.getElementById('pdfUrl').value;
+
+if(!className || !subject || !topic || !pdfUrl){
+
+alert("Fill all fields");
+
+return;
+
+}
+
+const notesRef = ref(db,'notes');
+
+const newRef = push(notesRef);
+
+await set(newRef,{
+
+class:className,
+subject:subject,
+topic:topic,
+pdfUrl:pdfUrl,
+downloads:0,
+createdAt:Date.now()
+
+});
+
+alert("Note Added");
+
+document.getElementById('className').value='';
+document.getElementById('subjectName').value='';
+document.getElementById('topicName').value='';
+document.getElementById('pdfUrl').value='';
+
+});
+
+function loadNotes(){
+
+const notesRef = ref(db,'notes');
+
+onValue(notesRef,(snapshot)=>{
+
+notesContainer.innerHTML='';
+
+if(snapshot.exists()){
+
+snapshot.forEach((child)=>{
+
+const note = child.val();
+
+notesContainer.innerHTML += `
+
+<div class="note">
+
+<div class="note-info">
+
+<h3>${note.topic}</h3>
+
+<div class="small">
+${note.class} • ${note.subject}
+</div>
+
+<div class="small">
+${note.downloads || 0} downloads
+</div>
+
+</div>
+
+<div class="actions">
+
+<button class="btn btn-edit"
+onclick="editNote('${child.key}')">
+Edit
+</button>
+
+<button class="btn btn-delete"
+onclick="deleteNote('${child.key}')">
+Delete
+</button>
+
+</div>
+
+</div>
+
+`;
+
+});
+
+}
+
+});
+
+}
+
+window.deleteNote = async(id)=>{
+
+if(confirm("Delete Note?")){
+
+await remove(ref(db,`notes/${id}`));
+
+}
+
+}
+
+window.editNote = async(id)=>{
+
+const topic = prompt("New Topic Name");
+
+if(!topic) return;
+
+await update(ref(db,`notes/${id}`),{
+topic:topic
+});
+
+}
+
+document.getElementById('logoutBtn').addEventListener('click',async()=>{
+
+await signOut(auth);
+
+window.location.href='index.html';
+
+});
+
+</script>
+
+</body>
+</html>
