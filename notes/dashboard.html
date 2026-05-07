@@ -133,7 +133,7 @@
       flex: 1;
       margin-left: var(--sidebar-width);
       transition: var(--transition);
-      min-width: 0; /* Prevents flex items from overflowing */
+      min-width: 0;
     }
 
     header {
@@ -156,7 +156,7 @@
       margin: 0 auto;
     }
 
-    /* Cards & Stats */
+    /* Stats */
     .stats-row {
       display: grid;
       grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
@@ -190,7 +190,7 @@
       font-size: 0.875rem;
     }
 
-    /* Accordion Styles */
+    /* Subject Groups */
     .subject-group {
       margin-bottom: 16px;
       border-radius: var(--radius);
@@ -250,7 +250,7 @@
     .btn-primary { background: var(--primary); color: white; }
     .btn-primary:hover { background: var(--primary-dark); }
 
-    /* Search Bar */
+    /* Search */
     .search-wrapper {
       position: relative;
       margin-bottom: 24px;
@@ -273,61 +273,55 @@
       transition: var(--transition);
     }
 
-    .search-input:focus {
-      border-color: var(--primary);
-      box-shadow: 0 0 0 4px rgba(14, 165, 233, 0.1);
-    }
-
-    /* PDF Modal */
+    /* PDF Modal (Sandboxed Viewer) */
     .pdf-modal {
       position: fixed;
       inset: 0;
-      background: rgba(15, 23, 42, 0.8);
-      backdrop-filter: blur(8px);
+      background: rgba(15, 23, 42, 0.95);
       z-index: 2000;
       display: flex;
-      align-items: flex-end;
+      align-items: center;
       justify-content: center;
     }
 
     .pdf-container {
-      background: white;
-      width: 100%;
-      height: 90vh;
-      border-radius: 24px 24px 0 0;
+      background: #1e293b;
+      width: 95%;
+      height: 95vh;
+      border-radius: 16px;
       display: flex;
       flex-direction: column;
+      position: relative;
       overflow: hidden;
-      animation: slideUp 0.4s ease-out;
-    }
-
-    @keyframes slideUp {
-      from { transform: translateY(100%); }
-      to { transform: translateY(0); }
+      box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
     }
 
     .pdf-header {
-      padding: 16px 24px;
+      padding: 12px 20px;
+      background: #0f172a;
       display: flex;
       justify-content: space-between;
       align-items: center;
-      border-bottom: 1px solid #f1f5f9;
+      border-bottom: 1px solid #334155;
     }
 
-    iframe {
+    .pdf-header h4 { color: white; font-size: 1rem; }
+
+    /* Sandboxing the iframe to prevent top-level navigation (new tabs) */
+    iframe.pdf-frame {
       flex: 1;
       width: 100%;
       border: none;
+      background: white;
     }
 
-    /* Mobile Adaptations */
+    /* Mobile */
     #menuBtn {
       display: none;
       background: #f1f5f9;
       border: none;
       padding: 10px;
       border-radius: 10px;
-      cursor: pointer;
     }
 
     .sidebar-overlay {
@@ -339,32 +333,11 @@
     }
 
     @media (max-width: 1024px) {
-      .sidebar {
-        transform: translateX(-100%);
-      }
-      .sidebar.open {
-        transform: translateX(0);
-      }
-      .main-content {
-        margin-left: 0;
-      }
-      #menuBtn {
-        display: block;
-      }
-      .sidebar-overlay.visible {
-        display: block;
-      }
-      .pdf-container {
-        height: 100vh;
-        border-radius: 0;
-      }
-    }
-
-    @media (max-width: 640px) {
-      .page-container { padding: 16px; }
-      .stats-row { grid-template-columns: 1fr 1fr; gap: 12px; }
-      .subject-content { grid-template-columns: 1fr; }
-      .logo-text { font-size: 1.1rem; }
+      .sidebar { transform: translateX(-100%); }
+      .sidebar.open { transform: translateX(0); }
+      .main-content { margin-left: 0; }
+      #menuBtn { display: block; }
+      .sidebar-overlay.visible { display: block; }
     }
   </style>
 </head>
@@ -372,10 +345,8 @@
 <body>
 
 <div class="dashboard-layout">
-  <!-- Sidebar Overlay for mobile -->
   <div class="sidebar-overlay" id="overlay"></div>
 
-  <!-- Sidebar -->
   <aside class="sidebar" id="sidebar">
     <div class="logo-section">
       <i class="fas fa-user-md"></i>
@@ -395,11 +366,7 @@
         <i class="fas fa-vial"></i>
         <span>Mock Tests</span>
       </div>
-      <div class="nav-item" data-section="favorites">
-        <i class="fas fa-bookmark"></i>
-        <span>Saved Notes</span>
-      </div>
-
+      
       <div class="nav-item logout-item" id="logoutBtn">
         <i class="fas fa-sign-out-alt"></i>
         <span>Log Out</span>
@@ -407,7 +374,6 @@
     </nav>
   </aside>
 
-  <!-- Main Content -->
   <main class="main-content">
     <header>
       <div style="display:flex; align-items:center; gap:12px;">
@@ -422,10 +388,26 @@
       </div>
     </header>
 
-    <div class="page-container" id="pageContent">
-      <!-- Content loaded dynamically here -->
-    </div>
+    <div class="page-container" id="pageContent"></div>
   </main>
+</div>
+
+<!-- Template for Note Viewer with Navigation Blocking -->
+<div id="viewerTemplate" style="display:none;">
+  <div class="pdf-modal">
+    <div class="pdf-container">
+      <div class="pdf-header">
+        <h4 id="viewerTitle">Note Viewer</h4>
+        <button class="btn" style="background:#ef4444; color:white; padding: 6px 16px;" onclick="closeViewer()">
+          <i class="fas fa-times"></i> Close
+        </button>
+      </div>
+      <!-- SANDBOX ATTR: blocks scripts and prevents navigation to new tabs or top-level windows -->
+      <iframe class="pdf-frame" id="pdfFrame" 
+              sandbox="allow-scripts allow-same-origin allow-forms"
+              src=""></iframe>
+    </div>
+  </div>
 </div>
 
 <script type="module">
@@ -450,7 +432,7 @@ const db = getDatabase(app);
 let currentUser = null;
 let notesData = {};
 
-// Mobile Sidebar Logic
+// Mobile Logic
 const sidebar = document.getElementById('sidebar');
 const overlay = document.getElementById('overlay');
 const menuBtn = document.getElementById('menuBtn');
@@ -463,14 +445,14 @@ function toggleSidebar() {
 menuBtn.onclick = toggleSidebar;
 overlay.onclick = toggleSidebar;
 
-// Router
+// Navigation
 function navigate(section) {
   document.querySelectorAll('.nav-item').forEach(i => i.classList.remove('active'));
   const activeItem = document.querySelector(`[data-section="${section}"]`);
   if(activeItem) activeItem.classList.add('active');
 
   const titleEl = document.getElementById('pageTitle');
-  if(window.innerWidth <= 1024) toggleSidebar();
+  if(window.innerWidth <= 1024 && sidebar.classList.contains('open')) toggleSidebar();
 
   switch(section) {
     case 'home':
@@ -483,16 +465,11 @@ function navigate(section) {
       break;
     case 'mock':
       titleEl.innerText = "Mock Tests";
-      renderPlaceholder("Mock Tests", "Full-length CEE model tests are being prepared. Check back soon!");
-      break;
-    case 'favorites':
-      titleEl.innerText = "Saved Notes";
-      renderPlaceholder("Saved Notes", "You haven't saved any notes yet.");
+      renderPlaceholder("Mock Tests", "Model tests are coming soon.");
       break;
   }
 }
 
-// Render Functions
 function renderHome() {
   let noteCount = 0;
   let subCount = 0;
@@ -506,35 +483,20 @@ function renderHome() {
   const html = `
     <div class="stats-row">
       <div class="stat-card">
-        <i class="fas fa-file-alt"></i>
+        <i class="fas fa-file-medical"></i>
         <span class="stat-value">${noteCount}</span>
         <span class="stat-label">Total Notes</span>
       </div>
       <div class="stat-card">
-        <i class="fas fa-layer-group"></i>
+        <i class="fas fa-microscope"></i>
         <span class="stat-value">${subCount}</span>
         <span class="stat-label">Subjects</span>
       </div>
-      <div class="stat-card">
-        <i class="fas fa-clock"></i>
-        <span class="stat-value">Free</span>
-        <span class="stat-label">Access Type</span>
-      </div>
-      <div class="stat-card">
-        <i class="fas fa-check-circle"></i>
-        <span class="stat-value">Active</span>
-        <span class="stat-label">Account Status</span>
-      </div>
     </div>
-    
-    <div class="stat-card" style="margin-top: 24px;">
-      <h3 style="margin-bottom: 8px;">Welcome back, ${currentUser?.displayName || 'Medico'}!</h3>
-      <p style="color: var(--text-muted); font-size: 0.95rem;">
-        You have full access to our premium CEE preparation materials. Start with your favorite subject today.
-      </p>
-      <button class="btn btn-primary" style="margin-top: 20px;" onclick="navigate('notes')">
-        Browse Notes <i class="fas fa-arrow-right"></i>
-      </button>
+    <div class="stat-card" style="border-left: 4px solid var(--primary);">
+      <h3>Welcome, ${currentUser?.displayName || 'Medico'}!</h3>
+      <p style="color:var(--text-muted); margin: 10px 0;">Your CEE preparation portal is ready. Access all premium notes and track your progress.</p>
+      <button class="btn btn-primary" onclick="navigate('notes')">Open Notes <i class="fas fa-arrow-right"></i></button>
     </div>
   `;
   document.getElementById('pageContent').innerHTML = html;
@@ -544,13 +506,9 @@ function renderNotes() {
   let html = `
     <div class="search-wrapper">
       <i class="fas fa-search"></i>
-      <input type="text" class="search-input" id="noteSearch" placeholder="Search by chapter or subject...">
+      <input type="text" class="search-input" id="noteSearch" placeholder="Search chapters...">
     </div>
   `;
-
-  if(Object.keys(notesData).length === 0) {
-    html += `<p style="text-align:center; color:var(--text-muted); padding:40px;">No notes available right now.</p>`;
-  }
 
   for(let className in notesData) {
     for(let subject in notesData[className]) {
@@ -558,17 +516,18 @@ function renderNotes() {
       html += `
         <div class="subject-group">
           <button class="subject-trigger">
-            <span><i class="fas fa-folder" style="color:var(--primary); margin-right:10px;"></i> ${subject} (${className})</span>
+            <span><i class="fas fa-book" style="color:var(--primary); margin-right:10px;"></i> ${subject} (${className})</span>
             <i class="fas fa-chevron-down"></i>
           </button>
           <div class="subject-content">
             ${notes.map(note => `
-              <div class="note-card">
-                <h4 style="font-size: 0.95rem; margin-bottom: 12px; height: 2.5em; overflow: hidden;">${note.title}</h4>
-                <div style="display: flex; justify-content: space-between; align-items: center;">
-                   <span style="font-size: 0.75rem; color: var(--text-muted);"><i class="fas fa-download"></i> ${note.downloads}</span>
-                   <button class="btn btn-primary" style="padding: 6px 12px; font-size: 0.75rem;" onclick="viewPDF('${note.preview}', '${note.id}')">
-                    View <i class="fas fa-eye"></i>
+              <div class="note-card" data-title="${note.title.toLowerCase()}">
+                <h4 style="font-size:0.9rem; margin-bottom:12px;">${note.title}</h4>
+                <div style="display:flex; justify-content:space-between; align-items:center;">
+                   <span style="font-size:0.7rem; color:var(--text-muted);"><i class="fas fa-eye"></i> ${note.downloads} views</span>
+                   <button class="btn btn-primary" style="padding:5px 12px; font-size:0.75rem;" 
+                           onclick="viewNote('${note.preview}', '${note.id}', '${note.title.replace(/'/g, "\\'")}')">
+                    Study
                    </button>
                 </div>
               </div>
@@ -578,66 +537,73 @@ function renderNotes() {
       `;
     }
   }
-
   document.getElementById('pageContent').innerHTML = html;
 
-  // Accordion Logic
-  document.querySelectorAll('.subject-trigger').forEach(btn => {
-    btn.onclick = () => {
-      const content = btn.nextElementSibling;
-      const icon = btn.querySelector('.fa-chevron-down');
-      const isOpen = content.style.display === 'grid';
-      content.style.display = isOpen ? 'none' : 'grid';
-      icon.style.transform = isOpen ? 'rotate(0deg)' : 'rotate(180deg)';
-    };
-  });
-
-  // Search Logic
+  // Search
   document.getElementById('noteSearch').oninput = (e) => {
     const val = e.target.value.toLowerCase();
     document.querySelectorAll('.note-card').forEach(card => {
-      const text = card.innerText.toLowerCase();
-      card.closest('.note-card').style.display = text.includes(val) ? 'block' : 'none';
+      card.style.display = card.dataset.title.includes(val) ? 'block' : 'none';
     });
   };
+
+  // Accordion
+  document.querySelectorAll('.subject-trigger').forEach(btn => {
+    btn.onclick = () => {
+      const content = btn.nextElementSibling;
+      content.style.display = content.style.display === 'grid' ? 'none' : 'grid';
+    };
+  });
 }
 
 function renderPlaceholder(title, msg) {
   document.getElementById('pageContent').innerHTML = `
-    <div style="text-align: center; padding: 60px 20px;">
-      <div style="font-size: 4rem; color: #e2e8f0; margin-bottom: 20px;"><i class="fas fa-hard-hat"></i></div>
-      <h3 style="margin-bottom: 10px;">${title}</h3>
-      <p style="color: var(--text-muted);">${msg}</p>
+    <div style="text-align:center; padding:50px;">
+      <i class="fas fa-tools" style="font-size:3rem; color:#cbd5e1;"></i>
+      <h3>${title}</h3>
+      <p style="color:var(--text-muted);">${msg}</p>
     </div>
   `;
 }
 
-// PDF Viewer
-window.viewPDF = async (url, id) => {
-  const modal = document.createElement('div');
-  modal.className = 'pdf-modal';
-  modal.innerHTML = `
-    <div class="pdf-container">
-      <div class="pdf-header">
-        <h4 style="font-weight:700;">Document Viewer</h4>
-        <button class="btn" style="background:#fee2e2; color:#ef4444;" onclick="this.closest('.pdf-modal').remove()">Close</button>
-      </div>
-      <iframe src="${url}"></iframe>
-    </div>
-  `;
-  document.body.appendChild(modal);
+// SECURE VIEWER LOGIC
+window.viewNote = async (url, id, title) => {
+  const viewer = document.getElementById('viewerTemplate').cloneNode(true);
+  viewer.style.display = 'flex';
+  viewer.id = 'activeViewer';
+  
+  const frame = viewer.querySelector('#pdfFrame');
+  const titleEl = viewer.querySelector('#viewerTitle');
+  
+  titleEl.innerText = title;
+  
+  // URL Modification to disable external UI in common viewers if possible
+  let finalUrl = url;
+  if (url.includes('drive.google.com')) {
+      finalUrl = url.replace('/view', '/preview');
+  }
 
-  // Update download count
+  frame.src = finalUrl;
+  document.body.appendChild(viewer);
+  document.body.style.overflow = 'hidden';
+
+  // Increment view count
   try {
     const noteRef = ref(db, `notes/${id}`);
     const snap = await get(noteRef);
     if(snap.exists()) {
-      await update(noteRef, { downloads: (snap.val().downloads || 0) + 1 });
+      update(noteRef, { downloads: (snap.val().downloads || 0) + 1 });
     }
   } catch(e) {}
 };
 
-// Auth and Data Fetching
+window.closeViewer = () => {
+  const viewer = document.getElementById('activeViewer');
+  if(viewer) viewer.remove();
+  document.body.style.overflow = 'auto';
+};
+
+// Auth
 onAuthStateChanged(auth, user => {
   if(!user) {
     window.location.href = 'index.html';
@@ -645,8 +611,7 @@ onAuthStateChanged(auth, user => {
   }
   currentUser = user;
   document.getElementById('userName').innerText = user.displayName || user.email.split('@')[0];
-  
-  // Realtime Notes
+
   onValue(ref(db, 'notes'), (snapshot) => {
     notesData = {};
     if(snapshot.exists()) {
@@ -666,16 +631,11 @@ onAuthStateChanged(auth, user => {
   });
 });
 
-// Event Listeners
 document.querySelectorAll('.nav-item[data-section]').forEach(item => {
   item.onclick = () => navigate(item.dataset.section);
 });
 
-document.getElementById('logoutBtn').onclick = async () => {
-  await signOut(auth);
-  window.location.href = 'index.html';
-};
-
+document.getElementById('logoutBtn').onclick = () => signOut(auth);
 window.navigate = navigate;
 
 </script>
