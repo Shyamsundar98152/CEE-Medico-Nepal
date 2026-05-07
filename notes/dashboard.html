@@ -2,13 +2,11 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes" />
-  <title>CEE Medico Nepal | Complete Dashboard</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <title>CEE Medico Nepal | Premium Dashboard</title>
 
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
-
-  <link rel="stylesheet"
-    href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css"/>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css"/>
 
   <script type="importmap">
   {
@@ -20,398 +18,422 @@
   }
   </script>
 
-<style>
+  <style>
+    :root {
+      --primary: #0ea5e9;
+      --primary-dark: #0284c7;
+      --secondary: #3b82f6;
+      --background: #f8fafc;
+      --card-bg: #ffffff;
+      --text-dark: #0f172a;
+      --text-muted: #64748b;
+      --radius: 16px;
+      --sidebar-width: 280px;
+      --transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    }
 
-*{
-margin:0;
-padding:0;
-box-sizing:border-box;
-font-family:'Inter',sans-serif;
-}
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+      font-family: 'Inter', sans-serif;
+      -webkit-tap-highlight-color: transparent;
+    }
 
-:root{
---primary:#0ea5e9;
---secondary:#3b82f6;
---background:#f0f9ff;
---card-bg:#ffffff;
---text-dark:#0c4a6e;
---text-muted:#64748b;
---radius:18px;
---sidebar-width:280px;
---sidebar-collapsed:80px;
-}
+    body {
+      background: var(--background);
+      color: var(--text-dark);
+      line-height: 1.5;
+      overflow-x: hidden;
+    }
 
-body{
-background:var(--background);
-overflow-x:hidden;
-}
+    /* Layout Structure */
+    .dashboard-layout {
+      display: flex;
+      min-height: 100vh;
+    }
 
-.dashboard{
-display:flex;
-min-height:100vh;
-}
+    /* Sidebar */
+    .sidebar {
+      width: var(--sidebar-width);
+      background: var(--card-bg);
+      border-right: 1px solid rgba(0,0,0,0.05);
+      height: 100vh;
+      position: fixed;
+      left: 0;
+      top: 0;
+      z-index: 1000;
+      transition: var(--transition);
+      display: flex;
+      flex-direction: column;
+    }
 
-.sidebar{
-width:var(--sidebar-width);
-background:rgba(255,255,255,0.96);
-backdrop-filter:blur(12px);
-box-shadow:4px 0 24px rgba(0,0,0,0.03);
-position:fixed;
-height:100vh;
-z-index:100;
-border-right:1px solid rgba(14,165,233,0.1);
-overflow-y:auto;
-transition:0.3s;
-}
+    .logo-section {
+      padding: 24px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      border-bottom: 1px solid #f1f5f9;
+    }
 
-.sidebar.collapsed{
-width:var(--sidebar-collapsed);
-}
+    .logo-section i {
+      font-size: 24px;
+      color: var(--primary);
+      background: #e0f2fe;
+      padding: 10px;
+      border-radius: 12px;
+    }
 
-.sidebar.collapsed .nav-label,
-.sidebar.collapsed .logo-text{
-display:none;
-}
+    .logo-text {
+      font-weight: 800;
+      font-size: 1.25rem;
+      letter-spacing: -0.5px;
+      color: var(--text-dark);
+    }
 
-.sidebar.collapsed .nav-item{
-justify-content:center;
-}
+    .nav-menu {
+      padding: 16px;
+      flex: 1;
+    }
 
-.logo-area{
-padding:1.7rem;
-display:flex;
-align-items:center;
-gap:12px;
-border-bottom:1px solid #eef2ff;
-}
+    .nav-item {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 12px 16px;
+      margin-bottom: 4px;
+      border-radius: 12px;
+      cursor: pointer;
+      color: var(--text-muted);
+      font-weight: 500;
+      transition: var(--transition);
+      text-decoration: none;
+    }
 
-.logo-icon{
-font-size:2rem;
-color:var(--primary);
-}
+    .nav-item:hover, .nav-item.active {
+      background: #f1f5f9;
+      color: var(--primary);
+    }
 
-.logo-text{
-font-weight:800;
-font-size:1.3rem;
-color:var(--primary);
-}
+    .nav-item.active {
+      background: #e0f2fe;
+      color: var(--primary);
+      font-weight: 600;
+    }
 
-.nav-item{
-display:flex;
-align-items:center;
-gap:14px;
-padding:14px 18px;
-margin:8px 12px;
-border-radius:16px;
-cursor:pointer;
-transition:0.2s;
-font-weight:600;
-color:var(--text-dark);
-}
+    .logout-item {
+      margin-top: auto;
+      border-top: 1px solid #f1f5f9;
+      padding-top: 16px;
+      color: #ef4444;
+    }
 
-.nav-item:hover,
-.nav-item.active{
-background:#e0f2fe;
-color:var(--primary);
-}
+    /* Main Content */
+    .main-content {
+      flex: 1;
+      margin-left: var(--sidebar-width);
+      transition: var(--transition);
+      min-width: 0; /* Prevents flex items from overflowing */
+    }
 
-.main-content{
-flex:1;
-margin-left:var(--sidebar-width);
-padding:24px;
-transition:0.3s;
-}
+    header {
+      height: 70px;
+      background: rgba(255, 255, 255, 0.8);
+      backdrop-filter: blur(10px);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 24px;
+      position: sticky;
+      top: 0;
+      z-index: 900;
+      border-bottom: 1px solid rgba(0,0,0,0.05);
+    }
 
-.sidebar.collapsed ~ .main-content{
-margin-left:var(--sidebar-collapsed);
-}
+    .page-container {
+      padding: 24px;
+      max-width: 1200px;
+      margin: 0 auto;
+    }
 
-.top-nav{
-display:flex;
-justify-content:space-between;
-align-items:center;
-background:rgba(255,255,255,0.75);
-padding:14px 22px;
-border-radius:40px;
-margin-bottom:26px;
-}
+    /* Cards & Stats */
+    .stats-row {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 20px;
+      margin-bottom: 32px;
+    }
 
-.user-greeting{
-background:white;
-padding:8px 18px;
-border-radius:40px;
-font-weight:600;
-}
+    .stat-card {
+      background: white;
+      padding: 20px;
+      border-radius: var(--radius);
+      box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+      border: 1px solid #f1f5f9;
+    }
 
-.stat-grid{
-display:grid;
-grid-template-columns:repeat(auto-fit,minmax(240px,1fr));
-gap:20px;
-margin-bottom:28px;
-}
+    .stat-card i {
+      color: var(--primary);
+      margin-bottom: 12px;
+      display: block;
+      font-size: 20px;
+    }
 
-.stat-card{
-background:white;
-padding:24px;
-border-radius:24px;
-border:1px solid rgba(14,165,233,0.08);
-transition:0.2s;
-}
+    .stat-value {
+      font-size: 1.5rem;
+      font-weight: 700;
+      display: block;
+    }
 
-.stat-card:hover{
-transform:translateY(-3px);
-}
+    .stat-label {
+      color: var(--text-muted);
+      font-size: 0.875rem;
+    }
 
-.stat-card i{
-font-size:2rem;
-color:var(--primary);
-margin-bottom:14px;
-}
+    /* Accordion Styles */
+    .subject-group {
+      margin-bottom: 16px;
+      border-radius: var(--radius);
+      background: white;
+      border: 1px solid #f1f5f9;
+      overflow: hidden;
+    }
 
-.stat-number{
-font-size:2rem;
-font-weight:800;
-margin-bottom:6px;
-}
+    .subject-trigger {
+      width: 100%;
+      padding: 20px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      background: none;
+      border: none;
+      cursor: pointer;
+      font-size: 1rem;
+      font-weight: 600;
+      color: var(--text-dark);
+    }
 
-.subject-accordion{
-background:white;
-border-radius:24px;
-margin-bottom:16px;
-overflow:hidden;
-}
+    .subject-content {
+      display: none;
+      padding: 0 20px 20px;
+      grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+      gap: 16px;
+    }
 
-.subject-header{
-padding:18px 22px;
-display:flex;
-justify-content:space-between;
-align-items:center;
-cursor:pointer;
-font-weight:700;
-background:#fafcff;
-}
+    .note-card {
+      padding: 16px;
+      border: 1px solid #f1f5f9;
+      border-radius: 12px;
+      background: #f8fafc;
+      transition: var(--transition);
+    }
 
-.chapter-list{
-display:none;
-padding:18px;
-grid-template-columns:repeat(auto-fill,minmax(300px,1fr));
-gap:18px;
-}
+    .note-card:hover {
+      border-color: var(--primary);
+      background: white;
+      box-shadow: 0 10px 15px -3px rgba(0,0,0,0.05);
+    }
 
-.chapter-card{
-background:white;
-padding:18px;
-border-radius:20px;
-border:1px solid #e2e8f0;
-transition:0.2s;
-}
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 10px 20px;
+      border-radius: 10px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: var(--transition);
+      border: none;
+      font-size: 0.875rem;
+    }
 
-.chapter-card:hover{
-transform:translateY(-3px);
-border-color:var(--primary);
-}
+    .btn-primary { background: var(--primary); color: white; }
+    .btn-primary:hover { background: var(--primary-dark); }
 
-.btn-sm{
-background:var(--primary);
-color:white;
-border:none;
-padding:10px 16px;
-border-radius:12px;
-font-weight:600;
-cursor:pointer;
-}
+    /* Search Bar */
+    .search-wrapper {
+      position: relative;
+      margin-bottom: 24px;
+    }
 
-.pdf-modal{
-position:fixed;
-top:0;
-left:0;
-width:100%;
-height:100%;
-background:rgba(0,0,0,0.75);
-display:flex;
-justify-content:center;
-align-items:center;
-z-index:5000;
-backdrop-filter:blur(5px);
-}
+    .search-wrapper i {
+      position: absolute;
+      left: 16px;
+      top: 50%;
+      transform: translateY(-50%);
+      color: var(--text-muted);
+    }
 
-.pdf-box{
-background:white;
-width:92%;
-max-width:1100px;
-height:90vh;
-border-radius:30px;
-padding:18px;
-}
+    .search-input {
+      width: 100%;
+      padding: 14px 14px 14px 48px;
+      border-radius: 14px;
+      border: 1px solid #e2e8f0;
+      outline: none;
+      transition: var(--transition);
+    }
 
-.pdf-header{
-display:flex;
-justify-content:space-between;
-align-items:center;
-margin-bottom:12px;
-}
+    .search-input:focus {
+      border-color: var(--primary);
+      box-shadow: 0 0 0 4px rgba(14, 165, 233, 0.1);
+    }
 
-.pdf-close{
-border:none;
-background:#ef4444;
-color:white;
-padding:10px 16px;
-border-radius:12px;
-cursor:pointer;
-}
+    /* PDF Modal */
+    .pdf-modal {
+      position: fixed;
+      inset: 0;
+      background: rgba(15, 23, 42, 0.8);
+      backdrop-filter: blur(8px);
+      z-index: 2000;
+      display: flex;
+      align-items: flex-end;
+      justify-content: center;
+    }
 
-iframe{
-border:none;
-border-radius:20px;
-}
+    .pdf-container {
+      background: white;
+      width: 100%;
+      height: 90vh;
+      border-radius: 24px 24px 0 0;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+      animation: slideUp 0.4s ease-out;
+    }
 
-.option-btn{
-background:#f8fafc;
-padding:14px 18px;
-border-radius:14px;
-margin:10px 0;
-cursor:pointer;
-border:1px solid #e2e8f0;
-transition:0.2s;
-}
+    @keyframes slideUp {
+      from { transform: translateY(100%); }
+      to { transform: translateY(0); }
+    }
 
-.option-btn:hover{
-background:#e0f2fe;
-border-color:var(--primary);
-}
+    .pdf-header {
+      padding: 16px 24px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      border-bottom: 1px solid #f1f5f9;
+    }
 
-.correct-feedback{
-background:#dcfce7;
-padding:12px;
-border-radius:14px;
-margin-top:14px;
-color:#166534;
-}
+    iframe {
+      flex: 1;
+      width: 100%;
+      border: none;
+    }
 
-.wrong-feedback{
-background:#fee2e2;
-padding:12px;
-border-radius:14px;
-margin-top:14px;
-color:#991b1b;
-}
+    /* Mobile Adaptations */
+    #menuBtn {
+      display: none;
+      background: #f1f5f9;
+      border: none;
+      padding: 10px;
+      border-radius: 10px;
+      cursor: pointer;
+    }
 
-@media(max-width:768px){
+    .sidebar-overlay {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.5);
+      z-index: 999;
+    }
 
-.sidebar{
-transform:translateX(-100%);
-}
+    @media (max-width: 1024px) {
+      .sidebar {
+        transform: translateX(-100%);
+      }
+      .sidebar.open {
+        transform: translateX(0);
+      }
+      .main-content {
+        margin-left: 0;
+      }
+      #menuBtn {
+        display: block;
+      }
+      .sidebar-overlay.visible {
+        display: block;
+      }
+      .pdf-container {
+        height: 100vh;
+        border-radius: 0;
+      }
+    }
 
-.sidebar.mobile-open{
-transform:translateX(0);
-}
-
-.main-content{
-margin-left:0 !important;
-padding:16px;
-}
-
-}
-
-</style>
+    @media (max-width: 640px) {
+      .page-container { padding: 16px; }
+      .stats-row { grid-template-columns: 1fr 1fr; gap: 12px; }
+      .subject-content { grid-template-columns: 1fr; }
+      .logo-text { font-size: 1.1rem; }
+    }
+  </style>
 </head>
 
 <body>
 
-<div class="dashboard">
+<div class="dashboard-layout">
+  <!-- Sidebar Overlay for mobile -->
+  <div class="sidebar-overlay" id="overlay"></div>
 
-<aside class="sidebar" id="sidebar">
+  <!-- Sidebar -->
+  <aside class="sidebar" id="sidebar">
+    <div class="logo-section">
+      <i class="fas fa-user-md"></i>
+      <span class="logo-text">CEE Medico</span>
+    </div>
 
-<div class="logo-area">
-<i class="fas fa-stethoscope logo-icon"></i>
-<span class="logo-text">CEE Medico</span>
-</div>
+    <nav class="nav-menu">
+      <div class="nav-item active" data-section="home">
+        <i class="fas fa-th-large"></i>
+        <span>Dashboard</span>
+      </div>
+      <div class="nav-item" data-section="notes">
+        <i class="fas fa-book-open"></i>
+        <span>Notes Library</span>
+      </div>
+      <div class="nav-item" data-section="mock">
+        <i class="fas fa-vial"></i>
+        <span>Mock Tests</span>
+      </div>
+      <div class="nav-item" data-section="favorites">
+        <i class="fas fa-bookmark"></i>
+        <span>Saved Notes</span>
+      </div>
 
-<nav style="margin-top:20px;">
+      <div class="nav-item logout-item" id="logoutBtn">
+        <i class="fas fa-sign-out-alt"></i>
+        <span>Log Out</span>
+      </div>
+    </nav>
+  </aside>
 
-<div class="nav-item active" data-section="dashboard">
-<i class="fas fa-home"></i>
-<span class="nav-label">Dashboard</span>
-</div>
+  <!-- Main Content -->
+  <main class="main-content">
+    <header>
+      <div style="display:flex; align-items:center; gap:12px;">
+        <button id="menuBtn"><i class="fas fa-bars"></i></button>
+        <h2 id="pageTitle" style="font-size: 1.25rem; font-weight: 700;">Dashboard</h2>
+      </div>
+      <div id="userInfo" style="display: flex; align-items: center; gap:10px;">
+        <span id="userName" style="font-weight: 600; font-size: 0.9rem;">Loading...</span>
+        <div style="width: 35px; height: 35px; border-radius: 50%; background: #e0f2fe; display: flex; align-items: center; justify-content: center; color: var(--primary);">
+          <i class="fas fa-user"></i>
+        </div>
+      </div>
+    </header>
 
-<div class="nav-item" data-section="notes">
-<i class="fas fa-book-open"></i>
-<span class="nav-label">Notes Library</span>
-</div>
-
-<div class="nav-item" data-section="mcq">
-<i class="fas fa-brain"></i>
-<span class="nav-label">MCQ Practice</span>
-</div>
-
-<div class="nav-item" data-section="mock">
-<i class="fas fa-chart-line"></i>
-<span class="nav-label">Mock Tests</span>
-</div>
-
-<div class="nav-item" data-section="favorites">
-<i class="fas fa-heart"></i>
-<span class="nav-label">Favorites</span>
-</div>
-
-<div class="nav-item" data-section="settings">
-<i class="fas fa-cog"></i>
-<span class="nav-label">Settings</span>
-</div>
-
-<div class="nav-item" id="logoutBtn">
-<i class="fas fa-sign-out-alt"></i>
-<span class="nav-label">Logout</span>
-</div>
-
-</nav>
-
-</aside>
-
-<div class="main-content">
-
-<div class="top-nav">
-
-<button id="mobileMenuToggle"
-style="border:none;background:none;font-size:1.3rem;display:none;">
-<i class="fas fa-bars"></i>
-</button>
-
-<div class="user-greeting" id="userGreeting">
-Loading...
-</div>
-
-<div>
-<i class="fas fa-bell" style="color:var(--primary)"></i>
-</div>
-
-</div>
-
-<div id="dynamicPanel"></div>
-
-</div>
-
+    <div class="page-container" id="pageContent">
+      <!-- Content loaded dynamically here -->
+    </div>
+  </main>
 </div>
 
 <script type="module">
-
 import { initializeApp } from "firebase/app";
+import { getAuth, signOut, onAuthStateChanged } from "firebase/auth";
+import { getDatabase, ref, get, update, onValue } from "firebase/database";
 
-import {
-getAuth,
-signOut,
-onAuthStateChanged
-} from "firebase/auth";
-
-import {
-getDatabase,
-ref,
-get,
-update,
-onValue
-} from "firebase/database";
-
- const firebaseConfig = {
+const firebaseConfig = {
     apiKey: "AIzaSyDfCO-xxHPpgSfE-I6KTmsw35Lo9n2v56s",
     authDomain: "live-quiz-6e77b.firebaseapp.com",
     databaseURL: "https://live-quiz-6e77b-default-rtdb.asia-southeast1.firebasedatabase.app",
@@ -419,753 +441,243 @@ onValue
     storageBucket: "live-quiz-6e77b.firebasestorage.app",
     messagingSenderId: "50057610341",
     appId: "1:50057610341:web:d4e88673a20757d4c9328c"
-  };
-
+};
 
 const app = initializeApp(firebaseConfig);
-
 const auth = getAuth(app);
-
 const db = getDatabase(app);
 
 let currentUser = null;
+let notesData = {};
 
-let currentSection = 'dashboard';
+// Mobile Sidebar Logic
+const sidebar = document.getElementById('sidebar');
+const overlay = document.getElementById('overlay');
+const menuBtn = document.getElementById('menuBtn');
 
-let notesLibrary = {};
-
-const mcqBank = {
-
-"Physics": {
-
-"Rotational Dynamics": [
-
-{
-question:"Moment of inertia depends on:",
-options:["Mass only","Mass distribution & axis","Velocity","Angular speed"],
-answer:1,
-explanation:"Moment of inertia depends on mass distribution and axis."
+function toggleSidebar() {
+  sidebar.classList.toggle('open');
+  overlay.classList.toggle('visible');
 }
 
-]
+menuBtn.onclick = toggleSidebar;
+overlay.onclick = toggleSidebar;
 
+// Router
+function navigate(section) {
+  document.querySelectorAll('.nav-item').forEach(i => i.classList.remove('active'));
+  const activeItem = document.querySelector(`[data-section="${section}"]`);
+  if(activeItem) activeItem.classList.add('active');
+
+  const titleEl = document.getElementById('pageTitle');
+  if(window.innerWidth <= 1024) toggleSidebar();
+
+  switch(section) {
+    case 'home':
+      titleEl.innerText = "Dashboard";
+      renderHome();
+      break;
+    case 'notes':
+      titleEl.innerText = "Notes Library";
+      renderNotes();
+      break;
+    case 'mock':
+      titleEl.innerText = "Mock Tests";
+      renderPlaceholder("Mock Tests", "Full-length CEE model tests are being prepared. Check back soon!");
+      break;
+    case 'favorites':
+      titleEl.innerText = "Saved Notes";
+      renderPlaceholder("Saved Notes", "You haven't saved any notes yet.");
+      break;
+  }
 }
 
+// Render Functions
+function renderHome() {
+  let noteCount = 0;
+  let subCount = 0;
+  Object.keys(notesData).forEach(cls => {
+    Object.keys(notesData[cls]).forEach(sub => {
+      subCount++;
+      noteCount += notesData[cls][sub].length;
+    });
+  });
+
+  const html = `
+    <div class="stats-row">
+      <div class="stat-card">
+        <i class="fas fa-file-alt"></i>
+        <span class="stat-value">${noteCount}</span>
+        <span class="stat-label">Total Notes</span>
+      </div>
+      <div class="stat-card">
+        <i class="fas fa-layer-group"></i>
+        <span class="stat-value">${subCount}</span>
+        <span class="stat-label">Subjects</span>
+      </div>
+      <div class="stat-card">
+        <i class="fas fa-clock"></i>
+        <span class="stat-value">Free</span>
+        <span class="stat-label">Access Type</span>
+      </div>
+      <div class="stat-card">
+        <i class="fas fa-check-circle"></i>
+        <span class="stat-value">Active</span>
+        <span class="stat-label">Account Status</span>
+      </div>
+    </div>
+    
+    <div class="stat-card" style="margin-top: 24px;">
+      <h3 style="margin-bottom: 8px;">Welcome back, ${currentUser?.displayName || 'Medico'}!</h3>
+      <p style="color: var(--text-muted); font-size: 0.95rem;">
+        You have full access to our premium CEE preparation materials. Start with your favorite subject today.
+      </p>
+      <button class="btn btn-primary" style="margin-top: 20px;" onclick="navigate('notes')">
+        Browse Notes <i class="fas fa-arrow-right"></i>
+      </button>
+    </div>
+  `;
+  document.getElementById('pageContent').innerHTML = html;
+}
+
+function renderNotes() {
+  let html = `
+    <div class="search-wrapper">
+      <i class="fas fa-search"></i>
+      <input type="text" class="search-input" id="noteSearch" placeholder="Search by chapter or subject...">
+    </div>
+  `;
+
+  if(Object.keys(notesData).length === 0) {
+    html += `<p style="text-align:center; color:var(--text-muted); padding:40px;">No notes available right now.</p>`;
+  }
+
+  for(let className in notesData) {
+    for(let subject in notesData[className]) {
+      const notes = notesData[className][subject];
+      html += `
+        <div class="subject-group">
+          <button class="subject-trigger">
+            <span><i class="fas fa-folder" style="color:var(--primary); margin-right:10px;"></i> ${subject} (${className})</span>
+            <i class="fas fa-chevron-down"></i>
+          </button>
+          <div class="subject-content">
+            ${notes.map(note => `
+              <div class="note-card">
+                <h4 style="font-size: 0.95rem; margin-bottom: 12px; height: 2.5em; overflow: hidden;">${note.title}</h4>
+                <div style="display: flex; justify-content: space-between; align-items: center;">
+                   <span style="font-size: 0.75rem; color: var(--text-muted);"><i class="fas fa-download"></i> ${note.downloads}</span>
+                   <button class="btn btn-primary" style="padding: 6px 12px; font-size: 0.75rem;" onclick="viewPDF('${note.preview}', '${note.id}')">
+                    View <i class="fas fa-eye"></i>
+                   </button>
+                </div>
+              </div>
+            `).join('')}
+          </div>
+        </div>
+      `;
+    }
+  }
+
+  document.getElementById('pageContent').innerHTML = html;
+
+  // Accordion Logic
+  document.querySelectorAll('.subject-trigger').forEach(btn => {
+    btn.onclick = () => {
+      const content = btn.nextElementSibling;
+      const icon = btn.querySelector('.fa-chevron-down');
+      const isOpen = content.style.display === 'grid';
+      content.style.display = isOpen ? 'none' : 'grid';
+      icon.style.transform = isOpen ? 'rotate(0deg)' : 'rotate(180deg)';
+    };
+  });
+
+  // Search Logic
+  document.getElementById('noteSearch').oninput = (e) => {
+    const val = e.target.value.toLowerCase();
+    document.querySelectorAll('.note-card').forEach(card => {
+      const text = card.innerText.toLowerCase();
+      card.closest('.note-card').style.display = text.includes(val) ? 'block' : 'none';
+    });
+  };
+}
+
+function renderPlaceholder(title, msg) {
+  document.getElementById('pageContent').innerHTML = `
+    <div style="text-align: center; padding: 60px 20px;">
+      <div style="font-size: 4rem; color: #e2e8f0; margin-bottom: 20px;"><i class="fas fa-hard-hat"></i></div>
+      <h3 style="margin-bottom: 10px;">${title}</h3>
+      <p style="color: var(--text-muted);">${msg}</p>
+    </div>
+  `;
+}
+
+// PDF Viewer
+window.viewPDF = async (url, id) => {
+  const modal = document.createElement('div');
+  modal.className = 'pdf-modal';
+  modal.innerHTML = `
+    <div class="pdf-container">
+      <div class="pdf-header">
+        <h4 style="font-weight:700;">Document Viewer</h4>
+        <button class="btn" style="background:#fee2e2; color:#ef4444;" onclick="this.closest('.pdf-modal').remove()">Close</button>
+      </div>
+      <iframe src="${url}"></iframe>
+    </div>
+  `;
+  document.body.appendChild(modal);
+
+  // Update download count
+  try {
+    const noteRef = ref(db, `notes/${id}`);
+    const snap = await get(noteRef);
+    if(snap.exists()) {
+      await update(noteRef, { downloads: (snap.val().downloads || 0) + 1 });
+    }
+  } catch(e) {}
 };
 
-async function validateDeviceSession(uid){
-
-const deviceId =
-localStorage.getItem('device_uid') ||
-(() => {
-
-let id = 'dev_' + Math.random().toString(36).substr(2,10);
-
-localStorage.setItem('device_uid',id);
-
-return id;
-
-})();
-
-const sessionsRef = ref(db, `sessions/${uid}`);
-
-const snap = await get(sessionsRef);
-
-let sessions = snap.exists() ? snap.val() : {};
-
-let found = false;
-
-for(let k in sessions){
-
-if(sessions[k].deviceId === deviceId){
-found = true;
-}
-
-}
-
-if(!found && Object.keys(sessions).length >= 2){
-
-await signOut(auth);
-
-alert("Maximum 2 active devices allowed");
-
-window.location.href='index.html';
-
-return false;
-
-}
-
-return true;
-
-}
-
-function loadRealtimeNotes(){
-
-const notesRef = ref(db,'notes');
-
-onValue(notesRef,(snapshot)=>{
-
-notesLibrary = {};
-
-if(snapshot.exists()){
-
-snapshot.forEach((child)=>{
-
-const note = child.val();
-
-if(!notesLibrary[note.class]){
-notesLibrary[note.class] = {};
-}
-
-if(!notesLibrary[note.class][note.subject]){
-notesLibrary[note.class][note.subject] = [];
-}
-
-notesLibrary[note.class][note.subject].push({
-
-id:child.key,
-title:note.topic,
-downloads:note.downloads || 0,
-preview:note.pdfUrl
-
+// Auth and Data Fetching
+onAuthStateChanged(auth, user => {
+  if(!user) {
+    window.location.href = 'index.html';
+    return;
+  }
+  currentUser = user;
+  document.getElementById('userName').innerText = user.displayName || user.email.split('@')[0];
+  
+  // Realtime Notes
+  onValue(ref(db, 'notes'), (snapshot) => {
+    notesData = {};
+    if(snapshot.exists()) {
+      snapshot.forEach(child => {
+        const note = child.val();
+        if(!notesData[note.class]) notesData[note.class] = {};
+        if(!notesData[note.class][note.subject]) notesData[note.class][note.subject] = [];
+        notesData[note.class][note.subject].push({
+          id: child.key,
+          title: note.topic,
+          downloads: note.downloads || 0,
+          preview: note.pdfUrl
+        });
+      });
+    }
+    navigate('home');
+  });
 });
 
+// Event Listeners
+document.querySelectorAll('.nav-item[data-section]').forEach(item => {
+  item.onclick = () => navigate(item.dataset.section);
 });
 
-}
-
-if(currentSection === 'notes'){
-renderNotesLibrary();
-}
-
-if(currentSection === 'dashboard'){
-renderDashboardHome(
-currentUser?.displayName ||
-currentUser?.email?.split('@')[0] ||
-"Medico"
-);
-}
-
-});
-
-}
-
-function renderDashboardHome(userName){
-
-let totalNotesCount = 0;
-let totalDownloads = 0;
-let totalSubjects = 0;
-
-for(let c in notesLibrary){
-
-for(let s in notesLibrary[c]){
-
-totalSubjects++;
-
-totalNotesCount += notesLibrary[c][s].length;
-
-notesLibrary[c][s].forEach(n=>{
-totalDownloads += n.downloads || 0;
-});
-
-}
-
-}
-
-let totalMcqs = 0;
-
-for(let sub in mcqBank)
-for(let chap in mcqBank[sub])
-totalMcqs += mcqBank[sub][chap].length;
-
-const html = `
-
-<div class="stat-grid">
-
-<div class="stat-card">
-<i class="fas fa-book-open"></i>
-<div class="stat-number">${totalNotesCount}+</div>
-<div>Premium Notes</div>
-</div>
-
-<div class="stat-card">
-<i class="fas fa-layer-group"></i>
-<div class="stat-number">${totalSubjects}</div>
-<div>Subjects</div>
-</div>
-
-<div class="stat-card">
-<i class="fas fa-download"></i>
-<div class="stat-number">${totalDownloads}+</div>
-<div>Total Downloads</div>
-</div>
-
-<div class="stat-card">
-<i class="fas fa-brain"></i>
-<div class="stat-number">${totalMcqs}+</div>
-<div>MCQs</div>
-</div>
-
-</div>
-
-<div class="stat-card">
-
-<h2 style="margin-bottom:12px;">
-Welcome, ${userName}
-</h2>
-
-<p>
-Continue your CEE preparation with premium notes,
-MCQs, and mock tests.
-</p>
-
-</div>
-
-`;
-
-document.getElementById('dynamicPanel').innerHTML = html;
-
-}
-
-function renderNotesLibrary(){
-
-let html = `
-
-<div>
-
-<div style="
-display:flex;
-justify-content:space-between;
-align-items:center;
-margin-bottom:24px;
-flex-wrap:wrap;
-gap:12px;
-">
-
-<h2 style="font-size:2rem;font-weight:800;">
-<i class="fas fa-book-open"></i>
-Notes Library
-</h2>
-
-<input
-type="text"
-id="noteSearch"
-placeholder="Search notes..."
-style="
-padding:12px 18px;
-border-radius:16px;
-border:1px solid #cbd5e1;
-min-width:260px;
-"
->
-
-</div>
-
-`;
-
-for(let className in notesLibrary){
-
-html += `
-
-<div class="subject-accordion">
-
-<div class="subject-header">
-
-<span>
-<i class="fas fa-folder-open"></i>
-${className}
-</span>
-
-<i class="fas fa-chevron-down"></i>
-
-</div>
-
-<div class="chapter-list">
-
-`;
-
-for(let subject in notesLibrary[className]){
-
-html += `
-
-<div style="margin-bottom:28px;">
-
-<h3 style="
-font-size:1.2rem;
-margin-bottom:16px;
-color:var(--primary);
-">
-${subject}
-</h3>
-
-<div style="
-display:grid;
-grid-template-columns:repeat(auto-fill,minmax(300px,1fr));
-gap:18px;
-">
-
-`;
-
-notesLibrary[className][subject].forEach(ch=>{
-
-html += `
-
-<div class="chapter-card">
-
-<div style="
-display:flex;
-gap:14px;
-">
-
-<div style="
-width:55px;
-height:55px;
-border-radius:18px;
-background:#fee2e2;
-display:flex;
-align-items:center;
-justify-content:center;
-color:red;
-font-size:22px;
-">
-
-<i class="fas fa-file-pdf"></i>
-
-</div>
-
-<div>
-
-<h4 style="margin-bottom:8px;">
-${ch.title}
-</h4>
-
-<div style="
-font-size:14px;
-color:#64748b;
-">
-
-📥 ${ch.downloads} downloads
-
-</div>
-
-</div>
-
-</div>
-
-<div style="
-display:flex;
-gap:10px;
-margin-top:18px;
-">
-
-<button
-class="preview-pdf btn-sm"
-data-preview="${ch.preview}"
-data-id="${ch.id}"
->
-
-<i class="fas fa-eye"></i>
-Preview
-
-</button>
-
-<a
-href="${ch.preview}"
-target="_blank"
-style="text-decoration:none;"
->
-
-<button class="btn-sm">
-
-<i class="fas fa-arrow-up-right-from-square"></i>
-Open
-
-</button>
-
-</a>
-
-</div>
-
-</div>
-
-`;
-
-});
-
-html += `</div></div>`;
-
-}
-
-html += `</div></div>`;
-
-}
-
-html += `</div>`;
-
-document.getElementById('dynamicPanel').innerHTML = html;
-
-document.querySelectorAll('.subject-header').forEach(header=>{
-
-header.addEventListener('click',()=>{
-
-const list = header.nextElementSibling;
-
-list.style.display =
-list.style.display === 'grid'
-? 'none'
-: 'grid';
-
-});
-
-});
-
-document.querySelectorAll('.preview-pdf').forEach(btn=>{
-
-btn.addEventListener('click', async()=>{
-
-const url = btn.dataset.preview;
-
-const id = btn.dataset.id;
-
-openPDFModal(url);
-
-try{
-
-const noteRef = ref(db, `notes/${id}`);
-
-const snapshot = await get(noteRef);
-
-if(snapshot.exists()){
-
-const current = snapshot.val().downloads || 0;
-
-await update(noteRef,{
-downloads:current + 1
-});
-
-}
-
-}catch(err){
-console.log(err);
-}
-
-});
-
-});
-
-document.getElementById('noteSearch')
-?.addEventListener('input',(e)=>{
-
-const value = e.target.value.toLowerCase();
-
-document.querySelectorAll('.chapter-card').forEach(card=>{
-
-const text = card.innerText.toLowerCase();
-
-card.style.display =
-text.includes(value)
-? 'block'
-: 'none';
-
-});
-
-});
-
-}
-
-function openPDFModal(url){
-
-const html = `
-
-<div class="pdf-modal" id="pdfModal">
-
-<div class="pdf-box">
-
-<div class="pdf-header">
-
-<h2>
-<i class="fas fa-book-open"></i>
-PDF Viewer
-</h2>
-
-<button class="pdf-close" id="closePdfModal">
-Close
-</button>
-
-</div>
-
-<iframe
-src="${url}"
-width="100%"
-height="92%"
-allow="autoplay"
-></iframe>
-
-</div>
-
-</div>
-
-`;
-
-document.body.insertAdjacentHTML('beforeend', html);
-
-document.getElementById('closePdfModal')
-?.addEventListener('click',()=>{
-
-document.getElementById('pdfModal')?.remove();
-
-});
-
-}
-
-function renderMCQPanel(){
-
-document.getElementById('dynamicPanel').innerHTML = `
-
-<div class="stat-card">
-
-<h2 style="margin-bottom:18px;">
-MCQ Practice
-</h2>
-
-<div id="mcqContainer"></div>
-
-</div>
-
-`;
-
-loadMCQ();
-
-}
-
-function loadMCQ(){
-
-const q = mcqBank["Physics"]["Rotational Dynamics"][0];
-
-let html = `
-
-<h3>${q.question}</h3>
-
-`;
-
-q.options.forEach((opt,idx)=>{
-
-html += `
-<div class="option-btn" data-id="${idx}">
-${opt}
-</div>
-`;
-
-});
-
-html += `<div id="feedback"></div>`;
-
-document.getElementById('mcqContainer').innerHTML = html;
-
-document.querySelectorAll('.option-btn').forEach(btn=>{
-
-btn.addEventListener('click',()=>{
-
-const selected = parseInt(btn.dataset.id);
-
-if(selected === q.answer){
-
-document.getElementById('feedback').innerHTML = `
-<div class="correct-feedback">
-Correct! ${q.explanation}
-</div>
-`;
-
-}else{
-
-document.getElementById('feedback').innerHTML = `
-<div class="wrong-feedback">
-Wrong! ${q.explanation}
-</div>
-`;
-
-}
-
-});
-
-});
-
-}
-
-function renderMockTests(){
-
-document.getElementById('dynamicPanel').innerHTML = `
-
-<div class="stat-card">
-
-<h2>Mock Tests</h2>
-
-<p style="margin-top:12px;">
-Coming soon...
-</p>
-
-</div>
-
-`;
-
-}
-
-function renderFavorites(){
-
-document.getElementById('dynamicPanel').innerHTML = `
-
-<div class="stat-card">
-
-<h2>Favorites</h2>
-
-<p style="margin-top:12px;">
-Favorite notes feature coming soon.
-</p>
-
-</div>
-
-`;
-
-}
-
-function renderSettings(){
-
-document.getElementById('dynamicPanel').innerHTML = `
-
-<div class="stat-card">
-
-<h2>Settings</h2>
-
-<p style="margin-top:12px;">
-Dark mode & profile settings coming soon.
-</p>
-
-</div>
-
-`;
-
-}
-
-function loadSection(section){
-
-currentSection = section;
-
-if(section === 'dashboard'){
-
-renderDashboardHome(
-currentUser?.displayName ||
-currentUser?.email?.split('@')[0] ||
-"Medico"
-);
-
-}
-
-else if(section === 'notes'){
-renderNotesLibrary();
-}
-
-else if(section === 'mcq'){
-renderMCQPanel();
-}
-
-else if(section === 'mock'){
-renderMockTests();
-}
-
-else if(section === 'favorites'){
-renderFavorites();
-}
-
-else if(section === 'settings'){
-renderSettings();
-}
-
-document.querySelectorAll('.nav-item')
-.forEach(el=>el.classList.remove('active'));
-
-document.querySelector(
-`.nav-item[data-section="${section}"]`
-)?.classList.add('active');
-
-}
-
-onAuthStateChanged(auth, async(user)=>{
-
-if(!user){
-
-window.location.href='index.html';
-
-return;
-
-}
-
-currentUser = user;
-
-const isValid = await validateDeviceSession(user.uid);
-
-if(!isValid) return;
-
-const userRef = ref(db, `users/${user.uid}`);
-
-const snap = await get(userRef);
-
-let userName =
-user.displayName ||
-(snap.exists()
-? snap.val().name
-: user.email.split('@')[0]);
-
-document.getElementById('userGreeting').innerHTML = `
-<i class="fas fa-user-circle"></i>
-${userName}
-`;
-
-loadRealtimeNotes();
-
-loadSection('dashboard');
-
-});
-
-document.querySelectorAll('.nav-item[data-section]')
-.forEach(el=>{
-
-el.addEventListener('click',()=>{
-
-loadSection(el.dataset.section);
-
-});
-
-});
-
-document.getElementById('logoutBtn')
-?.addEventListener('click', async()=>{
-
-await signOut(auth);
-
-window.location.href='index.html';
-
-});
-
-document.getElementById('mobileMenuToggle')
-?.addEventListener('click',()=>{
-
-document.getElementById('sidebar')
-.classList.toggle('mobile-open');
-
-});
-
-window.onload = ()=>{
-
-if(window.innerWidth < 768){
-
-document.getElementById('mobileMenuToggle')
-.style.display='block';
-
-}
-
+document.getElementById('logoutBtn').onclick = async () => {
+  await signOut(auth);
+  window.location.href = 'index.html';
 };
+
+window.navigate = navigate;
 
 </script>
-
 </body>
 </html>
