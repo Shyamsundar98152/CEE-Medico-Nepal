@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<title>Complete Admin Panel</title>
+<title>Admin Panel (Fixed)</title>
 
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
@@ -35,7 +35,6 @@ body{
   padding:25px;
   border-radius:14px;
   width:320px;
-  box-shadow:0 10px 30px rgba(0,0,0,0.1);
 }
 
 input{
@@ -103,23 +102,16 @@ button{
 
 <body>
 
-<!-- LOGIN -->
-<div class="center" id="loginBox">
+<!-- LOGIN UI (only fallback, not main login) -->
+<div class="center" id="loadingBox">
   <div class="card">
-    <h2>Admin Login</h2>
-
-    <input id="email" type="email" placeholder="Email">
-    <input id="password" type="password" placeholder="Password">
-
-    <button id="loginBtn">Login</button>
-
-    <p id="msg"></p>
+    <h3>Checking Admin Access...</h3>
+    <p id="status">Please wait</p>
   </div>
 </div>
 
-
-<!-- DASHBOARD -->
-<div id="dashboard" class="hidden">
+<!-- ADMIN PANEL -->
+<div id="adminPanel" class="hidden">
 
 <div class="container">
 
@@ -147,13 +139,11 @@ button{
 
 </div>
 
-
 <script type="module">
 
 import { initializeApp } from "firebase/app";
 import {
   getAuth,
-  signInWithEmailAndPassword,
   onAuthStateChanged,
   signOut
 } from "firebase/auth";
@@ -170,7 +160,7 @@ import {
 } from "firebase/database";
 
 
-// 🔥 YOUR CONFIG (ALREADY CORRECT)
+// 🔥 YOUR FIREBASE CONFIG (UNCHANGED)
 const firebaseConfig = {
   apiKey: "AIzaSyDfCO-xxHPpgSfE-I6KTmsw35Lo9n2v56s",
   authDomain: "live-quiz-6e77b.firebaseapp.com",
@@ -187,119 +177,107 @@ const db = getDatabase(app);
 
 
 // UI
-const loginBox = document.getElementById("loginBox");
-const dashboard = document.getElementById("dashboard");
-const msg = document.getElementById("msg");
+const loadingBox = document.getElementById("loadingBox");
+const adminPanel = document.getElementById("adminPanel");
+const status = document.getElementById("status");
+
+let currentUser = null;
 
 
-// 🔐 LOGIN
-document.getElementById("loginBtn").addEventListener("click", async()=>{
+// 🔐 AUTH + ADMIN CHECK (FIXED CORE LOGIC)
+onAuthStateChanged(auth, async (user) => {
 
-  const email = document.getElementById("email").value;
-  const password = document.getElementById("password").value;
+  if (!user) {
+    status.innerText = "Not logged in. Redirecting...";
+    setTimeout(() => {
+      window.location.href = "index.html";
+    }, 1000);
+    return;
+  }
 
-  try{
+  currentUser = user;
 
-    const cred = await signInWithEmailAndPassword(auth,email,password);
-    const user = cred.user;
+  status.innerText = "Checking admin permissions...";
 
-    // AUTO SAVE USER
-    await set(ref(db,`users/${user.uid}`),{
-      email:user.email,
-      time:Date.now()
-    });
+  try {
 
-    // ADMIN CHECK
-    const snap = await get(ref(db,`admins/${user.uid}`));
+    const snap = await get(ref(db, `admins/${user.uid}`));
 
-    if(!snap.exists()){
-      msg.innerText = "Not Approved Admin";
+    if (!snap.exists()) {
+      status.innerText = "Access Denied (Not Admin)";
       await signOut(auth);
+      setTimeout(() => {
+        window.location.href = "index.html";
+      }, 1200);
       return;
     }
 
-    loginBox.classList.add("hidden");
-    dashboard.classList.remove("hidden");
+    // ✅ ADMIN VERIFIED
+    loadingBox.classList.add("hidden");
+    adminPanel.classList.remove("hidden");
 
     loadNotes();
 
-  }catch(e){
-    msg.innerText = e.message;
-  }
-
-});
-
-
-// 🔁 AUTO LOGIN CHECK
-onAuthStateChanged(auth, async(user)=>{
-
-  if(user){
-
-    const snap = await get(ref(db,`admins/${user.uid}`));
-
-    if(snap.exists()){
-      loginBox.classList.add("hidden");
-      dashboard.classList.remove("hidden");
-      loadNotes();
-    }
-
+  } catch (e) {
+    status.innerText = "Error checking admin";
   }
 
 });
 
 
 // ➕ ADD NOTE
-document.getElementById("addBtn").addEventListener("click", async()=>{
+document.getElementById("addBtn").addEventListener("click", async () => {
 
   const c = document.getElementById("className").value;
   const s = document.getElementById("subject").value;
   const t = document.getElementById("topic").value;
   const p = document.getElementById("pdfUrl").value;
 
-  if(!c || !s || !t || !p){
+  if (!c || !s || !t || !p) {
     alert("Fill all fields");
     return;
   }
 
-  const newRef = push(ref(db,"notes"));
+  const newRef = push(ref(db, "notes"));
 
-  await set(newRef,{
-    class:c,
-    subject:s,
-    topic:t,
-    pdfUrl:p,
-    downloads:0,
-    createdAt:Date.now()
+  await set(newRef, {
+    class: c,
+    subject: s,
+    topic: t,
+    pdfUrl: p,
+    downloads: 0,
+    createdAt: Date.now()
   });
 
 });
 
 
 // 📄 LOAD NOTES
-function loadNotes(){
+function loadNotes() {
 
-  onValue(ref(db,"notes"),(snap)=>{
+  onValue(ref(db, "notes"), (snap) => {
 
     const notesDiv = document.getElementById("notes");
-    notesDiv.innerHTML="";
+    notesDiv.innerHTML = "";
 
-    snap.forEach(child=>{
+    snap.forEach(child => {
 
       const n = child.val();
 
       notesDiv.innerHTML += `
-      <div class="note">
-        <div>
-          <b>${n.topic}</b><br>
-          <span class="small">${n.class} • ${n.subject}</span>
-        </div>
+        <div class="note">
+          <div>
+            <b>${n.topic}</b><br>
+            <span class="small">${n.class} • ${n.subject}</span>
+          </div>
 
-        <div class="actions">
-          <button class="edit" onclick="edit('${child.key}')">Edit</button>
-          <button class="delete" onclick="del('${child.key}')">Delete</button>
+          <div class="actions">
+            <button class="edit" onclick="editNote('${child.key}')">Edit</button>
+            <button class="delete" onclick="deleteNote('${child.key}')">Delete</button>
+          </div>
         </div>
-      </div>
       `;
+
     });
 
   });
@@ -308,26 +286,26 @@ function loadNotes(){
 
 
 // 🗑 DELETE
-window.del = async(id)=>{
-  await remove(ref(db,`notes/${id}`));
+window.deleteNote = async (id) => {
+  await remove(ref(db, `notes/${id}`));
 };
 
 
 // ✏ EDIT
-window.edit = async(id)=>{
-  const t = prompt("New Topic:");
-  if(!t) return;
+window.editNote = async (id) => {
+  const newTopic = prompt("New Topic:");
+  if (!newTopic) return;
 
-  await update(ref(db,`notes/${id}`),{
-    topic:t
+  await update(ref(db, `notes/${id}`), {
+    topic: newTopic
   });
 };
 
 
 // 🚪 LOGOUT
-document.getElementById("logoutBtn").addEventListener("click", async()=>{
+document.getElementById("logoutBtn").addEventListener("click", async () => {
   await signOut(auth);
-  location.reload();
+  window.location.href = "index.html";
 });
 
 </script>
