@@ -202,32 +202,68 @@
    * It uses pointer-events:none normally so clicks pass through,
    * but we catch contextmenu at the document level to suppress it over the player.
    */
+  /* ── SHIELD: bottom-right Share/Copy Link button ── */
   .player-shield-corner {
     position: absolute;
-    /* covers bottom-right corner where Share / Copy Link button lives */
     bottom: 0; right: 0;
     width: 18%; height: 14%;
     z-index: 10;
-    cursor: not-allowed;
+    cursor: default;
     background: transparent;
   }
-  /* Also block the top-right watch-on-youtube logo area */
+  /* ── SHIELD: top-right "Watch on YouTube" logo ── */
   .player-shield-topright {
     position: absolute;
     top: 0; right: 0;
-    width: 20%; height: 12%;
+    width: 22%; height: 13%;
     z-index: 10;
-    cursor: not-allowed;
+    cursor: default;
     background: transparent;
   }
-  /* Full-player ghost — sits above iframe but passes pointer events through normally.
-     Only used for contextmenu suppression via JS. */
+  /* ── SHIELD: bottom-left YouTube logo / title link ──
+     This logo appears during playback AND in fullscreen.
+     It links to the YouTube page exposing the video URL. */
+  .player-shield-bottomleft {
+    position: absolute;
+    bottom: 0; left: 0;
+    width: 30%; height: 14%;
+    z-index: 10;
+    cursor: default;
+    background: transparent;
+  }
+  /* Full-player ghost — pointer-events:none so play/seek/volume
+     clicks pass through. Used only for JS contextmenu suppression. */
   .player-shield-full {
     position: absolute;
     inset: 0;
     z-index: 5;
     background: transparent;
     pointer-events: none;
+  }
+
+  /*
+   * FULLSCREEN SHIELD FIX:
+   * When the user goes fullscreen, the iframe expands to fill the screen
+   * but our shield divs (which are children of player-frame-wrap) also
+   * expand with it because they are positioned inside the same element.
+   * The :fullscreen pseudo-class lets us fine-tune their size for the
+   * fullscreen viewport so coverage stays accurate.
+   *
+   * Note: the YouTube logo in fullscreen is slightly larger — we widen
+   * the bottom-left shield to 28% height to account for this.
+   */
+  #playerFrameWrap:fullscreen .player-shield-bottomleft,
+  #playerFrameWrap:-webkit-full-screen .player-shield-bottomleft {
+    height: 11%;
+    width: 32%;
+  }
+  #playerFrameWrap:fullscreen .player-shield-corner,
+  #playerFrameWrap:-webkit-full-screen .player-shield-corner {
+    width: 16%; height: 10%;
+  }
+  #playerFrameWrap:fullscreen .player-shield-topright,
+  #playerFrameWrap:-webkit-full-screen .player-shield-topright {
+    width: 20%; height: 10%;
   }
   .player-controls{ padding:14px 20px 20px; flex-shrink:0; display:flex; flex-direction:column; align-items:center; gap:10px; }
   .speed-row{ display:flex; align-items:center; gap:10px; }
@@ -421,11 +457,13 @@
       <iframe class="player-iframe" id="playerFrame"
         allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; fullscreen"
         allowfullscreen src=""></iframe>
-      <!-- Blocks bottom-right Share/Copy Link button -->
-      <div class="player-shield-corner" title="Sharing disabled" oncontextmenu="return false;"></div>
-      <!-- Blocks top-right Watch on YouTube logo -->
+      <!-- Shield: bottom-right Share/Copy Link button -->
+      <div class="player-shield-corner" oncontextmenu="return false;"></div>
+      <!-- Shield: top-right Watch on YouTube logo -->
       <div class="player-shield-topright" oncontextmenu="return false;"></div>
-      <!-- Full ghost: contextmenu suppression only -->
+      <!-- Shield: bottom-left YouTube logo/title (main link leak point) -->
+      <div class="player-shield-bottomleft" oncontextmenu="return false;"></div>
+      <!-- Full ghost: contextmenu suppression via JS, clicks pass through -->
       <div class="player-shield-full" id="shieldFull"></div>
     </div>
   </div>
@@ -735,6 +773,9 @@ document.addEventListener('keydown',e=>{
       clipboard-copied while watching.
    4. Prevent drag-and-drop of the iframe src.
    5. On mobile: block long-press selection.
+   6. On fullscreenchange: JS re-tunes shield %-sizes because
+      the YouTube UI proportions shift in fullscreen and CSS
+      :fullscreen has inconsistent cross-browser support.
    Playback speed (postMessage) is unaffected.
 ══════════════════════════════════════════════ */
 const playerOverlay = document.getElementById('lecturePlayer');
@@ -764,10 +805,67 @@ playerOverlay.style.userSelect = 'none';
 playerOverlay.style.webkitUserSelect = 'none';
 
 /* Also make the shield corners show a custom blocked cursor */
-document.querySelectorAll('.player-shield-corner, .player-shield-topright').forEach(el => {
-  el.addEventListener('click', e => { e.stopPropagation(); e.preventDefault(); });
+document.querySelectorAll(
+  '.player-shield-corner, .player-shield-topright, .player-shield-bottomleft'
+).forEach(el => {
+  el.addEventListener('click',       e => { e.stopPropagation(); e.preventDefault(); });
+  el.addEventListener('dblclick',    e => { e.stopPropagation(); e.preventDefault(); });
   el.addEventListener('contextmenu', e => { e.stopPropagation(); e.preventDefault(); });
+  el.addEventListener('mousedown',   e => { e.stopPropagation(); });
+  el.addEventListener('touchstart',  e => { e.stopPropagation(); e.preventDefault(); }, { passive: false });
+  el.addEventListener('touchend',    e => { e.stopPropagation(); e.preventDefault(); }, { passive: false });
 });
+
+/* ── FULLSCREEN SHIELD REINFORCEMENT ──────────────────────────────────
+   CSS :fullscreen on the wrapper has inconsistent cross-browser support.
+   We reinforce shield sizes in JS whenever fullscreen state changes.
+   The shields are children of playerFrameWrap so they already expand to
+   fill the screen — we only need to re-tune their percentage dimensions
+   because the YouTube UI proportions shift slightly in fullscreen.
+   ──────────────────────────────────────────────────────────────────── */
+function applyShieldSizes(isFullscreen) {
+  const wrap = document.getElementById('playerFrameWrap');
+  if (!wrap) return;
+
+  const bl  = wrap.querySelector('.player-shield-bottomleft');
+  const br  = wrap.querySelector('.player-shield-corner');
+  const tr  = wrap.querySelector('.player-shield-topright');
+
+  if (isFullscreen) {
+    /* Fullscreen: YouTube logo / title link is slightly larger */
+    if (bl) { bl.style.width = '32%'; bl.style.height = '11%'; }
+    /* Share button shrinks a little relative to player height */
+    if (br) { br.style.width = '16%'; br.style.height = '10%'; }
+    /* Top-right "Watch on YouTube" logo also shifts */
+    if (tr) { tr.style.width = '20%'; tr.style.height = '10%'; }
+  } else {
+    /* Normal (windowed) mode — restore to default sizes */
+    if (bl) { bl.style.width = '';  bl.style.height = ''; }
+    if (br) { br.style.width = '';  br.style.height = ''; }
+    if (tr) { tr.style.width = '';  tr.style.height = ''; }
+  }
+}
+
+/* Listen on every vendor prefix */
+['fullscreenchange','webkitfullscreenchange','mozfullscreenchange','MSFullscreenChange']
+  .forEach(evt => {
+    document.addEventListener(evt, () => {
+      const fsEl = document.fullscreenElement
+                || document.webkitFullscreenElement
+                || document.mozFullScreenElement
+                || document.msFullscreenElement;
+      /* We are in fullscreen if the fullscreen element is our wrap
+         or the iframe inside it */
+      const wrap = document.getElementById('playerFrameWrap');
+      const inFS = !!(fsEl && wrap && (fsEl === wrap || wrap.contains(fsEl)));
+      applyShieldSizes(inFS);
+
+      /* Extra: re-block contextmenu when returning from fullscreen too */
+      if (!inFS && document.getElementById('lecturePlayer').style.display !== 'none') {
+        /* player still open — keep protections active */
+      }
+    });
+  });
 
 </script>
 </body>
