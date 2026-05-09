@@ -1,0 +1,472 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+  <title>CEE Medico Nepal | Complete MBBS Entrance Prep</title>
+  <!-- Google Fonts & Font Awesome -->
+  <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,300;14..32,400;14..32,500;14..32,600;14..32,700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+  <!-- Firebase SDKs -->
+  <script type="module">
+    // Import Firebase modules dynamically for the whole app (global)
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+    import { getAuth, onAuthStateChanged, signOut, sendPasswordResetEmail, signInWithEmailAndPassword, createUserWithEmailAndPassword, GoogleAuthProvider, signInWithPopup } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
+    import { getDatabase, ref, set, get, update, push, child, onValue } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
+
+    const firebaseConfig = {
+      apiKey: "AIzaSyDfCO-xxHPpgSfE-I6KTmsw35Lo9n2v56s",
+      authDomain: "live-quiz-6e77b.firebaseapp.com",
+      databaseURL: "https://live-quiz-6e77b-default-rtdb.asia-southeast1.firebasedatabase.app",
+      projectId: "live-quiz-6e77b",
+      storageBucket: "live-quiz-6e77b.firebasestorage.app",
+      messagingSenderId: "50057610341",
+      appId: "1:50057610341:web:d4e88673a20757d4c9328c"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const auth = getAuth(app);
+    const db = getDatabase(app);
+    window.db = db;
+    window.auth = auth;
+
+    // Expose globally for inline scripts
+    window.firebaseReady = true;
+    window.signOut = signOut;
+    window.sendPasswordResetEmail = sendPasswordResetEmail;
+    window.signInWithEmailAndPassword = signInWithEmailAndPassword;
+    window.createUserWithEmailAndPassword = createUserWithEmailAndPassword;
+    window.GoogleAuthProvider = GoogleAuthProvider;
+    window.signInWithPopup = signInWithPopup;
+    window.ref = ref;
+    window.set = set;
+    window.get = get;
+    window.update = update;
+    window.onValue = onValue;
+    window.child = child;
+    window.push = push;
+
+    // Device session management helper (2-device limit)
+    window.checkAndRegisterDevice = async (uid, deviceInfo) => {
+      const sessionsRef = ref(db, `sessions/${uid}`);
+      const snapshot = await get(sessionsRef);
+      let sessions = snapshot.exists() ? snapshot.val() : {};
+      const deviceId = deviceInfo.deviceId;
+      let existingDeviceKey = null;
+      for (let key in sessions) {
+        if (sessions[key] && sessions[key].deviceId === deviceId) existingDeviceKey = key;
+      }
+      if (existingDeviceKey) {
+        // update lastActive
+        await update(ref(db, `sessions/${uid}/${existingDeviceKey}`), { lastActive: Date.now() });
+        return { allowed: true };
+      }
+      const deviceCount = Object.keys(sessions).length;
+      if (deviceCount >= 2) {
+        return { allowed: false, message: "Maximum 2 active devices allowed. Please logout from another device." };
+      }
+      const newKey = `device_${deviceCount + 1}`;
+      await set(ref(db, `sessions/${uid}/${newKey}`), { ...deviceInfo, lastActive: Date.now() });
+      return { allowed: true };
+    };
+
+    window.getDeviceInfo = () => {
+      let deviceId = localStorage.getItem('device_id');
+      if (!deviceId) {
+        deviceId = 'dev_' + Math.random().toString(36).substr(2, 16) + '_' + Date.now();
+        localStorage.setItem('device_id', deviceId);
+      }
+      const userAgent = navigator.userAgent;
+      let browser = "Unknown";
+      if (userAgent.includes("Chrome")) browser = "Chrome";
+      else if (userAgent.includes("Firefox")) browser = "Firefox";
+      else if (userAgent.includes("Safari")) browser = "Safari";
+      else if (userAgent.includes("Edge")) browser = "Edge";
+      return { deviceId, browser, userAgent };
+    };
+  </script>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+      font-family: 'Inter', sans-serif;
+    }
+
+    :root {
+      --primary: #0ea5e9;
+      --primary-dark: #0369a1;
+      --secondary: #3b82f6;
+      --background: #f0f9ff;
+      --card-bg: #ffffff;
+      --text-dark: #0c4a6e;
+      --text-muted: #64748b;
+      --accent: #2563eb;
+      --radius: 18px;
+    }
+
+    body {
+      background: var(--background);
+      color: var(--text-dark);
+    }
+
+    /* glassmorphism + modern */
+    .glass-card {
+      background: rgba(255,255,255,0.85);
+      backdrop-filter: blur(12px);
+      border-radius: var(--radius);
+      box-shadow: 0 8px 32px rgba(0,0,0,0.05);
+      border: 1px solid rgba(255,255,255,0.5);
+    }
+
+    .btn-primary {
+      background: linear-gradient(135deg, var(--primary), var(--secondary));
+      border: none;
+      color: white;
+      padding: 12px 28px;
+      border-radius: 40px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: transform 0.2s, box-shadow 0.2s;
+    }
+    .btn-primary:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 10px 20px rgba(14,165,233,0.3);
+    }
+
+    .card-hover {
+      transition: all 0.25s ease;
+    }
+    .card-hover:hover {
+      transform: translateY(-5px);
+      box-shadow: 0 20px 30px -12px rgba(0,0,0,0.1);
+    }
+
+    .sidebar {
+      background: white;
+      width: 260px;
+      transition: all 0.3s;
+      border-radius: 0 24px 24px 0;
+      box-shadow: 2px 0 20px rgba(0,0,0,0.03);
+    }
+
+    @media (max-width: 768px) {
+      .sidebar {
+        position: fixed;
+        left: -280px;
+        z-index: 1050;
+        height: 100vh;
+        transition: 0.3s;
+      }
+      .sidebar.open {
+        left: 0;
+      }
+      .main-content {
+        width: 100%;
+      }
+    }
+
+    .note-card {
+      background: white;
+      border-radius: 20px;
+      padding: 20px;
+      box-shadow: 0 4px 20px rgba(14,165,233,0.08);
+      transition: 0.2s;
+      border: 1px solid #eef2ff;
+    }
+    .note-card:hover {
+      transform: translateY(-3px);
+      box-shadow: 0 12px 24px -8px rgba(14,165,233,0.2);
+    }
+
+    .mcq-option {
+      background: #f8fafc;
+      border-radius: 60px;
+      padding: 12px 20px;
+      margin: 10px 0;
+      cursor: pointer;
+      transition: all 0.2s;
+      border: 1px solid #e2e8f0;
+    }
+    .mcq-option:hover {
+      background: #e0f2fe;
+      border-color: var(--primary);
+    }
+
+    .toast-notify {
+      position: fixed;
+      bottom: 24px;
+      right: 24px;
+      background: #1e293b;
+      color: white;
+      padding: 12px 20px;
+      border-radius: 60px;
+      z-index: 9999;
+      animation: fadeUp 0.3s;
+    }
+
+    @keyframes fadeUp {
+      from { opacity: 0; transform: translateY(20px);}
+      to { opacity: 1; transform: translateY(0);}
+    }
+  </style>
+</head>
+<body>
+  <div id="app-root">
+    <!-- Homepage (public area), authentication modals via redirection simulation? We'll build SPA-like but separate pages: This blueprint is multipage but we craft main entry dashboard. Let's build unified dashboard flow -->
+    <script type="module">
+      // simple client-side routing: show homepage if not logged in, dashboard otherwise.
+      import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
+      const auth = window.auth;
+      const currentPath = window.location.pathname;
+      // handler for public pages vs protected
+      const publicPaths = ['/index.html', '/', '/login.html', '/signup.html', '/forgot-password.html'];
+      const isProtected = !publicPaths.includes(currentPath) && currentPath !== '/forgot-password.html' && !currentPath.includes('login') && !currentPath.includes('signup');
+      if (isProtected) {
+        onAuthStateChanged(auth, (user) => {
+          if (!user) {
+            window.location.href = 'login.html';
+          } else {
+            // device validation
+            (async () => {
+              const deviceInfo = window.getDeviceInfo();
+              const uid = user.uid;
+              const result = await window.checkAndRegisterDevice(uid, deviceInfo);
+              if (!result.allowed) {
+                alert(result.message);
+                await window.signOut(auth);
+                window.location.href = 'login.html';
+              }
+            })();
+          }
+        });
+      }
+    </script>
+    <!-- Since it's a full blueprint, we'll generate a full interactive dashboard experience with notes, mcq, etc inside dashboard.html -->
+    <!-- This file will act as dashboard.html (simulate the main platform) -->
+  </div>
+  <!-- Build complete Dashboard UI inline -->
+  <div id="dynamic-dashboard" style="display: none;">
+    <!-- sidebar markup etc -->
+  </div>
+  <script type="module">
+    // FULL PLATFORM: dynamically render protected dashboard if user is logged in AND current page is dashboard.html style
+    // we'll populate all content
+    const auth = window.auth;
+    const db = window.db;
+    const userContainer = document.getElementById('app-root');
+    if (window.location.pathname.includes('dashboard.html') || window.location.pathname === '/' || window.location.pathname === '/index.html') {
+      // for simplicity: redirect to dashboard flow but we craft on login.html etc
+    }
+
+    async function renderDashboard(user) {
+      const deviceInfo = window.getDeviceInfo();
+      const sessionValid = await window.checkAndRegisterDevice(user.uid, deviceInfo);
+      if (!sessionValid.allowed) {
+        alert(sessionValid.message);
+        window.signOut(auth);
+        window.location.href = 'login.html';
+        return;
+      }
+      const userRef = window.ref(db, `users/${user.uid}`);
+      const snap = await window.get(userRef);
+      let userData = snap.exists() ? snap.val() : { name: user.email?.split('@')[0] || "Student", email: user.email };
+      if (!snap.exists()) {
+        await window.set(userRef, { name: user.displayName || user.email.split('@')[0], email: user.email, createdAt: Date.now() });
+      }
+      const fullName = userData.name || user.displayName || "Aspirant";
+
+      const mainHTML = `
+      <div class="flex min-h-screen">
+        <div class="sidebar fixed md:relative z-30 bg-white h-full md:flex md:flex-col w-72 shadow-xl transition-transform" id="sidebar">
+          <div class="p-6 border-b flex items-center gap-3">
+            <i class="fas fa-stethoscope text-2xl text-primary"></i>
+            <span class="font-bold text-xl">CEE Medico</span>
+          </div>
+          <nav class="flex-1 p-4 space-y-2">
+            <a href="#" class="nav-item flex items-center gap-3 p-3 rounded-xl hover:bg-sky-50 text-slate-700"><i class="fas fa-tachometer-alt w-5"></i> Dashboard</a>
+            <a href="#" class="nav-item flex items-center gap-3 p-3 rounded-xl hover:bg-sky-50" data-section="notes"><i class="fas fa-book-open w-5"></i> PDF Notes</a>
+            <a href="#" class="nav-item flex items-center gap-3 p-3 rounded-xl hover:bg-sky-50" data-section="mcq"><i class="fas fa-question-circle w-5"></i> MCQ Practice</a>
+            <a href="#" class="nav-item flex items-center gap-3 p-3 rounded-xl hover:bg-sky-50"><i class="fas fa-chart-line w-5"></i> Mock Tests</a>
+            <a href="#" class="nav-item flex items-center gap-3 p-3 rounded-xl hover:bg-sky-50"><i class="fas fa-download w-5"></i> Downloads</a>
+            <a href="#" class="nav-item flex items-center gap-3 p-3 rounded-xl hover:bg-sky-50"><i class="fas fa-heart w-5"></i> Favorites</a>
+            <a href="#" class="nav-item flex items-center gap-3 p-3 rounded-xl hover:bg-sky-50"><i class="fas fa-cog w-5"></i> Settings</a>
+            <button id="logoutBtnSide" class="w-full flex items-center gap-3 p-3 rounded-xl text-red-600 hover:bg-red-50"><i class="fas fa-sign-out-alt w-5"></i> Logout</button>
+          </nav>
+        </div>
+        <div class="main-content flex-1 md:ml-72">
+          <header class="bg-white/70 backdrop-blur-sm sticky top-0 z-20 p-4 shadow-sm flex justify-between items-center">
+            <button id="menuToggle" class="md:hidden text-2xl"><i class="fas fa-bars"></i></button>
+            <h2 class="text-xl font-semibold">📘 CEE Medico Nepal</h2>
+            <div class="flex gap-4 items-center">
+              <span class="hidden sm:inline">👋 ${fullName}</span>
+              <div class="dropdown relative">
+                <img src="https://ui-avatars.com/api/?background=0ea5e9&color=fff&name=${fullName[0]}" class="w-10 h-10 rounded-full cursor-pointer">
+              </div>
+            </div>
+          </header>
+          <main id="dynamicContent" class="p-6">
+            <!-- dashboard home -->
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+              <div class="bg-gradient-to-r from-sky-500 to-blue-600 text-white rounded-2xl p-6 shadow-lg">
+                <h3 class="text-2xl font-bold">Welcome, ${fullName} 🎓</h3>
+                <p>Complete MBBS Entrance Prep</p>
+              </div>
+              <div class="bg-white rounded-2xl p-5 shadow-sm"><i class="fas fa-file-pdf text-3xl text-sky-500"></i><p class="text-2xl font-bold mt-2">48+ Notes</p><span>Chapters</span></div>
+              <div class="bg-white rounded-2xl p-5 shadow-sm"><i class="fas fa-tasks text-3xl text-sky-500"></i><p class="text-2xl font-bold mt-2">1200+ MCQs</p><span>Practice Sets</span></div>
+            </div>
+            <div class="bg-white rounded-2xl p-5 mb-8"><h3 class="font-bold text-lg">🔥 Continue Learning</h3><p class="text-muted">Rotational Dynamics - Class 12 Physics</p><div class="w-full bg-gray-200 rounded-full h-2 mt-2"><div class="bg-sky-500 h-2 rounded-full w-2/3"></div></div></div>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6" id="notesPreview">
+              <div class="note-card"><i class="fas fa-flask text-xl"></i><h4 class="font-bold mt-2">Physics: Rotational Dynamics</h4><button class="text-sm text-sky-600 mt-3 viewNoteBtn" data-drive="1nFmKXqKxPkC7xexample">Preview →</button></div>
+              <div class="note-card"><i class="fas fa-leaf text-xl"></i><h4 class="font-bold mt-2">Botany: Plant Anatomy</h4><button class="text-sm text-sky-600 mt-3">Preview →</button></div>
+            </div>
+          </main>
+        </div>
+      </div>
+      `;
+      document.body.innerHTML = mainHTML;
+      document.body.style.background = "var(--background)";
+      const styleSheet = document.createElement("style");
+      styleSheet.textContent = `:root { --primary: #0ea5e9; } .bg-primary { background: var(--primary); } .text-primary { color: var(--primary); } .rounded-2xl { border-radius: 1.25rem; } .shadow-sm { box-shadow: 0 2px 8px rgba(0,0,0,0.03); } .nav-item.active { background: #e0f2fe; color: #0284c7; }`;
+      document.head.appendChild(styleSheet);
+
+      document.getElementById('menuToggle')?.addEventListener('click', () => document.getElementById('sidebar')?.classList.toggle('open'));
+      document.getElementById('logoutBtnSide')?.addEventListener('click', async () => { await window.signOut(auth); window.location.href = 'login.html'; });
+      loadNotesSection();
+      attachNavEvents();
+    }
+
+    async function loadNotesSection() {
+      // load hierarchical notes from firebase or static demo.
+      const notesRef = window.ref(db, 'notes');
+      const snapshot = await window.get(notesRef);
+      let notesData = snapshot.exists() ? snapshot.val() : {
+        class11: { physics: { "Rotational Dynamics": { title: "Rotational Dynamics", driveLink: "https://drive.google.com/file/d/1mock_id/preview", subject: "Physics", downloads: 124 }, "Fluid Statics": { title: "Fluid Statics", driveLink: "https://drive.google.com/file/d/1mock_id2/preview" } }, chemistry: { "Periodic Table": {} } },
+        class12: { physics: { "Electrostatics": {} } }
+      };
+      const mainDiv = document.getElementById('dynamicContent');
+      if (!mainDiv) return;
+      mainDiv.innerHTML = `<div class="space-y-6"><h2 class="text-3xl font-bold">📚 Notes Library</h2><div id="accordionNotes"></div></div>`;
+      const container = document.getElementById('accordionNotes');
+      function renderAccordion(obj, level=0) {
+        let html = '<div class="space-y-3">';
+        for (let key in obj) {
+          if (typeof obj[key] === 'object' && !obj[key].driveLink) {
+            html += `<div class="bg-white rounded-xl p-4 shadow-sm"><div class="font-bold text-lg cursor-pointer flex justify-between" onclick="this.nextElementSibling.classList.toggle('hidden')"><span>📁 ${key}</span><i class="fas fa-chevron-down"></i></div><div class="hidden pl-4 mt-2">${renderAccordion(obj[key], level+1)}</div></div>`;
+          } else if (obj[key] && typeof obj[key] === 'object' && obj[key].driveLink !== undefined) {
+            html += `<div class="note-card flex justify-between items-center"><div><h4 class="font-semibold">${obj[key].title || key}</h4><p class="text-xs text-gray-500">📥 ${obj[key].downloads || 0} downloads</p></div><div><button class="text-sky-600 mr-3 view-pdf-btn" data-drive="${obj[key].driveLink}"><i class="fas fa-eye"></i> Open</button><button class="text-slate-500"><i class="fas fa-download"></i></button></div></div>`;
+          } else {
+            html += `<div class="note-card">📄 ${key}</div>`;
+          }
+        }
+        html += '</div>';
+        return html;
+      }
+      container.innerHTML = renderAccordion(notesData);
+      document.querySelectorAll('.view-pdf-btn').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+          let driveUrl = btn.dataset.drive;
+          if(driveUrl) window.open(driveUrl, '_blank');
+          else alert("Preview: sample drive link, integrate own file ID");
+        });
+      });
+    }
+
+    function attachNavEvents() {
+      document.querySelectorAll('.nav-item').forEach(item => {
+        item.addEventListener('click', (e) => {
+          e.preventDefault();
+          const section = item.dataset.section;
+          if (section === 'notes') loadNotesSection();
+          else if (section === 'mcq') loadMCQSection();
+          else loadHomeDashboard();
+        });
+      });
+    }
+
+    async function loadMCQSection() {
+      const mainDiv = document.getElementById('dynamicContent');
+      mainDiv.innerHTML = `<div class="bg-white rounded-2xl p-6"><h2 class="text-2xl font-bold">⚡ Chapter-wise MCQ Practice</h2><div id="mcqContainer" class="mt-6"><select id="chapterSelect" class="p-2 border rounded-lg"><option>Physics - Rotational Dynamics</option><option>Chemistry - Thermodynamics</option></select><div id="mcqList"></div></div></div>`;
+      const sampleMcqs = [
+        { question: "SI unit of force?", options: ["Newton", "Joule", "Pascal", "Watt"], answer: 0, explanation: "Newton (N) is SI unit of force." },
+        { question: "Which is scalar quantity?", options: ["Velocity", "Force", "Mass", "Acceleration"], answer: 2, explanation: "Mass has magnitude only." }
+      ];
+      const container = document.getElementById('mcqList');
+      let currentIdx = 0;
+      let score = 0;
+      function renderQuestion() {
+        if (currentIdx >= sampleMcqs.length) {
+          container.innerHTML = `<div class="text-center p-6 bg-green-50 rounded-2xl"><h3>🎉 Quiz Completed! Score: ${score}/${sampleMcqs.length}</h3><button class="btn-primary mt-3" id="restartQuiz">Restart</button></div>`;
+          document.getElementById('restartQuiz')?.addEventListener('click', () => { currentIdx = 0; score = 0; renderQuestion(); });
+          return;
+        }
+        const q = sampleMcqs[currentIdx];
+        let html = `<div class="mb-6"><h3 class="text-xl">${currentIdx+1}. ${q.question}</h3><div class="space-y-2 mt-4">`;
+        q.options.forEach((opt, idx) => {
+          html += `<div class="mcq-option" data-opt-index="${idx}">${opt}</div>`;
+        });
+        html += `</div><div class="mt-4 text-sm text-gray-500" id="explanationArea"></div><div class="flex justify-between mt-6"><span>Question ${currentIdx+1}/${sampleMcqs.length}</span><button id="nextMCQ" class="bg-sky-500 text-white px-4 py-2 rounded-full">Next</button></div></div>`;
+        container.innerHTML = html;
+        document.querySelectorAll('.mcq-option').forEach(optDiv => {
+          optDiv.addEventListener('click', (e) => {
+            const selected = parseInt(optDiv.dataset.optIndex);
+            const isCorrect = selected === q.answer;
+            if (isCorrect) { score++; document.getElementById('explanationArea').innerHTML = `<span class="text-green-600">✅ Correct! ${q.explanation}</span>`; }
+            else { document.getElementById('explanationArea').innerHTML = `<span class="text-red-600">❌ Wrong! Correct: ${q.options[q.answer]}<br>${q.explanation}</span>`; }
+            document.querySelectorAll('.mcq-option').forEach(opt => opt.style.pointerEvents = 'none');
+          });
+        });
+        document.getElementById('nextMCQ')?.addEventListener('click', () => { currentIdx++; renderQuestion(); });
+      }
+      renderQuestion();
+    }
+
+    function loadHomeDashboard() {
+      const mainDiv = document.getElementById('dynamicContent');
+      mainDiv.innerHTML = `<div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8"><div class="bg-gradient-to-r from-sky-500 to-blue-600 text-white rounded-2xl p-6"><h3 class="text-2xl font-bold">Welcome Back!</h3><p>Keep up your daily practice</p></div><div class="bg-white rounded-2xl p-5"><i class="fas fa-file-pdf text-3xl text-sky-500"></i><p class="text-2xl font-bold mt-2">48+ Notes</p></div><div class="bg-white rounded-2xl p-5"><i class="fas fa-tasks text-3xl text-sky-500"></i><p class="text-2xl font-bold mt-2">1200+ MCQs</p></div></div><div class="bg-white rounded-2xl p-5"><h3 class="font-bold">📌 Recent Notes</h3><div class="grid md:grid-cols-2 gap-4 mt-4"><div class="p-4 border rounded-xl"><i class="fas fa-book"></i> Rotational Dynamics <button class="text-xs text-sky-600 float-right">Preview</button></div><div class="p-4 border rounded-xl"><i class="fas fa-dna"></i> Human Physiology <button class="text-xs text-sky-600 float-right">Preview</button></div></div></div>`;
+    }
+
+    // onAuthStateChanged final trigger
+    import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
+    onAuthStateChanged(auth, async (user) => {
+      if (user && (window.location.pathname.includes('dashboard.html') || window.location.pathname === '/' || window.location.pathname === '/index.html')) {
+        await renderDashboard(user);
+      } else if (!user && (window.location.pathname.includes('dashboard.html') || window.location.pathname === '/' )) {
+        window.location.href = 'login.html';
+      }
+    });
+    // if login/signup page not fully built, we handle redirection but due to scope full dashboard works if we redirect login html – We'll Provide default login pages quick
+    if (window.location.pathname.includes('login.html')) {
+      document.body.innerHTML = `<div class="min-h-screen flex items-center justify-center bg-gradient-to-br from-sky-100 to-blue-100"><div class="glass-card w-full max-w-md p-8 rounded-2xl"><h2 class="text-3xl font-bold text-center">🔐 Login</h2><input id="loginEmail" class="w-full p-3 my-3 border rounded-xl" placeholder="Email"><input id="loginPassword" type="password" class="w-full p-3 my-3 border rounded-xl" placeholder="Password"><button id="doLogin" class="btn-primary w-full">Login</button><p class="text-center mt-4"><a href="forgot-password.html">Forgot Password?</a> | <a href="signup.html">Signup</a></p></div></div>`;
+      document.getElementById('doLogin')?.addEventListener('click', async () => {
+        const email = document.getElementById('loginEmail').value;
+        const pwd = document.getElementById('loginPassword').value;
+        try { await window.signInWithEmailAndPassword(window.auth, email, pwd); window.location.href = 'dashboard.html'; } 
+        catch(e) { alert(e.message); }
+      });
+    }
+    if (window.location.pathname.includes('signup.html')) {
+      document.body.innerHTML = `<div class="min-h-screen flex justify-center items-center"><div class="glass-card p-8 w-96"><h2 class="text-2xl font-bold">Sign Up</h2><input id="name" placeholder="Full Name" class="w-full p-2 my-2 border rounded"><input id="email" placeholder="Email" class="w-full p-2 my-2 border rounded"><input id="password" type="password" placeholder="Password" class="w-full p-2 my-2 border rounded"><button id="signupBtn" class="btn-primary w-full">Create Account</button></div></div>`;
+      document.getElementById('signupBtn')?.addEventListener('click', async () => {
+        const email = document.getElementById('email').value;
+        const pwd = document.getElementById('password').value;
+        const name = document.getElementById('name').value;
+        try {
+          const cred = await window.createUserWithEmailAndPassword(window.auth, email, pwd);
+          await window.set(window.ref(window.db, `users/${cred.user.uid}`), { name, email, createdAt: Date.now() });
+          window.location.href = 'dashboard.html';
+        } catch(e) { alert(e.message); }
+      });
+    }
+    if (window.location.pathname.includes('forgot-password.html')) {
+      document.body.innerHTML = `<div class="flex justify-center items-center h-screen"><div class="p-8 bg-white rounded-xl"><h2>Reset Password</h2><input id="resetEmail" class="border p-2 w-full" placeholder="Email"><button id="resetBtn" class="btn-primary mt-3">Send reset link</button></div></div>`;
+      document.getElementById('resetBtn')?.addEventListener('click', async () => {
+        const email = document.getElementById('resetEmail').value;
+        await window.sendPasswordResetEmail(window.auth, email);
+        alert("Reset link sent");
+      });
+    }
+  </script>
+  <noscript>Enable JavaScript for full platform experience.</noscript>
+</body>
+</html>
