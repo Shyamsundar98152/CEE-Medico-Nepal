@@ -2,285 +2,424 @@
 <html lang="en">
 <head>
   <!-- Google tag (gtag.js) -->
-<script async src="https://www.googletagmanager.com/gtag/js?id=G-EEKWY5Y4G3"></script>
-<script>
-  window.dataLayer = window.dataLayer || [];
-  function gtag(){dataLayer.push(arguments);}
-  gtag('js', new Date());
-
-  gtag('config', 'G-EEKWY5Y4G3');
-</script>
+  <script async src="https://www.googletagmanager.com/gtag/js?id=G-EEKWY5Y4G3"></script>
+  <script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag(){dataLayer.push(arguments);}
+    gtag('js', new Date());
+    gtag('config', 'G-EEKWY5Y4G3');
+  </script>
+  
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Student Dashboard | CEE Medico Nepal</title>
+  
   <link rel="apple-touch-icon" sizes="180x180" href="/fevicon/apple-touch-icon.png">
   <link rel="icon" type="image/png" sizes="32x32" href="/fevicon/favicon-32x32.png">
   <link rel="icon" type="image/png" sizes="16x16" href="/fevicon/favicon-16x16.png">
-  <link rel="manifest" href="/fevicon/site.webmanifest"> 
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Premium Medical Resources - ceemediconepal.xyz</title>
+  
+  <!-- Lucide Icons -->
+  <script src="https://unpkg.com/lucide@latest"></script>
+  
   <style>
-    /* Reset and Base Styles */
+    :root {
+      --primary: #2563eb;
+      --primary-light: #dbeafe;
+      --secondary: #0ea5e9;
+      --bg-slate: #f8fafc;
+      --text-main: #1e293b;
+      --text-muted: #64748b;
+      --white: #ffffff;
+      --shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+      --transition: all 0.3s ease;
+    }
+
     * {
       margin: 0;
       padding: 0;
       box-sizing: border-box;
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
     }
-    
+
     body {
-      background: linear-gradient(135deg, #667eea, #764ba2);
-      font-family: 'Segoe UI', sans-serif;
+      background-color: var(--bg-slate);
+      color: var(--text-main);
+      line-height: 1.6;
+      display: none; /* Auth check */
       min-height: 100vh;
-      color: #333;
-      display: none; /* Initially hidden until auth check */
-      overflow-x: hidden; /* Prevent horizontal scroll */
     }
 
-    /* Header Styles */
-    header {
-      background-color: rgba(255, 255, 255, 0.9);
-      padding: 15px 0;
-      box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+    /* --- Navigation --- */
+    nav {
+      background: var(--white);
+      border-bottom: 1px solid #e2e8f0;
+      padding: 0.75rem 1.5rem;
       position: fixed;
-      width: 100%;
       top: 0;
+      width: 100%;
       z-index: 1000;
-    }
-
-    .header-container {
-      max-width: 1200px;
-      margin: 0 auto;
-      padding: 0 20px;
       display: flex;
       justify-content: space-between;
       align-items: center;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.05);
     }
 
-    .logo {
-      font-size: 24px;
-      font-weight: bold;
-      color: #667eea;
+    .nav-brand {
+      display: flex;
+      align-items: center;
+      gap: 10px;
       text-decoration: none;
+      font-weight: 700;
+      font-size: 1.25rem;
+      color: var(--primary);
     }
 
     .nav-links {
       display: flex;
-      gap: 20px;
+      gap: 1.5rem;
       align-items: center;
     }
 
     .nav-links a {
       text-decoration: none;
-      color: #333;
+      color: var(--text-muted);
+      font-size: 0.95rem;
       font-weight: 500;
-      transition: color 0.3s;
+      transition: var(--transition);
     }
 
     .nav-links a:hover {
-      color: #667eea;
+      color: var(--primary);
     }
 
-    #logoutBtn {
-      padding: 8px 15px;
-      background: #ff4444;
-      color: white;
+    .btn-logout {
+      background: #fee2e2;
+      color: #dc2626;
       border: none;
-      border-radius: 8px;
-      font-weight: bold;
+      padding: 0.5rem 1rem;
+      border-radius: 6px;
+      font-weight: 600;
       cursor: pointer;
-      transition: background 0.3s, transform 0.2s;
+      transition: var(--transition);
+      display: flex;
+      align-items: center;
+      gap: 5px;
     }
 
-    #logoutBtn:hover {
-      background: #cc0000;
-      transform: translateY(-2px);
+    .btn-logout:hover {
+      background: #fecaca;
     }
 
-    /* Hero Section */
-    .hero {
-      text-align: center;
-      padding: 120px 20px 60px; /* Adjusted padding to account for fixed header */
-      color: white;
+    /* --- Dashboard Layout --- */
+    .dashboard-container {
+      max-width: 1100px;
+      margin: 80px auto 40px;
+      padding: 0 1.5rem;
     }
 
-    .hero h1 {
-      font-size: 2.5rem;
-      margin-bottom: 20px;
+    .welcome-banner {
+      background: linear-gradient(135deg, var(--primary), var(--secondary));
+      padding: 2.5rem;
+      border-radius: 1.5rem;
+      color: var(--white);
+      margin-bottom: 2rem;
+      position: relative;
+      overflow: hidden;
+      box-shadow: 0 10px 25px -5px rgba(37, 99, 235, 0.3);
     }
 
-    .hero p {
-      font-size: 1.2rem;
-      max-width: 700px;
-      margin: 0 auto 30px;
+    .welcome-banner::after {
+      content: '';
+      position: absolute;
+      top: -50px;
+      right: -50px;
+      width: 200px;
+      height: 200px;
+      background: rgba(255,255,255,0.1);
+      border-radius: 50%;
     }
 
-    /* Features Section */
-    .features {
-      max-width: 1200px;
-      margin: 0 auto;
-      padding: 40px 20px;
+    .welcome-banner h1 {
+      font-size: 2rem;
+      margin-bottom: 0.5rem;
+    }
+
+    .welcome-banner p {
+      opacity: 0.9;
+      max-width: 600px;
+    }
+
+    /* --- Info Bar --- */
+    .info-grid {
       display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-      gap: 30px;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 1.5rem;
+      margin-bottom: 2rem;
     }
 
-    .feature-card {
-      background: white;
-      border-radius: 12px;
-      padding: 25px;
-      box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
-      transition: transform 0.3s, box-shadow 0.3s;
+    .info-card {
+      background: var(--white);
+      padding: 1.25rem;
+      border-radius: 1rem;
+      border: 1px solid #e2e8f0;
+      display: flex;
+      align-items: center;
+      gap: 1rem;
     }
 
-    .feature-card:hover {
+    .icon-box {
+      width: 45px;
+      height: 45px;
+      border-radius: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .icon-blue { background: var(--primary-light); color: var(--primary); }
+    .icon-green { background: #dcfce7; color: #16a34a; }
+
+    /* --- Resource Grid --- */
+    .section-title {
+      font-size: 1.25rem;
+      font-weight: 700;
+      margin-bottom: 1.5rem;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .resource-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+      gap: 1.5rem;
+    }
+
+    .resource-card {
+      background: var(--white);
+      border: 1px solid #e2e8f0;
+      border-radius: 1.25rem;
+      padding: 1.75rem;
+      transition: var(--transition);
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+    }
+
+    .resource-card:hover {
       transform: translateY(-5px);
-      box-shadow: 0 8px 20px rgba(0, 0, 0, 0.15);
+      box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.05);
+      border-color: var(--primary-light);
     }
 
-    .feature-card h3 {
-      color: #667eea;
-      margin-bottom: 15px;
-      font-size: 1.5rem;
+    .card-header {
+      margin-bottom: 1rem;
     }
 
-    .feature-card p {
-      margin-bottom: 20px;
-    }
-
-    .btn {
+    .badge {
       display: inline-block;
-      padding: 10px 20px;
-      background: #667eea;
-      color: white;
-      border-radius: 8px;
+      padding: 4px 10px;
+      border-radius: 20px;
+      font-size: 0.75rem;
+      font-weight: 600;
+      background: var(--primary-light);
+      color: var(--primary);
+      margin-bottom: 10px;
+    }
+
+    .resource-card h3 {
+      font-size: 1.2rem;
+      margin-bottom: 0.75rem;
+      color: var(--text-main);
+    }
+
+    .resource-card p {
+      color: var(--text-muted);
+      font-size: 0.9rem;
+      margin-bottom: 1.5rem;
+    }
+
+    .btn-access {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      width: 100%;
+      padding: 0.75rem;
+      background: var(--primary);
+      color: var(--white);
       text-decoration: none;
-      font-weight: bold;
-      transition: background 0.3s, transform 0.2s;
+      border-radius: 10px;
+      font-weight: 600;
+      transition: var(--transition);
     }
 
-    .btn:hover {
-      background: #556cd6;
-      transform: translateY(-2px);
+    .btn-access:hover {
+      background: #1d4ed8;
     }
 
-    /* Footer */
+    /* --- Footer --- */
     footer {
-      background: rgba(0, 0, 0, 0.2);
-      color: white;
       text-align: center;
-      padding: 20px;
-      margin-top: 40px;
+      padding: 3rem 1.5rem;
+      color: var(--text-muted);
+      font-size: 0.9rem;
     }
 
-    /* Responsive Styles */
+    /* --- Mobile Responsive --- */
     @media (max-width: 768px) {
-      .header-container {
-        flex-direction: column;
-        gap: 10px;
-      }
-      
-      .nav-links {
-        gap: 15px;
-        flex-wrap: wrap;
-        justify-content: center;
-      }
-      
-      .hero {
-        padding: 100px 20px 40px;
-      }
-      
-      .hero h1 {
-        font-size: 2rem;
-      }
+      .nav-links { display: none; }
+      .welcome-banner { padding: 1.5rem; }
+      .welcome-banner h1 { font-size: 1.5rem; }
+      .resource-grid { grid-template-columns: 1fr; }
     }
 
-    @media (max-width: 480px) {
-      .nav-links {
-        flex-direction: column;
-        gap: 8px;
-        align-items: center;
-      }
-      
-      .hero h1 {
-        font-size: 1.8rem;
-      }
-      
-      .hero p {
-        font-size: 1rem;
-      }
-      
-      .features {
-        grid-template-columns: 1fr;
-      }
-      .feature-card {
-        padding: 20px;
-      }
-      .feature-card h3 {
-        font-size: 1.3rem;
-      }
-      .btn {
-        padding: 8px 15px;
-        font-size: 0.9rem;
-      }
+    /* Custom Toast Notification */
+    .toast {
+      position: fixed;
+      bottom: 20px;
+      right: 20px;
+      background: var(--text-main);
+      color: white;
+      padding: 12px 24px;
+      border-radius: 8px;
+      display: none;
+      z-index: 2000;
+      animation: slideIn 0.3s ease;
+    }
+
+    @keyframes slideIn {
+      from { transform: translateY(100px); opacity: 0; }
+      to { transform: translateY(0); opacity: 1; }
     }
   </style>
 </head>
 <body>
-  <header>
-    <div class="header-container">
-      <a href="https://ceemediconepal.xyz" class="logo">ceemediconepal.xyz</a>
-      <div class="nav-links">
-        <a href="https://ceemediconepal.xyz">Home</a>
-        <a href="/secure/200-mcq-sets.html">Premium 200 MCQ Sets</a>
-        <a href="/secure/mcq.html">Subject Wise Sets</a>
-        <button id="logoutBtn">Logout</button>
+
+  <nav>
+    <a href="https://ceemediconepal.xyz" class="nav-brand">
+      <i data-lucide="activity"></i>
+      ceemediconepal.xyz
+    </a>
+    <div class="nav-links">
+      <a href="https://ceemediconepal.xyz">Home</a>
+      <a href="/secure/200-mcq-sets.html">200 MCQ Sets</a>
+      <a href="/secure/mcq.html">Subject Sets</a>
+      <button id="logoutBtn" class="btn-logout">
+        <i data-lucide="log-out" style="width: 16px;"></i>
+        Logout
+      </button>
+    </div>
+  </nav>
+
+  <main class="dashboard-container">
+    <section class="welcome-banner">
+      <h1>Welcome back, Medical Student!</h1>
+      <p>Your one-stop destination for CEE preparation. Pick up where you left off and sharpen your skills with our premium medical resources.</p>
+    </section>
+
+    <div class="info-grid">
+      <div class="info-card">
+        <div class="icon-box icon-blue">
+          <i data-lucide="book-open"></i>
+        </div>
+        <div>
+          <div style="font-size: 0.8rem; color: var(--text-muted);">Access Level</div>
+          <div style="font-weight: 700;">Premium Member</div>
+        </div>
+      </div>
+      <div class="info-card">
+        <div class="icon-box icon-green">
+          <i data-lucide="check-circle"></i>
+        </div>
+        <div>
+          <div style="font-size: 0.8rem; color: var(--text-muted);">Active Course</div>
+          <div style="font-weight: 700;">CEE Full Mastery</div>
+        </div>
       </div>
     </div>
-  </header>
 
-  <section class="hero">
-    <h1>Premium Medical Resources for Nepali Students</h1>
-    <p>Access high-quality MCQ and comprehensive MCQ sets designed to help you excel in your medical studies and entrance examinations.</p>
-    <a href="#features" class="btn">Explore Resources</a>
-  </section>
+    <h2 class="section-title">
+      <i data-lucide="layers" style="color: var(--primary)"></i>
+      Learning Modules
+    </h2>
 
-  <section class="features" id="features">
-    <div class="feature-card">
-      <h3>Premium 200 mcq Set</h3>
-      <p>Comprehensive 200 mcq weekly test.</p>
-      <a href="/secure/200-mcq-sets.html" class="btn">View Sets</a>
-    </div>
-    
-    <div class="feature-card">
-      <h3>MCQ subject wise sets</h3>
-      <p>Thousands of carefully curated multiple-choice questions with detailed explanations to test your knowledge and prepare for exams.</p>
-      <a href="/secure/mcq.html" class="btn">Practice Subject MCQs</a>
-    </div>
-    
-    <div class="feature-card">
-      <h3>Mat Premium</h3>
-      <p>Chapter wise mat questions.</p>
-      <a href="/mat.html" class="btn">Access Notes</a>
-    </div>
-    
-    <div class="feature-card">
-      <h3>Physics Chapter Wise</h3>
-      <p>Specialized materials for various medical entrance exams including pattern analysis and previous year questions.</p>
-      <a href="/physics.html" class="btn">Prepare Now</a>
-    </div>
-     <div class="feature-card">
-      <h3>Zoology Chapter Wise Past Questions</h3>
-      <p>Specialized materials for various medical entrance exams including pattern analysis and previous year questions.</p>
-      <a href="/secure/sets/zoology-past.html" class="btn">Prepare Now</a>
-    </div>
-  </section>
+    <section class="resource-grid" id="features">
+      <!-- Premium 200 MCQ -->
+      <div class="resource-card">
+        <div class="card-header">
+          <span class="badge">Weekly Test</span>
+          <h3>Premium 200 MCQ Set</h3>
+          <p>Full-length 200 question mock exams designed to simulate the actual CEE environment. Real-time scoring and analysis.</p>
+        </div>
+        <a href="/secure/200-mcq-sets.html" class="btn-access">
+          Start Mock Test <i data-lucide="chevron-right"></i>
+        </a>
+      </div>
+
+      <!-- Subject Wise -->
+      <div class="resource-card">
+        <div class="card-header">
+          <span class="badge">Practice</span>
+          <h3>Subject-Wise Mastery</h3>
+          <p>Deep dive into specific subjects. Thousands of curated questions with high-yield explanations and diagrams.</p>
+        </div>
+        <a href="/secure/mcq.html" class="btn-access">
+          Select Subject <i data-lucide="chevron-right"></i>
+        </a>
+      </div>
+
+      <!-- MAT Premium -->
+      <div class="resource-card">
+        <div class="card-header">
+          <span class="badge">Aptitude</span>
+          <h3>MAT Premium Hub</h3>
+          <p>Mental Agility Test resources. Improve your speed and accuracy in reasoning and logical deduction.</p>
+        </div>
+        <a href="/mat.html" class="btn-access">
+          Practice MAT <i data-lucide="chevron-right"></i>
+        </a>
+      </div>
+
+      <!-- Physics -->
+      <div class="resource-card">
+        <div class="card-header">
+          <span class="badge">Past Questions</span>
+          <h3>Physics Chapter-Wise</h3>
+          <p>Concise physics practice including numerical shortcuts and critical theories frequently asked in entrance exams.</p>
+        </div>
+        <a href="/physics.html" class="btn-access">
+          View Physics <i data-lucide="chevron-right"></i>
+        </a>
+      </div>
+
+      <!-- Zoology -->
+      <div class="resource-card">
+        <div class="card-header">
+          <span class="badge">Past Questions</span>
+          <h3>Zoology Past Sets</h3>
+          <p>Access categorized past paper questions for Zoology. Understand pattern trends from the last decade of exams.</p>
+        </div>
+        <a href="/secure/sets/zoology-past.html" class="btn-access">
+          View Zoology <i data-lucide="chevron-right"></i>
+        </a>
+      </div>
+    </section>
+  </main>
 
   <footer>
-    <p>&copy; 2025 ceemediconepal.xyz - All Rights Reserved</p>
+    <p>&copy; 2025 ceemediconepal.xyz • Your Medical Journey Starts Here</p>
   </footer>
+
+  <div id="logoutToast" class="toast">Logging out safely...</div>
 
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/11.8.1/firebase-app.js";
     import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/11.8.1/firebase-auth.js";
     import { getDatabase, ref, update, serverTimestamp } from "https://www.gstatic.com/firebasejs/11.8.1/firebase-database.js";
+
+    // Initialize Lucide Icons
+    lucide.createIcons();
 
     const firebaseConfig = {
       apiKey: "AIzaSyB66MZa0WZk3WPydcjmCDu7P_CE0FD60ug",
@@ -297,23 +436,15 @@
     const auth = getAuth(app);
     const db = getDatabase(app);
 
-    /**
-     * Helper function to retrieve the persistent device ID from localStorage.
-     * This ID is generated and stored by the login page to uniquely identify the browser/client.
-     * @returns {string} The persistent device ID.
-     */
     function getDeviceId() {
-      let deviceId = localStorage.getItem('uniqueDeviceId'); // Use 'uniqueDeviceId' as per login page
+      let deviceId = localStorage.getItem('uniqueDeviceId');
       if (!deviceId) {
-        // Fallback: If for some reason uniqueDeviceId isn't set, generate a new UUID.
-        // This scenario should ideally be rare if the login page is always visited first.
         deviceId = 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
           const r = Math.random() * 16 | 0,
                 v = c == 'x' ? r : (r & 0x3 | 0x8);
           return v.toString(16);
         });
         localStorage.setItem('uniqueDeviceId', deviceId);
-        console.warn("Generated new uniqueDeviceId during logout fallback. Ensure login page sets this consistently.");
       }
       return deviceId;
     }
@@ -321,10 +452,8 @@
     // Authentication state observer
     onAuthStateChanged(auth, user => {
       if (user) {
-        // User is logged in, show the page content
         document.body.style.display = "block";
       } else {
-        // User is not logged in, redirect to login page
         window.location.href = "login.html";
       }
     });
@@ -332,30 +461,30 @@
     // Logout functionality
     document.getElementById("logoutBtn").addEventListener("click", async () => {
       const user = auth.currentUser;
+      const toast = document.getElementById("logoutToast");
+      
       if (user) {
-        const deviceId = getDeviceId(); // Get the persistent device ID
+        const deviceId = getDeviceId();
         const userAgent = navigator.userAgent;
 
+        toast.style.display = "block";
+
         try {
-          // Update device status to offline and record logout time
           const deviceRef = ref(db, `userDevices/${user.uid}/${deviceId}`);
-          await update(deviceRef, { // Use update for partial modification
+          await update(deviceRef, {
             userAgent: userAgent,
-            lastLogout: serverTimestamp(), // Use server timestamp for accuracy
+            lastLogout: serverTimestamp(),
             isOnline: false
           });
 
-          await signOut(auth); // Sign out from Firebase
-          // IMPORTANT: Do NOT remove 'uniqueDeviceId' from localStorage here.
-          // We want this ID to persist for the specific device/browser.
-          alert("👋 Logged out successfully.");
-          window.location.href = "login.html"; // Redirect to login page
+          await signOut(auth);
+          window.location.href = "login.html";
         } catch (error) {
           console.error("Logout error:", error);
-          alert("❌ Logout failed: " + error.message);
+          toast.innerText = "Error logging out";
+          setTimeout(() => toast.style.display = "none", 3000);
         }
       } else {
-        // No user logged in, just redirect to login
         window.location.href = "login.html";
       }
     });
