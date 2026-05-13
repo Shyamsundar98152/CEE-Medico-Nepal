@@ -11,49 +11,57 @@
   </script>
   
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <title>Student Dashboard | CEE Medico Nepal</title>
   
   <link rel="apple-touch-icon" sizes="180x180" href="/fevicon/apple-touch-icon.png">
   <link rel="icon" type="image/png" sizes="32x32" href="/fevicon/favicon-32x32.png">
   <link rel="icon" type="image/png" sizes="16x16" href="/fevicon/favicon-16x16.png">
   
+  <!-- Google Fonts: Inter -->
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
   <!-- Lucide Icons -->
   <script src="https://unpkg.com/lucide@latest"></script>
   
   <style>
     :root {
       --primary: #2563eb;
+      --primary-dark: #1e4ed8;
       --primary-light: #dbeafe;
       --secondary: #0ea5e9;
-      --bg-slate: #f8fafc;
-      --text-main: #1e293b;
+      --bg-slate: #f1f5f9;
+      --text-main: #0f172a;
       --text-muted: #64748b;
       --white: #ffffff;
-      --shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
-      --transition: all 0.3s ease;
+      --border: #e2e8f0;
+      --radius-lg: 1rem;
+      --radius-md: 0.75rem;
+      --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.05);
+      --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.1);
     }
 
     * {
       margin: 0;
       padding: 0;
       box-sizing: border-box;
-      font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      -webkit-tap-highlight-color: transparent;
     }
 
     body {
       background-color: var(--bg-slate);
       color: var(--text-main);
-      line-height: 1.6;
-      display: none; /* Auth check */
-      min-height: 100vh;
+      font-family: 'Inter', sans-serif;
+      line-height: 1.5;
+      display: none; /* Controlled by Auth */
+      padding-bottom: 80px; /* Space for mobile nav */
     }
 
-    /* --- Navigation --- */
+    /* --- Desktop Navigation --- */
     nav {
       background: var(--white);
-      border-bottom: 1px solid #e2e8f0;
-      padding: 0.75rem 1.5rem;
+      border-bottom: 1px solid var(--border);
+      padding: 0 1.25rem;
+      height: 64px;
       position: fixed;
       top: 0;
       width: 100%;
@@ -61,31 +69,30 @@
       display: flex;
       justify-content: space-between;
       align-items: center;
-      box-shadow: 0 1px 3px rgba(0,0,0,0.05);
     }
 
     .nav-brand {
       display: flex;
       align-items: center;
-      gap: 10px;
+      gap: 8px;
       text-decoration: none;
       font-weight: 700;
-      font-size: 1.25rem;
+      font-size: 1.1rem;
       color: var(--primary);
     }
 
     .nav-links {
       display: flex;
-      gap: 1.5rem;
+      gap: 1.25rem;
       align-items: center;
     }
 
     .nav-links a {
       text-decoration: none;
       color: var(--text-muted);
-      font-size: 0.95rem;
+      font-size: 0.9rem;
       font-weight: 500;
-      transition: var(--transition);
+      transition: color 0.2s;
     }
 
     .nav-links a:hover {
@@ -97,340 +104,333 @@
       color: #dc2626;
       border: none;
       padding: 0.5rem 1rem;
-      border-radius: 6px;
+      border-radius: var(--radius-md);
       font-weight: 600;
+      font-size: 0.85rem;
       cursor: pointer;
-      transition: var(--transition);
       display: flex;
       align-items: center;
-      gap: 5px;
+      gap: 6px;
     }
 
-    .btn-logout:hover {
-      background: #fecaca;
-    }
-
-    /* --- Dashboard Layout --- */
-    .dashboard-container {
-      max-width: 1100px;
-      margin: 80px auto 40px;
-      padding: 0 1.5rem;
-    }
-
-    .welcome-banner {
-      background: linear-gradient(135deg, var(--primary), var(--secondary));
-      padding: 2.5rem;
-      border-radius: 1.5rem;
-      color: var(--white);
-      margin-bottom: 2rem;
-      position: relative;
-      overflow: hidden;
-      box-shadow: 0 10px 25px -5px rgba(37, 99, 235, 0.3);
-    }
-
-    .welcome-banner::after {
-      content: '';
-      position: absolute;
-      top: -50px;
-      right: -50px;
-      width: 200px;
-      height: 200px;
-      background: rgba(255,255,255,0.1);
-      border-radius: 50%;
-    }
-
-    .welcome-banner h1 {
-      font-size: 2rem;
-      margin-bottom: 0.5rem;
-    }
-
-    .welcome-banner p {
-      opacity: 0.9;
-      max-width: 600px;
-    }
-
-    /* --- Info Bar --- */
-    .info-grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-      gap: 1.5rem;
-      margin-bottom: 2rem;
-    }
-
-    .info-card {
+    /* --- Mobile Bottom Nav --- */
+    .mobile-nav {
+      display: none;
+      position: fixed;
+      bottom: 0;
+      left: 0;
+      right: 0;
       background: var(--white);
-      padding: 1.25rem;
-      border-radius: 1rem;
-      border: 1px solid #e2e8f0;
-      display: flex;
-      align-items: center;
-      gap: 1rem;
+      border-top: 1px solid var(--border);
+      padding: 0.75rem 1rem;
+      z-index: 1001;
+      justify-content: space-around;
+      box-shadow: 0 -2px 10px rgba(0,0,0,0.05);
     }
 
-    .icon-box {
-      width: 45px;
-      height: 45px;
-      border-radius: 10px;
+    .m-nav-item {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      text-decoration: none;
+      color: var(--text-muted);
+      font-size: 0.7rem;
+      font-weight: 500;
+      gap: 4px;
+      flex: 1;
+      border: none;
+      background: none;
+      cursor: pointer;
+    }
+
+    .m-nav-item.active { color: var(--primary); }
+    .m-nav-item i { width: 22px; height: 22px; }
+
+    /* --- Main Content --- */
+    .main-wrapper {
+      max-width: 1200px;
+      margin: 84px auto 20px;
+      padding: 0 1rem;
+    }
+
+    .welcome-card {
+      background: linear-gradient(135deg, var(--primary), var(--secondary));
+      padding: 2rem;
+      border-radius: var(--radius-lg);
+      color: var(--white);
+      margin-bottom: 1.5rem;
+      box-shadow: 0 10px 15px -3px rgba(37, 99, 235, 0.2);
+    }
+
+    .welcome-card h1 { font-size: 1.5rem; margin-bottom: 0.5rem; }
+    .welcome-card p { font-size: 0.95rem; opacity: 0.9; }
+
+    /* --- Stats Grid --- */
+    .stats-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 1rem;
+      margin-bottom: 2rem;
+    }
+
+    .stat-card {
+      background: var(--white);
+      padding: 1rem;
+      border-radius: var(--radius-md);
+      border: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+    }
+
+    .stat-icon {
+      width: 40px;
+      height: 40px;
+      border-radius: 8px;
       display: flex;
       align-items: center;
       justify-content: center;
     }
 
-    .icon-blue { background: var(--primary-light); color: var(--primary); }
-    .icon-green { background: #dcfce7; color: #16a34a; }
+    .stat-icon.blue { background: #eff6ff; color: #2563eb; }
+    .stat-icon.green { background: #f0fdf4; color: #16a34a; }
 
-    /* --- Resource Grid --- */
-    .section-title {
-      font-size: 1.25rem;
-      font-weight: 700;
-      margin-bottom: 1.5rem;
+    .stat-info .label { font-size: 0.75rem; color: var(--text-muted); }
+    .stat-info .value { font-size: 0.85rem; font-weight: 700; }
+
+    /* --- Learning Modules Grid --- */
+    .section-header {
       display: flex;
       align-items: center;
-      gap: 10px;
-    }
-
-    .resource-grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
-      gap: 1.5rem;
-    }
-
-    .resource-card {
-      background: var(--white);
-      border: 1px solid #e2e8f0;
-      border-radius: 1.25rem;
-      padding: 1.75rem;
-      transition: var(--transition);
-      display: flex;
-      flex-direction: column;
-      justify-content: space-between;
-    }
-
-    .resource-card:hover {
-      transform: translateY(-5px);
-      box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.05);
-      border-color: var(--primary-light);
-    }
-
-    .card-header {
-      margin-bottom: 1rem;
-    }
-
-    .badge {
-      display: inline-block;
-      padding: 4px 10px;
-      border-radius: 20px;
-      font-size: 0.75rem;
-      font-weight: 600;
-      background: var(--primary-light);
-      color: var(--primary);
-      margin-bottom: 10px;
-    }
-
-    .resource-card h3 {
-      font-size: 1.2rem;
-      margin-bottom: 0.75rem;
+      gap: 8px;
+      margin-bottom: 1.25rem;
+      font-weight: 700;
       color: var(--text-main);
     }
 
-    .resource-card p {
-      color: var(--text-muted);
-      font-size: 0.9rem;
-      margin-bottom: 1.5rem;
+    .module-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+      gap: 1.25rem;
     }
 
-    .btn-access {
+    .module-card {
+      background: var(--white);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-md);
+      padding: 1.25rem;
+      display: flex;
+      flex-direction: column;
+      height: 100%;
+      transition: transform 0.2s, box-shadow 0.2s;
+    }
+
+    .module-card:active { transform: scale(0.98); }
+
+    .tag {
+      font-size: 0.7rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      padding: 2px 8px;
+      border-radius: 4px;
+      background: var(--primary-light);
+      color: var(--primary);
+      width: fit-content;
+      margin-bottom: 0.75rem;
+    }
+
+    .module-card h3 { font-size: 1.1rem; margin-bottom: 0.5rem; }
+    .module-card p { font-size: 0.875rem; color: var(--text-muted); margin-bottom: 1.25rem; flex-grow: 1; }
+
+    .btn-action {
       display: flex;
       align-items: center;
       justify-content: center;
-      gap: 8px;
-      width: 100%;
-      padding: 0.75rem;
+      gap: 6px;
       background: var(--primary);
-      color: var(--white);
+      color: white;
       text-decoration: none;
-      border-radius: 10px;
+      padding: 0.75rem;
+      border-radius: 8px;
       font-weight: 600;
-      transition: var(--transition);
-    }
-
-    .btn-access:hover {
-      background: #1d4ed8;
-    }
-
-    /* --- Footer --- */
-    footer {
-      text-align: center;
-      padding: 3rem 1.5rem;
-      color: var(--text-muted);
       font-size: 0.9rem;
     }
 
-    /* --- Mobile Responsive --- */
-    @media (max-width: 768px) {
-      .nav-links { display: none; }
-      .welcome-banner { padding: 1.5rem; }
-      .welcome-banner h1 { font-size: 1.5rem; }
-      .resource-grid { grid-template-columns: 1fr; }
-    }
-
-    /* Custom Toast Notification */
+    /* --- Toast --- */
     .toast {
       position: fixed;
-      bottom: 20px;
-      right: 20px;
-      background: var(--text-main);
+      bottom: 90px; /* Above mobile nav */
+      left: 50%;
+      transform: translateX(-50%);
+      background: #1e293b;
       color: white;
-      padding: 12px 24px;
-      border-radius: 8px;
+      padding: 10px 20px;
+      border-radius: 30px;
+      font-size: 0.85rem;
       display: none;
       z-index: 2000;
-      animation: slideIn 0.3s ease;
+      box-shadow: var(--shadow-md);
     }
 
-    @keyframes slideIn {
-      from { transform: translateY(100px); opacity: 0; }
-      to { transform: translateY(0); opacity: 1; }
+    /* --- Responsive Adjustments --- */
+    @media (max-width: 768px) {
+      .nav-links { display: none; }
+      .mobile-nav { display: flex; }
+      .main-wrapper { margin-top: 74px; }
+      .welcome-card { padding: 1.5rem; }
+      .stats-grid { grid-template-columns: 1fr; }
+      .module-grid { grid-template-columns: 1fr; }
+      body { padding-bottom: 90px; }
     }
   </style>
 </head>
 <body>
 
+  <!-- Desktop Header -->
   <nav>
     <a href="https://ceemediconepal.xyz" class="nav-brand">
-      <i data-lucide="activity"></i>
-      ceemediconepal.xyz
+      <i data-lucide="activity" style="width: 22px;"></i>
+      <span>CEE Medico</span>
     </a>
     <div class="nav-links">
       <a href="https://ceemediconepal.xyz">Home</a>
-      <a href="/secure/200-mcq-sets.html">200 MCQ Sets</a>
-      <a href="/secure/mcq.html">Subject Sets</a>
-      <button id="logoutBtn" class="btn-logout">
+      <a href="/secure/200-mcq-sets.html">Mock Tests</a>
+      <a href="/secure/mcq.html">Subjects</a>
+      <button id="logoutBtnDesktop" class="btn-logout">
         <i data-lucide="log-out" style="width: 16px;"></i>
         Logout
       </button>
     </div>
   </nav>
 
-  <main class="dashboard-container">
-    <section class="welcome-banner">
-      <h1>Welcome back, Medical Student!</h1>
-      <p>Your one-stop destination for CEE preparation. Pick up where you left off and sharpen your skills with our premium medical resources.</p>
-    </section>
+  <!-- Mobile Bottom Navigation -->
+  <div class="mobile-nav">
+    <a href="#" class="m-nav-item active">
+      <i data-lucide="home"></i>
+      <span>Home</span>
+    </a>
+    <a href="/secure/200-mcq-sets.html" class="m-nav-item">
+      <i data-lucide="file-check"></i>
+      <span>Tests</span>
+    </a>
+    <a href="/secure/mcq.html" class="m-nav-item">
+      <i data-lucide="book-open"></i>
+      <span>Subjects</span>
+    </a>
+    <button id="logoutBtnMobile" class="m-nav-item">
+      <i data-lucide="log-out"></i>
+      <span>Logout</span>
+    </button>
+  </div>
 
-    <div class="info-grid">
-      <div class="info-card">
-        <div class="icon-box icon-blue">
-          <i data-lucide="book-open"></i>
+  <main class="main-wrapper">
+    <header class="welcome-card">
+      <h1>Hello, Medic! 👋</h1>
+      <p>Keep pushing your boundaries. Every question you solve brings you closer to your white coat.</p>
+    </header>
+
+    <div class="stats-grid">
+      <div class="stat-card">
+        <div class="stat-icon blue">
+          <i data-lucide="shield-check" style="width: 20px;"></i>
         </div>
-        <div>
-          <div style="font-size: 0.8rem; color: var(--text-muted);">Access Level</div>
-          <div style="font-weight: 700;">Premium Member</div>
+        <div class="stat-info">
+          <p class="label">Membership</p>
+          <p class="value">Premium Access</p>
         </div>
       </div>
-      <div class="info-card">
-        <div class="icon-box icon-green">
-          <i data-lucide="check-circle"></i>
+      <div class="stat-card">
+        <div class="stat-icon green">
+          <i data-lucide="zap" style="width: 20px;"></i>
         </div>
-        <div>
-          <div style="font-size: 0.8rem; color: var(--text-muted);">Active Course</div>
-          <div style="font-weight: 700;">CEE Full Mastery</div>
+        <div class="stat-info">
+          <p class="label">Course Plan</p>
+          <p class="value">Full CEE Mastery</p>
         </div>
       </div>
     </div>
 
-    <h2 class="section-title">
-      <i data-lucide="layers" style="color: var(--primary)"></i>
+    <h2 class="section-header">
+      <i data-lucide="compass" style="width: 20px; color: var(--primary)"></i>
       Learning Modules
     </h2>
 
-    <section class="resource-grid" id="features">
-      <!-- Premium 200 MCQ -->
-      <div class="resource-card">
-        <div class="card-header">
-          <span class="badge">Weekly Test</span>
-          <h3>Premium 200 MCQ Set</h3>
-          <p>Full-length 200 question mock exams designed to simulate the actual CEE environment. Real-time scoring and analysis.</p>
-        </div>
-        <a href="/secure/200-mcq-sets.html" class="btn-access">
-          Start Mock Test <i data-lucide="chevron-right"></i>
+    <section class="module-grid">
+      <!-- Full Test -->
+      <article class="module-card">
+        <span class="tag">High Yield</span>
+        <h3>Full Mock Tests (200 Qs)</h3>
+        <p>Real-time simulated environment for the Common Entrance Examination.</p>
+        <a href="/secure/200-mcq-sets.html" class="btn-action">
+          Take Exam <i data-lucide="arrow-right" style="width: 16px;"></i>
         </a>
-      </div>
+      </article>
 
       <!-- Subject Wise -->
-      <div class="resource-card">
-        <div class="card-header">
-          <span class="badge">Practice</span>
-          <h3>Subject-Wise Mastery</h3>
-          <p>Deep dive into specific subjects. Thousands of curated questions with high-yield explanations and diagrams.</p>
-        </div>
-        <a href="/secure/mcq.html" class="btn-access">
-          Select Subject <i data-lucide="chevron-right"></i>
+      <article class="module-card">
+        <span class="tag" style="background:#fef3c7; color:#92400e;">Practice</span>
+        <h3>Subject Wise Practice</h3>
+        <p>Target your weak areas in Biology, Physics, and Chemistry.</p>
+        <a href="/secure/mcq.html" class="btn-action">
+          Start Practice <i data-lucide="arrow-right" style="width: 16px;"></i>
         </a>
-      </div>
-
-      <!-- MAT Premium -->
-      <div class="resource-card">
-        <div class="card-header">
-          <span class="badge">Aptitude</span>
-          <h3>MAT Premium Hub</h3>
-          <p>Mental Agility Test resources. Improve your speed and accuracy in reasoning and logical deduction.</p>
-        </div>
-        <a href="/mat.html" class="btn-access">
-          Practice MAT <i data-lucide="chevron-right"></i>
-        </a>
-      </div>
+      </article>
 
       <!-- Physics -->
-      <div class="resource-card">
-        <div class="card-header">
-          <span class="badge">Past Questions</span>
-          <h3>Physics Chapter-Wise</h3>
-          <p>Concise physics practice including numerical shortcuts and critical theories frequently asked in entrance exams.</p>
-        </div>
-        <a href="/physics.html" class="btn-access">
-          View Physics <i data-lucide="chevron-right"></i>
+      <article class="module-card">
+        <span class="tag" style="background:#f3e8ff; color:#6b21a8;">Concepts</span>
+        <h3>Physics Hub</h3>
+        <p>Chapter-wise numerical focus and formula summaries.</p>
+        <a href="/physics.html" class="btn-action">
+          Open Physics <i data-lucide="arrow-right" style="width: 16px;"></i>
         </a>
-      </div>
+      </article>
 
-       <!-- Chemistry -->
-      <div class="resource-card">
-        <div class="card-header">
-          <span class="badge">Past Questions</span>
-          <h3>Chemistry Chapter-Wise</h3>
-          <p>Concise chemistry practice including numerical shortcuts and critical theories frequently asked in entrance exams.</p>
-        </div>
-        <a href="/secure/sets/chemistry.html" class="btn-access">
-          View Chemistry <i data-lucide="chevron-right"></i>
+      <!-- Chemistry -->
+      <article class="module-card">
+        <span class="tag" style="background:#ecfdf5; color:#065f46;">Concepts</span>
+        <h3>Chemistry Hub</h3>
+        <p>Inorganic, Organic, and Physical chemistry past sets.</p>
+        <a href="/secure/sets/chemistry.html" class="btn-action">
+          Open Chemistry <i data-lucide="arrow-right" style="width: 16px;"></i>
         </a>
-      </div>
+      </article>
+
+      <!-- MAT -->
+      <article class="module-card">
+        <span class="tag" style="background:#fff1f2; color:#9f1239;">Aptitude</span>
+        <h3>MAT Premium</h3>
+        <p>Master the Mental Agility Test with logic-based questions.</p>
+        <a href="/mat.html" class="btn-action">
+          Practice MAT <i data-lucide="arrow-right" style="width: 16px;"></i>
+        </a>
+      </article>
 
       <!-- Zoology -->
-      <div class="resource-card">
-        <div class="card-header">
-          <span class="badge">Past Questions</span>
-          <h3>Zoology Past Sets</h3>
-          <p>Access categorized past paper questions for Zoology. Understand pattern trends from the last decade of exams.</p>
-        </div>
-        <a href="/secure/sets/zoology-past.html" class="btn-access">
-          View Zoology <i data-lucide="chevron-right"></i>
+      <article class="module-card">
+        <span class="tag" style="background:#eff6ff; color:#1e40af;">Revision</span>
+        <h3>Zoology Past Papers</h3>
+        <p>Decade of Zoology patterns summarized for quick review.</p>
+        <a href="/secure/sets/zoology-past.html" class="btn-action">
+          View Past Sets <i data-lucide="arrow-right" style="width: 16px;"></i>
         </a>
-      </div>
+      </article>
     </section>
+
+    <footer style="margin-top: 3rem; text-align: center; color: var(--text-muted); font-size: 0.8rem; padding-bottom: 2rem;">
+      <p>&copy; 2025 ceemediconepal.xyz</p>
+      <p>Nepal's Digital Medical Classroom</p>
+    </footer>
   </main>
 
-  <footer>
-    <p>&copy; 2025 ceemediconepal.xyz • Your Medical Journey Starts Here</p>
-  </footer>
-
-  <div id="logoutToast" class="toast">Logging out safely...</div>
+  <div id="logoutToast" class="toast">Signing out...</div>
 
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/11.8.1/firebase-app.js";
     import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/11.8.1/firebase-auth.js";
     import { getDatabase, ref, update, serverTimestamp } from "https://www.gstatic.com/firebasejs/11.8.1/firebase-database.js";
 
-    // Initialize Lucide Icons
+    // Initialize Icons
     lucide.createIcons();
 
     const firebaseConfig = {
@@ -448,12 +448,12 @@
     const auth = getAuth(app);
     const db = getDatabase(app);
 
+    // Device Tracking logic
     function getDeviceId() {
       let deviceId = localStorage.getItem('uniqueDeviceId');
       if (!deviceId) {
-        deviceId = 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
-          const r = Math.random() * 16 | 0,
-                v = c == 'x' ? r : (r & 0x3 | 0x8);
+        deviceId = 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, (c) => {
+          const r = Math.random() * 16 | 0, v = c == 'x' ? r : (r & 0x3 | 0x8);
           return v.toString(16);
         });
         localStorage.setItem('uniqueDeviceId', deviceId);
@@ -461,7 +461,7 @@
       return deviceId;
     }
 
-    // Authentication state observer
+    // Auth Guardian
     onAuthStateChanged(auth, user => {
       if (user) {
         document.body.style.display = "block";
@@ -470,15 +470,14 @@
       }
     });
 
-    // Logout functionality
-    document.getElementById("logoutBtn").addEventListener("click", async () => {
+    // Logout Handler (shared for mobile/desktop)
+    const handleLogout = async () => {
       const user = auth.currentUser;
       const toast = document.getElementById("logoutToast");
       
       if (user) {
         const deviceId = getDeviceId();
         const userAgent = navigator.userAgent;
-
         toast.style.display = "block";
 
         try {
@@ -493,13 +492,16 @@
           window.location.href = "login.html";
         } catch (error) {
           console.error("Logout error:", error);
-          toast.innerText = "Error logging out";
-          setTimeout(() => toast.style.display = "none", 3000);
+          toast.innerText = "Error signing out";
+          setTimeout(() => toast.style.display = "none", 2000);
         }
       } else {
         window.location.href = "login.html";
       }
-    });
+    };
+
+    document.getElementById("logoutBtnDesktop").addEventListener("click", handleLogout);
+    document.getElementById("logoutBtnMobile").addEventListener("click", handleLogout);
   </script>
 </body>
 </html>
