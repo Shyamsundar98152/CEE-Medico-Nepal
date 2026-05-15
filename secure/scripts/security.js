@@ -1,10 +1,12 @@
-// security.js
+// security.js (Production Ready)
 
 import { initializeApp } from "https://www.gstatic.com/firebasejs/11.8.1/firebase-app.js";
 import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/11.8.1/firebase-auth.js";
 import { getDatabase, ref, update, serverTimestamp } from "https://www.gstatic.com/firebasejs/11.8.1/firebase-database.js";
 
-// 1. Firebase config
+// =======================
+// 1. Firebase Config
+// =======================
 const firebaseConfig = {
   apiKey: "AIzaSyB66MZa0WZk3WPydcjmCDu7P_CE0FD60ug",
   authDomain: "login-2f07b.firebaseapp.com",
@@ -16,26 +18,68 @@ const firebaseConfig = {
   measurementId: "G-G7ZY1MJ106"
 };
 
+// Initialize Firebase
 const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
 const db = getDatabase(app);
 
-// 2. Get or generate persistent device ID
+// =======================
+// 2. Toast System (UI)
+// =======================
+function showToast(message, isError = false) {
+  let toast = document.getElementById("toast");
+
+  if (!toast) {
+    toast = document.createElement("div");
+    toast.id = "toast";
+    document.body.appendChild(toast);
+
+    // basic styling
+    toast.style.position = "fixed";
+    toast.style.bottom = "20px";
+    toast.style.right = "20px";
+    toast.style.padding = "12px 18px";
+    toast.style.borderRadius = "8px";
+    toast.style.color = "#fff";
+    toast.style.fontSize = "14px";
+    toast.style.zIndex = "9999";
+    toast.style.display = "none";
+  }
+
+  toast.style.background = isError ? "#e74c3c" : "#2ecc71";
+  toast.innerText = message;
+  toast.style.display = "block";
+
+  setTimeout(() => {
+    toast.style.display = "none";
+  }, 2500);
+}
+
+// =======================
+// 3. Device ID Generator
+// =======================
 function getDeviceId() {
-  let deviceId = localStorage.getItem('uniqueDeviceId');
+  let deviceId = localStorage.getItem("uniqueDeviceId");
+
   if (!deviceId) {
-    deviceId = 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
-      const r = Math.random() * 16 | 0,
-            v = c == 'x' ? r : (r & 0x3 | 0x8);
+    deviceId = "xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx".replace(/[xy]/g, (c) => {
+      const r = Math.random() * 16 | 0;
+      const v = c === "x" ? r : (r & 0x3) | 0x8;
       return v.toString(16);
     });
-    localStorage.setItem('uniqueDeviceId', deviceId);
+
+    localStorage.setItem("uniqueDeviceId", deviceId);
   }
+
   return deviceId;
 }
 
-// 3. Auth check to protect page
-onAuthStateChanged(auth, user => {
+// =======================
+// 4. Auth Guard (Page Protection)
+// =======================
+document.body.style.display = "none";
+
+onAuthStateChanged(auth, (user) => {
   if (user) {
     document.body.style.display = "block";
   } else {
@@ -43,29 +87,57 @@ onAuthStateChanged(auth, user => {
   }
 });
 
-// 4. Optional logout handler
+// =======================
+// 5. Logout Function
+// =======================
+async function handleLogout() {
+  const user = auth.currentUser;
+
+  if (!user) {
+    window.location.href = "/secure/login.html";
+    return;
+  }
+
+  const deviceId = getDeviceId();
+  const userAgent = navigator.userAgent;
+
+  try {
+    const deviceRef = ref(db, `userDevices/${user.uid}/${deviceId}`);
+
+    await update(deviceRef, {
+      userAgent: userAgent,
+      lastLogout: serverTimestamp(),
+      isOnline: false
+    });
+
+    await signOut(auth);
+
+    showToast("Logged out successfully 👋");
+    window.location.href = "/secure/login.html";
+
+  } catch (error) {
+    console.error("Logout Error:", error);
+    showToast("Logout failed ❌", true);
+  }
+}
+
+// =======================
+// 6. Button Bindings (Safe)
+// =======================
+
+// Single logout button (recommended)
 const logoutBtn = document.getElementById("logoutBtn");
 if (logoutBtn) {
-  logoutBtn.addEventListener("click", async () => {
-    const user = auth.currentUser;
-    if (user) {
-      const deviceId = getDeviceId();
-      const userAgent = navigator.userAgent;
+  logoutBtn.addEventListener("click", handleLogout);
+}
 
-      try {
-        const deviceRef = ref(db, `userDevices/${user.uid}/${deviceId}`);
-        await update(deviceRef, {
-          userAgent: userAgent,
-          lastLogout: serverTimestamp(),
-          isOnline: false
-        });
+// Optional support for multiple buttons
+const logoutBtnDesktop = document.getElementById("logoutBtnDesktop");
+if (logoutBtnDesktop) {
+  logoutBtnDesktop.addEventListener("click", handleLogout);
+}
 
-        await signOut(auth);
-        alert("👋 Logged out successfully.");
-        window.location.href = "/secure/login.html";
-      } catch (error) {
-        alert("❌ Logout failed: " + error.message);
-      }
-    }
-  });
+const logoutBtnMobile = document.getElementById("logoutBtnMobile");
+if (logoutBtnMobile) {
+  logoutBtnMobile.addEventListener("click", handleLogout);
 }
