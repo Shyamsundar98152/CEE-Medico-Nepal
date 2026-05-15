@@ -1,0 +1,1113 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CEE Medico Nepal — Full Mock Test</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;900&family=Source+Sans+3:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0a0f1e;
+    --surface: #111827;
+    --card: #162033;
+    --border: #1e3a5f;
+    --accent: #00c6ff;
+    --accent2: #0072ff;
+    --gold: #f5c518;
+    --green: #22c55e;
+    --red: #ef4444;
+    --text: #e2e8f0;
+    --muted: #94a3b8;
+    --radius: 12px;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Source Sans 3', sans-serif;
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  /* Animated background */
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background: radial-gradient(ellipse at 20% 10%, rgba(0,114,255,0.12) 0%, transparent 60%),
+                radial-gradient(ellipse at 80% 80%, rgba(0,198,255,0.08) 0%, transparent 50%);
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  /* ─── HEADER ─── */
+  header {
+    position: relative;
+    z-index: 10;
+    padding: 2rem 2rem 1.5rem;
+    border-bottom: 1px solid var(--border);
+    background: rgba(10,15,30,0.8);
+    backdrop-filter: blur(12px);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 1rem;
+  }
+
+  .logo {
+    display: flex;
+    flex-direction: column;
+  }
+
+  .logo-title {
+    font-family: 'Playfair Display', serif;
+    font-size: 1.7rem;
+    font-weight: 900;
+    background: linear-gradient(135deg, #00c6ff, #0072ff);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    line-height: 1;
+  }
+
+  .logo-sub {
+    font-size: 0.75rem;
+    color: var(--gold);
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    margin-top: 3px;
+  }
+
+  .header-stats {
+    display: flex;
+    gap: 1.5rem;
+    align-items: center;
+  }
+
+  .stat-badge {
+    text-align: center;
+  }
+
+  .stat-badge .num {
+    font-family: 'Playfair Display', serif;
+    font-size: 1.4rem;
+    font-weight: 700;
+    color: var(--accent);
+    line-height: 1;
+  }
+
+  .stat-badge .lbl {
+    font-size: 0.65rem;
+    color: var(--muted);
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+  }
+
+  /* ─── TIMER BAR ─── */
+  .timer-bar {
+    position: sticky;
+    top: 0;
+    z-index: 20;
+    background: var(--surface);
+    border-bottom: 1px solid var(--border);
+    padding: 0.6rem 2rem;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    display: none;
+  }
+
+  .timer-bar.visible { display: flex; }
+
+  .timer-display {
+    font-family: 'Playfair Display', serif;
+    font-size: 1.3rem;
+    font-weight: 700;
+    color: var(--gold);
+    letter-spacing: 0.05em;
+  }
+
+  .timer-label { font-size: 0.75rem; color: var(--muted); text-transform: uppercase; }
+
+  .progress-track {
+    flex: 1;
+    height: 6px;
+    background: var(--border);
+    border-radius: 999px;
+    overflow: hidden;
+  }
+
+  .progress-fill {
+    height: 100%;
+    background: linear-gradient(90deg, var(--accent2), var(--accent));
+    border-radius: 999px;
+    transition: width 0.3s ease;
+    width: 0%;
+  }
+
+  .q-counter { font-size: 0.85rem; color: var(--muted); white-space: nowrap; }
+
+  /* ─── LANDING ─── */
+  #landing {
+    position: relative;
+    z-index: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    min-height: calc(100vh - 100px);
+    padding: 2rem;
+    text-align: center;
+    gap: 2rem;
+  }
+
+  .hero-tag {
+    display: inline-block;
+    background: linear-gradient(135deg, rgba(0,198,255,0.15), rgba(0,114,255,0.15));
+    border: 1px solid rgba(0,198,255,0.3);
+    padding: 0.4rem 1.2rem;
+    border-radius: 999px;
+    font-size: 0.75rem;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    color: var(--accent);
+  }
+
+  .hero-title {
+    font-family: 'Playfair Display', serif;
+    font-size: clamp(2rem, 6vw, 4rem);
+    font-weight: 900;
+    line-height: 1.1;
+    max-width: 700px;
+  }
+
+  .hero-title span {
+    background: linear-gradient(135deg, #00c6ff, #0072ff);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+  }
+
+  .hero-desc {
+    max-width: 520px;
+    color: var(--muted);
+    font-size: 1.05rem;
+    line-height: 1.7;
+  }
+
+  /* Config panel */
+  .config-panel {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 2rem;
+    max-width: 560px;
+    width: 100%;
+    text-align: left;
+  }
+
+  .config-title {
+    font-size: 0.75rem;
+    text-transform: uppercase;
+    letter-spacing: 0.15em;
+    color: var(--muted);
+    margin-bottom: 1rem;
+  }
+
+  .config-row {
+    display: flex;
+    flex-direction: column;
+    gap: 0.4rem;
+    margin-bottom: 1.2rem;
+  }
+
+  .config-row label { font-size: 0.9rem; color: var(--text); }
+
+  .config-row input, .config-row select, .config-row textarea {
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 0.6rem 1rem;
+    color: var(--text);
+    font-family: inherit;
+    font-size: 0.9rem;
+    width: 100%;
+    outline: none;
+    transition: border-color 0.2s;
+  }
+
+  .config-row input:focus, .config-row select:focus, .config-row textarea:focus {
+    border-color: var(--accent);
+  }
+
+  .config-row textarea { min-height: 100px; resize: vertical; font-size: 0.8rem; }
+
+  .hint { font-size: 0.75rem; color: var(--muted); margin-top: 0.25rem; }
+
+  .btn-primary {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    background: linear-gradient(135deg, #0072ff, #00c6ff);
+    color: #fff;
+    font-family: inherit;
+    font-size: 1rem;
+    font-weight: 600;
+    padding: 0.85rem 2.5rem;
+    border: none;
+    border-radius: 999px;
+    cursor: pointer;
+    transition: transform 0.2s, box-shadow 0.2s;
+    box-shadow: 0 4px 24px rgba(0,114,255,0.4);
+  }
+
+  .btn-primary:hover { transform: translateY(-2px); box-shadow: 0 8px 32px rgba(0,114,255,0.5); }
+  .btn-primary:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
+
+  .btn-secondary {
+    background: transparent;
+    border: 1px solid var(--border);
+    color: var(--text);
+    font-family: inherit;
+    font-size: 0.9rem;
+    padding: 0.6rem 1.5rem;
+    border-radius: 999px;
+    cursor: pointer;
+    transition: border-color 0.2s, background 0.2s;
+  }
+
+  .btn-secondary:hover { border-color: var(--accent); background: rgba(0,198,255,0.05); }
+
+  /* ─── STATUS LOG ─── */
+  #status-area {
+    max-width: 560px;
+    width: 100%;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 1rem;
+    font-size: 0.78rem;
+    color: var(--muted);
+    max-height: 180px;
+    overflow-y: auto;
+    display: none;
+    font-family: monospace;
+    line-height: 1.8;
+  }
+
+  .log-ok { color: var(--green); }
+  .log-err { color: var(--red); }
+  .log-info { color: var(--accent); }
+
+  /* ─── EXAM AREA ─── */
+  #exam-area {
+    display: none;
+    position: relative;
+    z-index: 1;
+    padding: 2rem;
+    max-width: 900px;
+    margin: 0 auto;
+  }
+
+  .section-divider {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    margin: 2rem 0 1.2rem;
+  }
+
+  .section-label {
+    font-size: 0.7rem;
+    text-transform: uppercase;
+    letter-spacing: 0.2em;
+    color: var(--accent);
+    white-space: nowrap;
+  }
+
+  .divider-line {
+    flex: 1;
+    height: 1px;
+    background: var(--border);
+  }
+
+  /* Question card */
+  .q-card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 1.5rem;
+    margin-bottom: 1rem;
+    transition: border-color 0.2s;
+    position: relative;
+  }
+
+  .q-card:hover { border-color: rgba(0,198,255,0.3); }
+
+  .q-number {
+    position: absolute;
+    top: -12px;
+    left: 1.2rem;
+    background: linear-gradient(135deg, #0072ff, #00c6ff);
+    color: #fff;
+    font-size: 0.7rem;
+    font-weight: 700;
+    padding: 2px 10px;
+    border-radius: 999px;
+    letter-spacing: 0.08em;
+  }
+
+  .q-chapter {
+    font-size: 0.7rem;
+    color: var(--gold);
+    text-transform: uppercase;
+    letter-spacing: 0.12em;
+    margin-bottom: 0.6rem;
+  }
+
+  .q-text {
+    font-size: 0.97rem;
+    line-height: 1.6;
+    margin-bottom: 1rem;
+    color: var(--text);
+  }
+
+  .options-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 0.5rem;
+  }
+
+  @media (max-width: 600px) { .options-grid { grid-template-columns: 1fr; } }
+
+  .opt-label {
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 0.55rem 0.9rem;
+    cursor: pointer;
+    font-size: 0.88rem;
+    transition: border-color 0.2s, background 0.2s;
+  }
+
+  .opt-label:hover { border-color: var(--accent); background: rgba(0,198,255,0.05); }
+
+  .opt-label input[type="radio"] { accent-color: var(--accent); width: 15px; height: 15px; flex-shrink: 0; }
+
+  .opt-letter {
+    width: 22px;
+    height: 22px;
+    background: var(--border);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.7rem;
+    font-weight: 700;
+    color: var(--muted);
+    flex-shrink: 0;
+  }
+
+  /* Answered state */
+  .opt-label.selected { border-color: var(--accent2); background: rgba(0,114,255,0.12); }
+  .opt-label.correct  { border-color: var(--green);  background: rgba(34,197,94,0.12); }
+  .opt-label.wrong    { border-color: var(--red);    background: rgba(239,68,68,0.12); }
+
+  /* ─── RESULT ─── */
+  #result-area {
+    display: none;
+    position: relative;
+    z-index: 1;
+    padding: 3rem 2rem;
+    max-width: 700px;
+    margin: 0 auto;
+    text-align: center;
+  }
+
+  .result-score-ring {
+    width: 180px;
+    height: 180px;
+    border-radius: 50%;
+    background: conic-gradient(var(--accent2) 0%, var(--accent) var(--pct, 0%), var(--border) var(--pct, 0%) 100%);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    margin: 0 auto 2rem;
+    position: relative;
+    box-shadow: 0 0 60px rgba(0,114,255,0.3);
+  }
+
+  .result-score-ring::before {
+    content: '';
+    position: absolute;
+    inset: 12px;
+    border-radius: 50%;
+    background: var(--bg);
+  }
+
+  .result-score-inner {
+    position: relative;
+    z-index: 1;
+    text-align: center;
+  }
+
+  .score-big {
+    font-family: 'Playfair Display', serif;
+    font-size: 2.5rem;
+    font-weight: 900;
+    color: var(--accent);
+    line-height: 1;
+  }
+
+  .score-label { font-size: 0.7rem; color: var(--muted); text-transform: uppercase; }
+
+  .result-stats {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 1rem;
+    margin: 1.5rem 0;
+  }
+
+  .rs {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 1rem;
+  }
+
+  .rs-num { font-family: 'Playfair Display', serif; font-size: 1.6rem; font-weight: 700; line-height: 1; }
+  .rs-lbl { font-size: 0.7rem; color: var(--muted); text-transform: uppercase; margin-top: 0.25rem; }
+
+  .rs.correct .rs-num { color: var(--green); }
+  .rs.wrong   .rs-num { color: var(--red); }
+  .rs.skip    .rs-num { color: var(--gold); }
+
+  .btn-group { display: flex; gap: 1rem; justify-content: center; flex-wrap: wrap; margin-top: 1.5rem; }
+
+  /* Sticky submit bar */
+  .submit-bar {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    z-index: 100;
+    background: rgba(10,15,30,0.95);
+    backdrop-filter: blur(12px);
+    border-top: 1px solid var(--border);
+    padding: 1rem 2rem;
+    display: none;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    flex-wrap: wrap;
+  }
+
+  .submit-bar.visible { display: flex; }
+
+  .answered-pill {
+    font-size: 0.85rem;
+    color: var(--muted);
+  }
+
+  .answered-pill strong { color: var(--text); }
+
+  /* Loading spinner */
+  .spinner {
+    width: 36px;
+    height: 36px;
+    border: 3px solid var(--border);
+    border-top-color: var(--accent);
+    border-radius: 50%;
+    animation: spin 0.8s linear infinite;
+    margin: 0 auto;
+  }
+
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  .loading-msg {
+    text-align: center;
+    padding: 2rem;
+    color: var(--muted);
+    font-size: 0.9rem;
+  }
+
+  /* Scrollbar */
+  ::-webkit-scrollbar { width: 6px; }
+  ::-webkit-scrollbar-track { background: var(--bg); }
+  ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="logo">
+    <div class="logo-title">CEE Medico Nepal</div>
+    <div class="logo-sub">Full Mock Test Generator</div>
+  </div>
+  <div class="header-stats" id="header-stats" style="display:none">
+    <div class="stat-badge"><div class="num" id="hs-total">0</div><div class="lbl">Questions</div></div>
+    <div class="stat-badge"><div class="num" id="hs-chapters">0</div><div class="lbl">Chapters</div></div>
+    <div class="stat-badge"><div class="num" id="hs-time">3:20</div><div class="lbl">Time Left</div></div>
+  </div>
+</header>
+
+<!-- Sticky Timer -->
+<div class="timer-bar" id="timer-bar">
+  <div>
+    <div class="timer-label">Time Remaining</div>
+    <div class="timer-display" id="timer-display">03:20:00</div>
+  </div>
+  <div class="progress-track"><div class="progress-fill" id="timer-progress"></div></div>
+  <div class="q-counter" id="q-counter">0 / 200 answered</div>
+</div>
+
+<!-- ─── LANDING ─── -->
+<div id="landing">
+  <div class="hero-tag">🇳🇵 CEE 2081 / 2082 Preparation</div>
+  <h1 class="hero-title">Generate Your <span>200-Question</span><br>CEE Mock Test</h1>
+  <p class="hero-desc">
+    Paste your GitHub raw file URLs below (one per line). The app will load your MCQ JSON/text files, pick <strong>1 question per chapter randomly</strong>, and assemble a timed 200-question mock exam.
+  </p>
+
+  <div class="config-panel">
+    <div class="config-title">⚙ Configuration</div>
+
+    <div class="config-row">
+      <label>GitHub Raw File URLs <span style="color:var(--red)">*</span></label>
+      <textarea id="urls-input" placeholder="https://raw.githubusercontent.com/Shyamsundar98152/CEE-Medico-Nepal/main/physics/chapter1.json&#10;https://raw.githubusercontent.com/Shyamsundar98152/CEE-Medico-Nepal/main/biology/chapter1.json&#10;...one URL per line..."></textarea>
+      <div class="hint">Use raw.githubusercontent.com URLs. Supports JSON and plain text formats.</div>
+    </div>
+
+    <div class="config-row">
+      <label>Total Questions</label>
+      <select id="total-q">
+        <option value="100">100 Questions</option>
+        <option value="200" selected>200 Questions (Full CEE)</option>
+        <option value="50">50 Questions (Mini Mock)</option>
+      </select>
+    </div>
+
+    <div class="config-row">
+      <label>Duration</label>
+      <select id="duration">
+        <option value="7200">2 hours</option>
+        <option value="12000" selected>3 hours 20 min (CEE Standard)</option>
+        <option value="5400">1 hour 30 min</option>
+        <option value="3600">1 hour</option>
+      </select>
+    </div>
+
+    <div style="display:flex;gap:0.8rem;flex-wrap:wrap;margin-top:0.5rem">
+      <button class="btn-primary" id="load-btn" onclick="startLoading()">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="13 17 18 12 13 7"/><polyline points="6 17 11 12 6 7"/></svg>
+        Load &amp; Generate Test
+      </button>
+      <button class="btn-secondary" onclick="loadDemo()">Try Demo Data</button>
+    </div>
+  </div>
+
+  <div id="status-area"></div>
+</div>
+
+<!-- ─── EXAM ─── -->
+<div id="exam-area"></div>
+
+<!-- ─── RESULT ─── -->
+<div id="result-area">
+  <div class="hero-tag">📊 Test Complete</div>
+  <h2 style="font-family:'Playfair Display',serif;font-size:2rem;margin:1rem 0 0.5rem">Your Results</h2>
+  <p style="color:var(--muted);margin-bottom:1.5rem">CEE Mock Test — Full Analysis</p>
+
+  <div class="result-score-ring" id="score-ring">
+    <div class="result-score-inner">
+      <div class="score-big" id="score-pct">0%</div>
+      <div class="score-label">Score</div>
+    </div>
+  </div>
+
+  <div class="result-stats">
+    <div class="rs correct"><div class="rs-num" id="r-correct">0</div><div class="rs-lbl">Correct</div></div>
+    <div class="rs wrong">  <div class="rs-num" id="r-wrong">0</div>  <div class="rs-lbl">Wrong</div></div>
+    <div class="rs skip">   <div class="rs-num" id="r-skip">0</div>   <div class="rs-lbl">Skipped</div></div>
+  </div>
+
+  <div id="subject-breakdown" style="margin-top:1rem;text-align:left"></div>
+
+  <div class="btn-group">
+    <button class="btn-primary" onclick="reviewAnswers()">Review Answers</button>
+    <button class="btn-secondary" onclick="resetTest()">New Test</button>
+  </div>
+</div>
+
+<!-- Submit Bar -->
+<div class="submit-bar" id="submit-bar">
+  <div class="answered-pill">Answered: <strong id="answered-count">0</strong> / <span id="total-display">200</span></div>
+  <button class="btn-primary" onclick="submitTest()">Submit Test ✓</button>
+</div>
+
+<script>
+// ─── STATE ───────────────────────────────────────────────────────────────
+let allQuestions = [];
+let testQuestions = [];
+let userAnswers = {};
+let timerInterval = null;
+let timeLeft = 0;
+let totalTime = 0;
+let testStarted = false;
+let submitted = false;
+
+// ─── GITHUB FETCHER ───────────────────────────────────────────────────────
+async function fetchFile(url) {
+  const resp = await fetch(url);
+  if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
+  const text = await resp.text();
+  return { url, text };
+}
+
+function log(msg, type = 'info') {
+  const area = document.getElementById('status-area');
+  area.style.display = 'block';
+  const span = document.createElement('div');
+  span.className = `log-${type}`;
+  span.textContent = (type === 'ok' ? '✓ ' : type === 'err' ? '✗ ' : '→ ') + msg;
+  area.appendChild(span);
+  area.scrollTop = area.scrollHeight;
+}
+
+// ─── PARSERS ──────────────────────────────────────────────────────────────
+function parseQuestions(text, url) {
+  // Derive chapter name from URL
+  const parts = url.split('/');
+  const filename = parts[parts.length - 1].replace(/\.(json|txt|md)$/i, '');
+  const folder = parts.length >= 2 ? parts[parts.length - 2] : 'General';
+  const chapter = `${folder} › ${filename}`.replace(/_/g, ' ').replace(/-/g, ' ');
+
+  let questions = [];
+
+  // Try JSON parse first
+  try {
+    const json = JSON.parse(text);
+    questions = normalizeJSON(json, chapter);
+    return questions;
+  } catch (_) {}
+
+  // Try line-by-line text format
+  questions = parseTextFormat(text, chapter);
+  return questions;
+}
+
+function normalizeJSON(data, chapter) {
+  const qs = [];
+  const arr = Array.isArray(data) ? data : (data.questions || data.mcqs || data.data || Object.values(data));
+  if (!Array.isArray(arr)) return qs;
+
+  for (const item of arr) {
+    if (!item) continue;
+    const q = item.question || item.q || item.stem || item.text || '';
+    if (!q) continue;
+
+    // Options: could be array or object
+    let opts = [];
+    if (Array.isArray(item.options)) {
+      opts = item.options.map(o => typeof o === 'string' ? o : (o.text || o.option || o.value || String(o)));
+    } else if (item.choices) {
+      opts = Object.values(item.choices);
+    } else {
+      // Try A, B, C, D keys
+      ['A','B','C','D','a','b','c','d'].forEach(k => { if (item[k]) opts.push(item[k]); });
+    }
+
+    if (opts.length < 2) continue;
+
+    // Answer
+    let ans = item.answer ?? item.correct ?? item.correct_answer ?? item.correctAnswer ?? item.key ?? null;
+    let ansIdx = -1;
+    if (typeof ans === 'number') ansIdx = ans;
+    else if (typeof ans === 'string') {
+      const lower = ans.toLowerCase().trim();
+      if (['a','b','c','d'].includes(lower)) ansIdx = 'abcd'.indexOf(lower);
+      else {
+        // Try matching text
+        ansIdx = opts.findIndex(o => o.toLowerCase().trim() === lower);
+      }
+    }
+
+    qs.push({ question: q, options: opts.slice(0, 4), answer: ansIdx, chapter });
+  }
+  return qs;
+}
+
+function parseTextFormat(text, chapter) {
+  // Supports formats like:
+  // Q1. Question text\nA) opt\nB) opt\nC) opt\nD) opt\nAnswer: A
+  const qs = [];
+  const blocks = text.split(/\n\s*\n/).filter(b => b.trim());
+
+  for (const block of blocks) {
+    const lines = block.split('\n').map(l => l.trim()).filter(Boolean);
+    if (lines.length < 3) continue;
+
+    // Question line
+    const qLine = lines.find(l => /^(Q\d*[\.\):]?\s*|^\d+[\.\)]\s*)/i.test(l) || (!l.match(/^[A-Da-d][\.\)]/)));
+    const qText = qLine ? qLine.replace(/^(Q\d*[\.\):\s]+|\d+[\.\)\s]+)/i, '').trim() : lines[0];
+
+    // Options
+    const opts = [];
+    const optRe = /^[A-Da-d][\.\)\s]+(.+)/;
+    for (const l of lines) {
+      const m = l.match(optRe);
+      if (m) opts.push(m[1].trim());
+    }
+
+    if (opts.length < 2) continue;
+
+    // Answer
+    const ansLine = lines.find(l => /^(ans|answer|correct)\s*[:\-]/i.test(l));
+    let ansIdx = -1;
+    if (ansLine) {
+      const m = ansLine.match(/[A-Da-d]/);
+      if (m) ansIdx = 'abcd'.indexOf(m[0].toLowerCase());
+    }
+
+    qs.push({ question: qText, options: opts.slice(0, 4), answer: ansIdx, chapter });
+  }
+  return qs;
+}
+
+// ─── LOAD & GENERATE ─────────────────────────────────────────────────────
+async function startLoading() {
+  const urlsRaw = document.getElementById('urls-input').value.trim();
+  if (!urlsRaw) { alert('Please enter at least one GitHub raw URL.'); return; }
+
+  const urls = urlsRaw.split('\n').map(u => u.trim()).filter(Boolean);
+  const btn = document.getElementById('load-btn');
+  btn.disabled = true;
+  btn.textContent = 'Loading…';
+
+  document.getElementById('status-area').innerHTML = '';
+  log(`Loading ${urls.length} file(s)…`);
+
+  allQuestions = [];
+  const chapterMap = {}; // chapter → [questions]
+
+  for (const url of urls) {
+    try {
+      const { text } = await fetchFile(url);
+      const qs = parseQuestions(text, url);
+      if (qs.length === 0) { log(`No questions parsed from: ${url.split('/').pop()}`, 'err'); continue; }
+      log(`Loaded ${qs.length} questions from ${url.split('/').pop()}`, 'ok');
+      for (const q of qs) {
+        if (!chapterMap[q.chapter]) chapterMap[q.chapter] = [];
+        chapterMap[q.chapter].push(q);
+      }
+    } catch (e) {
+      log(`Failed to load: ${url.split('/').pop()} — ${e.message}`, 'err');
+    }
+  }
+
+  buildTest(chapterMap);
+  btn.disabled = false;
+  btn.textContent = 'Load & Generate Test';
+}
+
+function buildTest(chapterMap) {
+  const totalQ = parseInt(document.getElementById('total-q').value);
+  const chapters = Object.keys(chapterMap);
+
+  if (chapters.length === 0) {
+    log('No questions loaded. Please check your URLs and file formats.', 'err');
+    return;
+  }
+
+  testQuestions = [];
+
+  // Strategy: pick 1 random q per chapter, cycle until totalQ reached
+  const shuffledChapters = shuffle([...chapters]);
+  let i = 0;
+  while (testQuestions.length < totalQ) {
+    const ch = shuffledChapters[i % shuffledChapters.length];
+    const pool = chapterMap[ch];
+    const q = pool[Math.floor(Math.random() * pool.length)];
+    // Avoid exact duplicates
+    if (testQuestions.length < pool.length * shuffledChapters.length || !testQuestions.includes(q)) {
+      testQuestions.push({ ...q, idx: testQuestions.length });
+    }
+    i++;
+    if (i > totalQ * 10) break; // safety
+  }
+  testQuestions = testQuestions.slice(0, totalQ);
+
+  log(`Generated test: ${testQuestions.length} questions from ${chapters.length} chapters`, 'ok');
+
+  totalTime = parseInt(document.getElementById('duration').value);
+  timeLeft = totalTime;
+  userAnswers = {};
+  submitted = false;
+
+  renderExam();
+}
+
+// ─── DEMO DATA ────────────────────────────────────────────────────────────
+function loadDemo() {
+  // Built-in CEE sample questions
+  const demo = {
+    'Physics › Mechanics': [
+      { question: "A body moving with uniform acceleration covers 13.5 m in the 3rd second and 22.5 m in the 7th second. Find the initial velocity.", options: ["0 m/s", "1 m/s", "2.25 m/s", "3 m/s"], answer: 0 },
+      { question: "The escape velocity from the surface of Earth is approximately:", options: ["7.9 km/s", "11.2 km/s", "15.6 km/s", "9.8 km/s"], answer: 1 },
+      { question: "Which law states that pressure of a fixed amount of gas is proportional to its absolute temperature at constant volume?", options: ["Boyle's Law", "Charles' Law", "Gay-Lussac's Law", "Avogadro's Law"], answer: 2 },
+    ],
+    'Physics › Waves': [
+      { question: "The frequency of sound produced by a vibrating string is independent of:", options: ["Length", "Tension", "Mass per unit length", "Colour of string"], answer: 3 },
+      { question: "Doppler effect is observed when there is relative motion between:", options: ["Source and observer", "Source and medium", "Observer and medium", "Source and ground"], answer: 0 },
+    ],
+    'Chemistry › Organic': [
+      { question: "Which of the following is not an isomer of butane?", options: ["n-butane", "isobutane", "neopentane", "2-methylpropane"], answer: 2 },
+      { question: "The IUPAC name of CH₃–CH(OH)–CH₃ is:", options: ["1-propanol", "2-propanol", "propan-1-ol", "propan-3-ol"], answer: 1 },
+      { question: "Benzene undergoes:", options: ["Addition reaction", "Substitution reaction", "Both A and B", "None"], answer: 1 },
+    ],
+    'Chemistry › Inorganic': [
+      { question: "Which element shows maximum oxidation states?", options: ["Mn", "Cr", "Fe", "Cu"], answer: 0 },
+      { question: "The hybridization of Xe in XeF₄ is:", options: ["sp³", "sp³d", "sp³d²", "sp²"], answer: 2 },
+    ],
+    'Biology › Cell Biology': [
+      { question: "The powerhouse of the cell is:", options: ["Nucleus", "Ribosome", "Mitochondria", "Golgi body"], answer: 2 },
+      { question: "DNA replication is:", options: ["Conservative", "Semiconservative", "Dispersive", "Non-conservative"], answer: 1 },
+      { question: "Which organelle is absent in prokaryotes?", options: ["Ribosome", "Cell membrane", "Mitochondria", "Cell wall"], answer: 2 },
+    ],
+    'Biology › Genetics': [
+      { question: "The term 'gene' was coined by:", options: ["Mendel", "Morgan", "Johannsen", "Watson"], answer: 2 },
+      { question: "Down's syndrome is caused by trisomy of chromosome number:", options: ["13", "18", "21", "23"], answer: 2 },
+    ],
+    'Biology › Human Physiology': [
+      { question: "The cardiac output of a normal adult at rest is approximately:", options: ["2 L/min", "3 L/min", "5 L/min", "7 L/min"], answer: 2 },
+      { question: "The enzyme pepsin acts best at pH:", options: ["2", "4", "7", "9"], answer: 0 },
+      { question: "Which blood group is universal donor?", options: ["A", "B", "AB", "O"], answer: 3 },
+    ],
+    'Biology › Plant Physiology': [
+      { question: "The opening of stomata is due to:", options: ["Decrease in turgor", "Increase in turgor of guard cells", "Wilting", "Dark reactions"], answer: 1 },
+      { question: "The light reactions of photosynthesis take place in:", options: ["Stroma", "Thylakoid membrane", "Matrix", "Cytoplasm"], answer: 1 },
+    ],
+    'English › Grammar': [
+      { question: "Choose the correct form: 'She __ to the market yesterday.'", options: ["goes", "went", "gone", "going"], answer: 1 },
+      { question: "The synonym of 'benevolent' is:", options: ["cruel", "kind", "strict", "lazy"], answer: 1 },
+    ],
+  };
+
+  const chapterMap = {};
+  for (const [ch, qs] of Object.entries(demo)) {
+    chapterMap[ch] = qs.map(q => ({ ...q, chapter: ch }));
+  }
+
+  document.getElementById('total-q').value = '200';
+  document.getElementById('duration').value = '12000';
+
+  log('Loading built-in demo questions…');
+  buildTest(chapterMap);
+}
+
+// ─── RENDER EXAM ──────────────────────────────────────────────────────────
+function renderExam() {
+  document.getElementById('landing').style.display = 'none';
+  document.getElementById('exam-area').style.display = 'block';
+  document.getElementById('submit-bar').classList.add('visible');
+  document.getElementById('timer-bar').classList.add('visible');
+  document.getElementById('header-stats').style.display = 'flex';
+
+  document.getElementById('hs-total').textContent = testQuestions.length;
+  const chapters = [...new Set(testQuestions.map(q => q.chapter))];
+  document.getElementById('hs-chapters').textContent = chapters.length;
+  document.getElementById('total-display').textContent = testQuestions.length;
+
+  const examDiv = document.getElementById('exam-area');
+  examDiv.innerHTML = '';
+
+  // Group by subject (first part of chapter)
+  const subjectMap = {};
+  for (const q of testQuestions) {
+    const subj = q.chapter.split('›')[0].trim();
+    if (!subjectMap[subj]) subjectMap[subj] = [];
+    subjectMap[subj].push(q);
+  }
+
+  let globalN = 1;
+  for (const [subj, qs] of Object.entries(subjectMap)) {
+    const divider = document.createElement('div');
+    divider.className = 'section-divider';
+    divider.innerHTML = `<div class="section-label">📚 ${subj}</div><div class="divider-line"></div>`;
+    examDiv.appendChild(divider);
+
+    for (const q of qs) {
+      examDiv.appendChild(makeCard(q, globalN++));
+    }
+  }
+
+  startTimer();
+  updateCounter();
+}
+
+function makeCard(q, n) {
+  const card = document.createElement('div');
+  card.className = 'q-card';
+  card.id = `qcard-${q.idx}`;
+
+  const letters = ['A','B','C','D'];
+  const opts = q.options.map((o, i) => `
+    <label class="opt-label" id="opt-${q.idx}-${i}">
+      <input type="radio" name="q${q.idx}" value="${i}" onchange="selectAnswer(${q.idx}, ${i})">
+      <span class="opt-letter">${letters[i]}</span>
+      <span>${o}</span>
+    </label>
+  `).join('');
+
+  card.innerHTML = `
+    <div class="q-number">Q${n}</div>
+    <div class="q-chapter">${q.chapter}</div>
+    <div class="q-text">${q.question}</div>
+    <div class="options-grid">${opts}</div>
+  `;
+  return card;
+}
+
+function selectAnswer(qIdx, optIdx) {
+  if (submitted) return;
+  userAnswers[qIdx] = optIdx;
+  updateCounter();
+  // Highlight selected
+  const q = testQuestions[qIdx];
+  q.options.forEach((_, i) => {
+    const lbl = document.getElementById(`opt-${qIdx}-${i}`);
+    lbl.classList.toggle('selected', i === optIdx);
+  });
+}
+
+function updateCounter() {
+  const count = Object.keys(userAnswers).length;
+  document.getElementById('answered-count').textContent = count;
+  document.getElementById('q-counter').textContent = `${count} / ${testQuestions.length} answered`;
+}
+
+// ─── TIMER ────────────────────────────────────────────────────────────────
+function startTimer() {
+  clearInterval(timerInterval);
+  timerInterval = setInterval(() => {
+    if (timeLeft <= 0) { clearInterval(timerInterval); submitTest(); return; }
+    timeLeft--;
+    const h = Math.floor(timeLeft / 3600);
+    const m = Math.floor((timeLeft % 3600) / 60);
+    const s = timeLeft % 60;
+    document.getElementById('timer-display').textContent =
+      `${String(h).padStart(2,'0')}:${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`;
+    const pct = ((totalTime - timeLeft) / totalTime * 100).toFixed(1);
+    document.getElementById('timer-progress').style.width = pct + '%';
+
+    // Warn when < 5 min
+    if (timeLeft < 300) document.getElementById('timer-display').style.color = 'var(--red)';
+  }, 1000);
+}
+
+// ─── SUBMIT ───────────────────────────────────────────────────────────────
+function submitTest() {
+  if (submitted) return;
+  clearInterval(timerInterval);
+  submitted = true;
+
+  document.getElementById('submit-bar').classList.remove('visible');
+  document.getElementById('timer-bar').classList.remove('visible');
+  document.getElementById('exam-area').style.display = 'none';
+
+  // Compute results
+  let correct = 0, wrong = 0, skip = 0;
+  const subjectResults = {};
+
+  for (const q of testQuestions) {
+    const subj = q.chapter.split('›')[0].trim();
+    if (!subjectResults[subj]) subjectResults[subj] = { correct: 0, wrong: 0, total: 0 };
+    subjectResults[subj].total++;
+
+    const userAns = userAnswers[q.idx];
+    if (userAns === undefined || userAns === null) { skip++; }
+    else if (q.answer >= 0 && userAns === q.answer) { correct++; subjectResults[subj].correct++; }
+    else { wrong++; subjectResults[subj].wrong++; }
+  }
+
+  const total = testQuestions.length;
+  const pct = total > 0 ? Math.round(correct / total * 100) : 0;
+
+  document.getElementById('score-pct').textContent = pct + '%';
+  document.getElementById('score-ring').style.setProperty('--pct', pct + '%');
+  document.getElementById('r-correct').textContent = correct;
+  document.getElementById('r-wrong').textContent = wrong;
+  document.getElementById('r-skip').textContent = skip;
+
+  // Subject breakdown
+  const bd = document.getElementById('subject-breakdown');
+  bd.innerHTML = '<div style="font-size:0.75rem;text-transform:uppercase;letter-spacing:0.15em;color:var(--muted);margin-bottom:0.8rem">Subject Breakdown</div>';
+  for (const [subj, r] of Object.entries(subjectResults)) {
+    const pctS = r.total > 0 ? Math.round(r.correct / r.total * 100) : 0;
+    bd.innerHTML += `
+      <div style="display:flex;align-items:center;gap:1rem;margin-bottom:0.6rem">
+        <div style="width:120px;font-size:0.85rem;color:var(--text);overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${subj}</div>
+        <div style="flex:1;height:8px;background:var(--border);border-radius:999px;overflow:hidden">
+          <div style="width:${pctS}%;height:100%;background:linear-gradient(90deg,#0072ff,#00c6ff);border-radius:999px;transition:width 1s ease"></div>
+        </div>
+        <div style="font-size:0.8rem;color:var(--muted);width:60px;text-align:right">${r.correct}/${r.total}</div>
+      </div>`;
+  }
+
+  document.getElementById('result-area').style.display = 'block';
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+// ─── REVIEW ───────────────────────────────────────────────────────────────
+function reviewAnswers() {
+  document.getElementById('result-area').style.display = 'none';
+  document.getElementById('exam-area').style.display = 'block';
+
+  for (const q of testQuestions) {
+    const userAns = userAnswers[q.idx];
+    q.options.forEach((_, i) => {
+      const lbl = document.getElementById(`opt-${q.idx}-${i}`);
+      if (!lbl) return;
+      lbl.classList.remove('selected', 'correct', 'wrong');
+      if (i === q.answer) lbl.classList.add('correct');
+      else if (userAns === i) lbl.classList.add('wrong');
+    });
+  }
+
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+function resetTest() {
+  clearInterval(timerInterval);
+  submitted = false;
+  allQuestions = [];
+  testQuestions = [];
+  userAnswers = {};
+  document.getElementById('result-area').style.display = 'none';
+  document.getElementById('exam-area').style.display = 'none';
+  document.getElementById('exam-area').innerHTML = '';
+  document.getElementById('landing').style.display = 'flex';
+  document.getElementById('status-area').style.display = 'none';
+  document.getElementById('status-area').innerHTML = '';
+  document.getElementById('submit-bar').classList.remove('visible');
+  document.getElementById('timer-bar').classList.remove('visible');
+  document.getElementById('header-stats').style.display = 'none';
+  document.getElementById('timer-display').style.color = 'var(--gold)';
+}
+
+// ─── UTILS ────────────────────────────────────────────────────────────────
+function shuffle(arr) {
+  for (let i = arr.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [arr[i], arr[j]] = [arr[j], arr[i]];
+  }
+  return arr;
+}
+</script>
+</body>
+</html>
