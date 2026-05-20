@@ -363,10 +363,9 @@ tr:hover td{background:rgba(255,255,255,0.02);}
 <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-firestore-compat.js"></script>
 
 <script>
-/* ─────────────────────────────────────────────
-   MAIN FIREBASE
-   (Exam + Results + Dashboard)
-───────────────────────────────────────────── */
+/* =========================
+   MAIN FIREBASE (NEPALQUIZ)
+========================= */
 const mainConfig = {
   apiKey:"AIzaSyDI-O7KiPzKKAc94UBcy-EusldtOMD_ZbE",
   authDomain:"nepalquiz-7d444.firebaseapp.com",
@@ -378,15 +377,11 @@ const mainConfig = {
 };
 
 const mainApp = firebase.initializeApp(mainConfig);
-
 const db = mainApp.database();
-const fdb = firebase.firestore();
 
-
-/* ─────────────────────────────────────────────
+/* =========================
    BACKUP FIREBASE
-   (Question Sets + Questions)
-───────────────────────────────────────────── */
+========================= */
 const backupConfig = {
   apiKey: "AIzaSyDD5xBrSkX_YXzSnsKxjW8-K6W4rBfV3rg",
   authDomain: "chapter-wise-backup.firebaseapp.com",
@@ -398,22 +393,20 @@ const backupConfig = {
 };
 
 const backupApp = firebase.initializeApp(backupConfig, "backup");
-
 const backupDB = backupApp.database();
 
 
-/* ─────────────────────────────────────────────
+/* =========================
    ADMIN LOGIN
-───────────────────────────────────────────── */
-const ADMIN_USER='admin';
-const ADMIN_PASS='ceemedicoadmin2025';
+========================= */
+const ADMIN_USER = "admin";
+const ADMIN_PASS = "ceemedicoadmin2025";
 
 function doLogin(){
-  const u=document.getElementById('admin-user').value.trim();
-  const p=document.getElementById('admin-pass').value;
+  const u = document.getElementById('admin-user').value.trim();
+  const p = document.getElementById('admin-pass').value;
 
-  if(u===ADMIN_USER && p===ADMIN_PASS){
-
+  if(u === ADMIN_USER && p === ADMIN_PASS){
     sessionStorage.setItem('cee_admin','1');
 
     document.getElementById('login-overlay').style.display='none';
@@ -421,14 +414,10 @@ function doLogin(){
     document.getElementById('main').style.display='block';
 
     initAdmin();
-
-  }else{
-
-    const el=document.getElementById('login-err');
-
-    el.textContent='Invalid credentials.';
+  } else {
+    const el = document.getElementById('login-err');
+    el.textContent = "Invalid credentials";
     el.classList.remove('hidden');
-
   }
 }
 
@@ -437,68 +426,35 @@ function doLogout(){
   location.reload();
 }
 
-if(sessionStorage.getItem('cee_admin')==='1'){
 
-  document.getElementById('login-overlay').style.display='none';
-  document.getElementById('sidebar').style.display='flex';
-  document.getElementById('main').style.display='block';
-
-  initAdmin();
-}
-
-
-/* ─────────────────────────────────────────────
-   PAGE NAVIGATION
-───────────────────────────────────────────── */
-function showPage(id){
-
-  document.querySelectorAll('.page')
-    .forEach(p=>p.classList.remove('active'));
-
-  document.getElementById('page-'+id)
-    .classList.add('active');
-
-}
-
-
-/* ─────────────────────────────────────────────
+/* =========================
    INIT
-───────────────────────────────────────────── */
-let examSets=[];
+========================= */
+let examSets = [];
 
 async function initAdmin(){
-
   await loadQuestionSets();
-
 }
 
 
-/* ─────────────────────────────────────────────
-   LOAD QUESTION SETS
-   FROM BACKUP FIREBASE
-───────────────────────────────────────────── */
+/* =========================
+   LOAD SETS
+========================= */
 async function loadQuestionSets(){
+  const snap = await backupDB.ref('question_sets').once('value');
 
-  const snap = await backupDB
-    .ref('question_sets')
-    .once('value');
-
-  examSets=[];
+  examSets = [];
 
   if(snap.exists()){
-
     snap.forEach(child=>{
-
+      const val = child.val();
       examSets.push({
-        id:child.key,
-        ...child.val(),
-        qCount:child.val().questions
-          ? Object.keys(child.val().questions).length
-          : 0
+        id: child.key,
+        name: val.name,
+        description: val.description,
+        qCount: val.questions ? Object.keys(val.questions).length : 0
       });
-
     });
-
   }
 
   renderSetsList();
@@ -506,282 +462,119 @@ async function loadQuestionSets(){
 }
 
 
-/* ─────────────────────────────────────────────
-   RENDER SETS
-───────────────────────────────────────────── */
-function renderSetsList(){
-
-  const container=document.getElementById('sets-list');
-
-  if(!examSets.length){
-
-    container.innerHTML='<p>No sets found.</p>';
-    return;
-
-  }
-
-  container.innerHTML=examSets.map(s=>`
-  
-    <div class="qset-item">
-
-      <div>
-        <div class="qset-name">${s.name}</div>
-
-        <div class="qset-meta">
-          ${s.qCount} Questions
-        </div>
-      </div>
-
-      <div style="display:flex;gap:8px;">
-
-        <button class="btn btn-danger btn-sm"
-          onclick="deleteSet('${s.id}')">
-          Delete
-        </button>
-
-      </div>
-
-    </div>
-
-  `).join('');
-
-}
-
-
-/* ─────────────────────────────────────────────
-   DROPDOWNS
-───────────────────────────────────────────── */
-function populateSetDropdowns(){
-
-  const opts = `
-    <option value="">-- Select --</option>
-  ` + examSets.map(s=>`
-  
-    <option value="${s.id}">
-      ${s.name} (${s.qCount})
-    </option>
-
-  `).join('');
-
-  document.getElementById('target-qset').innerHTML=opts;
-
-}
-
-
-/* ─────────────────────────────────────────────
-   CREATE QUESTION SET
-───────────────────────────────────────────── */
+/* =========================
+   CREATE SET (FIXED)
+========================= */
 async function createQuestionSet(){
+  const name = document.getElementById('new-set-name').value.trim();
+  const desc = document.getElementById('new-set-desc').value.trim();
 
-  const name=document.getElementById('new-set-name')
-    .value.trim();
+  if(!name) return alert("Enter set name");
 
-  if(!name){
+  const id = "set_" + Date.now();
 
-    alert('Enter set name');
-    return;
+  const data = {
+    name,
+    description: desc,
+    createdAt: Date.now(),
+    questions: {}
+  };
 
-  }
+  // WRITE TO BOTH DBs
+  await backupDB.ref(`question_sets/${id}`).set(data);
+  await db.ref(`question_sets/${id}`).set(data);
 
-  const id='set_'+Date.now();
-
-  await backupDB
-    .ref(`question_sets/${id}`)
-    .set({
-
-      name:name,
-      description:document.getElementById('new-set-desc')
-        .value.trim(),
-
-      createdAt:Date.now(),
-      questions:[]
-
-    });
-
-  document.getElementById('new-set-name').value='';
-  document.getElementById('new-set-desc').value='';
+  document.getElementById('new-set-name').value = "";
+  document.getElementById('new-set-desc').value = "";
 
   loadQuestionSets();
-
 }
 
 
-/* ─────────────────────────────────────────────
+/* =========================
    DELETE SET
-───────────────────────────────────────────── */
+========================= */
 async function deleteSet(id){
+  if(!confirm("Delete set?")) return;
 
-  if(!confirm('Delete this set?')) return;
-
-  await backupDB
-    .ref(`question_sets/${id}`)
-    .remove();
+  await backupDB.ref(`question_sets/${id}`).remove();
+  await db.ref(`question_sets/${id}`).remove();
 
   loadQuestionSets();
-
 }
 
 
-/* ─────────────────────────────────────────────
-   LOAD QUESTION PREVIEW
-───────────────────────────────────────────── */
-async function loadQPreview(setId){
+/* =========================
+   POPULATE DROPDOWN
+========================= */
+function populateSetDropdowns(){
+  const html = `<option value="">-- Select --</option>` +
+    examSets.map(s =>
+      `<option value="${s.id}">${s.name} (${s.qCount})</option>`
+    ).join("");
 
-  if(!setId) return;
-
-  const snap = await backupDB
-    .ref(`question_sets/${setId}/questions`)
-    .once('value');
-
-  const qs=snap.val();
-
-  if(!qs){
-
-    document.getElementById('q-list-preview')
-      .innerHTML='<p>No questions yet.</p>';
-
-    return;
-
-  }
-
-  const arr = Array.isArray(qs)
-    ? qs
-    : Object.values(qs);
-
-  document.getElementById('q-list-preview')
-    .innerHTML = arr.map((q,i)=>`
-
-      <div style="padding:10px;border:1px solid #333;margin-bottom:8px;border-radius:8px;">
-        <strong>Q${i+1}</strong><br>
-        ${q.question}
-      </div>
-
-    `).join('');
-
+  document.getElementById("target-qset").innerHTML = html;
 }
 
 
-/* ─────────────────────────────────────────────
-   IMPORT QUESTIONS
-───────────────────────────────────────────── */
-async function importQuestions(){
-
-  const setId=document.getElementById('target-qset').value;
-
-  if(!setId){
-
-    alert('Select question set');
-    return;
-
-  }
-
-  let json;
-
-  try{
-
-    json=JSON.parse(
-      document.getElementById('json-import').value
-    );
-
-  }catch(e){
-
-    alert('Invalid JSON');
-    return;
-
-  }
-
-  const snap = await backupDB
-    .ref(`question_sets/${setId}/questions`)
-    .once('value');
-
-  let existing=[];
-
-  if(snap.exists()){
-
-    const v=snap.val();
-
-    existing=Array.isArray(v)
-      ? v
-      : Object.values(v);
-
-  }
-
-  const merged=[...existing,...json];
-
-  await backupDB
-    .ref(`question_sets/${setId}/questions`)
-    .set(merged);
-
-  alert('Questions imported');
-
-  document.getElementById('json-import').value='';
-
-  loadQPreview(setId);
-  loadQuestionSets();
-
-}
-
-
-/* ─────────────────────────────────────────────
-   ADD SINGLE QUESTION
-───────────────────────────────────────────── */
+/* =========================
+   ADD SINGLE QUESTION (FIXED)
+========================= */
 async function addSingleQuestion(){
+  const setId = document.getElementById('target-qset').value;
+  if(!setId) return alert("Select set");
 
-  const setId=document.getElementById('target-qset').value;
-
-  if(!setId){
-
-    alert('Select set first');
-    return;
-
-  }
-
-  const q={
-
-    question:document.getElementById('sq-text').value,
-
-    options:[
+  const q = {
+    question: document.getElementById('sq-text').value,
+    options: [
       document.getElementById('sq-a').value,
       document.getElementById('sq-b').value,
       document.getElementById('sq-c').value,
       document.getElementById('sq-d').value
     ],
-
-    correct:parseInt(
-      document.getElementById('sq-correct').value
-    ),
-
-    explanation:document.getElementById('sq-exp').value
-
+    correct: parseInt(document.getElementById('sq-correct').value),
+    explanation: document.getElementById('sq-exp').value
   };
 
-  const snap = await backupDB
-    .ref(`question_sets/${setId}/questions`)
-    .once('value');
+  const qid = "q_" + Date.now() + "_" + Math.random().toString(36).slice(2,7);
 
-  let existing=[];
+  await backupDB.ref(`question_sets/${setId}/questions/${qid}`).set(q);
+  await db.ref(`question_sets/${setId}/questions/${qid}`).set(q);
 
-  if(snap.exists()){
+  alert("Question Added");
 
-    const v=snap.val();
+  loadQuestionSets();
+}
 
-    existing=Array.isArray(v)
-      ? v
-      : Object.values(v);
 
+/* =========================
+   IMPORT QUESTIONS (FIXED)
+========================= */
+async function importQuestions(){
+  const setId = document.getElementById('target-qset').value;
+  if(!setId) return alert("Select set");
+
+  let json;
+  try {
+    json = JSON.parse(document.getElementById('json-import').value);
+  } catch(e){
+    return alert("Invalid JSON");
   }
 
-  existing.push(q);
+  const updates = {};
 
-  await backupDB
-    .ref(`question_sets/${setId}/questions`)
-    .set(existing);
+  json.forEach(q=>{
+    const qid = "q_" + Date.now() + "_" + Math.random().toString(36).slice(2,7);
+    updates[qid] = q;
+  });
 
-  alert('Question Added');
+  await backupDB.ref(`question_sets/${setId}/questions`).update(updates);
+  await db.ref(`question_sets/${setId}/questions`).update(updates);
 
-  loadQPreview(setId);
+  alert("Imported successfully");
+
+  document.getElementById('json-import').value = "";
   loadQuestionSets();
-
 }
 </script>
 </body>
