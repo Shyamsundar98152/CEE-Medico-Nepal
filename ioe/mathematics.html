@@ -1170,270 +1170,622 @@ footer{
   </div>
 </footer>
 
-<!-- ═══════════════════════════════
-     JAVASCRIPT
-═══════════════════════════════ -->
 <script>
+/* =========================================
+   UNIVERSAL MCQ QUIZ ENGINE
+   Supports ALL JSON formats
+========================================= */
 
-/* ─── STATE ─── */
-let questions = [];
-let answered = {};
-let timerInterval = null;
-let elapsed = 0;
-let currentChapter = '';
-let quizSubmitted = false;
+/*
+SUPPORTED JSON TYPES
 
-/* ─── MOBILE MENU ─── */
-document.getElementById("mobileMenuBtn").addEventListener("click",()=>{
-  document.getElementById("navMenu").classList.toggle("active");
-});
-
-/* ─── WHATSAPP FAB ─── */
-document.getElementById("chatFab").addEventListener("click",()=>{
-  window.open('https://wa.me/9779812240229','_blank');
-});
-
-/* ─── SCROLL TO TOP ─── */
-const scrollTopBtn = document.getElementById("scrollTop");
-window.addEventListener("scroll",()=>{
-  scrollTopBtn.classList.toggle("visible", window.scrollY > 400);
-});
-scrollTopBtn.addEventListener("click",()=>{
-  window.scrollTo({top:0,behavior:"smooth"});
-});
-
-/* ─── SEARCH ─── */
-document.getElementById("searchInput").addEventListener("input", function(){
-  filterCards(this.value, activeFilter);
-});
-
-/* ─── FILTER ─── */
-let activeFilter = 'all';
-document.querySelectorAll(".filter-btn").forEach(btn=>{
-  btn.addEventListener("click",function(){
-    document.querySelectorAll(".filter-btn").forEach(b=>b.classList.remove("active"));
-    this.classList.add("active");
-    activeFilter = this.dataset.filter;
-    filterCards(document.getElementById("searchInput").value, activeFilter);
-  });
-});
-
-function filterCards(query, unit){
-  const q = query.toLowerCase().trim();
-  let anyVisible = false;
-
-  document.querySelectorAll(".chapter-card").forEach(card=>{
-    const kw = (card.dataset.keywords||'').toLowerCase();
-    const title = card.querySelector("h3").textContent.toLowerCase();
-    const text = card.querySelector("p").textContent.toLowerCase();
-    const cardUnit = card.dataset.unit;
-
-    const matchSearch = !q || kw.includes(q) || title.includes(q) || text.includes(q);
-    const matchFilter = unit === 'all' || cardUnit === unit;
-
-    const show = matchSearch && matchFilter;
-    card.style.display = show ? "" : "none";
-    if(show) anyVisible = true;
-  });
-
-  /* Show/hide section labels */
-  document.querySelectorAll(".section-label").forEach(label=>{
-    const u = label.dataset.unit;
-    const sib = label.nextElementSibling;
-    const hasVisible = sib && [...sib.querySelectorAll(".chapter-card")].some(c=>c.style.display !== "none");
-    label.style.display = hasVisible ? "" : "none";
-    if(sib) sib.style.display = hasVisible ? "" : "none";
-  });
+-----------------------------------------
+FORMAT 1
+-----------------------------------------
+{
+  "subject":"Mathematics",
+  "chapter":"Functions",
+  "questions":[
+    {
+      "question":"...",
+      "options":[],
+      "correct":0,
+      "explanation":"...",
+      "difficulty":"recall"
+    }
+  ]
 }
 
-/* ─── KEYBOARD NAV ON CARDS ─── */
-document.querySelectorAll(".chapter-card").forEach(card=>{
-  card.addEventListener("keydown",e=>{
-    if(e.key==="Enter"||e.key===" "){e.preventDefault();card.click();}
-  });
-});
+-----------------------------------------
+FORMAT 2
+-----------------------------------------
+[
+  {
+    "question":"...",
+    "options":[],
+    "correct":0
+  }
+]
 
-/* ─── LOAD CHAPTER ─── */
-async function loadChapter(chapter){
-  currentChapter = chapter;
-  answered = {};
-  quizSubmitted = false;
-  elapsed = 0;
+-----------------------------------------
+FORMAT 3
+-----------------------------------------
+[
+  {
+    "q":"...",
+    "opts":[],
+    "ans":0,
+    "exp":"...",
+    "diff":"recall"
+  }
+]
+*/
 
-  document.getElementById("chapterBrowser").style.display = "none";
-  document.getElementById("quizSection").style.display = "block";
-  document.getElementById("scoreDashboard").style.display = "none";
-  document.getElementById("resultCard").style.display = "none";
-  document.getElementById("submitBtn").style.display = "inline-flex";
-  document.getElementById("progressWrap").style.display = "block";
 
-  document.getElementById("quizContainer").innerHTML = `
+/* =========================================
+   GLOBAL VARIABLES
+========================================= */
+
+let currentQuestions = [];
+let currentChapter = "";
+let currentSubject = "";
+
+let score = 0;
+let wrong = 0;
+let answered = 0;
+
+
+/* =========================================
+   JSON FILE MAP
+========================================= */
+
+const chapterFiles = {
+
+  functions: "data/functions.json",
+
+  set_logic: "data/set_logic.json",
+
+  matrices_determinants:
+    "data/matrices_determinants.json"
+
+};
+
+
+/* =========================================
+   LOAD CHAPTER
+========================================= */
+
+async function loadChapter(chapterKey) {
+
+  const file = chapterFiles[chapterKey];
+
+  if (!file) {
+
+    alert("JSON file not found");
+
+    return;
+  }
+
+  document.getElementById("chapterBrowser")
+    .style.display = "none";
+
+  document.getElementById("quizSection")
+    .style.display = "block";
+
+  const quizContent =
+    document.getElementById("quizContent");
+
+  quizContent.innerHTML = `
     <div class="loader">
       <div class="loader-spinner"></div>
-      <p style="color:var(--slate-500);">Loading questions…</p>
-    </div>`;
+      <p>Loading Questions...</p>
+    </div>
+  `;
 
-  window.scrollTo({top:0,behavior:"smooth"});
+  try {
 
-  try{
-    const res = await fetch(`./data-mathematics/${chapter}.json`);
-    if(!res.ok) throw new Error("File not found");
-    questions = await res.json();
+    const response = await fetch(file);
 
-    const card = document.querySelector(`.chapter-card[onclick*="${chapter}"]`);
-    const title = card ? card.querySelector("h3").textContent : chapter;
-    document.getElementById("quizTitle").textContent = title;
-    document.getElementById("quizSubtitle").textContent = `${questions.length} questions — click an option to answer`;
+    let data = await response.json();
 
-    renderQuestions();
-    startTimer();
 
-  }catch(err){
-    console.error(err);
-    document.getElementById("quizContainer").innerHTML = `
-      <div class="loader">
-        <i class="fas fa-exclamation-circle" style="font-size:2rem;color:var(--red-500);margin-bottom:.75rem;display:block;"></i>
-        <p style="color:var(--slate-500);">Questions not found.<br><br>
-        Make sure <strong>./data-mathematics/${chapter}.json</strong> exists and the page is served from a web server (not file://).</p>
-      </div>`;
+    /* =====================================
+       FORMAT DETECTION + CONVERSION
+    ===================================== */
+
+    if (Array.isArray(data)) {
+
+      /*
+      FORMAT 3
+      q, opts, ans, exp, diff
+      */
+
+      if (data.length && data[0].q) {
+
+        currentQuestions = data.map(item => ({
+
+          question:
+            item.q || "",
+
+          options:
+            item.opts || [],
+
+          correct:
+            item.ans ?? 0,
+
+          explanation:
+            item.exp || "",
+
+          difficulty:
+            item.diff || "medium"
+
+        }));
+
+      }
+
+      /*
+      FORMAT 2
+      question, options, correct
+      */
+
+      else {
+
+        currentQuestions = data.map(item => ({
+
+          question:
+            item.question || "",
+
+          options:
+            item.options || [],
+
+          correct:
+            item.correct ?? 0,
+
+          explanation:
+            item.explanation || "",
+
+          difficulty:
+            item.difficulty || "medium"
+
+        }));
+
+      }
+
+      currentSubject = "Mathematics";
+
+      currentChapter = chapterKey;
+
+    }
+
+
+    /*
+    FORMAT 1
+    structured object
+    */
+
+    else {
+
+      currentSubject =
+        data.subject || "Mathematics";
+
+      currentChapter =
+        data.chapter || chapterKey;
+
+      currentQuestions =
+        (data.questions || []).map(item => ({
+
+          question:
+            item.question || item.q || "",
+
+          options:
+            item.options || item.opts || [],
+
+          correct:
+            item.correct ?? item.ans ?? 0,
+
+          explanation:
+            item.explanation || item.exp || "",
+
+          difficulty:
+            item.difficulty || item.diff || "medium"
+
+        }));
+
+    }
+
+    renderQuiz();
+
+  }
+
+  catch (error) {
+
+    console.error(error);
+
+    quizContent.innerHTML = `
+      <div class="result-card">
+
+        <h3>Failed to load JSON</h3>
+
+        <p>${error.message}</p>
+
+      </div>
+    `;
   }
 }
 
-/* ─── RENDER QUESTIONS ─── */
-function renderQuestions(){
-  const c = document.getElementById("quizContainer");
-  c.innerHTML = "";
-  updateProgress();
 
-  questions.forEach((q, idx)=>{
-    const letters = ['A','B','C','D','E'];
-    let optsHTML = q.opts.map((opt,i)=>`
-      <div class="option" id="opt-${idx}-${i}"
-        onclick="checkAnswer(this,${i},${q.ans},'exp${idx}',${idx})">
-        <span class="option-letter">${letters[i]}</span>
-        <span>${opt}</span>
-      </div>`).join('');
+/* =========================================
+   RENDER QUIZ
+========================================= */
 
-    const diff = q.diff || '';
-    const diffBadge = diff
-      ? `<span class="q-difficulty diff-${diff}">${diff.charAt(0).toUpperCase()+diff.slice(1)}</span>`
-      : '';
+function renderQuiz() {
 
-    c.innerHTML += `
-      <div class="q-card" id="qcard-${idx}">
-        <div class="q-meta">
-          <span class="q-num">Q ${idx+1} / ${questions.length}</span>
-          ${diffBadge}
+  score = 0;
+  wrong = 0;
+  answered = 0;
+
+  document.getElementById("quizTitle")
+    .innerText = currentChapter;
+
+  document.getElementById("quizSubtitle")
+    .innerText =
+      `${currentSubject} • ${currentQuestions.length} Questions`;
+
+  const quizContent =
+    document.getElementById("quizContent");
+
+  let html = "";
+
+  currentQuestions.forEach((q, qIndex) => {
+
+    let diffClass = "diff-medium";
+
+    if (
+      q.difficulty === "recall"
+    ) {
+      diffClass = "diff-easy";
+    }
+
+    if (
+      q.difficulty === "advanced"
+    ) {
+      diffClass = "diff-hard";
+    }
+
+    html += `
+
+    <div class="q-card" id="q-${qIndex}">
+
+      <div class="q-meta">
+
+        <span class="q-num">
+          Question ${qIndex + 1}
+        </span>
+
+        <span class="q-difficulty ${diffClass}">
+          ${q.difficulty}
+        </span>
+
+      </div>
+
+      <div class="q-title">
+        ${q.question}
+      </div>
+
+      <div class="options-grid">
+
+        ${q.options.map((opt, optIndex) => `
+
+          <div
+            class="option"
+            onclick="selectAnswer(${qIndex}, ${optIndex})"
+            id="q${qIndex}-opt${optIndex}"
+          >
+
+            <div class="option-letter">
+              ${String.fromCharCode(65 + optIndex)}
+            </div>
+
+            <div>${opt}</div>
+
+          </div>
+
+        `).join("")}
+
+      </div>
+
+      <div
+        class="exp"
+        id="exp-${qIndex}"
+      >
+
+        <div class="exp-label">
+          💡 Explanation
         </div>
-        <div class="q-title">${q.q}</div>
-        <div class="options-grid">${optsHTML}</div>
-        <div class="exp" id="exp${idx}">
-          <div class="exp-label"><i class="fas fa-lightbulb"></i> Explanation</div>
-          ${q.exp || 'No explanation provided.'}
-        </div>
-      </div>`;
+
+        ${q.explanation}
+
+      </div>
+
+    </div>
+
+    `;
+  });
+
+  html += `
+
+    <div
+      class="result-card"
+      id="finalResult"
+      style="display:none;"
+    >
+
+      <div class="result-emoji">
+        🎯
+      </div>
+
+      <h3>
+        Quiz Completed
+      </h3>
+
+      <div
+        class="result-score"
+        id="finalScore"
+      >
+        0%
+      </div>
+
+      <p id="finalText"></p>
+
+    </div>
+
+  `;
+
+  quizContent.innerHTML = html;
+
+  updateDashboard();
+}
+
+
+/* =========================================
+   SELECT ANSWER
+========================================= */
+
+function selectAnswer(questionIndex, selectedIndex) {
+
+  const q =
+    currentQuestions[questionIndex];
+
+  const options =
+    document.querySelectorAll(
+      `#q-${questionIndex} .option`
+    );
+
+  const explanation =
+    document.getElementById(
+      `exp-${questionIndex}`
+    );
+
+  if (
+    options[0].classList.contains("locked")
+  ) {
+    return;
+  }
+
+  answered++;
+
+  options.forEach(option => {
+
+    option.classList.add("locked");
+
+  });
+
+  options.forEach((option, index) => {
+
+    if (index === q.correct) {
+
+      option.classList.add("correct");
+
+    }
+
+    if (
+      index === selectedIndex &&
+      index !== q.correct
+    ) {
+
+      option.classList.add("wrong");
+
+      wrong++;
+    }
+
+  });
+
+  if (selectedIndex === q.correct) {
+
+    score++;
+  }
+
+  explanation.style.display = "block";
+
+  updateDashboard();
+
+  if (answered === currentQuestions.length) {
+
+    showFinalResult();
+  }
+}
+
+
+/* =========================================
+   DASHBOARD
+========================================= */
+
+function updateDashboard() {
+
+  const total =
+    currentQuestions.length;
+
+  const progress =
+    total
+      ? (answered / total) * 100
+      : 0;
+
+  document.getElementById("correctCount")
+    .innerText = score;
+
+  document.getElementById("wrongCount")
+    .innerText = wrong;
+
+  document.getElementById("totalCount")
+    .innerText = total;
+
+  document.getElementById("progressFill")
+    .style.width = `${progress}%`;
+}
+
+
+/* =========================================
+   FINAL RESULT
+========================================= */
+
+function showFinalResult() {
+
+  const total =
+    currentQuestions.length;
+
+  const percent =
+    Math.round((score / total) * 100);
+
+  document.getElementById("finalResult")
+    .style.display = "block";
+
+  document.getElementById("finalScore")
+    .innerText = `${percent}%`;
+
+  let message = "Keep practicing!";
+
+  if (percent >= 80) {
+
+    message = "Excellent performance!";
+
+  }
+
+  else if (percent >= 60) {
+
+    message = "Good Job!";
+  }
+
+  document.getElementById("finalText")
+    .innerText =
+      `${score} correct out of ${total}. ${message}`;
+
+  window.scrollTo({
+
+    top: document.body.scrollHeight,
+
+    behavior: "smooth"
+
   });
 }
 
-/* ─── CHECK ANSWER ─── */
-function checkAnswer(el, selected, correct, expId, idx){
-  if(quizSubmitted) return;
 
-  const parent = el.closest(".options-grid");
-  const opts = parent.querySelectorAll(".option");
+/* =========================================
+   BACK BUTTON
+========================================= */
 
-  opts.forEach(o=>{o.classList.add("locked");o.style.pointerEvents="none";});
-  opts.forEach((o,i)=>{
-    if(i===correct) o.classList.add("correct");
-    if(i===selected && selected!==correct) o.classList.add("wrong");
-  });
+function goBack() {
 
-  document.getElementById(expId).style.display = "block";
+  document.getElementById("chapterBrowser")
+    .style.display = "block";
 
-  answered[idx] = selected===correct ? 'correct' : 'wrong';
-  updateProgress();
+  document.getElementById("quizSection")
+    .style.display = "none";
 }
 
-/* ─── UPDATE PROGRESS ─── */
-function updateProgress(){
-  const total = questions.length;
-  const done = Object.keys(answered).length;
-  const pct = total > 0 ? Math.round((done/total)*100) : 0;
-  document.getElementById("progressFill").style.width = pct+"%";
-  document.getElementById("progressText").textContent = `${done} / ${total} answered`;
+
+/* =========================================
+   MOBILE MENU
+========================================= */
+
+const mobileMenuBtn =
+  document.getElementById("mobileMenuBtn");
+
+const navMenu =
+  document.getElementById("navMenu");
+
+if (mobileMenuBtn) {
+
+  mobileMenuBtn.addEventListener(
+    "click",
+    () => {
+
+      navMenu.classList.toggle("active");
+
+    }
+  );
 }
 
-/* ─── TIMER ─── */
-function startTimer(){
-  clearInterval(timerInterval);
-  elapsed = 0;
-  timerInterval = setInterval(()=>{
-    elapsed++;
-    const m = String(Math.floor(elapsed/60)).padStart(2,'0');
-    const s = String(elapsed%60).padStart(2,'0');
-    document.getElementById("timerDisplay").textContent = `${m}:${s}`;
-    const badge = document.getElementById("timerBadge");
-    badge.classList.toggle("warning", elapsed > 1800);
-  },1000);
-}
 
-function stopTimer(){clearInterval(timerInterval);}
+/* =========================================
+   SCROLL TOP BUTTON
+========================================= */
 
-/* ─── SUBMIT QUIZ ─── */
-function submitQuiz(){
-  if(quizSubmitted) return;
-  quizSubmitted = true;
-  stopTimer();
+const scrollTopBtn =
+  document.getElementById("scrollTop");
 
-  questions.forEach((q, idx)=>{
-    const parent = document.getElementById(`qcard-${idx}`).querySelector(".options-grid");
-    const opts = parent.querySelectorAll(".option");
-    opts.forEach((o,i)=>{
-      o.classList.add("locked");
-      o.style.pointerEvents="none";
-      if(i===q.ans) o.classList.add("correct");
-    });
-    document.getElementById(`exp${idx}`).style.display="block";
-    if(!(idx in answered)) answered[idx]='skip';
-  });
+window.addEventListener("scroll", () => {
 
-  const total = questions.length;
-  const correct = Object.values(answered).filter(v=>v==='correct').length;
-  const wrong = Object.values(answered).filter(v=>v==='wrong').length;
-  const skip = total - correct - wrong;
-  const pct = Math.round((correct/total)*100);
+  if (window.scrollY > 300) {
 
-  document.getElementById("sc-total").textContent = total;
-  document.getElementById("sc-correct").textContent = correct;
-  document.getElementById("sc-wrong").textContent = wrong;
-  document.getElementById("sc-skip").textContent = skip;
-  document.getElementById("sc-pct").textContent = pct+"%";
-  document.getElementById("scoreDashboard").style.display = "grid";
+    scrollTopBtn.classList.add("visible");
 
-  let emoji = pct>=80?"🏆":pct>=60?"👍":pct>=40?"📚":"💪";
-  let msg = pct>=80?"Excellent! You're well prepared!":pct>=60?"Good effort! Keep practicing.":pct>=40?"Keep studying — you'll get there!":"Don't give up — review and retry!";
-  document.getElementById("resultEmoji").textContent = emoji;
-  document.getElementById("resultScore").textContent = `${correct} / ${total}`;
-  document.getElementById("resultMsg").textContent = msg;
-  document.getElementById("resultBar").style.width = pct+"%";
-  document.getElementById("resultCard").style.display = "block";
-  document.getElementById("submitBtn").style.display = "none";
-  updateProgress();
-  window.scrollTo({top:0,behavior:"smooth"});
-}
+  }
 
-/* ─── GO BACK ─── */
-function goBack(){
-  stopTimer();
-  document.getElementById("quizSection").style.display = "none";
-  document.getElementById("chapterBrowser").style.display = "block";
-  window.scrollTo({top:0,behavior:"smooth"});
-}
+  else {
 
-/* ─── STAGGER CARD ANIMATIONS ─── */
-document.querySelectorAll(".chapter-card").forEach((card,i)=>{
-  card.style.animationDelay = `${i*30}ms`;
+    scrollTopBtn.classList.remove("visible");
+
+  }
+
 });
+
+scrollTopBtn.addEventListener(
+  "click",
+  () => {
+
+    window.scrollTo({
+
+      top: 0,
+
+      behavior: "smooth"
+
+    });
+
+  }
+);
+
+
+/* =========================================
+   WHATSAPP BUTTON
+========================================= */
+
+const chatFab =
+  document.getElementById("chatFab");
+
+if (chatFab) {
+
+  chatFab.addEventListener(
+    "click",
+    () => {
+
+      window.open(
+        "https://wa.me/9779800000000",
+        "_blank"
+      );
+
+    }
+  );
+}
 
 </script>
 </body>
