@@ -1,87 +1,857 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>CeemedicoNepal - Weekly CEE Exam</title>
-  <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-database-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-auth-compat.js"></script>
-  <script src="script.js"></script>
-  <style>
-    body { font-family: Arial, sans-serif; margin: 0; padding: 0; background: #f4f7f9; }
-    .container { max-width: 1100px; margin: 20px auto; padding: 20px; }
-    .header { background: #1e3a8a; color: white; padding: 15px; text-align: center; }
-    .card { background: white; border-radius: 10px; padding: 20px; margin: 15px 0; box-shadow: 0 4px 12px rgba(0,0,0,0.1); }
-    button { padding: 12px 20px; background: #1e3a8a; color: white; border: none; border-radius: 6px; cursor: pointer; }
-    button:hover { background: #2e4a9a; }
-    .exam-screen { display: none; }
-    .question-card { margin-bottom: 25px; padding: 15px; border: 1px solid #ddd; border-radius: 8px; }
-    .options label { display: block; margin: 10px 0; }
-  </style>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>CEE Weekly Exam | CeemedicoNepal</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Sora:wght@300;400;600;700;800&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+<style>
+:root {
+  --blue: #0062ff;
+  --blue-dark: #0047cc;
+  --blue-light: #e8f0ff;
+  --accent: #ff6b35;
+  --green: #00c97a;
+  --red: #ff3b5c;
+  --bg: #f0f4ff;
+  --card: #ffffff;
+  --text: #0d1b2a;
+  --muted: #6b7c93;
+  --border: #dde5f0;
+  --shadow: 0 4px 24px rgba(0,98,255,0.10);
+}
+*{box-sizing:border-box;margin:0;padding:0;}
+body{font-family:'Sora',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;}
+
+/* NAV */
+header{background:var(--blue);padding:0 16px;box-shadow:0 2px 16px rgba(0,98,255,0.18);}
+nav{max-width:1100px;margin:auto;display:flex;align-items:center;justify-content:space-between;height:64px;}
+.logo{display:flex;align-items:center;gap:10px;text-decoration:none;}
+.logo img{height:38px;}
+.logo span{color:#fff;font-weight:800;font-size:1.1rem;letter-spacing:-0.5px;}
+nav ul{display:flex;list-style:none;gap:6px;}
+nav ul a{color:rgba(255,255,255,0.85);text-decoration:none;font-size:0.88rem;font-weight:600;padding:7px 14px;border-radius:6px;transition:background 0.2s;}
+nav ul a:hover{background:rgba(255,255,255,0.15);color:#fff;}
+
+/* HERO */
+.hero{background:linear-gradient(135deg,#0062ff 0%,#0047cc 60%,#1a2fff 100%);padding:64px 16px 80px;text-align:center;position:relative;overflow:hidden;}
+.hero::before{content:'';position:absolute;inset:0;background:url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23ffffff' fill-opacity='0.04'%3E%3Ccircle cx='30' cy='30' r='2'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");}
+.hero h1{color:#fff;font-size:clamp(1.8rem,4vw,3rem);font-weight:800;line-height:1.15;margin-bottom:12px;position:relative;}
+.hero h1 span{color:#ffd700;}
+.hero p{color:rgba(255,255,255,0.82);font-size:1rem;max-width:540px;margin:0 auto 32px;position:relative;}
+.next-exam-badge{display:inline-flex;align-items:center;gap:10px;background:rgba(255,255,255,0.12);border:1px solid rgba(255,255,255,0.25);border-radius:40px;padding:10px 22px;color:#fff;font-size:0.9rem;font-weight:600;position:relative;backdrop-filter:blur(8px);}
+.pulse-dot{width:10px;height:10px;border-radius:50%;background:var(--accent);animation:pulse 1.5s infinite;}
+@keyframes pulse{0%,100%{opacity:1;transform:scale(1);}50%{opacity:0.5;transform:scale(1.3);}}
+
+/* CARDS */
+.main-content{max-width:900px;margin:-36px auto 60px;padding:0 16px;}
+.card{background:var(--card);border-radius:16px;box-shadow:var(--shadow);padding:32px;margin-bottom:24px;border:1px solid var(--border);word-wrap:break-word;}
+@media (max-width: 576px) {
+  .card { padding: 20px 16px; }
+}
+
+/* STATUS BANNER */
+.status-banner{border-radius:12px;padding:20px 24px;margin-bottom:24px;display:flex;align-items:center;gap:16px;font-weight:600;}
+.status-banner.closed{background:#fff4f0;border:1.5px solid #ffcbba;color:#c0392b;}
+.status-banner.open{background:#e8fff4;border:1.5px solid #a8f0cb;color:#0a7a45;}
+.status-banner.upcoming{background:#fffbea;border:1.5px solid #ffe066;color:#7a5c00;}
+.status-banner i{font-size:1.4rem;}
+
+/* AUTH SYSTEM */
+.auth-tabs {
+  display: flex;
+  border-bottom: 2px solid var(--border);
+  margin-bottom: 24px;
+}
+.auth-tab {
+  flex: 1;
+  text-align: center;
+  padding: 12px;
+  cursor: pointer;
+  font-weight: 700;
+  color: var(--muted);
+  transition: all 0.2s;
+  border-bottom: 3px solid transparent;
+  margin-bottom: -2px;
+}
+.auth-tab.active {
+  color: var(--blue);
+  border-bottom-color: var(--blue);
+}
+.auth-form-container {
+  display: none;
+}
+.auth-form-container.active {
+  display: block;
+}
+
+/* SOCIAL AUTH */
+.oauth-divider {
+  display: flex;
+  align-items: center;
+  text-align: center;
+  margin: 20px 0;
+  color: var(--muted);
+  font-size: 0.85rem;
+}
+.oauth-divider::before, .oauth-divider::after {
+  content: '';
+  flex: 1;
+  border-bottom: 1px solid var(--border);
+}
+.oauth-divider:not(:empty)::before {
+  margin-right: .5em;
+}
+.oauth-divider:not(:empty)::after {
+  margin-left: .5em;
+}
+.btn-google {
+  background: #ffffff;
+  color: #757575;
+  border: 1px solid var(--border);
+  box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  font-weight: 600;
+}
+.btn-google:hover {
+  background: #f7f9fa;
+  transform: translateY(-1px);
+}
+.btn-google img {
+  width: 18px;
+  height: 18px;
+}
+
+/* PROFILE CARD */
+.profile-info-card {
+  background: var(--blue-light);
+  border: 1.5px solid rgba(0, 98, 255, 0.15);
+  border-radius: 12px;
+  padding: 18px;
+  margin-bottom: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+.profile-meta {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+.profile-avatar {
+  width: 44px;
+  height: 44px;
+  background: var(--blue);
+  color: #fff;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 700;
+  font-size: 1.1rem;
+}
+.profile-avatar img {
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  object-fit: cover;
+}
+.profile-details h4 {
+  font-size: 0.95rem;
+  font-weight: 700;
+}
+.profile-details p {
+  font-size: 0.8rem;
+  color: var(--muted);
+}
+.btn-logout {
+  background: transparent;
+  color: var(--red);
+  border: 1px solid rgba(255, 59, 92, 0.3);
+  padding: 8px 14px;
+  border-radius: 8px;
+  font-size: 0.8rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+.btn-logout:hover {
+  background: rgba(255, 59, 92, 0.08);
+}
+
+/* FORM GROUP */
+.form-group{margin-bottom:18px;}
+.form-group label{display:block;font-size:0.82rem;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:7px;}
+.form-group input{width:100%;padding:13px 16px;border:2px solid var(--border);border-radius:10px;font-family:'Sora',sans-serif;font-size:0.95rem;color:var(--text);transition:border 0.2s,box-shadow 0.2s;background:#fafbff;}
+.form-group input:focus{outline:none;border-color:var(--blue);box-shadow:0 0 0 4px rgba(0,98,255,0.10);}
+.btn{width:100%;padding:14px;border:none;border-radius:10px;font-family:'Sora',sans-serif;font-size:1rem;font-weight:700;cursor:pointer;transition:transform 0.15s,box-shadow 0.2s;}
+.btn-primary{background:var(--blue);color:#fff;box-shadow:0 4px 16px rgba(0,98,255,0.3);}
+.btn-primary:hover{background:var(--blue-dark);transform:translateY(-1px);}
+.btn-primary:disabled{background:#a0b4cc;cursor:not-allowed;transform:none;box-shadow:none;}
+
+/* QUIZ AREA */
+#quiz-area{display:none;}
+.quiz-header{display:flex;align-items:center;justify-content:space-between;padding:16px 24px;background:var(--blue);border-radius:12px;margin-bottom:24px;color:#fff;flex-wrap:wrap;gap:16px;}
+.quiz-header .quiz-meta{display:flex;align-items:center;gap:20px;font-size:0.88rem;}
+#timer-display{font-family:'JetBrains Mono',monospace;font-size:1.4rem;font-weight:700;color:#ffd700;background:rgba(0,0,0,0.2);padding:6px 16px;border-radius:8px;}
+.progress-bar{height:6px;background:rgba(255,255,255,0.2);border-radius:3px;margin-top:10px;}
+.progress-fill{height:100%;background:#ffd700;border-radius:3px;transition:width 0.3s;}
+.question-card{background:#fafbff;border:2px solid var(--border);border-radius:12px;padding:22px;margin-bottom:16px;transition:border-color 0.2s;word-wrap:break-word;}
+.question-card:hover{border-color:var(--blue);}
+.q-number{font-size:0.75rem;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:1px;margin-bottom:8px;}
+.q-text{font-size:0.97rem;font-weight:600;color:var(--text);margin-bottom:16px;line-height:1.6;}
+.options{display:grid;gap:8px;}
+.option-label{display:flex;align-items:center;gap:12px;padding:11px 16px;border:2px solid var(--border);border-radius:9px;cursor:pointer;font-size:0.9rem;transition:all 0.2s;background:#fff;}
+.option-label:hover{border-color:var(--blue);background:var(--blue-light);}
+.option-label input{accent-color:var(--blue);width:16px;height:16px;cursor:pointer;}
+.option-label input:checked + span{font-weight:700;color:var(--blue);}
+.option-label:has(input:checked){border-color:var(--blue);background:var(--blue-light);}
+
+/* RESULTS */
+#result-area{display:none;}
+.result-stat{text-align:center;padding:20px;background:var(--blue-light);border-radius:12px;}
+.result-stat .big-num{font-size:3rem;font-weight:800;color:var(--blue);line-height:1;}
+.result-stat small{color:var(--muted);font-size:0.8rem;font-weight:600;text-transform:uppercase;}
+.stats-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:16px;margin:20px 0;}
+.stat-box{text-align:center;padding:16px;border-radius:10px;border:1.5px solid var(--border);}
+.stat-box .val{font-size:1.6rem;font-weight:800;}
+.stat-box small{color:var(--muted);font-size:0.78rem;font-weight:600;}
+.stat-box.correct{background:#e8fff4;border-color:#a8f0cb;}.stat-box.correct .val{color:var(--green);}
+.stat-box.wrong{background:#fff0f3;border-color:#ffb3c1;}.stat-box.wrong .val{color:var(--red);}
+.stat-box.rank{background:linear-gradient(135deg,#fffbea,#fff4d6);border-color:#ffe066;}.stat-box.rank .val{color:#c8860a;}
+
+.leaderboard-table{width:100%;border-collapse:collapse;font-size:0.88rem;}
+.leaderboard-table th{background:var(--blue);color:#fff;padding:10px 14px;text-align:left;font-weight:700;}
+.leaderboard-table td{padding:10px 14px;border-bottom:1px solid var(--border);}
+.leaderboard-table tr:hover td{background:var(--blue-light);}
+.leaderboard-table tr.me td{background:#fffbea;font-weight:700;}
+.rank-badge{display:inline-flex;align-items:center;justify-content:center;width:28px;height:28px;border-radius:50%;font-weight:800;font-size:0.85rem;}
+.rank-1{background:#ffd700;color:#7a5c00;}
+.rank-2{background:#e0e0e0;color:#555;}
+.rank-3{background:#e8c9a0;color:#7a4e00;}
+
+/* DETAILED REVIEW */
+.review-q{border-radius:10px;border:1.5px solid var(--border);padding:18px;margin-bottom:14px;word-break:break-word;}
+.review-opt{padding:8px 12px;border-radius:7px;margin-bottom:6px;font-size:0.88rem;}
+.review-opt.correct{background:#d4edda;color:#155724;font-weight:700;}
+.review-opt.wrong{background:#f8d7da;color:#721c24;font-weight:700;}
+.explanation{background:#fffbea;border-left:3px solid #ffd700;padding:10px 14px;border-radius:0 6px 6px 0;font-size:0.85rem;color:var(--text);margin-top:10px;}
+
+/* RULES BOX */
+.rules-list{list-style:none;display:grid;gap:10px;}
+.rules-list li{display:flex;gap:12px;align-items:flex-start;padding:12px 16px;background:#fafbff;border-radius:9px;border:1px solid var(--border);font-size:0.9rem;}
+.rules-list li i{color:var(--blue);margin-top:2px;flex-shrink:0;}
+
+/* UTILITY */
+.section-title{font-size:1.2rem;font-weight:800;color:var(--text);margin-bottom:18px;display:flex;align-items:center;gap:10px;}
+.section-title::after{content:'';flex:1;height:2px;background:var(--border);}
+.text-muted{color:var(--muted);}
+.alert{padding:14px 18px;border-radius:9px;font-size:0.88rem;font-weight:600;margin-bottom:16px;}
+.alert-error{background:#fff0f3;color:#c0392b;border:1px solid #ffb3c1;}
+.alert-success{background:#e8fff4;color:#0a7a45;border:1px solid #a8f0cb;}
+.hidden{display:none!important;}
+
+.table-wrap{overflow-x:auto;width:100%;-webkit-overflow-scrolling:touch;}
+table{width:100%;border-collapse:collapse;white-space:nowrap;}
+
+footer{background:var(--blue);color:rgba(255,255,255,0.7);text-align:center;padding:24px;font-size:0.82rem;margin-top:40px;}
+footer a{color:#fff;font-weight:700;}
+</style>
 </head>
 <body>
-  <div class="header">
-    <h1>CeemedicoNepal</h1>
-    <h2>Weekly CEE Exam Challenge</h2>
+
+<header>
+<nav>
+  <a href="https://ceemediconepal.xyz" class="logo">
+    <img src="https://ceemediconepal.xyz/img/Logo.png" alt="CeemedicoNepal" onerror="this.style.display='none'">
+    <span>CeemedicoNepal</span>
+  </a>
+  <ul>
+    <li><a href="https://ceemediconepal.xyz">Home</a></li>
+    <li><a href="dashboard.html">Dashboard</a></li>
+    <li><a href="admin.html">Admin</a></li>
+  </ul>
+</nav>
+</header>
+
+<div class="hero">
+  <h1>Weekly CEE<br><span>Exam Challenge</span></h1>
+  <p>Every Saturday — 200 questions — test your knowledge and see where you stand among all aspirants.</p>
+  <div class="next-exam-badge">
+    <div class="pulse-dot"></div>
+    <span id="next-exam-text">Loading schedule...</span>
+  </div>
+</div>
+
+<div class="main-content">
+
+  <!-- Status Banner -->
+  <div id="status-banner" class="status-banner closed">
+    <i class="fas fa-lock"></i>
+    <span id="status-text">Checking exam status...</span>
   </div>
 
-  <div class="container">
-    <!-- Exam Details -->
-    <div class="exam-details card">
-      <h2>Enter Your Details</h2>
-      <input type="text" id="fullName" placeholder="Full Name" style="width:100%; padding:10px; margin:10px 0;"><br>
-      <input type="email" id="email" placeholder="Email Address" style="width:100%; padding:10px; margin:10px 0;"><br>
+  <!-- Login Card -->
+  <div class="card" id="login-card">
+    <div class="section-title"><i class="fas fa-user-circle" style="color:var(--blue)"></i> Access CEE Platform</div>
+    <div id="login-error" class="alert alert-error hidden"></div>
 
-      <div id="examStatus">
-        <p>Loading schedule...</p>
-      </div>
-
-      <h3>Exam Rules</h3>
-      <ul>
-        <li>Only 1 attempt per device/email</li>
-        <li>+1 mark for each correct answer</li>
-        <li>−0.25 mark for each wrong answer</li>
-        <li>0 marks for unattempted questions</li>
-        <li>Time limit shown on the exam screen</li>
-      </ul>
-
-      <button onclick="startExamCheck()" style="width:100%; padding:15px; font-size:18px;">Start Exam</button>
-    </div>
-
-    <!-- Exam Screen -->
-    <div id="exam-screen" class="exam-screen card">
-      <div style="display:flex; justify-content:space-between; margin-bottom:15px;">
-        <h2>CEE Weekly Exam</h2>
-        <div>
-          <strong>TIME LEFT: <span id="time-left">00:00:00</span></strong><br>
-          <strong>Answered: <span id="answered-count">0/0</span></strong>
+    <!-- Active Profile Info (Visible only when logged in) -->
+    <div id="auth-profile-section" class="hidden">
+      <div class="profile-info-card">
+        <div class="profile-meta">
+          <div id="user-avatar" class="profile-avatar">C</div>
+          <div class="profile-details">
+            <h4 id="user-display-name">Guest User</h4>
+            <p id="user-email">user@domain.com</p>
+          </div>
         </div>
+        <button class="btn-logout" onclick="signOutUser()"><i class="fas fa-sign-out-alt"></i> Sign Out</button>
       </div>
-
-      <div id="questions-container"></div>
-
-      <button onclick="submitExam()" style="width:100%; padding:15px; font-size:18px; background:#d32f2f;">
-        Submit Exam
+      <button class="btn btn-primary" id="start-btn" disabled>
+        <i class="fas fa-lock"></i> Exam Not Active
       </button>
     </div>
+
+    <!-- Auth Portal Form (Visible only when logged out) -->
+    <div id="auth-portal-section">
+      <div class="auth-tabs">
+        <div class="auth-tab active" id="tab-login" onclick="switchAuthTab('login')">Log In</div>
+        <div class="auth-tab" id="tab-signup" onclick="switchAuthTab('signup')">Sign Up</div>
+      </div>
+
+      <!-- Login tab content -->
+      <div id="form-login" class="auth-form-container active">
+        <div class="form-group">
+          <label>Email Address</label>
+          <input type="email" id="inp-login-email" placeholder="your@email.com" autocomplete="email"/>
+        </div>
+        <div class="form-group">
+          <label>Password</label>
+          <input type="password" id="inp-login-pass" placeholder="••••••••" autocomplete="current-password" onkeydown="if(event.key==='Enter') loginWithEmail()"/>
+        </div>
+        <button class="btn btn-primary" style="margin-top: 8px;" onclick="loginWithEmail()"><i class="fas fa-sign-in-alt"></i> Log In</button>
+      </div>
+
+      <!-- Signup tab content -->
+      <div id="form-signup" class="auth-form-container">
+        <div class="form-group">
+          <label>Full Name</label>
+          <input type="text" id="inp-signup-name" placeholder="e.g. Ram Bahadur Shrestha" autocomplete="name"/>
+        </div>
+        <div class="form-group">
+          <label>Email Address</label>
+          <input type="email" id="inp-signup-email" placeholder="your@email.com" autocomplete="email"/>
+        </div>
+        <div class="form-group">
+          <label>Password</label>
+          <input type="password" id="inp-signup-pass" placeholder="At least 6 characters" autocomplete="new-password"/>
+        </div>
+        <button class="btn btn-primary" style="margin-top: 8px;" onclick="signUpWithEmail()"><i class="fas fa-user-plus"></i> Create Account</button>
+      </div>
+
+      <!-- Google Provider Integration -->
+      <div class="oauth-divider">or continue with</div>
+      <button class="btn btn-google" onclick="loginWithGoogle()">
+        <img src="https://lh3.googleusercontent.com/COgqkg0KmPIisgWDrt64-wf768-vHg7vS7gT96S44clP9p_uA9_vT9sV7_7Nscb5E0c9469e7fDF35D1=s120" alt="Google">
+        Google Sign In
+      </button>
+    </div>
+
+    <!-- Rules Panel -->
+    <div style="margin-top:28px;">
+      <div class="section-title"><i class="fas fa-list-check" style="color:var(--accent)"></i> Exam Rules</div>
+      <ul class="rules-list">
+        <li><i class="fas fa-check-circle"></i> Only <strong>1 attempt</strong> per authenticated account</li>
+        <li><i class="fas fa-plus-circle"></i> <strong>+1 mark</strong> for each correct answer</li>
+        <li><i class="fas fa-minus-circle"></i> <strong>−0.25 mark</strong> for each wrong answer</li>
+        <li><i class="fas fa-forward"></i> <strong>0 marks</strong> for unattempted questions</li>
+        <li><i class="fas fa-clock"></i> Time limit shown on the exam screen</li>
+        <li><i class="fas fa-trophy"></i> Live rankings shown after submission</li>
+        <li><i class="fas fa-calendar-week"></i> Exam held <strong>every Saturday</strong> at the scheduled time</li>
+      </ul>
+    </div>
   </div>
 
-  <footer style="text-align:center; padding:20px; background:#1e3a8a; color:white;">
-    © 2025 CeemedicoNepal. All rights reserved.
-  </footer>
+  <!-- Quiz Area -->
+  <div id="quiz-area">
+    <div class="quiz-header">
+      <div>
+        <div style="font-weight:800;font-size:1.1rem;">CEE Weekly Exam</div>
+        <div id="quiz-info-text" style="font-size:0.8rem;opacity:0.8;margin-top:2px;"></div>
+        <div class="progress-bar" style="width:220px;margin-top:8px;"><div class="progress-fill" id="progress-fill" style="width:0%"></div></div>
+      </div>
+      <div class="quiz-meta">
+        <div>
+          <div style="font-size:0.75rem;opacity:0.7;text-align:center;">TIME LEFT</div>
+          <div id="timer-display">00:00:00</div>
+        </div>
+        <div>
+          <div style="font-size:0.75rem;opacity:0.7;">Answered</div>
+          <div style="font-family:'JetBrains Mono',monospace;font-weight:700;" id="answered-count">0/0</div>
+        </div>
+      </div>
+    </div>
+    <div id="questions-container"></div>
+    <button class="btn btn-primary" id="submit-btn" style="max-width:300px;margin:0 auto;display:block;">
+      <i class="fas fa-paper-plane"></i> Submit Exam
+    </button>
+  </div>
 
-  <script>
-    function startExamCheck() {
-      const name = document.getElementById('fullName').value.trim();
-      const email = document.getElementById('email').value.trim();
+  <!-- Results Area -->
+  <div id="result-area">
+    <div class="card">
+      <div class="section-title"><i class="fas fa-star" style="color:#ffd700"></i> Your Results</div>
+      <div id="result-content"></div>
+    </div>
+    <div class="card">
+      <div class="section-title"><i class="fas fa-trophy" style="color:var(--accent)"></i> Leaderboard</div>
+      <div id="leaderboard-content"><p class="text-muted">Loading rankings...</p></div>
+    </div>
+    <div class="card" id="review-card">
+      <div class="section-title"><i class="fas fa-magnifying-glass" style="color:var(--blue)"></i> Detailed Review</div>
+      <div id="review-content"></div>
+    </div>
+  </div>
+
+</div>
+
+<footer>
+  <p>&copy; 2025 <a href="https://ceemediconepal.xyz">CeemedicoNepal</a>. All rights reserved. | Weekly CEE Exam System</p>
+</footer>
+
+<!-- Compat SDKs loaded cleanly -->
+<script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-database-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-auth-compat.js"></script>
+<script>
+const firebaseConfig = {
+  apiKey: "AIzaSyDI-O7KiPzKKAc94UBcy-EusldtOMD_ZbE",
+  authDomain: "nepalquiz-7d444.firebaseapp.com",
+  databaseURL: "https://nepalquiz-7d444-default-rtdb.asia-southeast1.firebasedatabase.app",
+  projectId: "nepalquiz-7d444",
+  storageBucket: "nepalquiz-7d444.firebasestorage.app",
+  messagingSenderId: "547865008194",
+  appId: "1:547865008194:web:2ced7d26f3c4c5ecc275db"
+};
+
+firebase.initializeApp(firebaseConfig);
+const db = firebase.database();
+const auth = firebase.auth();
+
+/* ─── State ─── */
+let examConfig = null;
+let questions = [];
+let userAnswers = {};
+let timerInterval = null;
+let timeLeft = 0;
+let quizStarted = false;
+let currentUser = null;
+let examKey = null;
+
+/* ─── Auth Switch UI ─── */
+function switchAuthTab(tab) {
+  document.getElementById('login-error').classList.add('hidden');
+  if (tab === 'login') {
+    document.getElementById('tab-login').classList.add('active');
+    document.getElementById('tab-signup').classList.remove('active');
+    document.getElementById('form-login').classList.add('active');
+    document.getElementById('form-signup').classList.remove('active');
+  } else {
+    document.getElementById('tab-signup').classList.add('active');
+    document.getElementById('tab-login').classList.remove('active');
+    document.getElementById('form-signup').classList.add('active');
+    document.getElementById('form-login').classList.remove('active');
+  }
+}
+
+/* ─── Init & Auth Watcher ─── */
+init();
+
+async function init() {
+  await loadExamConfig();
+  
+  // Track Authentication changes safely
+  auth.onAuthStateChanged(async (user) => {
+    const profileSection = document.getElementById('auth-profile-section');
+    const portalSection = document.getElementById('auth-portal-section');
+    document.getElementById('login-error').classList.add('hidden');
+
+    if (user) {
+      // User logged in
+      currentUser = {
+        uid: user.uid,
+        name: user.displayName || user.email.split('@')[0],
+        email: user.email
+      };
+
+      // Set UI avatar & details
+      const name = currentUser.name;
+      const initials = name ? name.split(' ').map(n=>n[0]).join('').toUpperCase().slice(0,2) : 'C';
+      const avatarEl = document.getElementById('user-avatar');
       
-      if (!name || !email) {
-        alert("Please enter your full name and email");
-        return;
+      if (user.photoURL) {
+        avatarEl.innerHTML = `<img src="${user.photoURL}" alt="User Profile" onerror="this.innerHTML='${initials}'">`;
+      } else {
+        avatarEl.textContent = initials;
       }
-      checkExamStatus();
+      
+      document.getElementById('user-display-name').textContent = name;
+      document.getElementById('user-email').textContent = currentUser.email;
+
+      // Show user card, hide inputs
+      portalSection.classList.add('hidden');
+      profileSection.classList.remove('hidden');
+
+      // Check results with secure UID
+      await checkPreviousAttempt();
+    } else {
+      // User is logged out
+      currentUser = null;
+      profileSection.classList.add('hidden');
+      portalSection.classList.remove('hidden');
     }
-  </script>
+    updateUI();
+  });
+}
+
+async function loadExamConfig() {
+  const snap = await db.ref('exam_config').once('value');
+  examConfig = snap.val() || {};
+  updateUI();
+}
+
+function updateUI() {
+  if (!examConfig) return;
+  const now = Date.now();
+  const startTime = examConfig.startTime || 0;
+  const endTime = examConfig.endTime || 0;
+  const isActive = examConfig.isActive && now >= startTime && now <= endTime;
+  const isUpcoming = examConfig.isActive && now < startTime;
+  const banner = document.getElementById('status-banner');
+  const btn = document.getElementById('start-btn');
+  const nextTxt = document.getElementById('next-exam-text');
+
+  if (isActive) {
+    banner.className = 'status-banner open';
+    banner.innerHTML = '<i class="fas fa-circle-check"></i><span>Exam is LIVE! You can start now.</span>';
+    btn.disabled = false;
+    btn.innerHTML = '<i class="fas fa-play"></i> Start Exam';
+    nextTxt.textContent = 'Exam is LIVE now!';
+  } else if (isUpcoming) {
+    banner.className = 'status-banner upcoming';
+    banner.innerHTML = `<i class="fas fa-clock"></i><span>Exam opens on: <strong>${new Date(startTime).toLocaleString()}</strong></span>`;
+    btn.disabled = true;
+    btn.innerHTML = '<i class="fas fa-clock"></i> Not Started Yet';
+    nextTxt.textContent = `Opens: ${new Date(startTime).toLocaleDateString('en-US',{weekday:'long',month:'short',day:'numeric',hour:'2-digit',minute:'2-digit'})}`;
+  } else {
+    banner.className = 'status-banner closed';
+    banner.innerHTML = '<i class="fas fa-lock"></i><span>No active exam. Check back on Saturday!</span>';
+    btn.disabled = true;
+    btn.innerHTML = '<i class="fas fa-lock"></i> Exam Closed';
+    const nextSat = getNextSaturday();
+    nextTxt.textContent = `Next: ${nextSat}`;
+  }
+}
+
+function getNextSaturday() {
+  const d = new Date();
+  const day = d.getDay();
+  const diff = (6 - day + 7) % 7 || 7;
+  d.setDate(d.getDate() + diff);
+  return d.toLocaleDateString('en-US',{weekday:'long',month:'short',day:'numeric'});
+}
+
+async function checkPreviousAttempt() {
+  if (!examConfig || !examConfig.examKey || !currentUser) return;
+  examKey = examConfig.examKey;
+  const snap = await db.ref(`exam_results/${examKey}/${currentUser.uid}`).once('value');
+  if (snap.exists()) {
+    const data = snap.val();
+    document.getElementById('login-card').style.display = 'none';
+    document.getElementById('status-banner').style.display = 'none';
+    showResults(data, data.answers || {}, true);
+  }
+}
+
+/* ─── Email/Password Authentication Functions ─── */
+async function signUpWithEmail() {
+  const name = document.getElementById('inp-signup-name').value.trim();
+  const email = document.getElementById('inp-signup-email').value.trim();
+  const pass = document.getElementById('inp-signup-pass').value;
+
+  if (!name) { showLoginError('Please enter your full name.'); return; }
+  if (!email || !email.includes('@')) { showLoginError('Please enter a valid email address.'); return; }
+  if (pass.length < 6) { showLoginError('Password must be at least 6 characters.'); return; }
+
+  try {
+    const cred = await auth.createUserWithEmailAndPassword(email, pass);
+    await cred.user.updateProfile({ displayName: name });
+    // Reload state manually to fetch current details immediately
+    auth.currentUser.reload().then(() => {
+      init();
+    });
+  } catch (error) {
+    showLoginError(error.message);
+  }
+}
+
+async function loginWithEmail() {
+  const email = document.getElementById('inp-login-email').value.trim();
+  const pass = document.getElementById('inp-login-pass').value;
+
+  if (!email || !email.includes('@')) { showLoginError('Please enter a valid email address.'); return; }
+  if (!pass) { showLoginError('Please enter your password.'); return; }
+
+  try {
+    await auth.signInWithEmailAndPassword(email, pass);
+  } catch (error) {
+    showLoginError(error.message);
+  }
+}
+
+async function loginWithGoogle() {
+  const provider = new firebase.auth.GoogleAuthProvider();
+  try {
+    await auth.signInWithPopup(provider);
+  } catch (error) {
+    showLoginError(error.message);
+  }
+}
+
+async function signOutUser() {
+  try {
+    await auth.signOut();
+    document.getElementById('inp-login-email').value = '';
+    document.getElementById('inp-login-pass').value = '';
+    document.getElementById('inp-signup-name').value = '';
+    document.getElementById('inp-signup-email').value = '';
+    document.getElementById('inp-signup-pass').value = '';
+  } catch (error) {
+    showLoginError(error.message);
+  }
+}
+
+/* ─── Exam Controller Functions ─── */
+document.getElementById('start-btn').addEventListener('click', startExam);
+document.getElementById('submit-btn').addEventListener('click', () => submitExam(false));
+
+async function startExam() {
+  if (!currentUser) { showLoginError('Please log in to start the exam.'); return; }
+
+  // Re-check config live
+  const snap = await db.ref('exam_config').once('value');
+  examConfig = snap.val() || {};
+  const now = Date.now();
+  if (!examConfig.isActive || now < examConfig.startTime || now > examConfig.endTime) {
+    showLoginError('Exam is not currently active.'); return;
+  }
+  examKey = examConfig.examKey;
+
+  // Double check secure UID attempt restriction
+  const prevSnap = await db.ref(`exam_results/${examKey}/${currentUser.uid}`).once('value');
+  if (prevSnap.exists()) { showLoginError('You have already attempted this exam.'); return; }
+
+  // Load questions from targeted set
+  const setId = examConfig.questionSetId;
+  if (!setId) { showLoginError('No question set configured by admin.'); return; }
+
+  const qSnap = await db.ref(`question_sets/${setId}/questions`).once('value');
+  if (!qSnap.exists()) { showLoginError('Questions not found. Contact admin.'); return; }
+
+  const allQs = qSnap.val();
+  questions = Array.isArray(allQs) ? allQs : Object.values(allQs);
+
+  // Shuffle and restrict count to 200 max
+  questions = shuffle(questions).slice(0, Math.min(200, questions.length));
+
+  document.getElementById('login-card').style.display = 'none';
+  document.getElementById('status-banner').style.display = 'none';
+  document.getElementById('quiz-area').style.display = 'block';
+  document.getElementById('quiz-info-text').textContent = `${questions.length} Questions • ${currentUser.name}`;
+  document.getElementById('answered-count').textContent = `0/${questions.length}`;
+
+  renderQuestions();
+
+  timeLeft = examConfig.durationSeconds || 10800;
+  quizStarted = true;
+  startTimer();
+}
+
+function shuffle(arr) {
+  const a = [...arr];
+  for (let i = a.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [a[i], a[j]] = [a[j], a[i]];
+  }
+  return a;
+}
+
+function renderQuestions() {
+  const container = document.getElementById('questions-container');
+  container.innerHTML = '';
+  questions.forEach((q, i) => {
+    const card = document.createElement('div');
+    card.className = 'question-card';
+    card.id = `qcard-${i}`;
+    const opts = q.options || [];
+    let optsHTML = opts.map((o, j) => `
+      <label class="option-label" id="opt-${i}-${j}">
+        <input type="radio" name="q${i}" value="${j}" onchange="recordAnswer(${i},${j})">
+        <span>${o}</span>
+      </label>`).join('');
+    card.innerHTML = `
+      <div class="q-number">Question ${i+1} of ${questions.length}</div>
+      <div class="q-text">${q.question}</div>
+      <div class="options">${optsHTML}</div>`;
+    container.appendChild(card);
+  });
+}
+
+function recordAnswer(qIdx, optIdx) {
+  userAnswers[qIdx] = optIdx;
+  const answered = Object.keys(userAnswers).length;
+  document.getElementById('answered-count').textContent = `${answered}/${questions.length}`;
+  document.getElementById('progress-fill').style.width = `${(answered/questions.length)*100}%`;
+}
+
+function startTimer() {
+  updateTimerDisplay();
+  timerInterval = setInterval(() => {
+    timeLeft--;
+    updateTimerDisplay();
+    if (timeLeft <= 0) { clearInterval(timerInterval); submitExam(true); }
+  }, 1000);
+}
+
+function updateTimerDisplay() {
+  const h = Math.floor(timeLeft/3600).toString().padStart(2,'0');
+  const m = Math.floor((timeLeft%3600)/60).toString().padStart(2,'0');
+  const s = (timeLeft%60).toString().padStart(2,'0');
+  const el = document.getElementById('timer-display');
+  el.textContent = `${h}:${m}:${s}`;
+  el.style.color = timeLeft <= 300 ? '#ff6b35' : '#ffd700';
+}
+
+async function submitExam(auto) {
+  if (!quizStarted) return;
+  if (!auto) {
+    const unanswered = questions.length - Object.keys(userAnswers).length;
+    if (unanswered > 0 && !confirm(`You have ${unanswered} unanswered questions. Submit anyway?`)) return;
+  }
+  clearInterval(timerInterval);
+  quizStarted = false;
+  document.getElementById('submit-btn').disabled = true;
+
+  let correct = 0, wrong = 0, unattempted = 0;
+  questions.forEach((q, i) => {
+    if (userAnswers[i] === undefined) { unattempted++; return; }
+    if (userAnswers[i] === q.correct) correct++;
+    else wrong++;
+  });
+  const score = correct - wrong * 0.25;
+  const pct = (score / questions.length * 100).toFixed(2);
+  const resultData = {
+    name: currentUser.name,
+    email: currentUser.email,
+    correct, wrong, unattempted,
+    score: parseFloat(score.toFixed(2)),
+    percentage: parseFloat(pct),
+    total: questions.length,
+    answers: userAnswers,
+    timestamp: Date.now()
+  };
+
+  // Securely write result node under authenticated UID
+  await db.ref(`exam_results/${examKey}/${currentUser.uid}`).set(resultData);
+  document.getElementById('quiz-area').style.display = 'none';
+  showResults(resultData, userAnswers, false);
+}
+
+function showResults(data, answers, fromPrev) {
+  document.getElementById('result-area').style.display = 'block';
+  const score = data.score;
+  const pct = data.percentage;
+  let grade = pct >= 80 ? '🏆 Excellent' : pct >= 60 ? '✅ Good' : pct >= 40 ? '⚠️ Average' : '❌ Needs Work';
+
+  document.getElementById('result-content').innerHTML = `
+    <div style="text-align:center;margin-bottom:20px;">
+      <div style="font-size:2.8rem;margin-bottom:4px;">${grade}</div>
+      <div style="font-size:0.9rem;color:var(--muted);">Hi, <strong>${data.name}</strong> — here's your performance</div>
+    </div>
+    <div class="stats-grid">
+      <div class="stat-box"><div class="val" style="color:var(--blue)">${score.toFixed(2)}</div><small>Total Score</small></div>
+      <div class="stat-box"><div class="val" style="color:var(--muted)">${data.percentage}%</div><small>Percentage</small></div>
+      <div class="stat-box correct"><div class="val">${data.correct}</div><small>Correct</small></div>
+      <div class="stat-box wrong"><div class="val">${data.wrong}</div><small>Wrong</small></div>
+      <div class="stat-box"><div class="val" style="color:var(--muted)">${data.unattempted}</div><small>Unattempted</small></div>
+      <div class="stat-box rank"><div class="val" id="your-rank">...</div><small>Your Rank</small></div>
+    </div>`;
+
+  loadLeaderboard(data.score);
+
+  // Detailed review
+  if (questions.length > 0 && !fromPrev) {
+    let reviewHTML = '';
+    questions.forEach((q, i) => {
+      const sel = answers[i];
+      const isCorrect = sel === q.correct;
+      const isUnattempted = sel === undefined;
+      let optsHTML = (q.options || []).map((o, j) => {
+        let cls = '';
+        if (j === q.correct) cls = 'correct';
+        else if (j === sel && j !== q.correct) cls = 'wrong';
+        return `<div class="review-opt ${cls}">${j === q.correct ? '✓' : j === sel ? '✗' : '○'} ${o}</div>`;
+      }).join('');
+      const status = isUnattempted ? '⬜ Unattempted' : isCorrect ? '✅ Correct' : '❌ Wrong';
+      reviewHTML += `
+        <div class="review-q">
+          <div style="font-weight:700;font-size:0.88rem;color:var(--muted);margin-bottom:6px;">Q${i+1} — ${status}</div>
+          <div style="font-size:0.95rem;font-weight:600;margin-bottom:12px;">${q.question}</div>
+          ${optsHTML}
+          ${q.explanation ? `<div class="explanation"><strong>Explanation:</strong> ${q.explanation}</div>` : ''}
+        </div>`;
+    });
+    document.getElementById('review-content').innerHTML = reviewHTML;
+  } else {
+    document.getElementById('review-card').style.display = 'none';
+  }
+}
+
+async function loadLeaderboard(myScore) {
+  const snap = await db.ref(`exam_results/${examKey}`).once('value');
+  if (!snap.exists()) return;
+  const all = Object.entries(snap.val()).map(([id,d]) => ({id,...d}));
+  all.sort((a,b) => b.score - a.score || a.timestamp - b.timestamp);
+  
+  const rank = all.findIndex(r => r.id === currentUser.uid) + 1;
+  document.getElementById('your-rank').textContent = rank || '?';
+
+  let rows = all.slice(0,50).map((r,i) => {
+    const isMe = r.id === currentUser.uid;
+    let badge = i===0 ? '<span class="rank-badge rank-1">🥇</span>' : i===1 ? '<span class="rank-badge rank-2">🥈</span>' : i===2 ? '<span class="rank-badge rank-3">🥉</span>' : `<span style="font-weight:700">#${i+1}</span>`;
+    return `<tr class="${isMe?'me':''}"><td>${badge}</td><td>${r.name}${isMe?' <em>(You)</em>':''}</td><td style="font-family:'JetBrains Mono',monospace;font-weight:700">${r.score.toFixed(2)}</td><td>${r.percentage}%</td><td>${r.correct}/${r.total}</td></tr>`;
+  }).join('');
+  document.getElementById('leaderboard-content').innerHTML = `
+    <p style="font-size:0.85rem;color:var(--muted);margin-bottom:12px;">Showing top 50 of ${all.length} participants</p>
+    <div class="table-wrap"><table class="leaderboard-table">
+      <thead><tr><th>Rank</th><th>Name</th><th>Score</th><th>%</th><th>Correct</th></tr></thead>
+      <tbody>${rows}</tbody>
+    </table></div>`;
+}
+
+function showLoginError(msg) {
+  const el = document.getElementById('login-error');
+  el.textContent = msg;
+  el.classList.remove('hidden');
+}
+</script>
 </body>
 </html>
