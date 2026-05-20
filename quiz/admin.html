@@ -1,158 +1,59 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8"/>
-<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-<title>CeemedicoNepal Admin</title>
-
-<script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-database-compat.js"></script>
-
-<style>
-body{font-family:Arial;background:#0f1115;color:#fff;padding:20px}
-button{padding:10px 14px;margin:5px;border:none;border-radius:6px;cursor:pointer}
-.card{background:#1c2230;padding:15px;border-radius:10px;margin-top:10px}
-pre{background:#000;padding:10px;border-radius:10px;overflow:auto;max-height:400px}
-input{padding:10px;margin:5px;width:300px}
-</style>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Admin Panel - CeemedicoNepal</title>
+  <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-database-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-auth-compat.js"></script>
+  <script src="script.js"></script>
+  <style>
+    body { font-family: Arial, sans-serif; margin: 0; background: #f4f7f9; }
+    .sidebar { width: 250px; background: #1e3a8a; color: white; position: fixed; height: 100%; padding: 20px; }
+    .content { margin-left: 270px; padding: 20px; }
+    .card { background: white; padding: 20px; border-radius: 10px; box-shadow: 0 4px 12px rgba(0,0,0,0.1); margin-bottom: 20px; }
+  </style>
 </head>
-
 <body>
 
-<h2>🔥 CeemedicoNepal Admin Panel</h2>
-
-<!-- LOGIN -->
-<div id="loginBox">
-  <input type="password" id="pass" placeholder="Admin Password"/>
-  <button onclick="login()">Login</button>
-</div>
-
-<!-- DASHBOARD -->
-<div id="panel" style="display:none">
-
-  <h3>📚 Chapter-wise Data</h3>
-  <button onclick="loadSets()">Load Sets</button>
-  <button onclick="loadStats()">Load Stats</button>
-
-  <h3>🧪 Write Test Exam</h3>
-  <input id="examKey" placeholder="exam_key"/>
-  <button onclick="createExam()">Create Exam</button>
-
-  <div class="card">
-    <h4>Output</h4>
-    <pre id="out">Waiting...</pre>
+  <div class="sidebar">
+    <h2>CeemedicoNepal</h2>
+    <h3>Admin Dashboard</h3>
+    <hr>
+    <p><strong>Admin:</strong> ceemedicoadmin</p>
+    <button onclick="logout()" style="width:100%; margin-top:20px;">Logout</button>
   </div>
 
-</div>
+  <div class="content">
+    <h1>Dashboard</h1>
 
-<script>
-/* =========================
-   FIREBASE APPS (MULTI DB FIX)
-========================= */
+    <div class="card">
+      <h2>Exam Control</h2>
+      <button onclick="activateExam()">Activate Current Exam</button>
+      <button onclick="loadAdminDashboard()">Refresh</button>
+    </div>
 
-// Chapter-wise DB (READ)
-const chapterApp = firebase.initializeApp({
-  apiKey: "AIzaSyDD5xBrSkX_YXzSnsKxjW8-K6W4rBfV3rg",
-  authDomain: "chapter-wise-backup.firebaseapp.com",
-  databaseURL: "https://chapter-wise-backup-default-rtdb.asia-southeast1.firebasedatabase.app",
-  projectId: "chapter-wise-backup",
-  storageBucket: "chapter-wise-backup.firebasestorage.app",
-  messagingSenderId: "864698641587",
-  appId: "1:864698641587:web:d0b550579c6eb7709ed4c6"
-}, "chapter");
+    <div class="card">
+      <h2>Live Leaderboard Preview</h2>
+      <div id="admin-leaderboard">Loading...</div>
+    </div>
+  </div>
 
-const chapterDB = chapterApp.database();
-
-
-// NepalQuiz DB (WRITE + EXAM CONTROL)
-const nepalApp = firebase.initializeApp({
-  apiKey: "AIzaSyDI-O7KiPzKKAc94UBcy-EusldtOMD_ZbE",
-  authDomain: "nepalquiz-7d444.firebaseapp.com",
-  databaseURL: "https://nepalquiz-7d444-default-rtdb.asia-southeast1.firebasedatabase.app",
-  projectId: "nepalquiz-7d444",
-  storageBucket: "nepalquiz-7d444.firebasestorage.app",
-  messagingSenderId: "547865008194",
-  appId: "1:547865008194:web:2ced7d26f3c4c5ecc275db"
-}, "nepal");
-
-const nepalDB = nepalApp.database();
-
-
-/* =========================
-   LOGIN
-========================= */
-const ADMIN_PASS = "admin123";
-
-function login(){
-  const p = document.getElementById("pass").value;
-  if(p === ADMIN_PASS){
-    document.getElementById("loginBox").style.display="none";
-    document.getElementById("panel").style.display="block";
-  } else {
-    alert("Wrong password");
-  }
-}
-
-
-/* =========================
-   LOAD QUESTION SETS
-========================= */
-async function loadSets(){
-  try{
-    const snap = await chapterDB.ref("question_sets").once("value");
-    const data = snap.val();
-
-    document.getElementById("out").textContent =
-      JSON.stringify(data, null, 2);
-
-  }catch(err){
-    document.getElementById("out").textContent = "ERROR: " + err.message;
-  }
-}
-
-
-/* =========================
-   CREATE EXAM IN NEPALQUIZ
-========================= */
-async function createExam(){
-  const key = document.getElementById("examKey").value || "demo_exam";
-
-  const exam = {
-    title: "Live Exam",
-    active: true,
-    createdAt: Date.now(),
-    duration: 10800
-  };
-
-  await nepalDB.ref("exams/" + key).set(exam);
-
-  document.getElementById("out").textContent =
-    "Exam created in nepalquiz:\n" + JSON.stringify(exam, null, 2);
-}
-
-
-/* =========================
-   BASIC STATS
-========================= */
-async function loadStats(){
-  const snap = await chapterDB.ref("question_sets").once("value");
-  const data = snap.val() || {};
-
-  let sets = Object.keys(data).length;
-  let questions = 0;
-
-  Object.values(data).forEach(s=>{
-    if(s.questions){
-      questions += Array.isArray(s.questions)
-        ? s.questions.length
-        : Object.keys(s.questions).length;
+  <script>
+    function logout() {
+      localStorage.removeItem('isAdmin');
+      window.location.href = "index.html";
     }
-  });
 
-  document.getElementById("out").textContent =
-    `Sets: ${sets}\nQuestions: ${questions}`;
-}
-</script>
-
+    // Call this after admin login
+    window.onload = () => {
+      if (!localStorage.getItem('isAdmin')) {
+        alert("Please login as admin first");
+        window.location.href = "index.html";
+      }
+      loadAdminDashboard();
+    };
+  </script>
 </body>
 </html>
