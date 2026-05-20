@@ -1,0 +1,329 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>My Dashboard | CeemedicoNepal</title>
+<link href="https://fonts.googleapis.com/css2?family=Sora:wght@300;400;600;700;800&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+<style>
+:root{
+  --blue:#0062ff;--blue-dark:#0047cc;--blue-light:#e8f0ff;
+  --accent:#ff6b35;--green:#00c97a;--red:#ff3b5c;--yellow:#ffd700;
+  --bg:#f0f4ff;--card:#fff;--text:#0d1b2a;--muted:#6b7c93;--border:#dde5f0;
+  --shadow:0 4px 24px rgba(0,98,255,0.09);
+}
+*{box-sizing:border-box;margin:0;padding:0;}
+body{font-family:'Sora',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;}
+
+header{background:var(--blue);padding:0 24px;box-shadow:0 2px 16px rgba(0,98,255,0.18);}
+nav{max-width:1100px;margin:auto;display:flex;align-items:center;justify-content:space-between;height:64px;}
+.logo{display:flex;align-items:center;gap:10px;text-decoration:none;}
+.logo span{color:#fff;font-weight:800;font-size:1.05rem;}
+nav ul{display:flex;list-style:none;gap:6px;}
+nav ul a{color:rgba(255,255,255,0.85);text-decoration:none;font-size:0.88rem;font-weight:600;padding:7px 14px;border-radius:6px;transition:background 0.2s;}
+nav ul a:hover,nav ul a.active{background:rgba(255,255,255,0.15);color:#fff;}
+
+.hero{background:linear-gradient(135deg,#0062ff,#0047cc);padding:40px 24px 56px;text-align:center;}
+.hero h1{color:#fff;font-size:1.8rem;font-weight:800;margin-bottom:6px;}
+.hero p{color:rgba(255,255,255,0.78);font-size:0.9rem;}
+
+.main{max-width:1000px;margin:-28px auto 60px;padding:0 16px;}
+
+.card{background:var(--card);border-radius:14px;box-shadow:var(--shadow);padding:24px;margin-bottom:20px;border:1px solid var(--border);}
+.section-title{font-size:1rem;font-weight:800;color:var(--text);margin-bottom:18px;display:flex;align-items:center;gap:10px;}
+.section-title i{color:var(--blue);}
+.section-title::after{content:'';flex:1;height:2px;background:var(--border);}
+
+/* LOOKUP */
+.lookup-form{display:flex;gap:12px;flex-wrap:wrap;}
+.lookup-form input{flex:1;min-width:200px;padding:12px 16px;border:2px solid var(--border);border-radius:10px;font-family:'Sora',sans-serif;font-size:0.9rem;background:#fafbff;}
+.lookup-form input:focus{outline:none;border-color:var(--blue);}
+.btn{padding:11px 22px;border:none;border-radius:9px;font-family:'Sora',sans-serif;font-size:0.88rem;font-weight:700;cursor:pointer;transition:all 0.2s;display:inline-flex;align-items:center;gap:8px;}
+.btn-primary{background:var(--blue);color:#fff;}
+.btn-primary:hover{background:var(--blue-dark);}
+
+/* PROFILE HEADER */
+.profile-header{display:flex;align-items:center;gap:20px;padding:20px;background:linear-gradient(135deg,var(--blue-light),#f8fbff);border-radius:12px;margin-bottom:20px;border:1.5px solid rgba(0,98,255,0.15);}
+.avatar{width:64px;height:64px;background:var(--blue);border-radius:50%;display:flex;align-items:center;justify-content:center;color:#fff;font-size:1.8rem;font-weight:800;flex-shrink:0;}
+.profile-name{font-size:1.3rem;font-weight:800;}
+.profile-email{color:var(--muted);font-size:0.85rem;margin-top:2px;}
+
+/* STATS */
+.stats-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:14px;margin-bottom:20px;}
+.stat-box{text-align:center;padding:18px 12px;border-radius:12px;border:1.5px solid var(--border);}
+.stat-box .val{font-size:1.7rem;font-weight:800;font-family:'JetBrains Mono',monospace;}
+.stat-box small{color:var(--muted);font-size:0.73rem;font-weight:700;text-transform:uppercase;letter-spacing:.4px;display:block;margin-top:4px;}
+.sb-blue{background:var(--blue-light);border-color:rgba(0,98,255,0.2);}.sb-blue .val{color:var(--blue);}
+.sb-green{background:#e8fff4;border-color:#a8f0cb;}.sb-green .val{color:var(--green);}
+.sb-red{background:#fff0f3;border-color:#ffb3c1;}.sb-red .val{color:var(--red);}
+.sb-yellow{background:#fffbea;border-color:#ffe066;}.sb-yellow .val{color:#c8860a;}
+.sb-gray{background:#f8f9fa;border-color:var(--border);}.sb-gray .val{color:var(--muted);}
+
+/* EXAM HISTORY */
+.history-item{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px;padding:16px;border:1.5px solid var(--border);border-radius:10px;margin-bottom:10px;transition:border-color 0.2s;}
+.history-item:hover{border-color:var(--blue);}
+.history-exam{font-weight:700;font-size:0.9rem;}
+.history-meta{color:var(--muted);font-size:0.78rem;margin-top:3px;}
+.history-score{font-family:'JetBrains Mono',monospace;font-size:1.3rem;font-weight:700;color:var(--blue);}
+.history-rank{font-size:0.8rem;font-weight:700;padding:4px 10px;border-radius:20px;background:var(--blue-light);color:var(--blue);}
+
+/* LEADERBOARD */
+table{width:100%;border-collapse:collapse;font-size:0.85rem;}
+th{background:var(--blue);color:#fff;padding:10px 14px;text-align:left;font-weight:700;font-size:0.78rem;}
+td{padding:10px 14px;border-bottom:1px solid var(--border);}
+tr:hover td{background:var(--blue-light);}
+tr.me td{background:#fffbea;font-weight:700;}
+
+/* PERFORMANCE BARS */
+.perf-bar-wrap{margin-bottom:12px;}
+.perf-label{display:flex;justify-content:space-between;font-size:0.82rem;font-weight:600;margin-bottom:5px;}
+.perf-bar{height:8px;background:#eee;border-radius:4px;overflow:hidden;}
+.perf-fill{height:100%;border-radius:4px;transition:width 0.6s;}
+
+.alert{padding:12px 16px;border-radius:9px;font-size:0.85rem;font-weight:600;margin-bottom:16px;}
+.alert-error{background:#fff0f3;color:#c0392b;border:1px solid #ffb3c1;}
+.hidden{display:none!important;}
+
+/* GRADE BADGE */
+.grade{display:inline-block;padding:5px 14px;border-radius:20px;font-size:0.85rem;font-weight:800;}
+.grade-a{background:rgba(0,201,122,0.12);color:var(--green);border:1px solid rgba(0,201,122,0.25);}
+.grade-b{background:rgba(0,98,255,0.1);color:var(--blue);border:1px solid rgba(0,98,255,0.2);}
+.grade-c{background:#fffbea;color:#c8860a;border:1px solid #ffe066;}
+.grade-d{background:#fff0f3;color:var(--red);border:1px solid #ffb3c1;}
+
+footer{background:var(--blue);color:rgba(255,255,255,0.7);text-align:center;padding:20px;font-size:0.8rem;}
+footer a{color:#fff;font-weight:700;}
+</style>
+</head>
+<body>
+
+<header>
+<nav>
+  <a href="index.html" class="logo"><span>CeemedicoNepal</span></a>
+  <ul>
+    <li><a href="index.html">Exam</a></li>
+    <li><a href="dashboard.html" class="active">Dashboard</a></li>
+    <li><a href="https://ceemediconepal.xyz">Home</a></li>
+  </ul>
+</nav>
+</header>
+
+<div class="hero">
+  <h1><i class="fas fa-chart-line" style="margin-right:10px;"></i>My Dashboard</h1>
+  <p>Track your performance, rankings, and progress across all weekly exams</p>
+</div>
+
+<div class="main">
+
+  <!-- Lookup -->
+  <div class="card">
+    <div class="section-title"><i class="fas fa-search"></i> Look Up Your Results</div>
+    <p style="font-size:0.85rem;color:var(--muted);margin-bottom:16px;">Enter your email address to see your full exam history and rankings.</p>
+    <div id="lookup-error" class="alert alert-error hidden"></div>
+    <div class="lookup-form">
+      <input type="email" id="lookup-email" placeholder="your@email.com" onkeydown="if(event.key==='Enter')lookupUser()"/>
+      <button class="btn btn-primary" onclick="lookupUser()"><i class="fas fa-search"></i> Find My Results</button>
+    </div>
+    <p style="font-size:0.78rem;color:var(--muted);margin-top:10px;"><i class="fas fa-info-circle"></i> Your device ID is also auto-detected. Results appear below automatically if you've attempted exams on this device.</p>
+  </div>
+
+  <!-- Dashboard Content (hidden until found) -->
+  <div id="dashboard-content" class="hidden">
+
+    <div class="card">
+      <div id="profile-header" class="profile-header"></div>
+      <div class="stats-grid" id="overview-stats"></div>
+    </div>
+
+    <div class="card">
+      <div class="section-title"><i class="fas fa-history"></i> Exam History</div>
+      <div id="exam-history"></div>
+    </div>
+
+    <div class="card">
+      <div class="section-title"><i class="fas fa-chart-bar"></i> Performance Overview</div>
+      <div id="perf-overview"></div>
+    </div>
+
+    <div class="card">
+      <div class="section-title"><i class="fas fa-trophy"></i> Latest Exam — Full Leaderboard</div>
+      <div id="leaderboard-section"></div>
+    </div>
+
+  </div>
+
+  <!-- Auto-load for current device -->
+  <div id="auto-section">
+    <div class="card">
+      <div class="section-title"><i class="fas fa-bolt"></i> This Device's Results</div>
+      <div id="auto-content"><p style="color:var(--muted);font-size:0.85rem;">Checking for results on this device...</p></div>
+    </div>
+  </div>
+
+</div>
+
+<footer>
+  <p>&copy; 2025 <a href="https://ceemediconepal.xyz">CeemedicoNepal</a>. All rights reserved.</p>
+</footer>
+
+<script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-database-compat.js"></script>
+<script>
+const firebaseConfig={apiKey:"AIzaSyDD5xBrSkX_YXzSnsKxjW8-K6W4rBfV3rg",authDomain:"chapter-wise-backup.firebaseapp.com",databaseURL:"https://chapter-wise-backup-default-rtdb.asia-southeast1.firebasedatabase.app",projectId:"chapter-wise-backup",storageBucket:"chapter-wise-backup.firebasestorage.app",messagingSenderId:"864698641587",appId:"1:864698641587:web:d0b550579c6eb7709ed4c6"};
+firebase.initializeApp(firebaseConfig);
+const db=firebase.database();
+
+const deviceId=localStorage.getItem('cee_device_id')||null;
+
+// Auto-load device results
+autoLoadDeviceResults();
+
+async function autoLoadDeviceResults(){
+  if(!deviceId){document.getElementById('auto-content').innerHTML='<p style="color:var(--muted);font-size:0.85rem;">No previous exam data found on this device.</p>';return;}
+  const snap=await db.ref('exam_results').once('value');
+  if(!snap.exists()){document.getElementById('auto-content').innerHTML='<p style="color:var(--muted);">No exams found.</p>';return;}
+  let found=[];
+  snap.forEach(examSnap=>{
+    const examKey=examSnap.key;
+    const userSnap=examSnap.child(deviceId);
+    if(userSnap.exists()){found.push({examKey,...userSnap.val()});}
+  });
+  if(!found.length){document.getElementById('auto-content').innerHTML='<p style="color:var(--muted);font-size:0.85rem;">You haven\'t attempted any exams on this device yet.</p>';return;}
+  found.sort((a,b)=>b.timestamp-a.timestamp);
+  document.getElementById('auto-content').innerHTML=found.map(r=>`
+    <div class="history-item">
+      <div>
+        <div class="history-exam">Exam: ${r.examKey}</div>
+        <div class="history-meta">${new Date(r.timestamp).toLocaleString()} • ${r.total} questions</div>
+      </div>
+      <div style="text-align:right;">
+        <div class="history-score">${r.score.toFixed(2)}</div>
+        <div style="font-size:0.78rem;color:var(--muted)">${r.percentage}% • ${r.correct}✓ ${r.wrong}✗</div>
+      </div>
+    </div>`).join('');
+}
+
+async function lookupUser(){
+  const email=document.getElementById('lookup-email').value.trim();
+  if(!email||!email.includes('@')){showErr('Enter a valid email.');return;}
+  const snap=await db.ref('exam_results').once('value');
+  if(!snap.exists()){showErr('No exam data found.');return;}
+  let allResults=[];
+  snap.forEach(examSnap=>{
+    const examKey=examSnap.key;
+    examSnap.forEach(userSnap=>{
+      const d=userSnap.val();
+      if((d.email||'').toLowerCase()===email.toLowerCase()){
+        allResults.push({examKey,deviceId:userSnap.key,...d});
+      }
+    });
+  });
+  if(!allResults.length){showErr('No results found for this email. Make sure you used this email during the exam.');return;}
+  document.getElementById('lookup-error').classList.add('hidden');
+  renderDashboard(allResults,email);
+}
+
+async function renderDashboard(results,email){
+  results.sort((a,b)=>b.timestamp-a.timestamp);
+  const latest=results[0];
+  const name=latest.name||'Student';
+  const totalExams=results.length;
+  const avgScore=(results.reduce((s,r)=>s+r.score,0)/totalExams).toFixed(2);
+  const bestScore=Math.max(...results.map(r=>r.score)).toFixed(2);
+  const totalCorrect=results.reduce((s,r)=>s+(r.correct||0),0);
+  const totalWrong=results.reduce((s,r)=>s+(r.wrong||0),0);
+  const avgPct=(results.reduce((s,r)=>s+r.percentage,0)/totalExams).toFixed(1);
+
+  const initials=name.split(' ').map(n=>n[0]).join('').toUpperCase().slice(0,2);
+  document.getElementById('profile-header').innerHTML=`
+    <div class="avatar">${initials}</div>
+    <div>
+      <div class="profile-name">${name}</div>
+      <div class="profile-email">${email}</div>
+      <div style="margin-top:8px;">${gradeTag(parseFloat(avgPct))}</div>
+    </div>`;
+
+  document.getElementById('overview-stats').innerHTML=`
+    <div class="stat-box sb-blue"><div class="val">${totalExams}</div><small>Exams Taken</small></div>
+    <div class="stat-box sb-green"><div class="val">${avgScore}</div><small>Avg Score</small></div>
+    <div class="stat-box sb-yellow"><div class="val">${bestScore}</div><small>Best Score</small></div>
+    <div class="stat-box sb-blue"><div class="val">${avgPct}%</div><small>Avg %</small></div>
+    <div class="stat-box sb-green"><div class="val">${totalCorrect}</div><small>Total Correct</small></div>
+    <div class="stat-box sb-red"><div class="val">${totalWrong}</div><small>Total Wrong</small></div>`;
+
+  // Exam history with rank fetch
+  let histHTML='';
+  for(const r of results){
+    const rank=await fetchRank(r.examKey,r.deviceId,r.score,r.timestamp);
+    const total=await fetchTotal(r.examKey);
+    histHTML+=`
+      <div class="history-item">
+        <div>
+          <div class="history-exam">Exam: ${r.examKey}</div>
+          <div class="history-meta">${new Date(r.timestamp).toLocaleString()} • ${r.total} questions</div>
+        </div>
+        <div style="text-align:right;display:flex;align-items:center;gap:16px;">
+          <div><div class="history-score">${r.score.toFixed(2)}</div><div style="font-size:0.78rem;color:var(--muted)">${r.percentage}% • ${r.correct}✓ ${r.wrong}✗</div></div>
+          <div class="history-rank">#${rank}/${total}</div>
+        </div>
+      </div>`;
+  }
+  document.getElementById('exam-history').innerHTML=histHTML;
+
+  // Performance chart (bars)
+  const correctRate=(totalCorrect/(totalCorrect+totalWrong+results.reduce((s,r)=>s+(r.unattempted||0),0))*100)||0;
+  document.getElementById('perf-overview').innerHTML=`
+    <div class="perf-bar-wrap"><div class="perf-label"><span>Accuracy (Correct out of attempted)</span><span>${correctRate.toFixed(1)}%</span></div><div class="perf-bar"><div class="perf-fill" style="width:${correctRate}%;background:var(--green)"></div></div></div>
+    <div class="perf-bar-wrap"><div class="perf-label"><span>Average Percentage</span><span>${avgPct}%</span></div><div class="perf-bar"><div class="perf-fill" style="width:${avgPct}%;background:var(--blue)"></div></div></div>
+    <div class="perf-bar-wrap"><div class="perf-label"><span>Best Exam Score (out of ${results.find(r=>r.score==bestScore)?.total||100})</span><span>${(parseFloat(bestScore)/(results.find(r=>r.score==bestScore)?.total||100)*100).toFixed(1)}%</span></div><div class="perf-bar"><div class="perf-fill" style="width:${(parseFloat(bestScore)/(results.find(r=>r.score==bestScore)?.total||100)*100)}%;background:var(--yellow)"></div></div></div>`;
+
+  // Leaderboard for latest exam
+  const latestKey=results[0].examKey;
+  const lbSnap=await db.ref(`exam_results/${latestKey}`).once('value');
+  if(lbSnap.exists()){
+    const all=Object.entries(lbSnap.val()).map(([id,d])=>({id,...d})).sort((a,b)=>b.score-a.score||a.timestamp-b.timestamp);
+    const myId=results[0].deviceId;
+    const rows=all.slice(0,20).map((r,i)=>{
+      const isMe=r.id===myId;
+      const medal=i===0?'🥇':i===1?'🥈':i===2?'🥉':`#${i+1}`;
+      return `<tr class="${isMe?'me':''}"><td>${medal}</td><td>${r.name}${isMe?' 👈':''}</td><td style="font-family:'JetBrains Mono',monospace;font-weight:700">${r.score.toFixed(2)}</td><td>${r.percentage}%</td><td style="color:var(--green)">${r.correct}</td><td style="color:var(--red)">${r.wrong}</td></tr>`;
+    }).join('');
+    document.getElementById('leaderboard-section').innerHTML=`
+      <p style="font-size:0.82rem;color:var(--muted);margin-bottom:12px;">Exam: ${latestKey} • ${all.length} participants</p>
+      <div style="overflow-x:auto;"><table><thead><tr><th>Rank</th><th>Name</th><th>Score</th><th>%</th><th>✓</th><th>✗</th></tr></thead><tbody>${rows}</tbody></table></div>
+      ${all.length>20?`<p style="color:var(--muted);font-size:0.78rem;margin-top:10px;">Showing top 20 of ${all.length}</p>`:''}`;
+  }
+
+  document.getElementById('dashboard-content').classList.remove('hidden');
+  document.getElementById('auto-section').style.display='none';
+  document.getElementById('dashboard-content').scrollIntoView({behavior:'smooth'});
+}
+
+async function fetchRank(examKey,myDeviceId,myScore,myTimestamp){
+  const snap=await db.ref(`exam_results/${examKey}`).once('value');
+  if(!snap.exists())return'?';
+  const all=Object.entries(snap.val()).map(([id,d])=>({id,...d})).sort((a,b)=>b.score-a.score||a.timestamp-b.timestamp);
+  return all.findIndex(r=>r.id===myDeviceId)+1||'?';
+}
+
+async function fetchTotal(examKey){
+  const snap=await db.ref(`exam_results/${examKey}`).once('value');
+  return snap.exists()?Object.keys(snap.val()).length:'?';
+}
+
+function gradeTag(pct){
+  if(pct>=80)return'<span class="grade grade-a">🏆 Excellent</span>';
+  if(pct>=60)return'<span class="grade grade-b">✅ Good</span>';
+  if(pct>=40)return'<span class="grade grade-c">⚠️ Average</span>';
+  return'<span class="grade grade-d">❌ Needs Improvement</span>';
+}
+
+function showErr(msg){
+  const el=document.getElementById('lookup-error');
+  el.textContent=msg;
+  el.classList.remove('hidden');
+}
+</script>
+</body>
+</html>
