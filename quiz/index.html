@@ -117,6 +117,11 @@ nav ul a:hover{background:rgba(255,255,255,0.15);color:#fff;}
   justify-content: center;
   gap: 12px;
   font-weight: 600;
+  width: 100%;
+  padding: 14px;
+  border-radius: 10px;
+  cursor: pointer;
+  transition: transform 0.15s, box-shadow 0.2s;
 }
 .btn-google:hover {
   background: #f7f9fa;
@@ -427,7 +432,7 @@ footer a{color:#fff;font-weight:700;}
   <p>&copy; 2025 <a href="https://ceemediconepal.xyz">CeemedicoNepal</a>. All rights reserved. | Weekly CEE Exam System</p>
 </footer>
 
-<!-- Compat SDKs loaded cleanly -->
+<!-- Firebase CDN Compatibility SDKs -->
 <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-database-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-auth-compat.js"></script>
@@ -478,21 +483,19 @@ init();
 async function init() {
   await loadExamConfig();
   
-  // Track Authentication changes safely
+  // Track Authentication securely
   auth.onAuthStateChanged(async (user) => {
     const profileSection = document.getElementById('auth-profile-section');
     const portalSection = document.getElementById('auth-portal-section');
     document.getElementById('login-error').classList.add('hidden');
 
     if (user) {
-      // User logged in
       currentUser = {
         uid: user.uid,
         name: user.displayName || user.email.split('@')[0],
         email: user.email
       };
 
-      // Set UI avatar & details
       const name = currentUser.name;
       const initials = name ? name.split(' ').map(n=>n[0]).join('').toUpperCase().slice(0,2) : 'C';
       const avatarEl = document.getElementById('user-avatar');
@@ -506,14 +509,12 @@ async function init() {
       document.getElementById('user-display-name').textContent = name;
       document.getElementById('user-email').textContent = currentUser.email;
 
-      // Show user card, hide inputs
       portalSection.classList.add('hidden');
       profileSection.classList.remove('hidden');
 
-      // Check results with secure UID
+      // Check results node under results/ matching Firebase Security Rules
       await checkPreviousAttempt();
     } else {
-      // User is logged out
       currentUser = null;
       profileSection.classList.add('hidden');
       portalSection.classList.remove('hidden');
@@ -523,9 +524,13 @@ async function init() {
 }
 
 async function loadExamConfig() {
-  const snap = await db.ref('exam_config').once('value');
-  examConfig = snap.val() || {};
-  updateUI();
+  try {
+    const snap = await db.ref('exam_config').once('value');
+    examConfig = snap.val() || {};
+    updateUI();
+  } catch (error) {
+    console.error("Failed to load exam config:", error);
+  }
 }
 
 function updateUI() {
@@ -572,29 +577,32 @@ function getNextSaturday() {
 async function checkPreviousAttempt() {
   if (!examConfig || !examConfig.examKey || !currentUser) return;
   examKey = examConfig.examKey;
-  const snap = await db.ref(`exam_results/${examKey}/${currentUser.uid}`).once('value');
-  if (snap.exists()) {
-    const data = snap.val();
-    document.getElementById('login-card').style.display = 'none';
-    document.getElementById('status-banner').style.display = 'none';
-    showResults(data, data.answers || {}, true);
+  try {
+    const snap = await db.ref(`results/${examKey}/${currentUser.uid}`).once('value');
+    if (snap.exists()) {
+      const data = snap.val();
+      document.getElementById('login-card').style.display = 'none';
+      document.getElementById('status-banner').style.display = 'none';
+      showResults(data, data.answers || {}, true);
+    }
+  } catch (error) {
+    console.error("Attempt validation lookup error:", error);
   }
 }
 
-/* ─── Email/Password Authentication Functions ─── */
+/* ─── Email/Password Authentication ─── */
 async function signUpWithEmail() {
   const name = document.getElementById('inp-signup-name').value.trim();
   const email = document.getElementById('inp-signup-email').value.trim();
   const pass = document.getElementById('inp-signup-pass').value;
 
   if (!name) { showLoginError('Please enter your full name.'); return; }
-  if (!email || !email.includes('@')) { showLoginError('Please enter a valid email address.'); return; }
+  if (!email || !email.includes('@')) { showLoginError('Please enter a valid email.'); return; }
   if (pass.length < 6) { showLoginError('Password must be at least 6 characters.'); return; }
 
   try {
     const cred = await auth.createUserWithEmailAndPassword(email, pass);
     await cred.user.updateProfile({ displayName: name });
-    // Reload state manually to fetch current details immediately
     auth.currentUser.reload().then(() => {
       init();
     });
@@ -607,7 +615,7 @@ async function loginWithEmail() {
   const email = document.getElementById('inp-login-email').value.trim();
   const pass = document.getElementById('inp-login-pass').value;
 
-  if (!email || !email.includes('@')) { showLoginError('Please enter a valid email address.'); return; }
+  if (!email || !email.includes('@')) { showLoginError('Please enter a valid email.'); return; }
   if (!pass) { showLoginError('Please enter your password.'); return; }
 
   try {
@@ -639,50 +647,61 @@ async function signOutUser() {
   }
 }
 
-/* ─── Exam Controller Functions ─── */
+/* ─── Exam Launch Control ─── */
 document.getElementById('start-btn').addEventListener('click', startExam);
 document.getElementById('submit-btn').addEventListener('click', () => submitExam(false));
 
 async function startExam() {
-  if (!currentUser) { showLoginError('Please log in to start the exam.'); return; }
+  try {
+    if (!currentUser) { showLoginError('Please log in to start the exam.'); return; }
 
-  // Re-check config live
-  const snap = await db.ref('exam_config').once('value');
-  examConfig = snap.val() || {};
-  const now = Date.now();
-  if (!examConfig.isActive || now < examConfig.startTime || now > examConfig.endTime) {
-    showLoginError('Exam is not currently active.'); return;
+    // Re-verify exam active status live
+    const snap = await db.ref('exam_config').once('value');
+    examConfig = snap.val() || {};
+    const now = Date.now();
+    if (!examConfig.isActive || now < examConfig.startTime || now > examConfig.endTime) {
+      showLoginError('Exam is not currently active.'); return;
+    }
+    examKey = examConfig.examKey;
+
+    // Secure database attempts restriction check
+    const prevSnap = await db.ref(`results/${examKey}/${currentUser.uid}`).once('value');
+    if (prevSnap.exists()) { showLoginError('You have already completed this exam.'); return; }
+
+    const setId = examConfig.questionSetId;
+    if (!setId) { showLoginError('No question set configured by admin.'); return; }
+
+    const qSnap = await db.ref(`question_sets/${setId}/questions`).once('value');
+    if (!qSnap.exists()) { showLoginError('Questions missing in this set. Contact admin.'); return; }
+
+    const allQs = qSnap.val();
+    let rawQuestions = Array.isArray(allQs) ? allQs : Object.values(allQs);
+    
+    // Critical Patch: Filters out null slots caused by manual question deletions in Admin
+    questions = rawQuestions.filter(q => q !== null && typeof q === 'object');
+    if (questions.length === 0) {
+      showLoginError('Target question set has no valid questions.');
+      return;
+    }
+
+    // Shuffle and slice down to 200 items max
+    questions = shuffle(questions).slice(0, Math.min(200, questions.length));
+
+    document.getElementById('login-card').style.display = 'none';
+    document.getElementById('status-banner').style.display = 'none';
+    document.getElementById('quiz-area').style.display = 'block';
+    document.getElementById('quiz-info-text').textContent = `${questions.length} Questions • ${currentUser.name}`;
+    document.getElementById('answered-count').textContent = `0/${questions.length}`;
+
+    renderQuestions();
+
+    timeLeft = examConfig.durationSeconds || 10800;
+    quizStarted = true;
+    startTimer();
+  } catch (err) {
+    console.error("Exam Initialization Failure: ", err);
+    showLoginError('Failed to start exam: ' + err.message);
   }
-  examKey = examConfig.examKey;
-
-  // Double check secure UID attempt restriction
-  const prevSnap = await db.ref(`exam_results/${examKey}/${currentUser.uid}`).once('value');
-  if (prevSnap.exists()) { showLoginError('You have already attempted this exam.'); return; }
-
-  // Load questions from targeted set
-  const setId = examConfig.questionSetId;
-  if (!setId) { showLoginError('No question set configured by admin.'); return; }
-
-  const qSnap = await db.ref(`question_sets/${setId}/questions`).once('value');
-  if (!qSnap.exists()) { showLoginError('Questions not found. Contact admin.'); return; }
-
-  const allQs = qSnap.val();
-  questions = Array.isArray(allQs) ? allQs : Object.values(allQs);
-
-  // Shuffle and restrict count to 200 max
-  questions = shuffle(questions).slice(0, Math.min(200, questions.length));
-
-  document.getElementById('login-card').style.display = 'none';
-  document.getElementById('status-banner').style.display = 'none';
-  document.getElementById('quiz-area').style.display = 'block';
-  document.getElementById('quiz-info-text').textContent = `${questions.length} Questions • ${currentUser.name}`;
-  document.getElementById('answered-count').textContent = `0/${questions.length}`;
-
-  renderQuestions();
-
-  timeLeft = examConfig.durationSeconds || 10800;
-  quizStarted = true;
-  startTimer();
 }
 
 function shuffle(arr) {
@@ -769,8 +788,8 @@ async function submitExam(auto) {
     timestamp: Date.now()
   };
 
-  // Securely write result node under authenticated UID
-  await db.ref(`exam_results/${examKey}/${currentUser.uid}`).set(resultData);
+  // Safe submission aligned with secure results security rule path
+  await db.ref(`results/${examKey}/${currentUser.uid}`).set(resultData);
   document.getElementById('quiz-area').style.display = 'none';
   showResults(resultData, userAnswers, false);
 }
@@ -826,7 +845,7 @@ function showResults(data, answers, fromPrev) {
 }
 
 async function loadLeaderboard(myScore) {
-  const snap = await db.ref(`exam_results/${examKey}`).once('value');
+  const snap = await db.ref(`results/${examKey}`).once('value');
   if (!snap.exists()) return;
   const all = Object.entries(snap.val()).map(([id,d]) => ({id,...d}));
   all.sort((a,b) => b.score - a.score || a.timestamp - b.timestamp);
