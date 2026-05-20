@@ -215,7 +215,7 @@ autoLoadDeviceResults();
 
 async function autoLoadDeviceResults(){
   if(!deviceId){document.getElementById('auto-content').innerHTML='<p style="color:var(--muted);font-size:0.85rem;">No previous exam data found on this device.</p>';return;}
-  const snap=await db.ref('exam_results').once('value');
+  const snap=await db.ref('results').once('value');
   if(!snap.exists()){document.getElementById('auto-content').innerHTML='<p style="color:var(--muted);">No exams found.</p>';return;}
   let found=[];
   snap.forEach(examSnap=>{
@@ -241,7 +241,7 @@ async function autoLoadDeviceResults(){
 async function lookupUser(){
   const email=document.getElementById('lookup-email').value.trim();
   if(!email||!email.includes('@')){showErr('Enter a valid email.');return;}
-  const snap=await db.ref('exam_results').once('value');
+  const snap=await db.ref('results').once('value');
   if(!snap.exists()){showErr('No exam data found.');return;}
   let allResults=[];
   snap.forEach(examSnap=>{
@@ -314,7 +314,7 @@ async function renderDashboard(results,email){
 
   // Leaderboard for latest exam
   const latestKey=results[0].examKey;
-  const lbSnap=await db.ref(`exam_results/${latestKey}`).once('value');
+  const lbSnap=await db.ref(`results/${latestKey}`).once('value');
   if(lbSnap.exists()){
     const all=Object.entries(lbSnap.val()).map(([id,d])=>({id,...d})).sort((a,b)=>b.score-a.score||a.timestamp-b.timestamp);
     const myId=results[0].deviceId;
@@ -335,14 +335,14 @@ async function renderDashboard(results,email){
 }
 
 async function fetchRank(examKey,myDeviceId,myScore,myTimestamp){
-  const snap=await db.ref(`exam_results/${examKey}`).once('value');
+  const snap=await db.ref(`results/${examKey}`).once('value');
   if(!snap.exists())return'?';
   const all=Object.entries(snap.val()).map(([id,d])=>({id,...d})).sort((a,b)=>b.score-a.score||a.timestamp-b.timestamp);
   return all.findIndex(r=>r.id===myDeviceId)+1||'?';
 }
 
 async function fetchTotal(examKey){
-  const snap=await db.ref(`exam_results/${examKey}`).once('value');
+  const snap=await db.ref(`results/${examKey}`).once('value');
   return snap.exists()?Object.keys(snap.val()).length:'?';
 }
 
