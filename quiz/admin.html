@@ -446,11 +446,12 @@ if(sessionStorage.getItem('cee_admin')==='1'){
   initAdmin();
 }
 
-function showPage(id){
+function showPage(id, el){
   document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
   document.getElementById('page-'+id).classList.add('active');
   document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('active'));
-  event.currentTarget.classList.add('active');
+  const target = el || (typeof event !== 'undefined' && event.currentTarget);
+  if(target) target.classList.add('active');
   const titles={dashboard:'Dashboard','exam-control':'Exam Control','question-sets':'Question Sets','add-questions':'Add Questions',results:'Results & Rankings',analysis:'Analysis'};
   document.getElementById('page-title').textContent=titles[id]||id;
 }
@@ -555,7 +556,11 @@ function populateSetDropdowns(){
 
 async function selectSetForExam(id){
   document.getElementById('exam-qset').value=id;
-  showPage('exam-control');
+  // Switch to exam-control page
+  document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+  document.getElementById('page-exam-control').classList.add('active');
+  document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('active'));
+  document.getElementById('page-title').textContent='Exam Control';
   await saveExamConfig();
 }
 
@@ -641,7 +646,7 @@ async function loadDashboard(){
   const cfgSnap=await db.ref('exam_config').once('value');
   const cfg=cfgSnap.val()||{};
   if(!cfg.examKey)return;
-  const snap=await db.ref(`exam_results/${cfg.examKey}`).once('value');
+  const snap=await db.ref(`results/${cfg.examKey}`).once('value');
   if(!snap.exists()){document.getElementById('stat-participants').textContent='0';return;}
   const all=Object.values(snap.val());
   document.getElementById('stat-participants').textContent=all.length;
@@ -655,7 +660,7 @@ async function loadDashboard(){
 }
 
 async function loadExamKeys(){
-  const snap=await db.ref('exam_results').once('value');
+  const snap=await db.ref('results').once('value');
   examKeys=snap.exists()?Object.keys(snap.val()):[];
   const opts=`<option value="">-- Select --</option>`+examKeys.map(k=>`<option value="${k}">${k}</option>`).join('');
   document.getElementById('results-exam-key').innerHTML=opts;
@@ -665,7 +670,7 @@ async function loadExamKeys(){
 async function loadResults(){
   const key=document.getElementById('results-exam-key').value;
   if(!key)return;
-  const snap=await db.ref(`exam_results/${key}`).once('value');
+  const snap=await db.ref(`results/${key}`).once('value');
   if(!snap.exists()){document.getElementById('full-results-table').innerHTML='<p style="color:var(--muted)">No results for this exam.</p>';return;}
   const all=Object.values(snap.val()).sort((a,b)=>b.score-a.score||a.timestamp-b.timestamp);
   const rows=all.map((r,i)=>`<tr><td>#${i+1}</td><td>${r.name}</td><td>${r.email||'—'}</td><td style="font-family:'JetBrains Mono',monospace;font-weight:700">${r.score.toFixed(2)}</td><td>${r.percentage}%</td><td style="color:var(--green)">${r.correct}</td><td style="color:var(--red)">${r.wrong}</td><td style="color:var(--muted)">${r.unattempted}</td><td style="color:var(--muted);font-size:0.78rem">${new Date(r.timestamp).toLocaleString()}</td></tr>`).join('');
@@ -680,7 +685,7 @@ async function loadResults(){
 async function loadAnalysis(){
   const key=document.getElementById('analysis-exam-key').value;
   if(!key)return;
-  const snap=await db.ref(`exam_results/${key}`).once('value');
+  const snap=await db.ref(`results/${key}`).once('value');
   if(!snap.exists()){document.getElementById('analysis-content').innerHTML='<div class="card"><p style="color:var(--muted)">No data.</p></div>';return;}
   const all=Object.values(snap.val());
   const n=all.length;
@@ -726,7 +731,7 @@ async function clearResults(){
   const key=document.getElementById('exam-key').value.trim();
   if(!key){showAlert('exam-alert','Set an exam key first.','error');return;}
   if(!confirm(`Delete ALL results for exam "${key}"? This cannot be undone.`))return;
-  await db.ref(`exam_results/${key}`).remove();
+  await db.ref(`results/${key}`).remove();
   showAlert('exam-alert',`✅ Results for "${key}" cleared.`);
 }
 
