@@ -3,57 +3,181 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Admin Panel - CeemedicoNepal</title>
+  <title>Admin Login - CeemedicoNepal</title>
   <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-database-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-auth-compat.js"></script>
   <script src="script.js"></script>
   <style>
-    body { font-family: Arial, sans-serif; margin: 0; background: #f4f7f9; }
-    .sidebar { width: 250px; background: #1e3a8a; color: white; position: fixed; height: 100%; padding: 20px; }
-    .content { margin-left: 270px; padding: 20px; }
-    .card { background: white; padding: 20px; border-radius: 10px; box-shadow: 0 4px 12px rgba(0,0,0,0.1); margin-bottom: 20px; }
+    body {
+      font-family: Arial, sans-serif;
+      margin: 0;
+      padding: 0;
+      background: linear-gradient(135deg, #1e3a8a, #3b82f6);
+      height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .login-container {
+      background: white;
+      padding: 40px 30px;
+      border-radius: 12px;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+      width: 100%;
+      max-width: 400px;
+      text-align: center;
+    }
+    .dashboard-container {
+      display: none;
+      padding: 20px;
+    }
+    input {
+      width: 100%;
+      padding: 12px;
+      margin: 10px 0;
+      border: 1px solid #ccc;
+      border-radius: 6px;
+      font-size: 16px;
+    }
+    button {
+      width: 100%;
+      padding: 14px;
+      background: #1e3a8a;
+      color: white;
+      border: none;
+      border-radius: 6px;
+      font-size: 16px;
+      cursor: pointer;
+    }
+    button:hover {
+      background: #2e4a9a;
+    }
+    .sidebar {
+      width: 250px;
+      background: #1e3a8a;
+      color: white;
+      position: fixed;
+      height: 100%;
+      padding: 20px;
+    }
+    .content {
+      margin-left: 270px;
+      padding: 20px;
+    }
+    .card {
+      background: white;
+      padding: 20px;
+      border-radius: 10px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+      margin-bottom: 20px;
+    }
   </style>
 </head>
 <body>
 
-  <div class="sidebar">
+  <!-- ====================== LOGIN SCREEN ====================== -->
+  <div id="login-screen" class="login-container">
+    <h1>🛡️ Admin Panel</h1>
     <h2>CeemedicoNepal</h2>
-    <h3>Admin Dashboard</h3>
-    <hr>
-    <p><strong>Admin:</strong> ceemedicoadmin</p>
-    <button onclick="logout()" style="width:100%; margin-top:20px;">Logout</button>
+    <p style="color:#666; margin:15px 0;">Restricted Access</p>
+
+    <input type="text" id="adminUsername" placeholder="Username" value="ceemedicoadmin"><br>
+    <input type="password" id="adminPassword" placeholder="Password"><br><br>
+
+    <button onclick="adminLogin()">Sign In</button>
+
+    <p style="margin-top:20px; font-size:14px; color:#888;">
+      Default Username: <strong>ceemedicoadmin</strong>
+    </p>
   </div>
 
-  <div class="content">
-    <h1>Dashboard</h1>
-
-    <div class="card">
-      <h2>Exam Control</h2>
-      <button onclick="activateExam()">Activate Current Exam</button>
-      <button onclick="loadAdminDashboard()">Refresh</button>
+  <!-- ====================== ADMIN DASHBOARD ====================== -->
+  <div id="dashboard-screen" class="dashboard-container">
+    <div class="sidebar">
+      <h2>CeemedicoNepal</h2>
+      <h3>Admin Dashboard</h3>
+      <hr>
+      <p><strong>Logged in as:</strong> <span id="admin-name">ceemedicoadmin</span></p>
+      <button onclick="logout()" style="margin-top:30px; background:#dc2626;">Logout</button>
     </div>
 
-    <div class="card">
-      <h2>Live Leaderboard Preview</h2>
-      <div id="admin-leaderboard">Loading...</div>
+    <div class="content">
+      <h1>Welcome to Admin Panel</h1>
+
+      <div class="card">
+        <h2>Exam Control</h2>
+        <button onclick="toggleExamStatus()">Activate / Deactivate Exam</button>
+        <button onclick="loadAdminDashboard()">Refresh Status</button>
+      </div>
+
+      <div class="card">
+        <h2>Live Statistics</h2>
+        <div id="live-stats">Loading statistics...</div>
+      </div>
+
+      <div class="card">
+        <h2>Recent Leaderboard</h2>
+        <table style="width:100%; border-collapse:collapse;">
+          <thead>
+            <tr><th>Rank</th><th>Name</th><th>Score</th></tr>
+          </thead>
+          <tbody id="admin-leaderboard"></tbody>
+        </table>
+      </div>
     </div>
   </div>
 
   <script>
-    function logout() {
-      localStorage.removeItem('isAdmin');
-      window.location.href = "index.html";
+    // Check if already logged in
+    window.onload = function() {
+      if (localStorage.getItem('isAdminLoggedIn') === 'true') {
+        showDashboard();
+      }
+    };
+
+    async function adminLogin() {
+      const username = document.getElementById('adminUsername').value.trim();
+      const password = document.getElementById('adminPassword').value.trim();
+
+      if (username === "ceemedicoadmin" && password !== "") {
+        // You can later make password more secure (Firebase Auth or hashed)
+        localStorage.setItem('isAdminLoggedIn', 'true');
+        localStorage.setItem('adminUsername', username);
+        
+        showDashboard();
+      } else {
+        alert("❌ Invalid username or password!");
+      }
     }
 
-    // Call this after admin login
-    window.onload = () => {
-      if (!localStorage.getItem('isAdmin')) {
-        alert("Please login as admin first");
-        window.location.href = "index.html";
-      }
+    function showDashboard() {
+      document.getElementById('login-screen').style.display = 'none';
+      document.getElementById('dashboard-screen').style.display = 'block';
       loadAdminDashboard();
-    };
+    }
+
+    function logout() {
+      if (confirm("Are you sure you want to logout?")) {
+        localStorage.removeItem('isAdminLoggedIn');
+        localStorage.removeItem('adminUsername');
+        window.location.reload();
+      }
+    }
+
+    // Placeholder for admin functions (you can expand later)
+    function toggleExamStatus() {
+      alert("Exam activation feature will be connected soon.");
+      // Later: connect with Firebase
+    }
+
+    async function loadAdminDashboard() {
+      document.getElementById('live-stats').innerHTML = `
+        <p><strong>Total Participants:</strong> Loading...</p>
+        <p><strong>Average Score:</strong> Loading...</p>
+      `;
+      // You can call loadLeaderboard() here later
+    }
   </script>
 </body>
 </html>
