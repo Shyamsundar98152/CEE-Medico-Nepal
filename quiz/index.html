@@ -315,8 +315,14 @@ let examKey = null;
 init();
 
 async function init() {
-  await loadExamConfig();
-  checkPreviousAttempt();
+  try {
+    await loadExamConfig();
+    await checkPreviousAttempt();
+  } catch(e) {
+    console.error('Init error:', e);
+    document.getElementById('status-banner').className = 'status-banner closed';
+    document.getElementById('status-banner').innerHTML = '<i class="fas fa-exclamation-triangle"></i><span>Error connecting to server. Please refresh.</span>';
+  }
 }
 
 async function loadExamConfig() {
@@ -325,17 +331,30 @@ async function loadExamConfig() {
   updateUI();
 }
 
+function isExamLive() {
+  if (!examConfig || !examConfig.isActive) return false;
+  const now = Date.now();
+  const start = examConfig.startTime || 0;
+  const end = examConfig.endTime || 0;
+  // If no time window set but isActive=true, treat as live
+  if (!start && !end) return true;
+  // If only start set, live after start
+  if (start && !end) return now >= start;
+  // Full window
+  return now >= start && now <= end;
+}
+
 function updateUI() {
   const now = Date.now();
   const startTime = examConfig.startTime || 0;
   const endTime = examConfig.endTime || 0;
-  const isActive = examConfig.isActive && now >= startTime && now <= endTime;
-  const isUpcoming = examConfig.isActive && now < startTime;
+  const live = isExamLive();
+  const isUpcoming = examConfig.isActive && startTime && now < startTime;
   const banner = document.getElementById('status-banner');
   const btn = document.getElementById('start-btn');
   const nextTxt = document.getElementById('next-exam-text');
 
-  if (isActive) {
+  if (live) {
     banner.className = 'status-banner open';
     banner.innerHTML = '<i class="fas fa-circle-check"></i><span>Exam is LIVE! You can start now.</span>';
     btn.disabled = false;
@@ -368,7 +387,7 @@ function getNextSaturday() {
 async function checkPreviousAttempt() {
   if (!examConfig || !examConfig.examKey) return;
   examKey = examConfig.examKey;
-  const snap = await db.ref(`exam_results/${examKey}/${deviceId}`).once('value');
+  const snap = await db.ref(`results/${examKey}/${deviceId}`).once('value');
   if (snap.exists()) {
     const data = snap.val();
     document.getElementById('login-card').style.display = 'none';
@@ -386,45 +405,84 @@ async function startExam() {
   if (!name) { showLoginError('Please enter your name.'); return; }
   if (!email || !email.includes('@')) { showLoginError('Please enter a valid email.'); return; }
 
-  // Re-check config
-  const snap = await db.ref('exam_config').once('value');
-  examConfig = snap.val() || {};
-  const now = Date.now();
-  if (!examConfig.isActive || now < examConfig.startTime || now > examConfig.endTime) {
-    showLoginError('Exam is not currently active.'); return;
+  // Show loading state
+  const btn = document.getElementById('start-btn');
+  btn.disabled = true;
+  btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Loading...';
+
+  try {
+    // Re-check config
+    const snap = await db.ref('exam_config').once('value');
+    examConfig = snap.val() || {};
+
+    if (!isExamLive()) {
+      showLoginError('Exam is not currently active.'); 
+      btn.disabled = false;
+      btn.innerHTML = '<i class="fas fa-play"></i> Start Exam';
+      return;
+    }
+    examKey = examConfig.examKey || 'default';
+
+    // Check if already attempted
+    const prevSnap = await db.ref(`results/${examKey}/${deviceId}`).once('value');
+    if (prevSnap.exists()) { 
+      showLoginError('You have already attempted this exam on this device.'); 
+      btn.disabled = false;
+      btn.innerHTML = '<i class="fas fa-play"></i> Start Exam';
+      return; 
+    }
+
+    currentUser = { name, email, deviceId };
+
+    // Load questions from the selected set
+    const setId = examConfig.questionSetId;
+    if (!setId) { 
+      showLoginError('No question set configured by admin. Please contact admin.'); 
+      btn.disabled = false;
+      btn.innerHTML = '<i class="fas fa-play"></i> Start Exam';
+      return; 
+    }
+
+    const qSnap = await db.ref(`question_sets/${setId}/questions`).once('value');
+    if (!qSnap.exists()) { 
+      showLoginError('Questions not found. Please contact admin.'); 
+      btn.disabled = false;
+      btn.innerHTML = '<i class="fas fa-play"></i> Start Exam';
+      return; 
+    }
+
+    const allQs = qSnap.val();
+    questions = Array.isArray(allQs) ? allQs : Object.values(allQs);
+    questions = questions.filter(q => q && q.question); // filter invalid entries
+
+    if (questions.length === 0) {
+      showLoginError('No valid questions found in this set.'); 
+      btn.disabled = false;
+      btn.innerHTML = '<i class="fas fa-play"></i> Start Exam';
+      return;
+    }
+
+    // Shuffle and take up to 200
+    questions = shuffle(questions).slice(0, Math.min(200, questions.length));
+
+    document.getElementById('login-card').style.display = 'none';
+    document.getElementById('status-banner').style.display = 'none';
+    document.getElementById('quiz-area').style.display = 'block';
+    document.getElementById('quiz-info-text').textContent = `${questions.length} Questions • ${currentUser.name}`;
+    document.getElementById('answered-count').textContent = `0/${questions.length}`;
+
+    renderQuestions();
+
+    timeLeft = examConfig.durationSeconds || 10800;
+    quizStarted = true;
+    startTimer();
+
+  } catch(e) {
+    console.error('Start exam error:', e);
+    showLoginError('Connection error. Please check your internet and try again.');
+    btn.disabled = false;
+    btn.innerHTML = '<i class="fas fa-play"></i> Start Exam';
   }
-  examKey = examConfig.examKey;
-
-  // Check if already attempted
-  const prevSnap = await db.ref(`exam_results/${examKey}/${deviceId}`).once('value');
-  if (prevSnap.exists()) { showLoginError('You have already attempted this exam.'); return; }
-
-  currentUser = { name, email, deviceId };
-
-  // Load questions from the selected set
-  const setId = examConfig.questionSetId;
-  if (!setId) { showLoginError('No question set configured by admin.'); return; }
-
-  const qSnap = await db.ref(`question_sets/${setId}/questions`).once('value');
-  if (!qSnap.exists()) { showLoginError('Questions not found. Contact admin.'); return; }
-
-  const allQs = qSnap.val();
-  questions = Array.isArray(allQs) ? allQs : Object.values(allQs);
-
-  // Shuffle and take 200 (or all if less)
-  questions = shuffle(questions).slice(0, Math.min(200, questions.length));
-
-  document.getElementById('login-card').style.display = 'none';
-  document.getElementById('status-banner').style.display = 'none';
-  document.getElementById('quiz-area').style.display = 'block';
-  document.getElementById('quiz-info-text').textContent = `${questions.length} Questions • ${currentUser.name}`;
-  document.getElementById('answered-count').textContent = `0/${questions.length}`;
-
-  renderQuestions();
-
-  timeLeft = examConfig.durationSeconds || 10800;
-  quizStarted = true;
-  startTimer();
 }
 
 function shuffle(arr) {
@@ -511,7 +569,7 @@ async function submitExam(auto) {
     timestamp: Date.now()
   };
 
-  await db.ref(`exam_results/${examKey}/${deviceId}`).set(resultData);
+  await db.ref(`results/${examKey}/${deviceId}`).set(resultData);
   document.getElementById('quiz-area').style.display = 'none';
   showResults(resultData, userAnswers, false);
 }
@@ -567,7 +625,7 @@ function showResults(data, answers, fromPrev) {
 }
 
 async function loadLeaderboard(myScore) {
-  const snap = await db.ref(`exam_results/${examKey}`).once('value');
+  const snap = await db.ref(`results/${examKey}`).once('value');
   if (!snap.exists()) return;
   const all = Object.entries(snap.val()).map(([id,d]) => ({id,...d}));
   all.sort((a,b) => b.score - a.score || a.timestamp - b.timestamp);
