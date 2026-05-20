@@ -357,31 +357,78 @@ tr:hover td{background:rgba(255,255,255,0.02);}
   </div><!-- /content -->
 </div><!-- /main -->
 
+<!-- Firebase -->
 <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-database-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-firestore-compat.js"></script>
-<script>
-const firebaseConfig={apiKey:"AIzaSyDI-O7KiPzKKAc94UBcy-EusldtOMD_ZbE",authDomain:"nepalquiz-7d444.firebaseapp.com",databaseURL:"https://nepalquiz-7d444-default-rtdb.asia-southeast1.firebasedatabase.app",projectId:"nepalquiz-7d444",storageBucket:"nepalquiz-7d444.firebasestorage.app",messagingSenderId:"547865008194",appId:"1:547865008194:web:2ced7d26f3c4c5ecc275db"};
-firebase.initializeApp(firebaseConfig);
-const db=firebase.database();    // Realtime DB
-const fdb=firebase.firestore();  // Firestore
 
+<script>
+/* ─────────────────────────────────────────────
+   MAIN FIREBASE
+   (Exam + Results + Dashboard)
+───────────────────────────────────────────── */
+const mainConfig = {
+  apiKey:"AIzaSyDI-O7KiPzKKAc94UBcy-EusldtOMD_ZbE",
+  authDomain:"nepalquiz-7d444.firebaseapp.com",
+  databaseURL:"https://nepalquiz-7d444-default-rtdb.asia-southeast1.firebasedatabase.app",
+  projectId:"nepalquiz-7d444",
+  storageBucket:"nepalquiz-7d444.firebasestorage.app",
+  messagingSenderId:"547865008194",
+  appId:"1:547865008194:web:2ced7d26f3c4c5ecc275db"
+};
+
+const mainApp = firebase.initializeApp(mainConfig);
+
+const db = mainApp.database();
+const fdb = firebase.firestore();
+
+
+/* ─────────────────────────────────────────────
+   BACKUP FIREBASE
+   (Question Sets + Questions)
+───────────────────────────────────────────── */
+const backupConfig = {
+  apiKey: "AIzaSyDD5xBrSkX_YXzSnsKxjW8-K6W4rBfV3rg",
+  authDomain: "chapter-wise-backup.firebaseapp.com",
+  databaseURL: "https://chapter-wise-backup-default-rtdb.asia-southeast1.firebasedatabase.app",
+  projectId: "chapter-wise-backup",
+  storageBucket: "chapter-wise-backup.firebasestorage.app",
+  messagingSenderId: "864698641587",
+  appId: "1:864698641587:web:d0b550579c6eb7709ed4c6"
+};
+
+const backupApp = firebase.initializeApp(backupConfig, "backup");
+
+const backupDB = backupApp.database();
+
+
+/* ─────────────────────────────────────────────
+   ADMIN LOGIN
+───────────────────────────────────────────── */
 const ADMIN_USER='admin';
 const ADMIN_PASS='ceemedicoadmin2025';
 
 function doLogin(){
   const u=document.getElementById('admin-user').value.trim();
   const p=document.getElementById('admin-pass').value;
-  if(u===ADMIN_USER&&p===ADMIN_PASS){
+
+  if(u===ADMIN_USER && p===ADMIN_PASS){
+
     sessionStorage.setItem('cee_admin','1');
+
     document.getElementById('login-overlay').style.display='none';
     document.getElementById('sidebar').style.display='flex';
     document.getElementById('main').style.display='block';
+
     initAdmin();
-  } else {
+
+  }else{
+
     const el=document.getElementById('login-err');
+
     el.textContent='Invalid credentials.';
     el.classList.remove('hidden');
+
   }
 }
 
@@ -390,305 +437,351 @@ function doLogout(){
   location.reload();
 }
 
-// Auto login if session exists
 if(sessionStorage.getItem('cee_admin')==='1'){
+
   document.getElementById('login-overlay').style.display='none';
   document.getElementById('sidebar').style.display='flex';
   document.getElementById('main').style.display='block';
+
   initAdmin();
 }
 
+
+/* ─────────────────────────────────────────────
+   PAGE NAVIGATION
+───────────────────────────────────────────── */
 function showPage(id){
-  document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
-  document.getElementById('page-'+id).classList.add('active');
-  document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('active'));
-  event.currentTarget.classList.add('active');
-  const titles={dashboard:'Dashboard','exam-control':'Exam Control','question-sets':'Question Sets','add-questions':'Add Questions',results:'Results & Rankings',analysis:'Analysis'};
-  document.getElementById('page-title').textContent=titles[id]||id;
+
+  document.querySelectorAll('.page')
+    .forEach(p=>p.classList.remove('active'));
+
+  document.getElementById('page-'+id)
+    .classList.add('active');
+
 }
 
+
+/* ─────────────────────────────────────────────
+   INIT
+───────────────────────────────────────────── */
 let examSets=[];
-let examKeys=[];
 
 async function initAdmin(){
-  await loadExamConfig();
+
   await loadQuestionSets();
-  await loadDashboard();
-  await loadExamKeys();
+
 }
 
-async function loadExamConfig(){
-  const snap=await db.ref('exam_config').once('value');
-  const cfg=snap.val()||{};
-  document.getElementById('toggle-active').checked=!!cfg.isActive;
-  if(cfg.startTime) document.getElementById('exam-start').value=toLocalISO(cfg.startTime);
-  if(cfg.endTime) document.getElementById('exam-end').value=toLocalISO(cfg.endTime);
-  if(cfg.durationSeconds) document.getElementById('exam-duration').value=cfg.durationSeconds;
-  if(cfg.examKey) document.getElementById('exam-key').value=cfg.examKey;
-  updateConfigPreview(cfg);
-  updateDashboardStatus(cfg);
-}
 
-function toLocalISO(ts){
-  const d=new Date(ts);
-  return new Date(d.getTime()-d.getTimezoneOffset()*60000).toISOString().slice(0,16);
-}
-
-async function saveExamConfig(){
-  const startVal=document.getElementById('exam-start').value;
-  const endVal=document.getElementById('exam-end').value;
-  const cfg={
-    isActive:document.getElementById('toggle-active').checked,
-    startTime:startVal?new Date(startVal).getTime():null,
-    endTime:endVal?new Date(endVal).getTime():null,
-    durationSeconds:parseInt(document.getElementById('exam-duration').value)||10800,
-    examKey:document.getElementById('exam-key').value.trim()||'default',
-    questionSetId:document.getElementById('exam-qset').value
-  };
-  await db.ref('exam_config').set(cfg);
-  updateConfigPreview(cfg);
-  updateDashboardStatus(cfg);
-  showAlert('exam-alert','✅ Exam configuration saved!');
-}
-
-function updateConfigPreview(cfg){
-  document.getElementById('config-preview').textContent=JSON.stringify(cfg,null,2);
-}
-
-function updateDashboardStatus(cfg){
-  const now=Date.now();
-  const el=document.getElementById('current-exam-status');
-  if(!el)return;
-  if(cfg.isActive&&cfg.startTime&&cfg.endTime&&now>=cfg.startTime&&now<=cfg.endTime){
-    el.className='exam-status live';
-    el.innerHTML=`<div class="icon">🟢</div><div><div style="font-weight:800;font-size:1rem;color:var(--green)">EXAM IS LIVE</div><div style="color:var(--muted);font-size:0.85rem;margin-top:4px;">Key: ${cfg.examKey} | Ends: ${new Date(cfg.endTime).toLocaleString()}</div></div>`;
-  }else if(cfg.isActive&&cfg.startTime&&now<cfg.startTime){
-    el.className='exam-status upcoming';
-    el.innerHTML=`<div class="icon">⏰</div><div><div style="font-weight:800;font-size:1rem;color:#c8860a">UPCOMING</div><div style="color:var(--muted);font-size:0.85rem;margin-top:4px;">Starts: ${new Date(cfg.startTime).toLocaleString()}</div></div>`;
-  }else{
-    el.className='exam-status closed';
-    el.innerHTML=`<div class="icon">🔒</div><div><div style="font-weight:800;font-size:1rem;">No Active Exam</div><div style="color:var(--muted);font-size:0.85rem;margin-top:4px;">Configure an exam in Exam Control</div></div>`;
-  }
-}
-
+/* ─────────────────────────────────────────────
+   LOAD QUESTION SETS
+   FROM BACKUP FIREBASE
+───────────────────────────────────────────── */
 async function loadQuestionSets(){
-  const snap=await db.ref('question_sets').once('value');
+
+  const snap = await backupDB
+    .ref('question_sets')
+    .once('value');
+
   examSets=[];
+
   if(snap.exists()){
+
     snap.forEach(child=>{
-      examSets.push({id:child.key,...child.val(),qCount:child.val().questions?Object.keys(child.val().questions).length:0});
+
+      examSets.push({
+        id:child.key,
+        ...child.val(),
+        qCount:child.val().questions
+          ? Object.keys(child.val().questions).length
+          : 0
+      });
+
     });
+
   }
+
   renderSetsList();
   populateSetDropdowns();
 }
 
+
+/* ─────────────────────────────────────────────
+   RENDER SETS
+───────────────────────────────────────────── */
 function renderSetsList(){
+
   const container=document.getElementById('sets-list');
-  if(!examSets.length){container.innerHTML='<p style="color:var(--muted)">No sets yet.</p>';return;}
+
+  if(!examSets.length){
+
+    container.innerHTML='<p>No sets found.</p>';
+    return;
+
+  }
+
   container.innerHTML=examSets.map(s=>`
+  
     <div class="qset-item">
+
       <div>
         <div class="qset-name">${s.name}</div>
-        <div class="qset-meta">${s.description||''} • <strong>${s.qCount}</strong> questions • ID: <code>${s.id}</code></div>
+
+        <div class="qset-meta">
+          ${s.qCount} Questions
+        </div>
       </div>
+
       <div style="display:flex;gap:8px;">
-        <button class="btn btn-sm btn-success" onclick="selectSetForExam('${s.id}')"><i class="fas fa-check"></i> Use in Exam</button>
-        <button class="btn btn-sm btn-danger" onclick="deleteSet('${s.id}')"><i class="fas fa-trash"></i></button>
+
+        <button class="btn btn-danger btn-sm"
+          onclick="deleteSet('${s.id}')">
+          Delete
+        </button>
+
       </div>
-    </div>`).join('');
+
+    </div>
+
+  `).join('');
+
 }
 
+
+/* ─────────────────────────────────────────────
+   DROPDOWNS
+───────────────────────────────────────────── */
 function populateSetDropdowns(){
-  const opts=`<option value="">-- Select --</option>`+examSets.map(s=>`<option value="${s.id}">${s.name} (${s.qCount} Qs)</option>`).join('');
-  document.getElementById('exam-qset').innerHTML=opts;
+
+  const opts = `
+    <option value="">-- Select --</option>
+  ` + examSets.map(s=>`
+  
+    <option value="${s.id}">
+      ${s.name} (${s.qCount})
+    </option>
+
+  `).join('');
+
   document.getElementById('target-qset').innerHTML=opts;
+
 }
 
-async function selectSetForExam(id){
-  document.getElementById('exam-qset').value=id;
-  showPage('exam-control');
-  await saveExamConfig();
-}
 
+/* ─────────────────────────────────────────────
+   CREATE QUESTION SET
+───────────────────────────────────────────── */
 async function createQuestionSet(){
-  const name=document.getElementById('new-set-name').value.trim();
-  if(!name){showAlert('sets-alert','Please enter a set name.','error');return;}
+
+  const name=document.getElementById('new-set-name')
+    .value.trim();
+
+  if(!name){
+
+    alert('Enter set name');
+    return;
+
+  }
+
   const id='set_'+Date.now();
-  await db.ref(`question_sets/${id}`).set({name,description:document.getElementById('new-set-desc').value.trim(),createdAt:Date.now(),questions:[]});
+
+  await backupDB
+    .ref(`question_sets/${id}`)
+    .set({
+
+      name:name,
+      description:document.getElementById('new-set-desc')
+        .value.trim(),
+
+      createdAt:Date.now(),
+      questions:[]
+
+    });
+
   document.getElementById('new-set-name').value='';
   document.getElementById('new-set-desc').value='';
-  showAlert('sets-alert',`✅ Question set "${name}" created!`);
+
   loadQuestionSets();
+
 }
 
+
+/* ─────────────────────────────────────────────
+   DELETE SET
+───────────────────────────────────────────── */
 async function deleteSet(id){
-  if(!confirm('Delete this question set and all its questions?'))return;
-  await db.ref(`question_sets/${id}`).remove();
-  showAlert('sets-alert','✅ Set deleted.');
+
+  if(!confirm('Delete this set?')) return;
+
+  await backupDB
+    .ref(`question_sets/${id}`)
+    .remove();
+
   loadQuestionSets();
+
 }
 
-document.getElementById('target-qset').addEventListener('change',function(){loadQPreview(this.value);});
 
+/* ─────────────────────────────────────────────
+   LOAD QUESTION PREVIEW
+───────────────────────────────────────────── */
 async function loadQPreview(setId){
-  if(!setId)return;
-  const snap=await db.ref(`question_sets/${setId}/questions`).once('value');
+
+  if(!setId) return;
+
+  const snap = await backupDB
+    .ref(`question_sets/${setId}/questions`)
+    .once('value');
+
   const qs=snap.val();
-  if(!qs){document.getElementById('q-list-preview').innerHTML='<p style="color:var(--muted)">No questions yet.</p>';return;}
-  const arr=Array.isArray(qs)?qs:Object.values(qs);
-  document.getElementById('q-list-preview').innerHTML=`
-    <p style="color:var(--muted);font-size:0.82rem;margin-bottom:12px;">${arr.length} questions in this set</p>
-    <div style="max-height:400px;overflow-y:auto;">
-    ${arr.slice(0,50).map((q,i)=>`<div style="padding:10px;border:1px solid var(--border);border-radius:8px;margin-bottom:8px;font-size:0.85rem;"><strong>Q${i+1}:</strong> ${q.question}</div>`).join('')}
-    ${arr.length>50?`<p style="color:var(--muted);font-size:0.8rem;margin-top:10px;">...and ${arr.length-50} more</p>`:''}
-    </div>`;
-}
 
-async function importQuestions(){
-  const setId=document.getElementById('target-qset').value;
-  if(!setId){showAlert('q-alert','Select a question set first.','error');return;}
-  let json;
-  try{json=JSON.parse(document.getElementById('json-import').value);}
-  catch(e){showAlert('q-alert','Invalid JSON. Check format.','error');return;}
-  if(!Array.isArray(json)){showAlert('q-alert','JSON must be an array.','error');return;}
-  
-  // Get current questions
-  const snap=await db.ref(`question_sets/${setId}/questions`).once('value');
-  let existing=[];
-  if(snap.exists()){const v=snap.val();existing=Array.isArray(v)?v:Object.values(v);}
-  const merged=[...existing,...json];
-  await db.ref(`question_sets/${setId}/questions`).set(merged);
-  showAlert('q-alert',`✅ Imported ${json.length} questions! Total: ${merged.length}`);
-  document.getElementById('json-import').value='';
-  loadQuestionSets();
-  loadQPreview(setId);
-}
+  if(!qs){
 
-async function addSingleQuestion(){
-  const setId=document.getElementById('target-qset').value;
-  if(!setId){showAlert('q-alert','Select a question set first.','error');return;}
-  const q={
-    question:document.getElementById('sq-text').value.trim(),
-    options:[document.getElementById('sq-a').value.trim(),document.getElementById('sq-b').value.trim(),document.getElementById('sq-c').value.trim(),document.getElementById('sq-d').value.trim()],
-    correct:parseInt(document.getElementById('sq-correct').value),
-    explanation:document.getElementById('sq-exp').value.trim()
-  };
-  if(!q.question||q.options.some(o=>!o)){showAlert('q-alert','Fill in all question fields.','error');return;}
-  const snap=await db.ref(`question_sets/${setId}/questions`).once('value');
-  let existing=[];
-  if(snap.exists()){const v=snap.val();existing=Array.isArray(v)?v:Object.values(v);}
-  existing.push(q);
-  await db.ref(`question_sets/${setId}/questions`).set(existing);
-  showAlert('q-alert','✅ Question added!');
-  ['sq-text','sq-a','sq-b','sq-c','sq-d','sq-exp'].forEach(id=>document.getElementById(id).value='');
-  loadQuestionSets();
-  loadQPreview(setId);
-}
+    document.getElementById('q-list-preview')
+      .innerHTML='<p>No questions yet.</p>';
 
-async function loadDashboard(){
-  // Count sets
-  document.getElementById('stat-sets').textContent=examSets.length;
-  // Load latest exam results
-  const cfgSnap=await db.ref('exam_config').once('value');
-  const cfg=cfgSnap.val()||{};
-  if(!cfg.examKey)return;
-  const snap=await db.ref(`exam_results/${cfg.examKey}`).once('value');
-  if(!snap.exists()){document.getElementById('stat-participants').textContent='0';return;}
-  const all=Object.values(snap.val());
-  document.getElementById('stat-participants').textContent=all.length;
-  const avg=(all.reduce((s,r)=>s+r.score,0)/all.length).toFixed(2);
-  const top=Math.max(...all.map(r=>r.score)).toFixed(2);
-  document.getElementById('stat-avg').textContent=avg;
-  document.getElementById('stat-top').textContent=top;
-  all.sort((a,b)=>b.score-a.score||a.timestamp-b.timestamp);
-  const rows=all.slice(0,10).map((r,i)=>`<tr><td>#${i+1}</td><td>${r.name}</td><td style="font-family:'JetBrains Mono',monospace;font-weight:700">${r.score.toFixed(2)}</td><td>${r.percentage}%</td><td>${r.correct}/${r.total}</td><td style="color:var(--muted);font-size:0.78rem">${new Date(r.timestamp).toLocaleString()}</td></tr>`).join('');
-  document.getElementById('top10-table').innerHTML=`<div class="table-wrap"><table><thead><tr><th>Rank</th><th>Name</th><th>Score</th><th>%</th><th>Correct</th><th>Submitted</th></tr></thead><tbody>${rows}</tbody></table></div>`;
-}
+    return;
 
-async function loadExamKeys(){
-  const snap=await db.ref('exam_results').once('value');
-  examKeys=snap.exists()?Object.keys(snap.val()):[];
-  const opts=`<option value="">-- Select --</option>`+examKeys.map(k=>`<option value="${k}">${k}</option>`).join('');
-  document.getElementById('results-exam-key').innerHTML=opts;
-  document.getElementById('analysis-exam-key').innerHTML=opts;
-}
+  }
 
-async function loadResults(){
-  const key=document.getElementById('results-exam-key').value;
-  if(!key)return;
-  const snap=await db.ref(`exam_results/${key}`).once('value');
-  if(!snap.exists()){document.getElementById('full-results-table').innerHTML='<p style="color:var(--muted)">No results for this exam.</p>';return;}
-  const all=Object.values(snap.val()).sort((a,b)=>b.score-a.score||a.timestamp-b.timestamp);
-  const rows=all.map((r,i)=>`<tr><td>#${i+1}</td><td>${r.name}</td><td>${r.email||'—'}</td><td style="font-family:'JetBrains Mono',monospace;font-weight:700">${r.score.toFixed(2)}</td><td>${r.percentage}%</td><td style="color:var(--green)">${r.correct}</td><td style="color:var(--red)">${r.wrong}</td><td style="color:var(--muted)">${r.unattempted}</td><td style="color:var(--muted);font-size:0.78rem">${new Date(r.timestamp).toLocaleString()}</td></tr>`).join('');
-  document.getElementById('full-results-table').innerHTML=`
-    <p style="color:var(--muted);margin-bottom:12px;">${all.length} participants</p>
-    <div class="table-wrap"><table>
-      <thead><tr><th>Rank</th><th>Name</th><th>Email</th><th>Score</th><th>%</th><th>✓</th><th>✗</th><th>—</th><th>Submitted</th></tr></thead>
-      <tbody>${rows}</tbody>
-    </table></div>`;
-}
+  const arr = Array.isArray(qs)
+    ? qs
+    : Object.values(qs);
 
-async function loadAnalysis(){
-  const key=document.getElementById('analysis-exam-key').value;
-  if(!key)return;
-  const snap=await db.ref(`exam_results/${key}`).once('value');
-  if(!snap.exists()){document.getElementById('analysis-content').innerHTML='<div class="card"><p style="color:var(--muted)">No data.</p></div>';return;}
-  const all=Object.values(snap.val());
-  const n=all.length;
-  const scores=all.map(r=>r.score);
-  const avg=(scores.reduce((a,b)=>a+b,0)/n).toFixed(2);
-  const top=Math.max(...scores).toFixed(2);
-  const bot=Math.min(...scores).toFixed(2);
-  const pass80=all.filter(r=>r.percentage>=80).length;
-  const pass60=all.filter(r=>r.percentage>=60&&r.percentage<80).length;
-  const pass40=all.filter(r=>r.percentage>=40&&r.percentage<60).length;
-  const fail=all.filter(r=>r.percentage<40).length;
-  document.getElementById('analysis-content').innerHTML=`
-    <div class="stat-grid">
-      <div class="stat-card"><div class="val" style="color:var(--blue)">${n}</div><small>Participants</small></div>
-      <div class="stat-card"><div class="val" style="color:var(--green)">${avg}</div><small>Average Score</small></div>
-      <div class="stat-card"><div class="val" style="color:var(--yellow)">${top}</div><small>Highest Score</small></div>
-      <div class="stat-card"><div class="val" style="color:var(--red)">${bot}</div><small>Lowest Score</small></div>
-    </div>
-    <div class="card">
-      <h3><i class="fas fa-chart-pie"></i> Score Distribution</h3>
-      <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:12px;">
-        <div style="text-align:center;padding:16px;background:rgba(0,201,122,0.1);border-radius:10px;border:1px solid rgba(0,201,122,0.25);">
-          <div style="font-size:2rem;font-weight:800;color:var(--green)">${pass80}</div>
-          <small style="color:var(--muted)">≥80% (Excellent)</small>
-        </div>
-        <div style="text-align:center;padding:16px;background:rgba(0,98,255,0.1);border-radius:10px;border:1px solid rgba(0,98,255,0.25);">
-          <div style="font-size:2rem;font-weight:800;color:var(--blue)">${pass60}</div>
-          <small style="color:var(--muted)">60–79% (Good)</small>
-        </div>
-        <div style="text-align:center;padding:16px;background:rgba(255,215,0,0.1);border-radius:10px;border:1px solid rgba(255,215,0,0.25);">
-          <div style="font-size:2rem;font-weight:800;color:#c8860a">${pass40}</div>
-          <small style="color:var(--muted)">40–59% (Average)</small>
-        </div>
-        <div style="text-align:center;padding:16px;background:rgba(255,59,92,0.1);border-radius:10px;border:1px solid rgba(255,59,92,0.25);">
-          <div style="font-size:2rem;font-weight:800;color:var(--red)">${fail}</div>
-          <small style="color:var(--muted)">Below 40%</small>
-        </div>
+  document.getElementById('q-list-preview')
+    .innerHTML = arr.map((q,i)=>`
+
+      <div style="padding:10px;border:1px solid #333;margin-bottom:8px;border-radius:8px;">
+        <strong>Q${i+1}</strong><br>
+        ${q.question}
       </div>
-    </div>`;
+
+    `).join('');
+
 }
 
-async function clearResults(){
-  const key=document.getElementById('exam-key').value.trim();
-  if(!key){showAlert('exam-alert','Set an exam key first.','error');return;}
-  if(!confirm(`Delete ALL results for exam "${key}"? This cannot be undone.`))return;
-  await db.ref(`exam_results/${key}`).remove();
-  showAlert('exam-alert',`✅ Results for "${key}" cleared.`);
+
+/* ─────────────────────────────────────────────
+   IMPORT QUESTIONS
+───────────────────────────────────────────── */
+async function importQuestions(){
+
+  const setId=document.getElementById('target-qset').value;
+
+  if(!setId){
+
+    alert('Select question set');
+    return;
+
+  }
+
+  let json;
+
+  try{
+
+    json=JSON.parse(
+      document.getElementById('json-import').value
+    );
+
+  }catch(e){
+
+    alert('Invalid JSON');
+    return;
+
+  }
+
+  const snap = await backupDB
+    .ref(`question_sets/${setId}/questions`)
+    .once('value');
+
+  let existing=[];
+
+  if(snap.exists()){
+
+    const v=snap.val();
+
+    existing=Array.isArray(v)
+      ? v
+      : Object.values(v);
+
+  }
+
+  const merged=[...existing,...json];
+
+  await backupDB
+    .ref(`question_sets/${setId}/questions`)
+    .set(merged);
+
+  alert('Questions imported');
+
+  document.getElementById('json-import').value='';
+
+  loadQPreview(setId);
+  loadQuestionSets();
+
 }
 
-function showAlert(id,msg,type='success'){
-  const el=document.getElementById(id);
-  if(!el)return;
-  el.className=`alert alert-${type}`;
-  el.textContent=msg;
-  el.classList.remove('hidden');
-  setTimeout(()=>el.classList.add('hidden'),4000);
+
+/* ─────────────────────────────────────────────
+   ADD SINGLE QUESTION
+───────────────────────────────────────────── */
+async function addSingleQuestion(){
+
+  const setId=document.getElementById('target-qset').value;
+
+  if(!setId){
+
+    alert('Select set first');
+    return;
+
+  }
+
+  const q={
+
+    question:document.getElementById('sq-text').value,
+
+    options:[
+      document.getElementById('sq-a').value,
+      document.getElementById('sq-b').value,
+      document.getElementById('sq-c').value,
+      document.getElementById('sq-d').value
+    ],
+
+    correct:parseInt(
+      document.getElementById('sq-correct').value
+    ),
+
+    explanation:document.getElementById('sq-exp').value
+
+  };
+
+  const snap = await backupDB
+    .ref(`question_sets/${setId}/questions`)
+    .once('value');
+
+  let existing=[];
+
+  if(snap.exists()){
+
+    const v=snap.val();
+
+    existing=Array.isArray(v)
+      ? v
+      : Object.values(v);
+
+  }
+
+  existing.push(q);
+
+  await backupDB
+    .ref(`question_sets/${setId}/questions`)
+    .set(existing);
+
+  alert('Question Added');
+
+  loadQPreview(setId);
+  loadQuestionSets();
+
 }
 </script>
 </body>
