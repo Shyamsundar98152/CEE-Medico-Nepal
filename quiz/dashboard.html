@@ -210,58 +210,130 @@ const db=firebase.database();
 
 const deviceId=localStorage.getItem('cee_device_id')||null;
 
-// Auto-load device results
+// Auto-load on page ready
 autoLoadDeviceResults();
 
 async function autoLoadDeviceResults(){
-  if(!deviceId){document.getElementById('auto-content').innerHTML='<p style="color:var(--muted);font-size:0.85rem;">No previous exam data found on this device.</p>';return;}
-  const snap=await db.ref('results').once('value');
-  if(!snap.exists()){document.getElementById('auto-content').innerHTML='<p style="color:var(--muted);">No exams found.</p>';return;}
-  let found=[];
-  snap.forEach(examSnap=>{
-    const examKey=examSnap.key;
-    const userSnap=examSnap.child(deviceId);
-    if(userSnap.exists()){found.push({examKey,...userSnap.val()});}
-  });
-  if(!found.length){document.getElementById('auto-content').innerHTML='<p style="color:var(--muted);font-size:0.85rem;">You haven\'t attempted any exams on this device yet.</p>';return;}
-  found.sort((a,b)=>b.timestamp-a.timestamp);
-  document.getElementById('auto-content').innerHTML=found.map(r=>`
-    <div class="history-item">
-      <div>
-        <div class="history-exam">Exam: ${r.examKey}</div>
-        <div class="history-meta">${new Date(r.timestamp).toLocaleString()} • ${r.total} questions</div>
-      </div>
-      <div style="text-align:right;">
-        <div class="history-score">${r.score.toFixed(2)}</div>
-        <div style="font-size:0.78rem;color:var(--muted)">${r.percentage}% • ${r.correct}✓ ${r.wrong}✗</div>
-      </div>
-    </div>`).join('');
+  const el=document.getElementById('auto-content');
+  el.innerHTML='<p style="color:var(--muted);font-size:0.85rem;"><i class="fas fa-spinner fa-spin"></i> Checking your results...</p>';
+
+  if(!deviceId){
+    el.innerHTML='<p style="color:var(--muted);font-size:0.85rem;">No exam data found on this device. Try the email lookup above.</p>';
+    return;
+  }
+
+  try {
+    const snap=await db.ref('results').once('value');
+    if(!snap.exists()){
+      el.innerHTML='<p style="color:var(--muted);font-size:0.85rem;">No exams have been held yet.</p>';
+      return;
+    }
+
+    let found=[];
+    snap.forEach(examSnap=>{
+      const key=examSnap.key;
+      const userSnap=examSnap.child(deviceId);
+      if(userSnap.exists()){
+        const d=userSnap.val();
+        // Safety: ensure numeric fields exist
+        found.push({
+          examKey:key,
+          name:d.name||'—',
+          email:d.email||'',
+          score:typeof d.score==='number'?d.score:0,
+          percentage:typeof d.percentage==='number'?d.percentage:0,
+          correct:d.correct||0,
+          wrong:d.wrong||0,
+          unattempted:d.unattempted||0,
+          total:d.total||0,
+          timestamp:d.timestamp||0,
+          answers:d.answers||{}
+        });
+      }
+    });
+
+    if(!found.length){
+      el.innerHTML='<p style="color:var(--muted);font-size:0.85rem;">You haven\'t attempted any exams on this device yet.</p>';
+      return;
+    }
+
+    found.sort((a,b)=>b.timestamp-a.timestamp);
+
+    // Auto-render full dashboard for device user
+    const email=found[0].email||'(not provided)';
+    document.getElementById('auto-section').style.display='none';
+    renderDashboard(found, email, deviceId);
+
+  } catch(e) {
+    console.error('Auto-load error:',e);
+    el.innerHTML=`<p style="color:#c0392b;font-size:0.85rem;"><i class="fas fa-exclamation-circle"></i> Error loading data: ${e.message}. Please refresh.</p>`;
+  }
 }
 
 async function lookupUser(){
   const email=document.getElementById('lookup-email').value.trim();
-  if(!email||!email.includes('@')){showErr('Enter a valid email.');return;}
-  const snap=await db.ref('results').once('value');
-  if(!snap.exists()){showErr('No exam data found.');return;}
-  let allResults=[];
-  snap.forEach(examSnap=>{
-    const examKey=examSnap.key;
-    examSnap.forEach(userSnap=>{
-      const d=userSnap.val();
-      if((d.email||'').toLowerCase()===email.toLowerCase()){
-        allResults.push({examKey,deviceId:userSnap.key,...d});
-      }
+  if(!email||!email.includes('@')){showErr('Enter a valid email address.');return;}
+
+  const btn=document.querySelector('.btn-primary');
+  btn.innerHTML='<i class="fas fa-spinner fa-spin"></i> Searching...';
+  btn.disabled=true;
+
+  try {
+    const snap=await db.ref('results').once('value');
+    if(!snap.exists()){
+      showErr('No exam data found in the system yet.');
+      btn.innerHTML='<i class="fas fa-search"></i> Find My Results';
+      btn.disabled=false;
+      return;
+    }
+
+    let allResults=[];
+    snap.forEach(examSnap=>{
+      const key=examSnap.key;
+      examSnap.forEach(userSnap=>{
+        const d=userSnap.val();
+        if(d && (d.email||'').toLowerCase()===email.toLowerCase()){
+          allResults.push({
+            examKey:key,
+            deviceId:userSnap.key,
+            name:d.name||'Student',
+            email:d.email||email,
+            score:typeof d.score==='number'?d.score:0,
+            percentage:typeof d.percentage==='number'?d.percentage:0,
+            correct:d.correct||0,
+            wrong:d.wrong||0,
+            unattempted:d.unattempted||0,
+            total:d.total||0,
+            timestamp:d.timestamp||0,
+            answers:d.answers||{}
+          });
+        }
+      });
     });
-  });
-  if(!allResults.length){showErr('No results found for this email. Make sure you used this email during the exam.');return;}
-  document.getElementById('lookup-error').classList.add('hidden');
-  renderDashboard(allResults,email);
+
+    btn.innerHTML='<i class="fas fa-search"></i> Find My Results';
+    btn.disabled=false;
+
+    if(!allResults.length){
+      showErr('No results found for this email. Make sure you used the same email during the exam.');
+      return;
+    }
+
+    document.getElementById('lookup-error').classList.add('hidden');
+    document.getElementById('auto-section').style.display='none';
+    renderDashboard(allResults, email, allResults[0].deviceId);
+
+  } catch(e) {
+    console.error('Lookup error:',e);
+    showErr('Connection error: '+e.message+'. Please try again.');
+    btn.innerHTML='<i class="fas fa-search"></i> Find My Results';
+    btn.disabled=false;
+  }
 }
 
-async function renderDashboard(results,email){
+async function renderDashboard(results, email, myDeviceId){
   results.sort((a,b)=>b.timestamp-a.timestamp);
-  const latest=results[0];
-  const name=latest.name||'Student';
+  const name=results[0].name||'Student';
   const totalExams=results.length;
   const avgScore=(results.reduce((s,r)=>s+r.score,0)/totalExams).toFixed(2);
   const bestScore=Math.max(...results.map(r=>r.score)).toFixed(2);
@@ -269,7 +341,7 @@ async function renderDashboard(results,email){
   const totalWrong=results.reduce((s,r)=>s+(r.wrong||0),0);
   const avgPct=(results.reduce((s,r)=>s+r.percentage,0)/totalExams).toFixed(1);
 
-  const initials=name.split(' ').map(n=>n[0]).join('').toUpperCase().slice(0,2);
+  const initials=name.split(' ').map(n=>n[0]||'').join('').toUpperCase().slice(0,2)||'?';
   document.getElementById('profile-header').innerHTML=`
     <div class="avatar">${initials}</div>
     <div>
@@ -286,64 +358,78 @@ async function renderDashboard(results,email){
     <div class="stat-box sb-green"><div class="val">${totalCorrect}</div><small>Total Correct</small></div>
     <div class="stat-box sb-red"><div class="val">${totalWrong}</div><small>Total Wrong</small></div>`;
 
-  // Exam history with rank fetch
-  let histHTML='';
-  for(const r of results){
-    const rank=await fetchRank(r.examKey,r.deviceId,r.score,r.timestamp);
-    const total=await fetchTotal(r.examKey);
-    histHTML+=`
-      <div class="history-item">
-        <div>
-          <div class="history-exam">Exam: ${r.examKey}</div>
-          <div class="history-meta">${new Date(r.timestamp).toLocaleString()} • ${r.total} questions</div>
-        </div>
-        <div style="text-align:right;display:flex;align-items:center;gap:16px;">
-          <div><div class="history-score">${r.score.toFixed(2)}</div><div style="font-size:0.78rem;color:var(--muted)">${r.percentage}% • ${r.correct}✓ ${r.wrong}✗</div></div>
-          <div class="history-rank">#${rank}/${total}</div>
-        </div>
-      </div>`;
-  }
-  document.getElementById('exam-history').innerHTML=histHTML;
+  // Exam history — fetch ranks in parallel
+  document.getElementById('exam-history').innerHTML='<p style="color:var(--muted);font-size:0.85rem;"><i class="fas fa-spinner fa-spin"></i> Loading history...</p>';
 
-  // Performance chart (bars)
-  const correctRate=(totalCorrect/(totalCorrect+totalWrong+results.reduce((s,r)=>s+(r.unattempted||0),0))*100)||0;
+  const rankData=await Promise.all(results.map(async r=>{
+    try {
+      const snap=await db.ref(`results/${r.examKey}`).once('value');
+      if(!snap.exists())return{rank:'?',total:'?'};
+      const all=Object.entries(snap.val()).map(([id,d])=>({id,...d})).sort((a,b)=>b.score-a.score||a.timestamp-b.timestamp);
+      const rank=all.findIndex(x=>x.id===r.deviceId)+1||'?';
+      return{rank,total:all.length};
+    } catch(e){return{rank:'?',total:'?'};}
+  }));
+
+  document.getElementById('exam-history').innerHTML=results.map((r,i)=>`
+    <div class="history-item">
+      <div>
+        <div class="history-exam"><i class="fas fa-clipboard-list" style="color:var(--blue);margin-right:6px;"></i>Exam: ${r.examKey}</div>
+        <div class="history-meta">${new Date(r.timestamp).toLocaleString()} • ${r.total} questions</div>
+      </div>
+      <div style="text-align:right;display:flex;align-items:center;gap:16px;flex-wrap:wrap;justify-content:flex-end;">
+        <div>
+          <div class="history-score">${r.score.toFixed(2)}</div>
+          <div style="font-size:0.78rem;color:var(--muted)">${r.percentage}% • <span style="color:var(--green)">${r.correct}✓</span> <span style="color:var(--red)">${r.wrong}✗</span></div>
+        </div>
+        <div class="history-rank">#${rankData[i].rank}/${rankData[i].total}</div>
+      </div>
+    </div>`).join('');
+
+  // Performance bars
+  const totalAttempted=totalCorrect+totalWrong;
+  const correctRate=totalAttempted>0?(totalCorrect/totalAttempted*100):0;
+  const bestTotal=results.find(r=>parseFloat(r.score)===parseFloat(bestScore))?.total||100;
+  const bestPct=(parseFloat(bestScore)/bestTotal*100).toFixed(1);
+
   document.getElementById('perf-overview').innerHTML=`
-    <div class="perf-bar-wrap"><div class="perf-label"><span>Accuracy (Correct out of attempted)</span><span>${correctRate.toFixed(1)}%</span></div><div class="perf-bar"><div class="perf-fill" style="width:${correctRate}%;background:var(--green)"></div></div></div>
-    <div class="perf-bar-wrap"><div class="perf-label"><span>Average Percentage</span><span>${avgPct}%</span></div><div class="perf-bar"><div class="perf-fill" style="width:${avgPct}%;background:var(--blue)"></div></div></div>
-    <div class="perf-bar-wrap"><div class="perf-label"><span>Best Exam Score (out of ${results.find(r=>r.score==bestScore)?.total||100})</span><span>${(parseFloat(bestScore)/(results.find(r=>r.score==bestScore)?.total||100)*100).toFixed(1)}%</span></div><div class="perf-bar"><div class="perf-fill" style="width:${(parseFloat(bestScore)/(results.find(r=>r.score==bestScore)?.total||100)*100)}%;background:var(--yellow)"></div></div></div>`;
+    <div class="perf-bar-wrap">
+      <div class="perf-label"><span>Accuracy (correct out of attempted)</span><span>${correctRate.toFixed(1)}%</span></div>
+      <div class="perf-bar"><div class="perf-fill" style="width:${Math.min(correctRate,100)}%;background:var(--green)"></div></div>
+    </div>
+    <div class="perf-bar-wrap">
+      <div class="perf-label"><span>Average Percentage</span><span>${avgPct}%</span></div>
+      <div class="perf-bar"><div class="perf-fill" style="width:${Math.min(avgPct,100)}%;background:var(--blue)"></div></div>
+    </div>
+    <div class="perf-bar-wrap">
+      <div class="perf-label"><span>Best Score Percentage</span><span>${bestPct}%</span></div>
+      <div class="perf-bar"><div class="perf-fill" style="width:${Math.min(bestPct,100)}%;background:var(--yellow)"></div></div>
+    </div>`;
 
   // Leaderboard for latest exam
-  const latestKey=results[0].examKey;
-  const lbSnap=await db.ref(`results/${latestKey}`).once('value');
-  if(lbSnap.exists()){
-    const all=Object.entries(lbSnap.val()).map(([id,d])=>({id,...d})).sort((a,b)=>b.score-a.score||a.timestamp-b.timestamp);
-    const myId=results[0].deviceId;
-    const rows=all.slice(0,20).map((r,i)=>{
-      const isMe=r.id===myId;
-      const medal=i===0?'🥇':i===1?'🥈':i===2?'🥉':`#${i+1}`;
-      return `<tr class="${isMe?'me':''}"><td>${medal}</td><td>${r.name}${isMe?' 👈':''}</td><td style="font-family:'JetBrains Mono',monospace;font-weight:700">${r.score.toFixed(2)}</td><td>${r.percentage}%</td><td style="color:var(--green)">${r.correct}</td><td style="color:var(--red)">${r.wrong}</td></tr>`;
-    }).join('');
-    document.getElementById('leaderboard-section').innerHTML=`
-      <p style="font-size:0.82rem;color:var(--muted);margin-bottom:12px;">Exam: ${latestKey} • ${all.length} participants</p>
-      <div style="overflow-x:auto;"><table><thead><tr><th>Rank</th><th>Name</th><th>Score</th><th>%</th><th>✓</th><th>✗</th></tr></thead><tbody>${rows}</tbody></table></div>
-      ${all.length>20?`<p style="color:var(--muted);font-size:0.78rem;margin-top:10px;">Showing top 20 of ${all.length}</p>`:''}`;
+  try {
+    const latestKey=results[0].examKey;
+    const lbSnap=await db.ref(`results/${latestKey}`).once('value');
+    if(lbSnap.exists()){
+      const all=Object.entries(lbSnap.val()).map(([id,d])=>({id,...d})).filter(r=>r.score!==undefined).sort((a,b)=>b.score-a.score||a.timestamp-b.timestamp);
+      const rows=all.slice(0,20).map((r,i)=>{
+        const isMe=r.id===myDeviceId;
+        const medal=i===0?'🥇':i===1?'🥈':i===2?'🥉':`#${i+1}`;
+        return `<tr class="${isMe?'me':''}"><td>${medal}</td><td>${r.name||'—'}${isMe?' 👈':''}</td><td style="font-family:'JetBrains Mono',monospace;font-weight:700">${(r.score||0).toFixed(2)}</td><td>${r.percentage||0}%</td><td style="color:var(--green)">${r.correct||0}</td><td style="color:var(--red)">${r.wrong||0}</td></tr>`;
+      }).join('');
+      document.getElementById('leaderboard-section').innerHTML=`
+        <p style="font-size:0.82rem;color:var(--muted);margin-bottom:12px;">Exam: <strong>${latestKey}</strong> • ${all.length} participants</p>
+        <div style="overflow-x:auto;"><table><thead><tr><th>Rank</th><th>Name</th><th>Score</th><th>%</th><th>✓</th><th>✗</th></tr></thead><tbody>${rows}</tbody></table></div>
+        ${all.length>20?`<p style="color:var(--muted);font-size:0.78rem;margin-top:10px;">Showing top 20 of ${all.length}</p>`:''}`;
+    } else {
+      document.getElementById('leaderboard-section').innerHTML='<p style="color:var(--muted);">No leaderboard data yet.</p>';
+    }
+  } catch(e){
+    document.getElementById('leaderboard-section').innerHTML='<p style="color:var(--muted);">Could not load leaderboard.</p>';
   }
 
   document.getElementById('dashboard-content').classList.remove('hidden');
-  document.getElementById('auto-section').style.display='none';
-  document.getElementById('dashboard-content').scrollIntoView({behavior:'smooth'});
-}
-
-async function fetchRank(examKey,myDeviceId,myScore,myTimestamp){
-  const snap=await db.ref(`results/${examKey}`).once('value');
-  if(!snap.exists())return'?';
-  const all=Object.entries(snap.val()).map(([id,d])=>({id,...d})).sort((a,b)=>b.score-a.score||a.timestamp-b.timestamp);
-  return all.findIndex(r=>r.id===myDeviceId)+1||'?';
-}
-
-async function fetchTotal(examKey){
-  const snap=await db.ref(`results/${examKey}`).once('value');
-  return snap.exists()?Object.keys(snap.val()).length:'?';
+  document.getElementById('dashboard-content').scrollIntoView({behavior:'smooth',block:'start'});
 }
 
 function gradeTag(pct){
