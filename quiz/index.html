@@ -245,18 +245,20 @@ footer a{color:#fff;font-weight:700;}
 <!-- Firebase -->
 <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-database-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-firestore-compat.js"></script>
 <script>
 const firebaseConfig = {
-  apiKey: "AIzaSyDD5xBrSkX_YXzSnsKxjW8-K6W4rBfV3rg",
-  authDomain: "chapter-wise-backup.firebaseapp.com",
-  databaseURL: "https://chapter-wise-backup-default-rtdb.asia-southeast1.firebasedatabase.app",
-  projectId: "chapter-wise-backup",
-  storageBucket: "chapter-wise-backup.firebasestorage.app",
-  messagingSenderId: "864698641587",
-  appId: "1:864698641587:web:d0b550579c6eb7709ed4c6"
+  apiKey: "AIzaSyDI-O7KiPzKKAc94UBcy-EusldtOMD_ZbE",
+  authDomain: "nepalquiz-7d444.firebaseapp.com",
+  databaseURL: "https://nepalquiz-7d444-default-rtdb.asia-southeast1.firebasedatabase.app",
+  projectId: "nepalquiz-7d444",
+  storageBucket: "nepalquiz-7d444.firebasestorage.app",
+  messagingSenderId: "547865008194",
+  appId: "1:547865008194:web:2ced7d26f3c4c5ecc275db"
 };
 firebase.initializeApp(firebaseConfig);
-const db = firebase.database();
+const db  = firebase.database();    // Realtime DB  → exam_config, question_sets, exam_results (fast/live)
+const fdb = firebase.firestore();   // Firestore    → users, exam_history, analytics (structured/queryable)
 
 /* ─── State ─── */
 let examConfig = null;
@@ -470,7 +472,31 @@ async function submitExam(auto) {
     timestamp: Date.now()
   };
 
+  // ── Write to Realtime Database (fast live leaderboard) ──
   await db.ref(`exam_results/${examKey}/${deviceId}`).set(resultData);
+
+  // ── Write to Firestore (structured analytics & history) ──
+  try {
+    // Per-exam result document
+    await fdb.collection('exam_results').doc(examKey).collection('participants').doc(deviceId).set(resultData);
+    // User history document (merged across all exams)
+    await fdb.collection('users').doc(currentUser.email.replace(/\./g,'_')).set({
+      name: currentUser.name,
+      email: currentUser.email,
+      lastSeen: Date.now(),
+      exams: firebase.firestore.FieldValue.arrayUnion({
+        examKey,
+        score: resultData.score,
+        percentage: resultData.percentage,
+        correct: resultData.correct,
+        wrong: resultData.wrong,
+        unattempted: resultData.unattempted,
+        total: resultData.total,
+        timestamp: resultData.timestamp
+      })
+    }, { merge: true });
+  } catch(e) { console.warn('Firestore write failed (non-critical):', e); }
+
   document.getElementById('quiz-area').style.display = 'none';
   showResults(resultData, userAnswers, false);
 }
