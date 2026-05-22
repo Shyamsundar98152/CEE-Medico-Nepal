@@ -45,6 +45,22 @@ nav ul a:hover{background:rgba(255,255,255,0.15);color:#fff;}
 .pulse-dot{width:10px;height:10px;border-radius:50%;background:var(--accent);animation:pulse 1.5s infinite;}
 @keyframes pulse{0%,100%{opacity:1;transform:scale(1);}50%{opacity:0.5;transform:scale(1.3);}}
 
+/* EXAM SELECTOR */
+.exam-selector-card{background:var(--card);border-radius:16px;box-shadow:var(--shadow);padding:24px;margin-bottom:20px;border:1px solid var(--border);}
+.exam-selector-card h3{font-size:0.95rem;font-weight:800;margin-bottom:14px;display:flex;align-items:center;gap:8px;}
+.exam-selector-card h3 i{color:var(--blue);}
+.exam-tab-list{display:flex;flex-direction:column;gap:10px;}
+.exam-tab{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px;padding:14px 18px;border:2px solid var(--border);border-radius:10px;cursor:pointer;transition:all 0.2s;background:#fafbff;}
+.exam-tab:hover{border-color:var(--blue);background:var(--blue-light);}
+.exam-tab.selected{border-color:var(--blue);background:var(--blue-light);}
+.exam-tab.live-tab{border-color:rgba(0,201,122,0.4);background:#e8fff4;}
+.exam-tab.live-tab.selected{border-color:var(--green);}
+.exam-tab-title{font-weight:700;font-size:0.92rem;}
+.exam-tab-meta{font-size:0.78rem;color:var(--muted);margin-top:3px;}
+.badge-live{background:rgba(0,201,122,0.12);color:var(--green);border:1px solid rgba(0,201,122,0.3);padding:3px 10px;border-radius:20px;font-size:0.72rem;font-weight:700;}
+.badge-upcoming{background:#fffbea;color:#c8860a;border:1px solid #ffe066;padding:3px 10px;border-radius:20px;font-size:0.72rem;font-weight:700;}
+.badge-closed{background:#fff0f3;color:var(--red);border:1px solid #ffb3c1;padding:3px 10px;border-radius:20px;font-size:0.72rem;font-weight:700;}
+
 /* CARDS */
 .main-content{max-width:900px;margin:-36px auto 60px;padding:0 16px;}
 .card{background:var(--card);border-radius:16px;box-shadow:var(--shadow);padding:32px;margin-bottom:24px;border:1px solid var(--border);}
@@ -161,6 +177,7 @@ footer a{color:#fff;font-weight:700;}
   .btn{font-size:0.92rem;}
   .next-exam-badge{font-size:0.82rem;padding:8px 16px;}
   .status-banner{padding:14px 16px;font-size:0.88rem;}
+  .exam-tab{flex-direction:column;align-items:flex-start;}
 }
 @media(max-width:420px){
   .hero h1{font-size:1.35rem;}
@@ -199,6 +216,12 @@ footer a{color:#fff;font-weight:700;}
 </div>
 
 <div class="main-content">
+
+  <!-- Exam Selector (shown when multiple exams exist) -->
+  <div class="exam-selector-card hidden" id="exam-selector-card">
+    <h3><i class="fas fa-calendar-check"></i> Available Exams</h3>
+    <div class="exam-tab-list" id="exam-tab-list"></div>
+  </div>
 
   <!-- Status Banner -->
   <div id="status-banner" class="status-banner closed">
@@ -240,7 +263,7 @@ footer a{color:#fff;font-weight:700;}
   <div id="quiz-area">
     <div class="quiz-header">
       <div>
-        <div style="font-weight:800;font-size:1.1rem;">CEE Weekly Exam</div>
+        <div style="font-weight:800;font-size:1.1rem;" id="quiz-title-display">CEE Weekly Exam</div>
         <div id="quiz-info-text" style="font-size:0.8rem;opacity:0.8;margin-top:2px;"></div>
         <div class="progress-bar" style="width:220px;margin-top:8px;"><div class="progress-fill" id="progress-fill" style="width:0%"></div></div>
       </div>
@@ -300,7 +323,8 @@ firebase.initializeApp(firebaseConfig);
 const db = firebase.database();
 
 /* ─── State ─── */
-let examConfig = null;
+let allExams = [];       // all exams from Firebase
+let selectedExam = null; // the currently chosen exam object
 let questions = [];
 let userAnswers = {};
 let timerInterval = null;
@@ -316,8 +340,8 @@ init();
 
 async function init() {
   try {
-    await loadExamConfig();
-    await checkPreviousAttempt();
+    await loadAllExams();
+    await checkPreviousAttempts();
   } catch(e) {
     console.error('Init error:', e);
     document.getElementById('status-banner').className = 'status-banner closed';
@@ -325,55 +349,123 @@ async function init() {
   }
 }
 
-async function loadExamConfig() {
-  const snap = await db.ref('exam_config').once('value');
-  examConfig = snap.val() || {};
+/* ─── Load all exams from the new multi-exam node ─── */
+async function loadAllExams() {
+  const snap = await db.ref('exams').once('value');
+  allExams = [];
+  if (snap.exists()) {
+    snap.forEach(child => { allExams.push({ id: child.key, ...child.val() }); });
+  }
+
+  // Determine which exams are live / upcoming / closed
+  const now = Date.now();
+  const liveExams    = allExams.filter(e => getStatus(e) === 'live');
+  const upcomingExams = allExams.filter(e => getStatus(e) === 'upcoming');
+
+  // If only one live exam, auto-select it. Otherwise show selector.
+  if (liveExams.length === 1) {
+    selectExam(liveExams[0]);
+  } else if (liveExams.length > 1) {
+    // multiple live — show selector
+    renderExamSelector(liveExams.concat(upcomingExams));
+    selectExam(liveExams[0]); // default to first live
+  } else if (upcomingExams.length > 0) {
+    // no live exam, show upcoming
+    if (upcomingExams.length === 1) selectExam(upcomingExams[0]);
+    else {
+      renderExamSelector(upcomingExams);
+      selectExam(upcomingExams[0]);
+    }
+  } else {
+    // all closed — show the most recently closed
+    const closed = allExams.filter(e => getStatus(e) === 'closed');
+    closed.sort((a,b) => (b.endTime||0)-(a.endTime||0));
+    if (closed.length) selectExam(closed[0]);
+    else updateUINoExam();
+  }
+}
+
+function getStatus(exam) {
+  const now = Date.now();
+  if (!exam.isActive) return 'closed';
+  if (exam.startTime && now < exam.startTime) return 'upcoming';
+  if (exam.startTime && exam.endTime && now >= exam.startTime && now <= exam.endTime) return 'live';
+  if (exam.endTime && now > exam.endTime) return 'closed';
+  // isActive with no time window = always live
+  if (!exam.startTime && !exam.endTime) return 'live';
+  return 'closed';
+}
+
+function selectExam(exam) {
+  selectedExam = exam;
+  examKey = exam.examKey || exam.id;
+  // highlight selected tab
+  document.querySelectorAll('.exam-tab').forEach(t => {
+    t.classList.toggle('selected', t.dataset.id === exam.id);
+  });
   updateUI();
 }
 
-function isExamLive() {
-  if (!examConfig || !examConfig.isActive) return false;
-  const now = Date.now();
-  const start = examConfig.startTime || 0;
-  const end = examConfig.endTime || 0;
-  // If no time window set but isActive=true, treat as live
-  if (!start && !end) return true;
-  // If only start set, live after start
-  if (start && !end) return now >= start;
-  // Full window
-  return now >= start && now <= end;
+function renderExamSelector(exams) {
+  const card = document.getElementById('exam-selector-card');
+  const list = document.getElementById('exam-tab-list');
+  card.classList.remove('hidden');
+  list.innerHTML = exams.map(e => {
+    const st = getStatus(e);
+    const badge = st === 'live'
+      ? '<span class="badge-live">🟢 LIVE</span>'
+      : st === 'upcoming'
+        ? '<span class="badge-upcoming">⏰ Upcoming</span>'
+        : '<span class="badge-closed">🔒 Closed</span>';
+    const timeInfo = e.startTime
+      ? `${new Date(e.startTime).toLocaleString()} → ${e.endTime ? new Date(e.endTime).toLocaleString() : '—'}`
+      : 'Open ended';
+    return `<div class="exam-tab ${st==='live'?'live-tab':''}" data-id="${e.id}" onclick="selectExam(allExams.find(x=>x.id==='${e.id}'))">
+      <div>
+        <div class="exam-tab-title">${e.title || e.examKey || e.id}</div>
+        <div class="exam-tab-meta">${timeInfo}</div>
+      </div>
+      ${badge}
+    </div>`;
+  }).join('');
 }
 
 function updateUI() {
-  const now = Date.now();
-  const startTime = examConfig.startTime || 0;
-  const endTime = examConfig.endTime || 0;
-  const live = isExamLive();
-  const isUpcoming = examConfig.isActive && startTime && now < startTime;
+  if (!selectedExam) { updateUINoExam(); return; }
+  const status = getStatus(selectedExam);
   const banner = document.getElementById('status-banner');
   const btn = document.getElementById('start-btn');
   const nextTxt = document.getElementById('next-exam-text');
 
-  if (live) {
+  if (status === 'live') {
     banner.className = 'status-banner open';
-    banner.innerHTML = '<i class="fas fa-circle-check"></i><span>Exam is LIVE! You can start now.</span>';
+    banner.innerHTML = `<i class="fas fa-circle-check"></i><span>Exam is LIVE! — <strong>${selectedExam.title||selectedExam.examKey}</strong>. Start now!</span>`;
     btn.disabled = false;
     btn.innerHTML = '<i class="fas fa-play"></i> Start Exam';
-    nextTxt.textContent = 'Exam is LIVE now!';
-  } else if (isUpcoming) {
+    nextTxt.textContent = `${selectedExam.title||'Exam'} is LIVE now!`;
+  } else if (status === 'upcoming') {
+    const startTime = selectedExam.startTime;
     banner.className = 'status-banner upcoming';
-    banner.innerHTML = `<i class="fas fa-clock"></i><span>Exam opens on: <strong>${new Date(startTime).toLocaleString()}</strong></span>`;
+    banner.innerHTML = `<i class="fas fa-clock"></i><span><strong>${selectedExam.title||'Exam'}</strong> opens on: <strong>${new Date(startTime).toLocaleString()}</strong></span>`;
     btn.disabled = true;
     btn.innerHTML = '<i class="fas fa-clock"></i> Not Started Yet';
     nextTxt.textContent = `Opens: ${new Date(startTime).toLocaleDateString('en-US',{weekday:'long',month:'short',day:'numeric',hour:'2-digit',minute:'2-digit'})}`;
   } else {
     banner.className = 'status-banner closed';
-    banner.innerHTML = '<i class="fas fa-lock"></i><span>No active exam. Check back on Saturday!</span>';
+    banner.innerHTML = '<i class="fas fa-lock"></i><span>No active exam right now. Check back on Saturday!</span>';
     btn.disabled = true;
     btn.innerHTML = '<i class="fas fa-lock"></i> Exam Closed';
-    const nextSat = getNextSaturday();
-    nextTxt.textContent = `Next: ${nextSat}`;
+    nextTxt.textContent = `Next: ${getNextSaturday()}`;
   }
+}
+
+function updateUINoExam() {
+  const banner = document.getElementById('status-banner');
+  banner.className = 'status-banner closed';
+  banner.innerHTML = '<i class="fas fa-lock"></i><span>No exams scheduled. Check back later!</span>';
+  document.getElementById('start-btn').disabled = true;
+  document.getElementById('start-btn').innerHTML = '<i class="fas fa-lock"></i> No Exam';
+  document.getElementById('next-exam-text').textContent = `Next: ${getNextSaturday()}`;
 }
 
 function getNextSaturday() {
@@ -384,15 +476,23 @@ function getNextSaturday() {
   return d.toLocaleDateString('en-US',{weekday:'long',month:'short',day:'numeric'});
 }
 
-async function checkPreviousAttempt() {
-  if (!examConfig || !examConfig.examKey) return;
-  examKey = examConfig.examKey;
-  const snap = await db.ref(`results/${examKey}/${deviceId}`).once('value');
-  if (snap.exists()) {
-    const data = snap.val();
-    document.getElementById('login-card').style.display = 'none';
-    document.getElementById('status-banner').style.display = 'none';
-    showResults(data, data.answers || {}, true);
+/* ─── Check if this device already attempted ANY available exam ─── */
+async function checkPreviousAttempts() {
+  // Check all exams (live or upcoming) if device already submitted
+  const examsToCheck = allExams.filter(e => getStatus(e) !== 'closed' || true); // check all
+  for (const exam of examsToCheck) {
+    const key = exam.examKey || exam.id;
+    const snap = await db.ref(`results/${key}/${deviceId}`).once('value');
+    if (snap.exists()) {
+      const data = snap.val();
+      selectedExam = exam;
+      examKey = key;
+      document.getElementById('login-card').style.display = 'none';
+      document.getElementById('status-banner').style.display = 'none';
+      document.getElementById('exam-selector-card').classList.add('hidden');
+      showResults(data, data.answers || {}, true);
+      return; // show the most recent attempt
+    }
   }
 }
 
@@ -405,84 +505,66 @@ async function startExam() {
   if (!name) { showLoginError('Please enter your name.'); return; }
   if (!email || !email.includes('@')) { showLoginError('Please enter a valid email.'); return; }
 
-  // Show loading state
   const btn = document.getElementById('start-btn');
   btn.disabled = true;
   btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Loading...';
 
   try {
-    // Re-check config
-    const snap = await db.ref('exam_config').once('value');
-    examConfig = snap.val() || {};
+    // Re-fetch selected exam to confirm still live
+    const snap = await db.ref(`exams/${selectedExam.id}`).once('value');
+    if (!snap.exists()) { showLoginError('Exam not found. Please refresh.'); resetBtn(btn); return; }
+    selectedExam = { id: selectedExam.id, ...snap.val() };
+    examKey = selectedExam.examKey || selectedExam.id;
 
-    if (!isExamLive()) {
-      showLoginError('Exam is not currently active.'); 
-      btn.disabled = false;
-      btn.innerHTML = '<i class="fas fa-play"></i> Start Exam';
-      return;
+    if (getStatus(selectedExam) !== 'live') {
+      showLoginError('This exam is not currently active.'); resetBtn(btn); return;
     }
-    examKey = examConfig.examKey || 'default';
 
-    // Check if already attempted
+    // Check attempt
     const prevSnap = await db.ref(`results/${examKey}/${deviceId}`).once('value');
-    if (prevSnap.exists()) { 
-      showLoginError('You have already attempted this exam on this device.'); 
-      btn.disabled = false;
-      btn.innerHTML = '<i class="fas fa-play"></i> Start Exam';
-      return; 
+    if (prevSnap.exists()) {
+      showLoginError('You have already attempted this exam on this device.'); resetBtn(btn); return;
     }
 
     currentUser = { name, email, deviceId };
 
-    // Load questions from the selected set
-    const setId = examConfig.questionSetId;
-    if (!setId) { 
-      showLoginError('No question set configured by admin. Please contact admin.'); 
-      btn.disabled = false;
-      btn.innerHTML = '<i class="fas fa-play"></i> Start Exam';
-      return; 
-    }
+    // Load questions
+    const setId = selectedExam.questionSetId;
+    if (!setId) { showLoginError('No question set configured. Contact admin.'); resetBtn(btn); return; }
 
     const qSnap = await db.ref(`question_sets/${setId}/questions`).once('value');
-    if (!qSnap.exists()) { 
-      showLoginError('Questions not found. Please contact admin.'); 
-      btn.disabled = false;
-      btn.innerHTML = '<i class="fas fa-play"></i> Start Exam';
-      return; 
-    }
+    if (!qSnap.exists()) { showLoginError('Questions not found. Contact admin.'); resetBtn(btn); return; }
 
     const allQs = qSnap.val();
-    questions = Array.isArray(allQs) ? allQs : Object.values(allQs);
-    questions = questions.filter(q => q && q.question); // filter invalid entries
+    questions = (Array.isArray(allQs) ? allQs : Object.values(allQs)).filter(q => q && q.question);
+    if (questions.length === 0) { showLoginError('No valid questions found.'); resetBtn(btn); return; }
 
-    if (questions.length === 0) {
-      showLoginError('No valid questions found in this set.'); 
-      btn.disabled = false;
-      btn.innerHTML = '<i class="fas fa-play"></i> Start Exam';
-      return;
-    }
-
-    // Shuffle and take up to 200
     questions = shuffle(questions).slice(0, Math.min(200, questions.length));
 
     document.getElementById('login-card').style.display = 'none';
     document.getElementById('status-banner').style.display = 'none';
+    document.getElementById('exam-selector-card').classList.add('hidden');
     document.getElementById('quiz-area').style.display = 'block';
+    document.getElementById('quiz-title-display').textContent = selectedExam.title || 'CEE Weekly Exam';
     document.getElementById('quiz-info-text').textContent = `${questions.length} Questions • ${currentUser.name}`;
     document.getElementById('answered-count').textContent = `0/${questions.length}`;
 
     renderQuestions();
 
-    timeLeft = examConfig.durationSeconds || 10800;
+    timeLeft = selectedExam.durationSeconds || 10800;
     quizStarted = true;
     startTimer();
 
   } catch(e) {
     console.error('Start exam error:', e);
     showLoginError('Connection error. Please check your internet and try again.');
-    btn.disabled = false;
-    btn.innerHTML = '<i class="fas fa-play"></i> Start Exam';
+    resetBtn(btn);
   }
+}
+
+function resetBtn(btn) {
+  btn.disabled = false;
+  btn.innerHTML = '<i class="fas fa-play"></i> Start Exam';
 }
 
 function shuffle(arr) {
@@ -561,6 +643,7 @@ async function submitExam(auto) {
   const resultData = {
     name: currentUser.name,
     email: currentUser.email,
+    examTitle: selectedExam.title || examKey,
     correct, wrong, unattempted,
     score: parseFloat(score.toFixed(2)),
     percentage: parseFloat(pct),
@@ -584,6 +667,7 @@ function showResults(data, answers, fromPrev) {
     <div style="text-align:center;margin-bottom:20px;">
       <div style="font-size:2.8rem;margin-bottom:4px;">${grade}</div>
       <div style="font-size:0.9rem;color:var(--muted);">Hi, <strong>${data.name}</strong> — here's your performance</div>
+      ${data.examTitle ? `<div style="font-size:0.82rem;color:var(--blue);margin-top:6px;font-weight:700;">Exam: ${data.examTitle}</div>` : ''}
     </div>
     <div class="stats-grid">
       <div class="stat-box"><div class="val" style="color:var(--blue)">${score.toFixed(2)}</div><small>Total Score</small></div>
@@ -596,7 +680,6 @@ function showResults(data, answers, fromPrev) {
 
   loadLeaderboard(data.score);
 
-  // Detailed review (only if we have questions loaded)
   if (questions.length > 0 && !fromPrev) {
     let reviewHTML = '';
     questions.forEach((q, i) => {
@@ -649,6 +732,8 @@ function showLoginError(msg) {
   const el = document.getElementById('login-error');
   el.textContent = msg;
   el.classList.remove('hidden');
+  document.getElementById('start-btn').disabled = false;
+  document.getElementById('start-btn').innerHTML = '<i class="fas fa-play"></i> Start Exam';
 }
 </script>
 </body>
