@@ -10,6 +10,7 @@
 :root{
   --blue:#0062ff;--blue-dark:#0047cc;--blue-light:#e8f0ff;
   --accent:#ff6b35;--green:#00c97a;--red:#ff3b5c;--yellow:#ffd700;
+  --purple:#9b59b6;
   --bg:#0d1117;--sidebar:#161b22;--card:#1c2333;--card2:#22304a;
   --text:#e6edf3;--muted:#8b949e;--border:#30363d;
   --shadow:0 4px 24px rgba(0,0,0,0.4);
@@ -38,7 +39,7 @@ body{font-family:'Sora',sans-serif;background:var(--bg);color:var(--text);displa
 
 /* MAIN */
 #main{flex:1;overflow:auto;display:none;}
-.topbar{display:flex;align-items:center;justify-content:space-between;padding:16px 28px;background:var(--sidebar);border-bottom:1px solid var(--border);}
+.topbar{display:flex;align-items:center;justify-content:space-between;padding:16px 28px;background:var(--sidebar);border-bottom:1px solid var(--border);position:sticky;top:0;z-index:50;}
 .topbar h2{font-size:1.1rem;font-weight:700;}
 .topbar-right{display:flex;align-items:center;gap:12px;}
 .online-badge{background:rgba(0,201,122,0.15);color:var(--green);border:1px solid rgba(0,201,122,0.3);border-radius:20px;padding:4px 12px;font-size:0.78rem;font-weight:700;}
@@ -57,11 +58,11 @@ body{font-family:'Sora',sans-serif;background:var(--bg);color:var(--text);displa
 .stat-card{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:20px;}
 .stat-card .val{font-size:2rem;font-weight:800;font-family:'JetBrains Mono',monospace;}
 .stat-card small{color:var(--muted);font-size:0.78rem;font-weight:600;text-transform:uppercase;letter-spacing:0.5px;}
-.stat-card .trend{font-size:0.78rem;margin-top:4px;}
 
 /* FORM */
 .form-row{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:16px;}
 .form-row.single{grid-template-columns:1fr;}
+.form-row.triple{grid-template-columns:1fr 1fr 1fr;}
 .field label{display:block;font-size:0.78rem;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:7px;}
 .field input,.field select,.field textarea{width:100%;background:var(--bg);border:1.5px solid var(--border);border-radius:9px;padding:11px 14px;color:var(--text);font-family:'Sora',sans-serif;font-size:0.9rem;transition:border 0.2s;}
 .field input:focus,.field select:focus,.field textarea:focus{outline:none;border-color:var(--blue);box-shadow:0 0 0 3px rgba(0,98,255,0.12);}
@@ -88,6 +89,10 @@ body{font-family:'Sora',sans-serif;background:var(--bg);color:var(--text);displa
 .btn-danger:hover{background:var(--red);color:#fff;}
 .btn-success{background:rgba(0,201,122,0.15);color:var(--green);border:1px solid rgba(0,201,122,0.3);}
 .btn-success:hover{background:var(--green);color:#fff;}
+.btn-warning{background:rgba(255,215,0,0.15);color:#c8860a;border:1px solid rgba(255,215,0,0.3);}
+.btn-warning:hover{background:var(--yellow);color:#333;}
+.btn-purple{background:rgba(155,89,182,0.15);color:var(--purple);border:1px solid rgba(155,89,182,0.3);}
+.btn-purple:hover{background:var(--purple);color:#fff;}
 .btn-sm{padding:6px 12px;font-size:0.8rem;}
 
 /* TABLE */
@@ -103,6 +108,7 @@ tr:hover td{background:rgba(255,255,255,0.02);}
 .badge-red{background:rgba(255,59,92,0.15);color:var(--red);}
 .badge-yellow{background:rgba(255,215,0,0.15);color:#c8860a;}
 .badge-blue{background:rgba(0,98,255,0.15);color:var(--blue);}
+.badge-purple{background:rgba(155,89,182,0.15);color:var(--purple);}
 
 /* ALERT */
 .alert{padding:12px 16px;border-radius:9px;font-size:0.85rem;font-weight:600;margin-bottom:16px;}
@@ -110,17 +116,32 @@ tr:hover td{background:rgba(255,255,255,0.02);}
 .alert-error{background:rgba(255,59,92,0.12);color:var(--red);border:1px solid rgba(255,59,92,0.25);}
 .hidden{display:none!important;}
 
-/* EXAM STATUS CARD */
-.exam-status{border-radius:14px;padding:24px;margin-bottom:20px;display:flex;align-items:center;gap:20px;border:2px solid;}
-.exam-status.live{background:rgba(0,201,122,0.08);border-color:rgba(0,201,122,0.3);}
-.exam-status.closed{background:rgba(255,59,92,0.08);border-color:rgba(255,59,92,0.3);}
-.exam-status.upcoming{background:rgba(255,215,0,0.08);border-color:rgba(255,215,0,0.3);}
-.exam-status .icon{font-size:2.5rem;}
+/* EXAM CARDS */
+.exam-card{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:20px;margin-bottom:14px;transition:border-color 0.2s;}
+.exam-card:hover{border-color:var(--blue);}
+.exam-card-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;}
+.exam-card-title{font-weight:800;font-size:1rem;}
+.exam-card-meta{display:flex;gap:16px;flex-wrap:wrap;margin-bottom:12px;}
+.exam-card-meta span{font-size:0.8rem;color:var(--muted);display:flex;align-items:center;gap:5px;}
+.exam-card-actions{display:flex;gap:8px;flex-wrap:wrap;}
+
+.exam-status-banner{border-radius:14px;padding:20px;margin-bottom:20px;display:flex;align-items:center;gap:20px;border:2px solid;}
+.exam-status-banner.live{background:rgba(0,201,122,0.08);border-color:rgba(0,201,122,0.3);}
+.exam-status-banner.closed{background:rgba(255,59,92,0.08);border-color:rgba(255,59,92,0.3);}
+.exam-status-banner.upcoming{background:rgba(255,215,0,0.08);border-color:rgba(255,215,0,0.3);}
+.exam-status-banner .icon{font-size:2rem;}
 
 /* Q SET LIST */
 .qset-item{display:flex;align-items:center;justify-content:space-between;padding:14px 18px;background:rgba(255,255,255,0.03);border:1px solid var(--border);border-radius:10px;margin-bottom:10px;}
 .qset-name{font-weight:700;font-size:0.9rem;}
 .qset-meta{font-size:0.78rem;color:var(--muted);margin-top:3px;}
+
+/* MODAL */
+.modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,0.75);z-index:500;display:flex;align-items:center;justify-content:center;padding:20px;}
+.modal{background:var(--card);border:1px solid var(--border);border-radius:18px;padding:32px;width:100%;max-width:680px;max-height:90vh;overflow-y:auto;position:relative;}
+.modal h2{font-size:1.1rem;font-weight:800;margin-bottom:20px;}
+.modal-close{position:absolute;top:16px;right:16px;background:transparent;border:none;color:var(--muted);font-size:1.2rem;cursor:pointer;width:32px;height:32px;display:flex;align-items:center;justify-content:center;border-radius:6px;}
+.modal-close:hover{background:rgba(255,255,255,0.06);color:var(--text);}
 
 /* LOGIN form */
 .lf-group{margin-bottom:16px;}
@@ -128,10 +149,14 @@ tr:hover td{background:rgba(255,255,255,0.02);}
 .lf-group input{width:100%;background:rgba(255,255,255,0.07);border:1.5px solid var(--border);border-radius:9px;padding:12px 14px;color:var(--text);font-family:'Sora',sans-serif;font-size:0.9rem;}
 .lf-group input:focus{outline:none;border-color:var(--blue);}
 
-/* MOBILE SIDEBAR TOGGLE */
+/* TABS */
+.tab-bar{display:flex;gap:4px;margin-bottom:20px;background:var(--bg);border-radius:10px;padding:4px;}
+.tab-btn{padding:8px 16px;border:none;border-radius:7px;background:transparent;color:var(--muted);font-family:'Sora',sans-serif;font-size:0.85rem;font-weight:600;cursor:pointer;transition:all 0.2s;}
+.tab-btn.active{background:var(--blue);color:#fff;}
+
+/* Mobile */
 .mob-toggle{display:none;position:fixed;bottom:20px;right:20px;width:52px;height:52px;border-radius:50%;background:var(--blue);color:#fff;font-size:1.3rem;border:none;cursor:pointer;z-index:200;box-shadow:0 4px 16px rgba(0,98,255,0.4);align-items:center;justify-content:center;}
 
-/* RESPONSIVE */
 @media(max-width:900px){
   body{flex-direction:column;}
   #sidebar{width:100%;flex-direction:row;flex-wrap:wrap;padding:10px 12px;gap:4px;border-right:none;border-bottom:1px solid var(--border);}
@@ -141,7 +166,7 @@ tr:hover td{background:rgba(255,255,255,0.02);}
   .nav-item{padding:8px 12px;border-left:none;border-bottom:3px solid transparent;border-radius:8px;font-size:0.8rem;}
   .nav-item.active{border-left-color:transparent;border-bottom-color:var(--blue);}
   .mob-toggle{display:flex;}
-  .form-row{grid-template-columns:1fr;}
+  .form-row,.form-row.triple{grid-template-columns:1fr;}
   .stat-grid{grid-template-columns:repeat(2,1fr);}
   .card{padding:16px;}
   .topbar{padding:12px 16px;}
@@ -156,13 +181,14 @@ tr:hover td{background:rgba(255,255,255,0.02);}
   .sidebar-logo{display:block;padding:0 20px 20px;}
   .sidebar-bottom{margin-top:auto;padding:16px 20px;border-top:1px solid var(--border);}
   .nav-item{border-radius:0;padding:13px 20px;border-bottom:none;border-left:3px solid transparent;font-size:0.9rem;}
+  .exam-card-meta{gap:8px;}
+  .exam-card-actions{gap:5px;}
 }
 </style>
 </head>
 <body>
 
-<!-- MOBILE SIDEBAR TOGGLE -->
-<button class="mob-toggle" id="mob-toggle" onclick="toggleSidebar()" aria-label="Menu"><i class="fas fa-bars"></i></button>
+<button class="mob-toggle" id="mob-toggle" onclick="toggleSidebar()"><i class="fas fa-bars"></i></button>
 
 <!-- LOGIN OVERLAY -->
 <div id="login-overlay">
@@ -194,10 +220,10 @@ tr:hover td{background:rgba(255,255,255,0.02);}
     <small>Admin Dashboard</small>
   </div>
   <div class="nav-item active" onclick="showPage('dashboard')"><i class="fas fa-chart-line"></i> Dashboard</div>
-  <div class="nav-item" onclick="showPage('exam-control')"><i class="fas fa-calendar-check"></i> Exam Control</div>
+  <div class="nav-item" onclick="showPage('exams')"><i class="fas fa-calendar-check"></i> Exams</div>
   <div class="nav-item" onclick="showPage('question-sets')"><i class="fas fa-database"></i> Question Sets</div>
   <div class="nav-item" onclick="showPage('add-questions')"><i class="fas fa-plus-circle"></i> Add Questions</div>
-  <div class="nav-item" onclick="showPage('results')"><i class="fas fa-trophy"></i> Results & Rankings</div>
+  <div class="nav-item" onclick="showPage('results')"><i class="fas fa-trophy"></i> Results</div>
   <div class="nav-item" onclick="showPage('analysis')"><i class="fas fa-chart-bar"></i> Analysis</div>
   <div class="sidebar-bottom">
     <div class="nav-item" onclick="doLogout()" style="color:var(--red);"><i class="fas fa-sign-out-alt"></i> Logout</div>
@@ -209,7 +235,7 @@ tr:hover td{background:rgba(255,255,255,0.02);}
   <div class="topbar">
     <h2 id="page-title">Dashboard</h2>
     <div class="topbar-right">
-      <span class="online-badge"><i class="fas fa-circle" style="font-size:0.5rem"></i> Live</span>
+      <span id="live-count" class="online-badge" style="display:none;"><i class="fas fa-circle" style="font-size:0.5rem"></i> <span id="live-count-num">0</span> Live</span>
       <span style="font-size:0.82rem;color:var(--muted);">Admin: ceemedicoadmin</span>
     </div>
   </div>
@@ -217,75 +243,35 @@ tr:hover td{background:rgba(255,255,255,0.02);}
 
     <!-- DASHBOARD PAGE -->
     <div class="page active" id="page-dashboard">
-      <div id="dashboard-alert" class="alert alert-success hidden"></div>
-      <div class="exam-status closed" id="current-exam-status">
-        <div class="icon">🔒</div>
-        <div>
-          <div style="font-weight:800;font-size:1rem;">No Active Exam</div>
-          <div style="color:var(--muted);font-size:0.85rem;margin-top:4px;">Configure an exam in Exam Control</div>
-        </div>
-      </div>
       <div class="stat-grid" id="stat-grid">
-        <div class="stat-card"><div class="val" id="stat-participants" style="color:var(--blue)">—</div><small>Total Participants</small></div>
-        <div class="stat-card"><div class="val" id="stat-avg" style="color:var(--green)">—</div><small>Avg Score</small></div>
-        <div class="stat-card"><div class="val" id="stat-top" style="color:var(--yellow)">—</div><small>Top Score</small></div>
+        <div class="stat-card"><div class="val" id="stat-exams" style="color:var(--blue)">—</div><small>Total Exams</small></div>
+        <div class="stat-card"><div class="val" id="stat-live" style="color:var(--green)">—</div><small>Live Now</small></div>
         <div class="stat-card"><div class="val" id="stat-sets" style="color:var(--accent)">—</div><small>Question Sets</small></div>
+        <div class="stat-card"><div class="val" id="stat-total-results" style="color:var(--yellow)">—</div><small>Total Submissions</small></div>
       </div>
       <div class="card">
-        <h3><i class="fas fa-crown"></i> Top 10 Latest Exam</h3>
-        <div id="top10-table"><p style="color:var(--muted);font-size:0.85rem;">No exam data yet.</p></div>
+        <h3><i class="fas fa-broadcast-tower"></i> Active & Upcoming Exams</h3>
+        <div id="dashboard-exams-list"><p style="color:var(--muted);font-size:0.85rem;">Loading...</p></div>
       </div>
     </div>
 
-    <!-- EXAM CONTROL PAGE -->
-    <div class="page" id="page-exam-control">
+    <!-- EXAMS PAGE -->
+    <div class="page" id="page-exams">
       <div id="exam-alert" class="alert alert-success hidden"></div>
-      <div class="card">
-        <h3><i class="fas fa-toggle-on"></i> Exam Status</h3>
-        <div class="toggle-row">
-          <div class="toggle-label">Activate Exam
-            <small>When ON, students can attempt the exam (within the time window)</small>
-          </div>
-          <label class="toggle"><input type="checkbox" id="toggle-active" onchange="saveExamConfig()"><span class="slider"></span></label>
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;">
+        <div>
+          <div style="font-size:1.05rem;font-weight:700;">All Exams</div>
+          <div style="color:var(--muted);font-size:0.82rem;margin-top:3px;">Create and manage multiple exam schedules</div>
         </div>
+        <button class="btn btn-primary" onclick="openExamModal()"><i class="fas fa-plus"></i> New Exam</button>
       </div>
-      <div class="card">
-        <h3><i class="fas fa-clock"></i> Schedule & Settings</h3>
-        <div class="form-row">
-          <div class="field">
-            <label>Exam Start Date & Time</label>
-            <input type="datetime-local" id="exam-start" onchange="saveExamConfig()"/>
-          </div>
-          <div class="field">
-            <label>Exam End Date & Time</label>
-            <input type="datetime-local" id="exam-end" onchange="saveExamConfig()"/>
-          </div>
-        </div>
-        <div class="form-row">
-          <div class="field">
-            <label>Duration (seconds)</label>
-            <input type="number" id="exam-duration" placeholder="10800 = 3 hours" value="10800" onchange="saveExamConfig()"/>
-          </div>
-          <div class="field">
-            <label>Exam Key (unique ID per week)</label>
-            <input type="text" id="exam-key" placeholder="e.g. week_2025_01" onchange="saveExamConfig()"/>
-          </div>
-        </div>
-        <div class="form-row single">
-          <div class="field">
-            <label>Question Set to Use</label>
-            <select id="exam-qset" onchange="saveExamConfig()">
-              <option value="">-- Select Question Set --</option>
-            </select>
-          </div>
-        </div>
-        <button class="btn btn-primary" onclick="saveExamConfig()"><i class="fas fa-save"></i> Save Configuration</button>
-        <button class="btn btn-danger" style="margin-left:10px;" onclick="clearResults()"><i class="fas fa-trash"></i> Clear Results for Current Exam</button>
+      <div class="tab-bar">
+        <button class="tab-btn active" onclick="filterExams('all',this)">All</button>
+        <button class="tab-btn" onclick="filterExams('live',this)">🟢 Live</button>
+        <button class="tab-btn" onclick="filterExams('upcoming',this)">⏰ Upcoming</button>
+        <button class="tab-btn" onclick="filterExams('closed',this)">🔒 Closed</button>
       </div>
-      <div class="card">
-        <h3><i class="fas fa-eye"></i> Live Preview</h3>
-        <div id="config-preview" style="font-family:'JetBrains Mono',monospace;font-size:0.8rem;color:var(--muted);background:var(--bg);padding:14px;border-radius:8px;white-space:pre-wrap;"></div>
-      </div>
+      <div id="exams-list"><p style="color:var(--muted);">Loading...</p></div>
     </div>
 
     <!-- QUESTION SETS PAGE -->
@@ -294,14 +280,8 @@ tr:hover td{background:rgba(255,255,255,0.02);}
       <div class="card">
         <h3><i class="fas fa-plus"></i> Create New Question Set</h3>
         <div class="form-row">
-          <div class="field">
-            <label>Set Name</label>
-            <input type="text" id="new-set-name" placeholder="e.g. CEE Week 1 - Physics+Bio"/>
-          </div>
-          <div class="field">
-            <label>Description</label>
-            <input type="text" id="new-set-desc" placeholder="Optional description"/>
-          </div>
+          <div class="field"><label>Set Name</label><input type="text" id="new-set-name" placeholder="e.g. CEE Week 1 - Physics+Bio"/></div>
+          <div class="field"><label>Description</label><input type="text" id="new-set-desc" placeholder="Optional description"/></div>
         </div>
         <button class="btn btn-primary" onclick="createQuestionSet()"><i class="fas fa-plus"></i> Create Set</button>
       </div>
@@ -316,18 +296,12 @@ tr:hover td{background:rgba(255,255,255,0.02);}
       <div id="q-alert" class="alert alert-success hidden"></div>
       <div class="card">
         <h3><i class="fas fa-arrow-right"></i> Select Target Set</h3>
-        <div class="field">
-          <label>Question Set</label>
-          <select id="target-qset"><option value="">-- Select --</option></select>
-        </div>
+        <div class="field"><label>Question Set</label><select id="target-qset"><option value="">-- Select --</option></select></div>
       </div>
       <div class="card">
         <h3><i class="fas fa-file-import"></i> Import Questions (JSON)</h3>
-        <p style="font-size:0.82rem;color:var(--muted);margin-bottom:14px;">Paste JSON array of questions. Format: <code style="background:var(--bg);padding:2px 6px;border-radius:4px;">[{"question":"...","options":["A","B","C","D"],"correct":0,"explanation":"..."}]</code></p>
-        <div class="field">
-          <label>JSON Array</label>
-          <textarea id="json-import" placeholder='[{"question":"What is...","options":["A","B","C","D"],"correct":0,"explanation":"Because..."}]'></textarea>
-        </div>
+        <p style="font-size:0.82rem;color:var(--muted);margin-bottom:14px;">Paste JSON array. Format: <code style="background:var(--bg);padding:2px 6px;border-radius:4px;">[{"question":"...","options":["A","B","C","D"],"correct":0,"explanation":"..."}]</code></p>
+        <div class="field"><label>JSON Array</label><textarea id="json-import" rows="5" placeholder='[{"question":"What is...","options":["A","B","C","D"],"correct":0,"explanation":"Because..."}]'></textarea></div>
         <button class="btn btn-primary" onclick="importQuestions()"><i class="fas fa-upload"></i> Import</button>
       </div>
       <div class="card">
@@ -342,35 +316,32 @@ tr:hover td{background:rgba(255,255,255,0.02);}
           <div class="field"><label>Option D</label><input type="text" id="sq-d"/></div>
         </div>
         <div class="form-row">
-          <div class="field">
-            <label>Correct Answer</label>
-            <select id="sq-correct">
-              <option value="0">A</option><option value="1">B</option>
-              <option value="2">C</option><option value="3">D</option>
-            </select>
-          </div>
+          <div class="field"><label>Correct Answer</label><select id="sq-correct"><option value="0">A</option><option value="1">B</option><option value="2">C</option><option value="3">D</option></select></div>
           <div class="field"><label>Explanation (optional)</label><input type="text" id="sq-exp"/></div>
         </div>
         <button class="btn btn-success" onclick="addSingleQuestion()"><i class="fas fa-plus"></i> Add Question</button>
       </div>
       <div class="card">
         <h3><i class="fas fa-list-ol"></i> Questions in Selected Set</h3>
-        <div id="q-list-preview"><p style="color:var(--muted)">Select a set to preview questions.</p></div>
+        <div id="q-list-preview"><p style="color:var(--muted)">Select a set above.</p></div>
       </div>
     </div>
 
     <!-- RESULTS PAGE -->
     <div class="page" id="page-results">
       <div class="card">
-        <h3><i class="fas fa-filter"></i> Filter by Exam</h3>
+        <h3><i class="fas fa-filter"></i> Select Exam</h3>
         <div class="form-row">
-          <div class="field"><label>Exam Key</label><select id="results-exam-key"><option value="">-- Select Exam --</option></select></div>
-          <div class="field" style="display:flex;align-items:flex-end;"><button class="btn btn-primary" onclick="loadResults()"><i class="fas fa-search"></i> Load Results</button></div>
+          <div class="field"><label>Exam</label><select id="results-exam-key"><option value="">-- Select Exam --</option></select></div>
+          <div class="field" style="display:flex;align-items:flex-end;gap:10px;">
+            <button class="btn btn-primary" onclick="loadResults()"><i class="fas fa-search"></i> Load</button>
+            <button class="btn btn-danger" onclick="clearResultsForSelected()"><i class="fas fa-trash"></i> Clear</button>
+          </div>
         </div>
       </div>
       <div class="card">
         <h3><i class="fas fa-medal"></i> Full Leaderboard</h3>
-        <div id="full-results-table"><p style="color:var(--muted);">Select an exam and click Load Results.</p></div>
+        <div id="full-results-table"><p style="color:var(--muted);">Select an exam and click Load.</p></div>
       </div>
     </div>
 
@@ -387,8 +358,42 @@ tr:hover td{background:rgba(255,255,255,0.02);}
       <div id="analysis-content"></div>
     </div>
 
-  </div><!-- /content -->
-</div><!-- /main -->
+  </div>
+</div>
+
+<!-- EXAM MODAL -->
+<div id="exam-modal" class="modal-overlay hidden">
+  <div class="modal">
+    <button class="modal-close" onclick="closeExamModal()"><i class="fas fa-times"></i></button>
+    <h2 id="modal-title">Create New Exam</h2>
+    <input type="hidden" id="modal-exam-id"/>
+    <div id="modal-alert" class="alert alert-error hidden"></div>
+    <div class="form-row single"><div class="field"><label>Exam Title</label><input type="text" id="m-title" placeholder="e.g. CEE Mock Test - Week 3"/></div></div>
+    <div class="form-row single"><div class="field"><label>Exam Key (unique ID, no spaces)</label><input type="text" id="m-key" placeholder="e.g. week_2025_03"/></div></div>
+    <div class="form-row">
+      <div class="field"><label>Start Date & Time</label><input type="datetime-local" id="m-start"/></div>
+      <div class="field"><label>End Date & Time</label><input type="datetime-local" id="m-end"/></div>
+    </div>
+    <div class="form-row">
+      <div class="field"><label>Duration (seconds)</label><input type="number" id="m-duration" value="10800" placeholder="10800 = 3 hrs"/></div>
+      <div class="field"><label>Question Set</label><select id="m-qset"><option value="">-- Select --</option></select></div>
+    </div>
+    <div class="form-row single">
+      <div class="field"><label>Description (optional)</label><input type="text" id="m-desc" placeholder="Short description or instructions"/></div>
+    </div>
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:20px;padding:14px;background:var(--bg);border-radius:9px;border:1px solid var(--border);">
+      <div>
+        <div style="font-weight:700;font-size:0.9rem;">Activate Exam</div>
+        <div style="font-size:0.78rem;color:var(--muted);margin-top:2px;">Students can attempt when active & within time window</div>
+      </div>
+      <label class="toggle"><input type="checkbox" id="m-active"><span class="slider"></span></label>
+    </div>
+    <div style="display:flex;gap:10px;justify-content:flex-end;">
+      <button class="btn btn-danger" onclick="closeExamModal()">Cancel</button>
+      <button class="btn btn-primary" onclick="saveExam()"><i class="fas fa-save"></i> Save Exam</button>
+    </div>
+  </div>
+</div>
 
 <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-database-compat.js"></script>
@@ -400,23 +405,11 @@ const db=firebase.database();
 const ADMIN_USER='admin';
 const ADMIN_PASS='ceemedicoadmin2025';
 
-function toggleSidebar(){
-  const sb=document.getElementById('sidebar');
-  sb.classList.toggle('visible');
-  const icon=document.getElementById('mob-toggle').querySelector('i');
-  icon.className=sb.classList.contains('visible')?'fas fa-times':'fas fa-bars';
-}
+let examSets=[];
+let allExams=[];
+let currentFilter='all';
 
-// Close sidebar when nav item clicked on mobile
-document.querySelectorAll('.nav-item').forEach(item=>{
-  item.addEventListener('click',()=>{
-    if(window.innerWidth<=480){
-      document.getElementById('sidebar').classList.remove('visible');
-      document.getElementById('mob-toggle').querySelector('i').className='fas fa-bars';
-    }
-  });
-});
-
+// ──────── AUTH ────────
 function doLogin(){
   const u=document.getElementById('admin-user').value.trim();
   const p=document.getElementById('admin-pass').value;
@@ -426,19 +419,12 @@ function doLogin(){
     document.getElementById('sidebar').style.display='flex';
     document.getElementById('main').style.display='block';
     initAdmin();
-  } else {
+  }else{
     const el=document.getElementById('login-err');
-    el.textContent='Invalid credentials.';
-    el.classList.remove('hidden');
+    el.textContent='Invalid credentials.';el.classList.remove('hidden');
   }
 }
-
-function doLogout(){
-  sessionStorage.removeItem('cee_admin');
-  location.reload();
-}
-
-// Auto login if session exists
+function doLogout(){sessionStorage.removeItem('cee_admin');location.reload();}
 if(sessionStorage.getItem('cee_admin')==='1'){
   document.getElementById('login-overlay').style.display='none';
   document.getElementById('sidebar').style.display='flex';
@@ -446,36 +432,198 @@ if(sessionStorage.getItem('cee_admin')==='1'){
   initAdmin();
 }
 
-function showPage(id, el){
+// ──────── NAV ────────
+function toggleSidebar(){
+  const sb=document.getElementById('sidebar');sb.classList.toggle('visible');
+  const icon=document.getElementById('mob-toggle').querySelector('i');
+  icon.className=sb.classList.contains('visible')?'fas fa-times':'fas fa-bars';
+}
+document.querySelectorAll('.nav-item').forEach(item=>item.addEventListener('click',()=>{
+  if(window.innerWidth<=480){document.getElementById('sidebar').classList.remove('visible');document.getElementById('mob-toggle').querySelector('i').className='fas fa-bars';}
+}));
+function showPage(id){
   document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
   document.getElementById('page-'+id).classList.add('active');
   document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('active'));
-  const target = el || (typeof event !== 'undefined' && event.currentTarget);
-  if(target) target.classList.add('active');
-  const titles={dashboard:'Dashboard','exam-control':'Exam Control','question-sets':'Question Sets','add-questions':'Add Questions',results:'Results & Rankings',analysis:'Analysis'};
+  const titles={dashboard:'Dashboard',exams:'Exams','question-sets':'Question Sets','add-questions':'Add Questions',results:'Results & Rankings',analysis:'Analysis'};
   document.getElementById('page-title').textContent=titles[id]||id;
+  // find matching nav item
+  document.querySelectorAll('.nav-item').forEach(n=>{
+    if(n.getAttribute('onclick')&&n.getAttribute('onclick').includes(`'${id}'`))n.classList.add('active');
+  });
 }
 
-let examSets=[];
-let examKeys=[];
-
+// ──────── INIT ────────
 async function initAdmin(){
-  await loadExamConfig();
   await loadQuestionSets();
+  await loadAllExams();
   await loadDashboard();
-  await loadExamKeys();
+  await loadResultsDropdowns();
 }
 
-async function loadExamConfig(){
-  const snap=await db.ref('exam_config').once('value');
-  const cfg=snap.val()||{};
-  document.getElementById('toggle-active').checked=!!cfg.isActive;
-  if(cfg.startTime) document.getElementById('exam-start').value=toLocalISO(cfg.startTime);
-  if(cfg.endTime) document.getElementById('exam-end').value=toLocalISO(cfg.endTime);
-  if(cfg.durationSeconds) document.getElementById('exam-duration').value=cfg.durationSeconds;
-  if(cfg.examKey) document.getElementById('exam-key').value=cfg.examKey;
-  updateConfigPreview(cfg);
-  updateDashboardStatus(cfg);
+// ──────── EXAMS ────────
+async function loadAllExams(){
+  const snap=await db.ref('exams').once('value');
+  allExams=[];
+  if(snap.exists()){
+    snap.forEach(child=>{allExams.push({id:child.key,...child.val()});});
+  }
+  // fallback: also load old single exam_config
+  renderExamsList();
+  updateLiveBadge();
+}
+
+function getExamStatus(exam){
+  const now=Date.now();
+  if(!exam.isActive) return 'closed';
+  if(exam.startTime&&now<exam.startTime) return 'upcoming';
+  if(exam.startTime&&exam.endTime&&now>=exam.startTime&&now<=exam.endTime) return 'live';
+  if(exam.endTime&&now>exam.endTime) return 'closed';
+  return 'closed';
+}
+
+function updateLiveBadge(){
+  const liveExams=allExams.filter(e=>getExamStatus(e)==='live');
+  const badge=document.getElementById('live-count');
+  if(liveExams.length>0){badge.style.display='flex';document.getElementById('live-count-num').textContent=liveExams.length;}
+  else badge.style.display='none';
+}
+
+function filterExams(filter, btn){
+  currentFilter=filter;
+  document.querySelectorAll('.tab-btn').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+  renderExamsList();
+}
+
+function renderExamsList(){
+  const container=document.getElementById('exams-list');
+  if(!container)return;
+  let filtered=allExams;
+  if(currentFilter!=='all') filtered=allExams.filter(e=>getExamStatus(e)===currentFilter);
+  if(!filtered.length){container.innerHTML=`<div class="card"><p style="color:var(--muted);">No ${currentFilter==='all'?'':currentFilter} exams found. <button class="btn btn-primary btn-sm" onclick="openExamModal()"><i class="fas fa-plus"></i> Create One</button></p></div>`;return;}
+  // Sort: live first, then upcoming, then closed
+  const order={live:0,upcoming:1,closed:2};
+  filtered.sort((a,b)=>order[getExamStatus(a)]-order[getExamStatus(b)]||(a.startTime||0)-(b.startTime||0));
+  container.innerHTML=filtered.map(exam=>{
+    const status=getExamStatus(exam);
+    const statusBadge=status==='live'?'<span class="badge badge-green">🟢 LIVE</span>':status==='upcoming'?'<span class="badge badge-yellow">⏰ Upcoming</span>':'<span class="badge badge-red">🔒 Closed</span>';
+    const set=examSets.find(s=>s.id===exam.questionSetId);
+    const dur=exam.durationSeconds?`${Math.round(exam.durationSeconds/60)} min`:'—';
+    return `<div class="exam-card">
+      <div class="exam-card-header">
+        <div><div class="exam-card-title">${exam.title||exam.examKey||exam.id}</div><div style="font-size:0.78rem;color:var(--muted);margin-top:3px;">Key: <code>${exam.examKey||exam.id}</code></div></div>
+        ${statusBadge}
+      </div>
+      <div class="exam-card-meta">
+        <span><i class="fas fa-play" style="color:var(--green)"></i>${exam.startTime?new Date(exam.startTime).toLocaleString():'No start set'}</span>
+        <span><i class="fas fa-stop" style="color:var(--red)"></i>${exam.endTime?new Date(exam.endTime).toLocaleString():'No end set'}</span>
+        <span><i class="fas fa-clock" style="color:var(--blue)"></i>${dur}</span>
+        <span><i class="fas fa-database" style="color:var(--accent)"></i>${set?set.name+' ('+set.qCount+' Qs)':'No set linked'}</span>
+      </div>
+      ${exam.description?`<div style="font-size:0.83rem;color:var(--muted);margin-bottom:12px;">${exam.description}</div>`:''}
+      <div class="exam-card-actions">
+        <button class="btn btn-sm btn-warning" onclick="openExamModal('${exam.id}')"><i class="fas fa-edit"></i> Edit</button>
+        ${status==='closed'?`<button class="btn btn-sm btn-success" onclick="quickToggle('${exam.id}',true)"><i class="fas fa-power-off"></i> Activate</button>`:`<button class="btn btn-sm btn-danger" onclick="quickToggle('${exam.id}',false)"><i class="fas fa-power-off"></i> Deactivate</button>`}
+        <button class="btn btn-sm btn-purple" onclick="viewExamResults('${exam.examKey||exam.id}')"><i class="fas fa-trophy"></i> Results</button>
+        <button class="btn btn-sm btn-danger" onclick="deleteExam('${exam.id}')"><i class="fas fa-trash"></i></button>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+async function quickToggle(examId,val){
+  await db.ref(`exams/${examId}/isActive`).set(val);
+  showAlert('exam-alert',`✅ Exam ${val?'activated':'deactivated'}.`);
+  await loadAllExams();
+  await loadDashboard();
+}
+
+async function deleteExam(examId){
+  if(!confirm('Delete this exam? This does NOT delete results.'))return;
+  await db.ref(`exams/${examId}`).remove();
+  showAlert('exam-alert','✅ Exam deleted.');
+  await loadAllExams();
+  await loadDashboard();
+}
+
+// ──────── MODAL ────────
+function openExamModal(examId){
+  const modal=document.getElementById('exam-modal');
+  modal.classList.remove('hidden');
+  document.getElementById('modal-exam-id').value=examId||'';
+  document.getElementById('modal-alert').classList.add('hidden');
+  // populate qset dropdown
+  const opts=`<option value="">-- Select --</option>`+examSets.map(s=>`<option value="${s.id}">${s.name} (${s.qCount} Qs)</option>`).join('');
+  document.getElementById('m-qset').innerHTML=opts;
+
+  if(examId){
+    const exam=allExams.find(e=>e.id===examId);
+    if(!exam)return;
+    document.getElementById('modal-title').textContent='Edit Exam';
+    document.getElementById('m-title').value=exam.title||'';
+    document.getElementById('m-key').value=exam.examKey||'';
+    document.getElementById('m-key').disabled=true; // key shouldn't change
+    document.getElementById('m-start').value=exam.startTime?toLocalISO(exam.startTime):'';
+    document.getElementById('m-end').value=exam.endTime?toLocalISO(exam.endTime):'';
+    document.getElementById('m-duration').value=exam.durationSeconds||10800;
+    document.getElementById('m-qset').value=exam.questionSetId||'';
+    document.getElementById('m-desc').value=exam.description||'';
+    document.getElementById('m-active').checked=!!exam.isActive;
+  }else{
+    document.getElementById('modal-title').textContent='Create New Exam';
+    document.getElementById('m-title').value='';
+    document.getElementById('m-key').value='';
+    document.getElementById('m-key').disabled=false;
+    document.getElementById('m-start').value='';
+    document.getElementById('m-end').value='';
+    document.getElementById('m-duration').value=10800;
+    document.getElementById('m-qset').value='';
+    document.getElementById('m-desc').value='';
+    document.getElementById('m-active').checked=false;
+  }
+}
+function closeExamModal(){document.getElementById('exam-modal').classList.add('hidden');}
+
+async function saveExam(){
+  const examId=document.getElementById('modal-exam-id').value;
+  const title=document.getElementById('m-title').value.trim();
+  const key=document.getElementById('m-key').value.trim().replace(/\s+/g,'_');
+  if(!title){showAlert('modal-alert','Exam title is required.','error');document.getElementById('modal-alert').classList.remove('hidden');return;}
+  if(!key&&!examId){showAlert2('modal-alert','Exam key is required.','error');return;}
+  const startVal=document.getElementById('m-start').value;
+  const endVal=document.getElementById('m-end').value;
+  const data={
+    title,
+    examKey: examId?(allExams.find(e=>e.id===examId)?.examKey||key):key,
+    startTime:startVal?new Date(startVal).getTime():null,
+    endTime:endVal?new Date(endVal).getTime():null,
+    durationSeconds:parseInt(document.getElementById('m-duration').value)||10800,
+    questionSetId:document.getElementById('m-qset').value,
+    description:document.getElementById('m-desc').value.trim(),
+    isActive:document.getElementById('m-active').checked,
+    updatedAt:Date.now()
+  };
+  if(!examId){
+    // check key unique
+    const existing=allExams.find(e=>e.examKey===key);
+    if(existing){showAlert2('modal-alert','Exam key already exists. Choose another.','error');return;}
+    data.createdAt=Date.now();
+    const newRef=db.ref('exams').push();
+    await newRef.set(data);
+  }else{
+    await db.ref(`exams/${examId}`).update(data);
+  }
+  closeExamModal();
+  showAlert('exam-alert',`✅ Exam "${title}" saved!`);
+  await loadAllExams();
+  await loadDashboard();
+  await loadResultsDropdowns();
+}
+
+function showAlert2(id,msg,type='success'){
+  const el=document.getElementById(id);if(!el)return;
+  el.className=`alert alert-${type}`;el.textContent=msg;el.classList.remove('hidden');
 }
 
 function toLocalISO(ts){
@@ -483,57 +631,54 @@ function toLocalISO(ts){
   return new Date(d.getTime()-d.getTimezoneOffset()*60000).toISOString().slice(0,16);
 }
 
-async function saveExamConfig(){
-  const startVal=document.getElementById('exam-start').value;
-  const endVal=document.getElementById('exam-end').value;
-  const cfg={
-    isActive:document.getElementById('toggle-active').checked,
-    startTime:startVal?new Date(startVal).getTime():null,
-    endTime:endVal?new Date(endVal).getTime():null,
-    durationSeconds:parseInt(document.getElementById('exam-duration').value)||10800,
-    examKey:document.getElementById('exam-key').value.trim()||'default',
-    questionSetId:document.getElementById('exam-qset').value
-  };
-  await db.ref('exam_config').set(cfg);
-  updateConfigPreview(cfg);
-  updateDashboardStatus(cfg);
-  showAlert('exam-alert','✅ Exam configuration saved!');
-}
+// ──────── DASHBOARD ────────
+async function loadDashboard(){
+  document.getElementById('stat-exams').textContent=allExams.length;
+  const live=allExams.filter(e=>getExamStatus(e)==='live').length;
+  document.getElementById('stat-live').textContent=live;
+  document.getElementById('stat-sets').textContent=examSets.length;
 
-function updateConfigPreview(cfg){
-  document.getElementById('config-preview').textContent=JSON.stringify(cfg,null,2);
-}
-
-function updateDashboardStatus(cfg){
-  const now=Date.now();
-  const el=document.getElementById('current-exam-status');
-  if(!el)return;
-  if(cfg.isActive&&cfg.startTime&&cfg.endTime&&now>=cfg.startTime&&now<=cfg.endTime){
-    el.className='exam-status live';
-    el.innerHTML=`<div class="icon">🟢</div><div><div style="font-weight:800;font-size:1rem;color:var(--green)">EXAM IS LIVE</div><div style="color:var(--muted);font-size:0.85rem;margin-top:4px;">Key: ${cfg.examKey} | Ends: ${new Date(cfg.endTime).toLocaleString()}</div></div>`;
-  }else if(cfg.isActive&&cfg.startTime&&now<cfg.startTime){
-    el.className='exam-status upcoming';
-    el.innerHTML=`<div class="icon">⏰</div><div><div style="font-weight:800;font-size:1rem;color:#c8860a">UPCOMING</div><div style="color:var(--muted);font-size:0.85rem;margin-top:4px;">Starts: ${new Date(cfg.startTime).toLocaleString()}</div></div>`;
+  // live exams list
+  const container=document.getElementById('dashboard-exams-list');
+  const active=allExams.filter(e=>getExamStatus(e)!=='closed');
+  if(!active.length){container.innerHTML='<p style="color:var(--muted);font-size:0.85rem;">No active or upcoming exams. <a href="#" onclick="showPage(\'exams\')" style="color:var(--blue);">Create one →</a></p>';
   }else{
-    el.className='exam-status closed';
-    el.innerHTML=`<div class="icon">🔒</div><div><div style="font-weight:800;font-size:1rem;">No Active Exam</div><div style="color:var(--muted);font-size:0.85rem;margin-top:4px;">Configure an exam in Exam Control</div></div>`;
+    container.innerHTML=active.map(e=>{
+      const status=getExamStatus(e);
+      const color=status==='live'?'var(--green)':'#c8860a';
+      const icon=status==='live'?'🟢':'⏰';
+      return `<div style="display:flex;align-items:center;justify-content:space-between;padding:14px;background:rgba(255,255,255,0.03);border:1px solid var(--border);border-radius:10px;margin-bottom:10px;">
+        <div>
+          <div style="font-weight:700;">${icon} ${e.title||e.examKey}</div>
+          <div style="font-size:0.78rem;color:var(--muted);margin-top:4px;">${e.startTime?new Date(e.startTime).toLocaleString():''} → ${e.endTime?new Date(e.endTime).toLocaleString():''}</div>
+        </div>
+        <button class="btn btn-sm btn-primary" onclick="viewExamResults('${e.examKey||e.id}')"><i class="fas fa-chart-bar"></i> Results</button>
+      </div>`;
+    }).join('');
   }
+
+  // total submissions
+  let total=0;
+  for(const exam of allExams){
+    const key=exam.examKey||exam.id;
+    const snap=await db.ref(`results/${key}`).once('value');
+    if(snap.exists())total+=Object.keys(snap.val()).length;
+  }
+  document.getElementById('stat-total-results').textContent=total;
 }
 
+// ──────── QUESTION SETS ────────
 async function loadQuestionSets(){
   const snap=await db.ref('question_sets').once('value');
   examSets=[];
-  if(snap.exists()){
-    snap.forEach(child=>{
-      examSets.push({id:child.key,...child.val(),qCount:child.val().questions?Object.keys(child.val().questions).length:0});
-    });
-  }
+  if(snap.exists()){snap.forEach(child=>{examSets.push({id:child.key,...child.val(),qCount:child.val().questions?Object.keys(child.val().questions).length:0});});}
   renderSetsList();
   populateSetDropdowns();
 }
 
 function renderSetsList(){
   const container=document.getElementById('sets-list');
+  if(!container)return;
   if(!examSets.length){container.innerHTML='<p style="color:var(--muted)">No sets yet.</p>';return;}
   container.innerHTML=examSets.map(s=>`
     <div class="qset-item">
@@ -542,7 +687,6 @@ function renderSetsList(){
         <div class="qset-meta">${s.description||''} • <strong>${s.qCount}</strong> questions • ID: <code>${s.id}</code></div>
       </div>
       <div style="display:flex;gap:8px;">
-        <button class="btn btn-sm btn-success" onclick="selectSetForExam('${s.id}')"><i class="fas fa-check"></i> Use in Exam</button>
         <button class="btn btn-sm btn-danger" onclick="deleteSet('${s.id}')"><i class="fas fa-trash"></i></button>
       </div>
     </div>`).join('');
@@ -550,18 +694,7 @@ function renderSetsList(){
 
 function populateSetDropdowns(){
   const opts=`<option value="">-- Select --</option>`+examSets.map(s=>`<option value="${s.id}">${s.name} (${s.qCount} Qs)</option>`).join('');
-  document.getElementById('exam-qset').innerHTML=opts;
   document.getElementById('target-qset').innerHTML=opts;
-}
-
-async function selectSetForExam(id){
-  document.getElementById('exam-qset').value=id;
-  // Switch to exam-control page
-  document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
-  document.getElementById('page-exam-control').classList.add('active');
-  document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('active'));
-  document.getElementById('page-title').textContent='Exam Control';
-  await saveExamConfig();
 }
 
 async function createQuestionSet(){
@@ -569,17 +702,16 @@ async function createQuestionSet(){
   if(!name){showAlert('sets-alert','Please enter a set name.','error');return;}
   const id='set_'+Date.now();
   await db.ref(`question_sets/${id}`).set({name,description:document.getElementById('new-set-desc').value.trim(),createdAt:Date.now(),questions:[]});
-  document.getElementById('new-set-name').value='';
-  document.getElementById('new-set-desc').value='';
-  showAlert('sets-alert',`✅ Question set "${name}" created!`);
-  loadQuestionSets();
+  document.getElementById('new-set-name').value='';document.getElementById('new-set-desc').value='';
+  showAlert('sets-alert',`✅ "${name}" created!`);
+  await loadQuestionSets();
 }
 
 async function deleteSet(id){
-  if(!confirm('Delete this question set and all its questions?'))return;
+  if(!confirm('Delete this question set?'))return;
   await db.ref(`question_sets/${id}`).remove();
   showAlert('sets-alert','✅ Set deleted.');
-  loadQuestionSets();
+  await loadQuestionSets();
 }
 
 document.getElementById('target-qset').addEventListener('change',function(){loadQPreview(this.value);});
@@ -591,7 +723,7 @@ async function loadQPreview(setId){
   if(!qs){document.getElementById('q-list-preview').innerHTML='<p style="color:var(--muted)">No questions yet.</p>';return;}
   const arr=Array.isArray(qs)?qs:Object.values(qs);
   document.getElementById('q-list-preview').innerHTML=`
-    <p style="color:var(--muted);font-size:0.82rem;margin-bottom:12px;">${arr.length} questions in this set</p>
+    <p style="color:var(--muted);font-size:0.82rem;margin-bottom:12px;">${arr.length} questions total</p>
     <div style="max-height:400px;overflow-y:auto;">
     ${arr.slice(0,50).map((q,i)=>`<div style="padding:10px;border:1px solid var(--border);border-radius:8px;margin-bottom:8px;font-size:0.85rem;"><strong>Q${i+1}:</strong> ${q.question}</div>`).join('')}
     ${arr.length>50?`<p style="color:var(--muted);font-size:0.8rem;margin-top:10px;">...and ${arr.length-50} more</p>`:''}
@@ -602,11 +734,8 @@ async function importQuestions(){
   const setId=document.getElementById('target-qset').value;
   if(!setId){showAlert('q-alert','Select a question set first.','error');return;}
   let json;
-  try{json=JSON.parse(document.getElementById('json-import').value);}
-  catch(e){showAlert('q-alert','Invalid JSON. Check format.','error');return;}
+  try{json=JSON.parse(document.getElementById('json-import').value);}catch(e){showAlert('q-alert','Invalid JSON.','error');return;}
   if(!Array.isArray(json)){showAlert('q-alert','JSON must be an array.','error');return;}
-  
-  // Get current questions
   const snap=await db.ref(`question_sets/${setId}/questions`).once('value');
   let existing=[];
   if(snap.exists()){const v=snap.val();existing=Array.isArray(v)?v:Object.values(v);}
@@ -614,8 +743,7 @@ async function importQuestions(){
   await db.ref(`question_sets/${setId}/questions`).set(merged);
   showAlert('q-alert',`✅ Imported ${json.length} questions! Total: ${merged.length}`);
   document.getElementById('json-import').value='';
-  loadQuestionSets();
-  loadQPreview(setId);
+  await loadQuestionSets();loadQPreview(setId);
 }
 
 async function addSingleQuestion(){
@@ -627,7 +755,7 @@ async function addSingleQuestion(){
     correct:parseInt(document.getElementById('sq-correct').value),
     explanation:document.getElementById('sq-exp').value.trim()
   };
-  if(!q.question||q.options.some(o=>!o)){showAlert('q-alert','Fill in all question fields.','error');return;}
+  if(!q.question||q.options.some(o=>!o)){showAlert('q-alert','Fill in all fields.','error');return;}
   const snap=await db.ref(`question_sets/${setId}/questions`).once('value');
   let existing=[];
   if(snap.exists()){const v=snap.val();existing=Array.isArray(v)?v:Object.values(v);}
@@ -635,36 +763,20 @@ async function addSingleQuestion(){
   await db.ref(`question_sets/${setId}/questions`).set(existing);
   showAlert('q-alert','✅ Question added!');
   ['sq-text','sq-a','sq-b','sq-c','sq-d','sq-exp'].forEach(id=>document.getElementById(id).value='');
-  loadQuestionSets();
-  loadQPreview(setId);
+  await loadQuestionSets();loadQPreview(setId);
 }
 
-async function loadDashboard(){
-  // Count sets
-  document.getElementById('stat-sets').textContent=examSets.length;
-  // Load latest exam results
-  const cfgSnap=await db.ref('exam_config').once('value');
-  const cfg=cfgSnap.val()||{};
-  if(!cfg.examKey)return;
-  const snap=await db.ref(`results/${cfg.examKey}`).once('value');
-  if(!snap.exists()){document.getElementById('stat-participants').textContent='0';return;}
-  const all=Object.values(snap.val());
-  document.getElementById('stat-participants').textContent=all.length;
-  const avg=(all.reduce((s,r)=>s+r.score,0)/all.length).toFixed(2);
-  const top=Math.max(...all.map(r=>r.score)).toFixed(2);
-  document.getElementById('stat-avg').textContent=avg;
-  document.getElementById('stat-top').textContent=top;
-  all.sort((a,b)=>b.score-a.score||a.timestamp-b.timestamp);
-  const rows=all.slice(0,10).map((r,i)=>`<tr><td>#${i+1}</td><td>${r.name}</td><td style="font-family:'JetBrains Mono',monospace;font-weight:700">${r.score.toFixed(2)}</td><td>${r.percentage}%</td><td>${r.correct}/${r.total}</td><td style="color:var(--muted);font-size:0.78rem">${new Date(r.timestamp).toLocaleString()}</td></tr>`).join('');
-  document.getElementById('top10-table').innerHTML=`<div class="table-wrap"><table><thead><tr><th>Rank</th><th>Name</th><th>Score</th><th>%</th><th>Correct</th><th>Submitted</th></tr></thead><tbody>${rows}</tbody></table></div>`;
-}
-
-async function loadExamKeys(){
-  const snap=await db.ref('results').once('value');
-  examKeys=snap.exists()?Object.keys(snap.val()):[];
-  const opts=`<option value="">-- Select --</option>`+examKeys.map(k=>`<option value="${k}">${k}</option>`).join('');
+// ──────── RESULTS ────────
+async function loadResultsDropdowns(){
+  const opts=`<option value="">-- Select Exam --</option>`+allExams.map(e=>`<option value="${e.examKey||e.id}">${e.title||e.examKey} (${getExamStatus(e)})</option>`).join('');
   document.getElementById('results-exam-key').innerHTML=opts;
   document.getElementById('analysis-exam-key').innerHTML=opts;
+}
+
+function viewExamResults(key){
+  document.getElementById('results-exam-key').value=key;
+  showPage('results');
+  loadResults();
 }
 
 async function loadResults(){
@@ -673,7 +785,15 @@ async function loadResults(){
   const snap=await db.ref(`results/${key}`).once('value');
   if(!snap.exists()){document.getElementById('full-results-table').innerHTML='<p style="color:var(--muted)">No results for this exam.</p>';return;}
   const all=Object.values(snap.val()).sort((a,b)=>b.score-a.score||a.timestamp-b.timestamp);
-  const rows=all.map((r,i)=>`<tr><td>#${i+1}</td><td>${r.name}</td><td>${r.email||'—'}</td><td style="font-family:'JetBrains Mono',monospace;font-weight:700">${r.score.toFixed(2)}</td><td>${r.percentage}%</td><td style="color:var(--green)">${r.correct}</td><td style="color:var(--red)">${r.wrong}</td><td style="color:var(--muted)">${r.unattempted}</td><td style="color:var(--muted);font-size:0.78rem">${new Date(r.timestamp).toLocaleString()}</td></tr>`).join('');
+  const rows=all.map((r,i)=>`<tr>
+    <td>#${i+1}</td><td>${r.name}</td><td>${r.email||'—'}</td>
+    <td style="font-family:'JetBrains Mono',monospace;font-weight:700">${typeof r.score==='number'?r.score.toFixed(2):r.score}</td>
+    <td>${r.percentage}%</td>
+    <td style="color:var(--green)">${r.correct}</td>
+    <td style="color:var(--red)">${r.wrong}</td>
+    <td style="color:var(--muted)">${r.unattempted??'—'}</td>
+    <td style="color:var(--muted);font-size:0.78rem">${new Date(r.timestamp).toLocaleString()}</td>
+  </tr>`).join('');
   document.getElementById('full-results-table').innerHTML=`
     <p style="color:var(--muted);margin-bottom:12px;">${all.length} participants</p>
     <div class="table-wrap"><table>
@@ -682,6 +802,15 @@ async function loadResults(){
     </table></div>`;
 }
 
+async function clearResultsForSelected(){
+  const key=document.getElementById('results-exam-key').value;
+  if(!key){alert('Select an exam first.');return;}
+  if(!confirm(`Delete ALL results for "${key}"?`))return;
+  await db.ref(`results/${key}`).remove();
+  document.getElementById('full-results-table').innerHTML='<p style="color:var(--muted)">Results cleared.</p>';
+}
+
+// ──────── ANALYSIS ────────
 async function loadAnalysis(){
   const key=document.getElementById('analysis-exam-key').value;
   if(!key)return;
@@ -697,52 +826,43 @@ async function loadAnalysis(){
   const pass60=all.filter(r=>r.percentage>=60&&r.percentage<80).length;
   const pass40=all.filter(r=>r.percentage>=40&&r.percentage<60).length;
   const fail=all.filter(r=>r.percentage<40).length;
+  const exam=allExams.find(e=>(e.examKey||e.id)===key);
   document.getElementById('analysis-content').innerHTML=`
+    ${exam?`<div class="card" style="margin-bottom:12px;"><h3><i class="fas fa-info-circle"></i> ${exam.title||exam.examKey}</h3><div style="font-size:0.82rem;color:var(--muted);">${exam.startTime?new Date(exam.startTime).toLocaleDateString():''} — ${exam.description||''}</div></div>`:''}
     <div class="stat-grid">
       <div class="stat-card"><div class="val" style="color:var(--blue)">${n}</div><small>Participants</small></div>
       <div class="stat-card"><div class="val" style="color:var(--green)">${avg}</div><small>Average Score</small></div>
-      <div class="stat-card"><div class="val" style="color:var(--yellow)">${top}</div><small>Highest Score</small></div>
-      <div class="stat-card"><div class="val" style="color:var(--red)">${bot}</div><small>Lowest Score</small></div>
+      <div class="stat-card"><div class="val" style="color:var(--yellow)">${top}</div><small>Highest</small></div>
+      <div class="stat-card"><div class="val" style="color:var(--red)">${bot}</div><small>Lowest</small></div>
     </div>
     <div class="card">
       <h3><i class="fas fa-chart-pie"></i> Score Distribution</h3>
       <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:12px;">
         <div style="text-align:center;padding:16px;background:rgba(0,201,122,0.1);border-radius:10px;border:1px solid rgba(0,201,122,0.25);">
-          <div style="font-size:2rem;font-weight:800;color:var(--green)">${pass80}</div>
-          <small style="color:var(--muted)">≥80% (Excellent)</small>
+          <div style="font-size:2rem;font-weight:800;color:var(--green)">${pass80}</div><small style="color:var(--muted)">≥80% Excellent</small>
         </div>
         <div style="text-align:center;padding:16px;background:rgba(0,98,255,0.1);border-radius:10px;border:1px solid rgba(0,98,255,0.25);">
-          <div style="font-size:2rem;font-weight:800;color:var(--blue)">${pass60}</div>
-          <small style="color:var(--muted)">60–79% (Good)</small>
+          <div style="font-size:2rem;font-weight:800;color:var(--blue)">${pass60}</div><small style="color:var(--muted)">60–79% Good</small>
         </div>
         <div style="text-align:center;padding:16px;background:rgba(255,215,0,0.1);border-radius:10px;border:1px solid rgba(255,215,0,0.25);">
-          <div style="font-size:2rem;font-weight:800;color:#c8860a">${pass40}</div>
-          <small style="color:var(--muted)">40–59% (Average)</small>
+          <div style="font-size:2rem;font-weight:800;color:#c8860a">${pass40}</div><small style="color:var(--muted)">40–59% Average</small>
         </div>
         <div style="text-align:center;padding:16px;background:rgba(255,59,92,0.1);border-radius:10px;border:1px solid rgba(255,59,92,0.25);">
-          <div style="font-size:2rem;font-weight:800;color:var(--red)">${fail}</div>
-          <small style="color:var(--muted)">Below 40%</small>
+          <div style="font-size:2rem;font-weight:800;color:var(--red)">${fail}</div><small style="color:var(--muted)">Below 40%</small>
         </div>
       </div>
     </div>`;
 }
 
-async function clearResults(){
-  const key=document.getElementById('exam-key').value.trim();
-  if(!key){showAlert('exam-alert','Set an exam key first.','error');return;}
-  if(!confirm(`Delete ALL results for exam "${key}"? This cannot be undone.`))return;
-  await db.ref(`results/${key}`).remove();
-  showAlert('exam-alert',`✅ Results for "${key}" cleared.`);
-}
-
+// ──────── UTILS ────────
 function showAlert(id,msg,type='success'){
-  const el=document.getElementById(id);
-  if(!el)return;
-  el.className=`alert alert-${type}`;
-  el.textContent=msg;
-  el.classList.remove('hidden');
+  const el=document.getElementById(id);if(!el)return;
+  el.className=`alert alert-${type}`;el.textContent=msg;el.classList.remove('hidden');
   setTimeout(()=>el.classList.add('hidden'),4000);
 }
+
+// Close modal on overlay click
+document.getElementById('exam-modal').addEventListener('click',function(e){if(e.target===this)closeExamModal();});
 </script>
 </body>
 </html>
