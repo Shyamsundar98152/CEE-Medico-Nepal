@@ -1,0 +1,357 @@
+<!DOCTYPE html>
+<html lang="en" class="scroll-smooth">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Upload — CEE Medico Nepal</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <script>
+        tailwind.config = {
+            theme:{ extend:{
+                fontFamily:{sans:['Plus Jakarta Sans','sans-serif']},
+                colors:{medical:{50:'#f0f9ff',100:'#e0f2fe',200:'#bae6fd',500:'#0ea5e9',600:'#0284c7',700:'#0369a1',950:'#0c4a6e'}}
+            }}
+        }
+    </script>
+    <style>
+        .scrolled-header{background-color:rgba(255,255,255,.85)!important;backdrop-filter:blur(12px)}
+        .shimmer-btn{position:relative;overflow:hidden}.shimmer-btn::after{content:'';position:absolute;top:-50%;left:-50%;width:200%;height:200%;background:linear-gradient(45deg,transparent,rgba(255,255,255,.2),transparent);transform:rotate(45deg);transition:.5s;opacity:0}.shimmer-btn:hover::after{opacity:1;left:120%;transition:all .8s ease-in-out}
+        .reveal{opacity:0;transform:translateY(24px);transition:all .8s cubic-bezier(.16,1,.3,1)}.reveal.active{opacity:1;transform:translateY(0)}
+        textarea{font-family:'Courier New',monospace}
+    </style>
+</head>
+<body class="bg-[#f8fafc] text-medical-950 font-sans antialiased flex flex-col min-h-screen">
+
+    <div id="header-root"></div>
+
+    <main class="flex-1 max-w-4xl mx-auto px-4 sm:px-6 py-12 w-full">
+
+        <div class="text-center mb-10 reveal">
+            <span class="text-xs font-bold text-violet-500 uppercase tracking-widest"><i class="fa-solid fa-shield-halved mr-1"></i> Admin Panel</span>
+            <h1 class="text-3xl sm:text-4xl font-black text-slate-900 mt-2">MCQ Upload to Firestore</h1>
+            <p class="text-slate-500 text-sm mt-2">Upload bulk questions, manage daily tests, and configure the platform.</p>
+        </div>
+
+        <!-- Tab Nav -->
+        <div class="flex gap-2 mb-8 bg-white rounded-2xl border border-slate-100 shadow-md p-2 reveal">
+            <button class="tab-btn flex-1 py-2.5 rounded-xl text-sm font-extrabold bg-medical-500 text-white transition-all" data-tab="bulk">
+                <i class="fa-solid fa-cloud-arrow-up mr-2"></i>Bulk Upload
+            </button>
+            <button class="tab-btn flex-1 py-2.5 rounded-xl text-sm font-extrabold text-slate-600 hover:bg-slate-50 transition-all" data-tab="single">
+                <i class="fa-solid fa-plus mr-2"></i>Add Single Q
+            </button>
+            <button class="tab-btn flex-1 py-2.5 rounded-xl text-sm font-extrabold text-slate-600 hover:bg-slate-50 transition-all" data-tab="daily">
+                <i class="fa-solid fa-calendar-day mr-2"></i>Daily Test
+            </button>
+        </div>
+
+        <!-- ── TAB 1: Bulk Upload ── -->
+        <section id="tab-bulk" class="tab-panel reveal space-y-5">
+            <div class="bg-white rounded-2xl border border-slate-100 shadow-xl p-7">
+                <h2 class="font-extrabold text-slate-800 mb-5"><i class="fa-solid fa-file-code text-medical-500 mr-2"></i>Paste MCQ JSON Array</h2>
+
+                <div class="grid grid-cols-2 gap-4 mb-4">
+                    <div>
+                        <label class="block text-sm font-bold text-slate-700 mb-1">Subject</label>
+                        <select id="bulkSubject" class="w-full border border-slate-200 rounded-xl px-4 py-2.5 text-sm font-semibold focus:ring-2 focus:ring-medical-400 outline-none bg-slate-50">
+                            <option value="physics">Physics</option>
+                            <option value="chemistry">Chemistry</option>
+                            <option value="botany">Botany</option>
+                            <option value="zoology">Zoology</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-bold text-slate-700 mb-1">Chapter ID</label>
+                        <input type="text" id="bulkChapter" placeholder="e.g. cell-biology" class="w-full border border-slate-200 rounded-xl px-4 py-2.5 text-sm font-semibold focus:ring-2 focus:ring-medical-400 outline-none bg-slate-50">
+                    </div>
+                </div>
+
+                <label class="block text-sm font-bold text-slate-700 mb-2">JSON Array of Questions</label>
+                <textarea id="bulkJson" rows="12" placeholder='[
+  {
+    "question": "What is the powerhouse of the cell?",
+    "options": ["Nucleus", "Mitochondria", "Ribosome", "Golgi Apparatus"],
+    "correct": 1,
+    "explanation": "Mitochondria produce ATP via cellular respiration.",
+    "difficulty": "easy",
+    "topic": "cell-biology"
+  }
+]' class="w-full border border-slate-200 rounded-xl px-4 py-3 text-xs bg-slate-50 focus:ring-2 focus:ring-medical-400 outline-none resize-y text-slate-700"></textarea>
+
+                <!-- JSON Template Hint -->
+                <div class="mt-3 p-3 bg-amber-50 border border-amber-200 rounded-xl text-xs text-amber-700 font-medium">
+                    <i class="fa-solid fa-circle-info mr-1"></i>
+                    Required fields: <code>question</code>, <code>options</code> (array of 4), <code>correct</code> (0-based index).
+                    Optional: <code>explanation</code>, <code>difficulty</code> (easy/medium/hard), <code>topic</code>.
+                </div>
+
+                <div id="bulkPreviewBox" class="hidden mt-4 p-4 bg-slate-50 rounded-xl text-sm">
+                    <p class="font-bold text-slate-700 mb-2">Preview (<span id="previewCount">0</span> questions)</p>
+                    <div id="previewList" class="space-y-2 max-h-48 overflow-y-auto"></div>
+                </div>
+
+                <div class="flex gap-3 mt-5">
+                    <button id="previewBtn" class="flex-1 border-2 border-slate-200 hover:border-medical-400 text-slate-700 font-bold py-3 rounded-2xl text-sm transition-all">
+                        <i class="fa-solid fa-eye mr-2"></i>Preview
+                    </button>
+                    <button id="uploadBtn" class="shimmer-btn flex-2 bg-medical-500 hover:bg-medical-600 text-white font-extrabold py-3 px-8 rounded-2xl text-sm shadow-xl transition-all">
+                        <i class="fa-solid fa-cloud-arrow-up mr-2"></i>Upload to Firestore
+                    </button>
+                </div>
+
+                <div id="uploadStatus" class="hidden mt-4 p-4 rounded-xl text-sm font-bold"></div>
+            </div>
+        </section>
+
+        <!-- ── TAB 2: Single Question ── -->
+        <section id="tab-single" class="tab-panel hidden reveal space-y-5">
+            <div class="bg-white rounded-2xl border border-slate-100 shadow-xl p-7 space-y-4">
+                <h2 class="font-extrabold text-slate-800"><i class="fa-solid fa-plus text-medical-500 mr-2"></i>Add Single Question</h2>
+
+                <div class="grid grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-sm font-bold text-slate-700 mb-1">Subject</label>
+                        <select id="singleSubject" class="w-full border border-slate-200 rounded-xl px-4 py-2.5 text-sm font-semibold focus:ring-2 focus:ring-medical-400 outline-none bg-slate-50">
+                            <option value="physics">Physics</option>
+                            <option value="chemistry">Chemistry</option>
+                            <option value="botany">Botany</option>
+                            <option value="zoology">Zoology</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-bold text-slate-700 mb-1">Chapter ID</label>
+                        <input type="text" id="singleChapter" placeholder="e.g. photosynthesis" class="w-full border border-slate-200 rounded-xl px-4 py-2.5 text-sm font-semibold focus:ring-2 focus:ring-medical-400 outline-none bg-slate-50">
+                    </div>
+                </div>
+
+                <div>
+                    <label class="block text-sm font-bold text-slate-700 mb-1">Question Text</label>
+                    <textarea id="singleQuestion" rows="3" placeholder="Enter the question…" class="w-full border border-slate-200 rounded-xl px-4 py-2.5 text-sm font-semibold focus:ring-2 focus:ring-medical-400 outline-none bg-slate-50 resize-y"></textarea>
+                </div>
+
+                <div class="space-y-2">
+                    <label class="block text-sm font-bold text-slate-700">Options</label>
+                    <div class="flex gap-2"><span class="w-8 h-9 flex items-center justify-center font-bold text-slate-500 text-sm">A</span><input type="text" class="single-opt flex-1 border border-slate-200 rounded-xl px-4 py-2 text-sm font-semibold focus:ring-2 focus:ring-medical-400 outline-none bg-slate-50" placeholder="Option A"></div>
+                    <div class="flex gap-2"><span class="w-8 h-9 flex items-center justify-center font-bold text-slate-500 text-sm">B</span><input type="text" class="single-opt flex-1 border border-slate-200 rounded-xl px-4 py-2 text-sm font-semibold focus:ring-2 focus:ring-medical-400 outline-none bg-slate-50" placeholder="Option B"></div>
+                    <div class="flex gap-2"><span class="w-8 h-9 flex items-center justify-center font-bold text-slate-500 text-sm">C</span><input type="text" class="single-opt flex-1 border border-slate-200 rounded-xl px-4 py-2 text-sm font-semibold focus:ring-2 focus:ring-medical-400 outline-none bg-slate-50" placeholder="Option C"></div>
+                    <div class="flex gap-2"><span class="w-8 h-9 flex items-center justify-center font-bold text-slate-500 text-sm">D</span><input type="text" class="single-opt flex-1 border border-slate-200 rounded-xl px-4 py-2 text-sm font-semibold focus:ring-2 focus:ring-medical-400 outline-none bg-slate-50" placeholder="Option D"></div>
+                </div>
+
+                <div class="grid grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-sm font-bold text-slate-700 mb-1">Correct Option</label>
+                        <select id="singleCorrect" class="w-full border border-slate-200 rounded-xl px-4 py-2.5 text-sm font-semibold focus:ring-2 focus:ring-medical-400 outline-none bg-slate-50">
+                            <option value="0">A</option><option value="1">B</option><option value="2">C</option><option value="3">D</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-bold text-slate-700 mb-1">Difficulty</label>
+                        <select id="singleDifficulty" class="w-full border border-slate-200 rounded-xl px-4 py-2.5 text-sm font-semibold focus:ring-2 focus:ring-medical-400 outline-none bg-slate-50">
+                            <option value="easy">Easy</option><option value="medium" selected>Medium</option><option value="hard">Hard</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div>
+                    <label class="block text-sm font-bold text-slate-700 mb-1">Explanation (optional)</label>
+                    <textarea id="singleExplanation" rows="2" placeholder="Explanation for the correct answer…" class="w-full border border-slate-200 rounded-xl px-4 py-2.5 text-sm font-semibold focus:ring-2 focus:ring-medical-400 outline-none bg-slate-50 resize-y"></textarea>
+                </div>
+
+                <button id="addSingleBtn" class="shimmer-btn w-full bg-medical-500 hover:bg-medical-600 text-white font-extrabold py-3.5 rounded-2xl shadow-xl transition-all">
+                    <i class="fa-solid fa-plus mr-2"></i>Add Question to Firestore
+                </button>
+                <div id="singleStatus" class="hidden p-4 rounded-xl text-sm font-bold"></div>
+            </div>
+        </section>
+
+        <!-- ── TAB 3: Daily Test Manager ── -->
+        <section id="tab-daily" class="tab-panel hidden reveal space-y-5">
+            <div class="bg-white rounded-2xl border border-slate-100 shadow-xl p-7 space-y-5">
+                <h2 class="font-extrabold text-slate-800"><i class="fa-solid fa-calendar-day text-medical-500 mr-2"></i>Schedule Daily Mock Test</h2>
+
+                <div>
+                    <label class="block text-sm font-bold text-slate-700 mb-1">Test Date</label>
+                    <input type="date" id="dailyDate" class="w-full border border-slate-200 rounded-xl px-4 py-2.5 text-sm font-semibold focus:ring-2 focus:ring-medical-400 outline-none bg-slate-50">
+                </div>
+                <div>
+                    <label class="block text-sm font-bold text-slate-700 mb-1">Test Title</label>
+                    <input type="text" id="dailyTitle" placeholder="e.g. CEE Daily Mock Test — Biology Focus" class="w-full border border-slate-200 rounded-xl px-4 py-2.5 text-sm font-semibold focus:ring-2 focus:ring-medical-400 outline-none bg-slate-50">
+                </div>
+                <div>
+                    <label class="block text-sm font-bold text-slate-700 mb-1">Duration (seconds)</label>
+                    <input type="number" id="dailyDuration" value="3600" class="w-full border border-slate-200 rounded-xl px-4 py-2.5 text-sm font-semibold focus:ring-2 focus:ring-medical-400 outline-none bg-slate-50">
+                </div>
+                <div>
+                    <label class="block text-sm font-bold text-slate-700 mb-2">Question References</label>
+                    <p class="text-xs text-slate-400 mb-2">Format: <code>subject/chapter/questionId</code> — one per line. Example: <code>botany/cell-biology/q1</code></p>
+                    <textarea id="dailyQuestions" rows="8" placeholder="botany/cell-biology/abc123&#10;chemistry/organic/def456&#10;physics/mechanics/ghi789" class="w-full border border-slate-200 rounded-xl px-4 py-3 text-xs bg-slate-50 focus:ring-2 focus:ring-medical-400 outline-none resize-y text-slate-700"></textarea>
+                </div>
+                <label class="flex items-center gap-3 cursor-pointer">
+                    <input type="checkbox" id="dailyActive" checked class="w-5 h-5 accent-medical-500 rounded">
+                    <span class="text-sm font-bold text-slate-700">Set as Active (visible to students)</span>
+                </label>
+                <button id="saveDailyBtn" class="shimmer-btn w-full bg-gradient-to-r from-indigo-600 to-medical-500 hover:opacity-90 text-white font-extrabold py-3.5 rounded-2xl shadow-xl transition-all">
+                    <i class="fa-solid fa-cloud-arrow-up mr-2"></i>Save Daily Test to Firestore
+                </button>
+                <div id="dailyStatus" class="hidden p-4 rounded-xl text-sm font-bold"></div>
+            </div>
+        </section>
+
+    </main>
+
+    <div id="footer-root"></div>
+
+    <script type="module">
+        import { renderHeader, renderFooter, initSharedScripts } from '../js/shared.js';
+        import { db } from '../js/firebase-config.js';
+        import { collection, addDoc, doc, setDoc, serverTimestamp } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js';
+
+        document.getElementById('header-root').innerHTML = renderHeader();
+        document.getElementById('footer-root').innerHTML = renderFooter();
+        initSharedScripts();
+
+        // Default date
+        document.getElementById('dailyDate').value = new Date().toISOString().split('T')[0];
+
+        // ── Tab Switching ───────────────────────────────────────────────
+        document.querySelectorAll('.tab-btn').forEach(btn => {
+            btn.addEventListener('click', () => {
+                document.querySelectorAll('.tab-btn').forEach(b => {
+                    b.className = 'tab-btn flex-1 py-2.5 rounded-xl text-sm font-extrabold text-slate-600 hover:bg-slate-50 transition-all';
+                });
+                btn.className = 'tab-btn flex-1 py-2.5 rounded-xl text-sm font-extrabold bg-medical-500 text-white transition-all';
+                document.querySelectorAll('.tab-panel').forEach(p => p.classList.add('hidden'));
+                document.getElementById('tab-' + btn.dataset.tab).classList.remove('hidden');
+            });
+        });
+
+        // ── BULK UPLOAD ─────────────────────────────────────────────────
+        document.getElementById('previewBtn').addEventListener('click', () => {
+            try {
+                const json = JSON.parse(document.getElementById('bulkJson').value.trim());
+                if (!Array.isArray(json)) throw new Error('JSON must be an array');
+                document.getElementById('previewCount').textContent = json.length;
+                document.getElementById('previewList').innerHTML = json.slice(0,5).map((q, i) => `
+                    <div class="p-2 bg-white rounded-lg border border-slate-100 text-xs">
+                        <p class="font-bold text-slate-800">${i+1}. ${q.question?.substring(0,80)}…</p>
+                        <p class="text-slate-400 mt-0.5">Options: ${(q.options||[]).join(' / ')} | Correct: ${q.options?.[q.correct]||'?'}</p>
+                    </div>`).join('') + (json.length > 5 ? `<p class="text-slate-400 text-xs mt-1">…and ${json.length - 5} more questions.</p>` : '');
+                document.getElementById('bulkPreviewBox').classList.remove('hidden');
+            } catch (e) {
+                alert('Invalid JSON: ' + e.message);
+            }
+        });
+
+        document.getElementById('uploadBtn').addEventListener('click', async () => {
+            const subject = document.getElementById('bulkSubject').value;
+            const chapter = document.getElementById('bulkChapter').value.trim().toLowerCase().replace(/\s+/g,'-');
+            const statusEl = document.getElementById('uploadStatus');
+
+            if (!chapter) { alert('Please enter a chapter ID.'); return; }
+
+            let questions;
+            try {
+                questions = JSON.parse(document.getElementById('bulkJson').value.trim());
+                if (!Array.isArray(questions) || questions.length === 0) throw new Error('Empty or invalid array');
+            } catch (e) { alert('Invalid JSON: ' + e.message); return; }
+
+            const btn = document.getElementById('uploadBtn');
+            btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin mr-2"></i>Uploading…';
+            btn.disabled = true;
+            statusEl.classList.add('hidden');
+
+            try {
+                // Ensure subject and chapter documents exist
+                await setDoc(doc(db, 'subjects', subject), { name: subject.charAt(0).toUpperCase()+subject.slice(1) }, { merge: true });
+                await setDoc(doc(db, 'subjects', subject, 'chapters', chapter), { name: chapter.replace(/-/g,' '), subject, createdAt: Date.now() }, { merge: true });
+
+                // Upload questions
+                let count = 0;
+                for (const q of questions) {
+                    await addDoc(collection(db, 'subjects', subject, 'chapters', chapter, 'questions'), {
+                        question: q.question || '',
+                        options:  q.options || [],
+                        correct:  q.correct ?? 0,
+                        answer:   q.options?.[q.correct] || '',
+                        explanation: q.explanation || '',
+                        difficulty:  q.difficulty || 'medium',
+                        topic:       q.topic || chapter,
+                        createdAt:   Date.now()
+                    });
+                    count++;
+                }
+
+                statusEl.className = 'p-4 rounded-xl text-sm font-bold bg-emerald-50 text-emerald-700 ring-1 ring-emerald-200';
+                statusEl.innerHTML = `<i class="fa-solid fa-check-circle mr-2"></i>Successfully uploaded ${count} questions to <strong>${subject}/${chapter}</strong>.`;
+                statusEl.classList.remove('hidden');
+            } catch (e) {
+                statusEl.className = 'p-4 rounded-xl text-sm font-bold bg-rose-50 text-rose-700 ring-1 ring-rose-200';
+                statusEl.innerHTML = `<i class="fa-solid fa-triangle-exclamation mr-2"></i>Upload failed: ${e.message}`;
+                statusEl.classList.remove('hidden');
+            }
+
+            btn.innerHTML = '<i class="fa-solid fa-cloud-arrow-up mr-2"></i>Upload to Firestore';
+            btn.disabled = false;
+        });
+
+        // ── SINGLE QUESTION ─────────────────────────────────────────────
+        document.getElementById('addSingleBtn').addEventListener('click', async () => {
+            const subject  = document.getElementById('singleSubject').value;
+            const chapter  = document.getElementById('singleChapter').value.trim().toLowerCase().replace(/\s+/g,'-');
+            const question = document.getElementById('singleQuestion').value.trim();
+            const options  = Array.from(document.querySelectorAll('.single-opt')).map(i => i.value.trim());
+            const correct  = parseInt(document.getElementById('singleCorrect').value);
+            const difficulty = document.getElementById('singleDifficulty').value;
+            const explanation = document.getElementById('singleExplanation').value.trim();
+            const statusEl = document.getElementById('singleStatus');
+
+            if (!chapter || !question || options.some(o => !o)) {
+                alert('Please fill all required fields including all 4 options.'); return;
+            }
+
+            try {
+                await setDoc(doc(db, 'subjects', subject), { name: subject.charAt(0).toUpperCase()+subject.slice(1) }, { merge: true });
+                await setDoc(doc(db, 'subjects', subject, 'chapters', chapter), { name: chapter.replace(/-/g,' '), subject, createdAt: Date.now() }, { merge: true });
+                const ref = await addDoc(collection(db, 'subjects', subject, 'chapters', chapter, 'questions'), {
+                    question, options, correct, answer: options[correct], explanation, difficulty, topic: chapter, createdAt: Date.now()
+                });
+
+                statusEl.className = 'p-4 rounded-xl text-sm font-bold bg-emerald-50 text-emerald-700 ring-1 ring-emerald-200';
+                statusEl.innerHTML = `<i class="fa-solid fa-check-circle mr-2"></i>Question added! ID: <code>${ref.id}</code>`;
+                statusEl.classList.remove('hidden');
+            } catch (e) {
+                statusEl.className = 'p-4 rounded-xl text-sm font-bold bg-rose-50 text-rose-700 ring-1 ring-rose-200';
+                statusEl.innerHTML = `<i class="fa-solid fa-triangle-exclamation mr-2"></i>${e.message}`;
+                statusEl.classList.remove('hidden');
+            }
+        });
+
+        // ── DAILY TEST ──────────────────────────────────────────────────
+        document.getElementById('saveDailyBtn').addEventListener('click', async () => {
+            const date     = document.getElementById('dailyDate').value;
+            const title    = document.getElementById('dailyTitle').value.trim() || 'CEE Daily Mock Test';
+            const duration = parseInt(document.getElementById('dailyDuration').value) || 3600;
+            const active   = document.getElementById('dailyActive').checked;
+            const qLines   = document.getElementById('dailyQuestions').value.trim().split('\n').map(l => l.trim()).filter(Boolean);
+            const statusEl = document.getElementById('dailyStatus');
+
+            if (!date || qLines.length === 0) { alert('Please select a date and add question references.'); return; }
+
+            try {
+                await setDoc(doc(db, 'dailyTests', date), {
+                    title, duration, questions: qLines, active, createdAt: Date.now()
+                });
+                statusEl.className = 'p-4 rounded-xl text-sm font-bold bg-emerald-50 text-emerald-700 ring-1 ring-emerald-200';
+                statusEl.innerHTML = `<i class="fa-solid fa-check-circle mr-2"></i>Daily test for <strong>${date}</strong> saved! ${qLines.length} question references.`;
+                statusEl.classList.remove('hidden');
+            } catch (e) {
+                statusEl.className = 'p-4 rounded-xl text-sm font-bold bg-rose-50 text-rose-700 ring-1 ring-rose-200';
+                statusEl.innerHTML = `<i class="fa-solid fa-triangle-exclamation mr-2"></i>${e.message}`;
+                statusEl.classList.remove('hidden');
+            }
+        });
+    </script>
+</body>
+</html>
