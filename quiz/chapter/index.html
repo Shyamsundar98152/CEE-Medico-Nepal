@@ -1,0 +1,253 @@
+<!DOCTYPE html>
+<html lang="en" class="scroll-smooth">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CEE Medico Nepal — MCQ Dashboard</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <script>
+        tailwind.config = {
+            theme: { extend: {
+                fontFamily: { sans: ['Plus Jakarta Sans', 'sans-serif'] },
+                colors: {
+                    medical: { 50:'#f0f9ff',100:'#e0f2fe',200:'#bae6fd',500:'#0ea5e9',600:'#0284c7',700:'#0369a1',950:'#0c4a6e' },
+                    premium: { rose:'#f43f5e', darkRose:'#be123c' }
+                }
+            }}
+        }
+    </script>
+    <style>
+        .reveal { opacity:0; transform:translateY(24px); transition:all .8s cubic-bezier(.16,1,.3,1); }
+        .reveal.active { opacity:1; transform:translateY(0); }
+        @keyframes gridMove { 0%{background-position:0 0} 100%{background-position:40px 40px} }
+        .animated-grid { background-size:40px 40px; background-image:linear-gradient(to right,rgba(14,165,233,.05) 1px,transparent 1px),linear-gradient(to bottom,rgba(14,165,233,.05) 1px,transparent 1px); animation:gridMove 20s linear infinite; }
+        @keyframes float { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-10px)} }
+        .animate-float { animation:float 5s ease-in-out infinite; }
+        .scrolled-header { background-color:rgba(255,255,255,.85)!important; backdrop-filter:blur(12px); box-shadow:0 4px 30px rgba(0,0,0,.03); border-bottom:1px solid rgba(14,165,233,.1); }
+        .shimmer-btn { position:relative; overflow:hidden; }
+        .shimmer-btn::after { content:''; position:absolute; top:-50%; left:-50%; width:200%; height:200%; background:linear-gradient(45deg,transparent,rgba(255,255,255,.2),transparent); transform:rotate(45deg); transition:.5s; opacity:0; }
+        .shimmer-btn:hover::after { opacity:1; left:120%; transition:all .8s ease-in-out; }
+    </style>
+</head>
+<body class="bg-[#f8fafc] text-medical-950 font-sans antialiased overflow-x-hidden flex flex-col min-h-screen">
+
+    <div id="header-root"></div>
+
+    <!-- Hero -->
+    <section class="relative overflow-hidden pt-12 pb-24 lg:pt-20 lg:pb-36 bg-gradient-to-b from-medical-50 via-white to-[#f8fafc]">
+        <div class="absolute inset-0 animated-grid pointer-events-none opacity-40"></div>
+        <div class="absolute top-1/4 left-10 w-72 h-72 bg-medical-200 rounded-full mix-blend-multiply filter blur-3xl opacity-30 animate-pulse pointer-events-none"></div>
+        <div class="absolute top-1/3 right-12 w-80 h-80 bg-rose-200 rounded-full mix-blend-multiply filter blur-3xl opacity-20 pointer-events-none"></div>
+
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative">
+            <div class="text-center max-w-4xl mx-auto space-y-6">
+                <span class="inline-flex items-center gap-1.5 px-4 py-2 rounded-full text-xs sm:text-sm font-bold bg-medical-100 text-medical-700 ring-1 ring-medical-200/50">
+                    <span class="w-2 h-2 rounded-full bg-medical-500 animate-ping"></span>
+                    Firebase-Powered MCQ Platform — CEE 2082/2083
+                </span>
+                <h1 class="text-4xl sm:text-5xl lg:text-6xl font-black text-slate-900 leading-none tracking-tight">
+                    Master CEE Entrance<br class="hidden sm:inline"/>
+                    <span class="text-transparent bg-clip-text bg-gradient-to-r from-medical-500 via-medical-600 to-indigo-600">with Smart MCQs</span>
+                </h1>
+                <p class="text-base sm:text-lg lg:text-xl text-slate-500 font-medium max-w-2xl mx-auto leading-relaxed">
+                    Subject-wise and chapter-wise MCQ practice with real-time leaderboards, daily mock tests, and deep analytics — all powered by Firestore.
+                </p>
+                <div class="flex flex-wrap justify-center gap-4 pt-4">
+                    <a href="exam.html" class="shimmer-btn inline-flex items-center gap-2 bg-medical-500 hover:bg-medical-600 text-white font-extrabold px-8 py-4 rounded-2xl shadow-xl shadow-medical-500/20 active:scale-95 transition-all text-base">
+                        <i class="fa-solid fa-play"></i> Start Exam
+                    </a>
+                    <a href="daily-test.html" class="inline-flex items-center gap-2 bg-white border-2 border-medical-200 hover:border-medical-400 text-medical-700 font-extrabold px-8 py-4 rounded-2xl shadow-md active:scale-95 transition-all text-base">
+                        <i class="fa-solid fa-calendar-day text-medical-500"></i> Daily Mock Test
+                    </a>
+                </div>
+                <!-- Quick stats -->
+                <div class="pt-8 flex flex-wrap justify-center items-center gap-6 sm:gap-10 text-slate-600 font-semibold text-sm">
+                    <span class="flex items-center gap-2"><i class="fa-solid fa-file-invoice text-medical-500"></i> 50,000+ MCQs</span>
+                    <span class="flex items-center gap-2"><i class="fa-solid fa-users text-indigo-500"></i> 15,000+ Students</span>
+                    <span class="flex items-center gap-2"><i class="fa-solid fa-star text-amber-500"></i> 4.9 Rating</span>
+                    <span class="flex items-center gap-2"><i class="fa-solid fa-book-open text-emerald-500"></i> 5 Subjects</span>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Dashboard Feature Cards -->
+    <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16 flex-1">
+
+        <div class="text-center mb-12 reveal">
+            <span class="text-xs font-bold text-medical-500 uppercase tracking-widest">Platform Features</span>
+            <h2 class="text-3xl sm:text-4xl font-black text-slate-900 mt-2">Everything You Need to Crack CEE</h2>
+        </div>
+
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
+
+            <!-- Chapter Exam Card -->
+            <a href="exam.html" class="reveal group bg-white rounded-2xl border border-slate-100 shadow-xl p-7 hover:-translate-y-2 transition-all duration-300 relative overflow-hidden block">
+                <div class="absolute top-0 right-0 w-32 h-32 bg-medical-50 rounded-full -translate-y-12 translate-x-12 group-hover:scale-150 transition-transform duration-500 pointer-events-none"></div>
+                <div class="w-14 h-14 bg-medical-100 rounded-2xl flex items-center justify-center text-medical-600 text-2xl mb-5 group-hover:bg-medical-500 group-hover:text-white transition-colors">
+                    <i class="fa-solid fa-pen-to-square"></i>
+                </div>
+                <h3 class="text-xl font-extrabold text-slate-900 mb-2 group-hover:text-medical-600 transition-colors">Chapter-wise Exam</h3>
+                <p class="text-slate-500 text-sm leading-relaxed mb-4">Pick any subject and chapter, get randomized MCQs, and see instant feedback with explanations.</p>
+                <div class="flex items-center text-medical-500 font-bold text-sm gap-1 group-hover:gap-3 transition-all">Start Practice <i class="fa-solid fa-arrow-right"></i></div>
+            </a>
+
+            <!-- Daily Mock Test Card -->
+            <a href="daily-test.html" class="reveal group bg-gradient-to-br from-indigo-950 to-[#0c4a6e] rounded-2xl shadow-xl p-7 hover:-translate-y-2 transition-all duration-300 relative overflow-hidden block text-white">
+                <div class="absolute bottom-0 right-0 w-40 h-40 bg-white/5 rounded-full translate-y-12 translate-x-12 group-hover:scale-150 transition-transform duration-500 pointer-events-none"></div>
+                <div class="w-14 h-14 bg-white/10 rounded-2xl flex items-center justify-center text-sky-300 text-2xl mb-5">
+                    <i class="fa-solid fa-calendar-check"></i>
+                </div>
+                <h3 class="text-xl font-extrabold mb-2">Daily Mock Test</h3>
+                <p class="text-sky-100/80 text-sm leading-relaxed mb-4">One new 100-question mock test daily. Same test for all users. Compete on the same playing field.</p>
+                <div id="dailyTestBadge" class="inline-flex items-center gap-1.5 bg-white/10 text-sky-200 text-xs font-bold px-3 py-1.5 rounded-full mb-3">
+                    <span class="w-2 h-2 rounded-full bg-sky-400 animate-ping"></span> Loading today's test…
+                </div>
+                <div class="flex items-center text-sky-300 font-bold text-sm gap-1 group-hover:gap-3 transition-all">Take Today's Test <i class="fa-solid fa-arrow-right"></i></div>
+            </a>
+
+            <!-- Leaderboard Card -->
+            <a href="leaderboard.html" class="reveal group bg-gradient-to-br from-amber-500 to-orange-600 rounded-2xl shadow-xl p-7 hover:-translate-y-2 transition-all duration-300 relative overflow-hidden block text-white">
+                <div class="absolute -right-8 -bottom-8 w-40 h-40 bg-white/10 rounded-full group-hover:scale-150 transition-transform duration-500 pointer-events-none"></div>
+                <div class="w-14 h-14 bg-white/20 rounded-2xl flex items-center justify-center text-2xl mb-5">
+                    <i class="fa-solid fa-trophy"></i>
+                </div>
+                <h3 class="text-xl font-extrabold mb-2">Live Leaderboard</h3>
+                <p class="text-amber-50/90 text-sm leading-relaxed mb-4">See your ranking among all students. Sorted by score, accuracy, and speed. Updated in real-time.</p>
+                <div class="flex items-center text-amber-100 font-bold text-sm gap-1 group-hover:gap-3 transition-all">View Rankings <i class="fa-solid fa-arrow-right"></i></div>
+            </a>
+
+            <!-- Analytics Card -->
+            <a href="analytics.html" class="reveal group bg-white rounded-2xl border border-slate-100 shadow-xl p-7 hover:-translate-y-2 transition-all duration-300 relative overflow-hidden block">
+                <div class="w-14 h-14 bg-emerald-50 rounded-2xl flex items-center justify-center text-emerald-500 text-2xl mb-5 group-hover:bg-emerald-500 group-hover:text-white transition-colors">
+                    <i class="fa-solid fa-chart-line"></i>
+                </div>
+                <h3 class="text-xl font-extrabold text-slate-900 mb-2 group-hover:text-emerald-600 transition-colors">My Analytics</h3>
+                <p class="text-slate-500 text-sm leading-relaxed mb-4">Track your weak topics, subject-wise accuracy, performance trends, and study heatmap over time.</p>
+                <div class="flex items-center text-emerald-500 font-bold text-sm gap-1 group-hover:gap-3 transition-all">View Analytics <i class="fa-solid fa-arrow-right"></i></div>
+            </a>
+
+            <!-- Admin Upload Card -->
+            <a href="admin/upload.html" class="reveal group bg-white rounded-2xl border border-slate-100 shadow-xl p-7 hover:-translate-y-2 transition-all duration-300 relative overflow-hidden block">
+                <div class="w-14 h-14 bg-violet-50 rounded-2xl flex items-center justify-center text-violet-500 text-2xl mb-5 group-hover:bg-violet-500 group-hover:text-white transition-colors">
+                    <i class="fa-solid fa-cloud-arrow-up"></i>
+                </div>
+                <h3 class="text-xl font-extrabold text-slate-900 mb-2 group-hover:text-violet-600 transition-colors">Admin Upload</h3>
+                <p class="text-slate-500 text-sm leading-relaxed mb-4">Paste MCQ JSON or upload bulk questions directly to Firestore. Select subject and chapter easily.</p>
+                <div class="flex items-center text-violet-500 font-bold text-sm gap-1 group-hover:gap-3 transition-all">Open Admin Panel <i class="fa-solid fa-arrow-right"></i></div>
+            </a>
+
+            <!-- Scoring System Info Card -->
+            <div class="reveal bg-gradient-to-br from-rose-500 to-premium-darkRose rounded-2xl shadow-xl p-7 text-white relative overflow-hidden">
+                <div class="absolute -right-8 -bottom-8 w-40 h-40 bg-white/10 rounded-full pointer-events-none"></div>
+                <div class="w-14 h-14 bg-white/20 rounded-2xl flex items-center justify-center text-2xl mb-5">
+                    <i class="fa-solid fa-calculator"></i>
+                </div>
+                <h3 class="text-xl font-extrabold mb-2">CEE Scoring System</h3>
+                <p class="text-rose-100/90 text-sm leading-relaxed mb-4">Official CEE negative marking formula applied to all exams.</p>
+                <div class="space-y-2 text-sm font-bold">
+                    <div class="flex justify-between bg-white/10 px-4 py-2 rounded-xl">
+                        <span>✔ Correct Answer</span><span class="text-emerald-300">+4 marks</span>
+                    </div>
+                    <div class="flex justify-between bg-white/10 px-4 py-2 rounded-xl">
+                        <span>✘ Wrong Answer</span><span class="text-rose-200">−1 mark</span>
+                    </div>
+                    <div class="flex justify-between bg-white/10 px-4 py-2 rounded-xl">
+                        <span>— Skipped</span><span class="text-slate-300">0 marks</span>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+
+        <!-- Subject Quick Select -->
+        <section class="mt-20 reveal">
+            <div class="text-center mb-10">
+                <span class="text-xs font-bold text-medical-500 uppercase tracking-widest">Practice by Subject</span>
+                <h2 class="text-2xl sm:text-3xl font-black text-slate-900 mt-1">Jump into Any Subject</h2>
+            </div>
+            <div class="grid grid-cols-2 sm:grid-cols-4 gap-5" id="subjectGrid">
+                <!-- Populated by JS -->
+                <div class="h-32 rounded-2xl bg-slate-100 animate-pulse"></div>
+                <div class="h-32 rounded-2xl bg-slate-100 animate-pulse"></div>
+                <div class="h-32 rounded-2xl bg-slate-100 animate-pulse"></div>
+                <div class="h-32 rounded-2xl bg-slate-100 animate-pulse"></div>
+            </div>
+        </section>
+
+    </main>
+
+    <div id="footer-root"></div>
+
+    <script type="module">
+        import { renderHeader, renderFooter, initSharedScripts } from './js/shared.js';
+        import { db } from './js/firebase-config.js';
+        import { collection, getDocs, doc, getDoc } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js';
+
+        // Inject header & footer
+        document.getElementById('header-root').innerHTML = renderHeader('Home');
+        document.getElementById('footer-root').innerHTML = renderFooter();
+        initSharedScripts();
+
+        // Subject config
+        const subjectMeta = {
+            physics:   { icon: 'fa-atom',         color: 'from-blue-500 to-blue-700',      label: 'Physics' },
+            chemistry: { icon: 'fa-flask',         color: 'from-emerald-500 to-teal-700',   label: 'Chemistry' },
+            botany:    { icon: 'fa-leaf',           color: 'from-green-500 to-green-700',    label: 'Botany' },
+            zoology:   { icon: 'fa-paw',            color: 'from-orange-500 to-amber-700',   label: 'Zoology' },
+        };
+
+        // Load subjects from Firestore
+        async function loadSubjects() {
+            const grid = document.getElementById('subjectGrid');
+            try {
+                const snap = await getDocs(collection(db, 'subjects'));
+                const subjects = snap.docs.map(d => d.id);
+                if (subjects.length === 0) {
+                    grid.innerHTML = Object.entries(subjectMeta).map(([key, meta]) =>
+                        subjectCard(key, meta)
+                    ).join('');
+                } else {
+                    grid.innerHTML = subjects.map(key => {
+                        const meta = subjectMeta[key] || { icon: 'fa-book', color: 'from-slate-500 to-slate-700', label: key.charAt(0).toUpperCase() + key.slice(1) };
+                        return subjectCard(key, meta);
+                    }).join('');
+                }
+            } catch {
+                // Fallback to static subjects if Firestore is empty/offline
+                grid.innerHTML = Object.entries(subjectMeta).map(([key, meta]) => subjectCard(key, meta)).join('');
+            }
+        }
+
+        function subjectCard(key, meta) {
+            return `
+            <a href="exam.html?subject=${key}" class="group bg-gradient-to-br ${meta.color} text-white rounded-2xl p-6 flex flex-col items-center justify-center gap-3 hover:-translate-y-1.5 transition-all shadow-lg cursor-pointer">
+                <i class="fa-solid ${meta.icon} text-3xl opacity-90 group-hover:scale-110 transition-transform"></i>
+                <span class="font-extrabold text-sm tracking-wide">${meta.label}</span>
+            </a>`;
+        }
+
+        // Load daily test status
+        async function loadDailyTestStatus() {
+            const badge = document.getElementById('dailyTestBadge');
+            const today = new Date().toISOString().split('T')[0];
+            try {
+                const snap = await getDoc(doc(db, 'dailyTests', today));
+                if (snap.exists()) {
+                    const data = snap.data();
+                    badge.innerHTML = `<span class="w-2 h-2 rounded-full bg-emerald-400 animate-ping"></span> Today's Test: ${data.title || 'CEE Daily Mock'} — ${data.questions?.length || 0} Qs`;
+                } else {
+                    badge.innerHTML = `<span class="w-2 h-2 rounded-full bg-amber-400"></span> No test scheduled today`;
+                }
+            } catch {
+                badge.innerHTML = `<span class="w-2 h-2 rounded-full bg-amber-400"></span> Daily test — connect Firestore`;
+            }
+        }
+
+        loadSubjects();
+        loadDailyTestStatus();
+    </script>
+</body>
+</html>
