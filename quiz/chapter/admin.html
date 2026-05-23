@@ -1,0 +1,194 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Admin Panel - CEE Mock Test</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore-compat.js"></script>
+  <style>
+    .question-card { transition: all 0.2s; }
+    .question-card:hover { transform: translateY(-2px); }
+  </style>
+</head>
+<body class="bg-gray-50">
+  <div class="max-w-6xl mx-auto p-6">
+    <h1 class="text-4xl font-bold text-center text-blue-700 mb-8">Admin Panel</h1>
+
+    <!-- Login Section -->
+    <div id="login-section" class="bg-white rounded-3xl shadow-xl p-10 max-w-md mx-auto">
+      <h2 class="text-3xl font-bold text-center mb-8">Admin Login</h2>
+      <input id="admin-email" type="email" placeholder="Admin Email" class="w-full px-5 py-4 border rounded-2xl mb-4">
+      <input id="admin-pass" type="password" placeholder="Password" class="w-full px-5 py-4 border rounded-2xl mb-6">
+      <button onclick="emailAdminLogin()" class="w-full bg-blue-600 text-white py-4 rounded-2xl font-semibold mb-4">Login</button>
+      <button onclick="googleAdminLogin()" class="w-full bg-white border-2 border-gray-300 py-4 rounded-2xl font-semibold">Continue with Google</button>
+      <p id="admin-error" class="text-red-600 text-center mt-6"></p>
+    </div>
+
+    <!-- Admin Dashboard -->
+    <div id="admin-dashboard" class="hidden">
+      <div class="flex justify-between items-center mb-8">
+        <h2 class="text-2xl font-semibold">Welcome, <span id="admin-name" class="text-blue-600"></span></h2>
+        <button onclick="logoutAdmin()" class="bg-red-600 text-white px-6 py-3 rounded-2xl">Logout</button>
+      </div>
+
+      <!-- Upload Section -->
+      <div class="bg-white rounded-3xl shadow-xl p-8 mb-8">
+        <h3 class="text-xl font-semibold mb-4">Upload Questions (JSON)</h3>
+        <input type="file" id="json-files" multiple accept=".json" class="w-full mb-4">
+        <div class="grid grid-cols-2 gap-4">
+          <select id="admin-subject" class="p-4 border rounded-2xl">
+            <option value="mathematics">Mathematics</option>
+            <option value="physics">Physics</option>
+            <option value="chemistry">Chemistry</option>
+            <option value="biology">Biology</option>
+          </select>
+          <input id="admin-chapter" type="text" placeholder="Chapter Name (e.g. algebra)" class="p-4 border rounded-2xl">
+        </div>
+        <button onclick="uploadMultipleJSON()" class="mt-6 w-full bg-emerald-600 text-white py-4 rounded-2xl font-semibold">Upload All Selected Files</button>
+      </div>
+
+      <!-- Questions List -->
+      <div class="bg-white rounded-3xl shadow-xl p-8">
+        <h3 class="text-xl font-semibold mb-6">Existing Questions</h3>
+        <div id="questions-list" class="space-y-4"></div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const firebaseConfig = {
+      apiKey: "AIzaSyDD5xBrSkX_YXzSnsKxjW8-K6W4rBfV3rg",
+      authDomain: "chapter-wise-backup.firebaseapp.com",
+      projectId: "chapter-wise-backup",
+      storageBucket: "chapter-wise-backup.firebasestorage.app",
+      messagingSenderId: "864698641587",
+      appId: "1:864698641587:web:d0b550579c6eb7709ed4c6"
+    };
+
+    firebase.initializeApp(firebaseConfig);
+    const auth = firebase.auth();
+    const db = firebase.firestore();
+
+    let currentAdmin = null;
+
+    auth.onAuthStateChanged(user => {
+      if (user) {
+        currentAdmin = user;
+        document.getElementById('login-section').classList.add('hidden');
+        document.getElementById('admin-dashboard').classList.remove('hidden');
+        document.getElementById('admin-name').textContent = user.email;
+        loadAllQuestions();
+      }
+    });
+
+    // ====================== LOGIN ======================
+    async function emailAdminLogin() {
+      const email = document.getElementById('admin-email').value;
+      const pass = document.getElementById('admin-pass').value;
+      try {
+        await auth.signInWithEmailAndPassword(email, pass);
+      } catch (e) {
+        document.getElementById('admin-error').textContent = e.message;
+      }
+    }
+
+    async function googleAdminLogin() {
+      const provider = new firebase.auth.GoogleAuthProvider();
+      try {
+        await auth.signInWithPopup(provider);
+      } catch (e) {
+        document.getElementById('admin-error').textContent = e.message;
+      }
+    }
+
+    function logoutAdmin() {
+      auth.signOut();
+      location.reload();
+    }
+
+    // ====================== UPLOAD MULTIPLE JSON ======================
+    async function uploadMultipleJSON() {
+      const files = document.getElementById('json-files').files;
+      const subject = document.getElementById('admin-subject').value;
+      const chapter = document.getElementById('admin-chapter').value.trim();
+
+      if (!files.length || !chapter) {
+        alert("Please select files and enter chapter name");
+        return;
+      }
+
+      for (let file of files) {
+        const text = await file.text();
+        try {
+          const questions = JSON.parse(text);
+          const batch = db.batch();
+          const ref = db.collection(`subjects/${subject}/chapters/${chapter}/questions`);
+
+          questions.forEach(q => {
+            const docRef = ref.doc();
+            batch.set(docRef, q);
+          });
+
+          await batch.commit();
+          console.log(`✅ Uploaded: ${file.name}`);
+        } catch (err) {
+          console.error(`Error uploading ${file.name}:`, err);
+        }
+      }
+
+      alert("🎉 All files uploaded successfully!");
+      loadAllQuestions();
+    }
+
+    // ====================== LOAD & EDIT QUESTIONS ======================
+    async function loadAllQuestions() {
+      const subject = document.getElementById('admin-subject').value;
+      const chapter = document.getElementById('admin-chapter').value || "algebra";
+
+      const snap = await db.collection(`subjects/${subject}/chapters/${chapter}/questions`).get();
+      let html = '';
+
+      snap.docs.forEach(doc => {
+        const q = doc.data();
+        html += `
+          <div class="question-card bg-gray-50 p-6 rounded-2xl border">
+            <p class="font-medium">${q.question}</p>
+            <div class="mt-4 grid grid-cols-2 gap-2">
+              ${q.options.map(opt => `<div class="text-sm">${opt}</div>`).join('')}
+            </div>
+            <div class="mt-4 flex gap-3">
+              <button onclick="editQuestion('${doc.id}', '${subject}', '${chapter}')" 
+                      class="text-blue-600 hover:text-blue-700">Edit</button>
+              <button onclick="deleteQuestion('${doc.id}', '${subject}', '${chapter}')" 
+                      class="text-red-600 hover:text-red-700">Delete</button>
+            </div>
+          </div>`;
+      });
+
+      document.getElementById('questions-list').innerHTML = html || "<p class='text-gray-500'>No questions found.</p>";
+    }
+
+    // Edit Question (Simple Prompt for now)
+    async function editQuestion(docId, subject, chapter) {
+      const newQuestion = prompt("Edit Question:");
+      if (!newQuestion) return;
+
+      await db.collection(`subjects/${subject}/chapters/${chapter}/questions`).doc(docId).update({
+        question: newQuestion
+      });
+      alert("Question updated!");
+      loadAllQuestions();
+    }
+
+    async function deleteQuestion(docId, subject, chapter) {
+      if (confirm("Delete this question?")) {
+        await db.collection(`subjects/${subject}/chapters/${chapter}/questions`).doc(docId).delete();
+        loadAllQuestions();
+      }
+    }
+  </script>
+</body>
+</html>
