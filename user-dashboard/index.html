@@ -1,0 +1,377 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Dashboard - CEE Medico Nepal</title>
+<link rel="apple-touch-icon" sizes="180x180" href="/fevicon/apple-touch-icon.png">
+<link rel="icon" type="image/png" sizes="32x32" href="/fevicon/favicon-32x32.png">
+<link rel="icon" type="image/png" sizes="16x16" href="/fevicon/favicon-16x16.png">
+<link rel="manifest" href="/fevicon/site.webmanifest">
+<link href="https://fonts.googleapis.com/css2?family=Sora:wght@300;400;600;700;800&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+<style>
+:root{
+  --blue:#0062ff;--blue-dark:#0047cc;--blue-light:#e8f0ff;
+  --green:#00c97a;--red:#ff3b5c;--yellow:#ffa500;--accent:#ff6b35;
+  --bg:#f0f4ff;--card:#fff;--text:#0d1b2a;--muted:#6b7c93;--border:#dde5f0;
+  --shadow:0 4px 24px rgba(0,98,255,0.09);
+}
+*{box-sizing:border-box;margin:0;padding:0;}
+body{font-family:'Sora',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;}
+
+/* NAV */
+header{background:var(--blue);padding:0 24px;box-shadow:0 2px 16px rgba(0,98,255,0.18);position:sticky;top:0;z-index:100;}
+nav{max-width:1200px;margin:auto;display:flex;align-items:center;justify-content:space-between;height:64px;}
+.logo{display:flex;align-items:center;gap:10px;text-decoration:none;}
+.logo img{height:32px;border-radius:6px;}
+.logo span{color:#fff;font-weight:800;font-size:1.05rem;}
+.nav-links{display:flex;list-style:none;gap:4px;}
+.nav-links a{color:rgba(255,255,255,0.85);text-decoration:none;font-size:.85rem;font-weight:600;padding:8px 14px;border-radius:8px;transition:background .2s;}
+.nav-links a:hover,.nav-links a.active{background:rgba(255,255,255,0.15);color:#fff;}
+.nav-user{display:flex;align-items:center;gap:12px;}
+.nav-avatar{width:36px;height:36px;border-radius:50%;background:rgba(255,255,255,0.2);display:flex;align-items:center;justify-content:center;color:#fff;font-weight:800;font-size:.85rem;cursor:pointer;}
+.nav-dropdown{position:relative;}
+.nav-dropdown-menu{display:none;position:absolute;right:0;top:48px;background:#fff;border-radius:10px;box-shadow:0 8px 32px rgba(0,0,0,0.12);min-width:200px;overflow:hidden;z-index:200;}
+.nav-dropdown-menu.show{display:block;}
+.nav-dropdown-menu a{display:flex;align-items:center;gap:10px;padding:12px 16px;color:var(--text);text-decoration:none;font-size:.85rem;font-weight:500;transition:background .15s;}
+.nav-dropdown-menu a:hover{background:var(--blue-light);}
+.nav-dropdown-menu a i{width:18px;color:var(--blue);}
+.hamburger{display:none;color:#fff;font-size:1.4rem;cursor:pointer;}
+
+/* HERO */
+.hero{background:linear-gradient(135deg,#0062ff,#0047cc);padding:40px 24px 56px;text-align:center;}
+.hero h1{color:#fff;font-size:1.8rem;font-weight:800;margin-bottom:6px;}
+.hero p{color:rgba(255,255,255,0.78);font-size:.9rem;}
+
+/* MAIN */
+.main{max-width:1100px;margin:-28px auto 40px;padding:0 16px;}
+.card{background:var(--card);border-radius:14px;box-shadow:var(--shadow);padding:24px;margin-bottom:20px;border:1px solid var(--border);}
+.section-title{font-size:1rem;font-weight:800;color:var(--text);margin-bottom:18px;display:flex;align-items:center;gap:10px;}
+.section-title i{color:var(--blue);}
+.section-title::after{content:'';flex:1;height:2px;background:var(--border);}
+
+/* PROFILE */
+.profile-header{display:flex;align-items:center;gap:20px;padding:20px;background:linear-gradient(135deg,var(--blue-light),#f8fbff);border-radius:12px;margin-bottom:20px;border:1.5px solid rgba(0,98,255,0.15);}
+.avatar{width:72px;height:72px;background:var(--blue);border-radius:50%;display:flex;align-items:center;justify-content:center;color:#fff;font-size:2rem;font-weight:800;flex-shrink:0;}
+.avatar img{width:100%;height:100%;border-radius:50%;object-fit:cover;}
+.profile-info h2{font-size:1.3rem;font-weight:800;}
+.profile-info p{color:var(--muted);font-size:.85rem;margin-top:2px;}
+
+/* STATS */
+.stats-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:14px;margin-bottom:20px;}
+.stat-box{text-align:center;padding:20px 12px;border-radius:12px;border:1.5px solid var(--border);transition:transform .2s;}
+.stat-box:hover{transform:translateY(-2px);}
+.stat-box .val{font-size:1.8rem;font-weight:800;font-family:'JetBrains Mono',monospace;}
+.stat-box small{color:var(--muted);font-size:.73rem;font-weight:700;text-transform:uppercase;letter-spacing:.4px;display:block;margin-top:4px;}
+.sb-blue{background:var(--blue-light);border-color:rgba(0,98,255,0.2);}.sb-blue .val{color:var(--blue);}
+.sb-green{background:#e8fff4;border-color:#a8f0cb;}.sb-green .val{color:var(--green);}
+.sb-red{background:#fff0f3;border-color:#ffb3c1;}.sb-red .val{color:var(--red);}
+.sb-yellow{background:#fff8eb;border-color:#ffd88a;}.sb-yellow .val{color:var(--yellow);}
+.sb-accent{background:#fff3ed;border-color:#ffc9a8;}.sb-accent .val{color:var(--accent);}
+
+/* INSIGHTS */
+.insight-card{padding:20px;border-radius:12px;margin-bottom:16px;}
+.insight-card.grade-a{background:linear-gradient(135deg,#e8fff4,#f0fdf4);border:1.5px solid #a8f0cb;}
+.insight-card.grade-b{background:linear-gradient(135deg,var(--blue-light),#f8fbff);border:1.5px solid rgba(0,98,255,0.2);}
+.insight-card.grade-c{background:linear-gradient(135deg,#fff8eb,#fffdf5);border:1.5px solid #ffd88a;}
+.insight-card.grade-d{background:linear-gradient(135deg,#fff0f3,#fff5f7);border:1.5px solid #ffb3c1;}
+.grade-display{font-size:2.5rem;font-weight:800;font-family:'JetBrains Mono',monospace;}
+.insight-msg{font-size:.9rem;color:var(--muted);margin-top:6px;}
+.recommendation{background:#f8faff;padding:14px;border-radius:8px;margin-top:12px;font-size:.85rem;border-left:4px solid var(--blue);}
+
+/* SUBJECT BARS */
+.subject-bar{margin-bottom:14px;}
+.subject-bar .label{display:flex;justify-content:space-between;font-size:.82rem;font-weight:700;margin-bottom:4px;}
+.subject-bar .bar{height:10px;background:#edf2ff;border-radius:5px;overflow:hidden;}
+.subject-bar .bar .fill{height:100%;border-radius:5px;transition:width .6s ease;}
+
+/* HISTORY */
+.history-item{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px;padding:14px 16px;border:1.5px solid var(--border);border-radius:10px;margin-bottom:10px;transition:border-color .2s;}
+.history-item:hover{border-color:var(--blue);}
+.history-left{flex:1;min-width:200px;}
+.history-title{font-weight:700;font-size:.9rem;}
+.history-meta{color:var(--muted);font-size:.78rem;margin-top:3px;}
+.history-score{font-family:'JetBrains Mono',monospace;font-size:1.2rem;font-weight:700;color:var(--blue);}
+.badge{font-size:.7rem;font-weight:700;padding:3px 8px;border-radius:12px;}
+.badge-correct{background:#e8fff4;color:var(--green);}
+.badge-wrong{background:#fff0f3;color:var(--red);}
+
+/* QUICK ACTIONS */
+.actions-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:14px;}
+.action-card{display:flex;flex-direction:column;align-items:center;gap:10px;padding:24px 16px;border-radius:12px;border:1.5px solid var(--border);text-decoration:none;color:var(--text);transition:all .2s;text-align:center;}
+.action-card:hover{border-color:var(--blue);transform:translateY(-3px);box-shadow:var(--shadow);}
+.action-card i{font-size:1.6rem;color:var(--blue);}
+.action-card span{font-weight:700;font-size:.85rem;}
+
+/* EMPTY STATE */
+.empty-state{text-align:center;padding:40px 20px;color:var(--muted);}
+.empty-state i{font-size:3rem;margin-bottom:12px;color:var(--border);}
+.empty-state p{font-size:.9rem;margin-top:8px;}
+.empty-state a{color:var(--blue);font-weight:700;text-decoration:none;}
+
+/* RESPONSIVE */
+@media(max-width:768px){
+  .nav-links{display:none;}
+  .hamburger{display:block;}
+  .hero h1{font-size:1.4rem;}
+  .profile-header{flex-direction:column;text-align:center;}
+  .stats-grid{grid-template-columns:repeat(2,1fr);}
+  .actions-grid{grid-template-columns:1fr 1fr;}
+}
+</style>
+</head>
+<body>
+
+<header>
+  <nav>
+    <a href="/" class="logo">
+      <img src="/Logo.png" alt="Logo" onerror="this.style.display='none'">
+      <span>CEE Medico Nepal</span>
+    </a>
+    <ul class="nav-links">
+      <li><a href="/user-dashboard/index.html" class="active"><i class="fas fa-chart-line"></i> Dashboard</a></li>
+      <li><a href="/user-dashboard/practice-history.html"><i class="fas fa-history"></i> History</a></li>
+      <li><a href="/user-dashboard/profile.html"><i class="fas fa-user"></i> Profile</a></li>
+      <li><a href="/"><i class="fas fa-home"></i> Home</a></li>
+    </ul>
+    <div class="nav-user">
+      <div class="nav-dropdown">
+        <div class="nav-avatar" id="navAvatar" title="Account">?</div>
+        <div class="nav-dropdown-menu" id="navDropdown">
+          <a href="/user-dashboard/profile.html"><i class="fas fa-user"></i> My Profile</a>
+          <a href="/user-dashboard/practice-history.html"><i class="fas fa-history"></i> Practice History</a>
+          <a href="#" id="logoutBtn"><i class="fas fa-sign-out-alt"></i> Logout</a>
+        </div>
+      </div>
+    </div>
+    <div class="hamburger" id="hamburger"><i class="fas fa-bars"></i></div>
+  </nav>
+</header>
+
+<div class="hero">
+  <h1 id="greeting">Welcome Back!</h1>
+  <p>Track your CEE preparation progress</p>
+</div>
+
+<div class="main">
+
+  <!-- Profile Card -->
+  <div class="card">
+    <div class="profile-header">
+      <div class="avatar" id="profileAvatar">?</div>
+      <div class="profile-info">
+        <h2 id="profileName">Loading...</h2>
+        <p id="profileEmail">...</p>
+        <p id="profileMeta" style="margin-top:4px;font-size:.8rem;"></p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Stats -->
+  <div class="card">
+    <div class="section-title"><i class="fas fa-chart-bar"></i> Your Statistics</div>
+    <div class="stats-grid" id="statsGrid">
+      <div class="stat-box sb-blue"><div class="val" id="statSessions">0</div><small>Sessions</small></div>
+      <div class="stat-box sb-blue"><div class="val" id="statQuestions">0</div><small>Questions</small></div>
+      <div class="stat-box sb-green"><div class="val" id="statCorrect">0</div><small>Correct</small></div>
+      <div class="stat-box sb-red"><div class="val" id="statWrong">0</div><small>Wrong</small></div>
+      <div class="stat-box sb-yellow"><div class="val" id="statAccuracy">0%</div><small>Accuracy</small></div>
+      <div class="stat-box sb-accent"><div class="val" id="statScore">0</div><small>Total Score</small></div>
+    </div>
+  </div>
+
+  <!-- Performance Insights -->
+  <div class="card">
+    <div class="section-title"><i class="fas fa-brain"></i> Performance Insights</div>
+    <div id="insightsContainer">
+      <div class="empty-state">
+        <i class="fas fa-chart-pie"></i>
+        <p>Complete some quizzes to see your performance insights.</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Subject-wise Performance -->
+  <div class="card">
+    <div class="section-title"><i class="fas fa-book"></i> Subject-wise Performance</div>
+    <div id="subjectBars">
+      <div class="empty-state">
+        <i class="fas fa-layer-group"></i>
+        <p>No subject data yet. <a href="/">Start practicing</a></p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Recent Sessions -->
+  <div class="card">
+    <div class="section-title"><i class="fas fa-clock"></i> Recent Sessions</div>
+    <div id="recentSessions">
+      <div class="empty-state">
+        <i class="fas fa-clipboard-list"></i>
+        <p>No sessions recorded yet. <a href="/">Take a quiz</a></p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Quick Actions -->
+  <div class="card">
+    <div class="section-title"><i class="fas fa-bolt"></i> Quick Actions</div>
+    <div class="actions-grid">
+      <a href="/" class="action-card"><i class="fas fa-play-circle"></i><span>Practice MCQs</span></a>
+      <a href="/quiz/index.html" class="action-card"><i class="fas fa-file-alt"></i><span>Weekly Exam</span></a>
+      <a href="/mock-test.html" class="action-card"><i class="fas fa-clock"></i><span>Mock Test</span></a>
+      <a href="/chapter-wise.html" class="action-card"><i class="fas fa-book-open"></i><span>Chapter-wise</span></a>
+      <a href="/user-dashboard/practice-history.html" class="action-card"><i class="fas fa-history"></i><span>View History</span></a>
+      <a href="/user-dashboard/profile.html" class="action-card"><i class="fas fa-user-cog"></i><span>Edit Profile</span></a>
+    </div>
+  </div>
+
+</div>
+
+<script type="module">
+import {
+  auth, db, signOut, onAuthStateChanged,
+  ref, get, onValue
+} from "../auth/firebase-init.js";
+import { getUserSessions, getUserStats, getPerformanceInsights } from "../auth/tracking-service.js";
+
+const navAvatar = document.getElementById("navAvatar");
+const navDropdown = document.getElementById("navDropdown");
+const logoutBtn = document.getElementById("logoutBtn");
+
+navAvatar.addEventListener("click", () => navDropdown.classList.toggle("show"));
+document.addEventListener("click", (e) => {
+  if (!e.target.closest(".nav-dropdown")) navDropdown.classList.remove("show");
+});
+
+logoutBtn.addEventListener("click", async (e) => {
+  e.preventDefault();
+  await signOut(auth);
+  window.location.href = "/auth/login.html";
+});
+
+onAuthStateChanged(auth, async (user) => {
+  if (!user) { window.location.href = "/auth/login.html"; return; }
+
+  const initial = (user.displayName || user.email || "?")[0].toUpperCase();
+  navAvatar.textContent = initial;
+  document.getElementById("profileAvatar").textContent = initial;
+
+  if (user.photoURL) {
+    document.getElementById("profileAvatar").innerHTML = `<img src="${user.photoURL}" alt="avatar">`;
+  }
+
+  document.getElementById("profileName").textContent = user.displayName || "User";
+  document.getElementById("profileEmail").textContent = user.email;
+
+  const hour = new Date().getHours();
+  let greet = "Good Morning";
+  if (hour >= 12 && hour < 17) greet = "Good Afternoon";
+  else if (hour >= 17) greet = "Good Evening";
+  document.getElementById("greeting").textContent = `${greet}, ${(user.displayName || "").split(" ")[0] || "Student"}!`;
+
+  const snap = await get(ref(db, `users/${user.uid}`));
+  if (snap.exists()) {
+    const data = snap.val();
+    if (data.college || data.targetYear) {
+      document.getElementById("profileMeta").textContent = [data.college, data.targetYear ? `Target: CEE ${data.targetYear}` : ""].filter(Boolean).join(" | ");
+    }
+  }
+
+  const stats = await getUserStats(user.uid);
+  if (stats) {
+    document.getElementById("statSessions").textContent = stats.totalSessions || 0;
+    document.getElementById("statQuestions").textContent = stats.totalQuestions || 0;
+    document.getElementById("statCorrect").textContent = stats.totalCorrect || 0;
+    document.getElementById("statWrong").textContent = stats.totalWrong || 0;
+    const acc = stats.totalQuestions > 0 ? Math.round((stats.totalCorrect / stats.totalQuestions) * 100) : 0;
+    document.getElementById("statAccuracy").textContent = acc + "%";
+    document.getElementById("statScore").textContent = Math.round((stats.totalScore || 0) * 10) / 10;
+
+    renderInsights(stats);
+    renderSubjectBars(stats);
+  }
+
+  const sessions = await getUserSessions(user.uid, 5);
+  renderSessions(sessions);
+});
+
+function renderInsights(stats) {
+  const insights = getPerformanceInsights(stats);
+  const container = document.getElementById("insightsContainer");
+  if (!insights || insights.grade === "N/A") return;
+
+  let gradeClass = "grade-b";
+  if (insights.accuracy >= 80) gradeClass = "grade-a";
+  else if (insights.accuracy >= 60) gradeClass = "grade-b";
+  else if (insights.accuracy >= 50) gradeClass = "grade-c";
+  else gradeClass = "grade-d";
+
+  let html = `
+    <div class="insight-card ${gradeClass}">
+      <div style="display:flex;align-items:center;gap:20px;flex-wrap:wrap;">
+        <div>
+          <div class="grade-display">${insights.grade}</div>
+          <div style="font-size:.8rem;color:var(--muted);font-weight:600;">GRADE</div>
+        </div>
+        <div style="flex:1;min-width:200px;">
+          <div style="font-weight:700;font-size:1rem;">${insights.accuracy}% Accuracy</div>
+          <div class="insight-msg">${insights.message}</div>
+        </div>
+      </div>
+      <div class="recommendation"><i class="fas fa-lightbulb" style="color:var(--yellow);margin-right:6px;"></i>${insights.recommendation}</div>
+    </div>`;
+
+  if (insights.strengths.length > 0) {
+    html += `<div style="margin-top:12px"><span style="font-weight:700;color:var(--green);font-size:.85rem;"><i class="fas fa-check-circle"></i> Strengths:</span>
+      ${insights.strengths.map(s => `<span style="display:inline-block;background:#e8fff4;color:var(--green);padding:3px 10px;border-radius:12px;font-size:.78rem;font-weight:600;margin:4px 4px 0 0;">${s.subject} (${s.accuracy}%)</span>`).join("")}</div>`;
+  }
+  if (insights.weaknesses.length > 0) {
+    html += `<div style="margin-top:8px"><span style="font-weight:700;color:var(--red);font-size:.85rem;"><i class="fas fa-exclamation-circle"></i> Needs Work:</span>
+      ${insights.weaknesses.map(w => `<span style="display:inline-block;background:#fff0f3;color:var(--red);padding:3px 10px;border-radius:12px;font-size:.78rem;font-weight:600;margin:4px 4px 0 0;">${w.subject} (${w.accuracy}%)</span>`).join("")}</div>`;
+  }
+
+  container.innerHTML = html;
+}
+
+function renderSubjectBars(stats) {
+  const container = document.getElementById("subjectBars");
+  if (!stats.subjectWise || Object.keys(stats.subjectWise).length === 0) return;
+
+  const colors = { Physics: "#0062ff", Chemistry: "#ff6b35", Botany: "#00c97a", Zoology: "#a855f7", MAT: "#ffa500" };
+  let html = "";
+
+  for (const [subject, data] of Object.entries(stats.subjectWise)) {
+    const acc = data.total > 0 ? Math.round((data.correct / data.total) * 100) : 0;
+    const color = colors[subject] || "#0062ff";
+    html += `
+      <div class="subject-bar">
+        <div class="label"><span>${subject}</span><span>${acc}% (${data.correct}/${data.total})</span></div>
+        <div class="bar"><div class="fill" style="width:${acc}%;background:${color};"></div></div>
+      </div>`;
+  }
+
+  container.innerHTML = html;
+}
+
+function renderSessions(sessions) {
+  const container = document.getElementById("recentSessions");
+  if (!sessions || sessions.length === 0) return;
+
+  container.innerHTML = sessions.map(s => {
+    const date = s.timestamp ? new Date(s.timestamp).toLocaleDateString("en-NP", { month: "short", day: "numeric", year: "numeric" }) : "N/A";
+    const acc = s.totalQuestions > 0 ? Math.round((s.correct / s.totalQuestions) * 100) : 0;
+    return `
+      <div class="history-item">
+        <div class="history-left">
+          <div class="history-title">${s.title || s.subject || "Quiz Session"}</div>
+          <div class="history-meta">${date} &bull; ${s.totalQuestions || 0} questions &bull; <span class="badge badge-correct">${s.correct || 0} correct</span> <span class="badge badge-wrong">${s.wrong || 0} wrong</span></div>
+        </div>
+        <div class="history-score">${acc}%</div>
+      </div>`;
+  }).join("");
+}
+</script>
+</body>
+</html>

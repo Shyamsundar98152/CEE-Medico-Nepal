@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Reset Password - CEE Medico Nepal</title>
+  <link rel="apple-touch-icon" sizes="180x180" href="/fevicon/apple-touch-icon.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/fevicon/favicon-32x32.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/fevicon/favicon-16x16.png">
+  <link rel="manifest" href="/fevicon/site.webmanifest">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css"/>
+  <style>
+    *{margin:0;padding:0;box-sizing:border-box;}
+    body{font-family:'Segoe UI',Tahoma,Geneva,Verdana,sans-serif;background:linear-gradient(135deg,#0062ff 0%,#3b82f6 50%,#0047cc 100%);min-height:100vh;display:flex;align-items:center;justify-content:center;padding:20px;}
+    .auth-card{background:#fff;border-radius:16px;box-shadow:0 20px 60px rgba(0,0,0,0.15);width:100%;max-width:440px;padding:40px;animation:fadeUp .5s ease;}
+    @keyframes fadeUp{from{opacity:0;transform:translateY(20px)}to{opacity:1;transform:translateY(0)}}
+    .auth-logo{text-align:center;margin-bottom:24px;}
+    .auth-logo h1{font-size:22px;color:#0062ff;margin-top:8px;}
+    .auth-logo p{color:#6b7c93;font-size:14px;margin-top:4px;}
+    .form-group{margin-bottom:18px;position:relative;}
+    .form-group label{display:block;font-weight:600;color:#333;margin-bottom:6px;font-size:14px;}
+    .form-group input{width:100%;padding:12px 14px 12px 42px;border:2px solid #e0e6ed;border-radius:10px;font-size:15px;transition:border .2s;}
+    .form-group input:focus{outline:none;border-color:#0062ff;}
+    .form-group i.field-icon{position:absolute;left:14px;top:40px;color:#6b7c93;font-size:15px;}
+    .btn-primary{width:100%;padding:13px;background:#0062ff;color:#fff;border:none;border-radius:10px;font-size:16px;font-weight:700;cursor:pointer;transition:background .2s;}
+    .btn-primary:hover{background:#0047cc;}
+    .auth-footer{text-align:center;margin-top:20px;font-size:14px;color:#6b7c93;}
+    .auth-footer a{color:#0062ff;font-weight:600;text-decoration:none;}
+    .error-msg{background:#fef2f2;color:#dc2626;padding:10px 14px;border-radius:8px;font-size:13px;margin-bottom:14px;display:none;}
+    .success-msg{background:#f0fdf4;color:#16a34a;padding:10px 14px;border-radius:8px;font-size:13px;margin-bottom:14px;display:none;}
+    .home-link{position:fixed;top:20px;left:20px;color:#fff;text-decoration:none;font-weight:600;font-size:14px;display:flex;align-items:center;gap:6px;opacity:0.9;}
+    .home-link:hover{opacity:1;}
+  </style>
+</head>
+<body>
+
+<a href="/" class="home-link"><i class="fas fa-arrow-left"></i> Home</a>
+
+<div class="auth-card">
+  <div class="auth-logo">
+    <i class="fas fa-key" style="font-size:36px;color:#0062ff;"></i>
+    <h1>Reset Password</h1>
+    <p>Enter your email to receive a reset link</p>
+  </div>
+
+  <div class="error-msg" id="errorMsg"></div>
+  <div class="success-msg" id="successMsg"></div>
+
+  <form id="resetForm">
+    <div class="form-group">
+      <label for="email">Email Address</label>
+      <i class="fas fa-envelope field-icon"></i>
+      <input type="email" id="email" placeholder="your@email.com" required/>
+    </div>
+    <button type="submit" class="btn-primary">Send Reset Link</button>
+  </form>
+
+  <div class="auth-footer">
+    <a href="/auth/login.html">Back to Login</a>
+  </div>
+</div>
+
+<script type="module">
+  import { auth, sendPasswordResetEmail } from "./firebase-init.js";
+
+  const form = document.getElementById("resetForm");
+  const errorMsg = document.getElementById("errorMsg");
+  const successMsg = document.getElementById("successMsg");
+
+  form.addEventListener("submit", async (e) => {
+    e.preventDefault();
+    errorMsg.style.display = "none";
+    successMsg.style.display = "none";
+
+    const email = document.getElementById("email").value.trim();
+    try {
+      await sendPasswordResetEmail(auth, email);
+      successMsg.textContent = "Password reset link sent! Check your email inbox.";
+      successMsg.style.display = "block";
+    } catch (err) {
+      errorMsg.textContent = "Error: " + err.message;
+      errorMsg.style.display = "block";
+    }
+  });
+</script>
+</body>
+</html>
