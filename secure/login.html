@@ -15,7 +15,7 @@
   
   <!-- FontAwesome & Google Fonts -->
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"/>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
   
   <!-- Tailwind CSS -->
   <script src="https://cdn.tailwindcss.com"></script>
@@ -49,53 +49,131 @@
     }
   </script>
   <style>
-    /* Premium background mesh and glows */
+    /* Premium background mesh */
     .bg-mesh {
       background-color: #f8fafc;
       background-image: 
-        radial-gradient(at 0% 0%, rgba(224, 242, 254, 0.6) 0, transparent 50%), 
-        radial-gradient(at 100% 0%, rgba(186, 230, 253, 0.5) 0, transparent 50%),
-        radial-gradient(at 50% 100%, rgba(240, 249, 251, 0.9) 0, transparent 70%);
+        radial-gradient(at 0% 0%, rgba(224, 242, 254, 0.4) 0, transparent 50%), 
+        radial-gradient(at 100% 0%, rgba(186, 230, 253, 0.3) 0, transparent 50%),
+        radial-gradient(at 50% 100%, rgba(240, 249, 251, 0.5) 0, transparent 70%);
+    }
+
+    /* Dynamic moving organic orbs */
+    @keyframes floatOrb1 {
+      0%, 100% { transform: translate(0px, 0px) scale(1); }
+      33% { transform: translate(30px, -50px) scale(1.1); }
+      66% { transform: translate(-20px, 20px) scale(0.95); }
+    }
+    @keyframes floatOrb2 {
+      0%, 100% { transform: translate(0px, 0px) scale(1); }
+      40% { transform: translate(-40px, 40px) scale(1.15); }
+      70% { transform: translate(30px, -20px) scale(0.9); }
+    }
+    @keyframes floatOrb3 {
+      0%, 100% { transform: translate(0px, 0px) scale(1); }
+      30% { transform: translate(20px, 40px) scale(0.9); }
+      60% { transform: translate(-30px, -30px) scale(1.1); }
     }
     
-    /* Elegant pulse animations */
-    .pulse-ring {
-      animation: pulseGeo 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+    .animate-orb1 { animation: floatOrb1 18s ease-in-out infinite; }
+    .animate-orb2 { animation: floatOrb2 22s ease-in-out infinite; }
+    .animate-orb3 { animation: floatOrb3 20s ease-in-out infinite; }
+
+    /* Elegant entry animations (Cubic Bezier curves) */
+    @keyframes fadeInUp {
+      from {
+        opacity: 0;
+        transform: translateY(24px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
     }
-    @keyframes pulseGeo {
-      0%, 100% { transform: scale(1); opacity: 0.2; }
-      50% { transform: scale(1.05); opacity: 0.35; }
+    .animate-fade-in-up {
+      animation: fadeInUp 0.8s cubic-bezier(0.16, 1, 0.3, 1) both;
     }
+
+    /* Double WhatsApp Ripple Rings */
+    @keyframes wavePulse {
+      0% { transform: scale(0.9); opacity: 0.9; }
+      100% { transform: scale(1.6); opacity: 0; }
+    }
+    .pulse-ring-wave {
+      animation: wavePulse 2.5s cubic-bezier(0.25, 0, 0, 1) infinite;
+    }
+
+    /* Subtle input active glows */
+    .input-transition {
+      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+    .input-transition:focus-within {
+      transform: translateY(-1px);
+    }
+
+    /* Primary CTA Shimmer Highlight Sweep */
+    .btn-shimmer {
+      position: relative;
+      overflow: hidden;
+    }
+    .btn-shimmer::after {
+      content: '';
+      position: absolute;
+      top: -50%;
+      left: -100%;
+      width: 50%;
+      height: 200%;
+      background: linear-gradient(
+        to right,
+        rgba(255, 255, 255, 0) 0%,
+        rgba(255, 255, 255, 0.3) 50%,
+        rgba(255, 255, 255, 0) 100%
+      );
+      transform: rotate(25deg);
+      transition: none;
+    }
+    .btn-shimmer:hover::after {
+      left: 150%;
+      transition: all 1s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    /* Stagger helpers */
+    .delay-75 { animation-delay: 75ms; }
+    .delay-150 { animation-delay: 150ms; }
+    .delay-225 { animation-delay: 225ms; }
+    .delay-300 { animation-delay: 300ms; }
+    .delay-375 { animation-delay: 375ms; }
+    .delay-450 { animation-delay: 450ms; }
+    .delay-525 { animation-delay: 525ms; }
+    .delay-600 { animation-delay: 600ms; }
   </style>
 </head>
 
 <body class="bg-mesh font-sans min-h-screen flex flex-col justify-between relative overflow-x-hidden antialiased text-slate-800">
 
-  <!-- Modern custom notifications (Success, Info, Error) directly into UI -->
+  <!-- Toast notification portal element -->
   <div id="toastContainer" class="fixed top-5 right-5 z-[10000] flex flex-col gap-3 w-full max-w-sm px-4 pointer-events-none"></div>
 
-  <!-- Custom Alert/Modal Popup instead of native window.alert -->
   <div id="customAlertModal" class="fixed inset-0 z-[9999] flex items-center justify-center hidden p-4">
-    <div class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm transition-opacity" onclick="hideAlert()"></div>
-    <div class="bg-white rounded-2xl shadow-2xl border border-sky-100 max-w-md w-full p-6 relative z-10 transform scale-95 transition-all duration-300">
+    <div class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm transition-opacity duration-300" onclick="hideAlert()"></div>
+    <div class="bg-white rounded-3xl shadow-2xl border border-sky-100 max-w-md w-full p-6 relative z-10 transform scale-95 opacity-0 transition-all duration-300 ease-out">
       <div class="flex items-center gap-4 mb-4">
-        <div id="alertIconContainer" class="w-12 h-12 rounded-full flex items-center justify-center text-xl">
-          <!-- Icon injected dynamically -->
+        <div id="alertIconContainer" class="w-12 h-12 rounded-full flex items-center justify-center text-xl shrink-0">
+          <!-- Dynamic Notification icon injected -->
         </div>
-        <h3 id="alertTitle" class="text-lg font-bold text-slate-900">Notification</h3>
+        <h3 id="alertTitle" class="text-lg font-bold text-slate-900">System Notification</h3>
       </div>
       <p id="alertMessage" class="text-slate-600 leading-relaxed mb-6"></p>
       <div class="flex justify-end">
         <button onclick="hideAlert()" id="alertConfirmBtn" class="px-5 py-2.5 bg-medical-600 hover:bg-medical-700 text-white font-medium rounded-xl transition duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-medical-500">
-          Got it
+          Continue
         </button>
       </div>
     </div>
   </div>
 
-  <!-- Notice Popup (Sponsored Ad) -->
-  <div id="overlay" class="fixed inset-0 bg-slate-900/40 backdrop-blur-sm z-[9997] hidden transition-opacity duration-300"></div>
-  <div id="noticePopup" class="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 bg-white rounded-3xl shadow-2xl border border-sky-100 p-6 z-[9998] hidden max-w-sm w-[90%] text-center transform scale-95 transition-all duration-300">
+  <div id="overlay" class="fixed inset-0 bg-slate-900/40 backdrop-blur-sm z-[9997] hidden opacity-0 transition-opacity duration-300"></div>
+  <div id="noticePopup" class="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 bg-white rounded-3xl shadow-2xl border border-sky-100 p-6 z-[9998] hidden max-w-sm w-[90%] text-center transform scale-90 opacity-0 transition-all duration-300 ease-out">
     <div class="flex justify-between items-center mb-4">
       <span class="bg-amber-50 text-amber-700 text-xs font-semibold px-3 py-1 rounded-full border border-amber-200">
         📢 Sponsored Offer
@@ -103,14 +181,14 @@
       <span id="countdown" class="text-rose-600 font-bold text-xs bg-rose-50 px-2.5 py-1 rounded-full">Closing in 10s</span>
     </div>
     <div class="overflow-hidden rounded-2xl mb-4 bg-slate-50 border border-slate-100">
-      <img src="/img/pay-199.png" onerror="this.src='https://placehold.co/400x300/e0f2fe/0369a1?text=Premium+Access+199+NPR'" alt="Premium Subscription Offer" class="w-full h-auto object-cover max-h-56">
+      <img src="/img/pay-199.png" onerror="this.src='https://placehold.co/400x300/e0f2fe/0369a1?text=Premium+Access+199+NPR'" alt="Premium Subscription Offer" class="w-full h-auto object-cover max-h-56 transform hover:scale-105 transition-transform duration-500">
     </div>
     <h4 class="text-lg font-bold text-slate-900 mb-2">Get Premium Upgrade</h4>
     <p class="text-sm text-slate-600 mb-5 leading-relaxed">
       Pay only <strong class="text-medical-600 text-base">Rs. 199</strong> to instantly acquire your premium subscription! Once registered, click the WhatsApp button to contact admin.
     </p>
     <div class="flex gap-2">
-      <a href="https://wa.me/9779812240229?text=I%20want%20premium%20subscription" target="_blank" class="flex-1 py-2.5 bg-emerald-500 hover:bg-emerald-600 text-white font-semibold rounded-xl text-sm transition duration-200 flex items-center justify-center gap-2">
+      <a href="https://wa.me/9779812240229?text=I%20want%20premium%20subscription" target="_blank" class="flex-1 py-2.5 bg-emerald-500 hover:bg-emerald-600 text-white font-semibold rounded-xl text-sm transition-all duration-200 flex items-center justify-center gap-2 shadow-lg shadow-emerald-500/10 hover:shadow-emerald-500/20">
         <i class="fab fa-whatsapp text-lg"></i> Buy Now
       </a>
       <button onclick="closeNotice()" class="px-4 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 font-medium rounded-xl text-sm transition duration-200">
@@ -119,125 +197,131 @@
     </div>
   </div>
 
-  <!-- Top Navigation Header -->
-  <header class="w-full px-6 py-4 bg-white/60 backdrop-blur-md border-b border-sky-100/50 flex justify-between items-center sticky top-0 z-50">
-    <div class="flex items-center gap-2.5">
+  <header class="w-full px-6 py-4 bg-white/60 backdrop-blur-md border-b border-sky-100/50 flex justify-between items-center sticky top-0 z-50 animate-fade-in-up">
+    <div class="flex items-center gap-2.5 hover:scale-105 transition-transform duration-300">
       <div class="w-10 h-10 rounded-xl bg-gradient-to-tr from-medical-600 to-sky-400 flex items-center justify-center text-white shadow-lg shadow-medical-500/20">
         <i class="fas fa-file-medical text-lg"></i>
       </div>
       <span class="font-bold text-xl tracking-tight text-slate-900">Ceemediconepal</span>
     </div>
-    <a href="https://ceemediconepal.xyz" class="px-5 py-2 text-sm font-semibold text-medical-700 bg-medical-50 hover:bg-medical-100 border border-medical-200/50 rounded-xl transition duration-200 shadow-sm">
-      <i class="fas fa-home mr-1.5"></i> Home
+    <a href="https://ceemediconepal.xyz" class="px-5 py-2 text-sm font-semibold text-medical-700 bg-medical-50 hover:bg-medical-100 border border-medical-200/50 rounded-xl transition duration-300 shadow-sm hover:translate-y-[-1px]">
+      <i class="fas fa-home mr-1.5 animate-pulse"></i> Home
     </a>
   </header>
 
-  <!-- Main Content Area -->
-  <main class="flex-grow flex items-center justify-center px-4 py-12 relative">
-    <!-- Decorative background elements -->
-    <div class="absolute w-[450px] h-[450px] rounded-full bg-sky-200/20 blur-3xl -top-12 -left-12 pulse-ring pointer-events-none"></div>
-    <div class="absolute w-[400px] h-[400px] rounded-full bg-medical-100/30 blur-3xl -bottom-16 -right-16 pulse-ring pointer-events-none" style="animation-delay: -1s;"></div>
+  <main class="flex-grow flex items-center justify-center px-4 py-12 relative overflow-hidden">
+    <!-- Animated fluid decorative backdrop spheres -->
+    <div class="absolute w-[450px] h-[450px] rounded-full bg-sky-200/20 blur-[100px] -top-12 -left-12 pointer-events-none animate-orb1"></div>
+    <div class="absolute w-[400px] h-[400px] rounded-full bg-medical-100/35 blur-[120px] bottom-16 -right-16 pointer-events-none animate-orb2"></div>
+    <div class="absolute w-[350px] h-[350px] rounded-full bg-indigo-100/20 blur-[90px] top-1/2 left-1/3 pointer-events-none animate-orb3"></div>
 
-    <div class="bg-white/80 backdrop-blur-xl border border-white p-8 md:p-10 rounded-3xl w-full max-w-md shadow-2xl shadow-sky-900/5 relative z-10">
+    <!-- Login credentials card -->
+    <div class="bg-white/80 backdrop-blur-xl border border-white p-8 md:p-10 rounded-3xl w-full max-w-md shadow-2xl shadow-sky-900/5 relative z-10 animate-fade-in-up delay-75">
       
       <!-- Logo Header Inside Form -->
-      <div class="text-center mb-8">
+      <div class="text-center mb-8 animate-fade-in-up delay-150">
         <h1 class="text-2xl md:text-3xl font-extrabold text-slate-900 tracking-tight">Welcome Back</h1>
         <p class="text-slate-500 mt-2 text-sm md:text-base">Please access your portal account</p>
       </div>
 
-      <!-- Login Form -->
+      <!-- Login Input Form -->
       <form class="space-y-5" id="loginForm">
+        
         <!-- Email field -->
-        <div>
+        <div class="animate-fade-in-up delay-225">
           <label for="email" class="block text-sm font-semibold text-slate-700 mb-1.5">Email Address</label>
-          <div class="relative">
+          <div class="relative input-transition">
             <span class="absolute inset-y-0 left-0 flex items-center pl-3.5 pointer-events-none text-slate-400">
               <i class="far fa-envelope"></i>
             </span>
             <input 
               type="email" 
               id="email" 
-              class="w-full pl-10 pr-4 py-3 bg-slate-50 border border-slate-200 text-slate-800 rounded-xl focus:outline-none focus:ring-2 focus:ring-medical-500/20 focus:border-medical-500 transition duration-200 placeholder:text-slate-400" 
+              class="w-full pl-10 pr-4 py-3 bg-slate-50/70 border border-slate-200 text-slate-800 rounded-xl focus:outline-none focus:ring-4 focus:ring-medical-500/10 focus:border-medical-500 focus:bg-white transition-all duration-300 placeholder:text-slate-400" 
               placeholder="name@example.com" 
               required 
             />
           </div>
         </div>
 
-        <!-- Password field with custom toggle -->
-        <div>
+        <!-- Password field with custom toggle animation -->
+        <div class="animate-fade-in-up delay-300">
           <label for="password" class="block text-sm font-semibold text-slate-700 mb-1.5">Password</label>
-          <div class="relative">
+          <div class="relative input-transition">
             <span class="absolute inset-y-0 left-0 flex items-center pl-3.5 pointer-events-none text-slate-400">
               <i class="fas fa-lock"></i>
             </span>
             <input 
               type="password" 
               id="password" 
-              class="w-full pl-10 pr-11 py-3 bg-slate-50 border border-slate-200 text-slate-800 rounded-xl focus:outline-none focus:ring-2 focus:ring-medical-500/20 focus:border-medical-500 transition duration-200 placeholder:text-slate-400" 
+              class="w-full pl-10 pr-11 py-3 bg-slate-50/70 border border-slate-200 text-slate-800 rounded-xl focus:outline-none focus:ring-4 focus:ring-medical-500/10 focus:border-medical-500 focus:bg-white transition-all duration-300 placeholder:text-slate-400" 
               placeholder="••••••••" 
               required 
             />
             <button 
               type="button" 
               id="togglePassword" 
-              class="absolute inset-y-0 right-0 flex items-center pr-3.5 text-slate-400 hover:text-medical-600 transition duration-150 focus:outline-none"
+              class="absolute inset-y-0 right-0 flex items-center pr-3.5 text-slate-400 hover:text-medical-600 transition-colors duration-200 focus:outline-none"
             >
-              <i class="far fa-eye text-sm" id="toggleIcon"></i>
+              <i class="far fa-eye text-sm transition-transform duration-300 hover:scale-110" id="toggleIcon"></i>
             </button>
           </div>
         </div>
 
         <!-- Remember & Forgot Options -->
-        <div class="flex items-center justify-between text-sm pt-1">
-          <label class="relative flex items-center cursor-pointer select-none">
+        <div class="flex items-center justify-between text-sm pt-1 animate-fade-in-up delay-375">
+          <label class="relative flex items-center cursor-pointer select-none group">
             <input type="checkbox" id="remember" class="sr-only peer">
-            <div class="w-5 h-5 bg-slate-100 border border-slate-300 rounded peer-checked:bg-medical-500 peer-checked:border-medical-500 flex items-center justify-center transition-all duration-200 mr-2">
-              <i class="fas fa-check text-[10px] text-white opacity-0 peer-checked:opacity-100 transition-opacity"></i>
+            <div class="w-5 h-5 bg-slate-100 border border-slate-300 rounded peer-checked:bg-medical-500 peer-checked:border-medical-500 flex items-center justify-center transition-all duration-300 mr-2 group-hover:border-medical-500">
+              <i class="fas fa-check text-[10px] text-white opacity-0 peer-checked:opacity-100 transition-all duration-300 transform scale-50 peer-checked:scale-100"></i>
             </div>
-            <span class="text-slate-600 font-medium">Remember me</span>
+            <span class="text-slate-600 font-medium transition-colors duration-200 group-hover:text-slate-800">Remember me</span>
           </label>
           
-          <a href="/secure/forgot.html" class="text-medical-600 hover:text-medical-700 font-semibold hover:underline transition">
+          <a href="/secure/forgot.html" class="text-medical-600 hover:text-medical-700 font-semibold hover:underline transition-colors duration-200">
             Forgot password?
           </a>
         </div>
 
-        <!-- Login Buttons -->
-        <div class="pt-2">
-          <button type="submit" class="w-full py-3 px-4 bg-medical-600 hover:bg-medical-700 text-white font-bold rounded-xl shadow-lg shadow-medical-600/10 hover:shadow-medical-600/25 transform active:scale-[0.98] transition duration-200 flex items-center justify-center gap-2">
-            <span>Sign In to Portal</span>
-            <i class="fas fa-arrow-right text-xs"></i>
+        <div class="pt-2 animate-fade-in-up delay-450">
+          <button type="submit" id="btnSubmit" class="w-full py-3 px-4 bg-medical-600 hover:bg-medical-700 text-white font-bold rounded-xl shadow-lg shadow-medical-600/10 hover:shadow-medical-600/25 transform active:scale-[0.98] transition-all duration-300 flex items-center justify-center gap-2 btn-shimmer">
+            <span id="btnText">Sign In to Portal</span>
+            <i id="btnIcon" class="fas fa-arrow-right text-xs transition-transform duration-300 group-hover:translate-x-1"></i>
+            <svg id="btnSpinner" class="hidden animate-spin h-5 w-5 text-white" fill="none" viewBox="0 0 24 24">
+              <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+              <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+            </svg>
           </button>
         </div>
 
         <!-- SSO Login Divider -->
-        <div class="relative py-4 flex items-center">
+        <div class="relative py-4 flex items-center animate-fade-in-up delay-525">
           <div class="flex-grow border-t border-slate-200"></div>
           <span class="flex-shrink mx-4 text-xs font-semibold text-slate-400 uppercase tracking-wider">Or continue with</span>
           <div class="flex-grow border-t border-slate-200"></div>
         </div>
 
         <!-- Google SSO -->
-        <button 
-          type="button" 
-          id="googleSignIn" 
-          class="w-full py-3 px-4 bg-white border border-slate-200 hover:bg-slate-50 text-slate-700 font-semibold rounded-xl shadow-sm transition duration-200 flex items-center justify-center gap-3 active:scale-[0.98]"
-        >
-          <svg class="w-5 h-5" viewBox="0 0 24 24" width="24" height="24" xmlns="http://www.w3.org/2000/svg">
-            <g transform="matrix(1, 0, 0, 1, 0, 0)">
-              <path d="M21.35,11.1H12v2.7h5.38c-0.24,1.28 -0.96,2.37 -2.04,3.1v2.57h3.3c1.93,-1.78 3.04,-4.4 3.04,-7.48c0,-0.32 -0.03,-0.64 -0.07,-0.89z" fill="#4285F4" />
-              <path d="M12,20.7c2.43,0 4.47,-0.8 5.96,-2.18l-3.3,-2.57c-0.9,0.6 -2.07,0.97 -3.33,0.97c-2.56,0 -4.73,-1.73 -5.5,-4.06H2.43v2.65c1.49,2.97 4.56,4.89 7.57,4.89z" fill="#34A853" />
-              <path d="M6.5,12.86a5.1,5.1 0 0 1 0,-3.2V7.01H2.43a8.94,8.94 0 0 0 0,8.5l4.07,-2.65z" fill="#FBBC05" />
-              <path d="M12,6.8c1.32,0 2.51,0.45 3.44,1.35l2.58,-2.58C16.46,4.11 14.43,3.3 12,3.3c-3.01,0 -6.08,1.92 -7.57,4.89l4.07,3.15c0.77,-2.33 2.94,-4.06 5.5,-4.06z" fill="#EA4335" />
-            </g>
-          </svg>
-          <span>Google Workspace</span>
-        </button>
+        <div class="animate-fade-in-up delay-600">
+          <button 
+            type="button" 
+            id="googleSignIn" 
+            class="w-full py-3 px-4 bg-white border border-slate-200 hover:bg-slate-50 text-slate-700 font-semibold rounded-xl shadow-sm hover:shadow transition-all duration-300 flex items-center justify-center gap-3 active:scale-[0.98]"
+          >
+            <svg class="w-5 h-5 transition-transform duration-300 hover:rotate-12" viewBox="0 0 24 24" width="24" height="24" xmlns="http://www.w3.org/2000/svg">
+              <g transform="matrix(1, 0, 0, 1, 0, 0)">
+                <path d="M21.35,11.1H12v2.7h5.38c-0.24,1.28 -0.96,2.37 -2.04,3.1v2.57h3.3c1.93,-1.78 3.04,-4.4 3.04,-7.48c0,-0.32 -0.03,-0.64 -0.07,-0.89z" fill="#4285F4" />
+                <path d="M12,20.7c2.43,0 4.47,-0.8 5.96,-2.18l-3.3,-2.57c-0.9,0.6 -2.07,0.97 -3.33,0.97c-2.56,0 -4.73,-1.73 -5.5,-4.06H2.43v2.65c1.49,2.97 4.56,4.89 7.57,4.89z" fill="#34A853" />
+                <path d="M6.5,12.86a5.1,5.1 0 0 1 0,-3.2V7.01H2.43a8.94,8.94 0 0 0 0,8.5l4.07,-2.65z" fill="#FBBC05" />
+                <path d="M12,6.8c1.32,0 2.51,0.45 3.44,1.35l2.58,-2.58C16.46,4.11 14.43,3.3 12,3.3c-3.01,0 -6.08,1.92 -7.57,4.89l4.07,3.15c0.77,-2.33 2.94,-4.06 5.5,-4.06z" fill="#EA4335" />
+              </g>
+            </svg>
+            <span id="googleBtnText">Google Workspace</span>
+          </button>
+        </div>
         
         <!-- Registration Redirect -->
-        <div class="text-center pt-3 text-sm text-slate-500">
+        <div class="text-center pt-3 text-sm text-slate-500 animate-fade-in-up delay-600">
           New candidate? 
           <a href="/secure/signup.html" class="text-medical-600 hover:text-medical-700 font-bold hover:underline transition ml-1">
             Create an Account
@@ -252,21 +336,22 @@
     <p>&copy; 2026 Ceemediconepal. All Rights Reserved. Committed to quality medical education.</p>
   </footer>
 
-  <!-- WhatsApp Floating Widget with Ring Pulse -->
+  <!-- WhatsApp Floating Widget with Double Pulse Wave effects -->
   <div class="fixed bottom-6 left-6 z-[9990] flex items-center group">
-    <div class="absolute inset-0 bg-emerald-500 rounded-full blur-md opacity-40 pulse-ring"></div>
-    <a href="https://wa.me/9779812240229?text=I%20want%20premium%20subscription" class="relative bg-[#25D366] text-white rounded-full w-14 h-14 flex items-center justify-center shadow-lg hover:scale-110 active:scale-95 transition-all duration-300" target="_blank" aria-label="Chat with admin on WhatsApp">
+    <div class="absolute inset-0 bg-emerald-500 rounded-full scale-100 pulse-ring-wave pointer-events-none"></div>
+    <div class="absolute inset-0 bg-emerald-400 rounded-full scale-100 pulse-ring-wave pointer-events-none" style="animation-delay: 1.25s;"></div>
+    
+    <a href="https://wa.me/9779812240229?text=I%20want%20premium%20subscription" class="relative bg-[#25D366] text-white rounded-full w-14 h-14 flex items-center justify-center shadow-lg hover:scale-110 active:scale-95 hover:rotate-6 transition-all duration-300" target="_blank" aria-label="Chat with admin on WhatsApp">
       <i class="fab fa-whatsapp text-3xl"></i>
     </a>
     <!-- Tooltip -->
-    <span class="ml-3 hidden md:inline-block bg-slate-900 text-white text-xs px-3 py-1.5 rounded-lg opacity-0 group-hover:opacity-100 transform translate-x-2 group-hover:translate-x-0 transition duration-300 pointer-events-none shadow-md">
+    <span class="ml-3 hidden md:inline-block bg-slate-900 text-white text-xs px-3 py-1.5 rounded-lg opacity-0 group-hover:opacity-100 transform translate-x-2 group-hover:translate-x-0 transition-all duration-300 pointer-events-none shadow-md font-medium">
       Contact Admin on WhatsApp
     </span>
   </div>
 
-  <!-- Custom Popup Modal Logic & Toasts -->
   <script>
-    // Custom beautiful non-blocking Alert replacements
+    // Show premium styled alert
     function showCustomAlert(title, message, type = 'info') {
       const modal = document.getElementById("customAlertModal");
       const titleEl = document.getElementById("alertTitle");
@@ -277,14 +362,14 @@
       titleEl.innerText = title;
       messageEl.innerText = message;
 
-      // Color coding styling for custom types
+      // Type-based aesthetic enhancements
       if (type === 'success') {
-        iconCont.className = "w-12 h-12 rounded-full flex items-center justify-center text-xl bg-emerald-50 text-emerald-600 border border-emerald-100";
+        iconCont.className = "w-12 h-12 rounded-full flex items-center justify-center text-xl bg-emerald-50 text-emerald-600 border border-emerald-100 animate-bounce";
         iconCont.innerHTML = '<i class="fas fa-check-circle"></i>';
         confirmBtn.className = "px-5 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white font-medium rounded-xl transition duration-200 focus:ring-emerald-500";
       } else if (type === 'error') {
-        iconCont.className = "w-12 h-12 rounded-full flex items-center justify-center text-xl bg-rose-50 text-rose-600 border border-rose-100";
-        iconCont.innerHTML = '<i class="fas fa-times-circle"></i>';
+        iconCont.className = "w-12 h-12 rounded-full flex items-center justify-center text-xl bg-rose-50 text-rose-600 border border-rose-100 animate-shake";
+        iconCont.innerHTML = '<i class="fas fa-times-circle animate-pulse"></i>';
         confirmBtn.className = "px-5 py-2.5 bg-rose-600 hover:bg-rose-700 text-white font-medium rounded-xl transition duration-200 focus:ring-rose-500";
       } else if (type === 'warning') {
         iconCont.className = "w-12 h-12 rounded-full flex items-center justify-center text-xl bg-amber-50 text-amber-600 border border-amber-100";
@@ -298,25 +383,28 @@
 
       modal.classList.remove("hidden");
       setTimeout(() => {
-        modal.querySelector('.bg-white').classList.remove('scale-95');
-        modal.querySelector('.bg-white').classList.add('scale-100');
+        const dialog = modal.querySelector('.bg-white');
+        dialog.classList.remove('scale-95', 'opacity-0');
+        dialog.classList.add('scale-100', 'opacity-100');
       }, 50);
     }
 
+    // Dismiss current dialog modal elegantly
     function hideAlert() {
       const modal = document.getElementById("customAlertModal");
-      modal.querySelector('.bg-white').classList.add('scale-95');
-      modal.querySelector('.bg-white').classList.remove('scale-100');
+      const dialog = modal.querySelector('.bg-white');
+      dialog.classList.add('scale-95', 'opacity-0');
+      dialog.classList.remove('scale-100', 'opacity-100');
       setTimeout(() => {
         modal.classList.add("hidden");
-      }, 150);
+      }, 200);
     }
 
-    // Interactive Toast Notification
+    // Dynamic toast alerts slide-in animations
     function showToast(message, type = 'info', duration = 4000) {
       const container = document.getElementById("toastContainer");
       const toast = document.createElement("div");
-      toast.className = "flex items-center gap-3 p-4 bg-white/95 border shadow-xl rounded-2xl transition duration-300 transform translate-x-5 opacity-0 select-none pointer-events-auto cursor-pointer";
+      toast.className = "flex items-center gap-3 p-4 bg-white/95 border shadow-xl rounded-2xl transition-all duration-500 transform translate-x-12 opacity-0 select-none pointer-events-auto cursor-pointer";
       
       let icon = '<i class="fas fa-info-circle text-sky-500"></i>';
       let border = 'border-sky-100';
@@ -340,37 +428,42 @@
 
       container.appendChild(toast);
 
-      // Slide in animation
+      // Slide-in Animation trigger
       requestAnimationFrame(() => {
-        toast.classList.remove("translate-x-5", "opacity-0");
+        toast.classList.remove("translate-x-12", "opacity-0");
       });
 
       const removeToast = () => {
-        toast.classList.add("opacity-0", "translate-x-5");
-        setTimeout(() => toast.remove(), 300);
+        toast.classList.add("opacity-0", "translate-x-12");
+        setTimeout(() => toast.remove(), 400);
       };
 
       toast.addEventListener('click', removeToast);
-      const autoRemove = setTimeout(removeToast, duration);
+      setTimeout(removeToast, duration);
     }
 
-    // Password visibility toggle handler
+    // Toggle active Password visibility with icon flip transition
     const togglePassword = document.getElementById('togglePassword');
     const passwordInput = document.getElementById('password');
     const toggleIcon = document.getElementById('toggleIcon');
 
     togglePassword.addEventListener('click', () => {
-      const type = passwordInput.getAttribute('type') === 'password' ? 'text' : 'password';
-      passwordInput.setAttribute('type', type);
+      const isPassword = passwordInput.getAttribute('type') === 'password';
+      passwordInput.setAttribute('type', isPassword ? 'text' : 'password');
       
-      if (type === 'password') {
-        toggleIcon.className = 'far fa-eye text-sm';
-      } else {
-        toggleIcon.className = 'far fa-eye-slash text-sm';
-      }
+      // Toggle animation transformation
+      toggleIcon.classList.add('scale-75', 'opacity-50');
+      setTimeout(() => {
+        if (isPassword) {
+          toggleIcon.className = 'far fa-eye-slash text-sm transition-transform duration-300 hover:scale-110';
+        } else {
+          toggleIcon.className = 'far fa-eye text-sm transition-transform duration-300 hover:scale-110';
+        }
+        toggleIcon.classList.remove('scale-75', 'opacity-50');
+      }, 150);
     });
 
-    // Countdown Ad / Notice popup logic
+    // Countdown sponsored modal entry / dismiss trigger
     let countdownValue = 10;
     let countdownInterval;
 
@@ -381,10 +474,14 @@
 
       popup.classList.remove("hidden");
       overlay.classList.remove("hidden");
+      
+      // Animate entry elements gracefully
       setTimeout(() => {
-        popup.classList.add("scale-100");
-        popup.classList.remove("scale-95");
-      }, 50);
+        popup.classList.add("scale-100", "opacity-100");
+        popup.classList.remove("scale-90", "opacity-0");
+        overlay.classList.add("opacity-100");
+        overlay.classList.remove("opacity-0");
+      }, 100);
 
       countdownInterval = setInterval(() => {
         countdownValue--;
@@ -399,24 +496,26 @@
     function closeNotice() {
       const popup = document.getElementById("noticePopup");
       const overlay = document.getElementById("overlay");
-      popup.classList.add("scale-95");
-      popup.classList.remove("scale-100");
+      
+      popup.classList.add("scale-90", "opacity-0");
+      popup.classList.remove("scale-100", "opacity-100");
+      overlay.classList.add("opacity-0");
+      overlay.classList.remove("opacity-100");
       
       setTimeout(() => {
         popup.classList.add("hidden");
         overlay.classList.add("hidden");
-      }, 150);
+      }, 300);
       
       clearInterval(countdownInterval);
     }
 
-    // Attach to window so module scopes can access it
+    // Expose helpers globally for module access
     window.showCustomAlert = showCustomAlert;
     window.showToast = showToast;
     window.closeNotice = closeNotice;
   </script>
 
-  <!-- Firebase Auth Module Integration with Concurrency Rules -->
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/11.8.1/firebase-app.js";
     import {
@@ -463,7 +562,7 @@
       return deviceId;
     }
 
-    // User agent cleaner
+    // OS/Device parser
     function getOSFromUserAgent(ua) {
       ua = ua.toLowerCase();
       if (ua.includes('windows')) return 'Windows Desktop';
@@ -472,6 +571,28 @@
       if (ua.includes('mac')) return 'macOS Computer';
       if (ua.includes('linux')) return 'Linux Computer';
       return 'Unknown Device';
+    }
+
+    // Toggle button submission states during loading
+    function toggleSubmitLoading(isLoading) {
+      const btn = document.getElementById("btnSubmit");
+      const text = document.getElementById("btnText");
+      const icon = document.getElementById("btnIcon");
+      const spinner = document.getElementById("btnSpinner");
+
+      if (isLoading) {
+        btn.disabled = true;
+        btn.classList.add("opacity-80", "cursor-not-allowed");
+        text.innerText = "Signing in...";
+        icon.classList.add("hidden");
+        spinner.classList.remove("hidden");
+      } else {
+        btn.disabled = false;
+        btn.classList.remove("opacity-80", "cursor-not-allowed");
+        text.innerText = "Sign In to Portal";
+        icon.classList.remove("hidden");
+        spinner.classList.add("hidden");
+      }
     }
 
     async function checkApproval(user) {
@@ -499,7 +620,7 @@
             }
           }
 
-          // Device restriction verification
+          // Device restriction validation check
           if (onlineCount >= 2 && !(devicesSnapshot.val()?.[deviceId]?.isOnline)) {
             window.showCustomAlert(
               "Access Denied", 
@@ -507,6 +628,7 @@
               "error"
             );
             await signOut(auth);
+            toggleSubmitLoading(false);
             return;
           }
 
@@ -530,7 +652,7 @@
           }, 1500);
 
         } else {
-          // Account unapproved by Administrator
+          // Account registration unapproved yet
           window.showCustomAlert(
             "Access Pending", 
             "⛔ Your portal registration is still awaiting administrator validation. Please check back shortly or reach out on WhatsApp.", 
@@ -543,9 +665,10 @@
             lastLogout: serverTimestamp()
           });
           await signOut(auth);
+          toggleSubmitLoading(false);
         }
       } else {
-        // Registration Initialization
+        // Init newly registered member setup
         window.showToast("Configuring new account setup...", "info");
         await set(userRef, {
           email: user.email,
@@ -566,28 +689,38 @@
           "success"
         );
         await signOut(auth);
+        toggleSubmitLoading(false);
       }
     }
 
-    // Email Credential login
+    // Email Credential login listener
     document.getElementById("loginForm").addEventListener("submit", async function (e) {
       e.preventDefault();
       const email = document.getElementById("email").value;
       const password = document.getElementById("password").value;
+      
+      toggleSubmitLoading(true);
+      
       try {
         const userCredential = await signInWithEmailAndPassword(auth, email, password);
         await checkApproval(userCredential.user);
       } catch (error) {
+        toggleSubmitLoading(false);
         window.showCustomAlert("Connection Error", "❌ Login failed: " + error.message, "error");
       }
     });
 
-    // Google SSO authentication trigger
+    // Google SSO login listener
     document.getElementById("googleSignIn").addEventListener("click", async function () {
+      const googleBtnText = document.getElementById("googleBtnText");
+      const originalText = googleBtnText.innerText;
+      googleBtnText.innerText = "Connecting Google...";
+      
       try {
         const result = await signInWithPopup(auth, provider);
         await checkApproval(result.user);
       } catch (error) {
+        googleBtnText.innerText = originalText;
         window.showCustomAlert("Workspace Error", "❌ Google authorization failed: " + error.message, "error");
       }
     });
