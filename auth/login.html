@@ -1,0 +1,205 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Login - CEE Medico Nepal</title>
+  <link rel="apple-touch-icon" sizes="180x180" href="/fevicon/apple-touch-icon.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/fevicon/favicon-32x32.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/fevicon/favicon-16x16.png">
+  <link rel="manifest" href="/fevicon/site.webmanifest">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css"/>
+  <style>
+    *{margin:0;padding:0;box-sizing:border-box;}
+    body{font-family:'Segoe UI',Tahoma,Geneva,Verdana,sans-serif;background:linear-gradient(135deg,#0062ff 0%,#3b82f6 50%,#0047cc 100%);min-height:100vh;display:flex;align-items:center;justify-content:center;padding:20px;}
+    .auth-card{background:#fff;border-radius:16px;box-shadow:0 20px 60px rgba(0,0,0,0.15);width:100%;max-width:440px;padding:40px;animation:fadeUp .5s ease;}
+    @keyframes fadeUp{from{opacity:0;transform:translateY(20px)}to{opacity:1;transform:translateY(0)}}
+    .auth-logo{text-align:center;margin-bottom:24px;}
+    .auth-logo img{height:48px;}
+    .auth-logo h1{font-size:22px;color:#0062ff;margin-top:8px;}
+    .auth-logo p{color:#6b7c93;font-size:14px;margin-top:4px;}
+    .form-group{margin-bottom:18px;position:relative;}
+    .form-group label{display:block;font-weight:600;color:#333;margin-bottom:6px;font-size:14px;}
+    .form-group input{width:100%;padding:12px 14px 12px 42px;border:2px solid #e0e6ed;border-radius:10px;font-size:15px;transition:border .2s;}
+    .form-group input:focus{outline:none;border-color:#0062ff;}
+    .form-group i.field-icon{position:absolute;left:14px;top:40px;color:#6b7c93;font-size:15px;}
+    .form-row{display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;font-size:13px;}
+    .form-row a{color:#0062ff;text-decoration:none;}
+    .form-row a:hover{text-decoration:underline;}
+    .btn-primary{width:100%;padding:13px;background:#0062ff;color:#fff;border:none;border-radius:10px;font-size:16px;font-weight:700;cursor:pointer;transition:background .2s;}
+    .btn-primary:hover{background:#0047cc;}
+    .btn-primary:disabled{background:#93b4f5;cursor:not-allowed;}
+    .divider{display:flex;align-items:center;margin:20px 0;gap:12px;color:#6b7c93;font-size:13px;}
+    .divider::before,.divider::after{content:'';flex:1;height:1px;background:#e0e6ed;}
+    .btn-google{width:100%;padding:12px;background:#fff;color:#333;border:2px solid #e0e6ed;border-radius:10px;font-size:15px;font-weight:600;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:10px;transition:border .2s;}
+    .btn-google:hover{border-color:#0062ff;}
+    .btn-google img{height:20px;}
+    .auth-footer{text-align:center;margin-top:20px;font-size:14px;color:#6b7c93;}
+    .auth-footer a{color:#0062ff;font-weight:600;text-decoration:none;}
+    .auth-footer a:hover{text-decoration:underline;}
+    .error-msg{background:#fef2f2;color:#dc2626;padding:10px 14px;border-radius:8px;font-size:13px;margin-bottom:14px;display:none;}
+    .loading-overlay{display:none;position:fixed;inset:0;background:rgba(255,255,255,0.8);z-index:999;align-items:center;justify-content:center;}
+    .spinner{width:40px;height:40px;border:4px solid #e0e6ed;border-top-color:#0062ff;border-radius:50%;animation:spin .8s linear infinite;}
+    @keyframes spin{to{transform:rotate(360deg)}}
+    .home-link{position:fixed;top:20px;left:20px;color:#fff;text-decoration:none;font-weight:600;font-size:14px;display:flex;align-items:center;gap:6px;opacity:0.9;transition:opacity .2s;}
+    .home-link:hover{opacity:1;}
+  </style>
+</head>
+<body>
+
+<a href="/" class="home-link"><i class="fas fa-arrow-left"></i> Home</a>
+
+<div class="loading-overlay" id="loadingOverlay">
+  <div class="spinner"></div>
+</div>
+
+<div class="auth-card">
+  <div class="auth-logo">
+    <img src="/Logo.png" alt="CEE Medico Nepal" onerror="this.style.display='none'">
+    <h1>CEE Medico Nepal</h1>
+    <p>Login to track your progress</p>
+  </div>
+
+  <div class="error-msg" id="errorMsg"></div>
+
+  <form id="loginForm">
+    <div class="form-group">
+      <label for="email">Email Address</label>
+      <i class="fas fa-envelope field-icon"></i>
+      <input type="email" id="email" placeholder="your@email.com" required autocomplete="email"/>
+    </div>
+
+    <div class="form-group">
+      <label for="password">Password</label>
+      <i class="fas fa-lock field-icon"></i>
+      <input type="password" id="password" placeholder="Enter your password" required autocomplete="current-password"/>
+    </div>
+
+    <div class="form-row">
+      <label><input type="checkbox" id="remember"> Remember me</label>
+      <a href="/auth/forgot.html">Forgot password?</a>
+    </div>
+
+    <button type="submit" class="btn-primary" id="loginBtn">Login</button>
+  </form>
+
+  <div class="divider">or continue with</div>
+
+  <button class="btn-google" id="googleBtn">
+    <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" alt="Google">
+    Sign in with Google
+  </button>
+
+  <div class="auth-footer">
+    Don't have an account? <a href="/auth/signup.html">Sign Up</a>
+  </div>
+</div>
+
+<script type="module">
+  import {
+    auth, db, googleProvider,
+    signInWithEmailAndPassword, signInWithPopup, onAuthStateChanged,
+    ref, get, set, update, serverTimestamp,
+    getDeviceId, getDeviceOS
+  } from "./firebase-init.js";
+
+  const form = document.getElementById("loginForm");
+  const googleBtn = document.getElementById("googleBtn");
+  const errorMsg = document.getElementById("errorMsg");
+  const loading = document.getElementById("loadingOverlay");
+
+  function showError(msg) {
+    errorMsg.textContent = msg;
+    errorMsg.style.display = "block";
+  }
+
+  function showLoading(show) {
+    loading.style.display = show ? "flex" : "none";
+  }
+
+  onAuthStateChanged(auth, (user) => {
+    if (user) {
+      window.location.href = "/user-dashboard/index.html";
+    }
+  });
+
+  async function handleLogin(user) {
+    showLoading(true);
+    const userRef = ref(db, `users/${user.uid}`);
+    const snap = await get(userRef);
+    const deviceId = getDeviceId();
+    const deviceOS = getDeviceOS();
+
+    if (snap.exists()) {
+      const data = snap.val();
+      if (data.isApproved === false) {
+        showLoading(false);
+        showError("Your account is pending admin approval. Please wait.");
+        return;
+      }
+    } else {
+      await set(userRef, {
+        email: user.email,
+        displayName: user.displayName || "",
+        photoURL: user.photoURL || "",
+        isApproved: true,
+        role: "user",
+        createdAt: serverTimestamp(),
+        stats: {
+          totalSessions: 0,
+          totalQuestions: 0,
+          totalCorrect: 0,
+          totalWrong: 0,
+          totalUnattempted: 0,
+          totalScore: 0,
+          subjectWise: {}
+        }
+      });
+    }
+
+    const deviceRef = ref(db, `userDevices/${user.uid}/${deviceId}`);
+    await update(deviceRef, {
+      userAgent: navigator.userAgent,
+      lastLogin: serverTimestamp(),
+      isOnline: true,
+      type: deviceOS
+    });
+
+    await update(userRef, { lastLogin: serverTimestamp() });
+
+    window.location.href = "/user-dashboard/index.html";
+  }
+
+  form.addEventListener("submit", async (e) => {
+    e.preventDefault();
+    errorMsg.style.display = "none";
+    const email = document.getElementById("email").value.trim();
+    const password = document.getElementById("password").value;
+
+    try {
+      showLoading(true);
+      const cred = await signInWithEmailAndPassword(auth, email, password);
+      await handleLogin(cred.user);
+    } catch (err) {
+      showLoading(false);
+      if (err.code === "auth/user-not-found") showError("No account found with this email.");
+      else if (err.code === "auth/wrong-password") showError("Incorrect password.");
+      else if (err.code === "auth/invalid-credential") showError("Invalid email or password.");
+      else showError("Login failed: " + err.message);
+    }
+  });
+
+  googleBtn.addEventListener("click", async () => {
+    errorMsg.style.display = "none";
+    try {
+      showLoading(true);
+      const result = await signInWithPopup(auth, googleProvider);
+      await handleLogin(result.user);
+    } catch (err) {
+      showLoading(false);
+      showError("Google login failed: " + err.message);
+    }
+  });
+</script>
+</body>
+</html>

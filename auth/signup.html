@@ -1,0 +1,245 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Sign Up - CEE Medico Nepal</title>
+  <link rel="apple-touch-icon" sizes="180x180" href="/fevicon/apple-touch-icon.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/fevicon/favicon-32x32.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/fevicon/favicon-16x16.png">
+  <link rel="manifest" href="/fevicon/site.webmanifest">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css"/>
+  <style>
+    *{margin:0;padding:0;box-sizing:border-box;}
+    body{font-family:'Segoe UI',Tahoma,Geneva,Verdana,sans-serif;background:linear-gradient(135deg,#0062ff 0%,#3b82f6 50%,#0047cc 100%);min-height:100vh;display:flex;align-items:center;justify-content:center;padding:20px;}
+    .auth-card{background:#fff;border-radius:16px;box-shadow:0 20px 60px rgba(0,0,0,0.15);width:100%;max-width:440px;padding:40px;animation:fadeUp .5s ease;}
+    @keyframes fadeUp{from{opacity:0;transform:translateY(20px)}to{opacity:1;transform:translateY(0)}}
+    .auth-logo{text-align:center;margin-bottom:24px;}
+    .auth-logo img{height:48px;}
+    .auth-logo h1{font-size:22px;color:#0062ff;margin-top:8px;}
+    .auth-logo p{color:#6b7c93;font-size:14px;margin-top:4px;}
+    .form-group{margin-bottom:16px;position:relative;}
+    .form-group label{display:block;font-weight:600;color:#333;margin-bottom:6px;font-size:14px;}
+    .form-group input,.form-group select{width:100%;padding:12px 14px 12px 42px;border:2px solid #e0e6ed;border-radius:10px;font-size:15px;transition:border .2s;}
+    .form-group select{padding-left:14px;}
+    .form-group input:focus,.form-group select:focus{outline:none;border-color:#0062ff;}
+    .form-group i.field-icon{position:absolute;left:14px;top:40px;color:#6b7c93;font-size:15px;}
+    .form-row-2{display:grid;grid-template-columns:1fr 1fr;gap:12px;}
+    .btn-primary{width:100%;padding:13px;background:#0062ff;color:#fff;border:none;border-radius:10px;font-size:16px;font-weight:700;cursor:pointer;transition:background .2s;margin-top:8px;}
+    .btn-primary:hover{background:#0047cc;}
+    .btn-primary:disabled{background:#93b4f5;cursor:not-allowed;}
+    .divider{display:flex;align-items:center;margin:20px 0;gap:12px;color:#6b7c93;font-size:13px;}
+    .divider::before,.divider::after{content:'';flex:1;height:1px;background:#e0e6ed;}
+    .btn-google{width:100%;padding:12px;background:#fff;color:#333;border:2px solid #e0e6ed;border-radius:10px;font-size:15px;font-weight:600;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:10px;transition:border .2s;}
+    .btn-google:hover{border-color:#0062ff;}
+    .btn-google img{height:20px;}
+    .auth-footer{text-align:center;margin-top:20px;font-size:14px;color:#6b7c93;}
+    .auth-footer a{color:#0062ff;font-weight:600;text-decoration:none;}
+    .auth-footer a:hover{text-decoration:underline;}
+    .error-msg{background:#fef2f2;color:#dc2626;padding:10px 14px;border-radius:8px;font-size:13px;margin-bottom:14px;display:none;}
+    .success-msg{background:#f0fdf4;color:#16a34a;padding:10px 14px;border-radius:8px;font-size:13px;margin-bottom:14px;display:none;}
+    .loading-overlay{display:none;position:fixed;inset:0;background:rgba(255,255,255,0.8);z-index:999;align-items:center;justify-content:center;}
+    .spinner{width:40px;height:40px;border:4px solid #e0e6ed;border-top-color:#0062ff;border-radius:50%;animation:spin .8s linear infinite;}
+    @keyframes spin{to{transform:rotate(360deg)}}
+    .home-link{position:fixed;top:20px;left:20px;color:#fff;text-decoration:none;font-weight:600;font-size:14px;display:flex;align-items:center;gap:6px;opacity:0.9;}
+    .home-link:hover{opacity:1;}
+    .pwd-strength{height:4px;border-radius:2px;margin-top:6px;transition:width .3s,background .3s;}
+  </style>
+</head>
+<body>
+
+<a href="/" class="home-link"><i class="fas fa-arrow-left"></i> Home</a>
+
+<div class="loading-overlay" id="loadingOverlay">
+  <div class="spinner"></div>
+</div>
+
+<div class="auth-card">
+  <div class="auth-logo">
+    <img src="/Logo.png" alt="CEE Medico Nepal" onerror="this.style.display='none'">
+    <h1>Create Account</h1>
+    <p>Start your CEE preparation journey</p>
+  </div>
+
+  <div class="error-msg" id="errorMsg"></div>
+  <div class="success-msg" id="successMsg"></div>
+
+  <form id="signupForm">
+    <div class="form-group">
+      <label for="fullName">Full Name</label>
+      <i class="fas fa-user field-icon"></i>
+      <input type="text" id="fullName" placeholder="Your full name" required/>
+    </div>
+
+    <div class="form-group">
+      <label for="email">Email Address</label>
+      <i class="fas fa-envelope field-icon"></i>
+      <input type="email" id="email" placeholder="your@email.com" required autocomplete="email"/>
+    </div>
+
+    <div class="form-group">
+      <label for="phone">Phone Number</label>
+      <i class="fas fa-phone field-icon"></i>
+      <input type="tel" id="phone" placeholder="98XXXXXXXX"/>
+    </div>
+
+    <div class="form-row-2">
+      <div class="form-group">
+        <label for="college">College / School</label>
+        <input type="text" id="college" placeholder="Your institution" style="padding-left:14px;"/>
+      </div>
+      <div class="form-group">
+        <label for="targetYear">Target Year</label>
+        <select id="targetYear">
+          <option value="2082">CEE 2082</option>
+          <option value="2083">CEE 2083</option>
+          <option value="2084">CEE 2084</option>
+        </select>
+      </div>
+    </div>
+
+    <div class="form-group">
+      <label for="password">Password</label>
+      <i class="fas fa-lock field-icon"></i>
+      <input type="password" id="password" placeholder="Min 6 characters" required minlength="6" autocomplete="new-password"/>
+      <div class="pwd-strength" id="pwdStrength"></div>
+    </div>
+
+    <div class="form-group">
+      <label for="confirmPassword">Confirm Password</label>
+      <i class="fas fa-lock field-icon"></i>
+      <input type="password" id="confirmPassword" placeholder="Repeat password" required autocomplete="new-password"/>
+    </div>
+
+    <button type="submit" class="btn-primary" id="signupBtn">Create Account</button>
+  </form>
+
+  <div class="divider">or sign up with</div>
+
+  <button class="btn-google" id="googleBtn">
+    <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" alt="Google">
+    Sign up with Google
+  </button>
+
+  <div class="auth-footer">
+    Already have an account? <a href="/auth/login.html">Login</a>
+  </div>
+</div>
+
+<script type="module">
+  import {
+    auth, db, googleProvider,
+    createUserWithEmailAndPassword, updateProfile,
+    signInWithPopup, onAuthStateChanged,
+    ref, set, serverTimestamp,
+    getDeviceId, getDeviceOS
+  } from "./firebase-init.js";
+
+  const form = document.getElementById("signupForm");
+  const googleBtn = document.getElementById("googleBtn");
+  const errorMsg = document.getElementById("errorMsg");
+  const successMsg = document.getElementById("successMsg");
+  const loading = document.getElementById("loadingOverlay");
+  const pwdInput = document.getElementById("password");
+  const pwdStrength = document.getElementById("pwdStrength");
+
+  function showError(msg) { errorMsg.textContent = msg; errorMsg.style.display = "block"; successMsg.style.display = "none"; }
+  function showSuccess(msg) { successMsg.textContent = msg; successMsg.style.display = "block"; errorMsg.style.display = "none"; }
+  function showLoading(show) { loading.style.display = show ? "flex" : "none"; }
+
+  pwdInput.addEventListener("input", () => {
+    const val = pwdInput.value;
+    let strength = 0;
+    if (val.length >= 6) strength++;
+    if (val.length >= 8) strength++;
+    if (/[A-Z]/.test(val)) strength++;
+    if (/[0-9]/.test(val)) strength++;
+    if (/[^A-Za-z0-9]/.test(val)) strength++;
+    const colors = ["#dc2626", "#f59e0b", "#f59e0b", "#22c55e", "#16a34a"];
+    const widths = ["20%", "40%", "60%", "80%", "100%"];
+    pwdStrength.style.width = widths[Math.min(strength, 4)];
+    pwdStrength.style.background = colors[Math.min(strength, 4)];
+  });
+
+  onAuthStateChanged(auth, (user) => {
+    if (user) window.location.href = "/user-dashboard/index.html";
+  });
+
+  async function createUserProfile(user, extraData = {}) {
+    const deviceId = getDeviceId();
+    const deviceOS = getDeviceOS();
+
+    await set(ref(db, `users/${user.uid}`), {
+      email: user.email,
+      displayName: extraData.displayName || user.displayName || "",
+      photoURL: user.photoURL || "",
+      phone: extraData.phone || "",
+      college: extraData.college || "",
+      targetYear: extraData.targetYear || "",
+      isApproved: true,
+      role: "user",
+      createdAt: serverTimestamp(),
+      lastLogin: serverTimestamp(),
+      stats: {
+        totalSessions: 0,
+        totalQuestions: 0,
+        totalCorrect: 0,
+        totalWrong: 0,
+        totalUnattempted: 0,
+        totalScore: 0,
+        subjectWise: {}
+      }
+    });
+
+    await set(ref(db, `userDevices/${user.uid}/${deviceId}`), {
+      userAgent: navigator.userAgent,
+      createdAt: serverTimestamp(),
+      lastLogin: serverTimestamp(),
+      isOnline: true,
+      type: deviceOS
+    });
+  }
+
+  form.addEventListener("submit", async (e) => {
+    e.preventDefault();
+    errorMsg.style.display = "none";
+
+    const fullName = document.getElementById("fullName").value.trim();
+    const email = document.getElementById("email").value.trim();
+    const phone = document.getElementById("phone").value.trim();
+    const college = document.getElementById("college").value.trim();
+    const targetYear = document.getElementById("targetYear").value;
+    const password = document.getElementById("password").value;
+    const confirmPwd = document.getElementById("confirmPassword").value;
+
+    if (password !== confirmPwd) { showError("Passwords do not match."); return; }
+
+    try {
+      showLoading(true);
+      const cred = await createUserWithEmailAndPassword(auth, email, password);
+      await updateProfile(cred.user, { displayName: fullName });
+      await createUserProfile(cred.user, { displayName: fullName, phone, college, targetYear });
+      window.location.href = "/user-dashboard/index.html";
+    } catch (err) {
+      showLoading(false);
+      if (err.code === "auth/email-already-in-use") showError("This email is already registered.");
+      else if (err.code === "auth/weak-password") showError("Password is too weak. Use at least 6 characters.");
+      else showError("Sign up failed: " + err.message);
+    }
+  });
+
+  googleBtn.addEventListener("click", async () => {
+    errorMsg.style.display = "none";
+    try {
+      showLoading(true);
+      const result = await signInWithPopup(auth, googleProvider);
+      await createUserProfile(result.user);
+      window.location.href = "/user-dashboard/index.html";
+    } catch (err) {
+      showLoading(false);
+      showError("Google sign up failed: " + err.message);
+    }
+  });
+</script>
+</body>
+</html>

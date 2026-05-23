@@ -1,0 +1,206 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Practice History - CEE Medico Nepal</title>
+<link rel="apple-touch-icon" sizes="180x180" href="/fevicon/apple-touch-icon.png">
+<link rel="icon" type="image/png" sizes="32x32" href="/fevicon/favicon-32x32.png">
+<link rel="icon" type="image/png" sizes="16x16" href="/fevicon/favicon-16x16.png">
+<link rel="manifest" href="/fevicon/site.webmanifest">
+<link href="https://fonts.googleapis.com/css2?family=Sora:wght@300;400;600;700;800&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+<style>
+:root{--blue:#0062ff;--blue-dark:#0047cc;--blue-light:#e8f0ff;--green:#00c97a;--red:#ff3b5c;--yellow:#ffa500;--bg:#f0f4ff;--card:#fff;--text:#0d1b2a;--muted:#6b7c93;--border:#dde5f0;--shadow:0 4px 24px rgba(0,98,255,0.09);}
+*{box-sizing:border-box;margin:0;padding:0;}
+body{font-family:'Sora',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;}
+header{background:var(--blue);padding:0 24px;box-shadow:0 2px 16px rgba(0,98,255,0.18);position:sticky;top:0;z-index:100;}
+nav{max-width:1200px;margin:auto;display:flex;align-items:center;justify-content:space-between;height:64px;}
+.logo{display:flex;align-items:center;gap:10px;text-decoration:none;}
+.logo span{color:#fff;font-weight:800;font-size:1.05rem;}
+.nav-links{display:flex;list-style:none;gap:4px;}
+.nav-links a{color:rgba(255,255,255,0.85);text-decoration:none;font-size:.85rem;font-weight:600;padding:8px 14px;border-radius:8px;transition:background .2s;}
+.nav-links a:hover,.nav-links a.active{background:rgba(255,255,255,0.15);color:#fff;}
+.hero{background:linear-gradient(135deg,#0062ff,#0047cc);padding:32px 24px 48px;text-align:center;}
+.hero h1{color:#fff;font-size:1.6rem;font-weight:800;margin-bottom:6px;}
+.hero p{color:rgba(255,255,255,0.78);font-size:.88rem;}
+.main{max-width:1000px;margin:-24px auto 40px;padding:0 16px;}
+.card{background:var(--card);border-radius:14px;box-shadow:var(--shadow);padding:24px;margin-bottom:20px;border:1px solid var(--border);}
+.section-title{font-size:1rem;font-weight:800;color:var(--text);margin-bottom:18px;display:flex;align-items:center;gap:10px;}
+.section-title i{color:var(--blue);}
+.section-title::after{content:'';flex:1;height:2px;background:var(--border);}
+
+/* FILTERS */
+.filters{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:20px;}
+.filter-btn{padding:8px 16px;border:2px solid var(--border);border-radius:8px;background:#fff;cursor:pointer;font-family:'Sora',sans-serif;font-size:.8rem;font-weight:600;transition:all .2s;color:var(--muted);}
+.filter-btn:hover,.filter-btn.active{border-color:var(--blue);color:var(--blue);background:var(--blue-light);}
+
+/* SESSION CARD */
+.session-card{border:1.5px solid var(--border);border-radius:12px;padding:20px;margin-bottom:14px;transition:border-color .2s;}
+.session-card:hover{border-color:var(--blue);}
+.session-header{display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:10px;margin-bottom:12px;}
+.session-title{font-weight:700;font-size:.95rem;}
+.session-date{color:var(--muted);font-size:.78rem;margin-top:2px;}
+.session-score{font-family:'JetBrains Mono',monospace;font-size:1.6rem;font-weight:800;color:var(--blue);}
+.session-stats{display:flex;gap:16px;flex-wrap:wrap;}
+.session-stat{font-size:.8rem;font-weight:600;}
+.session-stat.correct{color:var(--green);}
+.session-stat.wrong{color:var(--red);}
+.session-stat.skip{color:var(--muted);}
+.session-bar{height:8px;background:#edf2ff;border-radius:4px;overflow:hidden;margin-top:10px;display:flex;}
+.session-bar .correct-fill{background:var(--green);}
+.session-bar .wrong-fill{background:var(--red);}
+.session-bar .skip-fill{background:#dde5f0;}
+
+/* ATTEMPT ROW */
+.attempt-row{display:flex;align-items:center;gap:12px;padding:10px 14px;border:1px solid var(--border);border-radius:8px;margin-bottom:8px;font-size:.82rem;transition:border-color .15s;}
+.attempt-row:hover{border-color:var(--blue);}
+.attempt-icon{width:28px;height:28px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:.7rem;font-weight:800;flex-shrink:0;}
+.attempt-icon.correct{background:#e8fff4;color:var(--green);}
+.attempt-icon.wrong{background:#fff0f3;color:var(--red);}
+.attempt-q{flex:1;font-weight:600;}
+.attempt-subject{color:var(--muted);font-size:.75rem;background:var(--blue-light);padding:2px 8px;border-radius:6px;}
+
+.empty-state{text-align:center;padding:40px 20px;color:var(--muted);}
+.empty-state i{font-size:3rem;margin-bottom:12px;color:var(--border);}
+.empty-state a{color:var(--blue);font-weight:700;text-decoration:none;}
+
+.load-more{display:block;width:100%;padding:12px;background:var(--blue-light);color:var(--blue);border:none;border-radius:8px;font-family:'Sora',sans-serif;font-size:.85rem;font-weight:700;cursor:pointer;transition:background .2s;margin-top:12px;}
+.load-more:hover{background:#d4e4ff;}
+
+@media(max-width:768px){
+  .nav-links{display:none;}
+  .hero h1{font-size:1.3rem;}
+  .session-header{flex-direction:column;}
+}
+</style>
+</head>
+<body>
+
+<header>
+  <nav>
+    <a href="/" class="logo"><span>CEE Medico Nepal</span></a>
+    <ul class="nav-links">
+      <li><a href="/user-dashboard/index.html"><i class="fas fa-chart-line"></i> Dashboard</a></li>
+      <li><a href="/user-dashboard/practice-history.html" class="active"><i class="fas fa-history"></i> History</a></li>
+      <li><a href="/user-dashboard/profile.html"><i class="fas fa-user"></i> Profile</a></li>
+      <li><a href="/"><i class="fas fa-home"></i> Home</a></li>
+    </ul>
+  </nav>
+</header>
+
+<div class="hero">
+  <h1>Practice History</h1>
+  <p>Review your past sessions and question attempts</p>
+</div>
+
+<div class="main">
+
+  <!-- Sessions -->
+  <div class="card">
+    <div class="section-title"><i class="fas fa-clipboard-list"></i> Quiz Sessions</div>
+    <div class="filters" id="sessionFilters">
+      <button class="filter-btn active" data-filter="all">All</button>
+      <button class="filter-btn" data-filter="Physics">Physics</button>
+      <button class="filter-btn" data-filter="Chemistry">Chemistry</button>
+      <button class="filter-btn" data-filter="Botany">Botany</button>
+      <button class="filter-btn" data-filter="Zoology">Zoology</button>
+      <button class="filter-btn" data-filter="MAT">MAT</button>
+    </div>
+    <div id="sessionsList">
+      <div class="empty-state"><i class="fas fa-folder-open"></i><p>No sessions yet. <a href="/">Start a quiz</a></p></div>
+    </div>
+  </div>
+
+  <!-- Recent Attempts -->
+  <div class="card">
+    <div class="section-title"><i class="fas fa-question-circle"></i> Recent Question Attempts</div>
+    <div id="attemptsList">
+      <div class="empty-state"><i class="fas fa-list"></i><p>No question attempts recorded yet.</p></div>
+    </div>
+  </div>
+
+</div>
+
+<script type="module">
+import { auth, onAuthStateChanged, signOut } from "../auth/firebase-init.js";
+import { getUserSessions, getUserAttempts } from "../auth/tracking-service.js";
+
+let allSessions = [];
+let currentFilter = "all";
+
+onAuthStateChanged(auth, async (user) => {
+  if (!user) { window.location.href = "/auth/login.html"; return; }
+
+  allSessions = await getUserSessions(user.uid, 100);
+  renderSessions(allSessions);
+
+  const attempts = await getUserAttempts(user.uid, 50);
+  renderAttempts(attempts);
+});
+
+document.getElementById("sessionFilters").addEventListener("click", (e) => {
+  if (!e.target.classList.contains("filter-btn")) return;
+  document.querySelectorAll(".filter-btn").forEach(b => b.classList.remove("active"));
+  e.target.classList.add("active");
+  currentFilter = e.target.dataset.filter;
+  const filtered = currentFilter === "all" ? allSessions : allSessions.filter(s => s.subject === currentFilter);
+  renderSessions(filtered);
+});
+
+function renderSessions(sessions) {
+  const container = document.getElementById("sessionsList");
+  if (!sessions || sessions.length === 0) {
+    container.innerHTML = `<div class="empty-state"><i class="fas fa-folder-open"></i><p>No sessions found for this filter.</p></div>`;
+    return;
+  }
+
+  container.innerHTML = sessions.map(s => {
+    const date = s.timestamp ? new Date(s.timestamp).toLocaleDateString("en-NP", { weekday: "short", month: "short", day: "numeric", year: "numeric", hour: "2-digit", minute: "2-digit" }) : "N/A";
+    const total = s.totalQuestions || 1;
+    const correctPct = ((s.correct || 0) / total * 100).toFixed(0);
+    const wrongPct = ((s.wrong || 0) / total * 100).toFixed(0);
+    const skipPct = ((s.unattempted || 0) / total * 100).toFixed(0);
+    return `
+      <div class="session-card">
+        <div class="session-header">
+          <div>
+            <div class="session-title">${s.title || s.subject || "Quiz Session"}</div>
+            <div class="session-date">${date}</div>
+          </div>
+          <div class="session-score">${correctPct}%</div>
+        </div>
+        <div class="session-stats">
+          <span class="session-stat correct"><i class="fas fa-check"></i> ${s.correct || 0} Correct</span>
+          <span class="session-stat wrong"><i class="fas fa-times"></i> ${s.wrong || 0} Wrong</span>
+          <span class="session-stat skip"><i class="fas fa-minus"></i> ${s.unattempted || 0} Skipped</span>
+          <span class="session-stat" style="color:var(--blue);"><i class="fas fa-star"></i> Score: ${Math.round((s.score || 0) * 10) / 10}</span>
+        </div>
+        <div class="session-bar">
+          <div class="correct-fill" style="width:${correctPct}%"></div>
+          <div class="wrong-fill" style="width:${wrongPct}%"></div>
+          <div class="skip-fill" style="width:${skipPct}%"></div>
+        </div>
+      </div>`;
+  }).join("");
+}
+
+function renderAttempts(attempts) {
+  const container = document.getElementById("attemptsList");
+  if (!attempts || attempts.length === 0) return;
+
+  container.innerHTML = attempts.map(a => {
+    const icon = a.isCorrect ? "correct" : "wrong";
+    const iconSymbol = a.isCorrect ? '<i class="fas fa-check"></i>' : '<i class="fas fa-times"></i>';
+    const qText = a.questionText ? (a.questionText.length > 80 ? a.questionText.substring(0, 80) + "..." : a.questionText) : `Question #${a.questionId || "?"}`;
+    return `
+      <div class="attempt-row">
+        <div class="attempt-icon ${icon}">${iconSymbol}</div>
+        <div class="attempt-q">${qText}</div>
+        ${a.subject ? `<span class="attempt-subject">${a.subject}</span>` : ""}
+      </div>`;
+  }).join("");
+}
+</script>
+</body>
+</html>

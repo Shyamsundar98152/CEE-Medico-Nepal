@@ -1,0 +1,291 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Analytics - Admin Panel</title>
+<link rel="apple-touch-icon" sizes="180x180" href="/fevicon/apple-touch-icon.png">
+<link rel="icon" type="image/png" sizes="32x32" href="/fevicon/favicon-32x32.png">
+<link rel="icon" type="image/png" sizes="16x16" href="/fevicon/favicon-16x16.png">
+<link rel="manifest" href="/fevicon/site.webmanifest">
+<link href="https://fonts.googleapis.com/css2?family=Sora:wght@300;400;600;700;800&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+<style>
+:root{--blue:#0062ff;--blue-dark:#0047cc;--blue-light:#e8f0ff;--green:#00c97a;--red:#ff3b5c;--yellow:#ffa500;--purple:#a855f7;--orange:#ff6b35;--bg:#f0f4ff;--card:#fff;--text:#0d1b2a;--muted:#6b7c93;--border:#dde5f0;--shadow:0 4px 24px rgba(0,98,255,0.09);}
+*{box-sizing:border-box;margin:0;padding:0;}
+body{font-family:'Sora',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;}
+.layout{display:flex;min-height:100vh;}
+.sidebar{width:260px;background:linear-gradient(180deg,#0d1b2a,#1b2e4a);color:#fff;padding:24px 0;flex-shrink:0;position:sticky;top:0;height:100vh;overflow-y:auto;}
+.sidebar-logo{padding:0 20px 24px;border-bottom:1px solid rgba(255,255,255,0.1);margin-bottom:16px;}
+.sidebar-logo h2{font-size:1.1rem;font-weight:800;}
+.sidebar-logo p{font-size:.72rem;color:rgba(255,255,255,0.5);margin-top:2px;}
+.sidebar-nav{list-style:none;}
+.sidebar-nav a{display:flex;align-items:center;gap:12px;padding:12px 20px;color:rgba(255,255,255,0.7);text-decoration:none;font-size:.85rem;font-weight:600;transition:all .2s;border-left:3px solid transparent;}
+.sidebar-nav a:hover,.sidebar-nav a.active{color:#fff;background:rgba(255,255,255,0.08);border-left-color:var(--blue);}
+.sidebar-nav a i{width:20px;text-align:center;}
+.sidebar-section{padding:16px 20px 6px;font-size:.68rem;text-transform:uppercase;letter-spacing:1px;color:rgba(255,255,255,0.35);font-weight:700;}
+.content{flex:1;padding:24px 32px;overflow-x:hidden;}
+.content-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:28px;flex-wrap:wrap;gap:12px;}
+.content-header h1{font-size:1.6rem;font-weight:800;}
+.card{background:var(--card);border-radius:14px;box-shadow:var(--shadow);padding:24px;margin-bottom:20px;border:1px solid var(--border);}
+.section-title{font-size:.95rem;font-weight:800;color:var(--text);margin-bottom:18px;display:flex;align-items:center;gap:10px;}
+.section-title i{color:var(--blue);}
+.section-title::after{content:'';flex:1;height:2px;background:var(--border);}
+
+.overview-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:16px;margin-bottom:24px;}
+.overview-card{padding:24px;border-radius:14px;border:1.5px solid var(--border);text-align:center;transition:transform .2s;}
+.overview-card:hover{transform:translateY(-2px);}
+.overview-val{font-size:1.6rem;font-weight:800;font-family:'JetBrains Mono',monospace;}
+.overview-label{font-size:.72rem;color:var(--muted);font-weight:700;text-transform:uppercase;letter-spacing:.3px;margin-top:4px;}
+
+.bar-chart{margin-top:12px;}
+.bar-row{display:flex;align-items:center;gap:12px;margin-bottom:12px;}
+.bar-label{width:100px;font-size:.82rem;font-weight:700;text-align:right;flex-shrink:0;}
+.bar-track{flex:1;height:24px;background:#edf2ff;border-radius:6px;overflow:hidden;position:relative;}
+.bar-fill{height:100%;border-radius:6px;transition:width .6s ease;display:flex;align-items:center;justify-content:flex-end;padding-right:8px;font-size:.7rem;font-weight:700;color:#fff;}
+.bar-value{font-size:.82rem;font-weight:700;width:60px;text-align:left;flex-shrink:0;}
+
+.grid-2{display:grid;grid-template-columns:1fr 1fr;gap:20px;}
+
+.leaderboard-row{display:flex;align-items:center;gap:12px;padding:10px 14px;border:1px solid var(--border);border-radius:8px;margin-bottom:8px;transition:border-color .15s;}
+.leaderboard-row:hover{border-color:var(--blue);}
+.rank{width:28px;height:28px;border-radius:50%;background:var(--blue-light);color:var(--blue);display:flex;align-items:center;justify-content:center;font-weight:800;font-size:.75rem;flex-shrink:0;}
+.rank.gold{background:#fff8eb;color:#c8860a;}
+.rank.silver{background:#f4f4f5;color:#71717a;}
+.rank.bronze{background:#fff3ed;color:#c2410c;}
+.lb-name{flex:1;font-weight:700;font-size:.85rem;}
+.lb-score{font-family:'JetBrains Mono',monospace;font-weight:700;font-size:.9rem;color:var(--blue);}
+
+@media(max-width:900px){.sidebar{display:none;}.content{padding:16px;}.grid-2{grid-template-columns:1fr;}}
+</style>
+</head>
+<body>
+
+<div class="layout">
+  <aside class="sidebar">
+    <div class="sidebar-logo"><h2>CEE Medico Nepal</h2><p>Admin Panel</p></div>
+    <ul class="sidebar-nav">
+      <li class="sidebar-section">Main</li>
+      <li><a href="/admin-panel/index.html"><i class="fas fa-tachometer-alt"></i> Dashboard</a></li>
+      <li><a href="/admin-panel/users.html"><i class="fas fa-users"></i> User Management</a></li>
+      <li><a href="/admin-panel/analytics.html" class="active"><i class="fas fa-chart-bar"></i> Analytics</a></li>
+      <li class="sidebar-section">Navigation</li>
+      <li><a href="/"><i class="fas fa-home"></i> Main Site</a></li>
+      <li><a href="#" id="adminLogout"><i class="fas fa-sign-out-alt"></i> Logout</a></li>
+    </ul>
+  </aside>
+
+  <main class="content">
+    <div class="content-header">
+      <h1><i class="fas fa-chart-bar" style="color:var(--blue);margin-right:8px;"></i> Platform Analytics</h1>
+    </div>
+
+    <!-- Overview Stats -->
+    <div class="overview-grid" id="overviewStats">
+      <div class="overview-card" style="border-color:rgba(0,98,255,0.2);background:var(--blue-light);"><div class="overview-val" id="sTotalUsers" style="color:var(--blue);">0</div><div class="overview-label">Total Users</div></div>
+      <div class="overview-card" style="border-color:#a8f0cb;background:#e8fff4;"><div class="overview-val" id="sAvgAccuracy" style="color:var(--green);">0%</div><div class="overview-label">Avg Accuracy</div></div>
+      <div class="overview-card" style="border-color:#ffd88a;background:#fff8eb;"><div class="overview-val" id="sTotalSessions" style="color:var(--yellow);">0</div><div class="overview-label">Total Sessions</div></div>
+      <div class="overview-card" style="border-color:#c4b5fd;background:#f3e8ff;"><div class="overview-val" id="sTotalQuestions" style="color:var(--purple);">0</div><div class="overview-label">Questions Answered</div></div>
+      <div class="overview-card" style="border-color:#ffc9a8;background:#fff3ed;"><div class="overview-val" id="sAvgScore" style="color:var(--orange);">0</div><div class="overview-label">Avg Score/Session</div></div>
+    </div>
+
+    <div class="grid-2">
+      <!-- Subject Performance -->
+      <div class="card">
+        <div class="section-title"><i class="fas fa-book"></i> Subject-wise Performance</div>
+        <div id="subjectChart" class="bar-chart"></div>
+      </div>
+
+      <!-- Subject Distribution -->
+      <div class="card">
+        <div class="section-title"><i class="fas fa-chart-pie"></i> Questions by Subject</div>
+        <div id="subjectDistribution" class="bar-chart"></div>
+      </div>
+    </div>
+
+    <div class="grid-2">
+      <!-- Top Performers -->
+      <div class="card">
+        <div class="section-title"><i class="fas fa-trophy"></i> Top Performers (by Accuracy)</div>
+        <div id="topPerformers"></div>
+      </div>
+
+      <!-- Most Active -->
+      <div class="card">
+        <div class="section-title"><i class="fas fa-fire"></i> Most Active Users</div>
+        <div id="mostActive"></div>
+      </div>
+    </div>
+
+    <!-- Accuracy Distribution -->
+    <div class="card">
+      <div class="section-title"><i class="fas fa-chart-area"></i> Accuracy Distribution</div>
+      <div id="accuracyDist" class="bar-chart"></div>
+    </div>
+
+  </main>
+</div>
+
+<script type="module">
+import { auth, db, signOut, onAuthStateChanged, ref, get } from "../auth/firebase-init.js";
+
+document.getElementById("adminLogout").addEventListener("click", async (e) => { e.preventDefault(); await signOut(auth); window.location.href = "/auth/login.html"; });
+
+onAuthStateChanged(auth, async (user) => {
+  if (!user) { window.location.href = "/auth/login.html"; return; }
+  const snap = await get(ref(db, `users/${user.uid}`));
+  if (!snap.exists() || snap.val().role !== "admin") {
+    alert("Access denied.");
+    window.location.href = "/user-dashboard/index.html";
+    return;
+  }
+  loadAnalytics();
+});
+
+async function loadAnalytics() {
+  const snap = await get(ref(db, "users"));
+  if (!snap.exists()) return;
+
+  const users = [];
+  snap.forEach(c => users.push({ uid: c.key, ...c.val() }));
+
+  let totalSessions = 0, totalQuestions = 0, totalCorrect = 0, totalWrong = 0, totalScore = 0;
+  const subjectAgg = {};
+  const accuracyBuckets = { "0-20%": 0, "21-40%": 0, "41-60%": 0, "61-80%": 0, "81-100%": 0 };
+
+  const scoredUsers = [];
+
+  users.forEach(u => {
+    const s = u.stats || {};
+    totalSessions += s.totalSessions || 0;
+    totalQuestions += s.totalQuestions || 0;
+    totalCorrect += s.totalCorrect || 0;
+    totalWrong += s.totalWrong || 0;
+    totalScore += s.totalScore || 0;
+
+    if (s.totalQuestions > 0) {
+      const acc = Math.round((s.totalCorrect / s.totalQuestions) * 100);
+      scoredUsers.push({ ...u, accuracy: acc, questions: s.totalQuestions, sessions: s.totalSessions || 0 });
+      if (acc <= 20) accuracyBuckets["0-20%"]++;
+      else if (acc <= 40) accuracyBuckets["21-40%"]++;
+      else if (acc <= 60) accuracyBuckets["41-60%"]++;
+      else if (acc <= 80) accuracyBuckets["61-80%"]++;
+      else accuracyBuckets["81-100%"]++;
+    }
+
+    if (s.subjectWise) {
+      for (const [subj, data] of Object.entries(s.subjectWise)) {
+        if (!subjectAgg[subj]) subjectAgg[subj] = { correct: 0, wrong: 0, total: 0, sessions: 0 };
+        subjectAgg[subj].correct += data.correct || 0;
+        subjectAgg[subj].wrong += data.wrong || 0;
+        subjectAgg[subj].total += data.total || 0;
+        subjectAgg[subj].sessions += data.sessions || 0;
+      }
+    }
+  });
+
+  const avgAcc = totalQuestions > 0 ? Math.round((totalCorrect / totalQuestions) * 100) : 0;
+  const avgScore = totalSessions > 0 ? Math.round((totalScore / totalSessions) * 10) / 10 : 0;
+
+  document.getElementById("sTotalUsers").textContent = users.length;
+  document.getElementById("sAvgAccuracy").textContent = avgAcc + "%";
+  document.getElementById("sTotalSessions").textContent = totalSessions;
+  document.getElementById("sTotalQuestions").textContent = totalQuestions;
+  document.getElementById("sAvgScore").textContent = avgScore;
+
+  renderSubjectChart(subjectAgg);
+  renderSubjectDistribution(subjectAgg);
+  renderTopPerformers(scoredUsers);
+  renderMostActive(scoredUsers);
+  renderAccuracyDist(accuracyBuckets);
+}
+
+const subjectColors = { Physics: "#0062ff", Chemistry: "#ff6b35", Botany: "#00c97a", Zoology: "#a855f7", MAT: "#ffa500" };
+
+function renderSubjectChart(agg) {
+  const container = document.getElementById("subjectChart");
+  const subjects = Object.entries(agg);
+  if (subjects.length === 0) { container.innerHTML = `<p style="color:var(--muted);font-size:.85rem;">No subject data yet.</p>`; return; }
+
+  container.innerHTML = subjects.map(([subj, data]) => {
+    const acc = data.total > 0 ? Math.round((data.correct / data.total) * 100) : 0;
+    const color = subjectColors[subj] || "#0062ff";
+    return `
+      <div class="bar-row">
+        <div class="bar-label">${subj}</div>
+        <div class="bar-track"><div class="bar-fill" style="width:${acc}%;background:${color};">${acc > 15 ? acc + "%" : ""}</div></div>
+        <div class="bar-value">${acc}%</div>
+      </div>`;
+  }).join("");
+}
+
+function renderSubjectDistribution(agg) {
+  const container = document.getElementById("subjectDistribution");
+  const subjects = Object.entries(agg);
+  if (subjects.length === 0) { container.innerHTML = `<p style="color:var(--muted);font-size:.85rem;">No data yet.</p>`; return; }
+
+  const maxTotal = Math.max(...subjects.map(([, d]) => d.total), 1);
+  container.innerHTML = subjects.map(([subj, data]) => {
+    const pct = Math.round((data.total / maxTotal) * 100);
+    const color = subjectColors[subj] || "#0062ff";
+    return `
+      <div class="bar-row">
+        <div class="bar-label">${subj}</div>
+        <div class="bar-track"><div class="bar-fill" style="width:${pct}%;background:${color};">${data.total}</div></div>
+        <div class="bar-value">${data.total}</div>
+      </div>`;
+  }).join("");
+}
+
+function renderTopPerformers(users) {
+  const container = document.getElementById("topPerformers");
+  const sorted = [...users].filter(u => u.questions >= 5).sort((a, b) => b.accuracy - a.accuracy).slice(0, 10);
+
+  if (sorted.length === 0) { container.innerHTML = `<p style="color:var(--muted);font-size:.85rem;">No qualifying users yet (min 5 questions).</p>`; return; }
+
+  container.innerHTML = sorted.map((u, i) => {
+    const rankClass = i === 0 ? "gold" : i === 1 ? "silver" : i === 2 ? "bronze" : "";
+    return `
+      <div class="leaderboard-row">
+        <div class="rank ${rankClass}">${i + 1}</div>
+        <div class="lb-name">${u.displayName || u.email}<br><span style="font-size:.7rem;color:var(--muted);">${u.questions} questions</span></div>
+        <div class="lb-score">${u.accuracy}%</div>
+      </div>`;
+  }).join("");
+}
+
+function renderMostActive(users) {
+  const container = document.getElementById("mostActive");
+  const sorted = [...users].sort((a, b) => b.questions - a.questions).slice(0, 10);
+
+  if (sorted.length === 0) { container.innerHTML = `<p style="color:var(--muted);font-size:.85rem;">No active users yet.</p>`; return; }
+
+  container.innerHTML = sorted.map((u, i) => {
+    const rankClass = i === 0 ? "gold" : i === 1 ? "silver" : i === 2 ? "bronze" : "";
+    return `
+      <div class="leaderboard-row">
+        <div class="rank ${rankClass}">${i + 1}</div>
+        <div class="lb-name">${u.displayName || u.email}<br><span style="font-size:.7rem;color:var(--muted);">${u.sessions} sessions</span></div>
+        <div class="lb-score">${u.questions} Q</div>
+      </div>`;
+  }).join("");
+}
+
+function renderAccuracyDist(buckets) {
+  const container = document.getElementById("accuracyDist");
+  const maxVal = Math.max(...Object.values(buckets), 1);
+  const colors = ["#ff3b5c", "#ff6b35", "#ffa500", "#00c97a", "#0062ff"];
+
+  container.innerHTML = Object.entries(buckets).map(([label, count], i) => {
+    const pct = Math.round((count / maxVal) * 100);
+    return `
+      <div class="bar-row">
+        <div class="bar-label">${label}</div>
+        <div class="bar-track"><div class="bar-fill" style="width:${pct}%;background:${colors[i]};">${count > 0 ? count + " users" : ""}</div></div>
+        <div class="bar-value">${count}</div>
+      </div>`;
+  }).join("");
+}
+</script>
+</body>
+</html>
