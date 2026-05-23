@@ -3,98 +3,68 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Leaderboard — CEE Medico Nepal</title>
+    <title>CEE Medico Nepal — Dashboard</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
     <script>
         tailwind.config = {
-            theme:{ extend:{
-                fontFamily:{sans:['Plus Jakarta Sans','sans-serif']},
-                colors:{medical:{50:'#f0f9ff',100:'#e0f2fe',200:'#bae6fd',500:'#0ea5e9',600:'#0284c7',700:'#0369a1',950:'#0c4a6e'}}
+            theme: { extend: {
+                fontFamily: { sans: ['Plus Jakarta Sans', 'sans-serif'] },
+                colors: {
+                    medical: { 50:'#f0f9ff',100:'#e0f2fe',200:'#bae6fd',500:'#0ea5e9',600:'#0284c7',700:'#0369a1',950:'#0c4a6e' }
+                }
             }}
         }
     </script>
-    <style>
-        .scrolled-header{background-color:rgba(255,255,255,.85)!important;backdrop-filter:blur(12px)}
-        .shimmer-btn{position:relative;overflow:hidden}.shimmer-btn::after{content:'';position:absolute;top:-50%;left:-50%;width:200%;height:200%;background:linear-gradient(45deg,transparent,rgba(255,255,255,.2),transparent);transform:rotate(45deg);transition:.5s;opacity:0}.shimmer-btn:hover::after{opacity:1;left:120%;transition:all .8s ease-in-out}
-        .reveal{opacity:0;transform:translateY(24px);transition:all .8s cubic-bezier(.16,1,.3,1)}.reveal.active{opacity:1;transform:translateY(0)}
-        .rank-row{transition:all .3s ease}
-        .rank-row:hover{background:#f0f9ff!important;border-left:3px solid #0ea5e9;}
-    </style>
 </head>
 <body class="bg-[#f8fafc] text-medical-950 font-sans antialiased flex flex-col min-h-screen">
 
     <div id="header-root"></div>
 
-    <main class="flex-1 max-w-4xl mx-auto px-4 sm:px-6 py-12 w-full">
-
-        <!-- Header -->
-        <div class="text-center mb-10 reveal">
-            <span class="text-xs font-bold text-amber-500 uppercase tracking-widest"><i class="fa-solid fa-trophy mr-1"></i> Live Rankings</span>
-            <h1 class="text-3xl sm:text-4xl font-black text-slate-900 mt-2">Daily Leaderboard</h1>
-            <p class="text-slate-500 text-sm mt-2">Rankings reset every midnight. Scores from today's daily mock test.</p>
-        </div>
-
-        <!-- Date Selector -->
-        <div class="flex items-center justify-between bg-white rounded-2xl border border-slate-100 shadow-md p-4 mb-8 reveal">
-            <div class="flex items-center gap-3">
-                <i class="fa-solid fa-calendar text-medical-500 text-lg"></i>
-                <div>
-                    <p class="text-xs font-bold text-slate-400 uppercase tracking-wider">Viewing Leaderboard For</p>
-                    <p class="font-extrabold text-slate-900" id="displayDate"></p>
+    <main class="flex-1 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10 w-full space-y-10">
+        
+        <!-- Welcome Hero Panel -->
+        <div class="bg-gradient-to-r from-medical-600 to-indigo-600 rounded-3xl p-6 sm:p-10 text-white shadow-xl relative overflow-hidden flex flex-col md:flex-row items-center justify-between gap-6">
+            <div class="space-y-4 max-w-xl z-10">
+                <span id="dailyTestBadge" class="inline-flex items-center gap-1.5 text-xs font-bold bg-white/20 px-3.5 py-1.5 rounded-full text-white backdrop-blur-md">
+                    <span class="w-2 h-2 rounded-full bg-emerald-400 animate-ping"></span> Checking Today's mock test scheduler...
+                </span>
+                <h1 class="text-3xl sm:text-4xl font-black leading-tight">Excel Your Nepalese Common Entrance Examination Prep</h1>
+                <p class="text-white/80 text-sm leading-relaxed">Systematic assessment tools tailored for Botany, Zoology, Physics, and Chemistry. Practice Daily with zero-hassle active scheduling.</p>
+                <div class="flex flex-wrap gap-3">
+                    <a href="daily-test.html" class="bg-white hover:bg-slate-50 text-medical-600 font-extrabold px-6 py-3 rounded-xl text-xs transition-all shadow-md flex items-center gap-1.5"><i class="fa-solid fa-bolt"></i> Run Daily Test</a>
+                    <a href="upload.html" class="bg-indigo-500 hover:bg-indigo-600 text-white font-bold px-5 py-3 rounded-xl text-xs transition-all flex items-center gap-1.5 border border-indigo-400"><i class="fa-solid fa-lock"></i> Admin Portal</a>
                 </div>
             </div>
-            <input type="date" id="datePicker" class="border border-slate-200 rounded-xl px-3 py-2 text-sm font-semibold text-slate-700 focus:outline-none focus:ring-2 focus:ring-medical-400 bg-slate-50">
+            <div class="h-32 w-32 md:h-48 md:w-48 bg-white/10 rounded-full blur-3xl absolute -right-10 -bottom-10"></div>
         </div>
 
-        <!-- Top 3 Podium -->
-        <div id="podium" class="grid grid-cols-3 gap-4 mb-8 reveal">
-            <!-- Populated by JS -->
-        </div>
+        <!-- Subject selection card deck -->
+        <div class="space-y-4">
+            <h2 class="text-xl font-extrabold text-slate-900"><i class="fa-solid fa-folder-open mr-2 text-medical-500"></i>Syllabus Subjects Practice</h2>
+            <div class="grid grid-cols-2 sm:grid-cols-4 gap-4">
+                
+                <a href="exam.html?subject=physics" class="bg-white hover:-translate-y-1 hover:shadow-lg transition-all border border-slate-100 rounded-2xl p-5 flex flex-col items-center justify-center text-center gap-3">
+                    <div class="h-12 w-12 rounded-xl bg-sky-50 text-sky-500 flex items-center justify-center text-xl"><i class="fa-solid fa-atom animate-spin" style="animation-duration: 10s"></i></div>
+                    <span class="font-extrabold text-sm text-slate-800">Physics</span>
+                </a>
 
-        <!-- Full Rankings Table -->
-        <div class="bg-white rounded-2xl border border-slate-100 shadow-xl overflow-hidden reveal">
-            <div class="p-5 border-b border-slate-100 flex items-center justify-between">
-                <h2 class="font-extrabold text-slate-800">Full Rankings</h2>
-                <span id="totalParticipants" class="text-xs font-bold text-slate-400"></span>
-            </div>
+                <a href="exam.html?subject=chemistry" class="bg-white hover:-translate-y-1 hover:shadow-lg transition-all border border-slate-100 rounded-2xl p-5 flex flex-col items-center justify-center text-center gap-3">
+                    <div class="h-12 w-12 rounded-xl bg-emerald-50 text-emerald-500 flex items-center justify-center text-xl"><i class="fa-solid fa-flask-vial"></i></div>
+                    <span class="font-extrabold text-sm text-slate-800">Chemistry</span>
+                </a>
 
-            <!-- Table Header -->
-            <div class="grid grid-cols-12 gap-2 px-5 py-3 bg-slate-50 text-xs font-extrabold text-slate-400 uppercase tracking-wider border-b border-slate-100">
-                <div class="col-span-1">Rank</div>
-                <div class="col-span-4">Name</div>
-                <div class="col-span-2 text-center">Score</div>
-                <div class="col-span-2 text-center">Accuracy</div>
-                <div class="col-span-3 text-center">Time</div>
-            </div>
+                <a href="exam.html?subject=botany" class="bg-white hover:-translate-y-1 hover:shadow-lg transition-all border border-slate-100 rounded-2xl p-5 flex flex-col items-center justify-center text-center gap-3">
+                    <div class="h-12 w-12 rounded-xl bg-green-50 text-green-500 flex items-center justify-center text-xl"><i class="fa-solid fa-seedling"></i></div>
+                    <span class="font-extrabold text-sm text-slate-800">Botany</span>
+                </a>
 
-            <div id="rankingsTable">
-                <!-- Skeleton Loader -->
-                <div class="space-y-0">
-                    ${[1,2,3,4,5].map(()=>`
-                    <div class="grid grid-cols-12 gap-2 px-5 py-4 border-b border-slate-50 animate-pulse">
-                        <div class="col-span-1 h-5 bg-slate-100 rounded"></div>
-                        <div class="col-span-4 h-5 bg-slate-100 rounded"></div>
-                        <div class="col-span-2 h-5 bg-slate-100 rounded"></div>
-                        <div class="col-span-2 h-5 bg-slate-100 rounded"></div>
-                        <div class="col-span-3 h-5 bg-slate-100 rounded"></div>
-                    </div>`).join('')}
-                </div>
-            </div>
-        </div>
+                <a href="exam.html?subject=zoology" class="bg-white hover:-translate-y-1 hover:shadow-lg transition-all border border-slate-100 rounded-2xl p-5 flex flex-col items-center justify-center text-center gap-3">
+                    <div class="h-12 w-12 rounded-xl bg-amber-50 text-amber-500 flex items-center justify-center text-xl"><i class="fa-solid fa-dna"></i></div>
+                    <span class="font-extrabold text-sm text-slate-800">Zoology</span>
+                </a>
 
-        <!-- My Rank Highlight -->
-        <div id="myRankBox" class="hidden mt-6 bg-gradient-to-r from-medical-500 to-indigo-600 rounded-2xl p-5 text-white shadow-xl">
-            <div class="flex items-center justify-between">
-                <div>
-                    <p class="text-xs font-bold text-white/70 uppercase tracking-wider">Your Position</p>
-                    <p class="text-2xl font-black mt-1">Rank #<span id="myRankNum">—</span></p>
-                    <p class="text-sm text-white/80 mt-0.5" id="myRankDetails"></p>
-                </div>
-                <div class="w-16 h-16 bg-white/20 rounded-2xl flex items-center justify-center text-3xl">
-                    <i class="fa-solid fa-medal"></i>
-                </div>
             </div>
         </div>
 
@@ -103,105 +73,32 @@
     <div id="footer-root"></div>
 
     <script type="module">
-        import { renderHeader, renderFooter, initSharedScripts } from './js/shared.js';
-        import { db } from './js/firebase-config.js';
-        import { collection, getDocs, query, orderBy } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js';
+        import { renderHeader, renderFooter, initSharedScripts } from './shared.js';
+        import { db } from './firebase-config.js';
+        import { doc, getDoc } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js';
 
-        document.getElementById('header-root').innerHTML = renderHeader('Leaderboard');
+        document.getElementById('header-root').innerHTML = renderHeader('Home');
         document.getElementById('footer-root').innerHTML = renderFooter();
         initSharedScripts();
 
-        const myUserId = localStorage.getItem('cee_uid');
-        let currentDate = new Date().toISOString().split('T')[0];
-        document.getElementById('datePicker').value = currentDate;
-        document.getElementById('displayDate').textContent = new Date(currentDate + 'T00:00:00').toLocaleDateString('en-NP', { weekday:'long', year:'numeric', month:'long', day:'numeric' });
-
-        document.getElementById('datePicker').addEventListener('change', e => {
-            currentDate = e.target.value;
-            document.getElementById('displayDate').textContent = new Date(currentDate + 'T00:00:00').toLocaleDateString('en-NP', { weekday:'long', year:'numeric', month:'long', day:'numeric' });
-            loadLeaderboard(currentDate);
-        });
-
-        async function loadLeaderboard(date) {
-            const tableEl = document.getElementById('rankingsTable');
-            const podiumEl = document.getElementById('podium');
-            tableEl.innerHTML = '<div class="py-8 text-center"><div class="w-8 h-8 rounded-full border-4 border-medical-200 border-t-medical-500 animate-spin mx-auto"></div></div>';
-            podiumEl.innerHTML = '';
-
+        // Check if daily test exists
+        async function fetchDailyScheduleStatus() {
+            const badge = document.getElementById('dailyTestBadge');
+            const today = new Date().toISOString().split('T')[0];
             try {
-                const q = query(collection(db, 'leaderboard', 'daily', date, 'users'), orderBy('score', 'desc'));
-                const snap = await getDocs(q);
-                let entries = snap.docs.map((d, i) => ({ uid: d.id, rank: i+1, ...d.data() }));
-
-                // Sort: score desc, accuracy desc, time asc
-                entries.sort((a, b) => b.score - a.score || b.accuracy - a.accuracy || a.timeTaken - b.timeTaken);
-                entries = entries.map((e, i) => ({ ...e, rank: i+1 }));
-
-                document.getElementById('totalParticipants').textContent = `${entries.length} participants`;
-
-                if (entries.length === 0) {
-                    tableEl.innerHTML = '<div class="py-12 text-center text-slate-400 font-semibold"><i class="fa-solid fa-inbox text-3xl mb-3 block"></i>No submissions yet for this date.</div>';
-                    podiumEl.innerHTML = '';
-                    return;
+                const snap = await getDoc(doc(db, 'dailyTests', today));
+                if (snap.exists()) {
+                    const test = snap.data();
+                    badge.innerHTML = `<span class="w-2 h-2 rounded-full bg-emerald-400 animate-ping"></span> Live: ${test.title || 'CEE Daily booster mock'} (${test.questions?.length || 0} MCQs)`;
+                } else {
+                    badge.innerHTML = `<span class="w-2 h-2 rounded-full bg-amber-400"></span> No test scheduled today`;
                 }
-
-                // ── Podium Top 3 ──────────────────────────────────────
-                const top3 = entries.slice(0, 3);
-                const podiumOrder = [1, 0, 2]; // 2nd, 1st, 3rd visually
-                const heights = ['pt-8', 'pt-0', 'pt-14'];
-                const colors  = ['bg-slate-300', 'bg-amber-400', 'bg-amber-700'];
-                const icons   = ['🥈', '🥇', '🥉'];
-                podiumEl.innerHTML = podiumOrder.map((idx, pos) => {
-                    const e = top3[idx];
-                    if (!e) return '<div></div>';
-                    return `
-                    <div class="${heights[pos]} flex flex-col items-center gap-2 text-center">
-                        <div class="text-2xl">${icons[pos]}</div>
-                        <div class="w-12 h-12 rounded-full ${colors[pos]} flex items-center justify-center text-white font-black text-lg shadow-lg">
-                            ${e.name ? e.name.charAt(0).toUpperCase() : '?'}
-                        </div>
-                        <p class="font-extrabold text-sm text-slate-800 truncate max-w-[80px]">${e.name || 'Anonymous'}</p>
-                        <p class="text-xs text-slate-500 font-semibold">${e.score} pts</p>
-                        <div class="w-full ${colors[pos].replace('bg-','bg-')} bg-opacity-20 rounded-t-xl h-16 sm:h-24 flex items-end justify-center pb-2 text-xs font-bold text-slate-600">#${e.rank}</div>
-                    </div>`;
-                }).join('');
-
-                // ── Rankings Table ─────────────────────────────────────
-                tableEl.innerHTML = entries.map((e, i) => {
-                    const rankBadge = e.rank === 1 ? '<span class="text-amber-500 font-black">🥇</span>'
-                        : e.rank === 2 ? '<span class="text-slate-400 font-black">🥈</span>'
-                        : e.rank === 3 ? '<span class="text-amber-700 font-black">🥉</span>'
-                        : `<span class="font-bold text-slate-500">${e.rank}</span>`;
-                    const isMe = e.uid === myUserId;
-                    const rowBg = isMe ? 'bg-medical-50 border-l-4 border-medical-500' : 'hover:bg-slate-50';
-                    const m = Math.floor((e.timeTaken||0)/60), s=(e.timeTaken||0)%60;
-                    return `
-                    <div class="rank-row grid grid-cols-12 gap-2 px-5 py-4 border-b border-slate-50 text-sm ${rowBg}">
-                        <div class="col-span-1 flex items-center">${rankBadge}</div>
-                        <div class="col-span-4 font-bold text-slate-800 flex items-center gap-2 truncate">
-                            ${isMe ? '<span class="text-[10px] bg-medical-500 text-white px-1.5 py-0.5 rounded font-bold">YOU</span>' : ''}
-                            ${e.name || 'Anonymous'}
-                        </div>
-                        <div class="col-span-2 text-center font-extrabold text-medical-600">${e.score}</div>
-                        <div class="col-span-2 text-center font-semibold text-emerald-600">${e.accuracy || 0}%</div>
-                        <div class="col-span-3 text-center text-slate-500 font-medium">${m}m ${s}s</div>
-                    </div>`;
-                }).join('');
-
-                // ── My Rank ─────────────────────────────────────────────
-                const myEntry = entries.find(e => e.uid === myUserId);
-                if (myEntry) {
-                    document.getElementById('myRankBox').classList.remove('hidden');
-                    document.getElementById('myRankNum').textContent = myEntry.rank;
-                    document.getElementById('myRankDetails').textContent = `Score: ${myEntry.score} | Accuracy: ${myEntry.accuracy}% | Time: ${Math.floor(myEntry.timeTaken/60)}m ${myEntry.timeTaken%60}s`;
-                }
-
-            } catch (e) {
-                tableEl.innerHTML = '<div class="py-12 text-center text-slate-400 font-semibold"><i class="fa-solid fa-triangle-exclamation text-3xl mb-3 block text-amber-400"></i>Could not load leaderboard. Check Firestore connection.</div>';
+            } catch (err) {
+                badge.innerHTML = `<span class="w-2 h-2 rounded-full bg-rose-500"></span> Offline Mode`;
             }
         }
 
-        loadLeaderboard(currentDate);
+        fetchDailyScheduleStatus();
     </script>
 </body>
 </html>
