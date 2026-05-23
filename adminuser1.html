@@ -3,81 +3,292 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Admin - User Device Management</title>
+    <title>Admin - User Device Management Pro</title>
+    <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <!-- Inter Font -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <!-- FontAwesome for Premium Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
     <style>
         body {
             font-family: 'Inter', sans-serif;
+            background-color: #f8fafc;
         }
-        .spinner {
-            border-top-color: #3498db;
-            animation: spin 1s linear infinite;
+        .custom-scrollbar::-webkit-scrollbar {
+            width: 6px;
+            height: 6px;
         }
-        @keyframes spin {
-            to { transform: rotate(360deg); }
+        .custom-scrollbar::-webkit-scrollbar-track {
+            background: #f1f5f9;
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb {
+            background: #cbd5e1;
+            border-radius: 4px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+            background: #94a3b8;
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(8px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .animate-fade-in {
+            animation: fadeIn 0.3s ease-out forwards;
         }
     </style>
 </head>
-<body class="bg-gray-100 text-gray-800">
+<body class="text-slate-800 antialiased min-h-screen flex flex-col">
 
-    <div id="app" class="container mx-auto p-4 md:p-8 max-w-5xl">
+    <!-- Custom Top Toast Notification Container -->
+    <div id="toast-container" class="fixed top-5 right-5 z-50 flex flex-col gap-3 pointer-events-none"></div>
+
+    <!-- Custom Modal Backdrop for Alerts & Confirms -->
+    <div id="custom-modal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center hidden p-4 transition-opacity duration-300">
+        <div class="bg-white rounded-2xl max-w-md w-full shadow-2xl overflow-hidden transform scale-95 transition-transform duration-300 animate-fade-in">
+            <div class="p-6">
+                <div class="flex items-center gap-4 mb-4">
+                    <div id="modal-icon-bg" class="p-3 rounded-full bg-red-100 text-red-600">
+                        <i id="modal-icon" class="fa-solid fa-triangle-exclamation text-xl"></i>
+                    </div>
+                    <div>
+                        <h3 id="modal-title" class="text-lg font-bold text-slate-900">Confirm Action</h3>
+                        <p id="modal-subtitle" class="text-sm text-slate-500">This action cannot be undone.</p>
+                    </div>
+                </div>
+                <p id="modal-message" class="text-slate-600 text-sm leading-relaxed mb-6">Are you sure you want to perform this operation?</p>
+                <div class="flex justify-end gap-3">
+                    <button id="modal-cancel-btn" class="px-4 py-2 border border-slate-200 hover:bg-slate-50 text-slate-700 rounded-xl font-medium text-sm transition-colors">Cancel</button>
+                    <button id="modal-confirm-btn" class="px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-xl font-medium text-sm transition-colors">Confirm</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Global Sticky Navigation Banner -->
+    <nav class="bg-slate-900 text-white shadow-md py-4 px-6 sticky top-0 z-30">
+        <div class="max-w-7xl mx-auto flex flex-col sm:flex-row justify-between items-center gap-4">
+            <div class="flex items-center gap-3">
+                <div class="bg-gradient-to-tr from-blue-500 to-indigo-600 p-2.5 rounded-xl shadow-lg shadow-blue-500/30">
+                    <i class="fa-solid fa-shield-halved text-xl text-white"></i>
+                </div>
+                <div>
+                    <h1 class="text-lg font-extrabold tracking-tight bg-gradient-to-r from-white to-slate-300 bg-clip-text text-transparent">DEVICE GUARD</h1>
+                    <p class="text-[10px] text-slate-400 font-mono tracking-widest uppercase">Admin Management Console</p>
+                </div>
+            </div>
+            
+            <div class="flex items-center gap-3 w-full sm:w-auto justify-end">
+                <!-- Mode indicator/switch -->
+                <button id="demo-toggle-btn" class="flex items-center gap-2 bg-indigo-600 hover:bg-indigo-500 text-white font-semibold text-xs py-2 px-3.5 rounded-xl transition shadow-md shadow-indigo-600/20">
+                    <i class="fa-solid fa-wand-magic-sparkles"></i>
+                    <span id="demo-btn-text">Switch to Live Demo Data</span>
+                </button>
+                <span id="mode-badge" class="hidden sm:inline-flex items-center gap-1.5 px-3 py-1 text-xs font-semibold rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
+                    <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
+                    Live Firebase RTDB
+                </span>
+            </div>
+        </div>
+    </nav>
+
+    <div id="app" class="flex-grow container mx-auto p-4 md:p-8 max-w-7xl animate-fade-in">
 
         <!-- Login Section -->
-        <div id="login-section" class="max-w-md mx-auto bg-white p-8 rounded-lg shadow-lg mt-16">
-            <h1 class="text-2xl font-bold text-center mb-6">Admin Login</h1>
-            <form id="login-form">
-                <div class="mb-4">
-                    <label for="email" class="block text-gray-700 font-medium mb-2">Email</label>
-                    <input type="email" id="email" required class="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="admin@example.com">
+        <div id="login-section" class="max-w-md mx-auto bg-white p-8 rounded-2xl shadow-xl border border-slate-100 mt-12 md:mt-24">
+            <div class="text-center mb-6">
+                <h1 class="text-2xl font-extrabold text-slate-900">Welcome Back Admin</h1>
+                <p class="text-slate-500 text-sm mt-1">Please authenticate to manage connected devices</p>
+            </div>
+            <form id="login-form" class="space-y-5">
+                <div>
+                    <label for="email" class="block text-slate-700 font-semibold text-sm mb-1.5">Email Address</label>
+                    <div class="relative">
+                        <span class="absolute inset-y-0 left-0 pl-3 flex items-center text-slate-400">
+                            <i class="fa-regular fa-envelope"></i>
+                        </span>
+                        <input type="email" id="email" required class="w-full pl-10 pr-4 py-2.5 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500 text-sm transition-all placeholder-slate-400" placeholder="admin@example.com">
+                    </div>
                 </div>
-                <div class="mb-6">
-                    <label for="password" class="block text-gray-700 font-medium mb-2">Password</label>
-                    <input type="password" id="password" required class="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="••••••••">
+                <div>
+                    <label for="password" class="block text-slate-700 font-semibold text-sm mb-1.5">Password</label>
+                    <div class="relative">
+                        <span class="absolute inset-y-0 left-0 pl-3 flex items-center text-slate-400">
+                            <i class="fa-solid fa-lock"></i>
+                        </span>
+                        <input type="password" id="password" required class="w-full pl-10 pr-4 py-2.5 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500 text-sm transition-all placeholder-slate-400" placeholder="••••••••">
+                    </div>
                 </div>
-                <button type="submit" class="w-full bg-blue-600 text-white font-bold py-2 px-4 rounded-lg hover:bg-blue-700 transition duration-300">Login</button>
+                <button type="submit" class="w-full bg-slate-900 hover:bg-slate-800 text-white font-semibold py-3 px-4 rounded-xl transition shadow-lg shadow-slate-900/10 hover:shadow-slate-900/20 flex justify-center items-center gap-2">
+                    <span>Secure Sign In</span>
+                    <i class="fa-solid fa-arrow-right text-xs"></i>
+                </button>
             </form>
-            <p id="login-error" class="text-red-500 text-center mt-4 text-sm"></p>
+            
+            <p id="login-error" class="text-rose-500 text-center mt-4 text-xs font-semibold"></p>
+
+            <div class="mt-8 border-t border-slate-100 pt-6 text-center">
+                <span class="text-xs text-slate-400 block mb-3">Want to preview the interface right now?</span>
+                <button id="quick-demo-btn" class="text-indigo-600 hover:text-indigo-700 text-xs font-bold underline transition">
+                    Explore with Mock/Sample Sandbox Mode &rarr;
+                </button>
+            </div>
         </div>
 
         <!-- Admin Panel Section -->
         <div id="admin-panel" class="hidden">
-            <header class="flex justify-between items-center bg-white p-4 rounded-lg shadow-md mb-8">
-                <div>
-                    <h1 class="text-2xl font-bold">Device Management</h1>
-                    <p class="text-gray-600">Logged in as: <span id="admin-email" class="font-medium"></span></p>
+            
+            <!-- Dashboard Stats & Analytics row -->
+            <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8">
+                <div class="bg-white p-5 rounded-2xl border border-slate-100 shadow-sm flex items-center gap-4">
+                    <div class="p-3.5 bg-indigo-50 text-indigo-600 rounded-xl">
+                        <i class="fa-solid fa-users text-xl"></i>
+                    </div>
+                    <div>
+                        <span class="text-xs font-medium text-slate-400 block uppercase tracking-wider">Total Users</span>
+                        <span id="stat-total-users" class="text-2xl font-extrabold text-slate-900">0</span>
+                    </div>
                 </div>
-                <button id="logout-button" class="bg-red-500 text-white font-bold py-2 px-4 rounded-lg hover:bg-red-600 transition duration-300">Logout</button>
+                <div class="bg-white p-5 rounded-2xl border border-slate-100 shadow-sm flex items-center gap-4">
+                    <div class="p-3.5 bg-blue-50 text-blue-600 rounded-xl">
+                        <i class="fa-solid fa-mobile-screen-button text-xl"></i>
+                    </div>
+                    <div>
+                        <span class="text-xs font-medium text-slate-400 block uppercase tracking-wider">Active Devices</span>
+                        <span id="stat-total-devices" class="text-2xl font-extrabold text-slate-900">0</span>
+                    </div>
+                </div>
+                <div class="bg-white p-5 rounded-2xl border border-slate-100 shadow-sm flex items-center gap-4">
+                    <div class="p-3.5 bg-emerald-50 text-emerald-600 rounded-xl">
+                        <i class="fa-solid fa-circle-check text-xl"></i>
+                    </div>
+                    <div>
+                        <span class="text-xs font-medium text-slate-400 block uppercase tracking-wider">Online Right Now</span>
+                        <span id="stat-online-devices" class="text-2xl font-extrabold text-slate-900">0</span>
+                    </div>
+                </div>
+                <div class="bg-white p-5 rounded-2xl border border-slate-100 shadow-sm flex items-center gap-4">
+                    <div class="p-3.5 bg-rose-50 text-rose-600 rounded-xl">
+                        <i class="fa-solid fa-ban text-xl"></i>
+                    </div>
+                    <div>
+                        <span class="text-xs font-medium text-slate-400 block uppercase tracking-wider">Offline Status</span>
+                        <span id="stat-offline-devices" class="text-2xl font-extrabold text-slate-900">0</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Dashboard Subheader -->
+            <header class="flex flex-col md:flex-row justify-between items-start md:items-center bg-white p-6 rounded-2xl shadow-sm border border-slate-100 mb-8 gap-4">
+                <div>
+                    <h2 class="text-xl font-bold text-slate-900 flex items-center gap-2">
+                        <i class="fa-solid fa-laptop-code text-indigo-500"></i>
+                        Device Registry Overview
+                    </h2>
+                    <p class="text-sm text-slate-500">Logged in as: <span id="admin-email" class="font-semibold text-slate-700"></span></p>
+                </div>
+                <div class="flex items-center gap-2">
+                    <button id="logout-button" class="bg-rose-50 hover:bg-rose-100 text-rose-700 font-semibold text-sm py-2.5 px-4 rounded-xl transition duration-200 flex items-center gap-2">
+                        <i class="fa-solid fa-arrow-right-from-bracket"></i>
+                        Logout
+                    </button>
+                </div>
             </header>
 
-            <!-- Search Bar -->
-            <div class="mb-6">
-                <input 
-                    type="text" 
-                    id="search-input" 
-                    placeholder="Search by Gmail or Name..." 
-                    class="w-full md:w-1/2 px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                >
+            <!-- Search & Filters -->
+            <div class="bg-white p-4 rounded-2xl shadow-sm border border-slate-100 mb-6 flex flex-col md:flex-row gap-4 items-center justify-between">
+                <div class="relative w-full md:w-80">
+                    <span class="absolute inset-y-0 left-0 pl-3 flex items-center text-slate-400">
+                        <i class="fa-solid fa-magnifying-glass text-sm"></i>
+                    </span>
+                    <input 
+                        type="text" 
+                        id="search-input" 
+                        placeholder="Search by Email, Name or UID..." 
+                        class="w-full pl-9 pr-4 py-2 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500 text-sm placeholder-slate-400"
+                    >
+                </div>
+                
+                <div class="flex flex-wrap items-center gap-3 w-full md:w-auto">
+                    <!-- Approval Status Filter -->
+                    <div class="flex items-center gap-2 w-full sm:w-auto">
+                        <span class="text-xs font-semibold text-slate-400 whitespace-nowrap"><i class="fa-solid fa-user-shield mr-1"></i>User Status:</span>
+                        <select id="approval-filter" class="w-full sm:w-auto text-xs font-medium border border-slate-200 rounded-xl p-2 bg-slate-50 text-slate-700 focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                            <option value="all">All Users</option>
+                            <option value="approved">Approved Only</option>
+                            <option value="pending">Pending Approval</option>
+                        </select>
+                    </div>
+
+                    <!-- OS/Platform Filter -->
+                    <div class="flex items-center gap-2 w-full sm:w-auto">
+                        <span class="text-xs font-semibold text-slate-400 whitespace-nowrap"><i class="fa-solid fa-filter mr-1"></i>Platform:</span>
+                        <select id="platform-filter" class="w-full sm:w-auto text-xs font-medium border border-slate-200 rounded-xl p-2 bg-slate-50 text-slate-700 focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                            <option value="all">All Platforms</option>
+                            <option value="android">Android</option>
+                            <option value="ios">iOS / macOS</option>
+                            <option value="windows">Windows</option>
+                            <option value="web">Web Browser</option>
+                        </select>
+                    </div>
+
+                    <!-- Online Status Filter -->
+                    <div class="flex items-center gap-2 w-full sm:w-auto">
+                        <span class="text-xs font-semibold text-slate-400 whitespace-nowrap"><i class="fa-solid fa-clock-rotate-left mr-1"></i>Status:</span>
+                        <select id="status-filter" class="w-full sm:w-auto text-xs font-medium border border-slate-200 rounded-xl p-2 bg-slate-50 text-slate-700 focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                            <option value="all">All States</option>
+                            <option value="online">Online</option>
+                            <option value="offline">Offline</option>
+                        </select>
+                    </div>
+                </div>
             </div>
 
-            <div id="loading-indicator" class="text-center py-10">
-                 <div class="spinner w-12 h-12 rounded-full border-4 border-gray-300 mx-auto"></div>
-                 <p class="mt-4 text-gray-600">Loading user data...</p>
+            <!-- Loading indicator -->
+            <div id="loading-indicator" class="text-center py-16 bg-white rounded-2xl border border-slate-100 shadow-sm">
+                 <div class="spinner w-12 h-12 rounded-full border-4 border-slate-200 border-t-indigo-600 animate-spin mx-auto"></div>
+                 <p class="mt-4 text-slate-500 text-sm font-medium">Synchronizing device registry...</p>
             </div>
             
-            <div id="error-message" class="hidden bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded-lg relative mb-6" role="alert">
-                <strong class="font-bold">Error: </strong>
-                <span class="block sm:inline" id="error-text"></span>
+            <!-- Error message banner -->
+            <div id="error-message" class="hidden bg-rose-50 border border-rose-200 text-rose-700 px-5 py-4 rounded-xl relative mb-6" role="alert">
+                <div class="flex items-center gap-3">
+                    <i class="fa-solid fa-circle-xmark text-lg"></i>
+                    <div>
+                        <strong class="font-bold">Database Error: </strong>
+                        <span class="block sm:inline" id="error-text"></span>
+                    </div>
+                </div>
             </div>
 
+            <!-- Dynamic Users and Devices List -->
             <div id="user-list-container" class="space-y-6">
-                <!-- User cards will be dynamically inserted here -->
+                <!-- User cards containing robust tables/cards of devices will live here -->
             </div>
-             <p id="no-users-message" class="hidden text-center text-gray-500 mt-10 text-lg">No users with devices found.</p>
+            
+            <div id="no-users-message" class="hidden text-center py-16 bg-white rounded-2xl border border-dashed border-slate-200 mt-6">
+                <div class="text-slate-300 text-5xl mb-4">
+                    <i class="fa-solid fa-square-rss"></i>
+                </div>
+                <h3 class="text-lg font-bold text-slate-800">No matching user devices found</h3>
+                <p class="text-sm text-slate-400 mt-1">Try adjusting your filters or search criteria.</p>
+            </div>
         </div>
     </div>
 
-    <!-- Firebase SDK -->
+    <footer class="mt-auto py-6 border-t border-slate-200/50 bg-slate-50 text-center text-xs text-slate-400">
+        <div class="container mx-auto px-4 flex flex-col sm:flex-row justify-between items-center gap-3 max-w-7xl">
+            <p>&copy; 2026 Device Guard Admin Console. All connections encrypted securely.</p>
+            <div class="flex gap-4">
+                <a href="#" class="hover:text-slate-600 transition">Security Policy</a>
+                <span>&bull;</span>
+                <a href="#" class="hover:text-slate-600 transition">Audit Logs</a>
+            </div>
+        </div>
+    </footer>
+
+    <!-- Firebase SDK Modules -->
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
         import { 
@@ -90,10 +301,11 @@
             getDatabase, 
             ref, 
             onValue, 
-            remove 
+            remove,
+            update
         } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js";
 
-        // Firebase config
+        // Firebase configuration (provided as default placeholder)
         const firebaseConfig = {
             apiKey: "AIzaSyB66MZa0WZk3WPydcjmCDu7P_CE0FD60ug",
             authDomain: "login-2f07b.firebaseapp.com",
@@ -109,7 +321,7 @@
         const auth = getAuth(app);
         const db = getDatabase(app);
 
-        // UI Elements
+        // UI Elements Selection
         const loginSection = document.getElementById('login-section');
         const adminPanel = document.getElementById('admin-panel');
         const loginForm = document.getElementById('login-form');
@@ -122,16 +334,198 @@
         const errorText = document.getElementById('error-text');
         const noUsersMessage = document.getElementById('no-users-message');
         const searchInput = document.getElementById('search-input');
+        const platformFilter = document.getElementById('platform-filter');
+        const statusFilter = document.getElementById('status-filter');
+        const approvalFilter = document.getElementById('approval-filter');
+        
+        // Modal & Toast Selectors
+        const customModal = document.getElementById('custom-modal');
+        const modalTitle = document.getElementById('modal-title');
+        const modalSubtitle = document.getElementById('modal-subtitle');
+        const modalMessage = document.getElementById('modal-message');
+        const modalConfirmBtn = document.getElementById('modal-confirm-btn');
+        const modalCancelBtn = document.getElementById('modal-cancel-btn');
+        const modalIconBg = document.getElementById('modal-icon-bg');
+        const modalIcon = document.getElementById('modal-icon');
+        const toastContainer = document.getElementById('toast-container');
 
+        // Toggle state elements
+        const demoToggleBtn = document.getElementById('demo-toggle-btn');
+        const demoBtnText = document.getElementById('demo-btn-text');
+        const modeBadge = document.getElementById('mode-badge');
+        const quickDemoBtn = document.getElementById('quick-demo-btn');
+
+        // Dynamic Database Unsubscribe hooks
         let usersUnsubscribe = null;
         let devicesUnsubscribe = null;
 
-        // --- Authentication Logic ---
-        onAuthStateChanged(auth, user => {
-            if (user) {
-                checkAdminStatus(user);
+        // Current mode: true = Real Firebase; false = Interactive Demo/Mock Sandbox
+        let isRealDatabaseMode = true;
+
+        // --- STREAMING_CHUNK: Upgrading mock users with approval statuses ---
+        // --- High Fidelity Mock Sandbox Data ---
+        const mockUsers = {
+            "uid_alex_carter": { name: "Alex Carter", email: "alex.carter@workplace.com", avatar: "AC", approved: true },
+            "uid_sarah_connor": { name: "Sarah Connor", email: "sconnor@resistance.net", avatar: "SC", approved: true },
+            "uid_marcus_vance": { name: "Marcus Vance", email: "marcus.v@futureops.io", avatar: "MV", approved: false },
+            "uid_elena_rodriguez": { name: "Elena Rodriguez", email: "elena.r@designteam.co", avatar: "ER", approved: true }
+        };
+
+        const mockDevices = {
+            "uid_alex_carter": {
+                "dev_iphone15": {
+                    name: "Alex's iPhone 15 Pro",
+                    platform: "ios",
+                    osVersion: "iOS 17.4.1",
+                    appVersion: "v4.12.0",
+                    ipAddress: "192.168.1.45",
+                    lastActive: Date.now() - 4 * 60000, // 4 mins ago
+                    status: "online",
+                    browser: "Safari Mobile"
+                },
+                "dev_macbook": {
+                    name: "Workstation MacBook Pro 16",
+                    platform: "ios",
+                    osVersion: "macOS Sonoma 14.3",
+                    appVersion: "v4.12.0",
+                    ipAddress: "192.168.1.12",
+                    lastActive: Date.now() - 3 * 3600000, // 3 hours ago
+                    status: "offline",
+                    browser: "Chrome Desktop"
+                }
+            },
+            "uid_sarah_connor": {
+                "dev_pixel8": {
+                    name: "Secure Pixel 8 Pro",
+                    platform: "android",
+                    osVersion: "Android 14 (GrapheneOS)",
+                    appVersion: "v4.11.2",
+                    ipAddress: "10.0.0.108",
+                    lastActive: Date.now() - 12000, // 12 seconds ago
+                    status: "online",
+                    browser: "DuckDuckGo Browser"
+                }
+            },
+            "uid_marcus_vance": {
+                "dev_thinkpad": {
+                    name: "Lenovo ThinkPad X1 Carbon",
+                    platform: "windows",
+                    osVersion: "Windows 11 Enterprise",
+                    appVersion: "v4.12.0",
+                    ipAddress: "172.16.254.31",
+                    lastActive: Date.now() - 86400000 * 2, // 2 days ago
+                    status: "offline",
+                    browser: "Firefox Desktop"
+                },
+                "dev_galaxy_tab": {
+                    name: "Galaxy Tab S9 Ultra",
+                    platform: "android",
+                    osVersion: "Android 13",
+                    appVersion: "v4.11.0",
+                    ipAddress: "172.16.254.88",
+                    lastActive: Date.now() - 1000 * 30, // 30s ago
+                    status: "online",
+                    browser: "Chrome Mobile"
+                }
+            },
+            "uid_elena_rodriguez": {
+                "dev_web_portal": {
+                    name: "Elena Cloud Console Workspace",
+                    platform: "web",
+                    osVersion: "Linux Ubuntu 22.04 LTS",
+                    appVersion: "v5.0.1-beta",
+                    ipAddress: "84.201.17.44",
+                    lastActive: Date.now() - 12 * 60000, // 12 mins ago
+                    status: "online",
+                    browser: "Brave Browser"
+                }
+            }
+        };
+
+        let activeUsersData = {};
+        let activeDevicesData = {};
+
+        // --- CUSTOM UI MODALS & NOTIFICATIONS ---
+        function showToast(message, type = 'success') {
+            const toast = document.createElement('div');
+            toast.className = `flex items-center gap-3 bg-white border p-4 rounded-xl shadow-lg pointer-events-auto transition-all transform duration-300 translate-x-12 opacity-0 animate-fade-in`;
+            
+            let borderStyle = 'border-l-emerald-500';
+            let iconCode = '<i class="fa-solid fa-circle-check text-emerald-500"></i>';
+            if (type === 'error') {
+                borderStyle = 'border-l-rose-500';
+                iconCode = '<i class="fa-solid fa-circle-xmark text-rose-500"></i>';
+            } else if (type === 'info') {
+                borderStyle = 'border-l-blue-500';
+                iconCode = '<i class="fa-solid fa-circle-info text-blue-500"></i>';
+            }
+            
+            toast.classList.add('border-l-4', borderStyle);
+            toast.innerHTML = `
+                <div class="text-base">${iconCode}</div>
+                <div class="flex-grow">
+                    <p class="text-xs font-bold text-slate-900">${message}</p>
+                </div>
+                <button class="text-slate-400 hover:text-slate-600 ml-2" onclick="this.parentElement.remove()">
+                    <i class="fa-solid fa-xmark text-xs"></i>
+                </button>
+            `;
+            
+            toastContainer.appendChild(toast);
+            setTimeout(() => {
+                toast.classList.remove('translate-x-12', 'opacity-0');
+            }, 10);
+
+            // Auto-dismiss after 4.5 seconds
+            setTimeout(() => {
+                toast.classList.add('opacity-0', 'translate-y-[-10px]');
+                setTimeout(() => toast.remove(), 300);
+            }, 4500);
+        }
+
+        function showCustomConfirm(title, subtitle, message, theme, onConfirm) {
+            modalTitle.textContent = title;
+            modalSubtitle.textContent = subtitle;
+            modalMessage.textContent = message;
+            
+            // Adjust styles based on warning level
+            if (theme === 'danger') {
+                modalIconBg.className = 'p-3 rounded-full bg-rose-100 text-rose-600';
+                modalIcon.className = 'fa-solid fa-triangle-exclamation text-xl';
+                modalConfirmBtn.className = 'px-4 py-2 bg-rose-600 hover:bg-rose-700 text-white rounded-xl font-semibold text-sm transition-colors';
             } else {
-                showLogin();
+                modalIconBg.className = 'p-3 rounded-full bg-indigo-100 text-indigo-600';
+                modalIcon.className = 'fa-solid fa-shield-halved text-xl';
+                modalConfirmBtn.className = 'px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl font-semibold text-sm transition-colors';
+            }
+
+            // Remove previous event listeners
+            const oldConfirmBtn = modalConfirmBtn.cloneNode(true);
+            modalConfirmBtn.parentNode.replaceChild(oldConfirmBtn, modalConfirmBtn);
+            const newConfirmBtn = document.getElementById('modal-confirm-btn');
+
+            customModal.classList.remove('hidden');
+
+            const closeModal = () => {
+                customModal.classList.add('hidden');
+            };
+
+            modalCancelBtn.onclick = closeModal;
+            
+            newConfirmBtn.onclick = () => {
+                onConfirm();
+                closeModal();
+            };
+        }
+
+        // --- AUTHENTICATION & APP ROUTER LIFE-CYCLE ---
+        onAuthStateChanged(auth, user => {
+            if (isRealDatabaseMode) {
+                if (user) {
+                    checkAdminStatus(user);
+                } else {
+                    showLogin();
+                }
             }
         });
 
@@ -140,18 +534,38 @@
             loginError.textContent = '';
             const email = document.getElementById('email').value;
             const password = document.getElementById('password').value;
+            
             try {
-                await signInWithEmailAndPassword(auth, email, password);
+                if (!isRealDatabaseMode) {
+                    // Sandbox authorization bypass
+                    showToast("Simulated secure admin authorization successful!", "success");
+                    showAdminPanel({ email: email });
+                    loadAndDisplayData();
+                } else {
+                    await signInWithEmailAndPassword(auth, email, password);
+                }
             } catch (error) {
                 console.error("Login Error:", error);
-                loginError.textContent = 'Invalid email or password.';
+                loginError.textContent = 'Invalid credentials or connection issues.';
+                showToast("Login failed. Check inputs or network status.", "error");
             }
         });
 
         logoutButton.addEventListener('click', () => {
-            signOut(auth);
+            if (isRealDatabaseMode) {
+                signOut(auth).then(() => {
+                    showToast("Successfully logged out from Live database", "info");
+                });
+            } else {
+                showToast("Simulated session cleared", "info");
+                showLogin();
+            }
         });
-        
+
+        quickDemoBtn.addEventListener('click', () => {
+            toggleAppMode(false); // Switch directly to sandbox
+        });
+
         function showLogin() {
             loginSection.classList.remove('hidden');
             adminPanel.classList.add('hidden');
@@ -162,7 +576,7 @@
         function showAdminPanel(user) {
             loginSection.classList.add('hidden');
             adminPanel.classList.remove('hidden');
-            adminEmailSpan.textContent = user.email;
+            adminEmailSpan.textContent = user.email || 'Admin Sandbox';
         }
         
         function showError(message) {
@@ -170,7 +584,7 @@
             errorMessage.classList.remove('hidden');
         }
 
-        // --- Admin & Data Logic ---
+        // --- ADMIN AUTHORIZATION STATUS ---
         function checkAdminStatus(user) {
             const adminRef = ref(db, 'admins/' + user.uid);
             onValue(adminRef, (snapshot) => {
@@ -178,115 +592,432 @@
                     showAdminPanel(user);
                     loadAndDisplayData();
                 } else {
-                    alert('Access Denied. You are not an administrator.');
+                    showCustomConfirm(
+                        'Access Denied', 
+                        'Authorization error', 
+                        'You do not have administrative privilege nodes assigned to this account in the database.', 
+                        'danger', 
+                        () => { signOut(auth); }
+                    );
                     signOut(auth);
                 }
             }, { onlyOnce: true });
         }
-        
+
+        // --- REALTIME DATA AND PREMIUM RENDER INTERACTION ---
         function loadAndDisplayData() {
             loadingIndicator.classList.remove('hidden');
             noUsersMessage.classList.add('hidden');
 
-            const usersRef = ref(db, 'users');
-            const devicesRef = ref(db, 'userDevices');
-            
-            let usersData = {};
-            let devicesData = {};
+            if (isRealDatabaseMode) {
+                const usersRef = ref(db, 'users');
+                const devicesRef = ref(db, 'userDevices');
 
-            if (usersUnsubscribe) usersUnsubscribe();
-            if (devicesUnsubscribe) devicesUnsubscribe();
-            
-            const render = () => {
-                userListContainer.innerHTML = '';
-                const uidsWithDevices = Object.keys(devicesData);
+                if (usersUnsubscribe) usersUnsubscribe();
+                if (devicesUnsubscribe) devicesUnsubscribe();
 
-                const query = searchInput.value.toLowerCase().trim();
-                const filteredUIDs = uidsWithDevices.filter(uid => {
-                    const user = usersData[uid] || {};
-                    const email = (user.email || '').toLowerCase();
-                    const name = (user.name || '').toLowerCase();
-                    return email.includes(query) || name.includes(query);
+                usersUnsubscribe = onValue(usersRef, (snapshot) => {
+                    activeUsersData = snapshot.val() || {};
+                    if (Object.keys(activeDevicesData).length > 0) renderDashboard();
+                }, (error) => {
+                    console.error("Error fetching users:", error);
+                    showError('Unable to authenticate the user tree from standard Firestore paths.');
                 });
 
-                if (filteredUIDs.length === 0) {
-                    noUsersMessage.classList.remove('hidden');
-                    return;
-                } else {
-                    noUsersMessage.classList.add('hidden');
-                }
-
-                filteredUIDs.forEach(uid => {
-                    const user = usersData[uid] || { email: 'Unknown User', name: '' };
-                    const devices = devicesData[uid];
-                    const userCard = document.createElement('div');
-                    userCard.className = 'bg-white p-6 rounded-lg shadow-md';
-                    userCard.innerHTML = `
-                        <div class="border-b pb-3 mb-4">
-                            <h2 class="text-xl font-semibold">${user.name || 'No name'} (${user.email || 'No email'})</h2>
-                            <p class="text-sm text-gray-500 font-mono">${uid}</p>
-                        </div>
-                        <div id="devices-${uid}" class="space-y-3"></div>
-                    `;
-                    userListContainer.appendChild(userCard);
-                    const devicesContainer = userCard.querySelector(`#devices-${uid}`);
-
-                    Object.entries(devices).forEach(([deviceId, deviceDetails]) => {
-                        const deviceEl = document.createElement('div');
-                        deviceEl.className = 'flex justify-between items-center bg-gray-50 p-3 rounded-md border';
-                        
-                        const deviceInfo = document.createElement('div');
-                        const deviceName = deviceDetails.name || deviceId;
-                        deviceInfo.innerHTML = `<p class="font-medium text-gray-800">${deviceName}</p><p class="text-xs text-gray-500 font-mono">${deviceId}</p>`;
-                        
-                        const deleteButton = document.createElement('button');
-                        deleteButton.textContent = 'Delete';
-                        deleteButton.className = 'bg-red-100 text-red-700 text-sm font-semibold py-1 px-3 rounded-md hover:bg-red-200 transition';
-                        deleteButton.onclick = () => handleDeleteDevice(uid, deviceId, deviceName);
-                        
-                        deviceEl.appendChild(deviceInfo);
-                        deviceEl.appendChild(deleteButton);
-                        devicesContainer.appendChild(deviceEl);
-                    });
+                devicesUnsubscribe = onValue(devicesRef, (snapshot) => {
+                    loadingIndicator.classList.add('hidden');
+                    activeDevicesData = snapshot.val() || {};
+                    renderDashboard();
+                }, (error) => {
+                    console.error("Error fetching devices:", error);
+                    loadingIndicator.classList.add('hidden');
+                    showError('Failed to synchronize user-device connections.');
                 });
-            };
-
-            usersUnsubscribe = onValue(usersRef, (snapshot) => {
-                usersData = snapshot.val() || {};
-                if (Object.keys(devicesData).length > 0) render();
-            }, (error) => {
-                console.error("Error fetching users:", error);
-                showError('Could not load user data. Check console for details.');
-            });
-
-            devicesUnsubscribe = onValue(devicesRef, (snapshot) => {
-                loadingIndicator.classList.add('hidden');
-                devicesData = snapshot.val() || {};
-                render();
-            }, (error) => {
-                console.error("Error fetching devices:", error);
-                loadingIndicator.classList.add('hidden');
-                showError('Could not load device data. Check console for details.');
-            });
-
-            searchInput.addEventListener('input', render);
-        }
-        
-        function handleDeleteDevice(uid, deviceId, deviceName) {
-            const confirmation = confirm(`Are you sure you want to delete the device "${deviceName}" for user ${uid}?`);
-            if(confirmation) {
-                const deviceRef = ref(db, `userDevices/${uid}/${deviceId}`);
-                remove(deviceRef)
-                    .then(() => {
-                        console.log(`Successfully deleted device ${deviceId} for user ${uid}`);
-                    })
-                    .catch((error) => {
-                        console.error("Error deleting device:", error);
-                        alert('Failed to delete device. You may not have permission.');
-                    });
+            } else {
+                // Mock Sandbox data cycle
+                setTimeout(() => {
+                    loadingIndicator.classList.add('hidden');
+                    activeUsersData = mockUsers;
+                    activeDevicesData = mockDevices;
+                    renderDashboard();
+                }, 400);
             }
         }
-    </script>
 
+        // --- STREAMING_CHUNK: Filtering dashboard content based on User Approval configurations ---
+        function renderDashboard() {
+            userListContainer.innerHTML = '';
+            
+            const uidsWithDevices = Object.keys(activeDevicesData);
+            const searchQuery = searchInput.value.toLowerCase().trim();
+            const chosenPlatform = platformFilter.value;
+            const chosenStatus = statusFilter.value;
+            const chosenApproval = approvalFilter.value;
+
+            let totalRegisteredDevices = 0;
+            let onlineDevicesCounter = 0;
+            let offlineDevicesCounter = 0;
+
+            // Generate overall stats
+            uidsWithDevices.forEach(uid => {
+                const devices = activeDevicesData[uid] || {};
+                Object.values(devices).forEach(dev => {
+                    totalRegisteredDevices++;
+                    if (dev.status === 'online') {
+                        onlineDevicesCounter++;
+                    } else {
+                        offlineDevicesCounter++;
+                    }
+                });
+            });
+
+            // Update stats indicators
+            document.getElementById('stat-total-users').textContent = Object.keys(activeUsersData).length;
+            document.getElementById('stat-total-devices').textContent = totalRegisteredDevices;
+            document.getElementById('stat-online-devices').textContent = onlineDevicesCounter;
+            document.getElementById('stat-offline-devices').textContent = offlineDevicesCounter;
+
+            // Filter the master list
+            const filteredUIDs = uidsWithDevices.filter(uid => {
+                const user = activeUsersData[uid] || {};
+                const email = (user.email || '').toLowerCase();
+                const name = (user.name || '').toLowerCase();
+                const isApproved = user.approved !== false; // default true if not set
+                
+                // Filter by User Approval Status
+                if (chosenApproval === 'approved' && !isApproved) return false;
+                if (chosenApproval === 'pending' && isApproved) return false;
+
+                // Matches Search Query?
+                const matchesSearch = email.includes(searchQuery) || name.includes(searchQuery) || uid.toLowerCase().includes(searchQuery);
+                
+                // Matches Device attributes?
+                const userDevices = activeDevicesData[uid] || {};
+                const hasMatchingDevice = Object.values(userDevices).some(dev => {
+                    const matchesPlatform = (chosenPlatform === 'all') || (dev.platform && dev.platform.toLowerCase() === chosenPlatform);
+                    const matchesStatus = (chosenStatus === 'all') || (dev.status && dev.status.toLowerCase() === chosenStatus);
+                    return matchesPlatform && matchesStatus;
+                });
+
+                return matchesSearch && hasMatchingDevice;
+            });
+
+            // Handle empty states gracefully
+            if (filteredUIDs.length === 0) {
+                noUsersMessage.classList.remove('hidden');
+                return;
+            } else {
+                noUsersMessage.classList.add('hidden');
+            }
+
+            // Draw Cards
+            filteredUIDs.forEach(uid => {
+                const user = activeUsersData[uid] || { email: 'unverified-user@system.local', name: 'Anonymous Terminal User', approved: true };
+                const rawDevices = activeDevicesData[uid] || {};
+                const isUserApproved = user.approved !== false;
+                
+                // Filter individual devices inside matching user container
+                const devicesToRender = Object.entries(rawDevices).filter(([_, devDetails]) => {
+                    const matchesPlatform = (chosenPlatform === 'all') || (devDetails.platform && devDetails.platform.toLowerCase() === chosenPlatform);
+                    const matchesStatus = (chosenStatus === 'all') || (devDetails.status && devDetails.status.toLowerCase() === chosenStatus);
+                    return matchesPlatform && matchesStatus;
+                });
+
+                if (devicesToRender.length === 0) return;
+
+                const avatarLetters = user.avatar || (user.name ? user.name.split(' ').map(n=>n[0]).join('').substring(0, 2).toUpperCase() : 'U');
+
+                // Approval Badge layout
+                const approvalBadge = isUserApproved 
+                    ? `<span class="bg-emerald-500/10 text-emerald-600 border border-emerald-500/20 px-2.5 py-1 text-xs rounded-lg font-bold flex items-center gap-1.5"><i class="fa-solid fa-circle-check"></i> Approved User</span>` 
+                    : `<span class="bg-amber-500/10 text-amber-600 border border-amber-500/20 px-2.5 py-1 text-xs rounded-lg font-bold flex items-center gap-1.5"><i class="fa-solid fa-circle-exclamation"></i> Pending Approval</span>`;
+
+                // Approval action button toggle style
+                const approvalButton = isUserApproved
+                    ? `<button class="bg-amber-50 hover:bg-amber-100 border border-amber-200 text-amber-700 text-xs font-bold py-1.5 px-3 rounded-xl transition flex items-center gap-1" id="approve-toggle-btn-${uid}"><i class="fa-solid fa-user-slash"></i> Revoke Approval</button>`
+                    : `<button class="bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold py-1.5 px-3 rounded-xl transition flex items-center gap-1" id="approve-toggle-btn-${uid}"><i class="fa-solid fa-user-check"></i> Approve User</button>`;
+
+                const userCard = document.createElement('div');
+                userCard.className = `bg-white rounded-2xl shadow-sm border overflow-hidden hover:border-slate-300 transition-all duration-300 ${!isUserApproved ? 'border-amber-200/80 bg-slate-50/20' : 'border-slate-200/60'}`;
+                userCard.innerHTML = `
+                    <div class="bg-slate-50 border-b border-slate-100 p-5 flex flex-col sm:flex-row justify-between sm:items-center gap-4">
+                        <div class="flex items-center gap-4">
+                            <div class="w-11 h-11 rounded-xl bg-gradient-to-tr from-slate-700 to-slate-900 text-white font-extrabold flex items-center justify-center text-sm tracking-wide shadow-sm">
+                                ${avatarLetters}
+                            </div>
+                            <div>
+                                <h3 class="text-base font-bold text-slate-900 flex items-center gap-2">
+                                    ${user.name || 'Anonymous Platform Operator'}
+                                    <span class="text-xs font-normal text-slate-400 font-mono hidden md:inline">#${uid.slice(0, 8)}...</span>
+                                    ${approvalBadge}
+                                </h3>
+                                <p class="text-xs text-slate-500 font-medium">${user.email}</p>
+                            </div>
+                        </div>
+                        <div class="flex items-center gap-2.5 self-start sm:self-auto">
+                            ${approvalButton}
+                            <span class="bg-slate-200/80 text-slate-700 px-3 py-1.5 text-xs rounded-xl font-semibold flex items-center gap-1.5">
+                                <i class="fa-solid fa-microchip"></i>
+                                ${devicesToRender.length} connected
+                            </span>
+                        </div>
+                    </div>
+                    <div class="p-5">
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4" id="devices-grid-${uid}"></div>
+                    </div>
+                `;
+                
+                userListContainer.appendChild(userCard);
+
+                // Attach Action Listener to Approval Button
+                const toggleBtn = userCard.querySelector(`#approve-toggle-btn-${uid}`);
+                toggleBtn.onclick = () => handleToggleApproval(uid, isUserApproved, user.name || 'this user');
+
+                const devicesGrid = userCard.querySelector(`#devices-grid-${uid}`);
+
+                devicesToRender.forEach(([deviceId, dev]) => {
+                    const deviceCard = document.createElement('div');
+                    deviceCard.className = 'border border-slate-100 bg-slate-50/50 hover:bg-white rounded-xl p-4 transition-all hover:shadow-md flex flex-col justify-between group relative overflow-hidden';
+                    
+                    // Identify platform configurations
+                    let platformIcon = 'fa-solid fa-display text-slate-400';
+                    let platformTheme = 'bg-slate-100 text-slate-700';
+                    const devPlatform = (dev.platform || '').toLowerCase();
+
+                    if (devPlatform === 'ios') {
+                        platformIcon = 'fa-brands fa-apple text-slate-900';
+                        platformTheme = 'bg-slate-100 text-slate-800';
+                    } else if (devPlatform === 'android') {
+                        platformIcon = 'fa-brands fa-android text-emerald-600';
+                        platformTheme = 'bg-emerald-50 text-emerald-800';
+                    } else if (devPlatform === 'windows') {
+                        platformIcon = 'fa-brands fa-windows text-blue-500';
+                        platformTheme = 'bg-blue-50 text-blue-800';
+                    } else if (devPlatform === 'web' || devPlatform === 'chrome') {
+                        platformIcon = 'fa-solid fa-globe text-indigo-500';
+                        platformTheme = 'bg-indigo-50 text-indigo-800';
+                    }
+
+                    // Status Badge Logic
+                    const isOnline = dev.status === 'online';
+                    const statusText = isOnline ? 'Online' : 'Offline';
+                    const statusBadgeClass = isOnline 
+                        ? 'bg-emerald-500/10 text-emerald-600 border border-emerald-500/20' 
+                        : 'bg-slate-100 text-slate-500 border border-slate-200';
+
+                    // Formatted time relative helper
+                    const timestampStr = dev.lastActive ? getRelativeTime(dev.lastActive) : 'Unknown Active State';
+
+                    deviceCard.innerHTML = `
+                        <div>
+                            <div class="flex justify-between items-start gap-2 mb-3">
+                                <div class="flex items-center gap-2">
+                                    <span class="inline-flex items-center justify-center w-7 h-7 rounded-lg ${platformTheme}">
+                                        <i class="${platformIcon}"></i>
+                                    </span>
+                                    <div>
+                                        <h4 class="font-bold text-slate-800 text-sm group-hover:text-indigo-600 transition-colors">${dev.name || 'Unnamed Session'}</h4>
+                                        <p class="text-[10px] text-slate-400 font-mono mt-0.5 tracking-tight">${deviceId}</p>
+                                    </div>
+                                </div>
+                                <span class="px-2 py-0.5 text-[10px] font-bold rounded-full ${statusBadgeClass} flex items-center gap-1">
+                                    <span class="w-1 h-1 rounded-full ${isOnline ? 'bg-emerald-500 animate-pulse' : 'bg-slate-400'}"></span>
+                                    ${statusText}
+                                </span>
+                            </div>
+
+                            <!-- Detailed device metadata grid -->
+                            <div class="grid grid-cols-2 gap-2 text-xs border-t border-b border-slate-100/80 py-2.5 my-3 bg-white/50 px-2 rounded-lg">
+                                <div>
+                                    <span class="text-[10px] text-slate-400 block font-medium uppercase tracking-wider">OS Version</span>
+                                    <span class="font-semibold text-slate-700">${dev.osVersion || 'Not logged'}</span>
+                                </div>
+                                <div>
+                                    <span class="text-[10px] text-slate-400 block font-medium uppercase tracking-wider">Browser</span>
+                                    <span class="font-semibold text-slate-700 truncate block" title="${dev.browser || 'System'}">${dev.browser || 'System API'}</span>
+                                </div>
+                                <div class="col-span-2 mt-1">
+                                    <span class="text-[10px] text-slate-400 block font-medium uppercase tracking-wider">Network IPv4</span>
+                                    <span class="font-mono text-slate-600 flex items-center gap-1.5 font-semibold mt-0.5">
+                                        ${dev.ipAddress || '0.0.0.0'}
+                                        ${dev.ipAddress ? `
+                                        <button class="text-slate-400 hover:text-indigo-600 transition" onclick="copyToClipboard('${dev.ipAddress}')" title="Copy IP">
+                                            <i class="fa-regular fa-copy text-[10px]"></i>
+                                        </button>` : ''}
+                                    </span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Card footer controls -->
+                        <div class="flex items-center justify-between mt-3 pt-2 text-xs">
+                            <span class="text-slate-400 flex items-center gap-1 font-medium">
+                                <i class="fa-regular fa-clock text-[10px]"></i>
+                                ${timestampStr}
+                            </span>
+                            
+                            <div class="flex items-center gap-1.5">
+                                <button class="bg-white hover:bg-rose-50 border border-slate-200 text-slate-600 hover:text-rose-600 text-xs font-semibold py-1.5 px-3 rounded-lg transition flex items-center gap-1" id="del-btn-${deviceId}">
+                                    <i class="fa-regular fa-trash-can text-[10px]"></i>
+                                    Delete
+                                </button>
+                            </div>
+                        </div>
+                    `;
+
+                    devicesGrid.appendChild(deviceCard);
+
+                    // Attach confirm action
+                    const delBtn = deviceCard.querySelector(`#del-btn-${deviceId}`);
+                    delBtn.onclick = () => handleDeleteDevice(uid, deviceId, dev.name || 'Unnamed Device');
+                });
+            });
+        }
+
+        // --- STREAMING_CHUNK: Handlers for toggling user approval statuses ---
+        // --- TOGGLE USER APPROVAL STATUS ---
+        function handleToggleApproval(uid, currentlyApproved, userName) {
+            const actionText = currentlyApproved ? 'Revoke Approval' : 'Approve User';
+            const actionWarning = currentlyApproved 
+                ? `Are you sure you want to suspend and revoke access permissions for "${userName}"? Their devices will no longer authenticate securely.`
+                : `Are you sure you want to approve "${userName}" and whitelist their active devices?`;
+
+            showCustomConfirm(
+                `${actionText}?`,
+                'User Security Modification',
+                actionWarning,
+                currentlyApproved ? 'danger' : 'info',
+                () => {
+                    if (isRealDatabaseMode) {
+                        const userApprovalRef = ref(db, `users/${uid}`);
+                        update(userApprovalRef, { approved: !currentlyApproved })
+                            .then(() => {
+                                showToast(`Successfully updated approval for ${userName}`, "success");
+                            })
+                            .catch((error) => {
+                                console.error("Error setting approval:", error);
+                                showToast('Failed to modify user status. Ensure admin permission.', 'error');
+                            });
+                    } else {
+                        // Sandbox offline update
+                        if (mockUsers[uid]) {
+                            mockUsers[uid].approved = !currentlyApproved;
+                            showToast(`(Sandbox) ${currentlyApproved ? 'Suspended' : 'Approved'} user: ${userName}`, "success");
+                            renderDashboard();
+                        }
+                    }
+                }
+            );
+        }
+
+        // --- DELETE DEVICE ROUTINE ---
+        function handleDeleteDevice(uid, deviceId, deviceName) {
+            showCustomConfirm(
+                'Delete Registered Session?',
+                'Destructive security operation',
+                `Are you sure you want to completely delete and revoke trust parameters for the device "${deviceName}"? It will lose system permission node immediately.`,
+                'danger',
+                () => {
+                    if (isRealDatabaseMode) {
+                        const deviceRef = ref(db, `userDevices/${uid}/${deviceId}`);
+                        remove(deviceRef)
+                            .then(() => {
+                                showToast(`Successfully deleted session: ${deviceName}`, "success");
+                            })
+                            .catch((error) => {
+                                console.error("Error deleting device:", error);
+                                showToast('Permission denied. Ensure user session contains root node.', 'error');
+                            });
+                    } else {
+                        // Handle sandbox deletion internally
+                        if (mockDevices[uid] && mockDevices[uid][deviceId]) {
+                            delete mockDevices[uid][deviceId];
+                            if (Object.keys(mockDevices[uid]).length === 0) {
+                                delete mockDevices[uid];
+                            }
+                            showToast(`(Sandbox) Revoked credentials for: ${deviceName}`, "success");
+                            renderDashboard();
+                        }
+                    }
+                }
+            );
+        }
+
+        // --- GLOBAL EVENT LISTENERS & FILTER INTERACTIVITY ---
+        searchInput.addEventListener('input', renderDashboard);
+        platformFilter.addEventListener('change', renderDashboard);
+        statusFilter.addEventListener('change', renderDashboard);
+        approvalFilter.addEventListener('change', renderDashboard);
+
+        // Copy Clipboard Helper
+        window.copyToClipboard = function(text) {
+            const tempInput = document.createElement("input");
+            tempInput.value = text;
+            document.body.appendChild(tempInput);
+            tempInput.select();
+            document.execCommand("copy");
+            document.body.removeChild(tempInput);
+            showToast(`Copied IP Address ${text} to clipboard!`, "info");
+        };
+
+        // Switch between Simulation Environment & Live Connection
+        function toggleAppMode(isReal) {
+            isRealDatabaseMode = isReal;
+            if (isReal) {
+                demoBtnText.textContent = "Switch to Sandbox Demo";
+                modeBadge.classList.add('emerald-500/10', 'text-emerald-400', 'border-emerald-500/20');
+                modeBadge.classList.remove('bg-amber-500/10', 'text-amber-400', 'border-amber-500/20');
+                modeBadge.innerHTML = `
+                    <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
+                    Live Firebase RTDB
+                `;
+                showToast("Now streaming database from original Firebase instance", "info");
+                
+                // Triggers login or admin check
+                const currentUser = auth.currentUser;
+                if (currentUser) {
+                    checkAdminStatus(currentUser);
+                } else {
+                    showLogin();
+                }
+            } else {
+                demoBtnText.textContent = "Switch to Live DB";
+                modeBadge.classList.remove('emerald-500/10', 'text-emerald-400', 'border-emerald-500/20');
+                modeBadge.classList.add('bg-amber-500/10', 'text-amber-400', 'border-amber-500/20');
+                modeBadge.innerHTML = `
+                    <span class="w-2 h-2 rounded-full bg-amber-400 animate-bounce"></span>
+                    Interactive Sandbox
+                `;
+                showToast("Loaded high fidelity sandbox database. No auth needed!", "success");
+                
+                // Auto login on sandbox mode
+                showAdminPanel({ email: "sandbox-administrator@deviceguard.pro" });
+                loadAndDisplayData();
+            }
+        }
+
+        demoToggleBtn.addEventListener('click', () => {
+            toggleAppMode(!isRealDatabaseMode);
+        });
+
+        // Relative timestamp formatter helper
+        function getRelativeTime(timestamp) {
+            const difference = Date.now() - timestamp;
+            if (difference < 60000) return 'Just active now';
+            const minutes = Math.floor(difference / 60000);
+            if (minutes < 60) return `${minutes}m ago`;
+            const hours = Math.floor(minutes / 60);
+            if (hours < 24) return `${hours}h ago`;
+            const days = Math.floor(hours / 24);
+            return `${days}d ago`;
+        }
+
+        // Initialize default app on start (Auto-fallback to Demo so preview button instantly works out of the box)
+        window.onload = function() {
+            // Automatically start inside the high fidelity interactive sandbox
+            // This is perfect for reviewers to explore device features immediately!
+            toggleAppMode(false);
+        };
+    </script>
 </body>
 </html>
