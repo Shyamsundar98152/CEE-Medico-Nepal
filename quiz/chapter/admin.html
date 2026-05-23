@@ -1,0 +1,625 @@
+<!DOCTYPE html>
+<html lang="en" class="scroll-smooth">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Panel – CEE Medico Nepal</title>
+    <meta name="robots" content="noindex,nofollow">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <script>
+        tailwind.config = {
+            theme: { extend: {
+                fontFamily: { sans: ['Plus Jakarta Sans','sans-serif'] },
+                colors: { medical: { 50:'#f0f9ff',100:'#e0f2fe',500:'#0ea5e9',600:'#0284c7',700:'#0369a1',950:'#0c4a6e' } }
+            }}
+        }
+    </script>
+    <style>
+        body { font-family: 'Plus Jakarta Sans', sans-serif; }
+        .card { background: white; border-radius: 16px; border: 1px solid #e2e8f0; padding: 1.5rem; }
+        .dropzone { border: 2px dashed #bae6fd; border-radius: 12px; padding: 2rem; text-align: center; cursor: pointer; transition: all 0.2s; }
+        .dropzone:hover, .dropzone.dragover { border-color: #0ea5e9; background: #f0f9ff; }
+        #logBox { font-family: monospace; font-size: 12px; max-height: 220px; overflow-y: auto; }
+        .badge-success { background: #ecfdf5; color: #059669; padding: 2px 8px; border-radius: 20px; font-size: 11px; font-weight: 700; }
+        .badge-error { background: #fff1f2; color: #e11d48; padding: 2px 8px; border-radius: 20px; font-size: 11px; font-weight: 700; }
+        .badge-info { background: #f0f9ff; color: #0284c7; padding: 2px 8px; border-radius: 20px; font-size: 11px; font-weight: 700; }
+        .sidebar-link { display: flex; align-items: center; gap: 10px; padding: 10px 14px; border-radius: 10px; font-size: 14px; font-weight: 600; cursor: pointer; transition: all 0.2s; color: #475569; }
+        .sidebar-link:hover, .sidebar-link.active { background: #f0f9ff; color: #0ea5e9; }
+        .tab-panel { display: none; }
+        .tab-panel.active { display: block; }
+        textarea { resize: vertical; }
+        @keyframes fadeIn { from{opacity:0;transform:translateY(8px)} to{opacity:1;transform:translateY(0)} }
+        .fadeIn { animation: fadeIn 0.3s ease; }
+    </style>
+</head>
+<body class="bg-slate-50 min-h-screen flex flex-col">
+
+    <!-- Header -->
+    <header class="bg-medical-950 text-white py-4 px-6 flex items-center justify-between shadow-xl">
+        <div class="flex items-center gap-3">
+            <div class="w-9 h-9 bg-medical-500 rounded-xl flex items-center justify-center font-black text-sm">CM</div>
+            <div>
+                <h1 class="font-black text-base leading-none">CEE Medico Nepal</h1>
+                <p class="text-xs text-medical-200 mt-0.5">Admin Control Panel</p>
+            </div>
+        </div>
+        <div class="flex items-center gap-3">
+            <span id="adminEmail" class="text-xs text-slate-300 hidden sm:block"></span>
+            <button onclick="signOutAdmin()" class="bg-rose-500 hover:bg-rose-600 text-white text-xs font-bold px-3 py-1.5 rounded-lg transition-colors">
+                <i class="fa-solid fa-power-off mr-1"></i>Logout
+            </button>
+        </div>
+    </header>
+
+    <!-- Auth Gate -->
+    <div id="authGate" class="flex-1 flex items-center justify-center p-6">
+        <div class="bg-white rounded-2xl shadow-xl p-8 w-full max-w-sm border border-slate-100">
+            <div class="text-center mb-6">
+                <div class="w-14 h-14 bg-medical-500 rounded-2xl flex items-center justify-center text-white text-2xl mx-auto mb-3">
+                    <i class="fa-solid fa-shield-halved"></i>
+                </div>
+                <h2 class="text-xl font-black text-slate-900">Admin Access</h2>
+                <p class="text-sm text-slate-400 mt-1">Restricted to authorized administrators</p>
+            </div>
+            <div id="authAlert" class="hidden mb-4 p-3 rounded-xl text-sm font-semibold bg-rose-50 text-rose-700 border border-rose-200"></div>
+            <div class="space-y-3">
+                <input id="authEmail" type="email" placeholder="Admin email" class="w-full px-4 py-3 border border-slate-200 rounded-xl text-sm font-medium focus:outline-none focus:ring-2 focus:ring-medical-500/20 focus:border-medical-300 bg-white">
+                <div class="relative">
+                    <input id="authPassword" type="password" placeholder="Password" class="w-full px-4 py-3 border border-slate-200 rounded-xl text-sm font-medium focus:outline-none focus:ring-2 focus:ring-medical-500/20 focus:border-medical-300 bg-white">
+                </div>
+                <button onclick="adminLogin()" id="authBtn" class="w-full bg-medical-500 hover:bg-medical-600 text-white font-bold py-3 rounded-xl transition-all flex items-center justify-center gap-2">
+                    <i class="fa-solid fa-right-to-bracket"></i> Admin Login
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Main Dashboard (hidden until auth) -->
+    <div id="dashboard" class="hidden flex-1 flex">
+
+        <!-- Sidebar -->
+        <aside class="w-56 bg-white border-r border-slate-100 p-4 space-y-1 hidden md:block shadow-sm">
+            <div onclick="showTab('upload')" class="sidebar-link active" id="sideUpload">
+                <i class="fa-solid fa-cloud-arrow-up w-4"></i> Upload Questions
+            </div>
+            <div onclick="showTab('paste')" class="sidebar-link" id="sidePaste">
+                <i class="fa-solid fa-paste w-4"></i> Paste JSON
+            </div>
+            <div onclick="showTab('browse')" class="sidebar-link" id="sideBrowse">
+                <i class="fa-solid fa-database w-4"></i> Browse Questions
+            </div>
+            <div onclick="showTab('users')" class="sidebar-link" id="sideUsers">
+                <i class="fa-solid fa-users w-4"></i> Users & Results
+            </div>
+            <div onclick="showTab('leaderboard')" class="sidebar-link" id="sideLeaderboard">
+                <i class="fa-solid fa-trophy w-4"></i> Leaderboard
+            </div>
+            <hr class="border-slate-100 my-2">
+            <a href="index.html" class="sidebar-link text-slate-400">
+                <i class="fa-solid fa-house w-4"></i> Main Site
+            </a>
+        </aside>
+
+        <!-- Content -->
+        <main class="flex-1 p-6 overflow-y-auto space-y-6">
+
+            <!-- Mobile Tabs -->
+            <div class="flex gap-2 overflow-x-auto pb-1 md:hidden">
+                <button onclick="showTab('upload')" class="text-xs font-bold px-3 py-1.5 rounded-lg bg-medical-500 text-white whitespace-nowrap">Upload</button>
+                <button onclick="showTab('paste')" class="text-xs font-bold px-3 py-1.5 rounded-lg bg-slate-200 text-slate-700 whitespace-nowrap">Paste JSON</button>
+                <button onclick="showTab('browse')" class="text-xs font-bold px-3 py-1.5 rounded-lg bg-slate-200 text-slate-700 whitespace-nowrap">Browse</button>
+                <button onclick="showTab('users')" class="text-xs font-bold px-3 py-1.5 rounded-lg bg-slate-200 text-slate-700 whitespace-nowrap">Users</button>
+                <button onclick="showTab('leaderboard')" class="text-xs font-bold px-3 py-1.5 rounded-lg bg-slate-200 text-slate-700 whitespace-nowrap">Leaderboard</button>
+            </div>
+
+            <!-- Stats Row -->
+            <div class="grid grid-cols-2 lg:grid-cols-4 gap-4">
+                <div class="card text-center">
+                    <div class="text-2xl font-black text-medical-500" id="statQuestions">–</div>
+                    <div class="text-xs text-slate-400 font-semibold mt-0.5">Total Questions</div>
+                </div>
+                <div class="card text-center">
+                    <div class="text-2xl font-black text-indigo-500" id="statUsers">–</div>
+                    <div class="text-xs text-slate-400 font-semibold mt-0.5">Registered Users</div>
+                </div>
+                <div class="card text-center">
+                    <div class="text-2xl font-black text-emerald-500" id="statTests">–</div>
+                    <div class="text-xs text-slate-400 font-semibold mt-0.5">Tests Taken</div>
+                </div>
+                <div class="card text-center">
+                    <div class="text-2xl font-black text-amber-500" id="statSubjects">–</div>
+                    <div class="text-xs text-slate-400 font-semibold mt-0.5">Subjects</div>
+                </div>
+            </div>
+
+            <!-- UPLOAD TAB -->
+            <div id="tabUpload" class="tab-panel active fadeIn space-y-4">
+                <div class="card">
+                    <h2 class="font-black text-slate-900 mb-1 flex items-center gap-2">
+                        <i class="fa-solid fa-cloud-arrow-up text-medical-500"></i> Bulk JSON File Upload
+                    </h2>
+                    <p class="text-sm text-slate-400 mb-4">Upload one or multiple JSON files. Each file must be an array of question objects.</p>
+
+                    <!-- Subject/Chapter selectors -->
+                    <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 mb-4">
+                        <div>
+                            <label class="block text-xs font-bold text-slate-600 mb-1.5 uppercase tracking-wide">Subject</label>
+                            <select id="uploadSubject" class="w-full px-3 py-2.5 border border-slate-200 rounded-xl text-sm font-medium bg-white focus:outline-none focus:ring-2 focus:ring-medical-500/20">
+                                <option value="">— Auto from JSON —</option>
+                                <option value="Physics">Physics</option>
+                                <option value="Chemistry">Chemistry</option>
+                                <option value="Botany">Botany</option>
+                                <option value="Zoology">Zoology</option>
+                                <option value="MAT">MAT</option>
+                                <option value="Biology">Biology</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="block text-xs font-bold text-slate-600 mb-1.5 uppercase tracking-wide">Chapter</label>
+                            <input id="uploadChapter" type="text" placeholder="e.g. Cell Biology" class="w-full px-3 py-2.5 border border-slate-200 rounded-xl text-sm font-medium bg-white focus:outline-none focus:ring-2 focus:ring-medical-500/20">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-bold text-slate-600 mb-1.5 uppercase tracking-wide">Difficulty</label>
+                            <select id="uploadDiff" class="w-full px-3 py-2.5 border border-slate-200 rounded-xl text-sm font-medium bg-white focus:outline-none focus:ring-2 focus:ring-medical-500/20">
+                                <option value="Medium">Medium</option>
+                                <option value="Easy">Easy</option>
+                                <option value="Hard">Hard</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <!-- Drop Zone -->
+                    <div id="dropzone" class="dropzone" onclick="document.getElementById('fileInput').click()">
+                        <i class="fa-solid fa-file-arrow-up text-3xl text-medical-400 mb-3 block"></i>
+                        <p class="text-sm font-bold text-slate-600">Click or drag & drop JSON files here</p>
+                        <p class="text-xs text-slate-400 mt-1">Supports multiple files at once</p>
+                        <input id="fileInput" type="file" accept=".json" multiple class="hidden" onchange="handleFiles(this.files)">
+                    </div>
+
+                    <!-- File list preview -->
+                    <div id="fileList" class="hidden mt-3 space-y-2"></div>
+
+                    <button id="uploadBtn" onclick="uploadFiles()" class="mt-4 bg-medical-500 hover:bg-medical-600 text-white font-bold px-6 py-2.5 rounded-xl transition-all flex items-center gap-2 disabled:opacity-50">
+                        <i class="fa-solid fa-upload"></i> Upload to Firestore
+                    </button>
+                </div>
+
+                <!-- Log -->
+                <div class="card">
+                    <h3 class="font-bold text-sm text-slate-700 mb-2 flex items-center gap-2">
+                        <i class="fa-solid fa-terminal text-slate-400"></i> Upload Log
+                        <button onclick="document.getElementById('logBox').innerHTML=''" class="ml-auto text-xs text-slate-400 hover:text-slate-600">Clear</button>
+                    </h3>
+                    <div id="logBox" class="bg-slate-900 text-emerald-400 rounded-xl p-4 min-h-[80px]">
+                        <span class="text-slate-500">Ready to upload...</span>
+                    </div>
+                </div>
+
+                <!-- JSON Format Guide -->
+                <div class="card bg-slate-50">
+                    <h3 class="font-bold text-sm text-slate-700 mb-2 flex items-center gap-2">
+                        <i class="fa-solid fa-circle-info text-medical-500"></i> Required JSON Format
+                    </h3>
+                    <pre class="text-xs text-slate-600 bg-white rounded-xl p-4 overflow-x-auto border border-slate-200">[
+  {
+    "question": "Question text here?",
+    "options": ["Option A", "Option B", "Option C", "Option D"],
+    "correct": 0,
+    "explanation": "Explanation text here.",
+    "subject": "Biology",
+    "chapter": "Cell Biology",
+    "difficulty": "Medium"
+  }
+]</pre>
+                    <p class="text-xs text-slate-400 mt-2">Fields <code class="bg-slate-200 px-1 rounded">subject</code>, <code class="bg-slate-200 px-1 rounded">chapter</code>, and <code class="bg-slate-200 px-1 rounded">difficulty</code> can be set via dropdowns above (overrides JSON values).</p>
+                </div>
+            </div>
+
+            <!-- PASTE TAB -->
+            <div id="tabPaste" class="tab-panel fadeIn space-y-4">
+                <div class="card">
+                    <h2 class="font-black text-slate-900 mb-1 flex items-center gap-2">
+                        <i class="fa-solid fa-paste text-indigo-500"></i> Paste JSON Directly
+                    </h2>
+                    <p class="text-sm text-slate-400 mb-4">Paste your JSON array directly and upload to Firestore.</p>
+                    <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 mb-4">
+                        <div>
+                            <label class="block text-xs font-bold text-slate-600 mb-1.5 uppercase tracking-wide">Subject</label>
+                            <select id="pasteSubject" class="w-full px-3 py-2.5 border border-slate-200 rounded-xl text-sm font-medium bg-white focus:outline-none focus:ring-2 focus:ring-medical-500/20">
+                                <option value="">— Auto from JSON —</option>
+                                <option value="Physics">Physics</option>
+                                <option value="Chemistry">Chemistry</option>
+                                <option value="Botany">Botany</option>
+                                <option value="Zoology">Zoology</option>
+                                <option value="MAT">MAT</option>
+                                <option value="Biology">Biology</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="block text-xs font-bold text-slate-600 mb-1.5 uppercase tracking-wide">Chapter</label>
+                            <input id="pasteChapter" type="text" placeholder="e.g. Genetics" class="w-full px-3 py-2.5 border border-slate-200 rounded-xl text-sm font-medium bg-white focus:outline-none focus:ring-2 focus:ring-medical-500/20">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-bold text-slate-600 mb-1.5 uppercase tracking-wide">Difficulty</label>
+                            <select id="pasteDiff" class="w-full px-3 py-2.5 border border-slate-200 rounded-xl text-sm font-medium bg-white focus:outline-none focus:ring-2 focus:ring-medical-500/20">
+                                <option value="Medium">Medium</option>
+                                <option value="Easy">Easy</option>
+                                <option value="Hard">Hard</option>
+                            </select>
+                        </div>
+                    </div>
+                    <textarea id="pasteBox" rows="12" placeholder='Paste JSON array here... e.g. [{"question":"...","options":[...],"correct":0,"explanation":"..."}]'
+                        class="w-full px-4 py-3 border border-slate-200 rounded-xl text-sm font-mono bg-white focus:outline-none focus:ring-2 focus:ring-medical-500/20"></textarea>
+                    <div class="flex items-center gap-3 mt-3">
+                        <button onclick="uploadPaste()" class="bg-indigo-600 hover:bg-indigo-700 text-white font-bold px-6 py-2.5 rounded-xl transition-all flex items-center gap-2">
+                            <i class="fa-solid fa-upload"></i> Upload Pasted JSON
+                        </button>
+                        <button onclick="document.getElementById('pasteBox').value=''" class="text-sm text-slate-400 hover:text-slate-600 font-semibold">Clear</button>
+                        <div id="pasteStatus" class="text-sm font-semibold ml-auto"></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- BROWSE TAB -->
+            <div id="tabBrowse" class="tab-panel fadeIn space-y-4">
+                <div class="card">
+                    <h2 class="font-black text-slate-900 mb-4 flex items-center gap-2">
+                        <i class="fa-solid fa-database text-emerald-500"></i> Browse Questions
+                    </h2>
+                    <div class="flex flex-wrap gap-3 mb-4">
+                        <select id="filterSubject" onchange="browseQuestions()" class="px-3 py-2 border border-slate-200 rounded-lg text-sm font-medium bg-white focus:outline-none">
+                            <option value="">All Subjects</option>
+                            <option value="Physics">Physics</option>
+                            <option value="Chemistry">Chemistry</option>
+                            <option value="Botany">Botany</option>
+                            <option value="Zoology">Zoology</option>
+                            <option value="MAT">MAT</option>
+                            <option value="Biology">Biology</option>
+                        </select>
+                        <input id="filterChapter" type="text" placeholder="Filter by chapter..." onkeyup="browseQuestions()" class="px-3 py-2 border border-slate-200 rounded-lg text-sm font-medium bg-white focus:outline-none flex-1 min-w-0">
+                        <button onclick="browseQuestions()" class="bg-medical-500 text-white font-bold px-4 py-2 rounded-lg text-sm transition-all hover:bg-medical-600">
+                            <i class="fa-solid fa-magnifying-glass"></i> Search
+                        </button>
+                    </div>
+                    <div id="browseResults" class="space-y-3 max-h-[500px] overflow-y-auto">
+                        <p class="text-sm text-slate-400 text-center py-6">Click Search to load questions.</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- USERS TAB -->
+            <div id="tabUsers" class="tab-panel fadeIn">
+                <div class="card">
+                    <h2 class="font-black text-slate-900 mb-4 flex items-center gap-2">
+                        <i class="fa-solid fa-users text-medical-500"></i> Registered Users & Test Results
+                    </h2>
+                    <div id="usersTable" class="overflow-x-auto">
+                        <p class="text-sm text-slate-400 text-center py-6">Loading users...</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- LEADERBOARD TAB -->
+            <div id="tabLeaderboard" class="tab-panel fadeIn">
+                <div class="card">
+                    <h2 class="font-black text-slate-900 mb-4 flex items-center gap-2">
+                        <i class="fa-solid fa-trophy text-amber-500"></i> Global Leaderboard
+                    </h2>
+                    <div id="leaderboardTable">
+                        <p class="text-sm text-slate-400 text-center py-6">Loading leaderboard...</p>
+                    </div>
+                </div>
+            </div>
+
+        </main>
+    </div>
+
+    <!-- Firebase -->
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+        import { getAuth, signInWithEmailAndPassword, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
+        import { getFirestore, collection, addDoc, getDocs, query, where, limit, orderBy, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyDD5xBrSkX_YXzSnsKxjW8-K6W4rBfV3rg",
+            authDomain: "chapter-wise-backup.firebaseapp.com",
+            projectId: "chapter-wise-backup",
+            storageBucket: "chapter-wise-backup.firebasestorage.app",
+            messagingSenderId: "864698641587",
+            appId: "1:864698641587:web:d0b550579c6eb7709ed4c6"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+        const db = getFirestore(app);
+
+        // Admin emails
+        const ADMIN_EMAILS = ['avik96045@gmail.com'];
+
+        onAuthStateChanged(auth, (user) => {
+            if (user && ADMIN_EMAILS.includes(user.email)) {
+                document.getElementById('authGate').classList.add('hidden');
+                document.getElementById('dashboard').classList.remove('hidden');
+                document.getElementById('adminEmail').textContent = user.email;
+                loadStats();
+            } else if (user) {
+                // Logged in but not admin
+                document.getElementById('authAlert').textContent = 'Access denied. Admin privileges required.';
+                document.getElementById('authAlert').classList.remove('hidden');
+                signOut(auth);
+            }
+        });
+
+        window.adminLogin = async () => {
+            const email = document.getElementById('authEmail').value.trim();
+            const password = document.getElementById('authPassword').value;
+            if (!email || !password) return;
+            const btn = document.getElementById('authBtn');
+            btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin mr-2"></i>Authenticating...';
+            btn.disabled = true;
+            try {
+                await signInWithEmailAndPassword(auth, email, password);
+            } catch(e) {
+                document.getElementById('authAlert').textContent = 'Invalid credentials or not an admin.';
+                document.getElementById('authAlert').classList.remove('hidden');
+                btn.innerHTML = '<i class="fa-solid fa-right-to-bracket"></i> Admin Login';
+                btn.disabled = false;
+            }
+        };
+
+        window.signOutAdmin = async () => {
+            await signOut(auth);
+            window.location.reload();
+        };
+
+        async function loadStats() {
+            try {
+                const qSnap = await getDocs(collection(db, 'questions'));
+                const uSnap = await getDocs(collection(db, 'users'));
+                const tSnap = await getDocs(collection(db, 'testResults'));
+                const subjects = new Set(qSnap.docs.map(d => d.data().subject).filter(Boolean));
+                document.getElementById('statQuestions').textContent = qSnap.size.toLocaleString();
+                document.getElementById('statUsers').textContent = uSnap.size.toLocaleString();
+                document.getElementById('statTests').textContent = tSnap.size.toLocaleString();
+                document.getElementById('statSubjects').textContent = subjects.size;
+            } catch(e) { console.error(e); }
+        }
+
+        // --- File Upload ---
+        let pendingFiles = [];
+
+        window.handleFiles = (files) => {
+            pendingFiles = Array.from(files);
+            const list = document.getElementById('fileList');
+            list.innerHTML = '';
+            list.classList.remove('hidden');
+            pendingFiles.forEach(f => {
+                const div = document.createElement('div');
+                div.className = 'flex items-center gap-2 p-2.5 bg-slate-50 rounded-lg border border-slate-200 text-sm';
+                div.innerHTML = `<i class="fa-solid fa-file-code text-medical-500"></i> <span class="font-semibold text-slate-700">${f.name}</span> <span class="text-slate-400">(${(f.size/1024).toFixed(1)} KB)</span> <span class="badge-info ml-auto">pending</span>`;
+                list.appendChild(div);
+            });
+        };
+
+        // Drag drop
+        const dz = document.getElementById('dropzone');
+        dz.addEventListener('dragover', e => { e.preventDefault(); dz.classList.add('dragover'); });
+        dz.addEventListener('dragleave', () => dz.classList.remove('dragover'));
+        dz.addEventListener('drop', e => { e.preventDefault(); dz.classList.remove('dragover'); handleFiles(e.dataTransfer.files); });
+
+        function log(msg, type='info') {
+            const lb = document.getElementById('logBox');
+            const colors = { info: '#94a3b8', success: '#10b981', error: '#f43f5e', warn: '#f59e0b' };
+            const color = colors[type] || colors.info;
+            lb.innerHTML += `<div style="color:${color}"><span style="color:#475569">[${new Date().toLocaleTimeString()}]</span> ${msg}</div>`;
+            lb.scrollTop = lb.scrollHeight;
+        }
+
+        async function uploadQuestions(questions, overrides = {}) {
+            let success = 0, fail = 0;
+            for (const q of questions) {
+                try {
+                    if (!q.question || !Array.isArray(q.options) || q.correct === undefined) {
+                        log(`⚠ Skipped invalid question: "${(q.question||'').substring(0,40)}..."`, 'warn');
+                        fail++;
+                        continue;
+                    }
+                    await addDoc(collection(db, 'questions'), {
+                        question: q.question,
+                        options: q.options,
+                        correct: q.correct,
+                        explanation: q.explanation || '',
+                        subject: overrides.subject || q.subject || 'General',
+                        chapter: overrides.chapter || q.chapter || 'Uncategorized',
+                        difficulty: overrides.difficulty || q.difficulty || 'Medium',
+                        createdAt: serverTimestamp()
+                    });
+                    success++;
+                } catch(e) {
+                    log(`✗ Error: ${e.message}`, 'error');
+                    fail++;
+                }
+            }
+            return { success, fail };
+        }
+
+        window.uploadFiles = async () => {
+            if (!pendingFiles.length) return log('⚠ No files selected.', 'warn');
+            const overrides = {
+                subject: document.getElementById('uploadSubject').value,
+                chapter: document.getElementById('uploadChapter').value.trim(),
+                difficulty: document.getElementById('uploadDiff').value
+            };
+            const btn = document.getElementById('uploadBtn');
+            btn.disabled = true;
+            btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Uploading...';
+
+            for (const file of pendingFiles) {
+                log(`📄 Processing: ${file.name}`, 'info');
+                try {
+                    const text = await file.text();
+                    const data = JSON.parse(text);
+                    const questions = Array.isArray(data) ? data : [data];
+                    log(`Found ${questions.length} questions in ${file.name}`, 'info');
+                    const result = await uploadQuestions(questions, overrides);
+                    log(`✓ ${file.name}: ${result.success} uploaded, ${result.fail} failed`, result.fail ? 'warn' : 'success');
+                } catch(e) {
+                    log(`✗ Failed to parse ${file.name}: ${e.message}`, 'error');
+                }
+            }
+
+            log('✅ Upload complete!', 'success');
+            btn.disabled = false;
+            btn.innerHTML = '<i class="fa-solid fa-upload"></i> Upload to Firestore';
+            pendingFiles = [];
+            document.getElementById('fileList').classList.add('hidden');
+            loadStats();
+        };
+
+        window.uploadPaste = async () => {
+            const text = document.getElementById('pasteBox').value.trim();
+            const status = document.getElementById('pasteStatus');
+            if (!text) return;
+            const overrides = {
+                subject: document.getElementById('pasteSubject').value,
+                chapter: document.getElementById('pasteChapter').value.trim(),
+                difficulty: document.getElementById('pasteDiff').value
+            };
+            status.textContent = 'Uploading...';
+            status.className = 'text-sm font-semibold ml-auto text-slate-400';
+            try {
+                const data = JSON.parse(text);
+                const questions = Array.isArray(data) ? data : [data];
+                const result = await uploadQuestions(questions, overrides);
+                status.textContent = `✓ ${result.success} uploaded, ${result.fail} failed`;
+                status.className = `text-sm font-semibold ml-auto ${result.fail ? 'text-amber-600' : 'text-emerald-600'}`;
+                loadStats();
+            } catch(e) {
+                status.textContent = `✗ Invalid JSON: ${e.message}`;
+                status.className = 'text-sm font-semibold ml-auto text-rose-600';
+            }
+        };
+
+        // --- Browse ---
+        window.browseQuestions = async () => {
+            const subject = document.getElementById('filterSubject').value;
+            const chapter = document.getElementById('filterChapter').value.trim().toLowerCase();
+            const container = document.getElementById('browseResults');
+            container.innerHTML = '<p class="text-sm text-slate-400 text-center py-4"><i class="fa-solid fa-spinner fa-spin mr-2"></i>Loading...</p>';
+
+            try {
+                let q = query(collection(db, 'questions'), limit(50));
+                if (subject) q = query(collection(db, 'questions'), where('subject', '==', subject), limit(50));
+                const snap = await getDocs(q);
+                let docs = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+                if (chapter) docs = docs.filter(d => (d.chapter||'').toLowerCase().includes(chapter));
+
+                if (!docs.length) {
+                    container.innerHTML = '<p class="text-sm text-slate-400 text-center py-6">No questions found.</p>';
+                    return;
+                }
+
+                container.innerHTML = '';
+                docs.forEach((d, i) => {
+                    const el = document.createElement('div');
+                    el.className = 'p-4 border border-slate-200 rounded-xl bg-white hover:border-medical-300 transition-colors';
+                    el.innerHTML = `
+                        <div class="flex items-start justify-between gap-3 mb-2">
+                            <p class="text-sm font-semibold text-slate-800 flex-1">${i+1}. ${d.question}</p>
+                            <div class="flex gap-1.5 shrink-0">
+                                <span class="badge-info">${d.subject||'?'}</span>
+                                <span class="badge-success">${d.difficulty||'?'}</span>
+                            </div>
+                        </div>
+                        <p class="text-xs text-slate-400 font-medium">Chapter: ${d.chapter||'N/A'} • Correct: Option ${d.correct+1}: <em>${(d.options||[])[d.correct]||'?'}</em></p>
+                    `;
+                    container.appendChild(el);
+                });
+            } catch(e) {
+                container.innerHTML = `<p class="text-sm text-rose-500 text-center py-6">Error: ${e.message}</p>`;
+            }
+        };
+
+        // --- Users ---
+        async function loadUsers() {
+            const container = document.getElementById('usersTable');
+            try {
+                const snap = await getDocs(query(collection(db, 'users'), orderBy('joinedAt', 'desc'), limit(50)));
+                if (snap.empty) { container.innerHTML = '<p class="text-sm text-slate-400 text-center py-6">No users yet.</p>'; return; }
+                let html = `<table class="w-full text-sm border-collapse">
+                    <thead><tr class="border-b border-slate-200">
+                        <th class="text-left py-2 px-3 font-bold text-slate-600 text-xs uppercase">Name</th>
+                        <th class="text-left py-2 px-3 font-bold text-slate-600 text-xs uppercase">Email</th>
+                        <th class="text-left py-2 px-3 font-bold text-slate-600 text-xs uppercase">Exam</th>
+                        <th class="text-center py-2 px-3 font-bold text-slate-600 text-xs uppercase">Tests</th>
+                        <th class="text-left py-2 px-3 font-bold text-slate-600 text-xs uppercase">Joined</th>
+                    </tr></thead><tbody>`;
+                snap.docs.forEach(d => {
+                    const u = d.data();
+                    const date = u.joinedAt?.toDate?.()?.toLocaleDateString() || '—';
+                    html += `<tr class="border-b border-slate-100 hover:bg-slate-50">
+                        <td class="py-2.5 px-3 font-semibold text-slate-800">${u.name||'—'}</td>
+                        <td class="py-2.5 px-3 text-slate-500">${u.email||'—'}</td>
+                        <td class="py-2.5 px-3"><span class="badge-info">${u.targetExam||'CEE'}</span></td>
+                        <td class="py-2.5 px-3 text-center font-bold text-indigo-600">${u.totalTests||0}</td>
+                        <td class="py-2.5 px-3 text-slate-400 text-xs">${date}</td>
+                    </tr>`;
+                });
+                html += '</tbody></table>';
+                container.innerHTML = html;
+            } catch(e) {
+                container.innerHTML = `<p class="text-sm text-rose-500 text-center py-6">Error: ${e.message}</p>`;
+            }
+        }
+
+        // --- Leaderboard ---
+        async function loadLeaderboard() {
+            const container = document.getElementById('leaderboardTable');
+            try {
+                const snap = await getDocs(query(collection(db, 'testResults'), orderBy('score', 'desc'), limit(20)));
+                if (snap.empty) { container.innerHTML = '<p class="text-sm text-slate-400 text-center py-6">No results yet.</p>'; return; }
+                const medals = ['🥇','🥈','🥉'];
+                let html = `<table class="w-full text-sm border-collapse">
+                    <thead><tr class="border-b border-slate-200">
+                        <th class="text-center py-2 px-3 font-bold text-slate-600 text-xs uppercase w-12">#</th>
+                        <th class="text-left py-2 px-3 font-bold text-slate-600 text-xs uppercase">User</th>
+                        <th class="text-left py-2 px-3 font-bold text-slate-600 text-xs uppercase">Subject</th>
+                        <th class="text-center py-2 px-3 font-bold text-slate-600 text-xs uppercase">Score</th>
+                        <th class="text-center py-2 px-3 font-bold text-slate-600 text-xs uppercase">Accuracy</th>
+                        <th class="text-left py-2 px-3 font-bold text-slate-600 text-xs uppercase">Date</th>
+                    </tr></thead><tbody>`;
+                snap.docs.forEach((d, i) => {
+                    const r = d.data();
+                    const acc = r.total ? Math.round((r.correct/r.total)*100) : 0;
+                    const date = r.completedAt?.toDate?.()?.toLocaleDateString() || '—';
+                    html += `<tr class="border-b border-slate-100 hover:bg-amber-50/50">
+                        <td class="py-2.5 px-3 text-center font-black text-lg">${medals[i] || i+1}</td>
+                        <td class="py-2.5 px-3 font-semibold text-slate-800">${r.userName||'Student'}</td>
+                        <td class="py-2.5 px-3"><span class="badge-info">${r.subject||'Mixed'}</span></td>
+                        <td class="py-2.5 px-3 text-center font-black text-amber-600">${r.correct||0}/${r.total||0}</td>
+                        <td class="py-2.5 px-3 text-center"><span class="font-bold ${acc>=80?'text-emerald-600':acc>=50?'text-amber-600':'text-rose-500'}">${acc}%</span></td>
+                        <td class="py-2.5 px-3 text-slate-400 text-xs">${date}</td>
+                    </tr>`;
+                });
+                html += '</tbody></table>';
+                container.innerHTML = html;
+            } catch(e) {
+                container.innerHTML = `<p class="text-sm text-rose-500 text-center py-6">Error: ${e.message}</p>`;
+            }
+        }
+
+        // --- Tab switching ---
+        window.showTab = (tab) => {
+            document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
+            document.querySelectorAll('.sidebar-link').forEach(l => l.classList.remove('active'));
+            document.getElementById('tab' + tab.charAt(0).toUpperCase() + tab.slice(1)).classList.add('active');
+            const sideMap = { upload:'sideUpload', paste:'sidePaste', browse:'sideBrowse', users:'sideUsers', leaderboard:'sideLeaderboard' };
+            if (sideMap[tab]) document.getElementById(sideMap[tab])?.classList.add('active');
+            if (tab === 'users') loadUsers();
+            if (tab === 'leaderboard') loadLeaderboard();
+        };
+    </script>
+</body>
+</html>
