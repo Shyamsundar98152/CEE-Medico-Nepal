@@ -58,7 +58,7 @@
                     <i class="fa-solid fa-list-check"></i> 1. Quiz Builder
                 </button>
                 <button id="tabUploadBtn" class="flex-1 py-2.5 text-xs font-bold rounded-lg transition-all flex items-center justify-center gap-2 text-slate-600 hover:text-slate-800">
-                    <i class="fa-solid fa-file-import"></i> 2. JSON File Upload
+                    <i class="fa-solid fa-file-import"></i> 2. JSON File Import
                 </button>
                 <button id="tabScheduleBtn" class="flex-1 py-2.5 text-xs font-bold rounded-lg transition-all flex items-center justify-center gap-2 text-slate-600 hover:text-slate-800">
                     <i class="fa-solid fa-calendar-plus"></i> 3. Schedule Topic
@@ -72,6 +72,26 @@
                         <i class="fa-solid fa-file-signature text-brand-600"></i> Interactive MCQ Builder
                     </h2>
                     <p class="text-slate-400 text-xs mt-0.5">Build diagnostic assessments instantly inside the panel and save directly to your database.</p>
+                </div>
+
+                <!-- Live Edit Mode Indicator -->
+                <div id="builderEditIndicator" class="hidden bg-amber-50 border border-amber-200 text-amber-800 text-xs px-3.5 py-2.5 rounded-xl flex justify-between items-center mb-3">
+                    <span class="font-semibold flex items-center gap-1.5">
+                        <i class="fa-solid fa-pen-to-square text-amber-600 animate-pulse"></i> 
+                        Currently Editing Quiz: <span id="editingQuizName" class="font-bold underline"></span>
+                    </span>
+                    <button type="button" onclick="cancelQuizEdit()" class="text-xs bg-amber-100 hover:bg-amber-200 text-amber-900 px-2.5 py-1 rounded-lg font-bold transition">
+                        Cancel Edit
+                    </button>
+                </div>
+
+                <!-- Target Space Selector -->
+                <div>
+                    <label class="block text-xs font-bold text-slate-600 mb-1">Target Storage Workspace</label>
+                    <select id="builderNamespace" class="w-full border border-slate-200 p-3 rounded-xl text-sm focus:ring-2 focus:ring-indigo-100 focus:border-brand-600 outline-none font-semibold bg-white">
+                        <option value="daily-quiz-a29e8">My Custom Workspace (daily-quiz-a29e8)</option>
+                        <option value="default-app-id">Default Reference Workspace (default-app-id)</option>
+                    </select>
                 </div>
 
                 <!-- Syllabus Context metadata inputs -->
@@ -118,6 +138,15 @@
                     <p class="text-slate-400 text-xs mt-0.5">Upload pre-existing MCQ syllabus configurations instantly in JSON format.</p>
                 </div>
 
+                <!-- Target Space Selector -->
+                <div>
+                    <label class="block text-xs font-bold text-slate-600 mb-1">Target Storage Workspace</label>
+                    <select id="uploadNamespace" class="w-full border border-slate-200 p-3 rounded-xl text-sm focus:ring-2 focus:ring-indigo-100 focus:border-brand-600 outline-none font-semibold bg-white">
+                        <option value="daily-quiz-a29e8">My Custom Workspace (daily-quiz-a29e8)</option>
+                        <option value="default-app-id">Default Reference Workspace (default-app-id)</option>
+                    </select>
+                </div>
+
                 <div class="grid grid-cols-2 gap-3">
                     <div>
                         <label class="block text-xs font-bold text-slate-600 mb-1">Subject Name</label>
@@ -158,12 +187,42 @@
             </section>
 
             <!-- Tab Content 3: Calendar Schedule Setup Creator -->
-            <section id="paneSchedule" class="hidden bg-white border border-slate-200 rounded-2xl shadow-sm p-5 space-y-4">
+            <section id="paneSchedule" class="bg-white border border-slate-200 rounded-2xl shadow-sm p-5 space-y-4 hidden">
                 <div class="border-b border-slate-100 pb-3">
                     <h2 class="text-lg font-bold text-slate-800 flex items-center gap-2">
                         <i class="fa-solid fa-calendar-day text-emerald-600"></i> Schedule Topic Active Window
                     </h2>
                     <p class="text-slate-400 text-xs mt-0.5">Control opening and closing time boundaries for topics shown to students.</p>
+                </div>
+
+                <!-- Live Schedule Edit Mode Indicator -->
+                <div id="scheduleEditIndicator" class="hidden bg-amber-50 border border-amber-200 text-amber-800 text-xs px-3.5 py-2.5 rounded-xl flex justify-between items-center mb-3">
+                    <span class="font-semibold flex items-center gap-1.5">
+                        <i class="fa-solid fa-pen-to-square text-amber-600 animate-pulse"></i> 
+                        Currently Editing Schedule: <span id="editingScheduleName" class="font-bold underline"></span>
+                    </span>
+                    <button type="button" onclick="cancelScheduleEdit()" class="text-xs bg-amber-100 hover:bg-amber-200 text-amber-900 px-2.5 py-1 rounded-lg font-bold transition">
+                        Cancel Edit
+                    </button>
+                </div>
+
+                <!-- Dynamic Autocomplete / Quick fill from Previous Data -->
+                <div class="bg-slate-50 border border-slate-200 p-4 rounded-xl space-y-2">
+                    <label class="block text-xs font-bold text-indigo-700 flex items-center gap-1.5">
+                        <i class="fa-solid fa-bolt"></i> Quick-Fill from Existing Quiz data
+                    </label>
+                    <select id="scheduleQuickFill" class="w-full border border-slate-200 p-2.5 rounded-xl text-xs focus:ring-2 focus:ring-indigo-100 focus:border-brand-600 outline-none font-semibold bg-white text-slate-700">
+                        <option value="">-- Select an uploaded quiz to schedule automatically --</option>
+                    </select>
+                </div>
+
+                <!-- Target Space Selector -->
+                <div>
+                    <label class="block text-xs font-bold text-slate-600 mb-1">Target Storage Workspace</label>
+                    <select id="scheduleNamespace" class="w-full border border-slate-200 p-3 rounded-xl text-sm focus:ring-2 focus:ring-emerald-100 focus:border-emerald-600 outline-none font-semibold bg-white">
+                        <option value="daily-quiz-a29e8">My Custom Workspace (daily-quiz-a29e8)</option>
+                        <option value="default-app-id">Default Reference Workspace (default-app-id)</option>
+                    </select>
                 </div>
 
                 <div class="grid grid-cols-2 gap-3">
@@ -251,7 +310,7 @@
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
-        import { getFirestore, doc, setDoc, collection, getDocs, deleteDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+        import { getFirestore, doc, setDoc, collection, deleteDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
         // Firebase Configuration Matching Specification
         const firebaseConfig = {  
@@ -266,14 +325,35 @@
 
         const app = initializeApp(firebaseConfig);
         const db = getFirestore(app);
-        const appId = "daily-quiz-a29e8";
+        
+        const customAppId = "daily-quiz-a29e8";
+        const defaultAppId = "default-app-id";
 
-        // Global Strict Paths (Compliance Rule 1)
-        const QUIZ_PATH = `artifacts/${appId}/public/data/quizzes`;
-        const SCHEDULE_PATH = `artifacts/${appId}/public/data/schedules`;
+        // Structured multi-path namespaces (Rule 1 compliance)
+        const QUIZ_PATHS = [
+            `artifacts/${customAppId}/public/data/quizzes`,
+            `artifacts/${defaultAppId}/public/data/quizzes`
+        ];
+        const SCHEDULE_PATHS = [
+            `artifacts/${customAppId}/public/data/schedules`,
+            `artifacts/${defaultAppId}/public/data/schedules`
+        ];
 
-        // Interactive Builders question sequence
+        // Memory registers for monitoring combined records
+        const cachedQuizzes = new Map();
+        const cachedSchedules = new Map();
+
+        // Interactive Builders state counters & tracking
         let builderQuestionCount = 0;
+        
+        // Dynamic Edit States
+        let isEditingQuiz = false;
+        let editingQuizId = "";
+        let editingQuizPath = "";
+
+        let isEditingSchedule = false;
+        let editingScheduleId = "";
+        let editingSchedulePath = "";
 
         // Visual Tabs Toggling Logic
         const tabBuilderBtn = document.getElementById('tabBuilderBtn');
@@ -375,15 +455,24 @@
         };
 
         // Standard MCQ Builder: Add live question editor component card
-        window.addQuestionToBuilderList = () => {
+        window.addQuestionToBuilderList = (qData = null) => {
             builderQuestionCount++;
             const wrapper = document.getElementById('questionsBuilderHost');
             const card = document.createElement('div');
             card.className = "bg-slate-50 border border-slate-200 rounded-xl p-4 space-y-3 relative question-card-item";
             card.id = `qCard_${builderQuestionCount}`;
+            
+            const questionPrompt = qData ? qData.question : "";
+            const opt0 = qData ? qData.options[0] : "";
+            const opt1 = qData ? qData.options[1] : "";
+            const opt2 = qData ? qData.options[2] : "";
+            const opt3 = qData ? qData.options[3] : "";
+            const correctIdx = qData ? qData.correctIndex : 0;
+            const explanation = qData ? (qData.explanation || "") : "";
+
             card.innerHTML = `
                 <div class="flex items-center justify-between">
-                    <span class="text-xs font-black text-brand-600 bg-brand-100 px-2.5 py-0.5 rounded-lg">Question #${builderQuestionCount}</span>
+                    <span class="text-xs font-black text-brand-600 bg-brand-100 px-2.5 py-0.5 rounded-lg font-mono">Question #${builderQuestionCount}</span>
                     <button type="button" onclick="removeQuestionCard('${card.id}')" class="text-red-500 hover:text-red-700 text-xs font-bold transition">
                         <i class="fa-solid fa-trash-can"></i> Remove
                     </button>
@@ -391,25 +480,25 @@
 
                 <div>
                     <label class="block text-[10px] uppercase font-bold text-slate-500 mb-1">Question Prompt</label>
-                    <textarea class="w-full border border-slate-200 p-2 rounded-lg text-xs font-medium outline-none text-slate-800 q-prompt" rows="2" placeholder="Describe the diagnostic presentation or physiological case..."></textarea>
+                    <textarea class="w-full border border-slate-200 p-2 rounded-lg text-xs font-medium outline-none text-slate-800 q-prompt" rows="2" placeholder="Describe the diagnostic presentation or physiological case...">${questionPrompt}</textarea>
                 </div>
 
                 <div class="grid grid-cols-2 gap-2">
                     <div>
                         <label class="block text-[10px] uppercase font-bold text-slate-500 mb-1">Option A</label>
-                        <input type="text" class="w-full border border-slate-200 p-2 rounded-lg text-xs outline-none q-opt-0" placeholder="Option A">
+                        <input type="text" class="w-full border border-slate-200 p-2 rounded-lg text-xs outline-none q-opt-0" placeholder="Option A" value="${opt0.replace(/"/g, '&quot;')}">
                     </div>
                     <div>
                         <label class="block text-[10px] uppercase font-bold text-slate-500 mb-1">Option B</label>
-                        <input type="text" class="w-full border border-slate-200 p-2 rounded-lg text-xs outline-none q-opt-1" placeholder="Option B">
+                        <input type="text" class="w-full border border-slate-200 p-2 rounded-lg text-xs outline-none q-opt-1" placeholder="Option B" value="${opt1.replace(/"/g, '&quot;')}">
                     </div>
                     <div>
                         <label class="block text-[10px] uppercase font-bold text-slate-500 mb-1">Option C</label>
-                        <input type="text" class="w-full border border-slate-200 p-2 rounded-lg text-xs outline-none q-opt-2" placeholder="Option C">
+                        <input type="text" class="w-full border border-slate-200 p-2 rounded-lg text-xs outline-none q-opt-2" placeholder="Option C" value="${opt2.replace(/"/g, '&quot;')}">
                     </div>
                     <div>
                         <label class="block text-[10px] uppercase font-bold text-slate-500 mb-1">Option D</label>
-                        <input type="text" class="w-full border border-slate-200 p-2 rounded-lg text-xs outline-none q-opt-3" placeholder="Option D">
+                        <input type="text" class="w-full border border-slate-200 p-2 rounded-lg text-xs outline-none q-opt-3" placeholder="Option D" value="${opt3.replace(/"/g, '&quot;')}">
                     </div>
                 </div>
 
@@ -417,15 +506,15 @@
                     <div>
                         <label class="block text-[10px] uppercase font-bold text-slate-500 mb-1">Correct Choice</label>
                         <select class="w-full border border-slate-200 p-2 rounded-lg text-xs outline-none font-bold bg-white q-correct-index">
-                            <option value="0">A</option>
-                            <option value="1">B</option>
-                            <option value="2">C</option>
-                            <option value="3">D</option>
+                            <option value="0" ${correctIdx === 0 ? 'selected' : ''}>A</option>
+                            <option value="1" ${correctIdx === 1 ? 'selected' : ''}>B</option>
+                            <option value="2" ${correctIdx === 2 ? 'selected' : ''}>C</option>
+                            <option value="3" ${correctIdx === 3 ? 'selected' : ''}>D</option>
                         </select>
                     </div>
                     <div>
                         <label class="block text-[10px] uppercase font-bold text-slate-500 mb-1">Explanation / Clinical Rationale</label>
-                        <input type="text" class="w-full border border-slate-200 p-2 rounded-lg text-xs outline-none q-explanation" placeholder="Rationale for correct answer...">
+                        <input type="text" class="w-full border border-slate-200 p-2 rounded-lg text-xs outline-none q-explanation" placeholder="Rationale for correct answer..." value="${explanation.replace(/"/g, '&quot;')}">
                     </div>
                 </div>
             `;
@@ -453,8 +542,180 @@
             });
         }
 
+        // Load Quiz directly into dynamic builder for real-time Editing
+        window.editQuizRecord = (path, docId) => {
+            const uniqueKey = `${path}_${docId}`;
+            const quiz = cachedQuizzes.get(uniqueKey);
+            if (!quiz) {
+                showToast("Target quiz record could not be extracted.", "error");
+                return;
+            }
+
+            // Set Editing Session Context
+            isEditingQuiz = true;
+            editingQuizId = docId;
+            editingQuizPath = path;
+
+            // Update UI State & Switch Tab
+            switchTab(tabBuilderBtn, paneBuilder);
+            
+            // Populate Metadata Fields
+            document.getElementById('builderSubject').value = quiz.subject || "";
+            document.getElementById('builderChapter').value = quiz.chapter || "";
+            
+            const parsedNamespace = path.split('/')[1] || "daily-quiz-a29e8";
+            document.getElementById('builderNamespace').value = parsedNamespace;
+
+            // Clear builder container
+            const container = document.getElementById('questionsBuilderHost');
+            container.innerHTML = '';
+            builderQuestionCount = 0;
+
+            // Populate Questions array
+            if (quiz.quizData && Array.isArray(quiz.quizData)) {
+                quiz.quizData.forEach(q => {
+                    addQuestionToBuilderList(q);
+                });
+            } else {
+                addQuestionToBuilderList();
+            }
+
+            // Show indicator banner & modify submit trigger button text
+            document.getElementById('editingQuizName').innerText = quiz.chapter;
+            document.getElementById('builderEditIndicator').classList.remove('hidden');
+            
+            const submitBtn = document.getElementById('saveBuilderQuizBtn');
+            submitBtn.innerHTML = `<i class="fa-solid fa-floppy-disk text-base"></i> Update & Overwrite Live Quiz`;
+            submitBtn.className = "w-full bg-amber-600 hover:bg-amber-700 text-white font-bold py-3.5 px-6 rounded-xl transition flex items-center justify-center gap-2 shadow-md shadow-amber-50";
+
+            showToast("Quiz data imported into Editor.", "success");
+            window.scrollTo({ top: paneBuilder.offsetTop - 85, behavior: 'smooth' });
+        };
+
+        // Cancel Edit Session
+        window.cancelQuizEdit = () => {
+            isEditingQuiz = false;
+            editingQuizId = "";
+            editingQuizPath = "";
+
+            document.getElementById('builderSubject').value = '';
+            document.getElementById('builderChapter').value = '';
+            document.getElementById('builderEditIndicator').classList.add('hidden');
+            
+            const submitBtn = document.getElementById('saveBuilderQuizBtn');
+            submitBtn.innerHTML = `<i class="fa-solid fa-cloud-arrow-up text-base"></i> Save & Publish Interactive Quiz`;
+            submitBtn.className = "w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-3.5 px-6 rounded-xl transition flex items-center justify-center gap-2 shadow-md shadow-indigo-50";
+
+            // Clean the Question cards
+            const container = document.getElementById('questionsBuilderHost');
+            container.innerHTML = '';
+            builderQuestionCount = 0;
+            addQuestionToBuilderList();
+
+            showToast("Editing mode cleared.", "info");
+        };
+
+        // Load Schedule data directly into fields for real-time Editing
+        window.editScheduleRecord = (path, docId) => {
+            const uniqueKey = `${path}_${docId}`;
+            const sched = cachedSchedules.get(uniqueKey);
+            if (!sched) {
+                showToast("Target schedule record could not be extracted.", "error");
+                return;
+            }
+
+            isEditingSchedule = true;
+            editingScheduleId = docId;
+            editingSchedulePath = path;
+
+            // Update UI State & Switch Tab
+            switchTab(tabScheduleBtn, paneSchedule);
+
+            document.getElementById('scheduleSubject').value = sched.subject || "";
+            document.getElementById('scheduleTopic').value = sched.topic || "";
+            document.getElementById('openTime').value = sched.openTime || "";
+            document.getElementById('closeTime').value = sched.closeTime || "";
+            
+            const parsedNamespace = path.split('/')[1] || "daily-quiz-a29e8";
+            document.getElementById('scheduleNamespace').value = parsedNamespace;
+
+            // Show indicators & set buttons
+            document.getElementById('editingScheduleName').innerText = sched.topic;
+            document.getElementById('scheduleEditIndicator').classList.remove('hidden');
+
+            const submitBtn = document.getElementById('scheduleBtn');
+            submitBtn.innerHTML = `<i class="fa-solid fa-calendar-check"></i> Update Schedule Event`;
+            submitBtn.className = "bg-amber-600 hover:bg-amber-700 text-white font-bold py-3.5 px-6 rounded-xl w-full transition flex items-center justify-center gap-2 shadow-md shadow-amber-50";
+
+            // Unselect QuickFill selector if set
+            document.getElementById('scheduleQuickFill').value = "";
+
+            showToast("Schedule data imported into Editor.", "success");
+            window.scrollTo({ top: paneSchedule.offsetTop - 85, behavior: 'smooth' });
+        };
+
+        // Cancel Schedule Edit Session
+        window.cancelScheduleEdit = () => {
+            isEditingSchedule = false;
+            editingScheduleId = "";
+            editingSchedulePath = "";
+
+            document.getElementById('scheduleSubject').value = '';
+            document.getElementById('scheduleTopic').value = '';
+            document.getElementById('openTime').value = '';
+            document.getElementById('closeTime').value = '';
+            document.getElementById('scheduleQuickFill').value = '';
+            document.getElementById('scheduleEditIndicator').classList.add('hidden');
+
+            const submitBtn = document.getElementById('scheduleBtn');
+            submitBtn.innerHTML = `<i class="fa-solid fa-calendar-check"></i> Create & Publish Live Schedule`;
+            submitBtn.className = "bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-3.5 px-6 rounded-xl w-full transition flex items-center justify-center gap-2 shadow-md";
+
+            showToast("Schedule editing mode cleared.", "info");
+        };
+
+        // Dynamic Quick-fill Populator triggered on registry update
+        function refreshScheduleQuickFillOptions() {
+            const quickFillSelect = document.getElementById('scheduleQuickFill');
+            if (!quickFillSelect) return;
+
+            const selectedValue = quickFillSelect.value;
+            quickFillSelect.innerHTML = '<option value="">-- Select an uploaded quiz to schedule automatically --</option>';
+
+            cachedQuizzes.forEach((data, uniqueId) => {
+                const opt = document.createElement('option');
+                opt.value = uniqueId;
+                const sourceText = data.path.includes('default-app-id') ? 'System' : 'Custom';
+                opt.textContent = `[${sourceText}] ${data.subject} » ${data.chapter}`;
+                quickFillSelect.appendChild(opt);
+            });
+
+            // Restore selection if it still exists
+            if (cachedQuizzes.has(selectedValue)) {
+                quickFillSelect.value = selectedValue;
+            }
+        }
+
+        // Quick-Fill Select Handler
+        document.getElementById('scheduleQuickFill').onchange = (e) => {
+            const uniqueId = e.target.value;
+            if (!uniqueId) return;
+
+            const quiz = cachedQuizzes.get(uniqueId);
+            if (quiz) {
+                document.getElementById('scheduleSubject').value = quiz.subject || "";
+                document.getElementById('scheduleTopic').value = quiz.chapter || "";
+                
+                const parsedNamespace = quiz.path.split('/')[1] || "daily-quiz-a29e8";
+                document.getElementById('scheduleNamespace').value = parsedNamespace;
+                
+                showToast(`Auto-populated details from "${quiz.chapter}"`, "info");
+            }
+        };
+
         // 1. Submit Action: Save Interactive Quiz Builder data
         document.getElementById('saveBuilderQuizBtn').onclick = async () => {
+            const selectedNamespace = document.getElementById('builderNamespace').value;
             const subject = document.getElementById('builderSubject').value.trim();
             const chapter = document.getElementById('builderChapter').value.trim();
             const cardDoms = document.querySelectorAll('.question-card-item');
@@ -472,7 +733,7 @@
             const compiledQuizData = [];
             let isValid = true;
 
-            cardDoms.forEach((card, index) => {
+            cardDoms.forEach((card) => {
                 const questionPrompt = card.querySelector('.q-prompt').value.trim();
                 const optA = card.querySelector('.q-opt-0').value.trim();
                 const optB = card.querySelector('.q-opt-1').value.trim();
@@ -500,28 +761,35 @@
 
             try {
                 const id = chapter.replace(/\s+/g, '_').toLowerCase();
+                const path = `artifacts/${selectedNamespace}/public/data/quizzes`;
                 
+                const titleText = isEditingQuiz ? "Update This Quiz?" : "Publish This Quiz?";
+                const messageText = isEditingQuiz 
+                    ? `Are you sure you want to write updates for '${chapter}' inside [${selectedNamespace}]?`
+                    : `Are you sure you want to write '${chapter}' into the [${selectedNamespace}] database namespace?`;
+
                 triggerConfirmationModal({
-                    title: "Publish This Quiz?",
-                    message: `Are you sure you want to write '${chapter}' into the system quizzes database registry?`,
+                    title: titleText,
+                    message: messageText,
                     iconClass: "fa-solid fa-cloud-arrow-up text-brand-600",
                     iconBgClass: "bg-indigo-50 border border-indigo-100",
-                    primaryText: "Publish",
+                    primaryText: isEditingQuiz ? "Update & Save" : "Publish",
                     primaryClass: "bg-brand-600 hover:bg-brand-700 shadow-md shadow-indigo-50",
                     onPrimary: async () => {
-                        await setDoc(doc(db, QUIZ_PATH, id), {
+                        // Safe cleanup: If editing and either namespace workspace or unique ID changed, delete legacy path node
+                        if (isEditingQuiz && (id !== editingQuizId || path !== editingQuizPath)) {
+                            await deleteDoc(doc(db, editingQuizPath, editingQuizId));
+                        }
+
+                        await setDoc(doc(db, path, id), {
                             subject,
                             chapter,
                             quizData: compiledQuizData,
                             timestamp: Date.now()
                         });
-                        showToast(`Successfully published '${chapter}'!`, "success");
-                        
-                        // Clear Form fields
-                        document.getElementById('builderSubject').value = '';
-                        document.getElementById('builderChapter').value = '';
-                        document.getElementById('questionsBuilderHost').innerHTML = '';
-                        builderQuestionCount = 0;
+
+                        showToast(isEditingQuiz ? `Successfully updated '${chapter}'!` : `Successfully published '${chapter}'!`, "success");
+                        cancelQuizEdit();
                     }
                 });
             } catch (err) {
@@ -532,6 +800,7 @@
 
         // 2. Submit Action: Upload JSON MCQ Syllabus File
         document.getElementById('uploadBtn').onclick = async () => {
+            const selectedNamespace = document.getElementById('uploadNamespace').value;
             const file = document.getElementById('jsonFile').files[0];
             const subject = document.getElementById('subject').value.trim();
             const chapter = document.getElementById('chapter').value.trim();
@@ -556,16 +825,17 @@
                 }
 
                 const id = chapter.replace(/\s+/g, '_').toLowerCase();
+                const path = `artifacts/${selectedNamespace}/public/data/quizzes`;
 
                 triggerConfirmationModal({
                     title: "Upload JSON Document?",
-                    message: `Publish quiz document '${chapter}' containing ${quizData.length} questions?`,
+                    message: `Publish quiz document '${chapter}' containing ${quizData.length} questions inside the [${selectedNamespace}] namespace?`,
                     iconClass: "fa-solid fa-file-invoice text-indigo-500",
                     iconBgClass: "bg-indigo-50 border border-indigo-100",
                     primaryText: "Import JSON",
                     primaryClass: "bg-indigo-600 hover:bg-indigo-700 shadow-lg",
                     onPrimary: async () => {
-                        await setDoc(doc(db, QUIZ_PATH, id), {
+                        await setDoc(doc(db, path, id), {
                             subject,
                             chapter,
                             quizData,
@@ -589,6 +859,7 @@
 
         // 3. Submit Action: Create & Publish Live Schedule boundaries
         document.getElementById('scheduleBtn').onclick = async () => {
+            const selectedNamespace = document.getElementById('scheduleNamespace').value;
             const subject = document.getElementById('scheduleSubject').value.trim();
             const topic = document.getElementById('scheduleTopic').value.trim();
             const openTime = document.getElementById('openTime').value;
@@ -609,29 +880,35 @@
 
             try {
                 const id = topic.replace(/\s+/g, '_').toLowerCase();
+                const path = `artifacts/${selectedNamespace}/public/data/schedules`;
+
+                const titleText = isEditingSchedule ? "Update Schedule Window?" : "Confirm Live Window?";
+                const messageText = isEditingSchedule 
+                    ? `Are you sure you want to write updates for schedule '${topic}' inside [${selectedNamespace}]?`
+                    : `Schedule topic '${topic}' from ${openDate.toLocaleString()} to ${closeDate.toLocaleString()} inside [${selectedNamespace}]?`;
 
                 triggerConfirmationModal({
-                    title: "Confirm Live Window?",
-                    message: `Schedule topic '${topic}' from ${openDate.toLocaleString()} to ${closeDate.toLocaleString()}?`,
+                    title: titleText,
+                    message: messageText,
                     iconClass: "fa-solid fa-calendar-day text-emerald-500",
                     iconBgClass: "bg-emerald-50 border border-emerald-100",
-                    primaryText: "Schedule Event",
+                    primaryText: isEditingSchedule ? "Update Event" : "Schedule Event",
                     primaryClass: "bg-emerald-600 hover:bg-emerald-700 shadow-md",
                     onPrimary: async () => {
-                        await setDoc(doc(db, SCHEDULE_PATH, id), {
+                        // Safe Cleanup: Delete legacy path node if workspace/id changed
+                        if (isEditingSchedule && (id !== editingScheduleId || path !== editingSchedulePath)) {
+                            await deleteDoc(doc(db, editingSchedulePath, editingScheduleId));
+                        }
+
+                        await setDoc(doc(db, path, id), {
                             subject,
                             topic,
                             openTime,
                             closeTime,
                             createdAt: Date.now()
                         });
-                        showToast(`Topic '${topic}' scheduled successfully!`, "success");
-                        
-                        // Clear Schedule inputs
-                        document.getElementById('scheduleSubject').value = '';
-                        document.getElementById('scheduleTopic').value = '';
-                        document.getElementById('openTime').value = '';
-                        document.getElementById('closeTime').value = '';
+                        showToast(isEditingSchedule ? `Schedule for '${topic}' updated!` : `Topic '${topic}' scheduled successfully!`, "success");
+                        cancelScheduleEdit();
                     }
                 });
             } catch (err) {
@@ -640,117 +917,188 @@
             }
         };
 
-        // Inventory Watcher: Monitor Available Quizzes
-        function monitorQuizzesRegistry() {
+        // Render Combined Live Quizzes View
+        function renderCombinedQuizzes() {
             const quizListContainer = document.getElementById('quizInventoryList');
-            const queryRef = collection(db, QUIZ_PATH);
-            
-            onSnapshot(queryRef, (snap) => {
-                document.getElementById('quizCountBadge').innerText = `${snap.size} Quiz${snap.size !== 1 ? 'zes' : ''}`;
-                
-                if (snap.empty) {
-                    quizListContainer.innerHTML = `
-                    <div class="text-center p-6 bg-slate-50 border border-dashed rounded-xl">
-                        <span class="block text-xs font-semibold text-slate-400">Database is empty. Publish a quiz above.</span>
-                    </div>`;
-                    return;
-                }
+            document.getElementById('quizCountBadge').innerText = `${cachedQuizzes.size} Quiz${cachedQuizzes.size !== 1 ? 'zes' : ''}`;
 
-                let html = '';
-                snap.forEach(docSnap => {
-                    const data = docSnap.data();
-                    const mcqCount = data.quizData ? data.quizData.length : 0;
-                    html += `
-                    <div class="flex items-center justify-between p-3.5 bg-white hover:bg-slate-50 border border-slate-200 rounded-xl transition duration-200">
-                        <div class="flex-1 min-w-0 pr-2">
-                            <span class="inline-block text-[10px] uppercase tracking-wider font-extrabold text-indigo-600 bg-indigo-50 px-2 py-0.5 rounded-md mb-1">${data.subject || 'Medical'}</span>
-                            <h4 class="font-bold text-slate-900 text-sm truncate leading-snug">${data.chapter}</h4>
-                            <span class="text-[10px] text-slate-400 font-semibold flex items-center gap-1 mt-0.5"><i class="fa-solid fa-clipboard-question"></i> ${mcqCount} Questions</span>
+            if (cachedQuizzes.size === 0) {
+                quizListContainer.innerHTML = `
+                <div class="text-center p-6 bg-slate-50 border border-dashed rounded-xl">
+                    <span class="block text-xs font-semibold text-slate-400">Database is empty. Publish a quiz above.</span>
+                </div>`;
+                refreshScheduleQuickFillOptions();
+                return;
+            }
+
+            let html = '';
+            cachedQuizzes.forEach((data, uniqueId) => {
+                const mcqCount = data.quizData ? data.quizData.length : 0;
+                const sourceBadge = data.path.includes('default-app-id')
+                    ? '<span class="text-[9px] bg-slate-100 text-slate-500 border border-slate-200 px-1.5 py-0.5 rounded-md font-bold uppercase">System Reference</span>'
+                    : '<span class="text-[9px] bg-indigo-50 text-indigo-700 border border-indigo-100 px-1.5 py-0.5 rounded-md font-bold uppercase">Custom</span>';
+
+                html += `
+                <div class="flex items-center justify-between p-3.5 bg-white hover:bg-slate-50 border border-slate-200 rounded-xl transition duration-200">
+                    <div class="flex-1 min-w-0 pr-2">
+                        <div class="flex items-center gap-1.5 mb-1 flex-wrap">
+                            <span class="inline-block text-[9px] uppercase tracking-wider font-extrabold text-indigo-600 bg-indigo-50 px-2 py-0.5 rounded-md">${data.subject || 'Medical'}</span>
+                            ${sourceBadge}
                         </div>
-                        <button onclick="deleteQuizRecord('${docSnap.id}', '${data.chapter}')" class="text-red-400 hover:text-red-600 p-2 rounded-lg hover:bg-red-50 transition" title="Delete Quiz Record">
+                        <h4 class="font-bold text-slate-900 text-sm truncate leading-snug">${data.chapter}</h4>
+                        <span class="text-[10px] text-slate-400 font-semibold flex items-center gap-1 mt-0.5"><i class="fa-solid fa-clipboard-question"></i> ${mcqCount} Questions</span>
+                    </div>
+                    <div class="flex items-center gap-1">
+                        <button onclick="editQuizRecord('${data.path}', '${data.docId}')" class="text-indigo-500 hover:text-indigo-700 p-2 rounded-lg hover:bg-indigo-50 transition" title="Edit Quiz Record">
+                            <i class="fa-solid fa-pen-to-square"></i>
+                        </button>
+                        <button onclick="deleteQuizRecord('${data.path}', '${data.docId}', '${data.chapter}')" class="text-red-400 hover:text-red-600 p-2 rounded-lg hover:bg-red-50 transition" title="Delete Quiz Record">
                             <i class="fa-solid fa-trash-can"></i>
                         </button>
-                    </div>`;
-                });
-                quizListContainer.innerHTML = html;
-            }, (error) => {
-                console.error("Registry load error:", error);
-                quizListContainer.innerHTML = `<div class="text-center text-xs text-red-500 font-bold">Failed to sync: ${error.message}</div>`;
+                    </div>
+                </div>`;
             });
+            quizListContainer.innerHTML = html;
+
+            // Always update QuickFill options whenever quizzes state changes
+            refreshScheduleQuickFillOptions();
         }
 
-        // Inventory Watcher: Monitor Active Schedules
-        function monitorSchedulesRegistry() {
-            const scheduleListContainer = document.getElementById('scheduleRegistryList');
-            const queryRef = collection(db, SCHEDULE_PATH);
-            
-            onSnapshot(queryRef, (snap) => {
-                document.getElementById('scheduleCountBadge').innerText = `${snap.size} Scheduled`;
-
-                if (snap.empty) {
-                    scheduleListContainer.innerHTML = `
-                    <div class="text-center p-6 bg-slate-50 border border-dashed rounded-xl">
-                        <span class="block text-xs font-semibold text-slate-400">No events active. Add scheduled topics above.</span>
-                    </div>`;
-                    return;
-                }
-
-                let html = '';
-                const now = new Date();
-                snap.forEach(docSnap => {
-                    const data = docSnap.data();
-                    const openDate = new Date(data.openTime);
-                    const closeDate = new Date(data.closeTime);
-                    
-                    let pillStyles = 'bg-slate-100 text-slate-500 border-slate-200';
-                    let pillText = 'Inactive';
-                    if (now >= openDate && now <= closeDate) {
-                        pillStyles = 'bg-emerald-100 text-emerald-800 border-emerald-200 font-extrabold animate-pulse';
-                        pillText = 'LIVE NOW';
-                    } else if (now < openDate) {
-                        pillStyles = 'bg-amber-100 text-amber-800 border-amber-200 font-semibold';
-                        pillText = 'Upcoming';
+        // Inventory Watcher: Monitor Available Quizzes across multiple paths
+        function monitorQuizzesRegistry() {
+            QUIZ_PATHS.forEach(path => {
+                const queryRef = collection(db, path);
+                onSnapshot(queryRef, (snap) => {
+                    // Purge old keys associated with this path
+                    for (let [key, val] of cachedQuizzes.entries()) {
+                        if (val.path === path) {
+                            cachedQuizzes.delete(key);
+                        }
                     }
 
-                    html += `
-                    <div class="flex items-start justify-between p-3 bg-white hover:bg-slate-50 border border-slate-200 rounded-xl transition duration-200">
-                        <div class="flex-1 min-w-0 pr-2">
-                            <div class="flex items-center gap-1.5 mb-1 flex-wrap">
-                                <span class="inline-block text-[9px] uppercase tracking-wider font-extrabold text-emerald-600 bg-emerald-50 px-1.5 py-0.5 rounded-md">${data.subject || 'Syllabus'}</span>
-                                <span class="text-[8px] font-bold uppercase tracking-widest px-1.5 py-0.5 border rounded-full ${pillStyles}">${pillText}</span>
-                            </div>
-                            <h4 class="font-bold text-slate-900 text-xs truncate leading-snug">${data.topic}</h4>
-                            <div class="text-[9px] text-slate-400 font-medium mt-1">
-                                <div><i class="fa-solid fa-play text-emerald-500"></i> Open: ${openDate.toLocaleDateString()} ${openDate.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}</div>
-                                <div><i class="fa-solid fa-stop text-red-400"></i> Close: ${closeDate.toLocaleDateString()} ${closeDate.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}</div>
-                            </div>
-                        </div>
-                        <button onclick="deleteScheduleRecord('${docSnap.id}', '${data.topic}')" class="text-red-400 hover:text-red-600 p-2 rounded-lg hover:bg-red-50 transition" title="Delete Schedule Event">
-                            <i class="fa-solid fa-calendar-minus"></i>
-                        </button>
-                    </div>`;
+                    snap.forEach(docSnap => {
+                        const data = docSnap.data();
+                        const uniqueId = `${path}_${docSnap.id}`;
+                        cachedQuizzes.set(uniqueId, {
+                            ...data,
+                            docId: docSnap.id,
+                            path: path
+                        });
+                    });
+
+                    renderCombinedQuizzes();
+                }, (error) => {
+                    console.error("Registry sync error for path: " + path, error);
                 });
-                scheduleListContainer.innerHTML = html;
-            }, (error) => {
-                console.error("Registry schedules load error:", error);
-                scheduleListContainer.innerHTML = `<div class="text-center text-xs text-red-500 font-bold">Failed to sync: ${error.message}</div>`;
             });
         }
 
-        // Delete Records: Quizzes
-        window.deleteQuizRecord = (id, label) => {
+        // Render Combined Schedules View
+        function renderCombinedSchedules() {
+            const scheduleListContainer = document.getElementById('scheduleRegistryList');
+            document.getElementById('scheduleCountBadge').innerText = `${cachedSchedules.size} Scheduled`;
+
+            if (cachedSchedules.size === 0) {
+                scheduleListContainer.innerHTML = `
+                <div class="text-center p-6 bg-slate-50 border border-dashed rounded-xl">
+                    <span class="block text-xs font-semibold text-slate-400">No events active. Add scheduled topics above.</span>
+                </div>`;
+                return;
+            }
+
+            let html = '';
+            const now = new Date();
+            cachedSchedules.forEach((data, uniqueId) => {
+                const openDate = new Date(data.openTime);
+                const closeDate = new Date(data.closeTime);
+                
+                let pillStyles = 'bg-slate-100 text-slate-500 border-slate-200';
+                let pillText = 'Inactive';
+                if (now >= openDate && now <= closeDate) {
+                    pillStyles = 'bg-emerald-100 text-emerald-800 border-emerald-200 font-extrabold animate-pulse';
+                    pillText = 'LIVE NOW';
+                } else if (now < openDate) {
+                    pillStyles = 'bg-amber-100 text-amber-800 border-amber-200 font-semibold';
+                    pillText = 'Upcoming';
+                }
+
+                const sourceBadge = data.path.includes('default-app-id')
+                    ? '<span class="text-[8px] bg-slate-100 text-slate-500 border border-slate-200 px-1 py-0.5 rounded-full font-extrabold uppercase">Reference</span>'
+                    : '<span class="text-[8px] bg-indigo-50 text-indigo-700 border border-indigo-100 px-1 py-0.5 rounded-full font-extrabold uppercase">Custom</span>';
+
+                html += `
+                <div class="flex items-start justify-between p-3 bg-white hover:bg-slate-50 border border-slate-200 rounded-xl transition duration-200">
+                    <div class="flex-1 min-w-0 pr-2">
+                        <div class="flex items-center gap-1.5 mb-1 flex-wrap">
+                            <span class="inline-block text-[9px] uppercase tracking-wider font-extrabold text-emerald-600 bg-emerald-50 px-1.5 py-0.5 rounded-md">${data.subject || 'Syllabus'}</span>
+                            <span class="text-[8px] font-bold uppercase tracking-widest px-1.5 py-0.5 border rounded-full ${pillStyles}">${pillText}</span>
+                            ${sourceBadge}
+                        </div>
+                        <h4 class="font-bold text-slate-900 text-xs truncate leading-snug">${data.topic}</h4>
+                        <div class="text-[9px] text-slate-400 font-medium mt-1">
+                            <div><i class="fa-solid fa-play text-emerald-500"></i> Open: ${openDate.toLocaleDateString()} ${openDate.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}</div>
+                            <div><i class="fa-solid fa-stop text-red-400"></i> Close: ${closeDate.toLocaleDateString()} ${closeDate.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}</div>
+                        </div>
+                    </div>
+                    <div class="flex items-center gap-1">
+                        <button onclick="editScheduleRecord('${data.path}', '${data.docId}')" class="text-indigo-500 hover:text-indigo-700 p-2 rounded-lg hover:bg-indigo-50 transition" title="Edit Schedule">
+                            <i class="fa-solid fa-pen-to-square"></i>
+                        </button>
+                        <button onclick="deleteScheduleRecord('${data.path}', '${data.docId}', '${data.topic}')" class="text-red-400 hover:text-red-600 p-2 rounded-lg hover:bg-red-50 transition" title="Delete Schedule Event">
+                            <i class="fa-solid fa-calendar-minus"></i>
+                        </button>
+                    </div>
+                </div>`;
+            });
+            scheduleListContainer.innerHTML = html;
+        }
+
+        // Inventory Watcher: Monitor Active Schedules across multiple paths
+        function monitorSchedulesRegistry() {
+            SCHEDULE_PATHS.forEach(path => {
+                const queryRef = collection(db, path);
+                onSnapshot(queryRef, (snap) => {
+                    // Purge old keys associated with this path
+                    for (let [key, val] of cachedSchedules.entries()) {
+                        if (val.path === path) {
+                            cachedSchedules.delete(key);
+                        }
+                    }
+
+                    snap.forEach(docSnap => {
+                        const data = docSnap.data();
+                        const uniqueId = `${path}_${docSnap.id}`;
+                        cachedSchedules.set(uniqueId, {
+                            ...data,
+                            docId: docSnap.id,
+                            path: path
+                        });
+                    });
+
+                    renderCombinedSchedules();
+                }, (error) => {
+                    console.error("Schedules registry sync error for path: " + path, error);
+                });
+            });
+        }
+
+        // Delete Records: Quizzes from exact target path
+        window.deleteQuizRecord = (path, docId, label) => {
             triggerConfirmationModal({
                 title: "Delete Quiz Syllabus?",
-                message: `Are you sure you want to permanently delete '${label}'? This operation cannot be undone.`,
+                message: `Are you sure you want to permanently delete '${label}' from [${path}]? This operation cannot be undone.`,
                 iconClass: "fa-solid fa-triangle-exclamation text-red-500",
                 iconBgClass: "bg-red-50 border border-red-100",
                 primaryText: "Permanently Delete",
                 primaryClass: "bg-red-600 hover:bg-red-700 shadow-md shadow-red-50",
                 onPrimary: async () => {
                     try {
-                        const targetDoc = doc(db, QUIZ_PATH, id);
+                        const targetDoc = doc(db, path, docId);
                         await deleteDoc(targetDoc);
                         showToast(`Successfully deleted '${label}'!`, "success");
+                        if (isEditingQuiz && editingQuizId === docId && editingQuizPath === path) {
+                            cancelQuizEdit();
+                        }
                     } catch (err) {
                         console.error(err);
                         showToast("Failed to delete quiz document from database.", "error");
@@ -759,20 +1107,23 @@
             });
         };
 
-        // Delete Records: Schedules
-        window.deleteScheduleRecord = (id, label) => {
+        // Delete Records: Schedules from exact target path
+        window.deleteScheduleRecord = (path, docId, label) => {
             triggerConfirmationModal({
                 title: "Cancel Topic Schedule?",
-                message: `Are you sure you want to delete the scheduled active window for '${label}'?`,
+                message: `Are you sure you want to delete the scheduled active window for '${label}' from [${path}]?`,
                 iconClass: "fa-solid fa-calendar-times text-red-500",
                 iconBgClass: "bg-red-50 border border-red-100",
                 primaryText: "Cancel Event",
                 primaryClass: "bg-red-600 hover:bg-red-700 shadow-md",
                 onPrimary: async () => {
                     try {
-                        const targetDoc = doc(db, SCHEDULE_PATH, id);
+                        const targetDoc = doc(db, path, docId);
                         await deleteDoc(targetDoc);
                         showToast(`Successfully deleted schedule for '${label}'!`, "success");
+                        if (isEditingSchedule && editingScheduleId === docId && editingSchedulePath === path) {
+                            cancelScheduleEdit();
+                        }
                     } catch (err) {
                         console.error(err);
                         showToast("Failed to delete schedule document.", "error");
@@ -786,7 +1137,7 @@
             // Add initial empty quiz builder card to start
             addQuestionToBuilderList();
             
-            // Start sync watchers
+            // Start sync watchers for all namespaces
             monitorQuizzesRegistry();
             monitorSchedulesRegistry();
         });
