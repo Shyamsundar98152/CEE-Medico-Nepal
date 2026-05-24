@@ -564,10 +564,12 @@
             const open      = new Date(data.openTime);
             const close     = new Date(data.closeTime);
             const style     = subjectStyle(data.subject);
-            const countdownTarget = status === 'upcoming' ? open : null;
 
             // Duration minutes
             const durationMin = Math.round((close - open) / 60_000);
+
+            // Determine redirect URL
+            const quizUrl = data.quizUrl || data.quizLink || data.link || `quiz.html?id=${id}`;
 
             // Status badge config
             const statusConfig = {
@@ -615,7 +617,7 @@
                 ${status === 'upcoming' ? `
                 <div class="mt-3 bg-amber-50 border border-amber-100 rounded-xl p-3 text-center">
                     <p class="text-[10px] font-bold text-amber-600 uppercase tracking-widest mb-1">Starts in</p>
-                    <div class="flex items-center justify-center gap-1.5">
+                    <div class="flex items-center justify-center gap-1.5 mb-3">
                         <div class="countdown-seg" style="background:linear-gradient(135deg,#f59e0b,#d97706)">
                             <div class="text-lg font-black countdown-h-${id}">--</div>
                             <div class="text-[8px] font-bold opacity-80 uppercase">hrs</div>
@@ -631,25 +633,39 @@
                             <div class="text-[8px] font-bold opacity-80 uppercase">sec</div>
                         </div>
                     </div>
+                    <button disabled class="w-full bg-slate-200 text-slate-500 font-bold py-2.5 px-4 rounded-xl text-xs flex items-center justify-center gap-2 cursor-not-allowed">
+                        <i class="fa-solid fa-lock text-[10px]"></i> Opens Soon
+                    </button>
                 </div>` : ''}
 
-                <!-- Live progress bar -->
+                <!-- Live action & progress bar -->
                 ${status === 'live' ? (() => {
                     const total   = close - open;
                     const elapsed = new Date() - open;
                     const pct     = Math.min(100, Math.round((elapsed / total) * 100));
                     const remaining = Math.max(0, Math.round((close - new Date()) / 60_000));
                     return `
-                    <div class="mt-3">
-                        <div class="flex justify-between text-[10px] font-bold text-slate-400 mb-1">
-                            <span class="text-emerald-600">In progress</span>
-                            <span>${remaining} min remaining</span>
-                        </div>
+                    <div class="mt-3 space-y-3">
                         <div class="w-full bg-slate-100 rounded-full h-2 overflow-hidden">
                             <div class="h-2 bg-gradient-to-r from-emerald-400 to-emerald-600 rounded-full transition-all" style="width:${pct}%"></div>
                         </div>
+                        <div class="flex justify-between text-[10px] font-bold text-slate-400">
+                            <span class="text-emerald-600">In progress</span>
+                            <span>${remaining} min remaining</span>
+                        </div>
+                        <a href="${quizUrl}" class="shimmer-btn w-full bg-emerald-500 hover:bg-emerald-600 active:scale-95 text-white font-bold py-3 px-4 rounded-xl text-center text-sm transition-all duration-200 shadow-md shadow-emerald-500/20 hover:shadow-emerald-500/40 flex items-center justify-center gap-2">
+                            <i class="fa-solid fa-circle-play animate-pulse text-base"></i> 👉 Start Quiz Now
+                        </a>
                     </div>`;
                 })() : ''}
+
+                <!-- Closed action -->
+                ${status === 'closed' ? `
+                <div class="mt-3">
+                    <a href="${quizUrl}" class="w-full bg-slate-100 hover:bg-slate-200 active:scale-95 text-slate-700 font-bold py-2 px-4 rounded-xl text-center text-xs transition-all duration-200 border border-slate-300 flex items-center justify-center gap-1.5">
+                        <i class="fa-solid fa-square-poll-vertical text-slate-500"></i> View Results / Review Questions
+                    </a>
+                </div>` : ''}
 
             </div>`;
         }
