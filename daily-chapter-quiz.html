@@ -515,17 +515,6 @@
         let allSchedules   = [];   // full data array from Firestore
         let activeFilter   = 'all';
 
-        // ── DOM refs ──
-        const loadingState    = document.getElementById('loadingState');
-        const emptyState      = document.getElementById('emptyState');
-        const noFilterResult  = document.getElementById('noFilterResult');
-        const scheduleGrid    = document.getElementById('scheduleGrid');
-        const statsBar        = document.getElementById('statsBar');
-        const statLive        = document.getElementById('statLive');
-        const statUpcoming    = document.getElementById('statUpcoming');
-        const statClosed      = document.getElementById('statClosed');
-        const globalLiveBadge = document.getElementById('globalLiveBadge');
-
         // ── Status helper ──
         function getStatus(data) {
             const now   = new Date();
@@ -568,8 +557,10 @@
             // Duration minutes
             const durationMin = Math.round((close - open) / 60_000);
 
-            // Determine redirect URL
-            const quizUrl = data.quizUrl || data.quizLink || data.link || `quiz.html?id=${id}`;
+            // Dynamic redirect parameter connection check
+            // We read data.quizId (stored by updated control panel) first, then fallback to other configurations
+            const quizIdentifier = data.quizId || id;
+            const quizUrl = data.quizUrl || data.quizLink || data.link || `quiz.html?id=${quizIdentifier}`;
 
             // Status badge config
             const statusConfig = {
@@ -597,7 +588,7 @@
                 ${data.description ? `<p class="text-xs text-slate-400 font-medium mb-3 leading-relaxed">${data.description}</p>` : ''}
 
                 <!-- Time info -->
-                <div class="mt-auto pt-3 border-t border-slate-100 space-y-1.5">
+                <div class="mt-auto pt-3 border-t border-slate-100 space-y-1.5 font-sans">
                     <div class="flex items-center gap-2 text-[11px] text-slate-500 font-semibold">
                         <i class="fa-solid fa-play text-emerald-500 w-3 text-center"></i>
                         <span>Opens: <span class="text-slate-700">${open.toLocaleString([], { dateStyle:'medium', timeStyle:'short' })}</span></span>
@@ -615,7 +606,7 @@
 
                 <!-- Countdown (upcoming only) -->
                 ${status === 'upcoming' ? `
-                <div class="mt-3 bg-amber-50 border border-amber-100 rounded-xl p-3 text-center">
+                <div class="mt-4 bg-amber-50 border border-amber-100 rounded-xl p-3 text-center">
                     <p class="text-[10px] font-bold text-amber-600 uppercase tracking-widest mb-1">Starts in</p>
                     <div class="flex items-center justify-center gap-1.5 mb-3">
                         <div class="countdown-seg" style="background:linear-gradient(135deg,#f59e0b,#d97706)">
@@ -645,7 +636,7 @@
                     const pct     = Math.min(100, Math.round((elapsed / total) * 100));
                     const remaining = Math.max(0, Math.round((close - new Date()) / 60_000));
                     return `
-                    <div class="mt-3 space-y-3">
+                    <div class="mt-4 space-y-3">
                         <div class="w-full bg-slate-100 rounded-full h-2 overflow-hidden">
                             <div class="h-2 bg-gradient-to-r from-emerald-400 to-emerald-600 rounded-full transition-all" style="width:${pct}%"></div>
                         </div>
@@ -661,8 +652,8 @@
 
                 <!-- Closed action -->
                 ${status === 'closed' ? `
-                <div class="mt-3">
-                    <a href="${quizUrl}" class="w-full bg-slate-100 hover:bg-slate-200 active:scale-95 text-slate-700 font-bold py-2 px-4 rounded-xl text-center text-xs transition-all duration-200 border border-slate-300 flex items-center justify-center gap-1.5">
+                <div class="mt-4">
+                    <a href="${quizUrl}" class="w-full bg-slate-100 hover:bg-slate-200 active:scale-95 text-slate-700 font-bold py-2.5 px-4 rounded-xl text-center text-xs transition-all duration-200 border border-slate-300 flex items-center justify-center gap-1.5">
                         <i class="fa-solid fa-square-poll-vertical text-slate-500"></i> View Results / Review Questions
                     </a>
                 </div>` : ''}
