@@ -1,761 +1,768 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" class="scroll-smooth">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Daily Medical Quiz Platform</title>
-    <!-- Tailwind CSS -->
+    <title>Daily Chapter Quiz Schedule – CEE Medico Nepal</title>
+    <link rel="canonical" href="https://ceemediconepal.xyz/daily-chapter-quiz.html" />
+    <meta name="description" content="View today's live and upcoming daily chapter quiz schedule for CEE medical entrance preparation at CEE Medico Nepal.">
+
+    <link rel="apple-touch-icon" sizes="180x180" href="/fevicon/apple-touch-icon.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="/fevicon/favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="/fevicon/favicon-16x16.png">
+    <link rel="manifest" href="/fevicon/site.webmanifest">
+
+    <!-- Tailwind CSS & Fonts -->
     <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+
+    <!-- Google AdSense & Analytics -->
+    <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-3108357597736981" crossorigin="anonymous"></script>
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-EEKWY5Y4G3"></script>
+    <script>
+        window.dataLayer = window.dataLayer || [];
+        function gtag(){dataLayer.push(arguments);}
+        gtag('js', new Date());
+        gtag('config', 'G-EEKWY5Y4G3');
+    </script>
+
+    <!-- Tailwind Config (matches index.html) -->
     <script>
         tailwind.config = {
             theme: {
                 extend: {
+                    fontFamily: {
+                        sans: ['Plus Jakarta Sans', 'Inter', 'sans-serif'],
+                    },
                     colors: {
-                        brand: {
-                            50: '#f0f4ff',
-                            100: '#e0e7ff',
-                            200: '#c7d2fe',
-                            600: '#4f46e5',
-                            700: '#4338ca',
-                            800: '#3730a3',
-                            900: '#312e81',
+                        medical: {
+                            50: '#f0f9ff',
+                            100: '#e0f2fe',
+                            200: '#bae6fd',
+                            500: '#0ea5e9',
+                            600: '#0284c7',
+                            700: '#0369a1',
+                            950: '#0c4a6e',
+                        },
+                        premium: {
+                            rose: '#f43f5e',
+                            darkRose: '#be123c'
                         }
                     }
                 }
             }
         }
     </script>
-    <!-- FontAwesome Icons -->
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
-</head>
-<body class="bg-slate-50 min-h-screen font-sans text-slate-800 antialiased selection:bg-brand-200">
 
-    <!-- Top Premium Navigation Bar -->
-    <nav class="bg-white border-b border-slate-200 sticky top-0 z-50 shadow-sm backdrop-blur-md bg-white/90">
-        <div class="max-w-5xl mx-auto px-4 py-3 flex justify-between items-center">
-            <div class="flex items-center gap-3">
-                <div class="bg-gradient-to-tr from-brand-600 to-indigo-500 text-white p-2.5 rounded-xl shadow-md shadow-brand-100">
-                    <i class="fa-solid fa-graduation-cap text-xl"></i>
-                </div>
-                <div>
-                    <h1 class="text-lg font-extrabold tracking-tight text-slate-900 leading-tight">MedAcademy</h1>
-                    <p class="text-xs text-slate-500 font-medium">Daily Interactive Assessment</p>
-                </div>
-            </div>
-            
-            <div class="flex items-center gap-3">
-                <div id="liveBadge" class="hidden md:flex items-center gap-1.5 bg-emerald-50 text-emerald-700 border border-emerald-200 px-2.5 py-1 rounded-full text-xs font-semibold animate-pulse">
-                    <span class="w-1.5 h-1.5 rounded-full bg-emerald-600"></span> Live Session
-                </div>
-                <!-- Mini Timer Display -->
-                <div id="quizTimer" class="hidden bg-slate-100 text-slate-700 border border-slate-200 px-3 py-1.5 rounded-xl text-sm font-semibold flex items-center gap-2">
-                    <i class="fa-regular fa-clock text-brand-600"></i>
-                    <span id="timerDisplay">00:00</span>
-                </div>
-            </div>
-        </div>
-    </nav>
-
-    <!-- Main Container Layout -->
-    <main class="max-w-4xl mx-auto p-4 md:p-6 space-y-6">
-        
-        <!-- Live Schedules and Timelines Section -->
-        <section id="scheduleSection" class="hidden">
-            <div class="bg-gradient-to-br from-white to-slate-50 border border-slate-200 rounded-2xl p-5 shadow-sm">
-                <div class="flex items-center justify-between border-b border-slate-100 pb-3 mb-4">
-                    <div class="flex items-center gap-2">
-                        <i class="fa-solid fa-calendar-days text-xl text-brand-600"></i>
-                        <h2 class="text-lg font-bold text-slate-800">Today's Live Scheduled Chapters</h2>
-                    </div>
-                    <span class="text-xs font-semibold text-slate-400">Updates Automatically</span>
-                </div>
-                <div id="scheduleBox" class="grid gap-3 md:grid-cols-2">
-                    <!-- Schedule Items inject dynamically here -->
-                </div>
-            </div>
-        </section>
-
-        <!-- Chapter Quiz Selection Grid -->
-        <section id="catalogSection">
-            <div class="mb-5">
-                <h2 class="text-2xl font-black text-slate-800 tracking-tight">Available Medical Quizzes</h2>
-                <p class="text-slate-500 text-sm">Select any topic below to begin testing your clinical knowledge and reasoning skills.</p>
-            </div>
-            
-            <div id="chapterContainer" class="grid gap-4 sm:grid-cols-2">
-                <!-- Skeleton Loading State or Empty State -->
-                <div class="col-span-full py-12 flex flex-col items-center justify-center text-center bg-white border border-slate-200 rounded-2xl">
-                    <div class="animate-spin rounded-full h-10 w-10 border-b-2 border-brand-600 mb-3"></div>
-                    <p class="text-slate-500 font-medium">Fetching clinical syllabus & quiz documents...</p>
-                </div>
-            </div>
-        </section>
-
-        <!-- Dynamic Live Quiz Board Area -->
-        <section id="quizArea" class="hidden transform transition-all duration-300">
-            <div class="bg-white border border-slate-200 rounded-2xl shadow-lg overflow-hidden">
-                
-                <!-- Quiz Progress Bar Header -->
-                <div class="bg-slate-50 px-6 py-4 border-b border-slate-100">
-                    <div class="flex flex-col md:flex-row md:items-center justify-between gap-3 mb-3">
-                        <div>
-                            <span class="text-xs uppercase tracking-widest font-extrabold text-brand-600" id="quizSubjectLabel">SUBJECT</span>
-                            <h2 id="quizTitle" class="text-xl font-bold text-slate-900 leading-snug">Cardiovascular Physiology</h2>
-                        </div>
-                        <div class="flex items-center gap-4">
-                            <span id="questionCounter" class="bg-brand-50 text-brand-700 font-bold px-3 py-1 rounded-lg text-sm border border-brand-100">
-                                Question 1 of 10
-                            </span>
-                            <span id="score" class="bg-emerald-50 text-emerald-700 font-bold px-3 py-1 rounded-lg text-sm border border-emerald-100">
-                                Score: 0
-                            </span>
-                        </div>
-                    </div>
-                    
-                    <!-- Beautiful fluid progress track -->
-                    <div class="w-full bg-slate-200 rounded-full h-2">
-                        <div id="progressBar" class="bg-gradient-to-r from-brand-600 to-indigo-500 h-2 rounded-full transition-all duration-300" style="width: 10%"></div>
-                    </div>
-                </div>
-
-                <!-- Live Question Workspace -->
-                <div class="p-6 md:p-8">
-                    <div id="questionArea" class="space-y-6">
-                        <!-- Filled in dynamically -->
-                    </div>
-                </div>
-
-                <!-- Control Buttons Footer -->
-                <div class="bg-slate-50 px-6 py-4 border-t border-slate-100 flex items-center justify-between gap-3">
-                    <button id="prevBtn" class="flex items-center gap-2 px-5 py-3 rounded-xl border border-slate-200 text-slate-700 font-bold hover:bg-white hover:text-brand-600 transition disabled:opacity-40 disabled:hover:bg-transparent disabled:hover:text-slate-700" disabled>
-                        <i class="fa-solid fa-arrow-left"></i> Previous
-                    </button>
-                    
-                    <button id="nextBtn" class="flex-1 max-w-xs flex items-center justify-center gap-2 bg-brand-600 hover:bg-brand-700 text-white px-6 py-3 rounded-xl font-bold transition shadow-md shadow-brand-100">
-                        Next <i class="fa-solid fa-arrow-right"></i>
-                    </button>
-                </div>
-            </div>
-
-            <!-- Quiz Abandon Alert -->
-            <div class="text-center mt-4">
-                <button onclick="confirmExitQuiz()" class="text-xs text-red-500 hover:text-red-700 font-semibold hover:underline">
-                    <i class="fa-solid fa-circle-xmark mr-1"></i> Exit this quiz and lose progress
-                </button>
-            </div>
-        </section>
-
-        <!-- Quiz Performance Summary Result Dashboard -->
-        <section id="resultsDashboard" class="hidden">
-            <div class="bg-white border border-slate-200 rounded-3xl p-6 md:p-8 shadow-xl text-center space-y-6 max-w-2xl mx-auto">
-                <div class="inline-flex items-center justify-center w-20 h-20 rounded-full bg-emerald-50 text-emerald-500 border border-emerald-200 shadow-inner">
-                    <i class="fa-solid fa-circle-check text-4xl"></i>
-                </div>
-                
-                <div>
-                    <h2 class="text-3xl font-extrabold text-slate-900">Quiz Completed!</h2>
-                    <p class="text-slate-500 text-sm mt-1">Excellent training! Let's analyze your medical proficiency analytics.</p>
-                </div>
-
-                <!-- Diagnostic Scoreboard Circular/Pill stats -->
-                <div class="grid grid-cols-3 gap-3 bg-slate-50 p-4 rounded-2xl border border-slate-100">
-                    <div class="p-2 border-r border-slate-200">
-                        <span class="block text-xs font-semibold text-slate-400 uppercase tracking-wider">Correct Score</span>
-                        <span id="finalScoreText" class="text-2xl font-black text-brand-600">8/10</span>
-                    </div>
-                    <div class="p-2 border-r border-slate-200">
-                        <span class="block text-xs font-semibold text-slate-400 uppercase tracking-wider">Percentage</span>
-                        <span id="finalPercentText" class="text-2xl font-black text-emerald-600">80%</span>
-                    </div>
-                    <div class="p-2">
-                        <span class="block text-xs font-semibold text-slate-400 uppercase tracking-wider">Time Spent</span>
-                        <span id="finalTimeText" class="text-2xl font-black text-slate-700">01:45</span>
-                    </div>
-                </div>
-
-                <!-- Custom Performance Descriptor -->
-                <div id="gradeBanner" class="p-4 rounded-xl border font-medium text-sm">
-                    <!-- Dynamic evaluation string based on score percentage -->
-                </div>
-
-                <!-- Question Review Section -->
-                <div class="text-left border-t border-slate-200 pt-6">
-                    <h3 class="text-lg font-bold text-slate-800 mb-4 flex items-center gap-2">
-                        <i class="fa-solid fa-receipt text-brand-600"></i> Review Question Breakdown
-                    </h3>
-                    <div id="resultsReviewContainer" class="space-y-4 max-h-96 overflow-y-auto pr-2">
-                        <!-- Questions, student answers, correct answers list -->
-                    </div>
-                </div>
-
-                <div class="pt-4 flex flex-col sm:flex-row gap-3">
-                    <button onclick="restartQuizSession()" class="flex-1 bg-brand-600 hover:bg-brand-700 text-white font-bold py-3 px-6 rounded-xl transition shadow-md shadow-brand-100">
-                        <i class="fa-solid fa-arrows-rotate mr-2"></i> Retake This Quiz
-                    </button>
-                    <button onclick="returnToDashboard()" class="flex-1 bg-slate-100 hover:bg-slate-200 text-slate-800 font-bold py-3 px-6 rounded-xl transition border border-slate-200">
-                        <i class="fa-solid fa-house mr-2"></i> Choose Another Quiz
-                    </button>
-                </div>
-            </div>
-        </section>
-
-    </main>
-
-    <!-- Custom Modal System (Avoiding Alert Popups) -->
-    <div id="customModal" class="hidden fixed inset-0 z-50 overflow-y-auto bg-slate-900/50 backdrop-blur-sm flex items-center justify-center p-4">
-        <div class="bg-white rounded-2xl max-w-md w-full border border-slate-200 shadow-xl overflow-hidden p-6 space-y-4">
-            <div id="modalIconContainer" class="w-12 h-12 rounded-full flex items-center justify-center text-xl"></div>
-            <div>
-                <h3 id="modalTitle" class="text-lg font-bold text-slate-900">Modal Title</h3>
-                <p id="modalDescription" class="text-sm text-slate-500 mt-1">Modal description detailing the message.</p>
-            </div>
-            <div class="flex gap-2 justify-end pt-2">
-                <button id="modalSecondaryBtn" class="px-4 py-2 border border-slate-200 rounded-lg text-slate-700 font-semibold text-sm hover:bg-slate-50 transition"></button>
-                <button id="modalPrimaryBtn" class="px-4 py-2 text-white font-semibold text-sm rounded-lg transition"></button>
-            </div>
-        </div>
-    </div>
-
-    <!-- Live Toast Message Queue -->
-    <div id="toastContainer" class="fixed bottom-5 right-5 z-50 flex flex-col gap-2"></div>
-
-    <script type="module">
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
-        import { getFirestore, collection, getDocs, doc, getDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
-
-        // Firebase configuration matching system specs
-        const firebaseConfig = {  
-            apiKey: "AIzaSyBjm8uaVMdylGg3-YKdEKKV6DDbRkaxjiE",  
-            authDomain: "daily-quiz-a29e8.firebaseapp.com",  
-            databaseURL: "https://daily-quiz-a29e8-default-rtdb.asia-southeast1.firebasedatabase.app",  
-            projectId: "daily-quiz-a29e8",  
-            storageBucket: "daily-quiz-a29e8.firebasestorage.app",  
-            messagingSenderId: "886784418732",  
-            appId: "1:886784418732:web:0ad368df36f7187d2b1009"
-        };
-
-        const app = initializeApp(firebaseConfig);
-        const db = getFirestore(app);
-        const appId = "daily-quiz-a29e8";
-
-        // Global Strict Collection Paths (Rule 1 compliance)
-        const QUIZ_PATH = `artifacts/${appId}/public/data/quizzes`;
-        const SCHEDULE_PATH = `artifacts/${appId}/public/data/schedules`;
-
-        // Interactive States
-        let loadedQuizDoc = null;
-        let currentQuizData = []; // Main quiz questions array
-        let userResponses = [];   // Stores selected answers indices: [0, 2, -1, 1, ...]
-        let currentQuestionIndex = 0;
-        let originalQuizId = "";
-
-        // Performance Analytics Tracking
-        let startTime = 0;
-        let timerInterval = null;
-        let score = 0;
-
-        // UI DOM Access Elements
-        const chapterContainer = document.getElementById('chapterContainer');
-        const scheduleSection = document.getElementById('scheduleSection');
-        const scheduleBox = document.getElementById('scheduleBox');
-        const quizArea = document.getElementById('quizArea');
-        const catalogSection = document.getElementById('catalogSection');
-        const resultsDashboard = document.getElementById('resultsDashboard');
-        const resultsReviewContainer = document.getElementById('resultsReviewContainer');
-        
-        const quizTitle = document.getElementById('quizTitle');
-        const quizSubjectLabel = document.getElementById('quizSubjectLabel');
-        const questionCounter = document.getElementById('questionCounter');
-        const scoreBox = document.getElementById('score');
-        const progressBar = document.getElementById('progressBar');
-        const questionArea = document.getElementById('questionArea');
-        
-        const prevBtn = document.getElementById('prevBtn');
-        const nextBtn = document.getElementById('nextBtn');
-        const quizTimer = document.getElementById('quizTimer');
-        const timerDisplay = document.getElementById('timerDisplay');
-
-        // Custom UI Modal Logic (No native alert fallback)
-        function showCustomModal({ title, message, iconClass, iconBgClass, primaryText, primaryClass, secondaryText, onPrimary, onSecondary }) {
-            const modal = document.getElementById('customModal');
-            const iconCont = document.getElementById('modalIconContainer');
-            document.getElementById('modalTitle').textContent = title;
-            document.getElementById('modalDescription').textContent = message;
-            
-            iconCont.className = `w-12 h-12 rounded-full flex items-center justify-center text-xl ${iconBgClass}`;
-            iconCont.innerHTML = `<i class="${iconClass}"></i>`;
-
-            const primaryBtn = document.getElementById('modalPrimaryBtn');
-            primaryBtn.textContent = primaryText;
-            primaryBtn.className = `px-5 py-2.5 text-white font-bold text-sm rounded-xl transition ${primaryClass}`;
-            
-            const secondaryBtn = document.getElementById('modalSecondaryBtn');
-            if (secondaryText) {
-                secondaryBtn.textContent = secondaryText;
-                secondaryBtn.classList.remove('hidden');
-            } else {
-                secondaryBtn.classList.add('hidden');
-            }
-
-            modal.classList.remove('hidden');
-
-            primaryBtn.onclick = () => {
-                modal.classList.add('hidden');
-                if (onPrimary) onPrimary();
-            };
-
-            secondaryBtn.onclick = () => {
-                modal.classList.add('hidden');
-                if (onSecondary) onSecondary();
-            };
+    <style>
+        /* Glassmorphic Navbar shadow */
+        .scrolled-header {
+            background-color: rgba(255, 255, 255, 0.85) !important;
+            backdrop-filter: blur(12px);
+            box-shadow: 0 4px 30px rgba(0, 0, 0, 0.03);
+            border-bottom: 1px solid rgba(14, 165, 233, 0.1);
+        }
+        /* Shimmer effect */
+        .shimmer-btn {
+            position: relative;
+            overflow: hidden;
+        }
+        .shimmer-btn::after {
+            content: '';
+            position: absolute;
+            top: -50%; left: -50%;
+            width: 200%; height: 200%;
+            background: linear-gradient(45deg, transparent, rgba(255,255,255,0.2), transparent);
+            transform: rotate(45deg);
+            transition: 0.5s;
+            opacity: 0;
+        }
+        .shimmer-btn:hover::after {
+            opacity: 1;
+            left: 120%;
+            transition: all 0.8s ease-in-out;
         }
 
-        // Custom Toast UI
+        /* Fade-in animation */
+        @keyframes fadeInUp {
+            from { opacity: 0; transform: translateY(20px); }
+            to   { opacity: 1; transform: translateY(0); }
+        }
+        .fade-in-up {
+            animation: fadeInUp 0.5s ease forwards;
+        }
+
+        /* Pulse ring for LIVE badge */
+        @keyframes pulseRing {
+            0%   { box-shadow: 0 0 0 0 rgba(16,185,129,0.4); }
+            70%  { box-shadow: 0 0 0 8px rgba(16,185,129,0); }
+            100% { box-shadow: 0 0 0 0 rgba(16,185,129,0); }
+        }
+        .live-ring { animation: pulseRing 1.5s infinite; }
+
+        /* Hero gradient background */
+        .hero-bg {
+            background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 40%, #f8fafc 100%);
+        }
+
+        /* Schedule card hover lift */
+        .schedule-card {
+            transition: transform 0.25s ease, box-shadow 0.25s ease;
+        }
+        .schedule-card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 12px 32px rgba(14,165,233,0.10);
+        }
+
+        /* Countdown segment */
+        .countdown-seg {
+            background: linear-gradient(135deg, #0ea5e9, #0369a1);
+            border-radius: 10px;
+            color: white;
+            min-width: 52px;
+            text-align: center;
+            padding: 8px 6px 4px;
+        }
+
+        /* Skeleton shimmer */
+        @keyframes shimmer {
+            0%   { background-position: -400px 0; }
+            100% { background-position: 400px 0; }
+        }
+        .skeleton {
+            background: linear-gradient(90deg, #e2e8f0 25%, #f1f5f9 50%, #e2e8f0 75%);
+            background-size: 400px 100%;
+            animation: shimmer 1.4s ease infinite;
+            border-radius: 10px;
+        }
+
+        /* Filter tab active */
+        .filter-tab.active {
+            background: #0ea5e9;
+            color: white;
+        }
+        .filter-tab {
+            transition: all 0.2s;
+        }
+    </style>
+</head>
+<body class="bg-[#f8fafc] text-medical-950 font-sans antialiased overflow-x-hidden">
+
+    <!-- Floating WhatsApp Button -->
+    <button id="chatFab" aria-label="Chat on WhatsApp"
+        class="fixed bottom-6 right-6 w-14 h-14 bg-[#25D366] text-white rounded-full flex items-center justify-center text-3xl shadow-[0_8px_30px_rgb(37,211,102,0.4)] hover:shadow-[0_8px_30px_rgb(37,211,102,0.6)] hover:scale-110 active:scale-95 transition-all duration-300 z-50 cursor-pointer group">
+        <i class="fab fa-whatsapp group-hover:rotate-12 transition-transform"></i>
+        <span class="absolute right-16 bg-[#128C7E] text-white text-xs font-semibold px-3 py-1.5 rounded-lg opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap shadow-md pointer-events-none">Get Instant Support!</span>
+    </button>
+
+    <!-- ===================== HEADER (from index.html) ===================== -->
+    <header class="sticky top-0 w-full bg-white/90 backdrop-blur-md z-40 transition-all duration-300 border-b border-medical-100" id="mainHeader">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex items-center justify-between h-20">
+
+                <!-- Logo -->
+                <a href="index.html" class="flex items-center gap-3 group">
+                    <div class="relative w-11 h-11 bg-medical-500 rounded-xl flex items-center justify-center text-white font-black text-xl shadow-lg shadow-medical-500/20 group-hover:scale-105 transition-transform overflow-hidden">
+                        <img src="Logo.png" alt="Logo" class="w-full h-full object-cover" onerror="this.style.display='none'; document.getElementById('logoFallback').style.display='flex'">
+                        <div id="logoFallback" class="hidden absolute inset-0 items-center justify-center bg-gradient-to-tr from-medical-600 to-medical-500 font-extrabold text-white text-lg">CM</div>
+                    </div>
+                    <div>
+                        <h1 class="text-lg sm:text-xl font-extrabold text-medical-950 tracking-tight group-hover:text-medical-500 transition-colors">CEE Medico <span class="text-medical-500">Nepal</span></h1>
+                        <p class="text-[10px] sm:text-[11px] font-bold text-slate-400 tracking-wider uppercase">MBBS ENTRANCE PREP</p>
+                    </div>
+                </a>
+
+                <!-- Desktop Nav -->
+                <nav class="hidden md:flex items-center gap-8">
+                    <a href="index.html" class="text-sm font-semibold text-slate-600 hover:text-medical-500 transition-colors relative after:absolute after:bottom-[-4px] after:left-0 after:w-0 after:h-[2px] after:bg-medical-500 hover:after:w-full after:transition-all">Home</a>
+
+                    <div class="relative group">
+                        <button class="flex items-center gap-1 text-sm font-semibold text-slate-600 hover:text-medical-500 transition-colors">
+                            CEE Subjects <i class="fa-solid fa-chevron-down text-[10px] group-hover:rotate-180 transition-transform duration-200"></i>
+                        </button>
+                        <div class="absolute top-full left-1/2 -translate-x-1/2 mt-2 w-48 bg-white border border-slate-100 rounded-xl shadow-xl py-2 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-300 transform scale-95 group-hover:scale-100 z-50">
+                            <a href="physics.html" class="block px-4 py-2 text-sm text-slate-700 hover:bg-medical-50 hover:text-medical-500 transition-colors font-medium">Physics</a>
+                            <a href="chemistry.html" class="block px-4 py-2 text-sm text-slate-700 hover:bg-medical-50 hover:text-medical-500 transition-colors font-medium">Chemistry</a>
+                            <a href="botany.html" class="block px-4 py-2 text-sm text-slate-700 hover:bg-medical-50 hover:text-medical-500 transition-colors font-medium">Botany</a>
+                            <a href="zoology.html" class="block px-4 py-2 text-sm text-slate-700 hover:bg-medical-50 hover:text-medical-500 transition-colors font-medium">Zoology</a>
+                            <a href="mat.html" class="block px-4 py-2 text-sm text-slate-700 hover:bg-medical-50 hover:text-medical-500 transition-colors font-medium">MAT</a>
+                        </div>
+                    </div>
+
+                    <a href="/mbbs/mbbs-mock-test.html" class="text-sm font-semibold text-slate-600 hover:text-medical-500 transition-colors">MBBS-PG Quiz</a>
+                    <a href="Blog/blog.html" class="text-sm font-semibold text-slate-600 hover:text-medical-500 transition-colors">Blog</a>
+                    <a href="contact.html" class="text-sm font-semibold text-slate-600 hover:text-medical-500 transition-colors">Contact</a>
+                    <a href="/secure/login.html" class="shimmer-btn inline-flex items-center justify-center bg-medical-500 hover:bg-medical-600 text-white text-sm font-bold px-5 py-2.5 rounded-xl shadow-md shadow-medical-500/10 hover:shadow-medical-500/20 active:scale-95 transition-all">
+                        <i class="fa-solid fa-right-to-bracket mr-2"></i> Login
+                    </a>
+                </nav>
+
+                <!-- Mobile Menu Button -->
+                <button id="mobileMenuBtn" aria-label="Toggle menu" class="md:hidden p-2 rounded-xl text-slate-600 hover:bg-slate-100 hover:text-medical-500 transition-colors focus:outline-none">
+                    <i class="fas fa-bars text-2xl" id="menuIcon"></i>
+                </button>
+            </div>
+        </div>
+
+        <!-- Mobile Drawer -->
+        <div id="mobileDrawer" class="hidden md:hidden fixed inset-x-0 top-20 bg-white border-b border-slate-100 shadow-xl py-6 px-4 space-y-4 max-h-[calc(100vh-5rem)] overflow-y-auto z-40">
+            <a href="index.html" class="block text-base font-bold text-slate-700 hover:text-medical-500 px-3 py-2 rounded-lg hover:bg-slate-50 transition-colors">Home</a>
+            <div class="px-3">
+                <p class="text-xs font-semibold text-slate-400 uppercase tracking-widest mb-2">CEE Subjects</p>
+                <div class="grid grid-cols-2 gap-2">
+                    <a href="physics.html" class="block bg-slate-50 hover:bg-medical-50 text-slate-700 hover:text-medical-500 p-2.5 rounded-lg font-semibold text-sm transition-colors">Physics</a>
+                    <a href="chemistry.html" class="block bg-slate-50 hover:bg-medical-50 text-slate-700 hover:text-medical-500 p-2.5 rounded-lg font-semibold text-sm transition-colors">Chemistry</a>
+                    <a href="botany.html" class="block bg-slate-50 hover:bg-medical-50 text-slate-700 hover:text-medical-500 p-2.5 rounded-lg font-semibold text-sm transition-colors">Botany</a>
+                    <a href="zoology.html" class="block bg-slate-50 hover:bg-medical-50 text-slate-700 hover:text-medical-500 p-2.5 rounded-lg font-semibold text-sm transition-colors">Zoology</a>
+                    <a href="mat.html" class="block bg-slate-50 hover:bg-medical-50 text-slate-700 hover:text-medical-500 p-2.5 rounded-lg font-semibold text-sm transition-all col-span-2 text-center">Mental Ability (MAT)</a>
+                </div>
+            </div>
+            <a href="/mbbs/mbbs-mock-test.html" class="block text-base font-bold text-slate-700 hover:text-medical-500 px-3 py-2 rounded-lg hover:bg-slate-50 transition-colors">MBBS-PG Quiz</a>
+            <a href="Blog/blog.html" class="block text-base font-bold text-slate-700 hover:text-medical-500 px-3 py-2 rounded-lg hover:bg-slate-50 transition-colors">Medical Blog</a>
+            <a href="contact.html" class="block text-base font-bold text-slate-700 hover:text-medical-500 px-3 py-2 rounded-lg hover:bg-slate-50 transition-colors">Contact</a>
+            <a href="/secure/login.html" class="block text-center bg-medical-500 hover:bg-medical-600 text-white font-bold py-3 rounded-xl shadow-lg transition-colors">
+                <i class="fa-solid fa-right-to-bracket mr-2"></i> Login to Premium
+            </a>
+        </div>
+    </header>
+    <!-- ================== END HEADER ================== -->
+
+
+    <!-- ===================== HERO BANNER ===================== -->
+    <section class="hero-bg border-b border-medical-100 py-10 sm:py-14 relative overflow-hidden">
+        <!-- Decorative blobs -->
+        <div class="absolute top-0 left-0 w-64 h-64 bg-medical-200 rounded-full mix-blend-multiply filter blur-3xl opacity-20 pointer-events-none -translate-x-1/2 -translate-y-1/2"></div>
+        <div class="absolute bottom-0 right-0 w-72 h-72 bg-indigo-200 rounded-full mix-blend-multiply filter blur-3xl opacity-20 pointer-events-none translate-x-1/2 translate-y-1/2"></div>
+
+        <div class="max-w-5xl mx-auto px-4 sm:px-6 relative">
+            <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-5">
+                <div>
+                    <!-- Breadcrumb -->
+                    <nav class="flex items-center gap-1.5 text-xs font-semibold text-slate-400 mb-3">
+                        <a href="index.html" class="hover:text-medical-500 transition-colors">Home</a>
+                        <i class="fa-solid fa-chevron-right text-[9px]"></i>
+                        <span class="text-medical-600">Daily Quiz Schedule</span>
+                    </nav>
+
+                    <div class="flex items-center gap-3 mb-2">
+                        <div class="w-10 h-10 bg-medical-500 rounded-xl flex items-center justify-center text-white shadow-lg shadow-medical-500/25">
+                            <i class="fa-solid fa-calendar-days text-lg"></i>
+                        </div>
+                        <h1 class="text-2xl sm:text-3xl font-black text-slate-900 tracking-tight">Daily Chapter Quiz<br class="sm:hidden"> <span class="text-medical-500">Schedule</span></h1>
+                    </div>
+                    <p class="text-slate-500 text-sm font-medium max-w-lg leading-relaxed">
+                        Track all live and upcoming quiz sessions scheduled by your instructors. Join at the right time — never miss a session.
+                    </p>
+                </div>
+
+                <!-- Live indicator + clock -->
+                <div class="flex flex-col items-start sm:items-end gap-2 shrink-0">
+                    <div id="globalLiveBadge" class="hidden items-center gap-2 bg-emerald-500 text-white px-4 py-2 rounded-full text-xs font-extrabold uppercase tracking-widest live-ring">
+                        <span class="w-2 h-2 rounded-full bg-white animate-ping inline-block"></span>
+                        Live Sessions Active
+                    </div>
+                    <div class="flex items-center gap-2 text-xs font-bold text-slate-500 bg-white border border-slate-200 px-3 py-2 rounded-xl shadow-sm">
+                        <i class="fa-regular fa-clock text-medical-500"></i>
+                        <span id="liveClock">--:--:--</span>
+                        <span class="text-slate-300">|</span>
+                        <span id="liveDate" class="font-semibold text-slate-500"></span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Filter Tabs -->
+            <div class="mt-7 flex items-center gap-2 flex-wrap">
+                <span class="text-xs font-bold text-slate-400 uppercase tracking-widest mr-1">Filter:</span>
+                <button class="filter-tab active text-xs font-bold px-4 py-1.5 rounded-full border border-slate-200 bg-white text-slate-600" data-filter="all">All Sessions</button>
+                <button class="filter-tab text-xs font-bold px-4 py-1.5 rounded-full border border-slate-200 bg-white text-slate-600" data-filter="live">🟢 Live Now</button>
+                <button class="filter-tab text-xs font-bold px-4 py-1.5 rounded-full border border-slate-200 bg-white text-slate-600" data-filter="upcoming">🟡 Upcoming</button>
+                <button class="filter-tab text-xs font-bold px-4 py-1.5 rounded-full border border-slate-200 bg-white text-slate-600" data-filter="closed">⚫ Closed</button>
+            </div>
+        </div>
+    </section>
+
+
+    <!-- ===================== MAIN CONTENT ===================== -->
+    <main class="max-w-5xl mx-auto px-4 sm:px-6 py-10 space-y-8">
+
+        <!-- Summary Stats Bar -->
+        <div id="statsBar" class="hidden grid grid-cols-3 gap-3 sm:gap-5">
+            <div class="bg-white rounded-2xl border border-slate-100 shadow-sm p-4 text-center">
+                <div class="text-2xl font-black text-emerald-600" id="statLive">0</div>
+                <div class="text-[11px] font-bold text-slate-400 uppercase tracking-widest mt-0.5">Live Now</div>
+            </div>
+            <div class="bg-white rounded-2xl border border-slate-100 shadow-sm p-4 text-center">
+                <div class="text-2xl font-black text-amber-500" id="statUpcoming">0</div>
+                <div class="text-[11px] font-bold text-slate-400 uppercase tracking-widest mt-0.5">Upcoming</div>
+            </div>
+            <div class="bg-white rounded-2xl border border-slate-100 shadow-sm p-4 text-center">
+                <div class="text-2xl font-black text-slate-400" id="statClosed">0</div>
+                <div class="text-[11px] font-bold text-slate-400 uppercase tracking-widest mt-0.5">Closed</div>
+            </div>
+        </div>
+
+        <!-- Schedule Grid -->
+        <section id="scheduleSection">
+
+            <!-- Loading Skeletons -->
+            <div id="loadingState" class="grid gap-4 sm:grid-cols-2">
+                <div class="skeleton h-44 w-full"></div>
+                <div class="skeleton h-44 w-full"></div>
+                <div class="skeleton h-44 w-full"></div>
+                <div class="skeleton h-44 w-full"></div>
+            </div>
+
+            <!-- Empty State -->
+            <div id="emptyState" class="hidden flex flex-col items-center justify-center text-center py-20 bg-white rounded-2xl border border-dashed border-slate-200 shadow-sm">
+                <div class="w-20 h-20 bg-slate-50 rounded-full flex items-center justify-center text-3xl text-slate-300 mb-4 border border-slate-100">
+                    <i class="fa-regular fa-calendar-xmark"></i>
+                </div>
+                <h3 class="text-lg font-bold text-slate-700">No Sessions Scheduled</h3>
+                <p class="text-sm text-slate-400 mt-1 max-w-xs">Your instructors haven't added any quiz schedules yet. Check back soon!</p>
+            </div>
+
+            <!-- No results after filter -->
+            <div id="noFilterResult" class="hidden flex flex-col items-center justify-center text-center py-16 bg-white rounded-2xl border border-slate-100 shadow-sm">
+                <div class="w-16 h-16 bg-medical-50 rounded-full flex items-center justify-center text-2xl text-medical-300 mb-3">
+                    <i class="fa-solid fa-filter-circle-xmark"></i>
+                </div>
+                <h3 class="text-base font-bold text-slate-700">No sessions match this filter</h3>
+                <button class="mt-3 text-xs font-bold text-medical-500 underline" onclick="applyFilter('all')">Show all sessions</button>
+            </div>
+
+            <!-- Cards Grid -->
+            <div id="scheduleGrid" class="hidden grid gap-4 sm:grid-cols-2"></div>
+        </section>
+
+        <!-- Info Notice -->
+        <div class="bg-medical-50 border border-medical-100 rounded-2xl p-4 flex items-start gap-3">
+            <div class="w-8 h-8 bg-medical-500/10 rounded-lg flex items-center justify-center shrink-0 mt-0.5">
+                <i class="fa-solid fa-circle-info text-medical-500 text-sm"></i>
+            </div>
+            <div>
+                <p class="text-sm font-bold text-medical-900">Schedule updates automatically in real-time</p>
+                <p class="text-xs text-medical-700/70 mt-0.5 leading-relaxed">This page listens live to the database. Any new session added by your instructor appears instantly — no need to refresh. Times shown are in your local timezone.</p>
+            </div>
+        </div>
+
+    </main>
+    <!-- ================== END MAIN ================== -->
+
+
+    <!-- ===================== FOOTER (from index.html) ===================== -->
+    <footer class="bg-slate-900 text-slate-300 pt-20 pb-10 border-t border-slate-800 relative">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="grid grid-cols-1 md:grid-cols-4 gap-12 mb-16">
+
+                <!-- Col 1: Bio -->
+                <div class="space-y-4">
+                    <div class="flex items-center gap-3">
+                        <div class="w-10 h-10 bg-gradient-to-tr from-medical-600 to-medical-500 rounded-xl flex items-center justify-center font-bold text-white text-lg">CM</div>
+                        <h3 class="text-lg font-black text-white">CEE Medico Nepal</h3>
+                    </div>
+                    <p class="text-slate-400 text-sm leading-relaxed">
+                        Nepal's leading premium online platform for medical and engineering competitive entrance diagnostics.
+                    </p>
+                    <div class="flex items-center gap-3 pt-2">
+                        <a href="https://www.facebook.com/techgy.shyamsundar" class="w-9 h-9 bg-slate-800 hover:bg-medical-500 hover:text-white rounded-lg flex items-center justify-center text-sm transition-all"><i class="fab fa-facebook-f"></i></a>
+                        <a href="https://www.instagram.com/shyamsundar98122/" class="w-9 h-9 bg-slate-800 hover:bg-pink-500 hover:text-white rounded-lg flex items-center justify-center text-sm transition-all"><i class="fab fa-instagram"></i></a>
+                        <a href="https://www.youtube.com/@ceemediconepal" class="w-9 h-9 bg-slate-800 hover:bg-rose-500 hover:text-white rounded-lg flex items-center justify-center text-sm transition-all"><i class="fab fa-youtube"></i></a>
+                    </div>
+                </div>
+
+                <!-- Col 2: Syllabus -->
+                <div class="space-y-4">
+                    <h3 class="text-sm font-extrabold text-white uppercase tracking-widest">Syllabus Practice</h3>
+                    <ul class="space-y-2.5 text-sm font-medium">
+                        <li><a href="physics.html" class="hover:text-medical-400 transition-colors">Physics Question Sets</a></li>
+                        <li><a href="chemistry.html" class="hover:text-medical-400 transition-colors">Chemistry Chapter Banks</a></li>
+                        <li><a href="botany.html" class="hover:text-medical-400 transition-colors">Botany Practice Sheets</a></li>
+                        <li><a href="zoology.html" class="hover:text-medical-400 transition-colors">Zoology Bio Prep</a></li>
+                        <li><a href="mat.html" class="hover:text-medical-400 transition-colors">MAT Mock Tests</a></li>
+                    </ul>
+                </div>
+
+                <!-- Col 3: Navigation -->
+                <div class="space-y-4">
+                    <h3 class="text-sm font-extrabold text-white uppercase tracking-widest">Quick Navigation</h3>
+                    <ul class="space-y-2.5 text-sm font-medium">
+                        <li><a href="index.html" class="hover:text-medical-400 transition-colors">Home Dashboard</a></li>
+                        <li><a href="privacy.html" class="hover:text-medical-400 transition-colors">Privacy & Guidelines</a></li>
+                        <li><a href="Blog/blog.html" class="hover:text-medical-400 transition-colors">Medical Blog</a></li>
+                        <li><a href="contact.html" class="hover:text-medical-400 transition-colors">Contact Support</a></li>
+                        <li><a href="usmle.html" class="hover:text-medical-400 transition-colors">USMLE prep resources</a></li>
+                    </ul>
+                </div>
+
+                <!-- Col 4: Contact -->
+                <div class="space-y-4">
+                    <h3 class="text-sm font-extrabold text-white uppercase tracking-widest">Contact Support</h3>
+                    <ul class="space-y-3 text-sm text-slate-400">
+                        <li class="flex items-start gap-2.5">
+                            <i class="fas fa-map-marker-alt text-medical-500 mt-1"></i>
+                            <span>Kathmandu, Nepal</span>
+                        </li>
+                        <li class="flex items-start gap-2.5">
+                            <i class="fas fa-phone text-medical-500 mt-1"></i>
+                            <span>+977 9812240229</span>
+                        </li>
+                        <li class="flex items-start gap-2.5">
+                            <i class="fas fa-envelope text-medical-500 mt-1"></i>
+                            <a href="mailto:avik96045@gmail.com" class="hover:text-white transition-colors break-all">avik96045@gmail.com</a>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+
+            <!-- Copyright -->
+            <div class="pt-8 border-t border-slate-800 text-center text-xs text-slate-500 flex flex-col sm:flex-row justify-between items-center gap-4">
+                <p>© 2026 CEE Medico Nepal. All Rights Reserved. Mastered with Medical Excellence.</p>
+                <div class="flex gap-4">
+                    <a href="privacy.html" class="hover:text-slate-300">Privacy Policy</a>
+                    <span class="text-slate-700">|</span>
+                    <a href="contact.html" class="hover:text-slate-300">Terms of Use</a>
+                </div>
+            </div>
+        </div>
+    </footer>
+    <!-- ================== END FOOTER ================== -->
+
+
+    <!-- Toast Container -->
+    <div id="toastContainer" class="fixed bottom-20 right-5 z-50 flex flex-col gap-2"></div>
+
+
+    <!-- ===================== SCRIPTS ===================== -->
+
+    <!-- Header JS (mobile menu + scroll shadow) -->
+    <script>
+        // Mobile drawer
+        const mobileMenuBtn = document.getElementById('mobileMenuBtn');
+        const mobileDrawer  = document.getElementById('mobileDrawer');
+        const menuIcon      = document.getElementById('menuIcon');
+
+        mobileMenuBtn.addEventListener('click', () => {
+            const isHidden = mobileDrawer.classList.toggle('hidden');
+            menuIcon.className = isHidden ? "fas fa-bars text-2xl" : "fas fa-times text-2xl";
+        });
+        document.querySelectorAll('#mobileDrawer a').forEach(link => {
+            link.addEventListener('click', () => {
+                mobileDrawer.classList.add('hidden');
+                menuIcon.className = "fas fa-bars text-2xl";
+            });
+        });
+
+        // Sticky glassmorphic header
+        const mainHeader = document.getElementById('mainHeader');
+        window.addEventListener('scroll', () => {
+            mainHeader.classList.toggle('scrolled-header', window.scrollY > 20);
+        });
+
+        // WhatsApp FAB
+        document.getElementById('chatFab').addEventListener('click', () => {
+            window.open('https://wa.me/9779812240229', '_blank');
+        });
+
+        // Live clock
+        function updateClock() {
+            const now = new Date();
+            document.getElementById('liveClock').textContent = now.toLocaleTimeString();
+            document.getElementById('liveDate').textContent  = now.toLocaleDateString('en-US', { weekday:'short', month:'short', day:'numeric' });
+        }
+        updateClock();
+        setInterval(updateClock, 1000);
+
+        // Toast utility
         function showToast(message, type = 'info') {
             const container = document.getElementById('toastContainer');
             const toast = document.createElement('div');
-            toast.className = `flex items-center gap-3 p-4 rounded-xl border shadow-lg transform transition-all duration-300 translate-y-2 opacity-0 max-w-sm w-full bg-white `;
-            
-            let colorClasses = 'border-slate-200 text-slate-800';
+            let colorClass = 'border-slate-200 bg-white text-slate-800';
             let icon = '<i class="fa-solid fa-circle-info text-blue-500"></i>';
-            if (type === 'success') {
-                colorClasses = 'border-emerald-100 bg-emerald-50 text-emerald-900';
-                icon = '<i class="fa-solid fa-circle-check text-emerald-500"></i>';
-            } else if (type === 'error') {
-                colorClasses = 'border-red-100 bg-red-50 text-red-900';
-                icon = '<i class="fa-solid fa-circle-exclamation text-red-500"></i>';
-            }
+            if (type === 'success') { colorClass = 'border-emerald-100 bg-emerald-50 text-emerald-900'; icon = '<i class="fa-solid fa-circle-check text-emerald-500"></i>'; }
+            if (type === 'error')   { colorClass = 'border-red-100 bg-red-50 text-red-900'; icon = '<i class="fa-solid fa-circle-exclamation text-red-500"></i>'; }
 
-            toast.className += colorClasses;
-            toast.innerHTML = `
-                <div class="text-lg">${icon}</div>
-                <div class="text-xs font-semibold flex-1">${message}</div>
-                <button class="text-slate-400 hover:text-slate-600" onclick="this.parentElement.remove()"><i class="fa-solid fa-xmark"></i></button>
-            `;
+            toast.className = `flex items-center gap-3 p-4 rounded-xl border shadow-lg transform transition-all duration-300 translate-y-2 opacity-0 max-w-sm w-full ${colorClass}`;
+            toast.innerHTML = `<div class="text-lg">${icon}</div><div class="text-xs font-semibold flex-1">${message}</div><button class="text-slate-400 hover:text-slate-600" onclick="this.parentElement.remove()"><i class="fa-solid fa-xmark"></i></button>`;
             container.appendChild(toast);
-            
-            // Trigger animation
-            setTimeout(() => {
-                toast.classList.remove('translate-y-2', 'opacity-0');
-            }, 10);
-
-            // Self cleanup
-            setTimeout(() => {
-                toast.classList.add('translate-y-2', 'opacity-0');
-                setTimeout(() => toast.remove(), 300);
-            }, 4000);
+            setTimeout(() => toast.classList.remove('translate-y-2','opacity-0'), 10);
+            setTimeout(() => { toast.classList.add('translate-y-2','opacity-0'); setTimeout(() => toast.remove(), 300); }, 5000);
         }
+    </script>
 
-        // Timer controller
-        function startQuizTimer() {
-            startTime = Date.now();
-            quizTimer.classList.remove('hidden');
-            quizTimer.classList.add('flex');
-            
-            if (timerInterval) clearInterval(timerInterval);
-            timerInterval = setInterval(() => {
-                const totalSeconds = Math.floor((Date.now() - startTime) / 1000);
-                const minutes = Math.floor(totalSeconds / 60).toString().padStart(2, '0');
-                const seconds = (totalSeconds % 60).toString().padStart(2, '0');
-                timerDisplay.innerText = `${minutes}:${seconds}`;
-            }, 1000);
-        }
+    <!-- Firebase + Schedule Logic -->
+    <script type="module">
+        import { initializeApp }   from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+        import { getFirestore, collection, onSnapshot } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
-        function stopQuizTimer() {
-            if (timerInterval) clearInterval(timerInterval);
-            return timerDisplay.innerText;
-        }
-
-        // Load schedule documents (Simple query, Rule 2 compliance)
-        async function loadSchedules() {
-            try {
-                // Implementing real-time listeners with proper error handling callback
-                const queryRef = collection(db, SCHEDULE_PATH);
-                onSnapshot(queryRef, (snap) => {
-                    if (snap.empty) {
-                        scheduleSection.classList.add('hidden');
-                        return;
-                    }
-                    
-                    let html = '';
-                    const now = new Date();
-                    let liveCount = 0;
-
-                    snap.forEach(docSnap => {
-                        const data = docSnap.data();
-                        const openDate = new Date(data.openTime);
-                        const closeDate = new Date(data.closeTime);
-                        
-                        let status = "Closed";
-                        let statusBadge = "bg-slate-100 text-slate-500 border-slate-200";
-                        let outlineBorder = "border-slate-200 bg-white";
-                        
-                        if (now >= openDate && now <= closeDate) {
-                            status = "LIVE NOW";
-                            statusBadge = "bg-emerald-100 text-emerald-800 border-emerald-200 font-extrabold animate-pulse";
-                            outlineBorder = "border-emerald-300 bg-gradient-to-tr from-emerald-50/40 to-white shadow-md shadow-emerald-50";
-                            liveCount++;
-                        } else if (now < openDate) {
-                            status = "Upcoming";
-                            statusBadge = "bg-amber-100 text-amber-800 border-amber-200 font-semibold";
-                        }
-
-                        html += `
-                        <div class="border rounded-xl p-4 transition duration-300 flex flex-col justify-between ${outlineBorder}">
-                            <div>
-                                <div class="flex items-center justify-between gap-2 mb-2">
-                                    <span class="text-xs font-bold text-indigo-600 bg-indigo-50 px-2 py-0.5 rounded-md uppercase tracking-wider">${data.subject || 'Medical'}</span>
-                                    <span class="text-[10px] px-2 py-0.5 border rounded-full font-bold uppercase tracking-widest ${statusBadge}">${status}</span>
-                                </div>
-                                <h3 class="font-bold text-slate-800 text-base leading-tight">${data.topic}</h3>
-                            </div>
-                            
-                            <div class="mt-4 pt-3 border-t border-slate-100 flex flex-col gap-1 text-[11px] text-slate-500 font-medium">
-                                <div class="flex items-center gap-1.5"><i class="fa-solid fa-play text-emerald-500"></i> Open: ${openDate.toLocaleString()}</div>
-                                <div class="flex items-center gap-1.5"><i class="fa-solid fa-stop text-red-400"></i> Close: ${closeDate.toLocaleString()}</div>
-                            </div>
-                        </div>
-                        `;
-                    });
-
-                    if (liveCount > 0) {
-                        document.getElementById('liveBadge').classList.remove('hidden');
-                        document.getElementById('liveBadge').classList.add('flex');
-                    } else {
-                        document.getElementById('liveBadge').classList.add('hidden');
-                    }
-
-                    scheduleBox.innerHTML = html;
-                    scheduleSection.classList.remove('hidden');
-                }, (error) => {
-                    console.error("Schedule load failed:", error);
-                    showToast("Failed to load topic schedules automatically.", "error");
-                });
-            } catch (err) {
-                console.error("Schedule setup error: ", err);
-            }
-        }
-
-        // Loads Available Quizzes dynamically
-        async function loadChapters() {
-            try {
-                const queryRef = collection(db, QUIZ_PATH);
-                onSnapshot(queryRef, (snap) => {
-                    if (snap.empty) {
-                        chapterContainer.innerHTML = `
-                        <div class="col-span-full py-12 flex flex-col items-center justify-center text-center bg-white border border-dashed border-slate-200 rounded-2xl">
-                            <div class="bg-slate-50 text-slate-400 w-16 h-16 rounded-full flex items-center justify-center text-2xl mb-3 border border-slate-100">
-                                <i class="fa-solid fa-box-open"></i>
-                            </div>
-                            <h3 class="font-bold text-slate-800 text-lg">No Quizzes Listed</h3>
-                            <p class="text-slate-400 text-sm mt-1 max-w-sm">There are no diagnostic modules uploaded. Admins must upload standard MCQ JSON files from the Dashboard.</p>
-                        </div>`;
-                        return;
-                    }
-
-                    let html = '';
-                    snap.forEach(docSnap => {
-                        const data = docSnap.data();
-                        const questionsCount = data.quizData ? data.quizData.length : 0;
-                        html += `
-                        <div class="bg-white hover:bg-slate-50 border border-slate-200 rounded-2xl p-5 shadow-sm hover:shadow-md transition-all duration-300 flex flex-col justify-between group">
-                            <div>
-                                <div class="flex items-center justify-between mb-2">
-                                    <span class="text-xs font-bold text-brand-600 bg-brand-50 px-2.5 py-1 rounded-lg uppercase tracking-wide">${data.subject || 'General'}</span>
-                                    <span class="text-xs font-semibold text-slate-400 flex items-center gap-1">
-                                        <i class="fa-solid fa-clipboard-question text-brand-400"></i> ${questionsCount} MCQ${questionsCount !== 1 ? 's' : ''}
-                                    </span>
-                                </div>
-                                <h3 class="text-xl font-extrabold text-slate-950 group-hover:text-brand-600 transition-colors leading-tight mb-2">${data.chapter}</h3>
-                                <p class="text-slate-500 text-xs font-medium">Standard medical school difficulty format. Testing concept analysis, diagnosis, and triage.</p>
-                            </div>
-                            
-                            <div class="mt-6 pt-4 border-t border-slate-100 flex items-center justify-between">
-                                <span class="text-[11px] text-slate-400"><i class="fa-regular fa-clock"></i> ~${questionsCount * 1} min read</span>
-                                <button onclick="startQuiz('${docSnap.id}')" class="bg-brand-600 hover:bg-brand-700 text-white text-xs font-bold px-4 py-2.5 rounded-xl transition-all flex items-center gap-1 shadow-md shadow-brand-50 active:scale-95">
-                                    Start Quiz <i class="fa-solid fa-chevron-right text-[10px]"></i>
-                                </button>
-                            </div>
-                        </div>`;
-                    });
-                    chapterContainer.innerHTML = html;
-                }, (error) => {
-                    console.error("Quiz collection setup failed:", error);
-                    chapterContainer.innerHTML = `<div class="col-span-full text-center text-red-500 p-6 bg-red-50 rounded-xl">Error fetching modules: ${error.message}</div>`;
-                });
-            } catch (err) {
-                console.error("Quiz retrieval engine error: ", err);
-            }
-        }
-
-        // Launch quiz workspace
-        window.startQuiz = async (id) => {
-            try {
-                const ref = doc(db, QUIZ_PATH, id);
-                const snap = await getDoc(ref);
-                if (!snap.exists()) {
-                    showToast("Module document not found in system records.", "error");
-                    return;
-                }
-
-                loadedQuizDoc = snap.data();
-                originalQuizId = id;
-                currentQuizData = loadedQuizDoc.quizData;
-                
-                // Initialize clean response structures (fixes score multi-turn recalculation error)
-                userResponses = new Array(currentQuizData.length).fill(-1);
-                currentQuestionIndex = 0;
-                
-                quizTitle.innerText = loadedQuizDoc.chapter;
-                quizSubjectLabel.innerText = loadedQuizDoc.subject || "DAILY TOPIC";
-                
-                catalogSection.classList.add('hidden');
-                scheduleSection.classList.add('hidden');
-                resultsDashboard.classList.add('hidden');
-                
-                quizArea.classList.remove('hidden');
-                
-                startQuizTimer();
-                updateQuizDisplayState();
-                window.scrollTo({ top: quizArea.offsetTop - 80, behavior: 'smooth' });
-            } catch (err) {
-                console.error("Error setting up exam workspace:", err);
-                showToast("Connection to quiz engine failed.", "error");
-            }
+        // ── Firebase config (same as daily-chapter-quiz) ──
+        const firebaseConfig = {
+            apiKey:            "AIzaSyBjm8uaVMdylGg3-YKdEKKV6DDbRkaxjiE",
+            authDomain:        "daily-quiz-a29e8.firebaseapp.com",
+            databaseURL:       "https://daily-quiz-a29e8-default-rtdb.asia-southeast1.firebasedatabase.app",
+            projectId:         "daily-quiz-a29e8",
+            storageBucket:     "daily-quiz-a29e8.firebasestorage.app",
+            messagingSenderId: "886784418732",
+            appId:             "1:886784418732:web:0ad368df36f7187d2b1009"
         };
 
-        // Redraw Question Interface (Dynamic State Rendering)
-        function updateQuizDisplayState() {
-            const totalQuestions = currentQuizData.length;
-            const percentageProgress = ((currentQuestionIndex + 1) / totalQuestions) * 100;
-            
-            // Title and counter metrics
-            questionCounter.innerText = `Question ${currentQuestionIndex + 1} of ${totalQuestions}`;
-            progressBar.style.width = `${percentageProgress}%`;
-            
-            // Score tracking
-            calculateActiveScore();
-            scoreBox.innerText = `Score: ${score}`;
+        const app     = initializeApp(firebaseConfig);
+        const db      = getFirestore(app);
+        const appId   = "daily-quiz-a29e8";
+        const SCHEDULE_PATH = `artifacts/${appId}/public/data/schedules`;
 
-            // Handle Previous/Next Button triggers
-            prevBtn.disabled = currentQuestionIndex === 0;
-            
-            // Switch final button to finish
-            if (currentQuestionIndex === totalQuestions - 1) {
-                nextBtn.innerHTML = `Finish and Submit <i class="fa-solid fa-flag-checkered ml-1"></i>`;
-                nextBtn.className = "flex-1 max-w-xs flex items-center justify-center gap-2 bg-emerald-600 hover:bg-emerald-700 text-white px-6 py-3 rounded-xl font-bold transition shadow-md shadow-emerald-100";
+        // ── State ──
+        let allSchedules   = [];   // full data array from Firestore
+        let activeFilter   = 'all';
+
+        // ── DOM refs ──
+        const loadingState    = document.getElementById('loadingState');
+        const emptyState      = document.getElementById('emptyState');
+        const noFilterResult  = document.getElementById('noFilterResult');
+        const scheduleGrid    = document.getElementById('scheduleGrid');
+        const statsBar        = document.getElementById('statsBar');
+        const statLive        = document.getElementById('statLive');
+        const statUpcoming    = document.getElementById('statUpcoming');
+        const statClosed      = document.getElementById('statClosed');
+        const globalLiveBadge = document.getElementById('globalLiveBadge');
+
+        // ── Status helper ──
+        function getStatus(data) {
+            const now   = new Date();
+            const open  = new Date(data.openTime);
+            const close = new Date(data.closeTime);
+            if (now >= open && now <= close) return 'live';
+            if (now < open)                  return 'upcoming';
+            return 'closed';
+        }
+
+        // ── Countdown helper (returns string) ──
+        function getCountdown(targetDate) {
+            const diff = targetDate - new Date();
+            if (diff <= 0) return null;
+            const h = Math.floor(diff / 3_600_000);
+            const m = Math.floor((diff % 3_600_000) / 60_000);
+            const s = Math.floor((diff % 60_000) / 1_000);
+            return `${String(h).padStart(2,'0')}:${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`;
+        }
+
+        // ── Subject colour palette ──
+        const subjectColors = {
+            Biology:   { bg:'bg-emerald-50',  text:'text-emerald-700',  border:'border-emerald-200', icon:'fa-dna' },
+            Physics:   { bg:'bg-blue-50',      text:'text-blue-700',     border:'border-blue-200',    icon:'fa-atom' },
+            Chemistry: { bg:'bg-violet-50',    text:'text-violet-700',   border:'border-violet-200',  icon:'fa-flask' },
+            Botany:    { bg:'bg-lime-50',      text:'text-lime-700',     border:'border-lime-200',    icon:'fa-seedling' },
+            Zoology:   { bg:'bg-orange-50',    text:'text-orange-700',   border:'border-orange-200',  icon:'fa-paw' },
+            MAT:       { bg:'bg-pink-50',      text:'text-pink-700',     border:'border-pink-200',    icon:'fa-brain' },
+        };
+        function subjectStyle(subj) {
+            return subjectColors[subj] || { bg:'bg-medical-50', text:'text-medical-700', border:'border-medical-100', icon:'fa-book-medical' };
+        }
+
+        // ── Build one card's HTML ──
+        function buildCard(id, data, status) {
+            const open      = new Date(data.openTime);
+            const close     = new Date(data.closeTime);
+            const style     = subjectStyle(data.subject);
+            const countdownTarget = status === 'upcoming' ? open : null;
+
+            // Duration minutes
+            const durationMin = Math.round((close - open) / 60_000);
+
+            // Status badge config
+            const statusConfig = {
+                live:     { badge:'bg-emerald-100 text-emerald-800 border-emerald-200 animate-pulse', label:'LIVE NOW',  icon:'fa-circle-play',  cardBorder:'border-emerald-300 shadow-md shadow-emerald-50 bg-gradient-to-br from-emerald-50/40 to-white' },
+                upcoming: { badge:'bg-amber-100 text-amber-800 border-amber-200',                    label:'Upcoming',  icon:'fa-hourglass-half', cardBorder:'border-slate-200 bg-white' },
+                closed:   { badge:'bg-slate-100 text-slate-500 border-slate-200',                    label:'Closed',    icon:'fa-circle-stop',   cardBorder:'border-slate-200 bg-white opacity-70' },
+            }[status];
+
+            return `
+            <div class="schedule-card border rounded-2xl p-5 flex flex-col justify-between ${statusConfig.cardBorder} fade-in-up" data-status="${status}" data-id="${id}">
+                
+                <!-- Top row: subject + status -->
+                <div class="flex items-start justify-between gap-2 mb-3">
+                    <span class="flex items-center gap-1.5 text-xs font-bold px-2.5 py-1 rounded-lg border ${style.bg} ${style.text} ${style.border}">
+                        <i class="fa-solid ${style.icon} text-[10px]"></i>
+                        ${data.subject || 'Medical'}
+                    </span>
+                    <span class="flex items-center gap-1 text-[10px] px-2.5 py-1 rounded-full border font-extrabold uppercase tracking-widest ${statusConfig.badge}">
+                        <i class="fa-solid ${statusConfig.icon} text-[9px]"></i> ${statusConfig.label}
+                    </span>
+                </div>
+
+                <!-- Topic title -->
+                <h3 class="text-base font-bold text-slate-800 leading-snug mb-1">${data.topic}</h3>
+                ${data.description ? `<p class="text-xs text-slate-400 font-medium mb-3 leading-relaxed">${data.description}</p>` : ''}
+
+                <!-- Time info -->
+                <div class="mt-auto pt-3 border-t border-slate-100 space-y-1.5">
+                    <div class="flex items-center gap-2 text-[11px] text-slate-500 font-semibold">
+                        <i class="fa-solid fa-play text-emerald-500 w-3 text-center"></i>
+                        <span>Opens: <span class="text-slate-700">${open.toLocaleString([], { dateStyle:'medium', timeStyle:'short' })}</span></span>
+                    </div>
+                    <div class="flex items-center gap-2 text-[11px] text-slate-500 font-semibold">
+                        <i class="fa-solid fa-stop text-red-400 w-3 text-center"></i>
+                        <span>Closes: <span class="text-slate-700">${close.toLocaleString([], { dateStyle:'medium', timeStyle:'short' })}</span></span>
+                    </div>
+                    ${durationMin > 0 ? `
+                    <div class="flex items-center gap-2 text-[11px] text-slate-400 font-semibold">
+                        <i class="fa-regular fa-clock w-3 text-center text-medical-400"></i>
+                        <span>Duration: <span class="text-slate-600">${durationMin} min</span></span>
+                    </div>` : ''}
+                </div>
+
+                <!-- Countdown (upcoming only) -->
+                ${status === 'upcoming' ? `
+                <div class="mt-3 bg-amber-50 border border-amber-100 rounded-xl p-3 text-center">
+                    <p class="text-[10px] font-bold text-amber-600 uppercase tracking-widest mb-1">Starts in</p>
+                    <div class="flex items-center justify-center gap-1.5">
+                        <div class="countdown-seg" style="background:linear-gradient(135deg,#f59e0b,#d97706)">
+                            <div class="text-lg font-black countdown-h-${id}">--</div>
+                            <div class="text-[8px] font-bold opacity-80 uppercase">hrs</div>
+                        </div>
+                        <span class="text-amber-600 font-black text-lg">:</span>
+                        <div class="countdown-seg" style="background:linear-gradient(135deg,#f59e0b,#d97706)">
+                            <div class="text-lg font-black countdown-m-${id}">--</div>
+                            <div class="text-[8px] font-bold opacity-80 uppercase">min</div>
+                        </div>
+                        <span class="text-amber-600 font-black text-lg">:</span>
+                        <div class="countdown-seg" style="background:linear-gradient(135deg,#f59e0b,#d97706)">
+                            <div class="text-lg font-black countdown-s-${id}">--</div>
+                            <div class="text-[8px] font-bold opacity-80 uppercase">sec</div>
+                        </div>
+                    </div>
+                </div>` : ''}
+
+                <!-- Live progress bar -->
+                ${status === 'live' ? (() => {
+                    const total   = close - open;
+                    const elapsed = new Date() - open;
+                    const pct     = Math.min(100, Math.round((elapsed / total) * 100));
+                    const remaining = Math.max(0, Math.round((close - new Date()) / 60_000));
+                    return `
+                    <div class="mt-3">
+                        <div class="flex justify-between text-[10px] font-bold text-slate-400 mb-1">
+                            <span class="text-emerald-600">In progress</span>
+                            <span>${remaining} min remaining</span>
+                        </div>
+                        <div class="w-full bg-slate-100 rounded-full h-2 overflow-hidden">
+                            <div class="h-2 bg-gradient-to-r from-emerald-400 to-emerald-600 rounded-full transition-all" style="width:${pct}%"></div>
+                        </div>
+                    </div>`;
+                })() : ''}
+
+            </div>`;
+        }
+
+        // ── Render schedule grid ──
+        function renderSchedules() {
+            const now       = new Date();
+            let liveCount   = 0, upcomingCount = 0, closedCount = 0;
+
+            // Sort: live first, then upcoming (by open time), then closed (by close time desc)
+            const sorted = [...allSchedules].sort((a, b) => {
+                const sa = getStatus(a.data), sb = getStatus(b.data);
+                const order = { live:0, upcoming:1, closed:2 };
+                if (order[sa] !== order[sb]) return order[sa] - order[sb];
+                if (sa === 'upcoming') return new Date(a.data.openTime) - new Date(b.data.openTime);
+                if (sa === 'closed')  return new Date(b.data.closeTime) - new Date(a.data.closeTime);
+                return 0;
+            });
+
+            // Count by status
+            sorted.forEach(({ data }) => {
+                const s = getStatus(data);
+                if (s === 'live')     liveCount++;
+                if (s === 'upcoming') upcomingCount++;
+                if (s === 'closed')   closedCount++;
+            });
+
+            // Update stats bar
+            statLive.textContent     = liveCount;
+            statUpcoming.textContent = upcomingCount;
+            statClosed.textContent   = closedCount;
+            statsBar.classList.remove('hidden');
+            statsBar.classList.add('grid');
+
+            // Update global live badge in hero
+            if (liveCount > 0) {
+                globalLiveBadge.classList.remove('hidden');
+                globalLiveBadge.classList.add('flex');
             } else {
-                nextBtn.innerHTML = `Next <i class="fa-solid fa-arrow-right"></i>`;
-                nextBtn.className = "flex-1 max-w-xs flex items-center justify-center gap-2 bg-brand-600 hover:bg-brand-700 text-white px-6 py-3 rounded-xl font-bold transition shadow-md shadow-brand-100";
+                globalLiveBadge.classList.add('hidden');
             }
 
-            const currentQuestion = currentQuizData[currentQuestionIndex];
-            const storedUserChoice = userResponses[currentQuestionIndex];
+            // Filter
+            const filtered = activeFilter === 'all' ? sorted : sorted.filter(({ data }) => getStatus(data) === activeFilter);
 
-            let html = `
-            <div>
-                <div class="text-lg md:text-xl font-bold text-slate-900 leading-snug mb-6">
-                    <span class="inline-block bg-slate-100 text-slate-700 w-8 h-8 rounded-lg text-center leading-8 mr-2 text-sm">Q${currentQuestionIndex + 1}</span>
-                    ${currentQuestion.question}
-                </div>
-                <div class="grid gap-3">
-            `;
-
-            currentQuestion.options.forEach((opt, index) => {
-                const charCode = String.fromCharCode(65 + index);
-                let choiceStyles = "border-slate-200 hover:bg-slate-50 hover:border-slate-300";
-                let badgeStyles = "bg-slate-100 text-slate-600";
-                let checkIcon = "";
-
-                // Evaluated state colors (If answered)
-                if (storedUserChoice !== -1) {
-                    if (index === currentQuestion.correctIndex) {
-                        choiceStyles = "border-emerald-500 bg-emerald-50/80 hover:bg-emerald-50 text-emerald-950 ring-2 ring-emerald-500/20";
-                        badgeStyles = "bg-emerald-500 text-white";
-                        checkIcon = `<i class="fa-solid fa-circle-check text-emerald-600 text-lg"></i>`;
-                    } else if (index === storedUserChoice) {
-                        choiceStyles = "border-red-500 bg-red-50/80 hover:bg-red-50 text-red-950 ring-2 ring-red-500/20";
-                        badgeStyles = "bg-red-500 text-white";
-                        checkIcon = `<i class="fa-solid fa-circle-xmark text-red-600 text-lg"></i>`;
-                    } else {
-                        choiceStyles = "border-slate-200 bg-white opacity-60";
-                    }
-                }
-
-                html += `
-                <div class="border rounded-2xl p-4 cursor-pointer transition-all duration-200 flex items-center justify-between gap-3 option-node group ${choiceStyles}" data-index="${index}">
-                    <div class="flex items-center gap-3">
-                        <span class="w-8 h-8 rounded-lg flex items-center justify-center font-bold text-sm transition-all duration-200 ${badgeStyles}">${charCode}</span>
-                        <span class="font-semibold text-slate-800 text-sm md:text-base leading-snug">${opt}</span>
-                    </div>
-                    <div>${checkIcon}</div>
-                </div>
-                `;
-            });
-
-            html += `</div>`;
-
-            // If question has been answered, display a beautiful explanation block if available
-            if (storedUserChoice !== -1 && currentQuestion.explanation) {
-                html += `
-                <div class="mt-6 p-4 bg-indigo-50/50 border border-indigo-100 rounded-2xl text-slate-700 text-xs md:text-sm leading-relaxed flex gap-3">
-                    <div class="text-indigo-600 text-lg pt-0.5"><i class="fa-solid fa-circle-info"></i></div>
-                    <div>
-                        <span class="font-bold text-indigo-900 block mb-1">Clinical Rationale:</span>
-                        ${currentQuestion.explanation}
-                    </div>
-                </div>`;
-            }
-
-            html += `</div>`;
-            questionArea.innerHTML = html;
-
-            // Wire up choice elements
-            const choices = document.querySelectorAll('.option-node');
-            choices.forEach(node => {
-                node.addEventListener('click', () => {
-                    // Prevent modifying answers once committed for immediate validation
-                    if (userResponses[currentQuestionIndex] !== -1) return;
-                    
-                    const clickedIdx = parseInt(node.dataset.index);
-                    userResponses[currentQuestionIndex] = clickedIdx;
-                    
-                    // Render immediate feedback state
-                    updateQuizDisplayState();
-                });
-            });
-        }
-
-        // Safe Score Re-computation (Fixes point accumulation bugs during navigation)
-        function calculateActiveScore() {
-            score = 0;
-            userResponses.forEach((choice, index) => {
-                if (choice === currentQuizData[index].correctIndex) {
-                    score++;
-                }
-            });
-        }
-
-        // Navigation button mechanics
-        nextBtn.onclick = () => {
-            // Assert that an option must be picked before advancing to avoid blind progression
-            if (userResponses[currentQuestionIndex] === -1) {
-                showToast("Please choose an answer option before moving forward.", "error");
+            if (filtered.length === 0) {
+                scheduleGrid.classList.add('hidden');
+                noFilterResult.classList.remove('hidden');
+                noFilterResult.classList.add('flex');
                 return;
             }
 
-            if (currentQuestionIndex < currentQuizData.length - 1) {
-                currentQuestionIndex++;
-                updateQuizDisplayState();
-            } else {
-                // Compile final performance analytics and exit quiz
-                completeQuizSession();
-            }
-        };
+            noFilterResult.classList.add('hidden');
+            scheduleGrid.classList.remove('hidden');
+            scheduleGrid.innerHTML = filtered.map(({ id, data }) => buildCard(id, data, getStatus(data))).join('');
 
-        prevBtn.onclick = () => {
-            if (currentQuestionIndex > 0) {
-                currentQuestionIndex--;
-                updateQuizDisplayState();
-            }
-        };
-
-        // Complete the quiz and display the statistics dashboard
-        function completeQuizSession() {
-            const timeTakenStr = stopQuizTimer();
-            calculateActiveScore();
-            
-            quizArea.classList.add('hidden');
-            resultsDashboard.classList.remove('hidden');
-
-            const totalQs = currentQuizData.length;
-            const pct = Math.round((score / totalQs) * 100);
-
-            document.getElementById('finalScoreText').innerText = `${score}/${totalQs}`;
-            document.getElementById('finalPercentText').innerText = `${pct}%`;
-            document.getElementById('finalTimeText').innerText = timeTakenStr;
-
-            // Setup Grade Banner descriptor styles
-            const banner = document.getElementById('gradeBanner');
-            if (pct >= 85) {
-                banner.className = "p-4 rounded-xl border border-emerald-100 bg-emerald-50 text-emerald-800 font-bold text-center";
-                banner.innerHTML = `<i class="fa-solid fa-award text-lg mr-2"></i> Outstanding Score! You've demonstrated rigorous clinical command!`;
-            } else if (pct >= 60) {
-                banner.className = "p-4 rounded-xl border border-indigo-100 bg-indigo-50 text-indigo-800 font-bold text-center";
-                banner.innerHTML = `<i class="fa-solid fa-circle-check text-lg mr-2"></i> Sound Competency! A solid grasp of the foundational science.`;
-            } else {
-                banner.className = "p-4 rounded-xl border border-red-100 bg-red-50 text-red-800 font-bold text-center";
-                banner.innerHTML = `<i class="fa-solid fa-triangle-exclamation text-lg mr-2"></i> Score needs improvement. We recommend reviewing this syllabus topic.`;
-            }
-
-            // Build full question-by-question performance sheet
-            let reviewHtml = '';
-            currentQuizData.forEach((q, qIndex) => {
-                const isCorrect = userResponses[qIndex] === q.correctIndex;
-                const correctText = q.options[q.correctIndex];
-                const studentText = userResponses[qIndex] !== -1 ? q.options[userResponses[qIndex]] : "Unanswered";
-                
-                reviewHtml += `
-                <div class="p-4 rounded-xl border ${isCorrect ? 'border-emerald-100 bg-emerald-50/30' : 'border-red-100 bg-red-50/30'} space-y-2">
-                    <div class="flex items-start justify-between gap-2">
-                        <span class="font-bold text-slate-800 text-sm flex-1 leading-snug">Q${qIndex + 1}. ${q.question}</span>
-                        <span class="text-xs font-bold px-2 py-0.5 rounded-md ${isCorrect ? 'bg-emerald-100 text-emerald-800' : 'bg-red-100 text-red-800'}">
-                            ${isCorrect ? 'Correct' : 'Incorrect'}
-                        </span>
-                    </div>
-                    
-                    <div class="text-xs space-y-1 font-medium">
-                        <div class="text-slate-500"><i class="fa-solid fa-user-pen mr-1"></i> Your Answer: <span class="${isCorrect ? 'text-emerald-700' : 'text-red-700'} font-bold">${studentText}</span></div>
-                        ${!isCorrect ? `<div class="text-emerald-700"><i class="fa-solid fa-circle-check mr-1"></i> Correct Answer: <span class="font-bold">${correctText}</span></div>` : ''}
-                    </div>
-                </div>
-                `;
+            // Start countdown timers for upcoming sessions
+            sorted.filter(({ data }) => getStatus(data) === 'upcoming').forEach(({ id, data }) => {
+                const open = new Date(data.openTime);
+                const tick = () => {
+                    const diff = open - new Date();
+                    if (diff <= 0) { renderSchedules(); return; }
+                    const hEl = document.querySelector(`.countdown-h-${id}`);
+                    const mEl = document.querySelector(`.countdown-m-${id}`);
+                    const sEl = document.querySelector(`.countdown-s-${id}`);
+                    if (!hEl) return; // card may have been filtered away
+                    hEl.textContent = String(Math.floor(diff / 3_600_000)).padStart(2, '0');
+                    mEl.textContent = String(Math.floor((diff % 3_600_000) / 60_000)).padStart(2, '0');
+                    sEl.textContent = String(Math.floor((diff % 60_000) / 1_000)).padStart(2, '0');
+                };
+                tick();
+                setInterval(tick, 1000);
             });
 
-            resultsReviewContainer.innerHTML = reviewHtml;
-            window.scrollTo({ top: resultsDashboard.offsetTop - 80, behavior: 'smooth' });
+            // Re-render every minute for live→closed transitions
+            setTimeout(renderSchedules, 60_000);
         }
 
-        // Exit confirmation
-        window.confirmExitQuiz = () => {
-            showCustomModal({
-                title: "Exit current Quiz?",
-                message: "This will terminate your quiz and reset your answers. Are you sure you want to exit?",
-                iconClass: "fa-solid fa-triangle-exclamation text-amber-500",
-                iconBgClass: "bg-amber-50 border border-amber-200",
-                primaryText: "Yes, Exit",
-                primaryClass: "bg-red-600 hover:bg-red-700 shadow-md shadow-red-50",
-                secondaryText: "Continue Testing",
-                onPrimary: () => {
-                    stopQuizTimer();
-                    quizArea.classList.add('hidden');
-                    catalogSection.classList.remove('hidden');
-                    loadSchedules();
-                }
+        // ── Filter button logic (exposed globally) ──
+        window.applyFilter = function(filter) {
+            activeFilter = filter;
+            document.querySelectorAll('.filter-tab').forEach(btn => {
+                btn.classList.toggle('active', btn.dataset.filter === filter);
             });
+            renderSchedules();
         };
 
-        // Reset system triggers
-        window.restartQuizSession = () => {
-            if (originalQuizId) {
-                window.startQuiz(originalQuizId);
+        document.querySelectorAll('.filter-tab').forEach(btn => {
+            btn.addEventListener('click', () => window.applyFilter(btn.dataset.filter));
+        });
+
+        // ── Firestore real-time listener ──
+        const queryRef = collection(db, SCHEDULE_PATH);
+        onSnapshot(queryRef, (snap) => {
+            loadingState.classList.add('hidden');
+
+            if (snap.empty) {
+                emptyState.classList.remove('hidden');
+                emptyState.classList.add('flex');
+                statsBar.classList.add('hidden');
+                return;
             }
-        };
 
-        window.returnToDashboard = () => {
-            stopQuizTimer();
-            resultsDashboard.classList.add('hidden');
-            quizArea.classList.add('hidden');
-            catalogSection.classList.remove('hidden');
-            loadSchedules();
-            window.scrollTo({ top: 0, behavior: 'smooth' });
-        };
+            emptyState.classList.add('hidden');
+            allSchedules = snap.docs.map(d => ({ id: d.id, data: d.data() }));
+            renderSchedules();
 
-        // Execution kickoff on DOM Ready
-        window.addEventListener('DOMContentLoaded', () => {
-            loadSchedules();
-            loadChapters();
+        }, (error) => {
+            loadingState.classList.add('hidden');
+            console.error("Firestore schedule error:", error);
+            window.showToast("Failed to load schedules. Please refresh.", "error");
         });
     </script>
+
 </body>
 </html>
