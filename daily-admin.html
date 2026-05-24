@@ -1,0 +1,795 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Academic Quiz Control Panel</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        brand: {
+                            50: '#f4f5f9',
+                            100: '#e9eaf2',
+                            600: '#4f46e5',
+                            700: '#4338ca',
+                            800: '#3730a3',
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    <!-- FontAwesome Icon Suite -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+</head>
+<body class="bg-slate-50 min-h-screen text-slate-800 antialiased font-sans">
+
+    <!-- Brand Header Area -->
+    <nav class="bg-white border-b border-slate-200 sticky top-0 z-50 shadow-sm backdrop-blur-md bg-white/90">
+        <div class="max-w-6xl mx-auto px-4 py-4 flex justify-between items-center">
+            <div class="flex items-center gap-3">
+                <div class="bg-gradient-to-tr from-brand-700 to-indigo-500 text-white p-2.5 rounded-xl shadow-md">
+                    <i class="fa-solid fa-gears text-lg animate-spin" style="animation-duration: 6s;"></i>
+                </div>
+                <div>
+                    <h1 class="text-xl font-black text-slate-900 flex items-center gap-2">Control Panel</h1>
+                    <p class="text-xs text-slate-500 font-semibold uppercase tracking-wider">Medical Quiz & Scheduling Manager</p>
+                </div>
+            </div>
+            <a href="quiz.html" target="_blank" class="text-xs bg-slate-100 hover:bg-slate-200 border border-slate-200 text-slate-700 font-bold px-4 py-2 rounded-xl transition flex items-center gap-1.5 shadow-sm">
+                <i class="fa-solid fa-eye"></i> Preview Student Portal
+            </a>
+        </div>
+    </nav>
+
+    <!-- Master Layout Grid -->
+    <main class="max-w-6xl mx-auto p-4 md:p-6 grid lg:grid-cols-12 gap-6">
+        
+        <!-- Left Column: Form Submissions and Builders (7 spans) -->
+        <div class="lg:col-span-7 space-y-6">
+            
+            <!-- Dynamic Navigation Tab Headers -->
+            <div class="bg-slate-200 p-1 rounded-xl flex gap-1 border border-slate-200 shadow-inner">
+                <button id="tabBuilderBtn" class="flex-1 py-2.5 text-xs font-bold rounded-lg transition-all flex items-center justify-center gap-2 shadow-sm bg-white text-brand-700">
+                    <i class="fa-solid fa-list-check"></i> 1. Quiz Builder
+                </button>
+                <button id="tabUploadBtn" class="flex-1 py-2.5 text-xs font-bold rounded-lg transition-all flex items-center justify-center gap-2 text-slate-600 hover:text-slate-800">
+                    <i class="fa-solid fa-file-import"></i> 2. JSON File Upload
+                </button>
+                <button id="tabScheduleBtn" class="flex-1 py-2.5 text-xs font-bold rounded-lg transition-all flex items-center justify-center gap-2 text-slate-600 hover:text-slate-800">
+                    <i class="fa-solid fa-calendar-plus"></i> 3. Schedule Topic
+                </button>
+            </div>
+
+            <!-- Tab Content 1: Interactive MCQ Creator Builder -->
+            <section id="paneBuilder" class="bg-white border border-slate-200 rounded-2xl shadow-sm p-5 space-y-4">
+                <div class="border-b border-slate-100 pb-3">
+                    <h2 class="text-lg font-bold text-slate-800 flex items-center gap-2">
+                        <i class="fa-solid fa-file-signature text-brand-600"></i> Interactive MCQ Builder
+                    </h2>
+                    <p class="text-slate-400 text-xs mt-0.5">Build diagnostic assessments instantly inside the panel and save directly to your database.</p>
+                </div>
+
+                <!-- Syllabus Context metadata inputs -->
+                <div class="grid grid-cols-2 gap-3">
+                    <div>
+                        <label class="block text-xs font-bold text-slate-600 mb-1">Subject Area Name</label>
+                        <input id="builderSubject" class="w-full border border-slate-200 p-3 rounded-xl focus:ring-2 focus:ring-indigo-200 focus:border-brand-600 text-sm outline-none" placeholder="e.g. Pathology">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold text-slate-600 mb-1">Chapter / Module Title</label>
+                        <input id="builderChapter" class="w-full border border-slate-200 p-3 rounded-xl focus:ring-2 focus:ring-indigo-200 focus:border-brand-600 text-sm outline-none" placeholder="e.g. Endocrine Pathology">
+                    </div>
+                </div>
+
+                <!-- MCQs Questions Array Wrapper -->
+                <div class="pt-2">
+                    <div class="flex items-center justify-between mb-3">
+                        <span class="text-xs uppercase tracking-wider font-extrabold text-slate-400">Questions Ledger</span>
+                        <button type="button" onclick="addQuestionToBuilderList()" class="bg-brand-50 hover:bg-brand-100 text-brand-700 text-xs font-bold px-3 py-1.5 rounded-lg border border-brand-100 transition flex items-center gap-1">
+                            <i class="fa-solid fa-plus"></i> Add Question Card
+                        </button>
+                    </div>
+
+                    <!-- Host list for individual questions -->
+                    <div id="questionsBuilderHost" class="space-y-4 max-h-[420px] overflow-y-auto pr-1">
+                        <!-- Questions components are injected here -->
+                    </div>
+                </div>
+
+                <!-- Final Builder Submission Trigger -->
+                <div class="pt-4 border-t border-slate-100">
+                    <button id="saveBuilderQuizBtn" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-3.5 px-6 rounded-xl transition flex items-center justify-center gap-2 shadow-md shadow-brand-50">
+                        <i class="fa-solid fa-cloud-arrow-up text-base"></i> Save & Publish Interactive Quiz
+                    </button>
+                </div>
+            </section>
+
+            <!-- Tab Content 2: JSON Document Upload form -->
+            <section id="paneUpload" class="hidden bg-white border border-slate-200 rounded-2xl shadow-sm p-5 space-y-4">
+                <div class="border-b border-slate-100 pb-3">
+                    <h2 class="text-lg font-bold text-slate-800 flex items-center gap-2">
+                        <i class="fa-solid fa-file-import text-blue-600"></i> Upload JSON Syllabus File
+                    </h2>
+                    <p class="text-slate-400 text-xs mt-0.5">Upload pre-existing MCQ syllabus configurations instantly in JSON format.</p>
+                </div>
+
+                <div class="grid grid-cols-2 gap-3">
+                    <div>
+                        <label class="block text-xs font-bold text-slate-600 mb-1">Subject Name</label>
+                        <input id="subject" class="w-full border border-slate-200 p-3 rounded-xl text-sm focus:ring-2 focus:ring-indigo-100 focus:border-brand-600 outline-none" placeholder="e.g. Pharmacology">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold text-slate-600 mb-1">Chapter Name</label>
+                        <input id="chapter" class="w-full border border-slate-200 p-3 rounded-xl text-sm focus:ring-2 focus:ring-indigo-100 focus:border-brand-600 outline-none" placeholder="e.g. Pharmacodynamics">
+                    </div>
+                </div>
+
+                <div class="border border-dashed border-slate-200 rounded-xl p-6 text-center hover:bg-slate-50 transition cursor-pointer relative">
+                    <input type="file" id="jsonFile" accept=".json" class="absolute inset-0 opacity-0 cursor-pointer">
+                    <div class="text-3xl text-slate-400 mb-2"><i class="fa-solid fa-file-code"></i></div>
+                    <span class="block text-sm font-bold text-slate-700" id="jsonFileNameDisplay">Click to Select or Drop JSON File</span>
+                    <span class="block text-[11px] text-slate-400 mt-1">Must strictly follow the specified clinical array format</span>
+                </div>
+
+                <!-- Template preview model trigger -->
+                <div class="bg-indigo-50/50 p-4 rounded-xl border border-indigo-100">
+                    <div class="flex items-center gap-2 text-indigo-900 font-bold text-xs mb-1">
+                        <i class="fa-solid fa-circle-question"></i> Structure Blueprint Schema:
+                    </div>
+                    <pre class="text-[10px] text-indigo-950 font-mono overflow-x-auto whitespace-pre p-2 bg-white rounded-lg border border-indigo-100">
+[
+  {
+    "question": "What is the functional unit of kidney?",
+    "options": ["Neuron", "Nephron", "Alveoli", "Hepatocyte"],
+    "correctIndex": 1,
+    "explanation": "Nephrons filter blood to generate urine."
+  }
+]</pre>
+                </div>
+
+                <button id="uploadBtn" class="bg-brand-600 hover:bg-brand-700 text-white font-bold py-3 px-6 rounded-xl w-full transition flex items-center justify-center gap-2 shadow-md">
+                    <i class="fa-solid fa-cloud-arrow-up"></i> Upload Quiz Document
+                </button>
+            </section>
+
+            <!-- Tab Content 3: Calendar Schedule Setup Creator -->
+            <section id="paneSchedule" class="hidden bg-white border border-slate-200 rounded-2xl shadow-sm p-5 space-y-4">
+                <div class="border-b border-slate-100 pb-3">
+                    <h2 class="text-lg font-bold text-slate-800 flex items-center gap-2">
+                        <i class="fa-solid fa-calendar-day text-emerald-600"></i> Schedule Topic Active Window
+                    </h2>
+                    <p class="text-slate-400 text-xs mt-0.5">Control opening and closing time boundaries for topics shown to students.</p>
+                </div>
+
+                <div class="grid grid-cols-2 gap-3">
+                    <div>
+                        <label class="block text-xs font-bold text-slate-600 mb-1">Subject</label>
+                        <input id="scheduleSubject" class="w-full border border-slate-200 p-3 rounded-xl text-sm outline-none focus:ring-2 focus:ring-emerald-100 focus:border-emerald-600" placeholder="e.g. Biochemistry">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold text-slate-600 mb-1">Topic Name</label>
+                        <input id="scheduleTopic" class="w-full border border-slate-200 p-3 rounded-xl text-sm outline-none focus:ring-2 focus:ring-emerald-100 focus:border-emerald-600" placeholder="e.g. Endocrine Physiology">
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-2 gap-3">
+                    <div>
+                        <label class="block text-xs font-bold text-slate-600 mb-1">Opening Date & Time</label>
+                        <input type="datetime-local" id="openTime" class="w-full border border-slate-200 p-3 rounded-xl text-sm outline-none focus:ring-2 focus:ring-emerald-100 focus:border-emerald-600">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold text-slate-600 mb-1">Closing Date & Time</label>
+                        <input type="datetime-local" id="closeTime" class="w-full border border-slate-200 p-3 rounded-xl text-sm outline-none focus:ring-2 focus:ring-emerald-100 focus:border-emerald-600">
+                    </div>
+                </div>
+
+                <button id="scheduleBtn" class="bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-3.5 px-6 rounded-xl w-full transition flex items-center justify-center gap-2 shadow-md">
+                    <i class="fa-solid fa-calendar-check"></i> Create & Publish Live Schedule
+                </button>
+            </section>
+        </div>
+
+        <!-- Right Column: Database Records Monitors (5 spans) -->
+        <div class="lg:col-span-5 space-y-6">
+            
+            <!-- Live Quizzes Inventory Monitor -->
+            <section class="bg-white border border-slate-200 rounded-2xl p-5 shadow-sm space-y-4">
+                <div class="border-b border-slate-100 pb-3 flex items-center justify-between">
+                    <div>
+                        <h2 class="text-sm uppercase tracking-wider font-extrabold text-slate-400">Database System Registry</h2>
+                        <h3 class="text-lg font-black text-slate-800">Available Quizzes</h3>
+                    </div>
+                    <span id="quizCountBadge" class="bg-indigo-50 text-indigo-700 text-xs font-bold px-2.5 py-1 rounded-lg border border-indigo-100">0 Quizzes</span>
+                </div>
+
+                <div id="quizInventoryList" class="space-y-3 max-h-72 overflow-y-auto pr-1">
+                    <!-- Real-time quiz registry items here -->
+                </div>
+            </section>
+
+            <!-- Live Schedules Monitor -->
+            <section class="bg-white border border-slate-200 rounded-2xl p-5 shadow-sm space-y-4">
+                <div class="border-b border-slate-100 pb-3 flex items-center justify-between">
+                    <div>
+                        <h2 class="text-sm uppercase tracking-wider font-extrabold text-slate-400">Timeline Scheduler Registry</h2>
+                        <h3 class="text-lg font-black text-slate-800">Active Schedules</h3>
+                    </div>
+                    <span id="scheduleCountBadge" class="bg-emerald-50 text-emerald-700 text-xs font-bold px-2.5 py-1 rounded-lg border border-emerald-100">0 Active</span>
+                </div>
+
+                <div id="scheduleRegistryList" class="space-y-3 max-h-72 overflow-y-auto pr-1">
+                    <!-- Real-time schedule registry items here -->
+                </div>
+            </section>
+
+        </div>
+
+    </main>
+
+    <!-- Custom Modal Popup Screen (No alert overrides) -->
+    <div id="customModal" class="hidden fixed inset-0 z-50 overflow-y-auto bg-slate-900/55 backdrop-blur-sm flex items-center justify-center p-4">
+        <div class="bg-white rounded-2xl max-w-sm w-full border border-slate-200 shadow-2xl p-6 space-y-4">
+            <div id="modalIconContainer" class="w-12 h-12 rounded-full flex items-center justify-center text-xl"></div>
+            <div>
+                <h3 id="modalTitle" class="text-lg font-bold text-slate-900">Confirmation</h3>
+                <p id="modalDescription" class="text-sm text-slate-500 mt-1">Please confirm this database structural modification.</p>
+            </div>
+            <div class="flex gap-2 justify-end pt-2">
+                <button id="modalSecondaryBtn" class="px-4 py-2 border border-slate-200 rounded-xl text-slate-700 font-bold text-xs hover:bg-slate-50 transition"></button>
+                <button id="modalPrimaryBtn" class="px-4 py-2 text-white font-bold text-xs rounded-xl transition"></button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Toast Notification Tray -->
+    <div id="toastContainer" class="fixed bottom-5 right-5 z-50 flex flex-col gap-2"></div>
+
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+        import { getFirestore, doc, setDoc, collection, getDocs, deleteDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+
+        // Firebase Configuration Matching Specification
+        const firebaseConfig = {  
+            apiKey: "AIzaSyBjm8uaVMdylGg3-YKdEKKV6DDbRkaxjiE",  
+            authDomain: "daily-quiz-a29e8.firebaseapp.com",  
+            databaseURL: "https://daily-quiz-a29e8-default-rtdb.asia-southeast1.firebasedatabase.app",  
+            projectId: "daily-quiz-a29e8",  
+            storageBucket: "daily-quiz-a29e8.firebasestorage.app",  
+            messagingSenderId: "886784418732",  
+            appId: "1:886784418732:web:0ad368df36f7187d2b1009"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
+        const appId = "daily-quiz-a29e8";
+
+        // Global Strict Paths (Compliance Rule 1)
+        const QUIZ_PATH = `artifacts/${appId}/public/data/quizzes`;
+        const SCHEDULE_PATH = `artifacts/${appId}/public/data/schedules`;
+
+        // Interactive Builders question sequence
+        let builderQuestionCount = 0;
+
+        // Visual Tabs Toggling Logic
+        const tabBuilderBtn = document.getElementById('tabBuilderBtn');
+        const tabUploadBtn = document.getElementById('tabUploadBtn');
+        const tabScheduleBtn = document.getElementById('tabScheduleBtn');
+        
+        const paneBuilder = document.getElementById('paneBuilder');
+        const paneUpload = document.getElementById('paneUpload');
+        const paneSchedule = document.getElementById('paneSchedule');
+
+        function switchTab(activeTab, activePane) {
+            [tabBuilderBtn, tabUploadBtn, tabScheduleBtn].forEach(b => {
+                b.className = "flex-1 py-2.5 text-xs font-bold rounded-lg transition-all flex items-center justify-center gap-2 text-slate-600 hover:text-slate-800";
+            });
+            [paneBuilder, paneUpload, paneSchedule].forEach(p => p.classList.add('hidden'));
+
+            activeTab.className = "flex-1 py-2.5 text-xs font-bold rounded-lg transition-all flex items-center justify-center gap-2 shadow-sm bg-white text-brand-700";
+            activePane.classList.remove('hidden');
+        }
+
+        tabBuilderBtn.onclick = () => switchTab(tabBuilderBtn, paneBuilder);
+        tabUploadBtn.onclick = () => switchTab(tabUploadBtn, paneUpload);
+        tabScheduleBtn.onclick = () => switchTab(tabScheduleBtn, paneSchedule);
+
+        // Toast Messages Helper
+        function showToast(message, type = 'info') {
+            const container = document.getElementById('toastContainer');
+            const toast = document.createElement('div');
+            toast.className = `flex items-center gap-3 p-4 rounded-xl border shadow-lg transform transition-all duration-300 translate-y-2 opacity-0 max-w-sm w-full bg-white `;
+            
+            let colorClasses = 'border-slate-200 text-slate-800';
+            let icon = '<i class="fa-solid fa-circle-info text-blue-500"></i>';
+            if (type === 'success') {
+                colorClasses = 'border-emerald-100 bg-emerald-50 text-emerald-950';
+                icon = '<i class="fa-solid fa-circle-check text-emerald-500"></i>';
+            } else if (type === 'error') {
+                colorClasses = 'border-red-100 bg-red-50 text-red-950';
+                icon = '<i class="fa-solid fa-circle-exclamation text-red-500"></i>';
+            }
+
+            toast.className += colorClasses;
+            toast.innerHTML = `
+                <div class="text-lg">${icon}</div>
+                <div class="text-xs font-bold flex-1">${message}</div>
+                <button class="text-slate-400 hover:text-slate-600" onclick="this.parentElement.remove()"><i class="fa-solid fa-xmark"></i></button>
+            `;
+            container.appendChild(toast);
+            
+            setTimeout(() => {
+                toast.classList.remove('translate-y-2', 'opacity-0');
+            }, 10);
+
+            setTimeout(() => {
+                toast.classList.add('translate-y-2', 'opacity-0');
+                setTimeout(() => toast.remove(), 300);
+            }, 4000);
+        }
+
+        // Custom Modal Overlay Confirmation (Replaces native alerts/confirms)
+        function triggerConfirmationModal({ title, message, iconClass, iconBgClass, primaryText, primaryClass, secondaryText, onPrimary }) {
+            const modal = document.getElementById('customModal');
+            const iconCont = document.getElementById('modalIconContainer');
+            document.getElementById('modalTitle').textContent = title;
+            document.getElementById('modalDescription').textContent = message;
+            
+            iconCont.className = `w-12 h-12 rounded-full flex items-center justify-center text-xl ${iconBgClass}`;
+            iconCont.innerHTML = `<i class="${iconClass}"></i>`;
+
+            const primaryBtn = document.getElementById('modalPrimaryBtn');
+            primaryBtn.textContent = primaryText;
+            primaryBtn.className = `px-4 py-2 text-white font-bold text-xs rounded-xl transition ${primaryClass}`;
+            
+            const secondaryBtn = document.getElementById('modalSecondaryBtn');
+            secondaryBtn.textContent = secondaryText || "Cancel";
+
+            modal.classList.remove('hidden');
+
+            primaryBtn.onclick = () => {
+                modal.classList.add('hidden');
+                if (onPrimary) onPrimary();
+            };
+
+            secondaryBtn.onclick = () => {
+                modal.classList.add('hidden');
+            };
+        }
+
+        // Display Uploaded JSON File name dynamic selection change
+        const fileInput = document.getElementById('jsonFile');
+        fileInput.onchange = () => {
+            const nameDisplay = document.getElementById('jsonFileNameDisplay');
+            if (fileInput.files.length > 0) {
+                nameDisplay.textContent = `Selected: ${fileInput.files[0].name}`;
+                nameDisplay.classList.add('text-brand-700');
+            } else {
+                nameDisplay.textContent = `Click to Select or Drop JSON File`;
+                nameDisplay.classList.remove('text-brand-700');
+            }
+        };
+
+        // Standard MCQ Builder: Add live question editor component card
+        window.addQuestionToBuilderList = () => {
+            builderQuestionCount++;
+            const wrapper = document.getElementById('questionsBuilderHost');
+            const card = document.createElement('div');
+            card.className = "bg-slate-50 border border-slate-200 rounded-xl p-4 space-y-3 relative question-card-item";
+            card.id = `qCard_${builderQuestionCount}`;
+            card.innerHTML = `
+                <div class="flex items-center justify-between">
+                    <span class="text-xs font-black text-brand-600 bg-brand-100 px-2.5 py-0.5 rounded-lg">Question #${builderQuestionCount}</span>
+                    <button type="button" onclick="removeQuestionCard('${card.id}')" class="text-red-500 hover:text-red-700 text-xs font-bold transition">
+                        <i class="fa-solid fa-trash-can"></i> Remove
+                    </button>
+                </div>
+
+                <div>
+                    <label class="block text-[10px] uppercase font-bold text-slate-500 mb-1">Question Prompt</label>
+                    <textarea class="w-full border border-slate-200 p-2 rounded-lg text-xs font-medium outline-none text-slate-800 q-prompt" rows="2" placeholder="Describe the diagnostic presentation or physiological case..."></textarea>
+                </div>
+
+                <div class="grid grid-cols-2 gap-2">
+                    <div>
+                        <label class="block text-[10px] uppercase font-bold text-slate-500 mb-1">Option A</label>
+                        <input type="text" class="w-full border border-slate-200 p-2 rounded-lg text-xs outline-none q-opt-0" placeholder="Option A">
+                    </div>
+                    <div>
+                        <label class="block text-[10px] uppercase font-bold text-slate-500 mb-1">Option B</label>
+                        <input type="text" class="w-full border border-slate-200 p-2 rounded-lg text-xs outline-none q-opt-1" placeholder="Option B">
+                    </div>
+                    <div>
+                        <label class="block text-[10px] uppercase font-bold text-slate-500 mb-1">Option C</label>
+                        <input type="text" class="w-full border border-slate-200 p-2 rounded-lg text-xs outline-none q-opt-2" placeholder="Option C">
+                    </div>
+                    <div>
+                        <label class="block text-[10px] uppercase font-bold text-slate-500 mb-1">Option D</label>
+                        <input type="text" class="w-full border border-slate-200 p-2 rounded-lg text-xs outline-none q-opt-3" placeholder="Option D">
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-2 gap-2 pt-1 border-t border-slate-200">
+                    <div>
+                        <label class="block text-[10px] uppercase font-bold text-slate-500 mb-1">Correct Choice</label>
+                        <select class="w-full border border-slate-200 p-2 rounded-lg text-xs outline-none font-bold bg-white q-correct-index">
+                            <option value="0">A</option>
+                            <option value="1">B</option>
+                            <option value="2">C</option>
+                            <option value="3">D</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-[10px] uppercase font-bold text-slate-500 mb-1">Explanation / Clinical Rationale</label>
+                        <input type="text" class="w-full border border-slate-200 p-2 rounded-lg text-xs outline-none q-explanation" placeholder="Rationale for correct answer...">
+                    </div>
+                </div>
+            `;
+            wrapper.appendChild(card);
+            wrapper.scrollTop = wrapper.scrollHeight;
+        };
+
+        // Remove live builder card
+        window.removeQuestionCard = (id) => {
+            const card = document.getElementById(id);
+            if (card) {
+                card.remove();
+                resequenceQuestionLabels();
+            }
+        };
+
+        // Resequence labels after element deletion
+        function resequenceQuestionLabels() {
+            const cards = document.querySelectorAll('.question-card-item');
+            builderQuestionCount = 0;
+            cards.forEach((card) => {
+                builderQuestionCount++;
+                const span = card.querySelector('.bg-brand-100');
+                if (span) span.innerText = `Question #${builderQuestionCount}`;
+            });
+        }
+
+        // 1. Submit Action: Save Interactive Quiz Builder data
+        document.getElementById('saveBuilderQuizBtn').onclick = async () => {
+            const subject = document.getElementById('builderSubject').value.trim();
+            const chapter = document.getElementById('builderChapter').value.trim();
+            const cardDoms = document.querySelectorAll('.question-card-item');
+
+            if (!subject || !chapter) {
+                showToast("Please provide both a Subject and Chapter title.", "error");
+                return;
+            }
+
+            if (cardDoms.length === 0) {
+                showToast("Please add at least one question card to the quiz ledger.", "error");
+                return;
+            }
+
+            const compiledQuizData = [];
+            let isValid = true;
+
+            cardDoms.forEach((card, index) => {
+                const questionPrompt = card.querySelector('.q-prompt').value.trim();
+                const optA = card.querySelector('.q-opt-0').value.trim();
+                const optB = card.querySelector('.q-opt-1').value.trim();
+                const optC = card.querySelector('.q-opt-2').value.trim();
+                const optD = card.querySelector('.q-opt-3').value.trim();
+                const correctIndex = parseInt(card.querySelector('.q-correct-index').value);
+                const explanation = card.querySelector('.q-explanation').value.trim();
+
+                if (!questionPrompt || !optA || !optB || !optC || !optD) {
+                    isValid = false;
+                }
+
+                compiledQuizData.push({
+                    question: questionPrompt,
+                    options: [optA, optB, optC, optD],
+                    correctIndex: correctIndex,
+                    explanation: explanation || "The correct choice is determined by diagnostic medical protocol."
+                });
+            });
+
+            if (!isValid) {
+                showToast("All question prompts and all 4 options must be filled out.", "error");
+                return;
+            }
+
+            try {
+                const id = chapter.replace(/\s+/g, '_').toLowerCase();
+                
+                triggerConfirmationModal({
+                    title: "Publish This Quiz?",
+                    message: `Are you sure you want to write '${chapter}' into the system quizzes database registry?`,
+                    iconClass: "fa-solid fa-cloud-arrow-up text-brand-600",
+                    iconBgClass: "bg-indigo-50 border border-indigo-100",
+                    primaryText: "Publish",
+                    primaryClass: "bg-brand-600 hover:bg-brand-700 shadow-md shadow-indigo-50",
+                    onPrimary: async () => {
+                        await setDoc(doc(db, QUIZ_PATH, id), {
+                            subject,
+                            chapter,
+                            quizData: compiledQuizData,
+                            timestamp: Date.now()
+                        });
+                        showToast(`Successfully published '${chapter}'!`, "success");
+                        
+                        // Clear Form fields
+                        document.getElementById('builderSubject').value = '';
+                        document.getElementById('builderChapter').value = '';
+                        document.getElementById('questionsBuilderHost').innerHTML = '';
+                        builderQuestionCount = 0;
+                    }
+                });
+            } catch (err) {
+                console.error("Database submission error:", err);
+                showToast("Failed to write document into Firestore.", "error");
+            }
+        };
+
+        // 2. Submit Action: Upload JSON MCQ Syllabus File
+        document.getElementById('uploadBtn').onclick = async () => {
+            const file = document.getElementById('jsonFile').files[0];
+            const subject = document.getElementById('subject').value.trim();
+            const chapter = document.getElementById('chapter').value.trim();
+
+            if (!file) {
+                showToast("Please select a JSON syllabus file to upload.", "error");
+                return;
+            }
+            if (!subject || !chapter) {
+                showToast("Subject and Chapter Name are required fields.", "error");
+                return;
+            }
+
+            try {
+                const text = await file.text();
+                const quizData = JSON.parse(text);
+
+                // Verify basic structure logic
+                if (!Array.isArray(quizData) || quizData.length === 0) {
+                    showToast("Uploaded JSON is invalid. Must be a non-empty list array.", "error");
+                    return;
+                }
+
+                const id = chapter.replace(/\s+/g, '_').toLowerCase();
+
+                triggerConfirmationModal({
+                    title: "Upload JSON Document?",
+                    message: `Publish quiz document '${chapter}' containing ${quizData.length} questions?`,
+                    iconClass: "fa-solid fa-file-invoice text-indigo-500",
+                    iconBgClass: "bg-indigo-50 border border-indigo-100",
+                    primaryText: "Import JSON",
+                    primaryClass: "bg-indigo-600 hover:bg-indigo-700 shadow-lg",
+                    onPrimary: async () => {
+                        await setDoc(doc(db, QUIZ_PATH, id), {
+                            subject,
+                            chapter,
+                            quizData,
+                            timestamp: Date.now()
+                        });
+                        showToast(`Successfully published '${chapter}' via JSON!`, "success");
+                        
+                        // Clear form input targets
+                        document.getElementById('subject').value = '';
+                        document.getElementById('chapter').value = '';
+                        document.getElementById('jsonFile').value = '';
+                        document.getElementById('jsonFileNameDisplay').textContent = "Click to Select or Drop JSON File";
+                        document.getElementById('jsonFileNameDisplay').classList.remove('text-brand-700');
+                    }
+                });
+            } catch (e) {
+                console.error(e);
+                showToast("Format mismatch error: Check JSON structure and correct indexes.", "error");
+            }
+        };
+
+        // 3. Submit Action: Create & Publish Live Schedule boundaries
+        document.getElementById('scheduleBtn').onclick = async () => {
+            const subject = document.getElementById('scheduleSubject').value.trim();
+            const topic = document.getElementById('scheduleTopic').value.trim();
+            const openTime = document.getElementById('openTime').value;
+            const closeTime = document.getElementById('closeTime').value;
+
+            if (!topic || !openTime || !closeTime || !subject) {
+                showToast("Please fill in all scheduling fields (Subject, Topic, Open & Close times).", "error");
+                return;
+            }
+
+            const openDate = new Date(openTime);
+            const closeDate = new Date(closeTime);
+
+            if (closeDate <= openDate) {
+                showToast("Opening window must be scheduled prior to the closing time.", "error");
+                return;
+            }
+
+            try {
+                const id = topic.replace(/\s+/g, '_').toLowerCase();
+
+                triggerConfirmationModal({
+                    title: "Confirm Live Window?",
+                    message: `Schedule topic '${topic}' from ${openDate.toLocaleString()} to ${closeDate.toLocaleString()}?`,
+                    iconClass: "fa-solid fa-calendar-day text-emerald-500",
+                    iconBgClass: "bg-emerald-50 border border-emerald-100",
+                    primaryText: "Schedule Event",
+                    primaryClass: "bg-emerald-600 hover:bg-emerald-700 shadow-md",
+                    onPrimary: async () => {
+                        await setDoc(doc(db, SCHEDULE_PATH, id), {
+                            subject,
+                            topic,
+                            openTime,
+                            closeTime,
+                            createdAt: Date.now()
+                        });
+                        showToast(`Topic '${topic}' scheduled successfully!`, "success");
+                        
+                        // Clear Schedule inputs
+                        document.getElementById('scheduleSubject').value = '';
+                        document.getElementById('scheduleTopic').value = '';
+                        document.getElementById('openTime').value = '';
+                        document.getElementById('closeTime').value = '';
+                    }
+                });
+            } catch (err) {
+                console.error("Scheduling database error:", err);
+                showToast("Failed to write schedule into system database.", "error");
+            }
+        };
+
+        // Inventory Watcher: Monitor Available Quizzes
+        function monitorQuizzesRegistry() {
+            const quizListContainer = document.getElementById('quizInventoryList');
+            const queryRef = collection(db, QUIZ_PATH);
+            
+            onSnapshot(queryRef, (snap) => {
+                document.getElementById('quizCountBadge').innerText = `${snap.size} Quiz${snap.size !== 1 ? 'zes' : ''}`;
+                
+                if (snap.empty) {
+                    quizListContainer.innerHTML = `
+                    <div class="text-center p-6 bg-slate-50 border border-dashed rounded-xl">
+                        <span class="block text-xs font-semibold text-slate-400">Database is empty. Publish a quiz above.</span>
+                    </div>`;
+                    return;
+                }
+
+                let html = '';
+                snap.forEach(docSnap => {
+                    const data = docSnap.data();
+                    const mcqCount = data.quizData ? data.quizData.length : 0;
+                    html += `
+                    <div class="flex items-center justify-between p-3.5 bg-white hover:bg-slate-50 border border-slate-200 rounded-xl transition duration-200">
+                        <div class="flex-1 min-w-0 pr-2">
+                            <span class="inline-block text-[10px] uppercase tracking-wider font-extrabold text-indigo-600 bg-indigo-50 px-2 py-0.5 rounded-md mb-1">${data.subject || 'Medical'}</span>
+                            <h4 class="font-bold text-slate-900 text-sm truncate leading-snug">${data.chapter}</h4>
+                            <span class="text-[10px] text-slate-400 font-semibold flex items-center gap-1 mt-0.5"><i class="fa-solid fa-clipboard-question"></i> ${mcqCount} Questions</span>
+                        </div>
+                        <button onclick="deleteQuizRecord('${docSnap.id}', '${data.chapter}')" class="text-red-400 hover:text-red-600 p-2 rounded-lg hover:bg-red-50 transition" title="Delete Quiz Record">
+                            <i class="fa-solid fa-trash-can"></i>
+                        </button>
+                    </div>`;
+                });
+                quizListContainer.innerHTML = html;
+            }, (error) => {
+                console.error("Registry load error:", error);
+                quizListContainer.innerHTML = `<div class="text-center text-xs text-red-500 font-bold">Failed to sync: ${error.message}</div>`;
+            });
+        }
+
+        // Inventory Watcher: Monitor Active Schedules
+        function monitorSchedulesRegistry() {
+            const scheduleListContainer = document.getElementById('scheduleRegistryList');
+            const queryRef = collection(db, SCHEDULE_PATH);
+            
+            onSnapshot(queryRef, (snap) => {
+                document.getElementById('scheduleCountBadge').innerText = `${snap.size} Scheduled`;
+
+                if (snap.empty) {
+                    scheduleListContainer.innerHTML = `
+                    <div class="text-center p-6 bg-slate-50 border border-dashed rounded-xl">
+                        <span class="block text-xs font-semibold text-slate-400">No events active. Add scheduled topics above.</span>
+                    </div>`;
+                    return;
+                }
+
+                let html = '';
+                const now = new Date();
+                snap.forEach(docSnap => {
+                    const data = docSnap.data();
+                    const openDate = new Date(data.openTime);
+                    const closeDate = new Date(data.closeTime);
+                    
+                    let pillStyles = 'bg-slate-100 text-slate-500 border-slate-200';
+                    let pillText = 'Inactive';
+                    if (now >= openDate && now <= closeDate) {
+                        pillStyles = 'bg-emerald-100 text-emerald-800 border-emerald-200 font-extrabold animate-pulse';
+                        pillText = 'LIVE NOW';
+                    } else if (now < openDate) {
+                        pillStyles = 'bg-amber-100 text-amber-800 border-amber-200 font-semibold';
+                        pillText = 'Upcoming';
+                    }
+
+                    html += `
+                    <div class="flex items-start justify-between p-3 bg-white hover:bg-slate-50 border border-slate-200 rounded-xl transition duration-200">
+                        <div class="flex-1 min-w-0 pr-2">
+                            <div class="flex items-center gap-1.5 mb-1 flex-wrap">
+                                <span class="inline-block text-[9px] uppercase tracking-wider font-extrabold text-emerald-600 bg-emerald-50 px-1.5 py-0.5 rounded-md">${data.subject || 'Syllabus'}</span>
+                                <span class="text-[8px] font-bold uppercase tracking-widest px-1.5 py-0.5 border rounded-full ${pillStyles}">${pillText}</span>
+                            </div>
+                            <h4 class="font-bold text-slate-900 text-xs truncate leading-snug">${data.topic}</h4>
+                            <div class="text-[9px] text-slate-400 font-medium mt-1">
+                                <div><i class="fa-solid fa-play text-emerald-500"></i> Open: ${openDate.toLocaleDateString()} ${openDate.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}</div>
+                                <div><i class="fa-solid fa-stop text-red-400"></i> Close: ${closeDate.toLocaleDateString()} ${closeDate.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}</div>
+                            </div>
+                        </div>
+                        <button onclick="deleteScheduleRecord('${docSnap.id}', '${data.topic}')" class="text-red-400 hover:text-red-600 p-2 rounded-lg hover:bg-red-50 transition" title="Delete Schedule Event">
+                            <i class="fa-solid fa-calendar-minus"></i>
+                        </button>
+                    </div>`;
+                });
+                scheduleListContainer.innerHTML = html;
+            }, (error) => {
+                console.error("Registry schedules load error:", error);
+                scheduleListContainer.innerHTML = `<div class="text-center text-xs text-red-500 font-bold">Failed to sync: ${error.message}</div>`;
+            });
+        }
+
+        // Delete Records: Quizzes
+        window.deleteQuizRecord = (id, label) => {
+            triggerConfirmationModal({
+                title: "Delete Quiz Syllabus?",
+                message: `Are you sure you want to permanently delete '${label}'? This operation cannot be undone.`,
+                iconClass: "fa-solid fa-triangle-exclamation text-red-500",
+                iconBgClass: "bg-red-50 border border-red-100",
+                primaryText: "Permanently Delete",
+                primaryClass: "bg-red-600 hover:bg-red-700 shadow-md shadow-red-50",
+                onPrimary: async () => {
+                    try {
+                        const targetDoc = doc(db, QUIZ_PATH, id);
+                        await deleteDoc(targetDoc);
+                        showToast(`Successfully deleted '${label}'!`, "success");
+                    } catch (err) {
+                        console.error(err);
+                        showToast("Failed to delete quiz document from database.", "error");
+                    }
+                }
+            });
+        };
+
+        // Delete Records: Schedules
+        window.deleteScheduleRecord = (id, label) => {
+            triggerConfirmationModal({
+                title: "Cancel Topic Schedule?",
+                message: `Are you sure you want to delete the scheduled active window for '${label}'?`,
+                iconClass: "fa-solid fa-calendar-times text-red-500",
+                iconBgClass: "bg-red-50 border border-red-100",
+                primaryText: "Cancel Event",
+                primaryClass: "bg-red-600 hover:bg-red-700 shadow-md",
+                onPrimary: async () => {
+                    try {
+                        const targetDoc = doc(db, SCHEDULE_PATH, id);
+                        await deleteDoc(targetDoc);
+                        showToast(`Successfully deleted schedule for '${label}'!`, "success");
+                    } catch (err) {
+                        console.error(err);
+                        showToast("Failed to delete schedule document.", "error");
+                    }
+                }
+            });
+        };
+
+        // Execution kickoff on DOM Ready
+        window.addEventListener('DOMContentLoaded', () => {
+            // Add initial empty quiz builder card to start
+            addQuestionToBuilderList();
+            
+            // Start sync watchers
+            monitorQuizzesRegistry();
+            monitorSchedulesRegistry();
+        });
+    </script>
+</body>
+</html>
