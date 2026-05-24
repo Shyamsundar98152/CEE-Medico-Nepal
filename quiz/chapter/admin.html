@@ -280,11 +280,11 @@
                         </select>
                         <input id="filterChapter" type="text" placeholder="Filter by chapter..." onkeyup="browseQuestions()" class="px-3 py-2 border border-slate-200 rounded-lg text-sm font-medium bg-white focus:outline-none flex-1 min-w-0">
                         <button onclick="browseQuestions()" class="bg-medical-500 text-white font-bold px-4 py-2 rounded-lg text-sm transition-all hover:bg-medical-600">
-                            <i class="fa-solid fa-magnifying-glass"></i> Search
+                            <i class="fa-solid fa-magnifying-glass"></i> Search / Refresh
                         </button>
                     </div>
-                    <div id="browseResults" class="space-y-3 max-h-[500px] overflow-y-auto">
-                        <p class="text-sm text-slate-400 text-center py-6">Click Search to load questions.</p>
+                    <div id="browseResults" class="space-y-3 max-h-[600px] overflow-y-auto">
+                        <p class="text-sm text-slate-400 text-center py-6">Click Search or filter to load questions.</p>
                     </div>
                 </div>
             </div>
@@ -316,11 +316,125 @@
         </main>
     </div>
 
+    <!-- CUSTOM EDIT MODAL -->
+    <div id="editModal" class="fixed inset-0 bg-slate-900/50 backdrop-blur-sm hidden items-center justify-center p-4 z-50">
+        <div class="bg-white rounded-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto shadow-2xl border border-slate-100 flex flex-col">
+            <div class="flex items-center justify-between border-b border-slate-100 p-5 shrink-0 bg-slate-50 rounded-t-2xl">
+                <h3 class="text-lg font-black text-slate-900 flex items-center gap-2">
+                    <i class="fa-solid fa-pen-to-square text-medical-500"></i> Edit Question Details
+                </h3>
+                <button onclick="closeEditModal()" class="text-slate-400 hover:text-slate-600 transition-colors">
+                    <i class="fa-solid fa-xmark text-lg"></i>
+                </button>
+            </div>
+            
+            <form id="editForm" onsubmit="saveQuestionEdit(event)" class="p-6 space-y-4 overflow-y-auto flex-1">
+                <input type="hidden" id="editDocId">
+                
+                <div>
+                    <label class="block text-xs font-bold text-slate-600 mb-1 uppercase tracking-wide">Question Text</label>
+                    <textarea id="editQuestionText" required rows="3" class="w-full px-3 py-2 border border-slate-200 rounded-xl text-sm font-medium focus:outline-none focus:ring-2 focus:ring-medical-500/20 bg-white"></textarea>
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-xs font-bold text-slate-600 mb-1 uppercase tracking-wide">Option 1</label>
+                        <input type="text" id="editOpt0" required class="w-full px-3 py-2 border border-slate-200 rounded-xl text-sm font-medium focus:outline-none focus:ring-2 focus:ring-medical-500/20 bg-white">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold text-slate-600 mb-1 uppercase tracking-wide">Option 2</label>
+                        <input type="text" id="editOpt1" required class="w-full px-3 py-2 border border-slate-200 rounded-xl text-sm font-medium focus:outline-none focus:ring-2 focus:ring-medical-500/20 bg-white">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold text-slate-600 mb-1 uppercase tracking-wide">Option 3</label>
+                        <input type="text" id="editOpt2" required class="w-full px-3 py-2 border border-slate-200 rounded-xl text-sm font-medium focus:outline-none focus:ring-2 focus:ring-medical-500/20 bg-white">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold text-slate-600 mb-1 uppercase tracking-wide">Option 4</label>
+                        <input type="text" id="editOpt3" required class="w-full px-3 py-2 border border-slate-200 rounded-xl text-sm font-medium focus:outline-none focus:ring-2 focus:ring-medical-500/20 bg-white">
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-xs font-bold text-slate-600 mb-1 uppercase tracking-wide">Correct Option Index (0-3)</label>
+                        <select id="editCorrect" class="w-full px-3 py-2 border border-slate-200 rounded-xl text-sm font-medium focus:outline-none focus:ring-2 focus:ring-medical-500/20 bg-white">
+                            <option value="0">Option 1 (Index 0)</option>
+                            <option value="1">Option 2 (Index 1)</option>
+                            <option value="2">Option 3 (Index 2)</option>
+                            <option value="3">Option 4 (Index 3)</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold text-slate-600 mb-1 uppercase tracking-wide">Difficulty</label>
+                        <select id="editDiff" class="w-full px-3 py-2 border border-slate-200 rounded-xl text-sm font-medium focus:outline-none focus:ring-2 focus:ring-medical-500/20 bg-white">
+                            <option value="Easy">Easy</option>
+                            <option value="Medium">Medium</option>
+                            <option value="Hard">Hard</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-xs font-bold text-slate-600 mb-1 uppercase tracking-wide">Subject</label>
+                        <select id="editSubject" class="w-full px-3 py-2 border border-slate-200 rounded-xl text-sm font-medium focus:outline-none focus:ring-2 focus:ring-medical-500/20 bg-white">
+                            <option value="Physics">Physics</option>
+                            <option value="Chemistry">Chemistry</option>
+                            <option value="Botany">Botany</option>
+                            <option value="Zoology">Zoology</option>
+                            <option value="MAT">MAT</option>
+                            <option value="Biology">Biology</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold text-slate-600 mb-1 uppercase tracking-wide">Chapter</label>
+                        <input type="text" id="editChapter" required class="w-full px-3 py-2 border border-slate-200 rounded-xl text-sm font-medium focus:outline-none focus:ring-2 focus:ring-medical-500/20 bg-white">
+                    </div>
+                </div>
+
+                <div>
+                    <label class="block text-xs font-bold text-slate-600 mb-1 uppercase tracking-wide">Explanation</label>
+                    <textarea id="editExplanation" rows="3" class="w-full px-3 py-2 border border-slate-200 rounded-xl text-sm font-medium focus:outline-none focus:ring-2 focus:ring-medical-500/20 bg-white"></textarea>
+                </div>
+
+                <div class="flex items-center justify-end gap-3 pt-4 border-t border-slate-100 shrink-0">
+                    <button type="button" onclick="closeEditModal()" class="px-5 py-2.5 rounded-xl border border-slate-200 text-sm font-bold text-slate-600 hover:bg-slate-50 transition-colors">
+                        Cancel
+                    </button>
+                    <button type="submit" id="saveEditBtn" class="bg-medical-500 hover:bg-medical-600 text-white font-bold px-6 py-2.5 rounded-xl transition-all flex items-center gap-2">
+                        <i class="fa-solid fa-save"></i> Save Changes
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- CUSTOM CONFIRMATION DELETE MODAL -->
+    <div id="deleteModal" class="fixed inset-0 bg-slate-900/50 backdrop-blur-sm hidden items-center justify-center p-4 z-50">
+        <div class="bg-white rounded-2xl max-w-sm w-full p-6 shadow-2xl border border-slate-100 text-center">
+            <div class="w-16 h-16 bg-rose-50 rounded-full flex items-center justify-center text-rose-500 text-2xl mx-auto mb-4">
+                <i class="fa-solid fa-trash-can"></i>
+            </div>
+            <h3 class="text-lg font-bold text-slate-900 mb-2">Delete Question?</h3>
+            <p class="text-sm text-slate-500 mb-6">Are you sure you want to permanently delete this question? This action cannot be undone.</p>
+            <input type="hidden" id="deleteDocId">
+            <div class="flex gap-3 justify-center">
+                <button onclick="closeDeleteModal()" class="w-1/2 px-4 py-2.5 rounded-xl border border-slate-200 text-sm font-bold text-slate-600 hover:bg-slate-50 transition-colors">
+                    Cancel
+                </button>
+                <button onclick="confirmDeleteQuestion()" id="confirmDeleteBtn" class="w-1/2 bg-rose-500 hover:bg-rose-600 text-white font-bold px-4 py-2.5 rounded-xl transition-all">
+                    Delete
+                </button>
+            </div>
+        </div>
+    </div>
+
     <!-- Firebase -->
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
         import { getAuth, signInWithEmailAndPassword, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
-        import { getFirestore, collection, addDoc, getDocs, query, where, limit, orderBy, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+        import { getFirestore, collection, addDoc, getDocs, doc, updateDoc, deleteDoc, query, where, limit, orderBy, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
 
         const firebaseConfig = {
             apiKey: "AIzaSyDD5xBrSkX_YXzSnsKxjW8-K6W4rBfV3rg",
@@ -334,6 +448,9 @@
         const app = initializeApp(firebaseConfig);
         const auth = getAuth(app);
         const db = getFirestore(app);
+
+        // Keep local memory of currently active questions list for easy editing retrieval
+        let loadedQuestionsList = [];
 
         // Admin emails
         const ADMIN_EMAILS = ['avik96045@gmail.com'];
@@ -429,7 +546,7 @@
                     await addDoc(collection(db, 'questions'), {
                         question: q.question,
                         options: q.options,
-                        correct: q.correct,
+                        correct: Number(q.correct),
                         explanation: q.explanation || '',
                         subject: overrides.subject || q.subject || 'General',
                         chapter: overrides.chapter || q.chapter || 'Uncategorized',
@@ -502,7 +619,7 @@
             }
         };
 
-        // --- Browse ---
+        // --- Browse & Management ---
         window.browseQuestions = async () => {
             const subject = document.getElementById('filterSubject').value;
             const chapter = document.getElementById('filterChapter').value.trim().toLowerCase();
@@ -510,11 +627,14 @@
             container.innerHTML = '<p class="text-sm text-slate-400 text-center py-4"><i class="fa-solid fa-spinner fa-spin mr-2"></i>Loading...</p>';
 
             try {
-                let q = query(collection(db, 'questions'), limit(50));
-                if (subject) q = query(collection(db, 'questions'), where('subject', '==', subject), limit(50));
+                let q = query(collection(db, 'questions'), limit(100)); // Increased limit slightly to let admins browse more
+                if (subject) q = query(collection(db, 'questions'), where('subject', '==', subject), limit(100));
                 const snap = await getDocs(q);
                 let docs = snap.docs.map(d => ({ id: d.id, ...d.data() }));
                 if (chapter) docs = docs.filter(d => (d.chapter||'').toLowerCase().includes(chapter));
+
+                // Save list globally for edit panel mapping
+                loadedQuestionsList = docs;
 
                 if (!docs.length) {
                     container.innerHTML = '<p class="text-sm text-slate-400 text-center py-6">No questions found.</p>';
@@ -524,21 +644,152 @@
                 container.innerHTML = '';
                 docs.forEach((d, i) => {
                     const el = document.createElement('div');
-                    el.className = 'p-4 border border-slate-200 rounded-xl bg-white hover:border-medical-300 transition-colors';
-                    el.innerHTML = `
-                        <div class="flex items-start justify-between gap-3 mb-2">
-                            <p class="text-sm font-semibold text-slate-800 flex-1">${i+1}. ${d.question}</p>
-                            <div class="flex gap-1.5 shrink-0">
-                                <span class="badge-info">${d.subject||'?'}</span>
-                                <span class="badge-success">${d.difficulty||'?'}</span>
+                    el.className = 'p-4 border border-slate-200 rounded-xl bg-white hover:border-medical-300 transition-colors flex flex-col md:flex-row justify-between items-start gap-4';
+                    
+                    // Options and correct selection visualizer
+                    const optionsListHTML = (d.options || []).map((opt, idx) => {
+                        const isCorrect = idx === Number(d.correct);
+                        return `
+                            <div class="flex items-center gap-2 text-xs py-0.5 px-2 rounded ${isCorrect ? 'bg-emerald-50 text-emerald-700 font-bold border border-emerald-100' : 'text-slate-500'}">
+                                <span class="w-4 h-4 rounded-full bg-slate-100 flex items-center justify-center text-[10px] font-black shrink-0 ${isCorrect ? 'bg-emerald-500 text-white' : ''}">${idx + 1}</span>
+                                <span class="truncate">${opt}</span>
                             </div>
+                        `;
+                    }).join('');
+
+                    el.innerHTML = `
+                        <div class="flex-1 space-y-2 w-full min-w-0">
+                            <div class="flex items-start justify-between gap-3">
+                                <p class="text-sm font-semibold text-slate-800 flex-1">${i+1}. ${d.question}</p>
+                                <div class="flex gap-1.5 shrink-0">
+                                    <span class="badge-info">${d.subject||'?'}</span>
+                                    <span class="badge-success">${d.difficulty||'Medium'}</span>
+                                </div>
+                            </div>
+                            <div class="grid grid-cols-1 sm:grid-cols-2 gap-2 my-2">
+                                ${optionsListHTML}
+                            </div>
+                            <p class="text-xs text-slate-400 font-medium">
+                                <span class="text-slate-500 font-semibold">Chapter:</span> ${d.chapter||'N/A'} 
+                                ${d.explanation ? ` • <span class="text-slate-500 font-semibold">Explanation:</span> <span class="italic text-slate-500">${d.explanation.substring(0, 80)}${d.explanation.length > 80 ? '...' : ''}</span>` : ''}
+                            </p>
                         </div>
-                        <p class="text-xs text-slate-400 font-medium">Chapter: ${d.chapter||'N/A'} • Correct: Option ${d.correct+1}: <em>${(d.options||[])[d.correct]||'?'}</em></p>
+                        <div class="flex md:flex-col gap-2 shrink-0 w-full md:w-auto border-t md:border-t-0 pt-3 md:pt-0 border-slate-100 justify-end">
+                            <button onclick="window.openEditQuestion('${d.id}')" class="px-3 py-1.5 bg-slate-100 hover:bg-medical-100 hover:text-medical-600 rounded-lg text-xs font-bold text-slate-600 transition-all flex items-center justify-center gap-1.5">
+                                <i class="fa-solid fa-pen-to-square"></i> Edit
+                            </button>
+                            <button onclick="window.openDeleteQuestion('${d.id}')" class="px-3 py-1.5 bg-slate-100 hover:bg-rose-50 hover:text-rose-600 rounded-lg text-xs font-bold text-rose-500 transition-all flex items-center justify-center gap-1.5">
+                                <i class="fa-solid fa-trash-can"></i> Delete
+                            </button>
+                        </div>
                     `;
                     container.appendChild(el);
                 });
             } catch(e) {
                 container.innerHTML = `<p class="text-sm text-rose-500 text-center py-6">Error: ${e.message}</p>`;
+            }
+        };
+
+        // --- Question Edit Modal Logic ---
+        window.openEditQuestion = (docId) => {
+            const qData = loadedQuestionsList.find(q => q.id === docId);
+            if (!qData) return;
+
+            document.getElementById('editDocId').value = docId;
+            document.getElementById('editQuestionText').value = qData.question || '';
+            document.getElementById('editOpt0').value = qData.options?.[0] || '';
+            document.getElementById('editOpt1').value = qData.options?.[1] || '';
+            document.getElementById('editOpt2').value = qData.options?.[2] || '';
+            document.getElementById('editOpt3').value = qData.options?.[3] || '';
+            document.getElementById('editCorrect').value = qData.correct !== undefined ? qData.correct : '0';
+            document.getElementById('editDiff').value = qData.difficulty || 'Medium';
+            document.getElementById('editSubject').value = qData.subject || 'Physics';
+            document.getElementById('editChapter').value = qData.chapter || '';
+            document.getElementById('editExplanation').value = qData.explanation || '';
+
+            const modal = document.getElementById('editModal');
+            modal.classList.remove('hidden');
+            modal.classList.add('flex');
+        };
+
+        window.closeEditModal = () => {
+            const modal = document.getElementById('editModal');
+            modal.classList.add('hidden');
+            modal.classList.remove('flex');
+        };
+
+        window.saveQuestionEdit = async (event) => {
+            event.preventDefault();
+            const docId = document.getElementById('editDocId').value;
+            if (!docId) return;
+
+            const saveBtn = document.getElementById('saveEditBtn');
+            const originalHTML = saveBtn.innerHTML;
+            saveBtn.disabled = true;
+            saveBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin mr-1"></i> Saving...';
+
+            try {
+                const docRef = doc(db, 'questions', docId);
+                await updateDoc(docRef, {
+                    question: document.getElementById('editQuestionText').value,
+                    options: [
+                        document.getElementById('editOpt0').value,
+                        document.getElementById('editOpt1').value,
+                        document.getElementById('editOpt2').value,
+                        document.getElementById('editOpt3').value
+                    ],
+                    correct: Number(document.getElementById('editCorrect').value),
+                    difficulty: document.getElementById('editDiff').value,
+                    subject: document.getElementById('editSubject').value,
+                    chapter: document.getElementById('editChapter').value.trim(),
+                    explanation: document.getElementById('editExplanation').value
+                });
+
+                window.closeEditModal();
+                // Refresh list & stats
+                await browseQuestions();
+                await loadStats();
+            } catch (err) {
+                console.error("Error updating question:", err);
+            } finally {
+                saveBtn.disabled = false;
+                saveBtn.innerHTML = originalHTML;
+            }
+        };
+
+        // --- Question Delete Modal Logic ---
+        window.openDeleteQuestion = (docId) => {
+            document.getElementById('deleteDocId').value = docId;
+            const modal = document.getElementById('deleteModal');
+            modal.classList.remove('hidden');
+            modal.classList.add('flex');
+        };
+
+        window.closeDeleteModal = () => {
+            const modal = document.getElementById('deleteModal');
+            modal.classList.add('hidden');
+            modal.classList.remove('flex');
+        };
+
+        window.confirmDeleteQuestion = async () => {
+            const docId = document.getElementById('deleteDocId').value;
+            if (!docId) return;
+
+            const deleteBtn = document.getElementById('confirmDeleteBtn');
+            deleteBtn.disabled = true;
+            deleteBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin mr-1"></i> Deleting...';
+
+            try {
+                await deleteDoc(doc(db, 'questions', docId));
+                window.closeDeleteModal();
+                // Refresh list & stats
+                await browseQuestions();
+                await loadStats();
+            } catch(err) {
+                console.error("Error deleting question:", err);
+            } finally {
+                deleteBtn.disabled = false;
+                deleteBtn.innerHTML = 'Delete';
             }
         };
 
@@ -617,6 +868,7 @@
             document.getElementById('tab' + tab.charAt(0).toUpperCase() + tab.slice(1)).classList.add('active');
             const sideMap = { upload:'sideUpload', paste:'sidePaste', browse:'sideBrowse', users:'sideUsers', leaderboard:'sideLeaderboard' };
             if (sideMap[tab]) document.getElementById(sideMap[tab])?.classList.add('active');
+            if (tab === 'browse') browseQuestions();
             if (tab === 'users') loadUsers();
             if (tab === 'leaderboard') loadLeaderboard();
         };
