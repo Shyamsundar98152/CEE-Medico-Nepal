@@ -53,6 +53,11 @@
         .chart-bar-item { flex: 1; border-radius: 4px 4px 0 0; min-height: 4px; transition: height 0.6s ease; }
         input[type=range] { accent-color: #0ea5e9; }
         select:focus, input:focus { outline: none; box-shadow: 0 0 0 3px rgba(14,165,233,0.15); }
+        .subj-tile { user-select: none; }
+        .chapter-chip { user-select: none; }
+        /* Tailwind JIT workaround: pre-declare dynamic color classes */
+        .border-medical-400 { border-color: #38bdf8; } /* handled by tailwind config */
+        #setupScreen { animation: fadeUp 0.4s ease forwards; }
     </style>
 </head>
 <body class="bg-[#f8fafc] text-medical-950 font-sans antialiased overflow-x-hidden">
@@ -134,103 +139,123 @@
             <div class="bg-white rounded-2xl border border-slate-100 shadow-xl overflow-hidden">
                 <div class="bg-gradient-to-r from-medical-500 to-indigo-600 px-6 py-5 text-white">
                     <h2 class="text-xl font-black flex items-center gap-2"><i class="fa-solid fa-sliders"></i> Configure Your Test</h2>
-                    <p class="text-medical-100 text-sm mt-0.5">Customize every parameter for your practice session</p>
+                    <p class="text-medical-100 text-sm mt-0.5">Pick multiple subjects and chapters — mix them into one custom test</p>
                 </div>
-                <div class="p-6 sm:p-8">
-                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-6">
+                <div class="p-6 sm:p-8 space-y-6">
 
-                        <!-- Subject -->
-                        <div>
-                            <label class="block text-xs font-bold text-slate-600 mb-2 uppercase tracking-widest">
-                                <i class="fa-solid fa-book-medical text-medical-500 mr-1"></i> Subject
-                            </label>
-                            <select id="subjectSelect" onchange="loadChapters()" class="w-full px-4 py-3 border border-slate-200 rounded-xl text-sm font-semibold bg-white focus:border-medical-400 transition-all appearance-none cursor-pointer">
-                                <option value="">— Select Subject —</option>
-                                <option value="Physics">⚛️ Physics</option>
-                                <option value="Chemistry">🧪 Chemistry</option>
-                                <option value="Botany">🌿 Botany</option>
-                                <option value="Zoology">🦴 Zoology</option>
-                                <option value="Biology">🔬 Biology</option>
-                                <option value="MAT">🧠 MAT</option>
-                            </select>
-                        </div>
-
-                        <!-- Chapter -->
-                        <div>
-                            <label class="block text-xs font-bold text-slate-600 mb-2 uppercase tracking-widest">
-                                <i class="fa-solid fa-layer-group text-indigo-500 mr-1"></i> Chapter
-                            </label>
-                            <select id="chapterSelect" class="w-full px-4 py-3 border border-slate-200 rounded-xl text-sm font-semibold bg-white focus:border-medical-400 transition-all appearance-none cursor-pointer">
-                                <option value="">— All Chapters —</option>
-                            </select>
-                            <p id="chapterLoading" class="text-xs text-slate-400 mt-1 hidden"><i class="fa-solid fa-spinner fa-spin mr-1"></i>Loading chapters...</p>
-                        </div>
-
-                        <!-- Question Count -->
-                        <div>
-                            <label class="block text-xs font-bold text-slate-600 mb-2 uppercase tracking-widest">
-                                <i class="fa-solid fa-list-ol text-emerald-500 mr-1"></i> Number of Questions
-                                <span id="qCountDisplay" class="text-medical-500 ml-1">25</span>
-                            </label>
-                            <input type="range" id="questionCount" min="5" max="100" step="5" value="25" oninput="document.getElementById('qCountDisplay').textContent=this.value" class="w-full h-2 rounded-full cursor-pointer">
-                            <div class="flex justify-between text-xs text-slate-400 font-medium mt-1">
-                                <span>5</span><span>50</span><span>100</span>
-                            </div>
-                        </div>
-
-                        <!-- Timer -->
-                        <div>
-                            <label class="block text-xs font-bold text-slate-600 mb-2 uppercase tracking-widest">
-                                <i class="fa-solid fa-clock text-amber-500 mr-1"></i> Time Limit (minutes)
-                                <span id="timeDisplay" class="text-medical-500 ml-1">30 min</span>
-                            </label>
-                            <input type="range" id="timeLimit" min="5" max="120" step="5" value="30" oninput="document.getElementById('timeDisplay').textContent=this.value+' min'" class="w-full h-2 rounded-full cursor-pointer">
-                            <div class="flex justify-between text-xs text-slate-400 font-medium mt-1">
-                                <span>5 min</span><span>60 min</span><span>120 min</span>
-                            </div>
-                        </div>
-
-                        <!-- Difficulty -->
-                        <div>
-                            <label class="block text-xs font-bold text-slate-600 mb-2 uppercase tracking-widest">
-                                <i class="fa-solid fa-gauge text-rose-500 mr-1"></i> Difficulty
-                            </label>
-                            <div class="flex gap-2">
-                                <button onclick="setDiff(this,'Easy')" class="diff-btn flex-1 py-2.5 rounded-xl border-2 border-slate-200 text-sm font-bold text-slate-500 hover:border-emerald-400 hover:text-emerald-600 hover:bg-emerald-50 transition-all">Easy</button>
-                                <button onclick="setDiff(this,'Medium')" class="diff-btn flex-1 py-2.5 rounded-xl border-2 border-medical-400 text-sm font-bold text-medical-500 bg-medical-50 transition-all active-diff">Medium</button>
-                                <button onclick="setDiff(this,'Hard')" class="diff-btn flex-1 py-2.5 rounded-xl border-2 border-slate-200 text-sm font-bold text-slate-500 hover:border-rose-400 hover:text-rose-600 hover:bg-rose-50 transition-all">Hard</button>
-                                <button onclick="setDiff(this,'Any')" class="diff-btn flex-1 py-2.5 rounded-xl border-2 border-slate-200 text-sm font-bold text-slate-500 hover:border-indigo-400 hover:text-indigo-600 hover:bg-indigo-50 transition-all">Any</button>
-                            </div>
-                        </div>
-
-                        <!-- Mode -->
-                        <div>
-                            <label class="block text-xs font-bold text-slate-600 mb-2 uppercase tracking-widest">
-                                <i class="fa-solid fa-eye text-purple-500 mr-1"></i> Test Mode
-                            </label>
-                            <div class="flex gap-2">
-                                <button onclick="setMode(this,'instant')" class="mode-btn flex-1 py-2.5 rounded-xl border-2 border-medical-400 text-sm font-bold text-medical-500 bg-medical-50 transition-all">
-                                    <i class="fa-solid fa-bolt mr-1"></i> Instant Feedback
-                                </button>
-                                <button onclick="setMode(this,'exam')" class="mode-btn flex-1 py-2.5 rounded-xl border-2 border-slate-200 text-sm font-bold text-slate-500 hover:border-indigo-400 hover:text-indigo-600 hover:bg-indigo-50 transition-all">
-                                    <i class="fa-solid fa-graduation-cap mr-1"></i> Exam Mode
-                                </button>
-                            </div>
-                            <p class="text-xs text-slate-400 mt-1" id="modeDesc">Shows correct answer immediately after selection.</p>
+                    <!-- STEP 1: Subject Multi-Select -->
+                    <div>
+                        <label class="block text-xs font-bold text-slate-600 mb-3 uppercase tracking-widest flex items-center gap-2">
+                            <span class="w-5 h-5 bg-medical-500 text-white rounded-full flex items-center justify-center text-[10px] font-black">1</span>
+                            <i class="fa-solid fa-book-medical text-medical-500"></i> Select Subjects
+                            <span class="ml-auto text-medical-500 font-black text-sm" id="selectedSubjectsCount">0 selected</span>
+                        </label>
+                        <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-2.5" id="subjectGrid">
+                            <!-- Subject tiles injected by JS -->
                         </div>
                     </div>
 
-                    <!-- DB Info -->
-                    <div id="dbInfo" class="mt-6 p-4 bg-slate-50 rounded-xl border border-slate-200 flex items-center gap-3">
-                        <i class="fa-solid fa-database text-medical-400"></i>
-                        <span class="text-sm text-slate-500 font-medium" id="dbInfoText">Select a subject to see available questions.</span>
+                    <!-- STEP 2: Chapter Multi-Select (appears after subjects chosen) -->
+                    <div id="chapterSection" class="hidden">
+                        <div class="flex items-center justify-between mb-3">
+                            <label class="block text-xs font-bold text-slate-600 uppercase tracking-widest flex items-center gap-2">
+                                <span class="w-5 h-5 bg-indigo-500 text-white rounded-full flex items-center justify-center text-[10px] font-black">2</span>
+                                <i class="fa-solid fa-layer-group text-indigo-500"></i> Select Chapters
+                                <span class="ml-2 text-indigo-500 font-black text-sm" id="selectedChaptersCount">0 selected</span>
+                            </label>
+                            <div class="flex gap-2">
+                                <button onclick="selectAllChapters(true)" class="text-xs font-bold text-medical-500 hover:text-medical-700 px-2.5 py-1 rounded-lg hover:bg-medical-50 transition-colors border border-medical-200">All</button>
+                                <button onclick="selectAllChapters(false)" class="text-xs font-bold text-slate-400 hover:text-slate-600 px-2.5 py-1 rounded-lg hover:bg-slate-100 transition-colors border border-slate-200">None</button>
+                            </div>
+                        </div>
+                        <!-- Chapters grouped by subject -->
+                        <div id="chapterGroups" class="space-y-4"></div>
+                        <p id="chapterLoading" class="hidden text-sm text-slate-400 text-center py-4"><i class="fa-solid fa-spinner fa-spin mr-2"></i>Loading chapters from Firestore...</p>
+                    </div>
+
+                    <!-- STEP 3: Test Settings -->
+                    <div>
+                        <label class="block text-xs font-bold text-slate-600 mb-3 uppercase tracking-widest flex items-center gap-2">
+                            <span class="w-5 h-5 bg-emerald-500 text-white rounded-full flex items-center justify-center text-[10px] font-black">3</span>
+                            Test Settings
+                        </label>
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-5">
+                            <!-- Question Count -->
+                            <div class="bg-slate-50 rounded-xl p-4 border border-slate-200">
+                                <div class="flex items-center justify-between mb-2">
+                                    <span class="text-xs font-bold text-slate-600 uppercase tracking-wide flex items-center gap-1.5">
+                                        <i class="fa-solid fa-list-ol text-emerald-500"></i> Questions
+                                    </span>
+                                    <span id="qCountDisplay" class="text-lg font-black text-medical-500">25</span>
+                                </div>
+                                <input type="range" id="questionCount" min="5" max="100" step="5" value="25"
+                                    oninput="document.getElementById('qCountDisplay').textContent=this.value;updateDbInfo()"
+                                    class="w-full h-2 rounded-full cursor-pointer">
+                                <div class="flex justify-between text-[10px] text-slate-400 font-semibold mt-1.5">
+                                    <span>5</span><span>25</span><span>50</span><span>75</span><span>100</span>
+                                </div>
+                            </div>
+                            <!-- Timer -->
+                            <div class="bg-slate-50 rounded-xl p-4 border border-slate-200">
+                                <div class="flex items-center justify-between mb-2">
+                                    <span class="text-xs font-bold text-slate-600 uppercase tracking-wide flex items-center gap-1.5">
+                                        <i class="fa-solid fa-clock text-amber-500"></i> Time Limit
+                                    </span>
+                                    <span id="timeDisplay" class="text-lg font-black text-amber-500">30 min</span>
+                                </div>
+                                <input type="range" id="timeLimit" min="5" max="120" step="5" value="30"
+                                    oninput="document.getElementById('timeDisplay').textContent=this.value+' min'"
+                                    class="w-full h-2 rounded-full cursor-pointer" style="accent-color:#f59e0b">
+                                <div class="flex justify-between text-[10px] text-slate-400 font-semibold mt-1.5">
+                                    <span>5m</span><span>30m</span><span>60m</span><span>90m</span><span>120m</span>
+                                </div>
+                            </div>
+                            <!-- Difficulty -->
+                            <div class="bg-slate-50 rounded-xl p-4 border border-slate-200">
+                                <span class="text-xs font-bold text-slate-600 uppercase tracking-wide mb-3 block flex items-center gap-1.5">
+                                    <i class="fa-solid fa-gauge text-rose-500"></i> Difficulty
+                                </span>
+                                <div class="flex gap-2">
+                                    <button onclick="setDiff(this,'Easy')" class="diff-btn flex-1 py-2 rounded-lg border-2 border-slate-200 text-xs font-bold text-slate-500 hover:border-emerald-400 hover:text-emerald-600 hover:bg-emerald-50 transition-all">Easy</button>
+                                    <button onclick="setDiff(this,'Medium')" class="diff-btn flex-1 py-2 rounded-lg border-2 border-medical-400 text-xs font-bold text-medical-500 bg-medical-50 transition-all">Medium</button>
+                                    <button onclick="setDiff(this,'Hard')" class="diff-btn flex-1 py-2 rounded-lg border-2 border-slate-200 text-xs font-bold text-slate-500 hover:border-rose-400 hover:text-rose-600 hover:bg-rose-50 transition-all">Hard</button>
+                                    <button onclick="setDiff(this,'Any')" class="diff-btn flex-1 py-2 rounded-lg border-2 border-slate-200 text-xs font-bold text-slate-500 hover:border-indigo-400 hover:text-indigo-600 hover:bg-indigo-50 transition-all">Any</button>
+                                </div>
+                            </div>
+                            <!-- Mode -->
+                            <div class="bg-slate-50 rounded-xl p-4 border border-slate-200">
+                                <span class="text-xs font-bold text-slate-600 uppercase tracking-wide mb-3 block flex items-center gap-1.5">
+                                    <i class="fa-solid fa-eye text-purple-500"></i> Test Mode
+                                </span>
+                                <div class="flex gap-2">
+                                    <button onclick="setMode(this,'instant')" class="mode-btn flex-1 py-2 rounded-lg border-2 border-medical-400 text-xs font-bold text-medical-500 bg-medical-50 transition-all">
+                                        <i class="fa-solid fa-bolt mr-1"></i> Instant
+                                    </button>
+                                    <button onclick="setMode(this,'exam')" class="mode-btn flex-1 py-2 rounded-lg border-2 border-slate-200 text-xs font-bold text-slate-500 hover:border-indigo-400 hover:text-indigo-600 hover:bg-indigo-50 transition-all">
+                                        <i class="fa-solid fa-graduation-cap mr-1"></i> Exam
+                                    </button>
+                                </div>
+                                <p class="text-[11px] text-slate-400 mt-2" id="modeDesc">Shows correct answer immediately after each selection.</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Selection Summary Chip Bar -->
+                    <div id="selectionSummary" class="hidden p-4 bg-gradient-to-r from-medical-50 to-indigo-50 rounded-xl border border-medical-200">
+                        <p class="text-xs font-bold text-slate-600 uppercase tracking-widest mb-2.5">Your Test Summary</p>
+                        <div class="flex flex-wrap gap-2" id="summaryChips"></div>
+                        <div class="mt-3 pt-3 border-t border-medical-200 flex items-center justify-between">
+                            <span class="text-xs text-slate-500 font-semibold" id="dbInfoText">Select subjects to see available question count.</span>
+                            <span id="availBadge" class="hidden text-xs font-black text-medical-600 bg-medical-100 px-2.5 py-1 rounded-lg"></span>
+                        </div>
                     </div>
 
                     <!-- Error -->
-                    <div id="setupError" class="hidden mt-4 p-3 bg-rose-50 border border-rose-200 rounded-xl text-sm font-semibold text-rose-700"></div>
+                    <div id="setupError" class="hidden p-3 bg-rose-50 border border-rose-200 rounded-xl text-sm font-semibold text-rose-700"></div>
 
-                    <button onclick="startTest()" id="startBtn" class="shimmer-btn mt-6 w-full bg-gradient-to-r from-medical-500 to-indigo-600 hover:from-medical-600 hover:to-indigo-700 text-white font-black py-4 rounded-xl shadow-xl shadow-medical-500/20 transition-all active:scale-[0.99] flex items-center justify-center gap-3 text-base">
+                    <button onclick="startTest()" id="startBtn" class="shimmer-btn w-full bg-gradient-to-r from-medical-500 to-indigo-600 hover:from-medical-600 hover:to-indigo-700 text-white font-black py-4 rounded-xl shadow-xl shadow-medical-500/20 transition-all active:scale-[0.99] flex items-center justify-center gap-3 text-base disabled:opacity-60 disabled:cursor-not-allowed" disabled>
                         <i class="fa-solid fa-play-circle text-lg"></i> Start Practice Test
+                        <span id="startBtnCount" class="text-sm font-semibold opacity-80"></span>
                     </button>
                 </div>
             </div>
@@ -458,19 +483,266 @@
         const auth = getAuth(app);
         const db = getFirestore(app);
 
-        // State
+        // ── State ──────────────────────────────────────────────────────────
         let currentUser = null;
         let quizData = [];
         let currentQ = 0;
         let score = 0;
-        let answers = []; // { selected, correct, isCorrect }
+        let answers = [];
         let timerInterval = null;
         let timeLeft = 0;
         let totalTime = 0;
         let selectedDiff = 'Medium';
         let selectedMode = 'instant';
         let testStartTime = null;
-        let examAnswers = []; // for exam mode
+        let examAnswers = [];
+
+        // Multi-select state
+        const SUBJECTS = [
+            { id: 'Physics',   icon: '⚛️', color: 'blue'  },
+            { id: 'Chemistry', icon: '🧪', color: 'purple'},
+            { id: 'Botany',    icon: '🌿', color: 'green' },
+            { id: 'Zoology',   icon: '🦴', color: 'rose'  },
+            { id: 'Biology',   icon: '🔬', color: 'teal'  },
+            { id: 'MAT',       icon: '🧠', color: 'amber' },
+        ];
+        const COLOR_MAP = {
+            blue:  { sel:'border-medical-500 bg-medical-50 text-medical-700', unsel:'border-slate-200 text-slate-600 hover:border-medical-300 hover:bg-medical-50/50' },
+            purple:{ sel:'border-purple-500 bg-purple-50 text-purple-700',   unsel:'border-slate-200 text-slate-600 hover:border-purple-300 hover:bg-purple-50/50' },
+            green: { sel:'border-emerald-500 bg-emerald-50 text-emerald-700',unsel:'border-slate-200 text-slate-600 hover:border-emerald-300 hover:bg-emerald-50/50' },
+            rose:  { sel:'border-rose-500 bg-rose-50 text-rose-700',         unsel:'border-slate-200 text-slate-600 hover:border-rose-300 hover:bg-rose-50/50' },
+            teal:  { sel:'border-teal-500 bg-teal-50 text-teal-700',         unsel:'border-slate-200 text-slate-600 hover:border-teal-300 hover:bg-teal-50/50' },
+            amber: { sel:'border-amber-500 bg-amber-50 text-amber-700',      unsel:'border-slate-200 text-slate-600 hover:border-amber-300 hover:bg-amber-50/50' },
+        };
+        let selectedSubjects = new Set();           // Set of subject strings
+        let chapterData = {};                        // { subject: [chapters...] }
+        let selectedChapters = new Set();            // Set of "Subject::Chapter" keys
+        let totalAvailableQ = 0;
+
+        // ── Build subject grid ──────────────────────────────────────────────
+        function buildSubjectGrid() {
+            const grid = document.getElementById('subjectGrid');
+            grid.innerHTML = '';
+            SUBJECTS.forEach(s => {
+                const btn = document.createElement('button');
+                btn.id = `subj-${s.id}`;
+                btn.className = `subj-tile flex flex-col items-center gap-1.5 p-3 rounded-xl border-2 font-bold text-sm transition-all cursor-pointer ${COLOR_MAP[s.color].unsel}`;
+                btn.innerHTML = `<span class="text-2xl">${s.icon}</span><span class="text-xs font-bold leading-tight text-center">${s.id}</span>`;
+                btn.onclick = () => toggleSubject(s.id, s.color, btn);
+                grid.appendChild(btn);
+            });
+        }
+
+        function toggleSubject(id, color, btn) {
+            if (selectedSubjects.has(id)) {
+                selectedSubjects.delete(id);
+                btn.className = `subj-tile flex flex-col items-center gap-1.5 p-3 rounded-xl border-2 font-bold text-sm transition-all cursor-pointer ${COLOR_MAP[color].unsel}`;
+                // Remove its chapters from selection
+                [...selectedChapters].forEach(k => { if (k.startsWith(id + '::')) selectedChapters.delete(k); });
+            } else {
+                selectedSubjects.add(id);
+                btn.className = `subj-tile flex flex-col items-center gap-1.5 p-3 rounded-xl border-2 font-bold text-sm transition-all cursor-pointer ${COLOR_MAP[color].sel}`;
+            }
+            document.getElementById('selectedSubjectsCount').textContent = `${selectedSubjects.size} selected`;
+            loadChapters();
+        }
+
+        // ── Load chapters from Firestore for all selected subjects ──────────
+        window.loadChapters = async () => {
+            const count = selectedSubjects.size;
+            const chSec = document.getElementById('chapterSection');
+            const loading = document.getElementById('chapterLoading');
+
+            if (count === 0) {
+                chSec.classList.add('hidden');
+                document.getElementById('selectionSummary').classList.add('hidden');
+                document.getElementById('startBtn').disabled = true;
+                document.getElementById('startBtn').querySelector('#startBtnCount').textContent = '';
+                return;
+            }
+
+            chSec.classList.remove('hidden');
+            loading.classList.remove('hidden');
+            document.getElementById('chapterGroups').innerHTML = '';
+
+            const subjects = [...selectedSubjects];
+            // Fetch new subjects not yet cached
+            for (const sub of subjects) {
+                if (!chapterData[sub]) {
+                    try {
+                        const q = query(collection(db, 'questions'), where('subject', '==', sub), limit(500));
+                        const snap = await getDocs(q);
+                        const chapters = [...new Set(snap.docs.map(d => d.data().chapter).filter(Boolean))].sort();
+                        chapterData[sub] = { chapters, total: snap.size };
+                    } catch(e) {
+                        chapterData[sub] = { chapters: [], total: 0 };
+                    }
+                }
+            }
+
+            loading.classList.add('hidden');
+            buildChapterGroups(subjects);
+            updateSummary();
+        };
+
+        function buildChapterGroups(subjects) {
+            const container = document.getElementById('chapterGroups');
+            container.innerHTML = '';
+            subjects.forEach(sub => {
+                const subj = SUBJECTS.find(s => s.id === sub);
+                const { chapters, total } = chapterData[sub] || { chapters: [], total: 0 };
+                const color = subj?.color || 'blue';
+
+                const group = document.createElement('div');
+                group.className = 'bg-slate-50 rounded-xl border border-slate-200 p-4';
+                const header = `
+                    <div class="flex items-center justify-between mb-3">
+                        <span class="font-black text-sm text-slate-800 flex items-center gap-1.5">
+                            <span>${subj?.icon || ''}</span> ${sub}
+                            <span class="text-xs font-semibold text-slate-400 ml-1">(${total} questions)</span>
+                        </span>
+                        <div class="flex gap-1.5">
+                            <button onclick="selectSubjectChapters('${sub}',true)" class="text-[10px] font-bold text-medical-500 hover:text-medical-700 px-2 py-0.5 rounded border border-medical-200 hover:bg-medical-50">All</button>
+                            <button onclick="selectSubjectChapters('${sub}',false)" class="text-[10px] font-bold text-slate-400 hover:text-slate-600 px-2 py-0.5 rounded border border-slate-200 hover:bg-slate-100">None</button>
+                        </div>
+                    </div>`;
+
+                if (!chapters.length) {
+                    group.innerHTML = header + `<p class="text-xs text-slate-400 italic">No chapters found in Firestore for ${sub}. Upload questions via Admin panel.</p>`;
+                    container.appendChild(group);
+                    return;
+                }
+
+                const grid = document.createElement('div');
+                grid.className = 'flex flex-wrap gap-2';
+                chapters.forEach(ch => {
+                    const key = `${sub}::${ch}`;
+                    const chip = document.createElement('button');
+                    chip.id = `ch-${CSS.escape(key)}`;
+                    const isSelected = selectedChapters.has(key);
+                    chip.className = `chapter-chip text-xs font-semibold px-3 py-1.5 rounded-lg border-2 transition-all cursor-pointer ${isSelected ? `border-${color}-400 bg-${color}-50 text-${color}-700` : 'border-slate-200 text-slate-600 hover:border-slate-300 bg-white'}`;
+                    chip.textContent = ch;
+                    chip.onclick = () => toggleChapter(key, chip, color);
+                    grid.appendChild(chip);
+                });
+                group.innerHTML = header;
+                group.appendChild(grid);
+                container.appendChild(group);
+            });
+        }
+
+        function toggleChapter(key, chip, color) {
+            const colorSel = {
+                blue:'border-medical-400 bg-medical-50 text-medical-700',
+                purple:'border-purple-400 bg-purple-50 text-purple-700',
+                green:'border-emerald-400 bg-emerald-50 text-emerald-700',
+                rose:'border-rose-400 bg-rose-50 text-rose-700',
+                teal:'border-teal-400 bg-teal-50 text-teal-700',
+                amber:'border-amber-400 bg-amber-50 text-amber-700',
+            };
+            if (selectedChapters.has(key)) {
+                selectedChapters.delete(key);
+                chip.className = 'chapter-chip text-xs font-semibold px-3 py-1.5 rounded-lg border-2 transition-all cursor-pointer border-slate-200 text-slate-600 hover:border-slate-300 bg-white';
+            } else {
+                selectedChapters.add(key);
+                chip.className = `chapter-chip text-xs font-semibold px-3 py-1.5 rounded-lg border-2 transition-all cursor-pointer ${colorSel[color] || colorSel.blue}`;
+            }
+            updateSummary();
+        }
+
+        window.selectAllChapters = (select) => {
+            [...selectedSubjects].forEach(sub => selectSubjectChapters(sub, select));
+        };
+
+        window.selectSubjectChapters = (sub, select) => {
+            const { chapters } = chapterData[sub] || {};
+            if (!chapters) return;
+            const subj = SUBJECTS.find(s => s.id === sub);
+            const color = subj?.color || 'blue';
+            const colorSel = {
+                blue:'border-medical-400 bg-medical-50 text-medical-700',
+                purple:'border-purple-400 bg-purple-50 text-purple-700',
+                green:'border-emerald-400 bg-emerald-50 text-emerald-700',
+                rose:'border-rose-400 bg-rose-50 text-rose-700',
+                teal:'border-teal-400 bg-teal-50 text-teal-700',
+                amber:'border-amber-400 bg-amber-50 text-amber-700',
+            };
+            chapters.forEach(ch => {
+                const key = `${sub}::${ch}`;
+                const chip = document.querySelector(`[id="ch-${CSS.escape(key)}"]`);
+                if (select) {
+                    selectedChapters.add(key);
+                    if (chip) chip.className = `chapter-chip text-xs font-semibold px-3 py-1.5 rounded-lg border-2 transition-all cursor-pointer ${colorSel[color] || colorSel.blue}`;
+                } else {
+                    selectedChapters.delete(key);
+                    if (chip) chip.className = 'chapter-chip text-xs font-semibold px-3 py-1.5 rounded-lg border-2 transition-all cursor-pointer border-slate-200 text-slate-600 hover:border-slate-300 bg-white';
+                }
+            });
+            updateSummary();
+        };
+
+        function updateSummary() {
+            document.getElementById('selectedChaptersCount').textContent = `${selectedChapters.size} selected`;
+            const summary = document.getElementById('selectionSummary');
+            const chips = document.getElementById('summaryChips');
+            const startBtn = document.getElementById('startBtn');
+
+            // Calc available questions
+            totalAvailableQ = 0;
+            [...selectedSubjects].forEach(sub => { totalAvailableQ += chapterData[sub]?.total || 0; });
+
+            const hasChapters = selectedChapters.size > 0 || [...selectedSubjects].some(s => (chapterData[s]?.chapters || []).length === 0);
+
+            if (selectedSubjects.size > 0) {
+                summary.classList.remove('hidden');
+                chips.innerHTML = '';
+
+                // Subject chips
+                [...selectedSubjects].forEach(sub => {
+                    const subj = SUBJECTS.find(s => s.id === sub);
+                    const span = document.createElement('span');
+                    span.className = 'inline-flex items-center gap-1 px-2.5 py-1 bg-white border border-medical-300 rounded-lg text-xs font-bold text-medical-700 shadow-sm';
+                    span.innerHTML = `${subj?.icon || ''} ${sub}`;
+                    chips.appendChild(span);
+                });
+
+                // Chapter chips (first 6)
+                const chapArr = [...selectedChapters];
+                chapArr.slice(0, 6).forEach(key => {
+                    const [sub, ch] = key.split('::');
+                    const span = document.createElement('span');
+                    span.className = 'inline-flex items-center gap-1 px-2.5 py-1 bg-white border border-indigo-200 rounded-lg text-xs font-semibold text-indigo-700';
+                    span.textContent = ch;
+                    chips.appendChild(span);
+                });
+                if (chapArr.length > 6) {
+                    const more = document.createElement('span');
+                    more.className = 'px-2.5 py-1 bg-slate-100 rounded-lg text-xs font-bold text-slate-500';
+                    more.textContent = `+${chapArr.length - 6} more`;
+                    chips.appendChild(more);
+                }
+
+                const avail = document.getElementById('availBadge');
+                avail.textContent = `~${totalAvailableQ} questions available`;
+                avail.classList.remove('hidden');
+                document.getElementById('dbInfoText').textContent = selectedChapters.size > 0
+                    ? `${selectedChapters.size} chapter(s) selected across ${selectedSubjects.size} subject(s)`
+                    : `All chapters from ${selectedSubjects.size} subject(s)`;
+
+                // Enable start button
+                const canStart = selectedSubjects.size > 0;
+                startBtn.disabled = !canStart;
+                document.getElementById('startBtnCount').textContent = canStart
+                    ? `— up to ${document.getElementById('questionCount').value} questions`
+                    : '';
+            } else {
+                summary.classList.add('hidden');
+                startBtn.disabled = true;
+                document.getElementById('startBtnCount').textContent = '';
+            }
+        }
+
+        window.updateDbInfo = () => updateSummary();
 
         onAuthStateChanged(auth, (user) => {
             currentUser = user;
@@ -517,56 +789,61 @@
             document.getElementById('modeDesc').textContent = val==='instant' ? 'Shows correct answer immediately after selection.' : 'Submit all answers at end — just like real exam.';
         };
 
-        // Load chapters from Firestore
-        window.loadChapters = async () => {
-            const subject = document.getElementById('subjectSelect').value;
-            const chapterSel = document.getElementById('chapterSelect');
-            const loading = document.getElementById('chapterLoading');
-            chapterSel.innerHTML = '<option value="">— All Chapters —</option>';
-            if (!subject) { document.getElementById('dbInfoText').textContent = 'Select a subject to see available questions.'; return; }
+        // (loadChapters is now defined above in the multi-select section)
 
-            loading.classList.remove('hidden');
-            try {
-                let q = query(collection(db, 'questions'), where('subject', '==', subject), limit(500));
-                const snap = await getDocs(q);
-                const chapters = [...new Set(snap.docs.map(d => d.data().chapter).filter(Boolean))].sort();
-                chapters.forEach(ch => {
-                    const opt = document.createElement('option');
-                    opt.value = ch; opt.textContent = ch;
-                    chapterSel.appendChild(opt);
-                });
-                document.getElementById('dbInfoText').textContent = `✓ ${snap.size} questions available in ${subject} across ${chapters.length} chapters.`;
-            } catch(e) {
-                document.getElementById('dbInfoText').textContent = 'Could not load questions. Check Firestore connection.';
-            }
-            loading.classList.add('hidden');
-        };
-
-        // Start Test
+        // Start Test — multi-subject, multi-chapter
         window.startTest = async () => {
-            const subject = document.getElementById('subjectSelect').value;
-            const chapter = document.getElementById('chapterSelect').value;
             const count = parseInt(document.getElementById('questionCount').value);
             const minutes = parseInt(document.getElementById('timeLimit').value);
             const errBox = document.getElementById('setupError');
             errBox.classList.add('hidden');
 
-            if (!subject) { errBox.textContent = 'Please select a subject first.'; errBox.classList.remove('hidden'); return; }
+            if (selectedSubjects.size === 0) {
+                errBox.textContent = 'Please select at least one subject.';
+                errBox.classList.remove('hidden');
+                return;
+            }
 
             const btn = document.getElementById('startBtn');
             btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin mr-2"></i> Loading Questions...';
             btn.disabled = true;
 
             try {
-                // Build query
-                let constraints = [where('subject', '==', subject)];
-                if (chapter) constraints.push(where('chapter', '==', chapter));
-                if (selectedDiff !== 'Any') constraints.push(where('difficulty', '==', selectedDiff));
-                let q = query(collection(db, 'questions'), ...constraints, limit(Math.min(count * 3, 300)));
-                const snap = await getDocs(q);
+                const subjects = [...selectedSubjects];
+                const allDocs = [];
 
-                if (snap.empty) {
-                    errBox.textContent = 'No questions found for your selection. Try different filters or upload questions via Admin panel.';
+                // For each subject, build a query filtered by chosen chapters
+                for (const sub of subjects) {
+                    const subChapters = [...selectedChapters]
+                        .filter(k => k.startsWith(sub + '::'))
+                        .map(k => k.split('::')[1]);
+
+                    let constraints = [where('subject', '==', sub)];
+                    if (selectedDiff !== 'Any') constraints.push(where('difficulty', '==', selectedDiff));
+
+                    if (subChapters.length > 0) {
+                        // Firestore 'in' supports max 30 values; batch if needed
+                        const batches = [];
+                        for (let i = 0; i < subChapters.length; i += 10) batches.push(subChapters.slice(i, i + 10));
+                        for (const batch of batches) {
+                            const q = query(collection(db, 'questions'), ...constraints, where('chapter', 'in', batch), limit(300));
+                            const snap = await getDocs(q);
+                            snap.docs.forEach(d => allDocs.push({ id: d.id, ...d.data() }));
+                        }
+                    } else {
+                        // All chapters for this subject
+                        const q = query(collection(db, 'questions'), ...constraints, limit(300));
+                        const snap = await getDocs(q);
+                        snap.docs.forEach(d => allDocs.push({ id: d.id, ...d.data() }));
+                    }
+                }
+
+                // Dedupe by id
+                const seen = new Set();
+                const unique = allDocs.filter(d => { if (seen.has(d.id)) return false; seen.add(d.id); return true; });
+
+                if (!unique.length) {
+                    errBox.textContent = 'No questions found for your selection. Try different subjects/chapters or upload via Admin panel.';
                     errBox.classList.remove('hidden');
                     btn.innerHTML = '<i class="fa-solid fa-play-circle text-lg"></i> Start Practice Test';
                     btn.disabled = false;
@@ -574,11 +851,10 @@
                 }
 
                 // Shuffle and limit
-                let all = snap.docs.map(d => ({ id: d.id, ...d.data() }));
-                all = all.sort(() => Math.random() - 0.5).slice(0, count);
-                quizData = all;
-                answers = new Array(all.length).fill(null);
-                examAnswers = new Array(all.length).fill(null);
+                const shuffled = unique.sort(() => Math.random() - 0.5).slice(0, count);
+                quizData = shuffled;
+                answers = new Array(shuffled.length).fill(null);
+                examAnswers = new Array(shuffled.length).fill(null);
                 currentQ = 0; score = 0;
                 totalTime = minutes * 60; timeLeft = totalTime;
                 testStartTime = Date.now();
@@ -590,17 +866,20 @@
                 renderQuestion();
                 startTimer();
 
-                // Analytics
                 if (typeof gtag !== 'undefined') {
-                    gtag('event', 'test_started', { subject, chapter, count, difficulty: selectedDiff });
+                    gtag('event', 'test_started', {
+                        subjects: subjects.join(','),
+                        chapters: selectedChapters.size,
+                        count: shuffled.length,
+                        difficulty: selectedDiff
+                    });
                 }
             } catch(e) {
                 errBox.textContent = 'Error loading questions: ' + e.message;
                 errBox.classList.remove('hidden');
+                btn.innerHTML = '<i class="fa-solid fa-play-circle text-lg"></i> Start Practice Test';
+                btn.disabled = false;
             }
-
-            btn.innerHTML = '<i class="fa-solid fa-play-circle text-lg"></i> Start Practice Test';
-            btn.disabled = false;
         };
 
         function buildNavigator() {
@@ -821,13 +1100,14 @@
 
             // Save to Firestore
             try {
-                const subject = quizData[0]?.subject || 'Mixed';
+                const subjectLabel = [...new Set(quizData.map(q => q.subject))].join(', ') || 'Mixed';
                 const resultData = {
                     userId: currentUser?.uid || 'anonymous',
                     userName: currentUser?.displayName || 'Guest',
                     userEmail: currentUser?.email || '',
-                    subject,
-                    chapter: quizData[0]?.chapter || 'Mixed',
+                    subject: subjectLabel,
+                    subjects: [...new Set(quizData.map(q => q.subject))],
+                    chapters: [...new Set(quizData.map(q => q.chapter))],
                     difficulty: selectedDiff,
                     mode: selectedMode,
                     total: quizData.length,
@@ -845,7 +1125,7 @@
                 }
 
                 // Fetch rank
-                const rankQ = query(collection(db, 'testResults'), where('subject','==',subject), orderBy('score','desc'));
+                const rankQ = query(collection(db, 'testResults'), orderBy('score','desc'), limit(100));
                 const rankSnap = await getDocs(rankQ);
                 let rank = 1;
                 for (const d of rankSnap.docs) {
@@ -917,19 +1197,25 @@
 
         // Auto-start from URL params (launched from index.html quick launcher)
         window.addEventListener('DOMContentLoaded', () => {
+            buildSubjectGrid();
+
             const params = new URLSearchParams(window.location.search);
-            if (params.get('subject')) {
-                const subSel = document.getElementById('subjectSelect');
-                const sub = params.get('subject');
-                if (sub) { subSel.value = sub; loadChapters(); }
+            const sub = params.get('subject');
+            if (sub) {
+                // Auto-select the subject
+                const subj = SUBJECTS.find(s => s.id === sub);
+                if (subj) {
+                    const btn = document.getElementById(`subj-${sub}`);
+                    if (btn) toggleSubject(sub, subj.color, btn);
+                }
                 const count = params.get('count');
                 if (count) { const sl = document.getElementById('questionCount'); sl.value = count; document.getElementById('qCountDisplay').textContent = count; }
                 const time = params.get('time');
                 if (time) { const tl = document.getElementById('timeLimit'); tl.value = time; document.getElementById('timeDisplay').textContent = time + ' min'; }
                 const diff = params.get('diff');
                 if (diff) selectedDiff = diff;
-                // Auto-start after a brief delay for chapters to load
-                setTimeout(() => startTest(), 1200);
+                // Auto-start after chapters load
+                setTimeout(() => startTest(), 1800);
             }
         });
     </script>
