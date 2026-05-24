@@ -350,7 +350,7 @@
                     <h2 class="text-xl font-extrabold text-slate-800 tracking-tight flex items-center gap-2">
                         <i class="fa-solid fa-graduation-cap text-medical-500"></i> Practice Chapter Quizzes
                     </h2>
-                    <p class="text-slate-400 text-xs mt-0.5">Select a chapter below to practice clinical diagnostic questions and self-assess anytime.</p>
+                    <p class="text-slate-400 text-xs mt-0.5 font-medium">Select a scheduled chapter below. Non-active or unscheduled quizzes are locked.</p>
                 </div>
                 
                 <div id="chapterContainer" class="grid gap-4 sm:grid-cols-2">
@@ -651,6 +651,7 @@
 
         // ── State Registry ──
         let allSchedules   = [];   // Real-time schedules array
+        let allQuizzes     = [];   // Real-time medical quizzes array
         let activeFilter   = 'all';
 
         // ── Interactive Quiz Workspace States ──
@@ -955,53 +956,121 @@
         });
 
 
-        // ── Load Practice Chapters (Catalog) ──
+        // ── Render Practice Chapters Catalog (With Active Live/Closed Scheduling Protection) ──
+        function renderChapters() {
+            if (allQuizzes.length === 0) {
+                chapterContainer.innerHTML = `
+                <div class="col-span-full py-12 flex flex-col items-center justify-center text-center bg-white border border-dashed border-slate-200 rounded-2xl">
+                    <div class="bg-slate-50 text-slate-400 w-16 h-16 rounded-full flex items-center justify-center text-2xl mb-3 border border-slate-100">
+                        <i class="fa-solid fa-box-open"></i>
+                    </div>
+                    <h3 class="font-bold text-slate-800 text-lg">No Practice Quizzes Uploaded</h3>
+                    <p class="text-slate-400 text-sm mt-1 max-w-sm">No clinical diagnostic modules have been published. Admin users must upload MCQ datasets inside the Admin Dashboard.</p>
+                </div>`;
+                return;
+            }
+
+            let html = '';
+            allQuizzes.forEach(({ id, data }) => {
+                const questionsCount = data.quizData ? data.quizData.length : 0;
+
+                // Match with active or closed schedule logic (Only Scheduled Quizzes are playable/unlockable)
+                const isLive = allSchedules.some(s => getStatus(s.data) === 'live' && (s.data.quizId === id || s.id === id));
+                const isClosed = allSchedules.some(s => getStatus(s.data) === 'closed' && (s.data.quizId === id || s.id === id));
+
+                if (isLive) {
+                    // Quiz is Active and Scheduled LIVE NOW
+                    html += `
+                    <div class="bg-white hover:bg-slate-50 border border-emerald-300 rounded-2xl p-5 shadow-sm hover:shadow-md transition-all duration-300 flex flex-col justify-between group relative">
+                        <div class="absolute top-3 right-3 flex items-center gap-1 bg-emerald-50 text-emerald-700 border border-emerald-200 px-2.5 py-0.5 rounded-full text-[10px] font-bold animate-pulse">
+                            <span class="w-1.5 h-1.5 rounded-full bg-emerald-600 animate-ping"></span> Live Now
+                        </div>
+                        <div>
+                            <div class="flex items-center justify-between mb-2">
+                                <span class="text-xs font-bold text-medical-600 bg-medical-50 px-2.5 py-1 rounded-lg uppercase tracking-wide">${data.subject || 'General'}</span>
+                                <span class="text-xs font-semibold text-slate-400 flex items-center gap-1">
+                                    <i class="fa-solid fa-clipboard-question text-medical-400"></i> ${questionsCount} MCQ${questionsCount !== 1 ? 's' : ''}
+                                </span>
+                            </div>
+                            <h3 class="text-xl font-extrabold text-slate-950 group-hover:text-medical-600 transition-colors leading-tight mb-2">${data.chapter}</h3>
+                            <p class="text-slate-500 text-xs font-medium">This scheduled session is currently active. Click below to enter the examination cockpit.</p>
+                        </div>
+                        
+                        <div class="mt-6 pt-4 border-t border-slate-100 flex items-center justify-between">
+                            <span class="text-[11px] text-slate-400"><i class="fa-regular fa-clock"></i> ~${questionsCount * 1} min practice</span>
+                            <button onclick="startQuiz('${id}')" class="bg-emerald-500 hover:bg-emerald-600 text-white text-xs font-bold px-4 py-2.5 rounded-xl transition-all flex items-center gap-1 shadow-md shadow-emerald-500/10 active:scale-95">
+                                Start Quiz <i class="fa-solid fa-chevron-right text-[10px]"></i>
+                            </button>
+                        </div>
+                    </div>`;
+                } else if (isClosed) {
+                    // Quiz is Scheduled but CLOSED (Allows view results / questions review)
+                    html += `
+                    <div class="bg-white border border-slate-200 rounded-2xl p-5 shadow-sm flex flex-col justify-between group relative opacity-85 hover:opacity-100 transition-opacity">
+                        <div class="absolute top-3 right-3 flex items-center gap-1 bg-slate-100 text-slate-500 border border-slate-200 px-2.5 py-0.5 rounded-full text-[10px] font-bold">
+                            <i class="fa-solid fa-circle-stop text-[9px] text-slate-400"></i> Closed
+                        </div>
+                        <div>
+                            <div class="flex items-center justify-between mb-2">
+                                <span class="text-xs font-bold text-slate-500 bg-slate-100 px-2.5 py-1 rounded-lg uppercase tracking-wide">${data.subject || 'General'}</span>
+                                <span class="text-xs font-semibold text-slate-400 flex items-center gap-1">
+                                    <i class="fa-solid fa-clipboard-question text-slate-400"></i> ${questionsCount} MCQ${questionsCount !== 1 ? 's' : ''}
+                                </span>
+                            </div>
+                            <h3 class="text-xl font-extrabold text-slate-700 leading-tight mb-2">${data.chapter}</h3>
+                            <p class="text-slate-500 text-xs font-medium">This scheduled window is now closed. Click below to review performance analytics.</p>
+                        </div>
+                        
+                        <div class="mt-6 pt-4 border-t border-slate-100 flex items-center justify-between">
+                            <span class="text-[11px] text-slate-400"><i class="fa-regular fa-clock"></i> ~${questionsCount * 1} min practice</span>
+                            <button onclick="startQuiz('${id}')" class="bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold px-4 py-2.5 rounded-xl transition-all flex items-center gap-1 border border-slate-300 active:scale-95">
+                                Review <i class="fa-solid fa-square-poll-vertical text-[10px]"></i>
+                            </button>
+                        </div>
+                    </div>`;
+                } else {
+                    // Quiz is UNSCHEDULED or UPCOMING (Locked State)
+                    html += `
+                    <div class="bg-slate-50/50 border border-slate-200 rounded-2xl p-5 shadow-sm opacity-75 flex flex-col justify-between relative select-none">
+                        <div class="absolute top-3 right-3 flex items-center gap-1 bg-slate-200 text-slate-600 border border-slate-300 px-2.5 py-0.5 rounded-full text-[10px] font-bold">
+                            <i class="fa-solid fa-lock text-[9px]"></i> Locked
+                        </div>
+                        <div>
+                            <div class="flex items-center justify-between mb-2">
+                                <span class="text-xs font-bold text-slate-400 bg-slate-100 px-2.5 py-1 rounded-lg uppercase tracking-wide">${data.subject || 'General'}</span>
+                                <span class="text-xs font-semibold text-slate-400 flex items-center gap-1">
+                                    <i class="fa-solid fa-clipboard-question text-slate-300"></i> ${questionsCount} MCQ${questionsCount !== 1 ? 's' : ''}
+                                </span>
+                            </div>
+                            <h3 class="text-xl font-extrabold text-slate-400 leading-tight mb-2">${data.chapter}</h3>
+                            <p class="text-slate-400 text-xs font-medium">This module is currently locked. It will become active automatically when scheduled by your instructors.</p>
+                        </div>
+                        
+                        <div class="mt-6 pt-4 border-t border-slate-100 flex items-center justify-between">
+                            <span class="text-[11px] text-slate-400"><i class="fa-regular fa-clock"></i> ~${questionsCount * 1} min practice</span>
+                            <button disabled class="bg-slate-200 text-slate-400 text-xs font-bold px-4 py-2.5 rounded-xl flex items-center gap-1 cursor-not-allowed">
+                                <i class="fa-solid fa-lock text-[10px]"></i> Locked
+                            </button>
+                        </div>
+                    </div>`;
+                }
+            });
+            chapterContainer.innerHTML = html;
+        }
+
+
+        // ── Load Practice Chapters (Catalog Snapshot Listener) ──
         function loadChapters() {
             try {
                 const queryRef = collection(db, QUIZ_PATH);
                 onSnapshot(queryRef, (snap) => {
                     if (snap.empty) {
-                        chapterContainer.innerHTML = `
-                        <div class="col-span-full py-12 flex flex-col items-center justify-center text-center bg-white border border-dashed border-slate-200 rounded-2xl">
-                            <div class="bg-slate-50 text-slate-400 w-16 h-16 rounded-full flex items-center justify-center text-2xl mb-3 border border-slate-100">
-                                <i class="fa-solid fa-box-open"></i>
-                            </div>
-                            <h3 class="font-bold text-slate-800 text-lg">No Practice Quizzes Uploaded</h3>
-                            <p class="text-slate-400 text-sm mt-1 max-w-sm">No clinical diagnostic modules have been published. Admin users must upload MCQ datasets inside the Admin Dashboard.</p>
-                        </div>`;
-                        return;
+                        allQuizzes = [];
+                    } else {
+                        allQuizzes = snap.docs.map(d => ({ id: d.id, data: d.data() }));
                     }
-
-                    let html = '';
-                    snap.forEach(docSnap => {
-                        const data = docSnap.data();
-                        const questionsCount = data.quizData ? data.quizData.length : 0;
-                        html += `
-                        <div class="bg-white hover:bg-slate-50 border border-slate-200 rounded-2xl p-5 shadow-sm hover:shadow-md transition-all duration-300 flex flex-col justify-between group">
-                            <div>
-                                <div class="flex items-center justify-between mb-2">
-                                    <span class="text-xs font-bold text-medical-600 bg-medical-50 px-2.5 py-1 rounded-lg uppercase tracking-wide">${data.subject || 'General'}</span>
-                                    <span class="text-xs font-semibold text-slate-400 flex items-center gap-1">
-                                        <i class="fa-solid fa-clipboard-question text-medical-400"></i> ${questionsCount} MCQ${questionsCount !== 1 ? 's' : ''}
-                                    </span>
-                                </div>
-                                <h3 class="text-xl font-extrabold text-slate-950 group-hover:text-medical-600 transition-colors leading-tight mb-2">${data.chapter}</h3>
-                                <p class="text-slate-500 text-xs font-medium">Standard medical school difficulty format. Testing concept analysis, diagnosis, and clinical reasoning.</p>
-                            </div>
-                            
-                            <div class="mt-6 pt-4 border-t border-slate-100 flex items-center justify-between">
-                                <span class="text-[11px] text-slate-400"><i class="fa-regular fa-clock"></i> ~${questionsCount * 1} min practice</span>
-                                <button onclick="startQuiz('${docSnap.id}')" class="bg-medical-500 hover:bg-medical-600 text-white text-xs font-bold px-4 py-2.5 rounded-xl transition-all flex items-center gap-1 shadow-md shadow-medical-500/10 active:scale-95">
-                                    Start Quiz <i class="fa-solid fa-chevron-right text-[10px]"></i>
-                                </button>
-                            </div>
-                        </div>`;
-                    });
-                    chapterContainer.innerHTML = html;
-
-                    // Support direct URL parameter landing check (eg: daily-chapter-quiz.html?id=alcohol_and_phenol)
+                    renderChapters();
                     checkDirectUrlTrigger();
-
                 }, (error) => {
                     console.error("Quiz retrieval engine failed: ", error);
                     chapterContainer.innerHTML = `<div class="col-span-full text-center text-red-500 p-6 bg-red-50 rounded-xl">Error fetching modules: ${error.message}</div>`;
@@ -1049,6 +1118,15 @@
         // ── Quiz Execution Engine ──
         window.startQuiz = async (id) => {
             try {
+                // strict check: Only scheduled live or closed quizzes can be opened
+                const isLive = allSchedules.some(s => getStatus(s.data) === 'live' && (s.data.quizId === id || s.id === id));
+                const isClosed = allSchedules.some(s => getStatus(s.data) === 'closed' && (s.data.quizId === id || s.id === id));
+
+                if (!isLive && !isClosed) {
+                    window.showToast("This quiz is currently locked. It can only be started during its scheduled active session.", "error");
+                    return;
+                }
+
                 // Instantly show inline progress loader
                 window.showToast("Loading questions from MedAcademy database registry...", "info");
                 
@@ -1348,6 +1426,9 @@
                 emptyState.classList.add('hidden');
                 allSchedules = snap.docs.map(d => ({ id: d.id, data: d.data() }));
                 renderSchedules();
+                
+                // Keep the locked statuses on chapters fully synced in real-time as schedules transition
+                renderChapters();
 
             }, (error) => {
                 loadingState.classList.add('hidden');
