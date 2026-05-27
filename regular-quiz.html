@@ -1,139 +1,664 @@
 <!DOCTYPE html>
-<html lang="en" class="scroll-smooth">
+<html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>CEE Daily Quiz | CEE Medico Nepal</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700;800&display=swap" rel="stylesheet">
-    <style>
-        body { font-family: 'Inter', sans-serif; background: #050816; color: white; }
-        .glass { background: rgba(255, 255, 255, 0.03); backdrop-filter: blur(10px); border: 1px solid rgba(255, 255, 255, 0.05); }
-        .active-pulse { animation: pulse 2s infinite; background: #ef4444 !important; }
-        @keyframes pulse { 0% { transform: scale(1); } 50% { transform: scale(1.05); } 100% { transform: scale(1); } }
-    </style>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+
+<title>CEE Daily Quiz Scheduler</title>
+
+<link href="https://fonts.googleapis.com/css2?family=Sora:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+
+<style>
+
+*{
+  margin:0;
+  padding:0;
+  box-sizing:border-box;
+}
+
+body{
+  font-family:'Sora',sans-serif;
+  background:#050816;
+  color:white;
+  overflow-x:hidden;
+}
+
+body::before{
+  content:'';
+  position:fixed;
+  inset:0;
+  background:
+  radial-gradient(circle at top left,#1e3a8a55,transparent 35%),
+  radial-gradient(circle at bottom right,#7c3aed55,transparent 35%);
+  z-index:-1;
+}
+
+.container{
+  width:min(1200px,92%);
+  margin:auto;
+  padding:35px 0;
+}
+
+.header{
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  gap:20px;
+  flex-wrap:wrap;
+}
+
+.logo{
+  font-size:34px;
+  font-weight:800;
+  background:linear-gradient(to right,#60a5fa,#c084fc);
+  -webkit-background-clip:text;
+  -webkit-text-fill-color:transparent;
+}
+
+.status-box{
+  display:flex;
+  align-items:center;
+  gap:14px;
+  background:rgba(255,255,255,.05);
+  border:1px solid rgba(255,255,255,.08);
+  padding:18px 22px;
+  border-radius:20px;
+  backdrop-filter:blur(10px);
+}
+
+.light{
+  width:16px;
+  height:16px;
+  border-radius:50%;
+  background:red;
+  box-shadow:0 0 20px red;
+  animation:blink 1s infinite;
+}
+
+.light.live{
+  background:#00ff7b;
+  box-shadow:0 0 25px #00ff7b;
+  animation:none;
+}
+
+@keyframes blink{
+  0%{opacity:1}
+  50%{opacity:.3}
+  100%{opacity:1}
+}
+
+.hero{
+  margin-top:30px;
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:25px;
+}
+
+@media(max-width:900px){
+  .hero{
+    grid-template-columns:1fr;
+  }
+}
+
+.card{
+  background:rgba(255,255,255,.05);
+  border:1px solid rgba(255,255,255,.08);
+  border-radius:28px;
+  padding:28px;
+  backdrop-filter:blur(12px);
+}
+
+.small{
+  color:#94a3b8;
+  font-size:14px;
+}
+
+.big{
+  font-size:38px;
+  font-weight:800;
+  margin-top:12px;
+  line-height:1.2;
+}
+
+.subject{
+  margin-top:20px;
+  color:#60a5fa;
+  font-size:20px;
+  font-weight:700;
+}
+
+.chapter{
+  margin-top:14px;
+  display:inline-block;
+  background:linear-gradient(90deg,#2563eb,#7c3aed);
+  padding:12px 18px;
+  border-radius:14px;
+  font-weight:700;
+}
+
+.questions{
+  margin-top:18px;
+  color:#cbd5e1;
+}
+
+.timer{
+  display:flex;
+  gap:16px;
+  margin-top:28px;
+  flex-wrap:wrap;
+}
+
+.time-box{
+  flex:1;
+  min-width:90px;
+  background:#0f172a;
+  border-radius:18px;
+  padding:20px;
+  text-align:center;
+}
+
+.time-box h1{
+  font-size:36px;
+}
+
+.time-box p{
+  color:#94a3b8;
+  margin-top:5px;
+}
+
+.start-btn{
+  width:100%;
+  margin-top:28px;
+  border:none;
+  border-radius:18px;
+  padding:18px;
+  font-size:18px;
+  font-weight:800;
+  cursor:pointer;
+  color:white;
+  background:linear-gradient(to right,#2563eb,#7c3aed);
+  transition:.3s;
+}
+
+.start-btn:hover{
+  transform:translateY(-3px);
+}
+
+.schedule-title{
+  font-size:24px;
+  font-weight:800;
+  margin-bottom:22px;
+}
+
+.schedule-list{
+  display:flex;
+  flex-direction:column;
+  gap:14px;
+  max-height:700px;
+  overflow:auto;
+  padding-right:6px;
+}
+
+.schedule-item{
+  background:#0f172a;
+  border-radius:18px;
+  padding:18px;
+  display:flex;
+  justify-content:space-between;
+  gap:20px;
+  flex-wrap:wrap;
+}
+
+.schedule-item.today{
+  border:1px solid #3b82f6;
+}
+
+.badge{
+  background:#1e293b;
+  padding:10px 14px;
+  border-radius:12px;
+  font-size:13px;
+  font-weight:700;
+  height:fit-content;
+}
+
+.footer{
+  margin-top:35px;
+  text-align:center;
+  color:#64748b;
+  font-size:14px;
+}
+
+</style>
 </head>
-<body class="min-h-screen flex flex-col">
 
-    <header class="glass sticky top-0 z-50 border-b border-white/10">
-        <nav class="max-w-7xl mx-auto px-6 py-4 flex items-center justify-between">
-            <span class="text-2xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-blue-400 to-purple-400">CEEMedicoNepal</span>
-        </nav>
-    </header>
+<body>
 
-    <main class="flex-grow max-w-7xl mx-auto w-full px-6 py-12">
-        <div class="grid lg:grid-cols-3 gap-8">
-            <!-- Timer Section -->
-            <div class="lg:col-span-2 glass rounded-3xl p-8 border border-white/10">
-                <h1 id="todayDate" class="text-3xl font-bold mb-8">Loading Session...</h1>
-                
-                <div class="space-y-4 mb-8">
-                    <div id="todaySubject" class="text-blue-400 font-semibold text-lg">---</div>
-                    <div id="todayChapter" class="text-2xl font-bold">---</div>
-                </div>
+<div class="container">
 
-                <div id="countdownTimer" class="grid grid-cols-3 gap-4 mb-8">
-                    <div class="text-center bg-slate-900/50 p-4 rounded-2xl border border-white/5">
-                        <div id="hours" class="text-2xl font-bold">00</div>
-                        <div class="text-xs text-slate-500 uppercase">Hours</div>
-                    </div>
-                    <div class="text-center bg-slate-900/50 p-4 rounded-2xl border border-white/5">
-                        <div id="minutes" class="text-2xl font-bold">00</div>
-                        <div class="text-xs text-slate-500 uppercase">Minutes</div>
-                    </div>
-                    <div class="text-center bg-slate-900/50 p-4 rounded-2xl border border-white/5">
-                        <div id="seconds" class="text-2xl font-bold">00</div>
-                        <div class="text-xs text-slate-500 uppercase">Seconds</div>
-                    </div>
-                </div>
+  <div class="header">
 
-                <button id="startBtn" disabled class="w-full py-4 bg-slate-800 rounded-2xl font-bold transition duration-300">
-                    WAITING FOR SESSION
-                </button>
-            </div>
+    <div class="logo">
+      CEE Daily Quiz System
+    </div>
 
-            <!-- Future Schedule Sidebar -->
-            <div class="glass rounded-3xl p-8 border border-white/10">
-                <h2 class="text-xl font-bold mb-6 text-slate-300">90-Day Schedule</h2>
-                <div id="scheduleList" class="space-y-4 max-h-[400px] overflow-y-auto pr-2">
-                    <!-- Example entries -->
-                    <div class="p-3 bg-white/5 rounded-lg border border-white/5">
-                        <div class="text-xs text-blue-400">Day 1</div>
-                        <div class="font-semibold">Human Physiology</div>
-                    </div>
-                    <div class="p-3 bg-white/5 rounded-lg border border-white/5">
-                        <div class="text-xs text-blue-400">Day 2</div>
-                        <div class="font-semibold">Cell Biology</div>
-                    </div>
-                    <div class="p-3 bg-white/5 rounded-lg border border-white/5">
-                        <div class="text-xs text-blue-400">Day 3</div>
-                        <div class="font-semibold">Organic Chemistry</div>
-                    </div>
-                    <!-- Add more days here -->
-                </div>
-            </div>
+    <div class="status-box">
+
+      <div class="light" id="liveLight"></div>
+
+      <div>
+        <div class="small">Quiz Status</div>
+        <div id="liveText" style="font-weight:700;">
+          Waiting For Quiz
         </div>
-    </main>
+      </div>
 
-    <script type="module">
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
-        import { getFirestore, collection, query, getDocs, limit } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+    </div>
 
-        const firebaseConfig = {
-            apiKey: "AIzaSyDD5xBrSkX_YXzSnsKxjW8-K6W4rBfV3rg",
-            authDomain: "chapter-wise-backup.firebaseapp.com",
-            projectId: "chapter-wise-backup",
-            storageBucket: "chapter-wise-backup.firebasestorage.app",
-            messagingSenderId: "864698641587",
-            appId: "1:864698641587:web:d0b550579c6eb7709ed4c6"
+  </div>
+
+  <div class="hero">
+
+    <!-- LEFT -->
+    <div class="card">
+
+      <div class="small">Today's Scheduled Quiz</div>
+
+      <div class="big" id="todayDate">
+        Loading...
+      </div>
+
+      <div class="subject" id="todaySubject">
+        Loading Subject...
+      </div>
+
+      <div class="chapter" id="todayChapter">
+        Loading Chapter...
+      </div>
+
+      <div class="questions" id="questionCount">
+        Loading Questions...
+      </div>
+
+      <div class="timer">
+
+        <div class="time-box">
+          <h1 id="hours">00</h1>
+          <p>Hours</p>
+        </div>
+
+        <div class="time-box">
+          <h1 id="minutes">00</h1>
+          <p>Minutes</p>
+        </div>
+
+        <div class="time-box">
+          <h1 id="seconds">00</h1>
+          <p>Seconds</p>
+        </div>
+
+      </div>
+
+      <button class="start-btn" id="startBtn">
+        START QUIZ
+      </button>
+
+    </div>
+
+    <!-- RIGHT -->
+    <div class="card">
+
+      <div class="schedule-title">
+        Auto Schedule • Next 30 Days
+      </div>
+
+      <div class="schedule-list" id="scheduleList"></div>
+
+    </div>
+
+  </div>
+
+  <div class="footer">
+    Quiz Time: Everyday 10 PM - 11 PM • Saturday Off
+  </div>
+
+</div>
+
+<script type="module">
+
+/* =========================
+   FIREBASE
+========================= */
+
+import { initializeApp }
+from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+
+import {
+  getFirestore,
+  collection,
+  getDocs
+}
+from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+
+/* =========================
+   CONFIG
+========================= */
+
+const firebaseConfig = {
+  apiKey: "AIzaSyDD5xBrSkX_YXzSnsKxjW8-K6W4rBfV3rg",
+  authDomain: "chapter-wise-backup.firebaseapp.com",
+  databaseURL: "https://chapter-wise-backup-default-rtdb.asia-southeast1.firebasedatabase.app",
+  projectId: "chapter-wise-backup",
+  storageBucket: "chapter-wise-backup.firebasestorage.app",
+  messagingSenderId: "864698641587",
+  appId: "1:864698641587:web:d0b550579c6eb7709ed4c6"
+};
+
+const app = initializeApp(firebaseConfig);
+
+const db = getFirestore(app);
+
+/* =========================
+   GLOBALS
+========================= */
+
+let groupedData = [];
+
+let todayQuiz = null;
+
+/* =========================
+   LOAD QUESTIONS
+========================= */
+
+async function loadQuestions(){
+
+  try{
+
+    const snapshot = await getDocs(
+      collection(db,"questions")
+    );
+
+    const map = {};
+
+    snapshot.forEach(doc=>{
+
+      const data = doc.data();
+
+      if(!data.subject || !data.chapter) return;
+
+      const key =
+        data.subject + "___" + data.chapter;
+
+      if(!map[key]){
+
+        map[key] = {
+          subject:data.subject,
+          chapter:data.chapter,
+          count:0
         };
+      }
 
-        const db = getFirestore(initializeApp(firebaseConfig));
+      map[key].count++;
 
-        async function fetchLiveQuestions() {
-            try {
-                const snapshot = await getDocs(query(collection(db, 'questions'), limit(50)));
-                return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-            } catch (e) { console.error(e); return []; }
-        }
+    });
 
-        function updateTimer() {
-            const hEl = document.getElementById("hours"), mEl = document.getElementById("minutes"), sEl = document.getElementById("seconds"), startBtn = document.getElementById("startBtn");
-            if (!hEl || !mEl || !sEl) return;
+    groupedData = Object.values(map);
 
-            const now = new Date();
-            const start = new Date(); start.setHours(11, 0, 0, 0);
-            const end = new Date(); end.setHours(23, 0, 0, 0);
+    generateSchedule();
 
-            if (now >= start && now < end) {
-                hEl.innerText = "00"; mEl.innerText = "00"; sEl.innerText = "00";
-                if (startBtn) {
-                    startBtn.disabled = false;
-                    startBtn.classList.add("active-pulse");
-                    startBtn.textContent = "JOIN LIVE QUIZ NOW";
-                    startBtn.onclick = async () => {
-                        sessionStorage.setItem("currentQuiz", JSON.stringify(await fetchLiveQuestions()));
-                        window.location.href = "regular-quiz.html";
-                    };
-                }
-            } else {
-                let diff = start - now;
-                if (diff < 0) diff += 24 * 60 * 60 * 1000;
-                hEl.innerText = String(Math.floor(diff / 3600000)).padStart(2, '0');
-                mEl.innerText = String(Math.floor((diff % 3600000) / 60000)).padStart(2, '0');
-                sEl.innerText = String(Math.floor((diff % 60000) / 1000)).padStart(2, '0');
-                if (startBtn) {
-                    startBtn.disabled = true;
-                    startBtn.classList.remove("active-pulse");
-                    startBtn.textContent = "WAITING FOR SESSION";
-                }
-            }
-        }
+  }catch(err){
 
-        document.addEventListener("DOMContentLoaded", () => {
-            setInterval(updateTimer, 1000);
-            updateTimer();
-        });
-    </script>
+    console.error(err);
+
+    alert("Failed loading questions");
+
+  }
+
+}
+
+loadQuestions();
+
+/* =========================
+   GENERATE SCHEDULE
+========================= */
+
+function generateSchedule(){
+
+  const scheduleList =
+    document.getElementById("scheduleList");
+
+  scheduleList.innerHTML = "";
+
+  const today = new Date();
+
+  let index = 0;
+
+  for(let i=0;i<30;i++){
+
+    const date = new Date();
+
+    date.setDate(today.getDate()+i);
+
+    const day = date.getDay();
+
+    // SATURDAY OFF
+    if(day === 6){
+
+      const div = document.createElement("div");
+
+      div.className = "schedule-item";
+
+      div.innerHTML = `
+        <div>
+          <h3>Saturday Holiday</h3>
+          <p>${formatDate(date)}</p>
+        </div>
+
+        <div class="badge">
+          OFF DAY
+        </div>
+      `;
+
+      scheduleList.appendChild(div);
+
+      continue;
+    }
+
+    const item =
+      groupedData[index % groupedData.length];
+
+    const div = document.createElement("div");
+
+    const isToday =
+      date.toDateString() ===
+      today.toDateString();
+
+    div.className =
+      "schedule-item" +
+      (isToday ? " today" : "");
+
+    div.innerHTML = `
+      <div>
+        <h3>${item.chapter}</h3>
+        <p>
+          ${item.subject}
+          •
+          ${formatDate(date)}
+          •
+          10 PM - 11 PM
+        </p>
+      </div>
+
+      <div class="badge">
+        ${item.count} Questions
+      </div>
+    `;
+
+    scheduleList.appendChild(div);
+
+    // TODAY QUIZ
+    if(isToday){
+
+      todayQuiz = item;
+
+      document.getElementById("todayDate")
+      .innerText = formatDate(date);
+
+      document.getElementById("todaySubject")
+      .innerText = item.subject;
+
+      document.getElementById("todayChapter")
+      .innerText = item.chapter;
+
+      document.getElementById("questionCount")
+      .innerText =
+        item.count + " Questions Available";
+
+    }
+
+    index++;
+  }
+
+}
+
+/* =========================
+   DATE FORMAT
+========================= */
+
+function formatDate(date){
+
+  return date.toLocaleDateString(
+    "en-US",
+    {
+      weekday:"short",
+      month:"short",
+      day:"numeric"
+    }
+  );
+
+}
+
+/* =========================
+   COUNTDOWN
+========================= */
+
+function updateCountdown(){
+
+  const now = new Date();
+
+  const start = new Date();
+
+  start.setHours(11,0,0,0);
+
+  const end = new Date();
+
+  end.setHours(23,0,0,0);
+
+  const liveLight =
+    document.getElementById("liveLight");
+
+  const liveText =
+    document.getElementById("liveText");
+
+  // LIVE
+  if(now >= start && now <= end){
+
+    liveLight.classList.add("live");
+
+    liveText.innerText = "QUIZ LIVE NOW";
+
+    document.getElementById("hours")
+    .innerText = "00";
+
+    document.getElementById("minutes")
+    .innerText = "00";
+
+    document.getElementById("seconds")
+    .innerText = "00";
+
+    return;
+  }
+
+  // AFTER 11 PM
+  if(now > end){
+
+    start.setDate(start.getDate()+1);
+
+  }
+
+  const diff = start - now;
+
+  const hours =
+    Math.floor(diff / (1000*60*60));
+
+  const minutes =
+    Math.floor(
+      (diff % (1000*60*60))
+      / (1000*60)
+    );
+
+  const seconds =
+    Math.floor(
+      (diff % (1000*60))
+      / 1000
+    );
+
+  document.getElementById("hours")
+  .innerText =
+    String(hours).padStart(2,'0');
+
+  document.getElementById("minutes")
+  .innerText =
+    String(minutes).padStart(2,'0');
+
+  document.getElementById("seconds")
+  .innerText =
+    String(seconds).padStart(2,'0');
+
+}
+
+setInterval(updateCountdown,1000);
+
+updateCountdown();
+
+/* =========================
+   START QUIZ
+========================= */
+
+document.getElementById("startBtn")
+.addEventListener("click",()=>{
+
+  const now = new Date();
+
+  const start = new Date();
+
+  start.setHours(11,0,0,0);
+
+  const end = new Date();
+
+  end.setHours(23,0,0,0);
+
+  if(now >= start && now <= end){
+
+    alert(
+      "Starting Quiz: " +
+      todayQuiz.chapter
+    );
+
+    // REDIRECT
+    // window.location.href = "quiz.html";
+
+  }else{
+
+    alert(
+      "Quiz available only from 10 PM to 11 PM"
+    );
+
+  }
+
+});
+
+</script>
+
 </body>
 </html>
