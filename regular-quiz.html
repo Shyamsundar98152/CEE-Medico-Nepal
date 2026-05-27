@@ -1,4 +1,66 @@
 <!DOCTYPE html>
+<!--
+==============================================================
+  FIREBASE REALTIME DATABASE (RTDB) RULES
+  Project: cee-medico-nepal-regular
+  Apply at: Firebase Console → Realtime Database → Rules
+==============================================================
+
+{
+  "rules": {
+    ".read": false,
+    ".write": false,
+
+    "testResults": {
+      "$resultId": {
+        ".read": "auth != null && (root.child('testResults/' + $resultId + '/uid').val() === auth.uid || auth.token.email === 'avik96045@gmail.com')",
+        ".write": "auth != null && (newData.child('uid').val() === auth.uid || auth.token.email === 'avik96045@gmail.com')",
+        ".validate": "newData.hasChildren(['uid','score','accuracy','timestamp','quizDate'])",
+        "uid":       { ".validate": "newData.isString() && newData.val() === auth.uid" },
+        "score":     { ".validate": "newData.isNumber()" },
+        "accuracy":  { ".validate": "newData.isNumber()" },
+        "correct":   { ".validate": "newData.isNumber()" },
+        "wrong":     { ".validate": "newData.isNumber()" },
+        "skipped":   { ".validate": "newData.isNumber()" },
+        "timestamp": { ".validate": "newData.isNumber()" },
+        "quizDate":  { ".validate": "newData.isString()" },
+        "name":      { ".validate": "newData.isString()" },
+        "subject":   { ".validate": "newData.isString()" },
+        "chapter":   { ".validate": "newData.isString()" },
+        "$other":    { ".validate": false }
+      }
+    },
+
+    "leaderboard": {
+      ".read": true,
+      "$docId": {
+        ".write": "auth != null && (newData.child('uid').val() === auth.uid || auth.token.email === 'avik96045@gmail.com')",
+        ".validate": "newData.hasChildren(['uid','score','timestamp'])",
+        "uid":       { ".validate": "newData.isString() && newData.val() === auth.uid" },
+        "score":     { ".validate": "newData.isNumber()" },
+        "timestamp": { ".validate": "newData.isNumber()" },
+        "name":      { ".validate": "newData.isString()" },
+        "accuracy":  { ".validate": "newData.isNumber()" },
+        "$other":    { ".validate": false }
+      }
+    },
+
+    "users": {
+      "$userId": {
+        ".read":  "auth != null && (auth.uid === $userId || auth.token.email === 'avik96045@gmail.com')",
+        ".write": "auth != null && (auth.uid === $userId || auth.token.email === 'avik96045@gmail.com')"
+      }
+    }
+  }
+}
+
+==============================================================
+  NOTE: Firestore rules are NOT modified per your request.
+  The Firestore rules you provided are already correct and
+  remain as-is. Only read data from readDB (chapter-wise-backup)
+  and write results to writeDB (cee-medico-nepal-regular).
+==============================================================
+-->
 <html lang="en">
 <head>
 <meta charset="UTF-8"/>
@@ -402,7 +464,7 @@ main{max-width:1400px;margin:auto;padding:clamp(16px,3vw,40px) clamp(12px,4vw,48
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
 import { getAuth, GoogleAuthProvider, signInWithPopup, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
-import { getFirestore, collection, getDocs, addDoc, query, orderBy, limit, onSnapshot, where, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+import { getFirestore, collection, getDocs, addDoc, query, onSnapshot, where } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
 const readApp = initializeApp({ apiKey:"AIzaSyDD5xBrSkX_YXzSnsKxjW8-K6W4rBfV3rg", authDomain:"chapter-wise-backup.firebaseapp.com", projectId:"chapter-wise-backup" }, "readDB");
 const writeApp = initializeApp({ apiKey:"AIzaSyAng6y7NH9RZshoxEqaplOM9LiSMVrsmtI", authDomain:"cee-medico-nepal-regular.firebaseapp.com", projectId:"cee-medico-nepal-regular" }, "writeDB");
@@ -579,7 +641,14 @@ window.startQuiz = () => {
 
   quizQuestions = [...todaySlot.questions].sort(()=>Math.random()-0.5).slice(0,30);
   qIdx=0; score=0;
-  answers = quizQuestions.map(()=>({answered:false,skipped:false,userAnswer:null,correct:null,question:null}));
+  answers = quizQuestions.map(q=>({
+    answered:false,
+    skipped:false,
+    userAnswer:null,
+    correct: q.answer||q.ans||q.correctAnswer||q.correct||"",
+    question: q.question||q.q||"",
+    options: q.options||[]
+  }));
   
   $("qSubject").textContent=todaySlot.subject;
   $("qChapter").textContent=todaySlot.chapter;
@@ -617,7 +686,8 @@ function showQuestion(){
   const grid=$("optionsGrid"); grid.innerHTML="";
   const letters=["A","B","C","D","E"];
   const prev=answers[qIdx];
-  const correct = q.answer||q.ans||q.correctAnswer||"";
+  // Use the stored correct answer from answers array (set at quiz start)
+  const correct = prev.correct || q.answer||q.ans||q.correctAnswer||q.correct||"";
   $("nextBtn").disabled = !prev.answered && !prev.skipped;
 
   const currentOptions = q.options || [];
@@ -678,7 +748,7 @@ function handleAnswer(chosen, correct, btn, grid){
     skipped:false, 
     userAnswer:chosen, 
     correct, 
-    question: quizQuestions[qIdx].question||quizQuestions[qIdx].q,
+    question: quizQuestions[qIdx].question||quizQuestions[qIdx].q||"",
     options: quizQuestions[qIdx].options || []
   };
 
@@ -701,13 +771,14 @@ function autoSkip(){
   if(answers[qIdx].answered || answers[qIdx].skipped) return;
   
   const q=quizQuestions[qIdx];
-  const correct = q.answer||q.ans||q.correctAnswer||"";
+  // Use stored correct from answers array first, fallback to question fields
+  const correct = answers[qIdx].correct || q.answer||q.ans||q.correctAnswer||q.correct||"";
   answers[qIdx]={
     answered:false,
     skipped:true,
     userAnswer:null,
     correct,
-    question: q.question||q.q,
+    question: q.question||q.q||"",
     options: q.options || []
   };
   
@@ -759,8 +830,8 @@ window.confirmSubmit = () => {
   closeModal();
   quizQuestions.forEach((q,i)=>{
     if(!answers[i].answered && !answers[i].skipped){
-      const correct = q.answer||q.ans||q.correctAnswer||"";
-      answers[i]={answered:false,skipped:true,userAnswer:null,correct,question:q.question||q.q,options:q.options||[]};
+      const correct = answers[i].correct || q.answer||q.ans||q.correctAnswer||q.correct||"";
+      answers[i]={answered:false,skipped:true,userAnswer:null,correct,question:q.question||q.q||"",options:q.options||[]};
     }
   });
   finishQuiz();
@@ -819,19 +890,22 @@ async function finishQuiz(){
     try{
       await addDoc(collection(writeDB,"testResults"),{
         uid: currentUser.uid,
-        name: currentUser.displayName,
-        score, 
-        correct: correctCount,
-        wrong: wrongCount,
-        skipped: skippedCount,
-        accuracy, 
-        subject: todaySlot.subject, 
-        chapter: todaySlot.chapter,
-        timestamp: serverTimestamp(),
+        name: currentUser.displayName || "Anonymous",
+        score: Math.round(score),
+        correct: Math.round(correctCount),
+        wrong: Math.round(wrongCount),
+        skipped: Math.round(skippedCount),
+        accuracy: Math.round(accuracy),
+        subject: todaySlot.subject || "General", 
+        chapter: todaySlot.chapter || "Unknown",
+        timestamp: Date.now(),
         quizDate: new Date().toDateString()
       });
       toast("Performance parameters synchronized! 🎉");
-    } catch(e){ toast("Metrics tracking synchronization fault."); }
+    } catch(e){ 
+      console.error("Save error:", e);
+      toast("Save failed: " + (e.message || "Check Firestore rules")); 
+    }
   }
   
   switchResultTab('summaryTab');
@@ -847,9 +921,7 @@ function loadLeaderboard(){
   
   const qLive = query(
     collection(writeDB, "testResults"),
-    where("quizDate", "==", todayStr),
-    orderBy("score", "desc"),
-    limit(15)
+    where("quizDate", "==", todayStr)
   );
   
   liveLeaderboardUnsubscribe = onSnapshot(qLive, (snapshot) => {
@@ -866,8 +938,10 @@ function loadLeaderboard(){
     let rank = 1;
     let myRank = null;
     
-    snapshot.forEach((doc) => {
-      const data = doc.data();
+    // Sort by score descending client-side, limit 15
+    const sorted = snapshot.docs.map(d=>d.data()).sort((a,b)=>(b.score||0)-(a.score||0)).slice(0,15);
+    
+    sorted.forEach((data) => {
       let badgeClass = "";
       if(rank === 1) badgeClass = "gold";
       else if(rank === 2) badgeClass = "silver";
@@ -923,8 +997,7 @@ async function loadAnalytics(){
   try {
     const q = query(
       collection(writeDB, "testResults"),
-      where("uid", "==", currentUser.uid),
-      orderBy("timestamp", "desc")
+      where("uid", "==", currentUser.uid)
     );
     
     const snap = await getDocs(q);
@@ -939,14 +1012,16 @@ async function loadAnalytics(){
       return;
     }
     
+    // Sort client-side by timestamp descending (avoids composite index requirement)
+    const docs = snap.docs.map(d => d.data()).sort((a,b) => (b.timestamp||0) - (a.timestamp||0));
+    
     let totalScore = 0, bestScore = -Infinity, totalAcc = 0, count = 0;
     let html = "";
     let subjectAggregates = {};
     
     let chartCorrect = 0, chartWrong = 0, chartSkipped = 0;
 
-    snap.forEach(doc => {
-      const data = doc.data();
+    docs.forEach(data => {
       count++;
       totalScore += data.score || 0;
       totalAcc += data.accuracy || 0;
@@ -962,7 +1037,10 @@ async function loadAnalytics(){
       subjectAggregates[subj].accSum += data.accuracy || 0;
       subjectAggregates[subj].itemsCount++;
 
-      const dateStr = data.timestamp?.toDate() ? data.timestamp.toDate().toLocaleDateString("en-US", {month:"short", day:"numeric", year:"numeric"}) : "Recent Transaction";
+      // timestamp is stored as Date.now() integer
+      const dateStr = data.timestamp 
+        ? new Date(data.timestamp).toLocaleDateString("en-US", {month:"short", day:"numeric", year:"numeric"}) 
+        : "Recent";
       
       html += `
         <tr>
