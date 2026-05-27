@@ -3,159 +3,137 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>CEE Daily Quiz | CEE Medico Nepal - MBBS MCQ Mock Test</title>
-    <link rel="canonical" href="https://ceemediconepal.xyz/quiz.html" />
-    <meta name="description" content="Prepare for CEE and MBBS entrance exams in Nepal with CEE Medico Nepal. Daily medical quizzes and MCQs designed for medical aspirants.">
-    <meta name="keywords" content="CEE Medico Nepal, CEE Nepal, Medical Quiz Nepal, CEE Entrance Preparation, CEE Mock Test">
-    
+    <title>CEE Daily Quiz | CEE Medico Nepal</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700;800&display=swap" rel="stylesheet">
     <style>
-        body { font-family: 'Inter', sans-serif; background: #050816; }
+        body { font-family: 'Inter', sans-serif; background: #050816; color: white; }
         .glass { background: rgba(255, 255, 255, 0.03); backdrop-filter: blur(10px); border: 1px solid rgba(255, 255, 255, 0.05); }
+        .active-pulse { animation: pulse 2s infinite; background: #ef4444 !important; }
+        @keyframes pulse { 0% { transform: scale(1); } 50% { transform: scale(1.05); } 100% { transform: scale(1); } }
     </style>
 </head>
-<body class="text-white min-h-screen flex flex-col">
+<body class="min-h-screen flex flex-col">
 
-    <!-- Header -->
     <header class="glass sticky top-0 z-50 border-b border-white/10">
         <nav class="max-w-7xl mx-auto px-6 py-4 flex items-center justify-between">
-            <a href="https://ceemediconepal.xyz" class="text-2xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-blue-400 to-purple-400">
-                CEEMedicoNepal
-            </a>
-            <div class="hidden md:flex gap-8 text-sm font-medium text-slate-400">
-                <a href="https://ceemediconepal.xyz" class="hover:text-white transition">Home</a>
-                <a href="#" class="hover:text-white transition text-white">Quiz Dashboard</a>
-                <a href="#" class="hover:text-white transition">Leaderboard</a>
-            </div>
+            <span class="text-2xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-blue-400 to-purple-400">CEEMedicoNepal</span>
         </nav>
     </header>
 
     <main class="flex-grow max-w-7xl mx-auto w-full px-6 py-12">
         <div class="grid lg:grid-cols-3 gap-8">
+            <!-- Timer Section -->
             <div class="lg:col-span-2 glass rounded-3xl p-8 border border-white/10">
-                <div class="flex justify-between items-start mb-8">
-                    <div>
-                        <p class="text-slate-400 text-sm font-medium uppercase tracking-widest">Upcoming Session</p>
-                        <h1 id="todayDate" class="text-3xl font-bold mt-2">Loading...</h1>
-                    </div>
-                    <!-- Live Status Indicator -->
-                    <div id="liveBadge" class="hidden items-center gap-2 px-3 py-1 rounded-full bg-green-500/10 text-green-400 text-xs font-bold border border-green-500/20">
-                        <span class="w-2 h-2 rounded-full bg-green-500 animate-pulse"></span>
-                        LIVE NOW
-                    </div>
-                    <div id="offlineBadge" class="flex items-center gap-2 px-3 py-1 rounded-full bg-red-500/10 text-red-400 text-xs font-bold border border-red-500/20">
-                        <span class="w-2 h-2 rounded-full bg-red-500 animate-pulse"></span>
-                        OFFLINE
-                    </div>
-                </div>
-
+                <h1 id="todayDate" class="text-3xl font-bold mb-8">Loading Session...</h1>
+                
                 <div class="space-y-4 mb-8">
-                    <div id="todaySubject" class="text-blue-400 font-semibold text-lg">Loading...</div>
-                    <div id="todayChapter" class="text-2xl font-bold">Loading...</div>
+                    <div id="todaySubject" class="text-blue-400 font-semibold text-lg">---</div>
+                    <div id="todayChapter" class="text-2xl font-bold">---</div>
                 </div>
 
                 <div id="countdownTimer" class="grid grid-cols-3 gap-4 mb-8">
                     <div class="text-center bg-slate-900/50 p-4 rounded-2xl border border-white/5">
                         <div id="hours" class="text-2xl font-bold">00</div>
-                        <div class="text-xs text-slate-500">Hours</div>
+                        <div class="text-xs text-slate-500 uppercase">Hours</div>
                     </div>
                     <div class="text-center bg-slate-900/50 p-4 rounded-2xl border border-white/5">
                         <div id="minutes" class="text-2xl font-bold">00</div>
-                        <div class="text-xs text-slate-500">Minutes</div>
+                        <div class="text-xs text-slate-500 uppercase">Minutes</div>
                     </div>
                     <div class="text-center bg-slate-900/50 p-4 rounded-2xl border border-white/5">
                         <div id="seconds" class="text-2xl font-bold">00</div>
-                        <div class="text-xs text-slate-500">Seconds</div>
+                        <div class="text-xs text-slate-500 uppercase">Seconds</div>
                     </div>
                 </div>
 
-                <button id="startBtn" class="w-full py-4 bg-gradient-to-r from-blue-600 to-purple-600 rounded-2xl font-bold hover:scale-[1.01] transition duration-300">
-                    JOIN LIVE QUIZ
+                <button id="startBtn" disabled class="w-full py-4 bg-slate-800 rounded-2xl font-bold transition duration-300">
+                    WAITING FOR SESSION
                 </button>
             </div>
 
+            <!-- Future Schedule Sidebar -->
             <div class="glass rounded-3xl p-8 border border-white/10">
-                <h2 class="text-xl font-bold mb-6">90-Day Schedule</h2>
-                <div id="scheduleList" class="space-y-4 max-h-[400px] overflow-y-auto pr-2"></div>
+                <h2 class="text-xl font-bold mb-6 text-slate-300">90-Day Schedule</h2>
+                <div id="scheduleList" class="space-y-4 max-h-[400px] overflow-y-auto pr-2">
+                    <!-- Example entries -->
+                    <div class="p-3 bg-white/5 rounded-lg border border-white/5">
+                        <div class="text-xs text-blue-400">Day 1</div>
+                        <div class="font-semibold">Human Physiology</div>
+                    </div>
+                    <div class="p-3 bg-white/5 rounded-lg border border-white/5">
+                        <div class="text-xs text-blue-400">Day 2</div>
+                        <div class="font-semibold">Cell Biology</div>
+                    </div>
+                    <div class="p-3 bg-white/5 rounded-lg border border-white/5">
+                        <div class="text-xs text-blue-400">Day 3</div>
+                        <div class="font-semibold">Organic Chemistry</div>
+                    </div>
+                    <!-- Add more days here -->
+                </div>
             </div>
         </div>
     </main>
 
-    <footer class="bg-black/20 py-12 border-t border-white/10">
-        <div class="max-w-7xl mx-auto px-6 text-center text-slate-500 text-sm">
-            <p class="font-bold text-white mb-4">CEE Medico Nepal</p>
-            <p>&copy; 2026 CEEMedicoNepal. All Rights Reserved.</p>
-        </div>
-    </footer>
-
     <script type="module">
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
-        import { getFirestore, collection, getDocs } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+        import { getFirestore, collection, query, getDocs, limit } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
 
-        const db = getFirestore(initializeApp({ projectId: "chapter-wise-backup" }));
-        let groupedData = [];
+        const firebaseConfig = {
+            apiKey: "AIzaSyDD5xBrSkX_YXzSnsKxjW8-K6W4rBfV3rg",
+            authDomain: "chapter-wise-backup.firebaseapp.com",
+            projectId: "chapter-wise-backup",
+            storageBucket: "chapter-wise-backup.firebasestorage.app",
+            messagingSenderId: "864698641587",
+            appId: "1:864698641587:web:d0b550579c6eb7709ed4c6"
+        };
 
-        async function loadData() {
-            const snapshot = await getDocs(collection(db, "questions"));
-            const map = {};
-            snapshot.forEach(doc => {
-                const data = doc.data();
-                if (!data.subject || !data.chapter) return;
-                const key = data.subject + "___" + data.chapter;
-                if (!map[key]) map[key] = { subject: data.subject, chapter: data.chapter, count: 0 };
-                map[key].count++;
-            });
-            groupedData = Object.values(map);
-            generateSchedule();
+        const db = getFirestore(initializeApp(firebaseConfig));
+
+        async function fetchLiveQuestions() {
+            try {
+                const snapshot = await getDocs(query(collection(db, 'questions'), limit(50)));
+                return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+            } catch (e) { console.error(e); return []; }
         }
 
-        function generateSchedule() {
-            const today = new Date();
-            groupedData.forEach((item, i) => {
-                if (i >= 90) return;
-                const div = document.createElement("div");
-                div.className = "p-4 bg-slate-900 rounded-2xl border border-white/5 flex justify-between items-center";
-                div.innerHTML = `<div><p class="font-bold text-sm">${item.chapter}</p></div><span class="px-2 py-1 bg-blue-500/20 text-blue-400 rounded-md text-[10px] font-bold">${item.count} Qs</span>`;
-                document.getElementById("scheduleList").appendChild(div);
-                if (i === 0) {
-                    document.getElementById("todayDate").innerText = "Today's Session";
-                    document.getElementById("todaySubject").innerText = item.subject;
-                    document.getElementById("todayChapter").innerText = item.chapter;
-                }
-            });
-        }
+        function updateTimer() {
+            const hEl = document.getElementById("hours"), mEl = document.getElementById("minutes"), sEl = document.getElementById("seconds"), startBtn = document.getElementById("startBtn");
+            if (!hEl || !mEl || !sEl) return;
 
-        function updateStatus() {
             const now = new Date();
-            const hour = now.getHours();
-            
-            // To preview live mode, you can change this condition to 'true' or adjust the hour range.
-            const isLive = (hour >= 11 && hour < 23); 
+            const start = new Date(); start.setHours(11, 0, 0, 0);
+            const end = new Date(); end.setHours(23, 0, 0, 0);
 
-            if (isLive) {
-                document.getElementById("liveBadge").classList.remove("hidden");
-                document.getElementById("liveBadge").classList.add("flex");
-                document.getElementById("offlineBadge").classList.add("hidden");
-                document.getElementById("countdownTimer").classList.add("hidden");
+            if (now >= start && now < end) {
+                hEl.innerText = "00"; mEl.innerText = "00"; sEl.innerText = "00";
+                if (startBtn) {
+                    startBtn.disabled = false;
+                    startBtn.classList.add("active-pulse");
+                    startBtn.textContent = "JOIN LIVE QUIZ NOW";
+                    startBtn.onclick = async () => {
+                        sessionStorage.setItem("currentQuiz", JSON.stringify(await fetchLiveQuestions()));
+                        window.location.href = "regular-quiz.html";
+                    };
+                }
             } else {
-                document.getElementById("liveBadge").classList.add("hidden");
-                document.getElementById("offlineBadge").classList.remove("hidden");
-                document.getElementById("countdownTimer").classList.remove("hidden");
-                
-                // Countdown logic
-                const target = new Date();
-                target.setHours(22, 0, 0, 0);
-                if (now > target) target.setDate(target.getDate() + 1);
-                const diff = target - now;
-                document.getElementById("hours").innerText = String(Math.floor(diff / 3600000)).padStart(2, '0');
-                document.getElementById("minutes").innerText = String(Math.floor((diff % 3600000) / 60000)).padStart(2, '0');
-                document.getElementById("seconds").innerText = String(Math.floor((diff % 60000) / 1000)).padStart(2, '0');
+                let diff = start - now;
+                if (diff < 0) diff += 24 * 60 * 60 * 1000;
+                hEl.innerText = String(Math.floor(diff / 3600000)).padStart(2, '0');
+                mEl.innerText = String(Math.floor((diff % 3600000) / 60000)).padStart(2, '0');
+                sEl.innerText = String(Math.floor((diff % 60000) / 1000)).padStart(2, '0');
+                if (startBtn) {
+                    startBtn.disabled = true;
+                    startBtn.classList.remove("active-pulse");
+                    startBtn.textContent = "WAITING FOR SESSION";
+                }
             }
         }
 
-        loadData();
-        setInterval(updateStatus, 1000);
+        document.addEventListener("DOMContentLoaded", () => {
+            setInterval(updateTimer, 1000);
+            updateTimer();
+        });
     </script>
 </body>
 </html>
