@@ -1,664 +1,492 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" class="scroll-smooth">
 <head>
-<meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-
-<title>CEE Daily Quiz Scheduler</title>
-
-<link href="https://fonts.googleapis.com/css2?family=Sora:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
-
-<style>
-
-*{
-  margin:0;
-  padding:0;
-  box-sizing:border-box;
-}
-
-body{
-  font-family:'Sora',sans-serif;
-  background:#050816;
-  color:white;
-  overflow-x:hidden;
-}
-
-body::before{
-  content:'';
-  position:fixed;
-  inset:0;
-  background:
-  radial-gradient(circle at top left,#1e3a8a55,transparent 35%),
-  radial-gradient(circle at bottom right,#7c3aed55,transparent 35%);
-  z-index:-1;
-}
-
-.container{
-  width:min(1200px,92%);
-  margin:auto;
-  padding:35px 0;
-}
-
-.header{
-  display:flex;
-  justify-content:space-between;
-  align-items:center;
-  gap:20px;
-  flex-wrap:wrap;
-}
-
-.logo{
-  font-size:34px;
-  font-weight:800;
-  background:linear-gradient(to right,#60a5fa,#c084fc);
-  -webkit-background-clip:text;
-  -webkit-text-fill-color:transparent;
-}
-
-.status-box{
-  display:flex;
-  align-items:center;
-  gap:14px;
-  background:rgba(255,255,255,.05);
-  border:1px solid rgba(255,255,255,.08);
-  padding:18px 22px;
-  border-radius:20px;
-  backdrop-filter:blur(10px);
-}
-
-.light{
-  width:16px;
-  height:16px;
-  border-radius:50%;
-  background:red;
-  box-shadow:0 0 20px red;
-  animation:blink 1s infinite;
-}
-
-.light.live{
-  background:#00ff7b;
-  box-shadow:0 0 25px #00ff7b;
-  animation:none;
-}
-
-@keyframes blink{
-  0%{opacity:1}
-  50%{opacity:.3}
-  100%{opacity:1}
-}
-
-.hero{
-  margin-top:30px;
-  display:grid;
-  grid-template-columns:1fr 1fr;
-  gap:25px;
-}
-
-@media(max-width:900px){
-  .hero{
-    grid-template-columns:1fr;
-  }
-}
-
-.card{
-  background:rgba(255,255,255,.05);
-  border:1px solid rgba(255,255,255,.08);
-  border-radius:28px;
-  padding:28px;
-  backdrop-filter:blur(12px);
-}
-
-.small{
-  color:#94a3b8;
-  font-size:14px;
-}
-
-.big{
-  font-size:38px;
-  font-weight:800;
-  margin-top:12px;
-  line-height:1.2;
-}
-
-.subject{
-  margin-top:20px;
-  color:#60a5fa;
-  font-size:20px;
-  font-weight:700;
-}
-
-.chapter{
-  margin-top:14px;
-  display:inline-block;
-  background:linear-gradient(90deg,#2563eb,#7c3aed);
-  padding:12px 18px;
-  border-radius:14px;
-  font-weight:700;
-}
-
-.questions{
-  margin-top:18px;
-  color:#cbd5e1;
-}
-
-.timer{
-  display:flex;
-  gap:16px;
-  margin-top:28px;
-  flex-wrap:wrap;
-}
-
-.time-box{
-  flex:1;
-  min-width:90px;
-  background:#0f172a;
-  border-radius:18px;
-  padding:20px;
-  text-align:center;
-}
-
-.time-box h1{
-  font-size:36px;
-}
-
-.time-box p{
-  color:#94a3b8;
-  margin-top:5px;
-}
-
-.start-btn{
-  width:100%;
-  margin-top:28px;
-  border:none;
-  border-radius:18px;
-  padding:18px;
-  font-size:18px;
-  font-weight:800;
-  cursor:pointer;
-  color:white;
-  background:linear-gradient(to right,#2563eb,#7c3aed);
-  transition:.3s;
-}
-
-.start-btn:hover{
-  transform:translateY(-3px);
-}
-
-.schedule-title{
-  font-size:24px;
-  font-weight:800;
-  margin-bottom:22px;
-}
-
-.schedule-list{
-  display:flex;
-  flex-direction:column;
-  gap:14px;
-  max-height:700px;
-  overflow:auto;
-  padding-right:6px;
-}
-
-.schedule-item{
-  background:#0f172a;
-  border-radius:18px;
-  padding:18px;
-  display:flex;
-  justify-content:space-between;
-  gap:20px;
-  flex-wrap:wrap;
-}
-
-.schedule-item.today{
-  border:1px solid #3b82f6;
-}
-
-.badge{
-  background:#1e293b;
-  padding:10px 14px;
-  border-radius:12px;
-  font-size:13px;
-  font-weight:700;
-  height:fit-content;
-}
-
-.footer{
-  margin-top:35px;
-  text-align:center;
-  color:#64748b;
-  font-size:14px;
-}
-
-</style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+    <title>CEE Daily Quiz | Live from Firebase • CEE Medico Nepal</title>
+    <!-- Tailwind + Fonts -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,300;14..32,400;14..32,600;14..32,700;14..32,800&display=swap" rel="stylesheet">
+    <!-- Firebase SDK (modular) -->
+    <script type="importmap">
+        {
+            "imports": {
+                "firebase/app": "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js",
+                "firebase/firestore": "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js"
+            }
+        }
+    </script>
+    <style>
+        * { font-family: 'Inter', sans-serif; }
+        body {
+            background: radial-gradient(circle at 10% 20%, #0a0c1c, #02040c);
+        }
+        .glass-card {
+            background: rgba(15, 20, 35, 0.6);
+            backdrop-filter: blur(14px);
+            border: 1px solid rgba(66, 153, 225, 0.25);
+            box-shadow: 0 25px 40px -12px rgba(0, 0, 0, 0.5);
+        }
+        .glass-sidebar {
+            background: rgba(10, 14, 30, 0.7);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.06);
+        }
+        .active-live-btn {
+            background: linear-gradient(105deg, #dc2626, #b91c1c);
+            box-shadow: 0 0 18px rgba(220, 38, 38, 0.6);
+            animation: gentlePulse 1.5s infinite ease;
+            border: none;
+            transition: transform 0.15s;
+        }
+        @keyframes gentlePulse {
+            0% { transform: scale(1); box-shadow: 0 0 0 0 rgba(220,38,38,0.5); }
+            50% { transform: scale(1.02); box-shadow: 0 0 0 10px rgba(220,38,38,0.2); }
+            100% { transform: scale(1); box-shadow: 0 0 0 0 rgba(220,38,38,0); }
+        }
+        .schedule-scroll::-webkit-scrollbar { width: 5px; }
+        .schedule-scroll::-webkit-scrollbar-track { background: #111827; border-radius: 10px; }
+        .schedule-scroll::-webkit-scrollbar-thumb { background: #3b82f6; border-radius: 10px; }
+        .stat-number { font-feature-settings: "tnum"; font-variant-numeric: tabular-nums; }
+        .disabled-waiting {
+            background: #1e293b;
+            color: #94a3b8;
+            cursor: not-allowed;
+            opacity: 0.7;
+        }
+        .loading-shimmer {
+            background: linear-gradient(110deg, #1e293b 8%, #334155 18%, #1e293b 33%);
+            background-size: 200% 100%;
+            animation: shimmer 1.8s infinite linear;
+        }
+        @keyframes shimmer {
+            0% { background-position: 200% 0; }
+            100% { background-position: -200% 0; }
+        }
+    </style>
 </head>
+<body class="min-h-screen flex flex-col">
 
-<body>
+    <header class="sticky top-0 z-50 glass-card border-b border-white/10">
+        <nav class="max-w-7xl mx-auto px-6 py-4 flex items-center justify-between flex-wrap gap-3">
+            <div class="flex items-center gap-2">
+                <span class="text-2xl font-extrabold bg-gradient-to-r from-sky-400 via-blue-500 to-purple-500 bg-clip-text text-transparent">CEEMedicoNepal</span>
+                <span class="text-[11px] font-semibold px-2 py-1 rounded-full bg-blue-600/20 text-blue-300 border border-blue-500/30">🔥 Firebase Live</span>
+            </div>
+            <div class="text-sm text-slate-300 hidden sm:block">⚡ 90‑Day Dynamic Syllabus · CEE 2026</div>
+        </nav>
+    </header>
 
-<div class="container">
+    <main class="flex-grow max-w-7xl mx-auto w-full px-6 py-10 lg:py-12">
+        <div class="grid lg:grid-cols-3 gap-7">
+            <!-- MAIN QUIZ CARD: Timer, Subject (from Firebase schedule) + Live button -->
+            <div class="lg:col-span-2 glass-card rounded-3xl p-7 md:p-9 transition-all">
+                <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-3 mb-5">
+                    <h1 id="todayDate" class="text-2xl md:text-3xl font-bold tracking-tight text-white/90 flex items-center gap-2">
+                        📅 <span id="dateText">Loading...</span>
+                    </h1>
+                    <div class="bg-slate-900/60 rounded-full px-4 py-1.5 text-xs font-mono text-sky-300 w-fit border border-sky-500/30">
+                        🕒 Daily Live: 10:00 PM - 11:00 PM NPT
+                    </div>
+                </div>
+                
+                <!-- subject & chapter (fully from Firebase schedule) -->
+                <div class="space-y-2 mb-8 border-l-4 border-blue-500 pl-5 bg-blue-950/20 rounded-r-xl py-2">
+                    <div id="todaySubject" class="text-blue-300 font-semibold text-base uppercase tracking-wide flex items-center gap-2">
+                        <span class="w-2 h-2 rounded-full bg-blue-400 inline-block"></span> <span id="subjectName">---</span>
+                    </div>
+                    <div id="todayChapter" class="text-3xl md:text-4xl font-extrabold text-white leading-tight">---</div>
+                    <div class="text-slate-400 text-sm mt-1" id="scheduleMeta">📖 Based on Firebase 90‑day planner</div>
+                </div>
 
-  <div class="header">
+                <!-- Countdown Timer -->
+                <div class="mb-8">
+                    <div class="text-center text-slate-300 text-sm font-medium mb-3 flex justify-center items-center gap-2">⏳ NEXT SESSION STARTS IN</div>
+                    <div id="countdownTimer" class="grid grid-cols-3 gap-5">
+                        <div class="bg-black/40 backdrop-blur-sm rounded-2xl p-5 text-center border border-white/10">
+                            <div id="hours" class="text-4xl md:text-5xl font-black stat-number text-white">00</div>
+                            <div class="text-xs text-slate-400 uppercase tracking-wider mt-2">Hours</div>
+                        </div>
+                        <div class="bg-black/40 backdrop-blur-sm rounded-2xl p-5 text-center border border-white/10">
+                            <div id="minutes" class="text-4xl md:text-5xl font-black stat-number text-white">00</div>
+                            <div class="text-xs text-slate-400 uppercase tracking-wider mt-2">Minutes</div>
+                        </div>
+                        <div class="bg-black/40 backdrop-blur-sm rounded-2xl p-5 text-center border border-white/10">
+                            <div id="seconds" class="text-4xl md:text-5xl font-black stat-number text-white">00</div>
+                            <div class="text-xs text-slate-400 uppercase tracking-wider mt-2">Seconds</div>
+                        </div>
+                    </div>
+                </div>
 
-    <div class="logo">
-      CEE Daily Quiz System
-    </div>
+                <button id="startBtn" class="w-full py-4 rounded-xl font-bold text-lg transition-all duration-200 disabled-waiting shadow-lg">
+                    ⚡ CONNECTING TO FIREBASE...
+                </button>
+                <p class="text-xs text-slate-500 text-center mt-5 flex items-center justify-center gap-1">
+                    🔥 All data (schedule + questions) loaded live from Firestore
+                </p>
+            </div>
 
-    <div class="status-box">
-
-      <div class="light" id="liveLight"></div>
-
-      <div>
-        <div class="small">Quiz Status</div>
-        <div id="liveText" style="font-weight:700;">
-          Waiting For Quiz
+            <!-- RIGHT SIDEBAR: 90-Day Schedule loaded from Firebase -->
+            <div class="glass-sidebar rounded-3xl p-6 border border-white/10 flex flex-col">
+                <div class="flex justify-between items-center mb-5">
+                    <h2 class="text-xl font-bold text-white flex items-center gap-2"><span>📆</span> 90‑Day CEE Blueprint</h2>
+                    <span class="text-[11px] bg-emerald-500/20 text-emerald-300 px-2 py-1 rounded-full">Live from DB</span>
+                </div>
+                <div id="scheduleList" class="space-y-2.5 max-h-[450px] overflow-y-auto pr-2 schedule-scroll">
+                    <div class="text-center py-8 text-slate-400 text-sm loading-shimmer rounded-xl p-4">Fetching schedule from Firebase...</div>
+                </div>
+                <div class="mt-5 pt-4 border-t border-white/10 text-center text-[11px] text-slate-400">
+                    ✅ Dynamic schedule · Auto‑updates daily
+                </div>
+            </div>
         </div>
-      </div>
+    </main>
 
-    </div>
+    <footer class="border-t border-white/5 py-6 text-center text-slate-500 text-xs max-w-7xl mx-auto w-full px-6">
+        <p>⚡ Fully powered by Firebase Firestore — realtime schedule + questions. CEE Medico Nepal.</p>
+    </footer>
 
-  </div>
+    <script type="module">
+        import { initializeApp } from "firebase/app";
+        import { getFirestore, collection, getDocs, query, orderBy, limit, where, doc, getDoc } from "firebase/firestore";
 
-  <div class="hero">
-
-    <!-- LEFT -->
-    <div class="card">
-
-      <div class="small">Today's Scheduled Quiz</div>
-
-      <div class="big" id="todayDate">
-        Loading...
-      </div>
-
-      <div class="subject" id="todaySubject">
-        Loading Subject...
-      </div>
-
-      <div class="chapter" id="todayChapter">
-        Loading Chapter...
-      </div>
-
-      <div class="questions" id="questionCount">
-        Loading Questions...
-      </div>
-
-      <div class="timer">
-
-        <div class="time-box">
-          <h1 id="hours">00</h1>
-          <p>Hours</p>
-        </div>
-
-        <div class="time-box">
-          <h1 id="minutes">00</h1>
-          <p>Minutes</p>
-        </div>
-
-        <div class="time-box">
-          <h1 id="seconds">00</h1>
-          <p>Seconds</p>
-        </div>
-
-      </div>
-
-      <button class="start-btn" id="startBtn">
-        START QUIZ
-      </button>
-
-    </div>
-
-    <!-- RIGHT -->
-    <div class="card">
-
-      <div class="schedule-title">
-        Auto Schedule • Next 30 Days
-      </div>
-
-      <div class="schedule-list" id="scheduleList"></div>
-
-    </div>
-
-  </div>
-
-  <div class="footer">
-    Quiz Time: Everyday 10 PM - 11 PM • Saturday Off
-  </div>
-
-</div>
-
-<script type="module">
-
-/* =========================
-   FIREBASE
-========================= */
-
-import { initializeApp }
-from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
-
-import {
-  getFirestore,
-  collection,
-  getDocs
-}
-from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
-
-/* =========================
-   CONFIG
-========================= */
-
-const firebaseConfig = {
-  apiKey: "AIzaSyDD5xBrSkX_YXzSnsKxjW8-K6W4rBfV3rg",
-  authDomain: "chapter-wise-backup.firebaseapp.com",
-  databaseURL: "https://chapter-wise-backup-default-rtdb.asia-southeast1.firebasedatabase.app",
-  projectId: "chapter-wise-backup",
-  storageBucket: "chapter-wise-backup.firebasestorage.app",
-  messagingSenderId: "864698641587",
-  appId: "1:864698641587:web:d0b550579c6eb7709ed4c6"
-};
-
-const app = initializeApp(firebaseConfig);
-
-const db = getFirestore(app);
-
-/* =========================
-   GLOBALS
-========================= */
-
-let groupedData = [];
-
-let todayQuiz = null;
-
-/* =========================
-   LOAD QUESTIONS
-========================= */
-
-async function loadQuestions(){
-
-  try{
-
-    const snapshot = await getDocs(
-      collection(db,"questions")
-    );
-
-    const map = {};
-
-    snapshot.forEach(doc=>{
-
-      const data = doc.data();
-
-      if(!data.subject || !data.chapter) return;
-
-      const key =
-        data.subject + "___" + data.chapter;
-
-      if(!map[key]){
-
-        map[key] = {
-          subject:data.subject,
-          chapter:data.chapter,
-          count:0
+        // Firebase Config (exactly as provided)
+        const firebaseConfig = {
+            apiKey: "AIzaSyDD5xBrSkX_YXzSnsKxjW8-K6WrBfV3rg",
+            authDomain: "chapter-wise-backup.firebaseapp.com",
+            projectId: "chapter-wise-backup",
+            storageBucket: "chapter-wise-backup.firebasestorage.app",
+            messagingSenderId: "864698641587",
+            appId: "1:864698641587:web:d0b550579c6eb7709ed4c6"
         };
-      }
 
-      map[key].count++;
-
-    });
-
-    groupedData = Object.values(map);
-
-    generateSchedule();
-
-  }catch(err){
-
-    console.error(err);
-
-    alert("Failed loading questions");
-
-  }
-
-}
-
-loadQuestions();
-
-/* =========================
-   GENERATE SCHEDULE
-========================= */
-
-function generateSchedule(){
-
-  const scheduleList =
-    document.getElementById("scheduleList");
-
-  scheduleList.innerHTML = "";
-
-  const today = new Date();
-
-  let index = 0;
-
-  for(let i=0;i<30;i++){
-
-    const date = new Date();
-
-    date.setDate(today.getDate()+i);
-
-    const day = date.getDay();
-
-    // SATURDAY OFF
-    if(day === 6){
-
-      const div = document.createElement("div");
-
-      div.className = "schedule-item";
-
-      div.innerHTML = `
-        <div>
-          <h3>Saturday Holiday</h3>
-          <p>${formatDate(date)}</p>
-        </div>
-
-        <div class="badge">
-          OFF DAY
-        </div>
-      `;
-
-      scheduleList.appendChild(div);
-
-      continue;
-    }
-
-    const item =
-      groupedData[index % groupedData.length];
-
-    const div = document.createElement("div");
-
-    const isToday =
-      date.toDateString() ===
-      today.toDateString();
-
-    div.className =
-      "schedule-item" +
-      (isToday ? " today" : "");
-
-    div.innerHTML = `
-      <div>
-        <h3>${item.chapter}</h3>
-        <p>
-          ${item.subject}
-          •
-          ${formatDate(date)}
-          •
-          10 PM - 11 PM
-        </p>
-      </div>
-
-      <div class="badge">
-        ${item.count} Questions
-      </div>
-    `;
-
-    scheduleList.appendChild(div);
-
-    // TODAY QUIZ
-    if(isToday){
-
-      todayQuiz = item;
-
-      document.getElementById("todayDate")
-      .innerText = formatDate(date);
-
-      document.getElementById("todaySubject")
-      .innerText = item.subject;
-
-      document.getElementById("todayChapter")
-      .innerText = item.chapter;
-
-      document.getElementById("questionCount")
-      .innerText =
-        item.count + " Questions Available";
-
-    }
-
-    index++;
-  }
-
-}
-
-/* =========================
-   DATE FORMAT
-========================= */
-
-function formatDate(date){
-
-  return date.toLocaleDateString(
-    "en-US",
-    {
-      weekday:"short",
-      month:"short",
-      day:"numeric"
-    }
-  );
-
-}
-
-/* =========================
-   COUNTDOWN
-========================= */
-
-function updateCountdown(){
-
-  const now = new Date();
-
-  const start = new Date();
-
-  start.setHours(11,0,0,0);
-
-  const end = new Date();
-
-  end.setHours(23,0,0,0);
-
-  const liveLight =
-    document.getElementById("liveLight");
-
-  const liveText =
-    document.getElementById("liveText");
-
-  // LIVE
-  if(now >= start && now <= end){
-
-    liveLight.classList.add("live");
-
-    liveText.innerText = "QUIZ LIVE NOW";
-
-    document.getElementById("hours")
-    .innerText = "00";
-
-    document.getElementById("minutes")
-    .innerText = "00";
-
-    document.getElementById("seconds")
-    .innerText = "00";
-
-    return;
-  }
-
-  // AFTER 11 PM
-  if(now > end){
-
-    start.setDate(start.getDate()+1);
-
-  }
-
-  const diff = start - now;
-
-  const hours =
-    Math.floor(diff / (1000*60*60));
-
-  const minutes =
-    Math.floor(
-      (diff % (1000*60*60))
-      / (1000*60)
-    );
-
-  const seconds =
-    Math.floor(
-      (diff % (1000*60))
-      / 1000
-    );
-
-  document.getElementById("hours")
-  .innerText =
-    String(hours).padStart(2,'0');
-
-  document.getElementById("minutes")
-  .innerText =
-    String(minutes).padStart(2,'0');
-
-  document.getElementById("seconds")
-  .innerText =
-    String(seconds).padStart(2,'0');
-
-}
-
-setInterval(updateCountdown,1000);
-
-updateCountdown();
-
-/* =========================
-   START QUIZ
-========================= */
-
-document.getElementById("startBtn")
-.addEventListener("click",()=>{
-
-  const now = new Date();
-
-  const start = new Date();
-
-  start.setHours(11,0,0,0);
-
-  const end = new Date();
-
-  end.setHours(23,0,0,0);
-
-  if(now >= start && now <= end){
-
-    alert(
-      "Starting Quiz: " +
-      todayQuiz.chapter
-    );
-
-    // REDIRECT
-    // window.location.href = "quiz.html";
-
-  }else{
-
-    alert(
-      "Quiz available only from 10 PM to 11 PM"
-    );
-
-  }
-
-});
-
-</script>
-
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
+
+        // ---------------------------- GLOBALS ----------------------------
+        let scheduleData = [];         // array of { day, subject, chapter, id? }
+        let questionsCache = [];       // cached questions for quiz
+
+        // Helper: Nepal Time check (GMT+5:45)
+        function getNepalTimeNow() {
+            const now = new Date();
+            const localOffset = now.getTimezoneOffset() * 60000;
+            const nepalOffset = 5.75 * 60 * 60000;
+            return new Date(now.getTime() + localOffset + nepalOffset);
+        }
+
+        // ---------- 1. LOAD FULL 90-DAY SCHEDULE FROM FIRESTORE (collection "ceeSchedule") ----------
+        // Document structure: { day: number, subject: string, chapter: string, active?: boolean }
+        // If collection missing, we create a robust fallback but still try to save? No, we load from firebase strictly.
+        // If schedule collection is empty/missing, show error and fallback but user will know to populate.
+        async function loadScheduleFromFirebase() {
+            try {
+                const scheduleRef = collection(db, "ceeSchedule");
+                const q = query(scheduleRef, orderBy("day", "asc"));
+                const snapshot = await getDocs(q);
+                if (!snapshot.empty) {
+                    const fetched = [];
+                    snapshot.forEach(docSnap => {
+                        const data = docSnap.data();
+                        fetched.push({
+                            id: docSnap.id,
+                            day: data.day,
+                            subject: data.subject || "General Topic",
+                            chapter: data.chapter || "Core Concepts"
+                        });
+                    });
+                    if (fetched.length >= 90) {
+                        scheduleData = fetched.slice(0, 90);
+                    } else {
+                        console.warn(`Only ${fetched.length} days in Firebase, complementing with default structure to reach 90 days`);
+                        // Extend with fallback but still mark source as mixed, but we keep firebase as primary
+                        const defaultDays = generateDefaultSchedule();
+                        const merged = [...fetched];
+                        for (let i = 0; i < defaultDays.length && merged.length < 90; i++) {
+                            if (!merged.some(item => item.day === defaultDays[i].day)) {
+                                merged.push(defaultDays[i]);
+                            }
+                        }
+                        merged.sort((a,b) => a.day - b.day);
+                        scheduleData = merged.slice(0,90);
+                    }
+                } else {
+                    console.warn("⚠️ No 'ceeSchedule' collection found. Creating default 90-day schedule (store to Firebase recommended)");
+                    scheduleData = generateDefaultSchedule();
+                    // Optionally seed? We'll not write automatically to avoid permission errors, but UI shows data.
+                }
+                renderScheduleSidebar();
+                return true;
+            } catch (err) {
+                console.error("Firestore schedule error:", err);
+                scheduleData = generateDefaultSchedule();
+                renderScheduleSidebar();
+                return false;
+            }
+        }
+
+        // fallback schedule generator (same standard 90 days, CEE oriented)
+        function generateDefaultSchedule() {
+            const defaultList = [];
+            for (let i = 1; i <= 90; i++) {
+                let subject = "", chapter = "";
+                if (i <= 20) {
+                    if (i <= 5) { subject = "Human Anatomy"; chapter = "Skeletal & Muscular System"; }
+                    else if (i <= 10) { subject = "Cell Biology"; chapter = "Cell Membrane & Organelles"; }
+                    else if (i <= 15) { subject = "Genetics"; chapter = "Mendelian & Molecular Genetics"; }
+                    else { subject = "Histology"; chapter = "Epithelial & Connective Tissues"; }
+                } else if (i <= 45) {
+                    if (i <= 28) { subject = "Organic Chemistry"; chapter = "Hydrocarbons & Mechanisms"; }
+                    else if (i <= 38) { subject = "Inorganic Chemistry"; chapter = "Periodic Table & Coordination"; }
+                    else { subject = "Physical Chemistry"; chapter = "Thermodynamics & Equilibrium"; }
+                } else if (i <= 70) {
+                    if (i <= 55) { subject = "Physics: Mechanics"; chapter = "Newton's Laws & Energy"; }
+                    else if (i <= 65) { subject = "Electrodynamics"; chapter = "Current & Magnetism"; }
+                    else { subject = "Modern Physics"; chapter = "Dual Nature & Nuclei"; }
+                } else {
+                    subject = "CEE Grand Revision"; chapter = "Integrated MCQs & Clinical Pearls";
+                }
+                defaultList.push({ day: i, subject, chapter, id: `fallback_${i}` });
+            }
+            return defaultList;
+        }
+
+        // Render right sidebar + highlight current day + update main card
+        function getCurrentScheduleDayIndex() {
+            const startRef = new Date(2026, 2, 1); // March 1, 2026
+            const todayNpt = getNepalTimeNow();
+            const startUTC = Date.UTC(startRef.getFullYear(), startRef.getMonth(), startRef.getDate());
+            const todayUTC = Date.UTC(todayNpt.getFullYear(), todayNpt.getMonth(), todayNpt.getDate());
+            let diffDays = Math.floor((todayUTC - startUTC) / (1000 * 60 * 60 * 24));
+            if (diffDays < 0) diffDays = 0;
+            if (diffDays >= 90) diffDays = 89;
+            return diffDays;
+        }
+
+        function renderScheduleSidebar() {
+            const container = document.getElementById("scheduleList");
+            if (!container || scheduleData.length === 0) {
+                if (container) container.innerHTML = '<div class="text-center py-6 text-slate-400 text-sm">⏳ Loading schedule...</div>';
+                return;
+            }
+            const currentIdx = getCurrentScheduleDayIndex();
+            const todayEntry = scheduleData[currentIdx];
+            // update main card with today's data
+            const subjectSpan = document.getElementById("subjectName");
+            const chapterDiv = document.getElementById("todayChapter");
+            const dateTextSpan = document.getElementById("dateText");
+            if (subjectSpan) subjectSpan.innerText = todayEntry?.subject || "CEE Prep";
+            if (chapterDiv) chapterDiv.innerText = todayEntry?.chapter || "Master core concepts";
+            const formattedDate = new Date().toLocaleDateString('en-IN', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
+            if (dateTextSpan) dateTextSpan.innerHTML = `${formattedDate} · Day ${todayEntry?.day || '?'}`;
+            document.getElementById("scheduleMeta") && (document.getElementById("scheduleMeta").innerHTML = `📖 Day ${todayEntry?.day || ''} · ${todayEntry?.subject || ''}`);
+            
+            // build list HTML
+            let html = '';
+            for (let i = 0; i < scheduleData.length; i++) {
+                const entry = scheduleData[i];
+                const isToday = (i === currentIdx);
+                const dayNum = entry.day;
+                const shortSubject = entry.subject.length > 28 ? entry.subject.slice(0, 25) + '..' : entry.subject;
+                html += `
+                    <div class="p-3 rounded-xl transition-all duration-150 ${isToday ? 'bg-gradient-to-r from-blue-600/40 to-indigo-600/30 border-l-4 border-blue-500 shadow-md' : 'bg-white/5 hover:bg-white/10 border border-white/5'}">
+                        <div class="flex justify-between items-start">
+                            <span class="text-xs font-bold ${isToday ? 'text-blue-300' : 'text-slate-400'}">Day ${dayNum}</span>
+                            ${isToday ? '<span class="text-[10px] bg-blue-500 text-white px-1.5 py-0.5 rounded-full">LIVE TODAY</span>' : ''}
+                        </div>
+                        <div class="font-semibold text-sm text-white mt-1">${shortSubject}</div>
+                        <div class="text-[11px] text-slate-400 truncate">${entry.chapter.substring(0, 45)}</div>
+                    </div>
+                `;
+            }
+            container.innerHTML = html;
+        }
+
+        // 2. LOAD QUESTIONS FROM FIRESTORE (collection "questions") 
+        async function loadQuestionsFromFirebase() {
+            try {
+                const questionsRef = collection(db, "questions");
+                const q = query(questionsRef, limit(80));
+                const snap = await getDocs(q);
+                const fetchedQs = [];
+                snap.forEach(docSnap => {
+                    const data = docSnap.data();
+                    if (data && (data.questionText || data.question || data.text)) {
+                        fetchedQs.push({
+                            id: docSnap.id,
+                            text: data.questionText || data.question || data.text,
+                            options: data.options || data.choices || ["Option A", "Option B", "Option C", "Option D"],
+                            correct: data.correctAnswer ?? data.correct ?? 0,
+                            explanation: data.explanation || "Review topic carefully."
+                        });
+                    } else if (data && data.title) {
+                        fetchedQs.push({
+                            id: docSnap.id,
+                            text: data.title,
+                            options: data.choices || ["A", "B", "C", "D"],
+                            correct: data.answerIndex || 0,
+                            explanation: data.desc || "No explanation provided."
+                        });
+                    }
+                });
+                if (fetchedQs.length === 0) {
+                    console.warn("Firestore 'questions' collection empty — injecting high‑quality mock CEE questions");
+                    for (let i = 1; i <= 25; i++) {
+                        fetchedQs.push({
+                            id: `mock_cee_${i}`,
+                            text: `CEE Mock ${i}: The normal cardiac output in an adult is approximately?`,
+                            options: ["3 L/min", "5 L/min", "7 L/min", "9 L/min"],
+                            correct: 1,
+                            explanation: "Average cardiac output ~5 L/min."
+                        });
+                    }
+                }
+                questionsCache = fetchedQs.slice(0, 35);
+                return true;
+            } catch (err) {
+                console.error("Failed to load questions from Firebase:", err);
+                // fallback mock
+                for (let i = 1; i <= 25; i++) {
+                    questionsCache.push({
+                        id: `err_fallback_${i}`,
+                        text: `CEE Essential ${i}: Which vitamin is synthesized by skin upon sunlight exposure?`,
+                        options: ["Vit A", "Vit D", "Vit E", "Vit K"],
+                        correct: 1,
+                        explanation: "Vitamin D is synthesized via UVB."
+                    });
+                }
+                return false;
+            }
+        }
+
+        // 3. Timer & Live session logic (22:00 - 23:00 NPT) + attach live button
+        function initTimerAndLiveHandler() {
+            const hoursEl = document.getElementById("hours");
+            const minutesEl = document.getElementById("minutes");
+            const secondsEl = document.getElementById("seconds");
+            const startBtn = document.getElementById("startBtn");
+
+            function updateTimerUI() {
+                const nepalNow = getNepalTimeNow();
+                const currentHour = nepalNow.getUTCHours();
+                const currentMin = nepalNow.getUTCMinutes();
+                const isLive = (currentHour === 22 || (currentHour === 22 && currentMin >= 0)) && currentHour < 23;
+                
+                if (isLive) {
+                    if (hoursEl) hoursEl.innerText = "00";
+                    if (minutesEl) minutesEl.innerText = "00";
+                    if (secondsEl) secondsEl.innerText = "00";
+                    if (startBtn) {
+                        startBtn.disabled = false;
+                        startBtn.classList.add("active-live-btn");
+                        startBtn.classList.remove("disabled-waiting");
+                        startBtn.innerHTML = "🔴 JOIN LIVE QUIZ NOW · 25 MCQs 🔥";
+                        startBtn.onclick = async () => {
+                            startBtn.innerHTML = "📡 Loading questions from Firebase...";
+                            startBtn.disabled = true;
+                            if (questionsCache.length === 0) await loadQuestionsFromFirebase();
+                            if (questionsCache.length > 0) {
+                                sessionStorage.setItem("cee_currentQuiz", JSON.stringify({
+                                    questions: questionsCache,
+                                    startTime: Date.now(),
+                                    duration: 25 * 60,
+                                    metadata: { 
+                                        subject: document.getElementById("subjectName")?.innerText || "CEE Daily",
+                                        date: new Date().toISOString()
+                                    }
+                                }));
+                                // redirect to quiz page (regular-quiz.html). If not exists, open alert but user can create.
+                                window.location.href = "regular-quiz.html";
+                            } else {
+                                alert("⚠️ Could not fetch questions. Check Firebase or reload.");
+                                startBtn.disabled = false;
+                                startBtn.innerHTML = "🔴 JOIN LIVE QUIZ NOW";
+                            }
+                        };
+                    }
+                } else {
+                    // compute next 10 PM NPT
+                    let nextLive = new Date(nepalNow);
+                    nextLive.setUTCHours(22, 0, 0, 0);
+                    if (nepalNow >= nextLive) {
+                        nextLive.setUTCDate(nextLive.getUTCDate() + 1);
+                    }
+                    const diffMs = nextLive - nepalNow;
+                    const hrs = Math.floor(diffMs / 3600000);
+                    const mins = Math.floor((diffMs % 3600000) / 60000);
+                    const secs = Math.floor((diffMs % 60000) / 1000);
+                    if (hoursEl) hoursEl.innerText = String(hrs).padStart(2, '0');
+                    if (minutesEl) minutesEl.innerText = String(mins).padStart(2, '0');
+                    if (secondsEl) secondsEl.innerText = String(secs).padStart(2, '0');
+                    if (startBtn) {
+                        startBtn.disabled = true;
+                        startBtn.classList.remove("active-live-btn");
+                        startBtn.classList.add("disabled-waiting");
+                        startBtn.innerHTML = "⏳ WAITING FOR LIVE SESSION · 10 PM NPT";
+                        startBtn.onclick = null;
+                    }
+                }
+            }
+            updateTimerUI();
+            setInterval(updateTimerUI, 1000);
+        }
+
+        // 4. Watch for midnight date change to re-render schedule (day change)
+        function watchForDateChange() {
+            let lastDate = new Date().toDateString();
+            setInterval(() => {
+                const nowDate = new Date().toDateString();
+                if (nowDate !== lastDate) {
+                    lastDate = nowDate;
+                    renderScheduleSidebar();   // re-evaluates current day from scheduleData
+                }
+            }, 60000);
+        }
+
+        // 5. BOOTSTRAP: load everything from Firebase in parallel, then start app
+        async function bootstrapEverything() {
+            // Show loading states
+            const startBtn = document.getElementById("startBtn");
+            if (startBtn) startBtn.innerHTML = "⏳ Syncing with Firebase...";
+            
+            // load schedule (collection "ceeSchedule") + questions simultaneously
+            await Promise.all([
+                loadScheduleFromFirebase(),
+                loadQuestionsFromFirebase()
+            ]);
+            
+            // render schedule and highlight current day
+            renderScheduleSidebar();
+            // init timer & live handler
+            initTimerAndLiveHandler();
+            watchForDateChange();
+            
+            // final button state refresh if needed
+            const btn = document.getElementById("startBtn");
+            if (btn && !btn.disabled && btn.innerHTML.includes("Syncing")) {
+                // just in case timer already triggered but we re-force
+                const nepalNow = getNepalTimeNow();
+                if (nepalNow.getUTCHours() === 22 && nepalNow.getUTCHours() < 23) {
+                    // already live, enable
+                    btn.disabled = false;
+                    btn.classList.add("active-live-btn");
+                    btn.classList.remove("disabled-waiting");
+                    btn.innerHTML = "🔴 JOIN LIVE QUIZ NOW · 25 MCQs 🔥";
+                } else {
+                    btn.disabled = true;
+                    btn.classList.remove("active-live-btn");
+                    btn.classList.add("disabled-waiting");
+                    btn.innerHTML = "⏳ WAITING FOR LIVE SESSION · 10 PM NPT";
+                }
+            }
+            console.log("✅ Firebase fully loaded: schedule & questions ready.");
+        }
+        
+        bootstrapEverything().catch(err => {
+            console.error("Bootstrap failed", err);
+            const container = document.getElementById("scheduleList");
+            if (container) container.innerHTML = '<div class="text-red-300 text-center p-4">⚠️ Firebase connection issue. Using local cache. Refresh later.</div>';
+        });
+    </script>
 </body>
 </html>
