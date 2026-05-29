@@ -2,182 +2,103 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>ExamPro - Student Dashboard</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
-    <script>
-        tailwind.config = {
-            theme: {
-                extend: {
-                    fontFamily: { sans: ['Inter', 'sans-serif'] },
-                    colors: {
-                        primary: { 50: '#eff6ff', 100: '#dbeafe', 200: '#bfdbfe', 300: '#93c5fd', 400: '#60a5fa', 500: '#3b82f6', 600: '#2563eb', 700: '#1d4ed8', 800: '#1e40af', 900: '#1e3a8a' },
-                        success: { 50: '#f0fdf4', 100: '#dcfce7', 500: '#22c55e', 600: '#16a34a' },
-                        danger: { 50: '#fef2f2', 100: '#fee2e2', 500: '#ef4444', 600: '#dc2626' },
-                        warning: { 50: '#fffbeb', 100: '#fef3c7', 500: '#f59e0b', 600: '#d97706' }
-                    }
-                }
-            }
-        }
-    </script>
-    <style>
-        * { -webkit-tap-highlight-color: transparent; }
-        body { font-family: 'Inter', sans-serif; background: #f8fafc; }
-        .toast { animation: toastIn 0.3s ease-out, toastOut 0.3s ease-in 2.7s forwards; }
-        @keyframes toastIn { from { transform: translateX(100%); opacity:0; } to { transform: translateX(0); opacity:1; } }
-        @keyframes toastOut { from { transform: translateX(0); opacity:1; } to { transform: translateX(100%); opacity:0; } }
-        .sidebar-item.active { background: #3b82f6; color: white; }
-        .sidebar-item.active i { color: white; }
-        .sidebar-item:hover:not(.active) { background: #f1f5f9; }
-        .card-hover { transition: all 0.2s ease; }
-        .card-hover:hover { transform: translateY(-4px); box-shadow: 0 20px 25px -12px rgba(0,0,0,0.1); }
-        .timer-circle { transition: stroke-dashoffset 0.1s linear; }
-        .modal-enter { animation: modalFade 0.2s ease-out; }
-        @keyframes modalFade { from { opacity:0; transform: scale(0.95); } to { opacity:1; transform: scale(1); } }
-        .countdown { font-family: monospace; letter-spacing: 2px; }
-    </style>
 </head>
-<body>
+<body class="bg-gray-50">
 
-    <!-- Toast Container -->
     <div id="toastContainer" class="fixed top-4 right-4 z-50 space-y-2"></div>
-
-    <!-- Mobile Menu Overlay -->
-    <div id="mobileMenuOverlay" class="fixed inset-0 bg-black/50 z-40 hidden lg:hidden" onclick="toggleMobileMenu()"></div>
-    <div id="mobileSidebar" class="fixed left-0 top-0 bottom-0 w-72 bg-white z-50 transform -translate-x-full transition-transform duration-300 lg:hidden">
+    
+    <!-- Sidebar -->
+    <aside class="fixed left-0 top-0 w-64 h-full bg-white border-r z-30 overflow-y-auto">
         <div class="p-6 border-b">
-            <div class="flex items-center justify-between">
-                <div class="flex items-center gap-3">
-                    <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-primary-500 to-primary-700 flex items-center justify-center text-white font-bold">EP</div>
-                    <span class="font-bold text-xl text-gray-800">ExamPro</span>
-                </div>
-                <button onclick="toggleMobileMenu()" class="text-gray-400"><i class="fas fa-times text-xl"></i></button>
+            <div class="flex items-center gap-3">
+                <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-blue-600 to-indigo-700 flex items-center justify-center text-white font-bold">EP</div>
+                <span class="font-bold text-xl">ExamPro</span>
             </div>
         </div>
-        <div class="p-4" id="mobileNavItems"></div>
-    </div>
+        <nav class="p-4 space-y-1">
+            <button onclick="loadDashboard()" id="navDashboard" class="w-full flex items-center gap-3 px-4 py-3 rounded-lg text-gray-700 hover:bg-gray-100 transition-all">
+                <i class="fas fa-chart-line w-5"></i> Dashboard
+            </button>
+            <button onclick="loadExams()" id="navExams" class="w-full flex items-center gap-3 px-4 py-3 rounded-lg text-gray-700 hover:bg-gray-100 transition-all">
+                <i class="fas fa-book-open w-5"></i> Available Exams
+            </button>
+            <button onclick="loadAttempts()" id="navAttempts" class="w-full flex items-center gap-3 px-4 py-3 rounded-lg text-gray-700 hover:bg-gray-100 transition-all">
+                <i class="fas fa-history w-5"></i> My Attempts
+            </button>
+            <button onclick="loadProfile()" id="navProfile" class="w-full flex items-center gap-3 px-4 py-3 rounded-lg text-gray-700 hover:bg-gray-100 transition-all">
+                <i class="fas fa-user w-5"></i> Profile
+            </button>
+        </nav>
+        <div class="absolute bottom-0 left-0 right-0 p-4 border-t">
+            <button onclick="logout()" class="w-full flex items-center gap-3 px-4 py-3 rounded-lg text-red-600 hover:bg-red-50 transition-all">
+                <i class="fas fa-sign-out-alt"></i> Logout
+            </button>
+        </div>
+    </aside>
 
-    <div class="flex h-screen overflow-hidden">
-        <!-- Desktop Sidebar -->
-        <aside class="hidden lg:flex lg:flex-col lg:w-72 bg-white border-r border-gray-200 fixed h-full overflow-y-auto">
-            <div class="p-6 border-b border-gray-200">
-                <div class="flex items-center gap-3">
-                    <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-primary-500 to-primary-700 flex items-center justify-center text-white font-bold text-lg">EP</div>
-                    <span class="font-bold text-xl text-gray-800">ExamPro</span>
-                </div>
+    <!-- Main Content -->
+    <main class="ml-64 p-8">
+        <div id="mainContent" class="max-w-7xl mx-auto">
+            <div class="flex items-center justify-center h-64">
+                <div class="loading-spinner"></div>
             </div>
-            <nav class="flex-1 py-6 px-4 space-y-1" id="desktopNavItems"></nav>
-            <div class="p-4 border-t border-gray-200">
-                <div class="flex items-center gap-3 p-3 rounded-xl bg-gray-50">
-                    <div id="desktopAvatar" class="w-10 h-10 rounded-full bg-gradient-to-br from-primary-500 to-primary-700 flex items-center justify-center text-white font-bold text-sm"></div>
-                    <div class="flex-1 min-w-0">
-                        <p id="desktopUserName" class="text-sm font-semibold text-gray-900 truncate"></p>
-                        <p class="text-xs text-gray-500">Student</p>
-                    </div>
-                    <button onclick="logout()" class="text-gray-400 hover:text-red-500"><i class="fas fa-sign-out-alt"></i></button>
-                </div>
-            </div>
-        </aside>
+        </div>
+    </main>
 
-        <!-- Main Content -->
-        <main class="flex-1 lg:ml-72 overflow-y-auto">
-            <!-- Top Header -->
-            <header class="bg-white border-b border-gray-200 sticky top-0 z-30">
-                <div class="px-4 lg:px-8 py-4 flex items-center justify-between">
-                    <button onclick="toggleMobileMenu()" class="lg:hidden text-gray-600"><i class="fas fa-bars text-xl"></i></button>
-                    <h1 class="text-xl font-semibold text-gray-800 lg:hidden">ExamPro</h1>
-                    <div class="flex items-center gap-3">
-                        <button onclick="showNotifications()" class="relative p-2 text-gray-500 hover:bg-gray-100 rounded-xl transition">
-                            <i class="fas fa-bell text-lg"></i>
-                            <span id="notificationBadge" class="absolute top-1 right-1 w-2 h-2 bg-red-500 rounded-full hidden"></span>
-                        </button>
-                        <div class="lg:hidden flex items-center gap-2">
-                            <div id="mobileAvatar" class="w-8 h-8 rounded-full bg-gradient-to-br from-primary-500 to-primary-700 flex items-center justify-center text-white font-bold text-xs"></div>
-                        </div>
-                    </div>
-                </div>
-            </header>
-
-            <!-- Dynamic Content Area -->
-            <div id="mainContent" class="p-4 lg:p-8">
-                <!-- Content loaded dynamically -->
-                <div class="flex items-center justify-center h-64">
-                    <div class="loader border-4 border-gray-200 border-t-primary-600 rounded-full w-12 h-12 animate-spin"></div>
-                </div>
+    <!-- Exam Taking Modal -->
+    <div id="examModal" class="fixed inset-0 bg-black bg-opacity-50 hidden items-center justify-center z-50">
+        <div class="bg-white rounded-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto m-4">
+            <div class="sticky top-0 bg-white p-4 border-b flex justify-between items-center">
+                <h3 id="examModalTitle" class="text-xl font-bold">Start Exam</h3>
+                <button onclick="closeExamModal()" class="text-gray-400 hover:text-gray-600"><i class="fas fa-times"></i></button>
             </div>
-        </main>
-    </div>
-
-    <!-- Notifications Modal -->
-    <div id="notificationsModal" class="fixed inset-0 z-50 hidden items-center justify-center p-4">
-        <div class="absolute inset-0 bg-black/40 backdrop-blur-sm" onclick="closeNotifications()"></div>
-        <div class="relative bg-white rounded-2xl shadow-2xl w-full max-w-md modal-enter">
-            <div class="flex items-center justify-between p-5 border-b">
-                <h3 class="text-lg font-bold text-gray-900">Notifications</h3>
-                <button onclick="closeNotifications()" class="text-gray-400 hover:text-gray-600"><i class="fas fa-times"></i></button>
-            </div>
-            <div class="p-5 max-h-96 overflow-y-auto" id="notificationsList">
-                <div class="text-center text-gray-500 py-8">No new notifications</div>
-            </div>
+            <div id="examModalBody" class="p-6"></div>
         </div>
     </div>
 
-    <!-- Exam Modal -->
-    <div id="examModal" class="fixed inset-0 z-50 hidden items-center justify-center p-4">
-        <div class="absolute inset-0 bg-black/60 backdrop-blur-sm" onclick="closeExamModal()"></div>
-        <div class="relative bg-white rounded-2xl shadow-2xl w-full max-w-2xl modal-enter overflow-hidden">
-            <div class="bg-gradient-to-r from-primary-600 to-primary-700 text-white p-5">
-                <div class="flex justify-between items-center">
-                    <h3 id="examModalTitle" class="text-xl font-bold">Start Exam</h3>
-                    <button onclick="closeExamModal()" class="text-white/80 hover:text-white"><i class="fas fa-times text-xl"></i></button>
-                </div>
-            </div>
-            <div class="p-6" id="examModalBody"></div>
-        </div>
-    </div>
-
-    <!-- Take Exam Interface Modal -->
-    <div id="takeExamModal" class="fixed inset-0 z-50 hidden flex-col bg-white overflow-y-auto">
-        <div class="sticky top-0 bg-white border-b z-20 p-4 shadow-sm">
-            <div class="flex items-center justify-between max-w-6xl mx-auto">
-                <h2 id="examTitle" class="text-lg font-bold text-gray-900"></h2>
+    <!-- Take Exam Interface -->
+    <div id="takeExamModal" class="fixed inset-0 bg-white z-50 hidden flex flex-col">
+        <div class="sticky top-0 bg-white border-b p-4 shadow-sm z-10">
+            <div class="max-w-4xl mx-auto flex justify-between items-center">
+                <h2 id="examTitle" class="text-xl font-bold"></h2>
                 <div class="flex items-center gap-4">
-                    <div class="bg-gray-100 rounded-lg px-4 py-2">
-                        <span class="text-sm text-gray-600">Time Left:</span>
-                        <span id="timerDisplay" class="text-xl font-bold text-primary-600 ml-2 countdown">00:00</span>
+                    <div class="bg-gray-100 px-4 py-2 rounded-lg">
+                        <span class="text-sm">Time Left:</span>
+                        <span id="timerDisplay" class="text-xl font-bold text-blue-600 ml-2 font-mono">00:00</span>
                     </div>
-                    <button onclick="submitExam()" class="bg-primary-600 text-white px-5 py-2 rounded-lg font-semibold hover:bg-primary-700">Submit</button>
+                    <button onclick="submitExam()" class="bg-green-600 text-white px-6 py-2 rounded-lg font-semibold hover:bg-green-700">Submit</button>
                 </div>
             </div>
         </div>
-        <div class="flex-1 max-w-4xl mx-auto w-full p-6" id="examQuestionsContainer"></div>
+        <div class="flex-1 overflow-y-auto p-6" id="examQuestionsContainer"></div>
     </div>
 
     <style>
-        .loader { border: 3px solid #f3f4f6; border-top: 3px solid #3b82f6; border-radius: 50%; width: 40px; height: 40px; animation: spin 1s linear infinite; }
+        .loading-spinner { border: 3px solid #f3f4f6; border-top: 3px solid #3b82f6; border-radius: 50%; width: 40px; height: 40px; animation: spin 1s linear infinite; }
         @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+        .toast { animation: slideIn 0.3s ease-out; }
+        @keyframes slideIn { from { transform: translateX(100%); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
         .option-card { transition: all 0.2s; cursor: pointer; }
-        .option-card:hover { background: #f8fafc; border-color: #3b82f6; }
         .option-card.selected { background: #eff6ff; border-color: #3b82f6; border-width: 2px; }
-        .question-nav { transition: all 0.2s; cursor: pointer; }
-        .question-nav:hover { background: #e2e8f0; }
+        .question-nav { transition: all 0.2s; cursor: pointer; width: 40px; height: 40px; display: flex; align-items: center; justify-content: center; border-radius: 8px; font-weight: 600; }
         .question-nav.answered { background: #22c55e; color: white; }
         .question-nav.current { background: #3b82f6; color: white; transform: scale(1.05); }
+        .active-nav { background: #eff6ff; color: #3b82f6; }
     </style>
 
     <script>
-        // Sample Data
-        let currentUser = null;
-        let currentSession = null;
-        let availableExams = [];
-        let recentAttempts = [];
-        let userStats = { totalAttempts: 0, avgScore: 0, currentStreak: 0 };
-        let leaderboardData = [];
+        const SUPABASE_URL = 'https://rpudsnrqlhataqfavcjh.supabase.co';
+        const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJwdWRzbnJxbGhhdGFxZmF2Y2poIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzk5NzI0NjgsImV4cCI6MjA5NTU0ODQ2OH0.EEu5t-NPqWARChSAMpEvUPMBkz_JeeNe3bGSCQmH7Xo';
+        const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
         
-        // Exam taking state
+        let currentUser = null;
+        let currentProfile = null;
         let activeExam = null;
         let currentQuestions = [];
         let userAnswers = [];
@@ -185,379 +106,183 @@
         let timeRemaining = 0;
         let currentQuestionIndex = 0;
 
-        // Check authentication
-        const session = JSON.parse(localStorage.getItem('exampro_session') || 'null');
-        if (!session || !session.token) {
-            window.location.href = 'login.html';
-        }
-        currentUser = session.user;
-        if (currentUser.role !== 'student') {
-            window.location.href = 'admin.html';
-        }
-
-        // Initialize dashboard
-        function init() {
-            loadSampleData();
-            renderSidebar();
-            updateUserUI();
-            navigateTo('dashboard');
-        }
-
-        function loadSampleData() {
-            // Sample exams
-            availableExams = [
-                { id: 1, title: 'Biology: Cell Structure', subject: 'Biology', questions: 20, duration: 30, difficulty: 'Medium', attempts: 234 },
-                { id: 2, title: 'Physics: Mechanics', subject: 'Physics', questions: 25, duration: 45, difficulty: 'Hard', attempts: 187 },
-                { id: 3, title: 'Chemistry: Periodic Table', subject: 'Chemistry', questions: 15, duration: 20, difficulty: 'Easy', attempts: 312 },
-                { id: 4, title: 'Mathematics: Calculus', subject: 'Math', questions: 20, duration: 40, difficulty: 'Hard', attempts: 156 },
-                { id: 5, title: 'English: Grammar & Vocab', subject: 'English', questions: 30, duration: 35, difficulty: 'Medium', attempts: 278 },
-            ];
-
-            // Sample recent attempts
-            recentAttempts = [
-                { id: 1, exam: 'Biology: Cell Structure', date: '2024-03-15', score: 85, time: '28:30', status: 'passed' },
-                { id: 2, exam: 'Physics: Mechanics', date: '2024-03-12', score: 72, time: '42:15', status: 'failed' },
-                { id: 3, exam: 'Chemistry: Periodic Table', date: '2024-03-10', score: 94, time: '18:45', status: 'passed' },
-                { id: 4, exam: 'Mathematics: Calculus', date: '2024-03-08', score: 68, time: '38:20', status: 'failed' },
-            ];
-
-            // User stats
-            const scores = recentAttempts.map(a => a.score);
-            userStats = {
-                totalAttempts: recentAttempts.length,
-                avgScore: Math.round(scores.reduce((a,b) => a+b, 0) / scores.length),
-                currentStreak: 3,
-                rank: 12,
-                totalStudents: 1247
-            };
-
-            // Leaderboard
-            leaderboardData = [
-                { rank: 1, name: 'Alice Johnson', score: 94, exams: 12 },
-                { rank: 2, name: 'Bob Williams', score: 91, exams: 11 },
-                { rank: 3, name: 'Carol Davis', score: 89, exams: 14 },
-                { rank: 4, name: 'David Brown', score: 87, exams: 10 },
-                { rank: 5, name: 'Emma Wilson', score: 85, exams: 9 },
-                { rank: 6, name: currentUser.firstName + ' ' + currentUser.lastName, score: userStats.avgScore, exams: userStats.totalAttempts, isCurrentUser: true }
-            ];
-            leaderboardData.sort((a,b) => b.score - a.score);
-            leaderboardData = leaderboardData.map((item, idx) => ({ ...item, rank: idx + 1 }));
-        }
-
-        function renderSidebar() {
-            const navItems = [
-                { id: 'dashboard', icon: 'fa-chart-line', label: 'Dashboard' },
-                { id: 'exams', icon: 'fa-book-open', label: 'Available Exams' },
-                { id: 'attempts', icon: 'fa-history', label: 'My Attempts' },
-                { id: 'leaderboard', icon: 'fa-trophy', label: 'Leaderboard' },
-                { id: 'profile', icon: 'fa-user', label: 'Profile' }
-            ];
-
-            const desktopNav = document.getElementById('desktopNavItems');
-            const mobileNav = document.getElementById('mobileNavItems');
-            
-            const navHtml = navItems.map(item => `
-                <button onclick="navigateTo('${item.id}')" id="nav-${item.id}" class="sidebar-item w-full flex items-center gap-3 px-4 py-3 rounded-xl text-gray-700 font-medium transition-all">
-                    <i class="fas ${item.icon} w-5"></i>
-                    <span>${item.label}</span>
-                </button>
-            `).join('');
-            
-            desktopNav.innerHTML = navHtml;
-            mobileNav.innerHTML = navHtml;
-        }
-
-        function navigateTo(page) {
-            // Update active state
-            ['dashboard', 'exams', 'attempts', 'leaderboard', 'profile'].forEach(p => {
-                const btn = document.getElementById(`nav-${p}`);
-                if (btn) {
-                    if (p === page) btn.classList.add('active', 'bg-primary-600', 'text-white');
-                    else btn.classList.remove('active', 'bg-primary-600', 'text-white');
-                }
-            });
-            
-            // Load content
-            const contentDiv = document.getElementById('mainContent');
-            switch(page) {
-                case 'dashboard': loadDashboard(contentDiv); break;
-                case 'exams': loadExamsPage(contentDiv); break;
-                case 'attempts': loadAttemptsPage(contentDiv); break;
-                case 'leaderboard': loadLeaderboardPage(contentDiv); break;
-                case 'profile': loadProfilePage(contentDiv); break;
+        async function init() {
+            const { data: { session } } = await supabase.auth.getSession();
+            if (!session) {
+                window.location.href = 'login.html';
+                return;
             }
             
-            if (window.innerWidth < 1024) toggleMobileMenu();
+            currentUser = session.user;
+            
+            const { data: profile } = await supabase
+                .from('profiles')
+                .select('*')
+                .eq('id', currentUser.id)
+                .single();
+            currentProfile = profile;
+            
+            if (profile?.role !== 'student') {
+                window.location.href = 'admin.html';
+                return;
+            }
+            
+            loadDashboard();
         }
-
-        function loadDashboard(container) {
-            container.innerHTML = `
-                <div class="max-w-7xl mx-auto">
-                    <!-- Welcome Banner -->
-                    <div class="bg-gradient-to-r from-primary-600 to-primary-700 rounded-2xl p-6 lg:p-8 text-white mb-8">
-                        <h1 class="text-2xl lg:text-3xl font-bold mb-2">Welcome back, ${currentUser.firstName}!</h1>
-                        <p class="text-primary-100">Ready to test your knowledge? Continue your learning journey.</p>
+        
+        function showToast(message, type = 'success') {
+            const container = document.getElementById('toastContainer');
+            const toast = document.createElement('div');
+            const colors = { success: 'bg-green-500', error: 'bg-red-500', warning: 'bg-yellow-500' };
+            toast.className = `toast flex items-center gap-3 px-4 py-3 rounded-lg text-white shadow-lg ${colors[type]} mb-2`;
+            toast.innerHTML = `<i class="fas ${type === 'success' ? 'fa-check-circle' : 'fa-exclamation-circle'}"></i><span>${message}</span>`;
+            container.appendChild(toast);
+            setTimeout(() => toast.remove(), 3000);
+        }
+        
+        function setActiveNav(navId) {
+            ['navDashboard', 'navExams', 'navAttempts', 'navProfile'].forEach(id => {
+                const el = document.getElementById(id);
+                if (el) {
+                    if (id === navId) el.classList.add('active-nav');
+                    else el.classList.remove('active-nav');
+                }
+            });
+        }
+        
+        async function loadDashboard() {
+            setActiveNav('navDashboard');
+            document.getElementById('mainContent').innerHTML = `
+                <div>
+                    <div class="bg-gradient-to-r from-blue-600 to-indigo-700 rounded-2xl p-8 text-white mb-8">
+                        <h1 class="text-3xl font-bold mb-2">Welcome back, ${currentProfile?.full_name || 'Student'}!</h1>
+                        <p class="text-blue-100">Ready to test your knowledge?</p>
                     </div>
-
-                    <!-- Stats Grid -->
-                    <div class="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
-                        <div class="bg-white rounded-xl p-5 shadow-sm border border-gray-100 card-hover">
-                            <div class="flex items-center justify-between mb-2">
-                                <span class="text-gray-500 text-sm">Total Exams</span>
-                                <i class="fas fa-clipboard-list text-2xl text-primary-500"></i>
-                            </div>
-                            <p class="text-3xl font-bold text-gray-900">${userStats.totalAttempts}</p>
-                        </div>
-                        <div class="bg-white rounded-xl p-5 shadow-sm border border-gray-100 card-hover">
-                            <div class="flex items-center justify-between mb-2">
-                                <span class="text-gray-500 text-sm">Avg Score</span>
-                                <i class="fas fa-chart-line text-2ll text-success-500"></i>
-                            </div>
-                            <p class="text-3xl font-bold text-gray-900">${userStats.avgScore}%</p>
-                        </div>
-                        <div class="bg-white rounded-xl p-5 shadow-sm border border-gray-100 card-hover">
-                            <div class="flex items-center justify-between mb-2">
-                                <span class="text-gray-500 text-sm">Current Streak</span>
-                                <i class="fas fa-fire text-2xl text-orange-500"></i>
-                            </div>
-                            <p class="text-3xl font-bold text-gray-900">${userStats.currentStreak} days</p>
-                        </div>
-                        <div class="bg-white rounded-xl p-5 shadow-sm border border-gray-100 card-hover">
-                            <div class="flex items-center justify-between mb-2">
-                                <span class="text-gray-500 text-sm">Global Rank</span>
-                                <i class="fas fa-trophy text-2xl text-yellow-500"></i>
-                            </div>
-                            <p class="text-3xl font-bold text-gray-900">#${userStats.rank}</p>
-                        </div>
+                    
+                    <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8" id="statsGrid">
+                        <div class="bg-white rounded-xl p-6 shadow-sm"><div class="animate-pulse h-20 bg-gray-200 rounded"></div></div>
                     </div>
-
-                    <!-- Performance Chart -->
-                    <div class="bg-white rounded-xl p-6 shadow-sm border border-gray-100 mb-8">
-                        <h3 class="text-lg font-bold text-gray-900 mb-4">Performance Overview</h3>
-                        <div class="h-64">
-                            <canvas id="performanceChart"></canvas>
+                    
+                    <div class="grid lg:grid-cols-2 gap-8">
+                        <div class="bg-white rounded-xl p-6 shadow-sm">
+                            <h3 class="text-lg font-bold mb-4">Performance Overview</h3>
+                            <canvas id="performanceChart" height="250"></canvas>
                         </div>
-                    </div>
-
-                    <!-- Recent Activity & Recommended -->
-                    <div class="grid lg:grid-cols-2 gap-6">
-                        <div class="bg-white rounded-xl p-6 shadow-sm border border-gray-100">
-                            <div class="flex justify-between items-center mb-4">
-                                <h3 class="text-lg font-bold text-gray-900">Recent Attempts</h3>
-                                <button onclick="navigateTo('attempts')" class="text-primary-600 text-sm hover:underline">View all →</button>
-                            </div>
-                            <div class="space-y-3" id="recentAttemptsList"></div>
-                        </div>
-                        <div class="bg-white rounded-xl p-6 shadow-sm border border-gray-100">
-                            <h3 class="text-lg font-bold text-gray-900 mb-4">Recommended for You</h3>
-                            <div class="space-y-3" id="recommendedExams"></div>
+                        <div class="bg-white rounded-xl p-6 shadow-sm">
+                            <h3 class="text-lg font-bold mb-4">Recent Activity</h3>
+                            <div id="recentActivity" class="space-y-3"></div>
                         </div>
                     </div>
                 </div>
             `;
             
+            // Load stats
+            const { data: attempts } = await supabase
+                .from('attempts')
+                .select('score, total')
+                .eq('user_id', currentUser.id);
+            
+            const totalAttempts = attempts?.length || 0;
+            const avgScore = attempts?.length ? Math.round(attempts.reduce((a,b) => a + (b.score/b.total * 100), 0) / attempts.length) : 0;
+            
+            document.getElementById('statsGrid').innerHTML = `
+                <div class="bg-white rounded-xl p-6 shadow-sm"><i class="fas fa-clipboard-list text-2xl text-blue-500 mb-2"></i><p class="text-2xl font-bold">${totalAttempts}</p><p class="text-gray-500">Total Exams</p></div>
+                <div class="bg-white rounded-xl p-6 shadow-sm"><i class="fas fa-chart-line text-2xl text-green-500 mb-2"></i><p class="text-2xl font-bold">${avgScore}%</p><p class="text-gray-500">Avg Score</p></div>
+                <div class="bg-white rounded-xl p-6 shadow-sm"><i class="fas fa-fire text-2xl text-orange-500 mb-2"></i><p class="text-2xl font-bold">${currentProfile?.streak || 0}</p><p class="text-gray-500">Day Streak</p></div>
+                <div class="bg-white rounded-xl p-6 shadow-sm"><i class="fas fa-medal text-2xl text-yellow-500 mb-2"></i><p class="text-2xl font-bold">${currentProfile?.badge || 'Beginner'}</p><p class="text-gray-500">Badge</p></div>
+            `;
+            
             // Load recent attempts
-            const recentList = document.getElementById('recentAttemptsList');
-            recentList.innerHTML = recentAttempts.slice(0, 3).map(a => `
-                <div class="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
-                    <div>
-                        <p class="font-medium text-gray-900">${a.exam}</p>
-                        <p class="text-xs text-gray-500">${a.date}</p>
-                    </div>
-                    <div class="text-right">
-                        <p class="font-bold ${a.score >= 75 ? 'text-success-600' : 'text-danger-600'}">${a.score}%</p>
-                        <p class="text-xs text-gray-500">${a.time}</p>
-                    </div>
-                </div>
-            `).join('');
+            const { data: recentAttempts } = await supabase
+                .from('attempts')
+                .select('*, exam_sessions(title)')
+                .eq('user_id', currentUser.id)
+                .order('created_at', { ascending: false })
+                .limit(5);
             
-            // Load recommended exams
-            const recommendedList = document.getElementById('recommendedExams');
-            recommendedList.innerHTML = availableExams.slice(0, 2).map(exam => `
-                <div class="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
-                    <div>
-                        <p class="font-medium text-gray-900">${exam.title}</p>
-                        <p class="text-xs text-gray-500">${exam.questions} questions · ${exam.duration} min</p>
-                    </div>
-                    <button onclick="startExam(${exam.id})" class="bg-primary-600 text-white px-4 py-2 rounded-lg text-sm font-semibold hover:bg-primary-700">Start</button>
+            const recentHtml = recentAttempts?.map(a => `
+                <div class="flex justify-between items-center p-3 bg-gray-50 rounded-lg">
+                    <div><p class="font-medium">${a.exam_sessions?.title || a.subject}</p><p class="text-xs text-gray-500">${new Date(a.created_at).toLocaleDateString()}</p></div>
+                    <div class="text-right"><p class="font-bold ${a.score/a.total * 100 >= 70 ? 'text-green-600' : 'text-red-600'}">${Math.round(a.score/a.total * 100)}%</p><p class="text-xs text-gray-500">${a.score}/${a.total}</p></div>
                 </div>
-            `).join('');
+            `).join('') || '<p class="text-gray-500 text-center">No attempts yet</p>';
             
-            // Initialize chart
+            document.getElementById('recentActivity').innerHTML = recentHtml;
+            
+            // Chart
             setTimeout(() => {
                 const ctx = document.getElementById('performanceChart');
                 if (ctx) {
                     new Chart(ctx, {
                         type: 'line',
-                        data: {
-                            labels: ['Week 1', 'Week 2', 'Week 3', 'Week 4'],
-                            datasets: [{
-                                label: 'Your Score',
-                                data: [72, 78, 85, userStats.avgScore],
-                                borderColor: '#3b82f6',
-                                backgroundColor: 'rgba(59,130,246,0.1)',
-                                fill: true,
-                                tension: 0.4
-                            }]
-                        },
-                        options: {
-                            responsive: true,
-                            maintainAspectRatio: false,
-                            plugins: { legend: { display: false } }
-                        }
+                        data: { labels: ['Week 1', 'Week 2', 'Week 3', 'Week 4'], datasets: [{ label: 'Your Score', data: [65, 72, 78, avgScore], borderColor: '#3b82f6', tension: 0.4 }] },
+                        options: { responsive: true, maintainAspectRatio: true, plugins: { legend: { display: false } } }
                     });
                 }
             }, 100);
         }
-
-        function loadExamsPage(container) {
-            container.innerHTML = `
-                <div class="max-w-7xl mx-auto">
-                    <h1 class="text-2xl font-bold text-gray-900 mb-6">📚 Available Exams</h1>
-                    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6" id="examsGrid"></div>
+        
+        async function loadExams() {
+            setActiveNav('navExams');
+            document.getElementById('mainContent').innerHTML = `
+                <div>
+                    <h1 class="text-2xl font-bold mb-6">📚 Available Exams</h1>
+                    <div id="examsGrid" class="grid md:grid-cols-2 lg:grid-cols-3 gap-6"></div>
                 </div>
             `;
+            
+            const { data: exams } = await supabase
+                .from('exam_sessions')
+                .select('*')
+                .eq('is_active', true)
+                .order('created_at', { ascending: false });
             
             const examsGrid = document.getElementById('examsGrid');
-            examsGrid.innerHTML = availableExams.map(exam => `
-                <div class="bg-white rounded-xl p-6 shadow-sm border border-gray-100 card-hover">
-                    <div class="flex justify-between items-start mb-3">
-                        <h3 class="text-lg font-bold text-gray-900">${exam.title}</h3>
-                        <span class="text-xs font-medium px-2 py-1 rounded-full ${
-                            exam.difficulty === 'Easy' ? 'bg-success-50 text-success-600' :
-                            exam.difficulty === 'Hard' ? 'bg-danger-50 text-danger-600' :
-                            'bg-warning-50 text-warning-600'
-                        }">${exam.difficulty}</span>
-                    </div>
+            if (!exams?.length) {
+                examsGrid.innerHTML = '<div class="col-span-full text-center text-gray-500 py-12">No exams available</div>';
+                return;
+            }
+            
+            examsGrid.innerHTML = exams.map(exam => `
+                <div class="bg-white rounded-xl p-6 shadow-sm border hover:shadow-md transition">
+                    <h3 class="text-lg font-bold mb-2">${exam.title || `${exam.subject} - ${exam.chapter}`}</h3>
                     <div class="flex gap-4 text-sm text-gray-500 mb-4">
-                        <span><i class="far fa-file-alt mr-1"></i> ${exam.questions} questions</span>
-                        <span><i class="far fa-clock mr-1"></i> ${exam.duration} minutes</span>
-                        <span><i class="fas fa-users mr-1"></i> ${exam.attempts} attempts</span>
+                        <span><i class="far fa-clock"></i> ${exam.duration} min</span>
+                        <span><i class="far fa-folder"></i> ${exam.subject}</span>
+                        <span><i class="fas fa-chapter"></i> ${exam.chapter}</span>
                     </div>
-                    <button onclick="startExam(${exam.id})" class="w-full bg-primary-600 text-white py-2.5 rounded-lg font-semibold hover:bg-primary-700 transition">Start Exam →</button>
+                    <button onclick="startExam('${exam.id}')" class="w-full bg-blue-600 text-white py-2 rounded-lg font-semibold hover:bg-blue-700">Start Exam →</button>
                 </div>
             `).join('');
         }
-
-        function loadAttemptsPage(container) {
-            container.innerHTML = `
-                <div class="max-w-7xl mx-auto">
-                    <h1 class="text-2xl font-bold text-gray-900 mb-6">📊 My Attempt History</h1>
-                    <div class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
-                        <table class="w-full">
-                            <thead class="bg-gray-50 border-b">
-                                <tr>
-                                    <th class="text-left p-4">Exam</th>
-                                    <th class="text-left p-4">Date</th>
-                                    <th class="text-left p-4">Score</th>
-                                    <th class="text-left p-4">Time Taken</th>
-                                    <th class="text-left p-4">Status</th>
-                                </tr>
-                            </thead>
-                            <tbody id="attemptsTableBody"></tbody>
-                        </table>
-                    </div>
-                </div>
-            `;
+        
+        async function startExam(examId) {
+            const { data: exam } = await supabase
+                .from('exam_sessions')
+                .select('*')
+                .eq('id', examId)
+                .single();
             
-            const tbody = document.getElementById('attemptsTableBody');
-            tbody.innerHTML = recentAttempts.map(a => `
-                <tr class="border-b hover:bg-gray-50">
-                    <td class="p-4 font-medium text-gray-900">${a.exam}</td>
-                    <td class="p-4 text-gray-600">${a.date}</td>
-                    <td class="p-4"><span class="font-bold ${a.score >= 75 ? 'text-success-600' : 'text-danger-600'}">${a.score}%</span></td>
-                    <td class="p-4 text-gray-600">${a.time}</td>
-                    <td class="p-4"><span class="text-xs font-medium px-2 py-1 rounded-full ${a.status === 'passed' ? 'bg-success-50 text-success-600' : 'bg-danger-50 text-danger-600'}">${a.status === 'passed' ? 'Passed' : 'Failed'}</span></td>
-                </tr>
-            `).join('');
-        }
-
-        function loadLeaderboardPage(container) {
-            container.innerHTML = `
-                <div class="max-w-7xl mx-auto">
-                    <h1 class="text-2xl font-bold text-gray-900 mb-6">🏆 Global Leaderboard</h1>
-                    <div class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
-                        <div class="p-4 bg-gradient-to-r from-yellow-50 to-orange-50 border-b">
-                            <div class="flex items-center gap-2">
-                                <i class="fas fa-trophy text-yellow-500 text-xl"></i>
-                                <span class="font-semibold text-gray-900">Top Performers This Month</span>
-                            </div>
-                        </div>
-                        <div class="divide-y" id="leaderboardList"></div>
-                    </div>
-                </div>
-            `;
-            
-            const leaderboardList = document.getElementById('leaderboardList');
-            leaderboardList.innerHTML = leaderboardData.map(user => `
-                <div class="flex items-center justify-between p-4 ${user.isCurrentUser ? 'bg-primary-50' : ''}">
-                    <div class="flex items-center gap-4">
-                        <div class="w-8 h-8 rounded-full ${user.rank <= 3 ? 'bg-yellow-400' : 'bg-gray-200'} flex items-center justify-center font-bold text-sm">${user.rank}</div>
-                        <div>
-                            <p class="font-medium text-gray-900">${user.name} ${user.isCurrentUser ? '<span class="text-xs text-primary-600 ml-2">(You)</span>' : ''}</p>
-                            <p class="text-xs text-gray-500">${user.exams} exams taken</p>
-                        </div>
-                    </div>
-                    <p class="text-2xl font-bold text-gray-900">${user.score}%</p>
-                </div>
-            `).join('');
-        }
-
-        function loadProfilePage(container) {
-            container.innerHTML = `
-                <div class="max-w-3xl mx-auto">
-                    <h1 class="text-2xl font-bold text-gray-900 mb-6">👤 My Profile</h1>
-                    <div class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
-                        <div class="p-8 text-center border-b">
-                            <div class="w-24 h-24 rounded-full bg-gradient-to-br from-primary-500 to-primary-700 flex items-center justify-center text-white text-3xl font-bold mx-auto mb-4">
-                                ${(currentUser.firstName[0] + (currentUser.lastName?.[0] || '')).toUpperCase()}
-                            </div>
-                            <h2 class="text-xl font-bold text-gray-900">${currentUser.firstName} ${currentUser.lastName || ''}</h2>
-                            <p class="text-gray-500">${currentUser.email}</p>
-                            <p class="text-sm text-primary-600 mt-2">Student</p>
-                        </div>
-                        <div class="p-6 space-y-4">
-                            <div class="flex justify-between py-2 border-b">
-                                <span class="text-gray-600">Member Since</span>
-                                <span class="font-medium text-gray-900">March 2024</span>
-                            </div>
-                            <div class="flex justify-between py-2 border-b">
-                                <span class="text-gray-600">Total Exams Taken</span>
-                                <span class="font-medium text-gray-900">${userStats.totalAttempts}</span>
-                            </div>
-                            <div class="flex justify-between py-2 border-b">
-                                <span class="text-gray-600">Average Score</span>
-                                <span class="font-medium text-gray-900">${userStats.avgScore}%</span>
-                            </div>
-                            <div class="flex justify-between py-2 border-b">
-                                <span class="text-gray-600">Current Streak</span>
-                                <span class="font-medium text-gray-900">${userStats.currentStreak} days</span>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            `;
-        }
-
-        function startExam(examId) {
-            const exam = availableExams.find(e => e.id === examId);
             if (!exam) return;
             
-            // Generate random questions
-            currentQuestions = Array.from({ length: exam.questions }, (_, i) => ({
-                id: i + 1,
-                text: `Sample question ${i + 1} for ${exam.title}. This is a demonstration question.`,
-                options: ['Option A: First choice', 'Option B: Second choice', 'Option C: Third choice', 'Option D: Fourth choice'],
-                correct: Math.floor(Math.random() * 4)
-            }));
+            const { data: questions } = await supabase
+                .from('questions')
+                .select('*')
+                .eq('subject', exam.subject)
+                .limit(10);
             
-            userAnswers = new Array(exam.questions).fill(null);
-            timeRemaining = exam.duration * 60;
+            if (!questions?.length) {
+                showToast('No questions available for this exam', 'error');
+                return;
+            }
+            
             activeExam = exam;
+            currentQuestions = questions;
+            userAnswers = new Array(questions.length).fill(null);
+            timeRemaining = exam.duration * 60;
             currentQuestionIndex = 0;
             
-            // Show exam interface
-            document.getElementById('examTitle').textContent = exam.title;
+            document.getElementById('examTitle').textContent = exam.title || `${exam.subject} - ${exam.chapter}`;
             document.getElementById('takeExamModal').classList.remove('hidden');
             document.getElementById('takeExamModal').style.display = 'flex';
             
@@ -570,36 +295,39 @@
             const container = document.getElementById('examQuestionsContainer');
             
             container.innerHTML = `
-                <div class="mb-6">
-                    <div class="flex justify-between items-center mb-4">
+                <div class="max-w-3xl mx-auto">
+                    <div class="flex justify-between items-center mb-6">
                         <span class="text-sm text-gray-500">Question ${currentQuestionIndex + 1} of ${currentQuestions.length}</span>
                         <div class="flex gap-2">
                             ${currentQuestionIndex > 0 ? `<button onclick="previousQuestion()" class="px-4 py-2 border rounded-lg hover:bg-gray-50">← Previous</button>` : ''}
-                            ${currentQuestionIndex < currentQuestions.length - 1 ? `<button onclick="nextQuestion()" class="px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700">Next →</button>` : ''}
+                            ${currentQuestionIndex < currentQuestions.length - 1 ? `<button onclick="nextQuestion()" class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700">Next →</button>` : ''}
                         </div>
                     </div>
+                    
                     <div class="bg-gray-50 rounded-xl p-6 mb-6">
-                        <p class="text-lg font-medium text-gray-900">${q.text}</p>
+                        <p class="text-lg font-medium">${q.question}</p>
                     </div>
+                    
                     <div class="space-y-3">
-                        ${q.options.map((opt, idx) => `
+                        ${JSON.parse(q.options).map((opt, idx) => `
                             <div onclick="selectAnswer(${idx})" class="option-card p-4 border-2 rounded-xl ${userAnswers[currentQuestionIndex] === idx ? 'selected' : 'border-gray-200'}">
                                 <div class="flex items-center gap-3">
-                                    <div class="w-6 h-6 rounded-full border-2 ${userAnswers[currentQuestionIndex] === idx ? 'border-primary-600 bg-primary-600 text-white' : 'border-gray-300'} flex items-center justify-center text-xs font-bold">
+                                    <div class="w-6 h-6 rounded-full border-2 flex items-center justify-center text-sm font-bold ${userAnswers[currentQuestionIndex] === idx ? 'border-blue-600 bg-blue-600 text-white' : 'border-gray-300'}">
                                         ${String.fromCharCode(65 + idx)}
                                     </div>
-                                    <span class="text-gray-800">${opt}</span>
+                                    <span>${opt}</span>
                                 </div>
                             </div>
                         `).join('')}
                     </div>
-                </div>
-                <div class="grid grid-cols-8 gap-2 mt-8 pt-6 border-t">
-                    ${currentQuestions.map((_, idx) => `
-                        <button onclick="goToQuestion(${idx})" class="question-nav w-10 h-10 rounded-lg font-semibold text-sm ${userAnswers[idx] !== null ? 'answered' : ''} ${idx === currentQuestionIndex ? 'current' : ''}">
-                            ${idx + 1}
-                        </button>
-                    `).join('')}
+                    
+                    <div class="grid grid-cols-10 gap-2 mt-8 pt-6 border-t">
+                        ${currentQuestions.map((_, idx) => `
+                            <button onclick="goToQuestion(${idx})" class="question-nav ${userAnswers[idx] !== null ? 'answered' : 'bg-gray-100'} ${idx === currentQuestionIndex ? 'current' : ''}">
+                                ${idx + 1}
+                            </button>
+                        `).join('')}
+                    </div>
                 </div>
             `;
         }
@@ -644,115 +372,149 @@
             }, 1000);
         }
         
-        function submitExam() {
+        async function submitExam() {
             if (examTimer) clearInterval(examTimer);
             
-            // Calculate score
             let correctCount = 0;
+            const answersData = [];
             userAnswers.forEach((answer, idx) => {
-                if (answer !== null && answer === currentQuestions[idx].correct) correctCount++;
+                const isCorrect = answer !== null && answer === currentQuestions[idx].answer;
+                if (isCorrect) correctCount++;
+                answersData.push({
+                    question_id: currentQuestions[idx].id,
+                    selected: answer,
+                    correct: isCorrect
+                });
             });
             
-            const score = Math.round((correctCount / currentQuestions.length) * 100);
-            const passed = score >= 60;
+            const { error } = await supabase
+                .from('attempts')
+                .insert({
+                    user_id: currentUser.id,
+                    exam_session_id: activeExam.id,
+                    subject: activeExam.subject,
+                    chapter: activeExam.chapter,
+                    score: correctCount,
+                    total: currentQuestions.length,
+                    answers: answersData,
+                    time_taken: (activeExam.duration * 60) - timeRemaining
+                });
             
-            // Save attempt
-            const newAttempt = {
-                id: Date.now(),
-                exam: activeExam.title,
-                date: new Date().toISOString().split('T')[0],
-                score: score,
-                time: `${Math.floor((activeExam.duration * 60 - timeRemaining) / 60)}:${((activeExam.duration * 60 - timeRemaining) % 60).toString().padStart(2, '0')}`,
-                status: passed ? 'passed' : 'failed'
-            };
-            recentAttempts.unshift(newAttempt);
+            if (error) {
+                showToast('Error saving attempt', 'error');
+            } else {
+                showToast(`Exam submitted! Score: ${Math.round(correctCount/currentQuestions.length * 100)}%`, 'success');
+            }
             
-            // Update stats
-            const scores = recentAttempts.map(a => a.score);
-            userStats.totalAttempts = recentAttempts.length;
-            userStats.avgScore = Math.round(scores.reduce((a,b) => a+b, 0) / scores.length);
-            
-            // Close exam modal
             document.getElementById('takeExamModal').classList.add('hidden');
             document.getElementById('takeExamModal').style.display = 'none';
+            loadExams();
+        }
+        
+        async function loadAttempts() {
+            setActiveNav('navAttempts');
+            document.getElementById('mainContent').innerHTML = `
+                <div>
+                    <h1 class="text-2xl font-bold mb-6">📊 My Attempt History</h1>
+                    <div class="bg-white rounded-xl shadow-sm overflow-hidden">
+                        <table class="w-full">
+                            <thead class="bg-gray-50 border-b">
+                                <tr><th class="p-4 text-left">Exam</th><th class="p-4 text-left">Date</th><th class="p-4 text-left">Score</th><th class="p-4 text-left">Time</th><th class="p-4 text-left">Status</th></tr>
+                            </thead>
+                            <tbody id="attemptsTableBody"></tbody>
+                        </table>
+                    </div>
+                </div>
+            `;
             
-            // Show result
-            showToast(`Exam submitted! Your score: ${score}%`, passed ? 'success' : 'warning');
+            const { data: attempts } = await supabase
+                .from('attempts')
+                .select('*, exam_sessions(title)')
+                .eq('user_id', currentUser.id)
+                .order('created_at', { ascending: false });
             
-            // Refresh dashboard if on dashboard
-            const activePage = document.querySelector('.sidebar-item.active span')?.innerText.toLowerCase();
-            if (activePage === 'dashboard') {
-                loadDashboard(document.getElementById('mainContent'));
+            const tbody = document.getElementById('attemptsTableBody');
+            if (!attempts?.length) {
+                tbody.innerHTML = '<tr><td colspan="5" class="text-center p-8 text-gray-500">No attempts yet</td></tr>';
+                return;
             }
+            
+            tbody.innerHTML = attempts.map(a => {
+                const percent = Math.round(a.score / a.total * 100);
+                return `
+                    <tr class="border-b hover:bg-gray-50">
+                        <td class="p-4">${a.exam_sessions?.title || `${a.subject} - ${a.chapter}`}</td>
+                        <td class="p-4 text-gray-500">${new Date(a.created_at).toLocaleDateString()}</td>
+                        <td class="p-4"><span class="font-bold ${percent >= 70 ? 'text-green-600' : 'text-red-600'}">${percent}%</span> (${a.score}/${a.total})</td>
+                        <td class="p-4 text-gray-500">${Math.floor(a.time_taken / 60)}:${(a.time_taken % 60).toString().padStart(2, '0')}</td>
+                        <td class="p-4"><span class="px-2 py-1 rounded-full text-xs ${percent >= 70 ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}">${percent >= 70 ? 'Passed' : 'Failed'}</span></td>
+                    </tr>
+                `;
+            }).join('');
+        }
+        
+        async function loadProfile() {
+            setActiveNav('navProfile');
+            const { data: profile } = await supabase
+                .from('profiles')
+                .select('*')
+                .eq('id', currentUser.id)
+                .single();
+            
+            document.getElementById('mainContent').innerHTML = `
+                <div class="max-w-3xl mx-auto">
+                    <h1 class="text-2xl font-bold mb-6">👤 My Profile</h1>
+                    <div class="bg-white rounded-xl shadow-sm overflow-hidden">
+                        <div class="p-8 text-center border-b">
+                            <div class="w-24 h-24 rounded-full bg-gradient-to-br from-blue-600 to-indigo-700 flex items-center justify-center text-white text-3xl font-bold mx-auto mb-4">
+                                ${(profile?.full_name?.[0] || 'U').toUpperCase()}
+                            </div>
+                            <h2 class="text-xl font-bold">${profile?.full_name || 'Student'}</h2>
+                            <p class="text-gray-500">${currentUser.email}</p>
+                            <p class="text-sm text-blue-600 mt-2 capitalize">${profile?.role}</p>
+                        </div>
+                        <div class="p-6 space-y-4">
+                            <div class="flex justify-between py-2 border-b"><span class="text-gray-600">Member Since</span><span class="font-medium">${new Date(profile?.created_at).toLocaleDateString()}</span></div>
+                            <div class="flex justify-between py-2 border-b"><span class="text-gray-600">Current Streak</span><span class="font-medium">${profile?.streak || 0} days</span></div>
+                            <div class="flex justify-between py-2 border-b"><span class="text-gray-600">Badge</span><span class="font-medium">${profile?.badge || 'Beginner'}</span></div>
+                            <div class="flex justify-between py-2 border-b"><span class="text-gray-600">Total Attempts</span><span class="font-medium" id="totalAttempts">-</span></div>
+                        </div>
+                    </div>
+                </div>
+            `;
+            
+            const { count } = await supabase
+                .from('attempts')
+                .select('*', { count: 'exact', head: true })
+                .eq('user_id', currentUser.id);
+            
+            document.getElementById('totalAttempts').textContent = count || 0;
         }
         
         function closeExamModal() {
             document.getElementById('examModal').classList.add('hidden');
             document.getElementById('examModal').classList.remove('flex');
         }
-
-        function updateUserUI() {
-            const initials = (currentUser.firstName[0] + (currentUser.lastName?.[0] || '')).toUpperCase();
-            document.getElementById('desktopAvatar').textContent = initials;
-            document.getElementById('mobileAvatar').textContent = initials;
-            document.getElementById('desktopUserName').textContent = `${currentUser.firstName} ${currentUser.lastName || ''}`;
-        }
-
-        function showToast(message, type = 'success') {
-            const container = document.getElementById('toastContainer');
-            const toast = document.createElement('div');
-            const colors = { success: 'bg-green-500', error: 'bg-red-500', warning: 'bg-yellow-500', info: 'bg-blue-500' };
-            const icons = { success: 'fa-check-circle', error: 'fa-exclamation-circle', warning: 'fa-exclamation-triangle', info: 'fa-info-circle' };
-            toast.className = `toast flex items-center gap-3 px-4 py-3 rounded-xl text-white shadow-lg ${colors[type]} max-w-sm`;
-            toast.innerHTML = `<i class="fas ${icons[type]}"></i><span class="text-sm font-medium">${message}</span>`;
-            container.appendChild(toast);
-            setTimeout(() => toast.remove(), 3000);
-        }
-
-        function toggleMobileMenu() {
-            const sidebar = document.getElementById('mobileSidebar');
-            const overlay = document.getElementById('mobileMenuOverlay');
-            if (sidebar.classList.contains('-translate-x-full')) {
-                sidebar.classList.remove('-translate-x-full');
-                overlay.classList.remove('hidden');
-            } else {
-                sidebar.classList.add('-translate-x-full');
-                overlay.classList.add('hidden');
-            }
-        }
-
-        function showNotifications() {
-            const modal = document.getElementById('notificationsModal');
-            modal.classList.remove('hidden');
-            modal.classList.add('flex');
-        }
-
-        function closeNotifications() {
-            const modal = document.getElementById('notificationsModal');
-            modal.classList.add('hidden');
-            modal.classList.remove('flex');
-        }
-
-        function logout() {
-            localStorage.removeItem('exampro_session');
+        
+        async function logout() {
+            await supabase.auth.signOut();
             window.location.href = 'login.html';
         }
-
+        
         // Make functions global
-        window.navigateTo = navigateTo;
+        window.loadDashboard = loadDashboard;
+        window.loadExams = loadExams;
+        window.loadAttempts = loadAttempts;
+        window.loadProfile = loadProfile;
         window.startExam = startExam;
         window.selectAnswer = selectAnswer;
         window.nextQuestion = nextQuestion;
         window.previousQuestion = previousQuestion;
         window.goToQuestion = goToQuestion;
         window.submitExam = submitExam;
-        window.toggleMobileMenu = toggleMobileMenu;
-        window.showNotifications = showNotifications;
-        window.closeNotifications = closeNotifications;
-        window.logout = logout;
         window.closeExamModal = closeExamModal;
-
-        // Start app
+        window.logout = logout;
+        
         init();
     </script>
 </body>
