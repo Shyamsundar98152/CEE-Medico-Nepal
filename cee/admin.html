@@ -1,125 +1,778 @@
-        }
-        function saveQuestion() {
-            const text = document.getElementById('questionTextInput').value;
-            if (!text) { showToast('Please enter question text', 'error'); return; }
-
-            if (editingQuestionId) {
-                const q = adminQuestions.find(q => q.id === editingQuestionId);
-                q.text = text;
-                q.subject = document.getElementById('questionSubjectInput').value;
-                q.difficulty = document.getElementById('questionDifficultyInput').value;
-                showToast('Question updated!', 'success');
-            } else {
-                adminQuestions.push({
-                    id: Date.now(),
-                    text,
-                    subject: document.getElementById('questionSubjectInput').value,
-                    difficulty: document.getElementById('questionDifficultyInput').value
-                });
-                showToast('Question added!', 'success');
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>ExamPro - Admin Dashboard</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: { sans: ['Inter', 'sans-serif'] },
+                    colors: {
+                        primary: { 50: '#eff6ff', 100: '#dbeafe', 200: '#bfdbfe', 300: '#93c5fd', 400: '#60a5fa', 500: '#3b82f6', 600: '#2563eb', 700: '#1d4ed8', 800: '#1e40af', 900: '#1e3a8a' },
+                        success: { 50: '#f0fdf4', 100: '#dcfce7', 500: '#22c55e', 600: '#16a34a' },
+                        danger: { 50: '#fef2f2', 100: '#fee2e2', 500: '#ef4444', 600: '#dc2626' },
+                        warning: { 50: '#fffbeb', 100: '#fef3c7', 500: '#f59e0b', 600: '#d97706' }
+                    }
+                }
             }
-            closeQuestionModal();
-            loadQuestionsTable();
         }
-        function editQuestion(id) { openQuestionModal(id); }
-        function deleteQuestion(id) {
-            if (!confirm('Delete this question?')) return;
-            adminQuestions = adminQuestions.filter(q => q.id !== id);
-            loadQuestionsTable();
-            showToast('Question deleted', 'success');
+    </script>
+    <style>
+        * { -webkit-tap-highlight-color: transparent; }
+        body { font-family: 'Inter', sans-serif; background: #f8fafc; }
+        .toast { animation: toastIn 0.3s ease-out, toastOut 0.3s ease-in 2.7s forwards; }
+        @keyframes toastIn { from { transform: translateX(100%); opacity:0; } to { transform: translateX(0); opacity:1; } }
+        @keyframes toastOut { from { transform: translateX(0); opacity:1; } to { transform: translateX(100%); opacity:0; } }
+        .sidebar-item.active { background: #3b82f6; color: white; }
+        .sidebar-item.active i { color: white; }
+        .sidebar-item:hover:not(.active) { background: #f1f5f9; }
+        .card-hover { transition: all 0.2s ease; }
+        .card-hover:hover { transform: translateY(-4px); box-shadow: 0 20px 25px -12px rgba(0,0,0,0.1); }
+        .modal-enter { animation: modalFade 0.2s ease-out; }
+        @keyframes modalFade { from { opacity:0; transform: scale(0.95); } to { opacity:1; transform: scale(1); } }
+        .role-selected { border-color: #3b82f6; background: #eff6ff; color: #3b82f6; }
+        .role-unselected { border-color: #e2e8f0; background: white; color: #64748b; }
+    </style>
+</head>
+<body>
+
+    <div id="toastContainer" class="fixed top-4 right-4 z-50 space-y-2"></div>
+
+    <!-- Mobile Menu -->
+    <div id="mobileMenuOverlay" class="fixed inset-0 bg-black/50 z-40 hidden lg:hidden" onclick="toggleMobileMenu()"></div>
+    <div id="mobileSidebar" class="fixed left-0 top-0 bottom-0 w-72 bg-white z-50 transform -translate-x-full transition-transform duration-300 lg:hidden">
+        <div class="p-6 border-b">
+            <div class="flex items-center justify-between">
+                <div class="flex items-center gap-3">
+                    <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-primary-500 to-primary-700 flex items-center justify-center text-white font-bold">EP</div>
+                    <span class="font-bold text-xl text-gray-800">ExamPro</span>
+                </div>
+                <button onclick="toggleMobileMenu()" class="text-gray-400"><i class="fas fa-times text-xl"></i></button>
+            </div>
+        </div>
+        <div class="p-4" id="mobileNavItems"></div>
+    </div>
+
+    <div class="flex h-screen overflow-hidden">
+        <!-- Desktop Sidebar -->
+        <aside class="hidden lg:flex lg:flex-col lg:w-72 bg-white border-r border-gray-200 fixed h-full overflow-y-auto">
+            <div class="p-6 border-b border-gray-200">
+                <div class="flex items-center gap-3">
+                    <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-primary-500 to-primary-700 flex items-center justify-center text-white font-bold text-lg">EP</div>
+                    <span class="font-bold text-xl text-gray-800">ExamPro</span>
+                </div>
+            </div>
+            <nav class="flex-1 py-6 px-4 space-y-1" id="desktopNavItems"></nav>
+            <div class="p-4 border-t border-gray-200">
+                <div class="flex items-center gap-3 p-3 rounded-xl bg-gray-50">
+                    <div id="desktopAvatar" class="w-10 h-10 rounded-full bg-gradient-to-br from-primary-500 to-primary-700 flex items-center justify-center text-white font-bold text-sm"></div>
+                    <div class="flex-1 min-w-0">
+                        <p id="desktopUserName" class="text-sm font-semibold text-gray-900 truncate"></p>
+                        <p id="desktopUserRole" class="text-xs text-gray-500"></p>
+                    </div>
+                    <button onclick="logout()" class="text-gray-400 hover:text-red-500"><i class="fas fa-sign-out-alt"></i></button>
+                </div>
+            </div>
+        </aside>
+
+        <!-- Main Content -->
+        <main class="flex-1 lg:ml-72 overflow-y-auto">
+            <header class="bg-white border-b border-gray-200 sticky top-0 z-30">
+                <div class="px-4 lg:px-8 py-4 flex items-center justify-between">
+                    <button onclick="toggleMobileMenu()" class="lg:hidden text-gray-600"><i class="fas fa-bars text-xl"></i></button>
+                    <h1 class="text-xl font-semibold text-gray-800 lg:hidden">ExamPro Admin</h1>
+                    <div class="flex items-center gap-3">
+                        <button onclick="showNotifications()" class="relative p-2 text-gray-500 hover:bg-gray-100 rounded-xl transition">
+                            <i class="fas fa-bell text-lg"></i>
+                        </button>
+                        <div class="lg:hidden flex items-center gap-2">
+                            <div id="mobileAvatar" class="w-8 h-8 rounded-full bg-gradient-to-br from-primary-500 to-primary-700 flex items-center justify-center text-white font-bold text-xs"></div>
+                        </div>
+                    </div>
+                </div>
+            </header>
+
+            <div id="mainContent" class="p-4 lg:p-8">
+                <div class="flex items-center justify-center h-64">
+                    <div class="loader border-4 border-gray-200 border-t-primary-600 rounded-full w-12 h-12 animate-spin"></div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- Question Modal -->
+    <div id="questionModal" class="fixed inset-0 z-50 hidden items-center justify-center p-4">
+        <div class="absolute inset-0 bg-black/50 backdrop-blur-sm" onclick="closeQuestionModal()"></div>
+        <div class="relative bg-white rounded-2xl shadow-2xl w-full max-w-2xl modal-enter max-h-[90vh] overflow-y-auto">
+            <div class="sticky top-0 bg-white p-5 border-b">
+                <div class="flex justify-between items-center">
+                    <h3 id="questionModalTitle" class="text-xl font-bold text-gray-900">Add Question</h3>
+                    <button onclick="closeQuestionModal()" class="text-gray-400 hover:text-gray-600"><i class="fas fa-times"></i></button>
+                </div>
+            </div>
+            <div class="p-6 space-y-4">
+                <div class="grid grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Subject</label>
+                        <select id="questionSubject" class="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-primary-500">
+                            <option value="Mathematics">Mathematics</option>
+                            <option value="Physics">Physics</option>
+                            <option value="Chemistry">Chemistry</option>
+                            <option value="Biology">Biology</option>
+                            <option value="English">English</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Difficulty</label>
+                        <select id="questionDifficulty" class="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-primary-500">
+                            <option value="Easy">Easy</option>
+                            <option value="Medium">Medium</option>
+                            <option value="Hard">Hard</option>
+                        </select>
+                    </div>
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Question Text</label>
+                    <textarea id="questionText" rows="3" class="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-primary-500" placeholder="Enter the question..."></textarea>
+                </div>
+                <div id="optionsContainer" class="space-y-3">
+                    <!-- Options will be generated here -->
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Correct Answer</label>
+                    <select id="correctAnswer" class="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-primary-500">
+                        <option value="0">Option A</option>
+                        <option value="1">Option B</option>
+                        <option value="2">Option C</option>
+                        <option value="3">Option D</option>
+                    </select>
+                </div>
+                <div class="flex gap-3 pt-4">
+                    <button onclick="saveQuestion()" class="flex-1 bg-primary-600 text-white py-2 rounded-lg font-semibold hover:bg-primary-700">Save Question</button>
+                    <button onclick="closeQuestionModal()" class="flex-1 border border-gray-300 py-2 rounded-lg font-semibold hover:bg-gray-50">Cancel</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- User Modal -->
+    <div id="userModal" class="fixed inset-0 z-50 hidden items-center justify-center p-4">
+        <div class="absolute inset-0 bg-black/50 backdrop-blur-sm" onclick="closeUserModal()"></div>
+        <div class="relative bg-white rounded-2xl shadow-2xl w-full max-w-md modal-enter">
+            <div class="p-5 border-b">
+                <div class="flex justify-between items-center">
+                    <h3 id="userModalTitle" class="text-xl font-bold text-gray-900">Add User</h3>
+                    <button onclick="closeUserModal()" class="text-gray-400 hover:text-gray-600"><i class="fas fa-times"></i></button>
+                </div>
+            </div>
+            <div class="p-6 space-y-4">
+                <div class="grid grid-cols-2 gap-3">
+                    <input type="text" id="userFirstName" placeholder="First Name" class="px-4 py-2 border rounded-lg focus:ring-2 focus:ring-primary-500">
+                    <input type="text" id="userLastName" placeholder="Last Name" class="px-4 py-2 border rounded-lg focus:ring-2 focus:ring-primary-500">
+                </div>
+                <input type="email" id="userEmail" placeholder="Email" class="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-primary-500">
+                <input type="password" id="userPassword" placeholder="Password" class="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-primary-500">
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Role</label>
+                    <div class="grid grid-cols-3 gap-2">
+                        <button onclick="selectUserRole('student')" id="roleStudentBtn" class="role-selected py-2 rounded-xl border-2 text-sm font-semibold transition-all">Student</button>
+                        <button onclick="selectUserRole('admin')" id="roleAdminBtn" class="role-unselected py-2 rounded-xl border-2 text-sm font-semibold transition-all">Admin</button>
+                        <button onclick="selectUserRole('super_admin')" id="roleSuperBtn" class="role-unselected py-2 rounded-xl border-2 text-sm font-semibold transition-all">Super</button>
+                    </div>
+                </div>
+                <div class="flex gap-3 pt-4">
+                    <button onclick="saveUser()" class="flex-1 bg-primary-600 text-white py-2 rounded-lg font-semibold hover:bg-primary-700">Save</button>
+                    <button onclick="closeUserModal()" class="flex-1 border border-gray-300 py-2 rounded-lg font-semibold hover:bg-gray-50">Cancel</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Exam Modal -->
+    <div id="examModal" class="fixed inset-0 z-50 hidden items-center justify-center p-4">
+        <div class="absolute inset-0 bg-black/50 backdrop-blur-sm" onclick="closeExamModal()"></div>
+        <div class="relative bg-white rounded-2xl shadow-2xl w-full max-w-md modal-enter">
+            <div class="p-5 border-b">
+                <div class="flex justify-between items-center">
+                    <h3 id="examModalTitle" class="text-xl font-bold text-gray-900">Add Exam</h3>
+                    <button onclick="closeExamModal()" class="text-gray-400 hover:text-gray-600"><i class="fas fa-times"></i></button>
+                </div>
+            </div>
+            <div class="p-6 space-y-4">
+                <input type="text" id="examTitle" placeholder="Exam Title" class="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-primary-500">
+                <select id="examSubject" class="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-primary-500">
+                    <option value="Mathematics">Mathematics</option>
+                    <option value="Physics">Physics</option>
+                    <option value="Chemistry">Chemistry</option>
+                    <option value="Biology">Biology</option>
+                    <option value="English">English</option>
+                </select>
+                <div class="grid grid-cols-2 gap-3">
+                    <input type="number" id="examQuestions" placeholder="Number of Questions" class="px-4 py-2 border rounded-lg focus:ring-2 focus:ring-primary-500">
+                    <input type="number" id="examDuration" placeholder="Duration (minutes)" class="px-4 py-2 border rounded-lg focus:ring-2 focus:ring-primary-500">
+                </div>
+                <select id="examDifficulty" class="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-primary-500">
+                    <option value="Easy">Easy</option>
+                    <option value="Medium">Medium</option>
+                    <option value="Hard">Hard</option>
+                </select>
+                <div class="flex gap-3 pt-4">
+                    <button onclick="saveExam()" class="flex-1 bg-primary-600 text-white py-2 rounded-lg font-semibold hover:bg-primary-700">Save Exam</button>
+                    <button onclick="closeExamModal()" class="flex-1 border border-gray-300 py-2 rounded-lg font-semibold hover:bg-gray-50">Cancel</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Notifications Modal -->
+    <div id="notificationsModal" class="fixed inset-0 z-50 hidden items-center justify-center p-4">
+        <div class="absolute inset-0 bg-black/40 backdrop-blur-sm" onclick="closeNotifications()"></div>
+        <div class="relative bg-white rounded-2xl shadow-2xl w-full max-w-md modal-enter">
+            <div class="flex items-center justify-between p-5 border-b">
+                <h3 class="text-lg font-bold text-gray-900">Notifications</h3>
+                <button onclick="closeNotifications()" class="text-gray-400 hover:text-gray-600"><i class="fas fa-times"></i></button>
+            </div>
+            <div class="p-5">
+                <div class="text-center text-gray-500 py-8">No new notifications</div>
+            </div>
+        </div>
+    </div>
+
+    <style>
+        .loader { border: 3px solid #f3f4f6; border-top: 3px solid #3b82f6; border-radius: 50%; width: 40px; height: 40px; animation: spin 1s linear infinite; }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+    </style>
+
+    <script>
+        let currentUser = null;
+        let isSuperAdmin = false;
+        let editingQuestionId = null;
+        let editingUserId = null;
+        let currentUserRole = 'student';
+        
+        let adminStats = {
+            totalUsers: 1247,
+            totalExams: 28,
+            totalQuestions: 342,
+            avgScore: 72.5,
+            completionRate: 68
+        };
+        
+        let adminQuestions = [];
+        let adminUsers = [];
+        let adminExams = [];
+
+        // Check auth
+        const session = JSON.parse(localStorage.getItem('exampro_session') || 'null');
+        if (!session || !session.token) {
+            window.location.href = 'login.html';
+        }
+        currentUser = session.user;
+        if (currentUser.role === 'student') {
+            window.location.href = 'index.html';
+        }
+        isSuperAdmin = currentUser.role === 'super_admin';
+
+        function init() {
+            loadAdminData();
+            renderSidebar();
+            updateUserUI();
+            navigateTo('overview');
         }
 
-        // ==================== USERS TABLE ====================
-        function loadUsersTable() {
-            const tbody = document.getElementById('usersTableBody');
-            tbody.innerHTML = adminUsers.map(u => `
-                <tr class="hover:bg-gray-50 transition-colors">
-                    <td class="py-4 px-4 lg:px-6">
-                        <div class="flex items-center gap-3">
-                            <div class="w-10 h-10 rounded-full bg-gradient-to-br from-primary-500 to-primary-700 flex items-center justify-center text-white font-bold text-xs">
-                                ${u.name.split(' ').map(n => n[0]).join('')}
+        function loadAdminData() {
+            // Load from localStorage
+            const storedQuestions = localStorage.getItem('exampro_questions');
+            if (storedQuestions) {
+                adminQuestions = JSON.parse(storedQuestions);
+            } else {
+                adminQuestions = [
+                    { id: 1, text: 'What is the powerhouse of the cell?', subject: 'Biology', difficulty: 'Easy', options: ['Nucleus', 'Mitochondria', 'Ribosome', 'Golgi'], correct: 1 },
+                    { id: 2, text: 'Which planet is known as the Red Planet?', subject: 'Physics', difficulty: 'Easy', options: ['Mars', 'Jupiter', 'Venus', 'Saturn'], correct: 0 },
+                    { id: 3, text: 'What is the chemical symbol for Gold?', subject: 'Chemistry', difficulty: 'Easy', options: ['Go', 'Gd', 'Au', 'Ag'], correct: 2 },
+                ];
+            }
+            
+            const storedUsers = localStorage.getItem('exampro_users_list');
+            if (storedUsers) {
+                adminUsers = JSON.parse(storedUsers);
+            } else {
+                adminUsers = [
+                    { id: 1, name: 'John Student', email: 'student@example.com', role: 'student', exams: 12, avgScore: 78, status: 'active' },
+                    { id: 2, name: 'Jane Admin', email: 'admin@example.com', role: 'admin', exams: 8, avgScore: 85, status: 'active' },
+                    { id: 3, name: 'Super User', email: 'super@example.com', role: 'super_admin', exams: 15, avgScore: 92, status: 'active' },
+                ];
+                if (currentUser.firstName) {
+                    adminUsers.unshift({
+                        id: Date.now(),
+                        name: `${currentUser.firstName} ${currentUser.lastName || ''}`,
+                        email: currentUser.email,
+                        role: currentUser.role,
+                        exams: 5,
+                        avgScore: 88,
+                        status: 'active'
+                    });
+                }
+            }
+            
+            adminExams = [
+                { id: 1, title: 'Biology Fundamentals', subject: 'Biology', questions: 20, duration: 30, difficulty: 'Medium', active: true },
+                { id: 2, title: 'Physics Mechanics', subject: 'Physics', questions: 25, duration: 45, difficulty: 'Hard', active: true },
+                { id: 3, title: 'Chemistry Basics', subject: 'Chemistry', questions: 15, duration: 20, difficulty: 'Easy', active: true },
+            ];
+            
+            adminStats.totalUsers = adminUsers.length;
+            adminStats.totalQuestions = adminQuestions.length;
+            adminStats.totalExams = adminExams.length;
+        }
+
+        function renderSidebar() {
+            const navItems = [
+                { id: 'overview', icon: 'fa-chart-pie', label: 'Overview' },
+                { id: 'questions', icon: 'fa-database', label: 'Question Bank' },
+                { id: 'exams', icon: 'fa-file-alt', label: 'Exam Management' },
+                { id: 'users', icon: 'fa-users', label: 'User Management' }
+            ];
+            
+            const desktopNav = document.getElementById('desktopNavItems');
+            const mobileNav = document.getElementById('mobileNavItems');
+            
+            const navHtml = navItems.map(item => `
+                <button onclick="navigateTo('${item.id}')" id="nav-${item.id}" class="sidebar-item w-full flex items-center gap-3 px-4 py-3 rounded-xl text-gray-700 font-medium transition-all">
+                    <i class="fas ${item.icon} w-5"></i>
+                    <span>${item.label}</span>
+                </button>
+            `).join('');
+            
+            desktopNav.innerHTML = navHtml;
+            mobileNav.innerHTML = navHtml;
+        }
+
+        function navigateTo(page) {
+            ['overview', 'questions', 'exams', 'users'].forEach(p => {
+                const btn = document.getElementById(`nav-${p}`);
+                if (btn) {
+                    if (p === page) btn.classList.add('active', 'bg-primary-600', 'text-white');
+                    else btn.classList.remove('active', 'bg-primary-600', 'text-white');
+                }
+            });
+            
+            const contentDiv = document.getElementById('mainContent');
+            switch(page) {
+                case 'overview': loadOverview(contentDiv); break;
+                case 'questions': loadQuestionsPage(contentDiv); break;
+                case 'exams': loadExamsPage(contentDiv); break;
+                case 'users': loadUsersPage(contentDiv); break;
+            }
+            
+            if (window.innerWidth < 1024) toggleMobileMenu();
+        }
+
+        function loadOverview(container) {
+            container.innerHTML = `
+                <div class="max-w-7xl mx-auto">
+                    <h1 class="text-2xl font-bold text-gray-900 mb-6">Admin Overview</h1>
+                    
+                    <div class="grid grid-cols-2 lg:grid-cols-5 gap-4 mb-8">
+                        <div class="bg-white rounded-xl p-5 shadow-sm border border-gray-100">
+                            <div class="flex items-center justify-between mb-2">
+                                <span class="text-gray-500 text-sm">Total Users</span>
+                                <i class="fas fa-users text-2xl text-primary-500"></i>
                             </div>
-                            <div>
-                                <p class="font-medium text-sm text-gray-900">${u.name}</p>
-                                <p class="text-xs text-gray-500">${u.email}</p>
+                            <p class="text-2xl font-bold text-gray-900">${adminStats.totalUsers}</p>
+                        </div>
+                        <div class="bg-white rounded-xl p-5 shadow-sm border border-gray-100">
+                            <div class="flex items-center justify-between mb-2">
+                                <span class="text-gray-500 text-sm">Total Exams</span>
+                                <i class="fas fa-file-alt text-2xl text-success-500"></i>
+                            </div>
+                            <p class="text-2xl font-bold text-gray-900">${adminStats.totalExams}</p>
+                        </div>
+                        <div class="bg-white rounded-xl p-5 shadow-sm border border-gray-100">
+                            <div class="flex items-center justify-between mb-2">
+                                <span class="text-gray-500 text-sm">Questions</span>
+                                <i class="fas fa-database text-2xl text-warning-500"></i>
+                            </div>
+                            <p class="text-2xl font-bold text-gray-900">${adminStats.totalQuestions}</p>
+                        </div>
+                        <div class="bg-white rounded-xl p-5 shadow-sm border border-gray-100">
+                            <div class="flex items-center justify-between mb-2">
+                                <span class="text-gray-500 text-sm">Avg Score</span>
+                                <i class="fas fa-chart-line text-2xl text-purple-500"></i>
+                            </div>
+                            <p class="text-2xl font-bold text-gray-900">${adminStats.avgScore}%</p>
+                        </div>
+                        <div class="bg-white rounded-xl p-5 shadow-sm border border-gray-100">
+                            <div class="flex items-center justify-between mb-2">
+                                <span class="text-gray-500 text-sm">Completion Rate</span>
+                                <i class="fas fa-check-circle text-2xl text-green-500"></i>
+                            </div>
+                            <p class="text-2xl font-bold text-gray-900">${adminStats.completionRate}%</p>
+                        </div>
+                    </div>
+                    
+                    <div class="grid lg:grid-cols-2 gap-6">
+                        <div class="bg-white rounded-xl p-6 shadow-sm border border-gray-100">
+                            <h3 class="text-lg font-bold text-gray-900 mb-4">Recent Activity</h3>
+                            <div class="space-y-3">
+                                <div class="flex items-center gap-3 p-3 bg-gray-50 rounded-lg">
+                                    <div class="w-8 h-8 rounded-full bg-green-100 flex items-center justify-center"><i class="fas fa-user-plus text-green-600 text-sm"></i></div>
+                                    <div><p class="text-sm font-medium">New user registered</p><p class="text-xs text-gray-500">2 hours ago</p></div>
+                                </div>
+                                <div class="flex items-center gap-3 p-3 bg-gray-50 rounded-lg">
+                                    <div class="w-8 h-8 rounded-full bg-blue-100 flex items-center justify-center"><i class="fas fa-file-alt text-blue-600 text-sm"></i></div>
+                                    <div><p class="text-sm font-medium">New exam created: Biology Final</p><p class="text-xs text-gray-500">5 hours ago</p></div>
+                                </div>
+                                <div class="flex items-center gap-3 p-3 bg-gray-50 rounded-lg">
+                                    <div class="w-8 h-8 rounded-full bg-purple-100 flex items-center justify-center"><i class="fas fa-question-circle text-purple-600 text-sm"></i></div>
+                                    <div><p class="text-sm font-medium">10 questions added to Question Bank</p><p class="text-xs text-gray-500">Yesterday</p></div>
+                                </div>
                             </div>
                         </div>
+                        <div class="bg-white rounded-xl p-6 shadow-sm border border-gray-100">
+                            <h3 class="text-lg font-bold text-gray-900 mb-4">Quick Actions</h3>
+                            <div class="space-y-3">
+                                <button onclick="openQuestionModal()" class="w-full flex items-center justify-between p-3 bg-primary-50 rounded-lg hover:bg-primary-100 transition">
+                                    <span class="font-medium text-primary-700"><i class="fas fa-plus mr-2"></i> Add New Question</span>
+                                    <i class="fas fa-chevron-right text-primary-500"></i>
+                                </button>
+                                <button onclick="openExamModal()" class="w-full flex items-center justify-between p-3 bg-success-50 rounded-lg hover:bg-success-100 transition">
+                                    <span class="font-medium text-success-700"><i class="fas fa-plus mr-2"></i> Create New Exam</span>
+                                    <i class="fas fa-chevron-right text-success-500"></i>
+                                </button>
+                                <button onclick="openUserModal()" class="w-full flex items-center justify-between p-3 bg-purple-50 rounded-lg hover:bg-purple-100 transition">
+                                    <span class="font-medium text-purple-700"><i class="fas fa-user-plus mr-2"></i> Add New User</span>
+                                    <i class="fas fa-chevron-right text-purple-500"></i>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+
+        function loadQuestionsPage(container) {
+            container.innerHTML = `
+                <div class="max-w-7xl mx-auto">
+                    <div class="flex justify-between items-center mb-6">
+                        <h1 class="text-2xl font-bold text-gray-900">Question Bank</h1>
+                        <button onclick="openQuestionModal()" class="bg-primary-600 text-white px-4 py-2 rounded-lg flex items-center gap-2 hover:bg-primary-700">
+                            <i class="fas fa-plus"></i> Add Question
+                        </button>
+                    </div>
+                    <div class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+                        <div class="overflow-x-auto">
+                            <table class="w-full">
+                                <thead class="bg-gray-50 border-b">
+                                    <tr>
+                                        <th class="text-left p-4">Question</th>
+                                        <th class="text-left p-4">Subject</th>
+                                        <th class="text-left p-4">Difficulty</th>
+                                        <th class="text-left p-4">Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="questionsTableBody"></tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            `;
+            loadQuestionsTable();
+        }
+
+        function loadQuestionsTable() {
+            const tbody = document.getElementById('questionsTableBody');
+            if (!tbody) return;
+            
+            tbody.innerHTML = adminQuestions.map(q => `
+                <tr class="border-b hover:bg-gray-50">
+                    <td class="p-4 max-w-md">
+                        <p class="text-sm text-gray-900 truncate">${q.text}</p>
                     </td>
-                    <td class="py-4 px-4 lg:px-6 text-center">
-                        <span class="text-xs font-medium px-2.5 py-1 rounded-full ${
-                            u.role === 'student' ? 'bg-primary-50 text-primary-600' : 
-                            u.role === 'admin' ? 'bg-warning-50 text-warning-600' : 
-                            'bg-purple-50 text-purple-600'
-                        }">${u.role.replace('_', ' ').replace(/\b\w/g, l => l.toUpperCase())}</span>
+                    <td class="p-4"><span class="text-sm">${q.subject}</span></td>
+                    <td class="p-4">
+                        <span class="text-xs font-medium px-2 py-1 rounded-full ${
+                            q.difficulty === 'Easy' ? 'bg-success-50 text-success-600' :
+                            q.difficulty === 'Hard' ? 'bg-danger-50 text-danger-600' :
+                            'bg-warning-50 text-warning-600'
+                        }">${q.difficulty}</span>
                     </td>
-                    <td class="py-4 px-4 lg:px-6 text-center text-sm text-gray-700">${u.exams}</td>
-                    <td class="py-4 px-4 lg:px-6 text-center">
-                        <span class="text-sm font-bold ${u.avgScore >= 90 ? 'text-success-600' : u.avgScore >= 75 ? 'text-primary-600' : 'text-warning-600'}">${u.avgScore > 0 ? u.avgScore + '%' : '-'}</span>
-                    </td>
-                    <td class="py-4 px-4 lg:px-6 text-center">
-                        <span class="text-xs font-medium px-2.5 py-1 rounded-full ${u.status === 'active' ? 'bg-success-50 text-success-600' : 'bg-gray-100 text-gray-600'}">${u.status.charAt(0).toUpperCase() + u.status.slice(1)}</span>
-                    </td>
-                    <td class="py-4 px-4 lg:px-6 text-right">
-                        <div class="flex items-center justify-end gap-2">
-                            <button onclick="editUser(${u.id})" class="w-8 h-8 rounded-lg bg-gray-100 flex items-center justify-center text-gray-600 hover:bg-primary-50 hover:text-primary-600 transition-all">
-                                <i class="fas fa-edit text-xs"></i>
-                            </button>
-                            <button onclick="toggleUserStatus(${u.id})" class="w-8 h-8 rounded-lg bg-gray-100 flex items-center justify-center text-gray-600 hover:bg-warning-50 hover:text-warning-600 transition-all">
-                                <i class="fas ${u.status === 'active' ? 'fa-ban' : 'fa-check'} text-xs"></i>
-                            </button>
-                            ${isSuperAdmin ? `<button onclick="deleteUser(${u.id})" class="w-8 h-8 rounded-lg bg-gray-100 flex items-center justify-center text-gray-600 hover:bg-red-50 hover:text-red-600 transition-all"><i class="fas fa-trash text-xs"></i></button>` : ''}
+                    <td class="p-4">
+                        <div class="flex gap-2">
+                            <button onclick="editQuestion(${q.id})" class="text-blue-600 hover:text-blue-800"><i class="fas fa-edit"></i></button>
+                            <button onclick="deleteQuestion(${q.id})" class="text-red-600 hover:text-red-800"><i class="fas fa-trash"></i></button>
                         </div>
                     </td>
                 </tr>
             `).join('');
         }
 
-        let editingUserId = null;
-        let currentUserRole = 'student';
-
-        function selectUserRole(role) {
-            currentUserRole = role;
-            ['student','admin','super_admin'].forEach(r => {
-                const el = document.getElementById('userRole' + r.charAt(0).toUpperCase() + r.slice(1).replace('_',''));
-                if (r === role) { el.classList.add('role-selected'); el.classList.remove('role-unselected'); }
-                else { el.classList.remove('role-selected'); el.classList.add('role-unselected'); }
-            });
+        function loadExamsPage(container) {
+            container.innerHTML = `
+                <div class="max-w-7xl mx-auto">
+                    <div class="flex justify-between items-center mb-6">
+                        <h1 class="text-2xl font-bold text-gray-900">Exam Management</h1>
+                        <button onclick="openExamModal()" class="bg-primary-600 text-white px-4 py-2 rounded-lg flex items-center gap-2 hover:bg-primary-700">
+                            <i class="fas fa-plus"></i> Create Exam
+                        </button>
+                    </div>
+                    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6" id="examsList"></div>
+                </div>
+            `;
+            
+            const examsList = document.getElementById('examsList');
+            examsList.innerHTML = adminExams.map(exam => `
+                <div class="bg-white rounded-xl p-6 shadow-sm border border-gray-100">
+                    <div class="flex justify-between items-start mb-3">
+                        <h3 class="text-lg font-bold text-gray-900">${exam.title}</h3>
+                        <span class="text-xs font-medium px-2 py-1 rounded-full ${exam.active ? 'bg-success-50 text-success-600' : 'bg-gray-100 text-gray-600'}">
+                            ${exam.active ? 'Active' : 'Inactive'}
+                        </span>
+                    </div>
+                    <div class="flex gap-4 text-sm text-gray-500 mb-4">
+                        <span><i class="far fa-folder mr-1"></i> ${exam.subject}</span>
+                        <span><i class="far fa-file-alt mr-1"></i> ${exam.questions} questions</span>
+                        <span><i class="far fa-clock mr-1"></i> ${exam.duration} min</span>
+                    </div>
+                    <div class="flex gap-2">
+                        <button onclick="toggleExamStatus(${exam.id})" class="flex-1 ${exam.active ? 'bg-warning-500' : 'bg-success-500'} text-white py-2 rounded-lg text-sm font-semibold hover:opacity-90">
+                            ${exam.active ? 'Deactivate' : 'Activate'}
+                        </button>
+                        <button onclick="deleteExam(${exam.id})" class="px-4 py-2 border border-red-300 text-red-600 rounded-lg text-sm font-semibold hover:bg-red-50">Delete</button>
+                    </div>
+                </div>
+            `).join('');
         }
 
+        function loadUsersPage(container) {
+            container.innerHTML = `
+                <div class="max-w-7xl mx-auto">
+                    <div class="flex justify-between items-center mb-6">
+                        <h1 class="text-2xl font-bold text-gray-900">User Management</h1>
+                        <button onclick="openUserModal()" class="bg-primary-600 text-white px-4 py-2 rounded-lg flex items-center gap-2 hover:bg-primary-700">
+                            <i class="fas fa-plus"></i> Add User
+                        </button>
+                    </div>
+                    <div class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+                        <div class="overflow-x-auto">
+                            <table class="w-full">
+                                <thead class="bg-gray-50 border-b">
+                                    <tr>
+                                        <th class="text-left p-4">User</th>
+                                        <th class="text-left p-4">Role</th>
+                                        <th class="text-left p-4">Exams</th>
+                                        <th class="text-left p-4">Avg Score</th>
+                                        <th class="text-left p-4">Status</th>
+                                        <th class="text-left p-4">Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="usersTableBody"></tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            `;
+            loadUsersTable();
+        }
+
+        function loadUsersTable() {
+            const tbody = document.getElementById('usersTableBody');
+            if (!tbody) return;
+            
+            tbody.innerHTML = adminUsers.map(u => `
+                <tr class="border-b hover:bg-gray-50">
+                    <td class="p-4">
+                        <div class="flex items-center gap-3">
+                            <div class="w-8 h-8 rounded-full bg-gradient-to-br from-primary-500 to-primary-700 flex items-center justify-center text-white font-bold text-xs">
+                                ${u.name.split(' ').map(n => n[0]).join('')}
+                            </div>
+                            <div>
+                                <p class="font-medium text-sm">${u.name}</p>
+                                <p class="text-xs text-gray-500">${u.email}</p>
+                            </div>
+                        </div>
+                    </td>
+                    <td class="p-4">
+                        <span class="text-xs font-medium px-2 py-1 rounded-full ${
+                            u.role === 'student' ? 'bg-primary-50 text-primary-600' : 
+                            u.role === 'admin' ? 'bg-warning-50 text-warning-600' : 
+                            'bg-purple-50 text-purple-600'
+                        }">${u.role.replace('_', ' ')}</span>
+                    </td>
+                    <td class="p-4 text-center text-sm">${u.exams}</td>
+                    <td class="p-4 text-center"><span class="font-bold ${u.avgScore >= 80 ? 'text-success-600' : u.avgScore >= 60 ? 'text-warning-600' : 'text-danger-600'}">${u.avgScore}%</span></td>
+                    <td class="p-4 text-center">
+                        <span class="text-xs font-medium px-2 py-1 rounded-full ${u.status === 'active' ? 'bg-success-50 text-success-600' : 'bg-gray-100 text-gray-600'}">
+                            ${u.status}
+                        </span>
+                    </td>
+                    <td class="p-4">
+                        <div class="flex gap-2">
+                            <button onclick="editUser(${u.id})" class="text-blue-600 hover:text-blue-800"><i class="fas fa-edit"></i></button>
+                            <button onclick="toggleUserStatus(${u.id})" class="text-warning-600 hover:text-warning-800"><i class="fas ${u.status === 'active' ? 'fa-ban' : 'fa-check'}"></i></button>
+                            ${isSuperAdmin ? `<button onclick="deleteUser(${u.id})" class="text-red-600 hover:text-red-800"><i class="fas fa-trash"></i></button>` : ''}
+                        </div>
+                    </td>
+                </tr>
+            `).join('');
+        }
+
+        // Question CRUD
+        function openQuestionModal(id = null) {
+            editingQuestionId = id;
+            document.getElementById('questionModalTitle').textContent = id ? 'Edit Question' : 'Add Question';
+            
+            // Generate options HTML
+            const optionsContainer = document.getElementById('optionsContainer');
+            optionsContainer.innerHTML = `
+                <div><label class="block text-sm font-medium text-gray-700 mb-1">Option A</label><input type="text" id="opt0" class="w-full px-4 py-2 border rounded-lg"></div>
+                <div><label class="block text-sm font-medium text-gray-700 mb-1">Option B</label><input type="text" id="opt1" class="w-full px-4 py-2 border rounded-lg"></div>
+                <div><label class="block text-sm font-medium text-gray-700 mb-1">Option C</label><input type="text" id="opt2" class="w-full px-4 py-2 border rounded-lg"></div>
+                <div><label class="block text-sm font-medium text-gray-700 mb-1">Option D</label><input type="text" id="opt3" class="w-full px-4 py-2 border rounded-lg"></div>
+            `;
+            
+            if (id) {
+                const q = adminQuestions.find(q => q.id === id);
+                if (q) {
+                    document.getElementById('questionSubject').value = q.subject;
+                    document.getElementById('questionDifficulty').value = q.difficulty;
+                    document.getElementById('questionText').value = q.text;
+                    if (q.options) {
+                        document.getElementById('opt0').value = q.options[0];
+                        document.getElementById('opt1').value = q.options[1];
+                        document.getElementById('opt2').value = q.options[2];
+                        document.getElementById('opt3').value = q.options[3];
+                    }
+                    document.getElementById('correctAnswer').value = q.correct;
+                }
+            } else {
+                document.getElementById('questionSubject').value = 'Biology';
+                document.getElementById('questionDifficulty').value = 'Medium';
+                document.getElementById('questionText').value = '';
+                document.getElementById('opt0').value = '';
+                document.getElementById('opt1').value = '';
+                document.getElementById('opt2').value = '';
+                document.getElementById('opt3').value = '';
+                document.getElementById('correctAnswer').value = '0';
+            }
+            
+            document.getElementById('questionModal').classList.remove('hidden');
+            document.getElementById('questionModal').classList.add('flex');
+        }
+        
+        function saveQuestion() {
+            const text = document.getElementById('questionText').value;
+            if (!text) { showToast('Please enter question text', 'error'); return; }
+            
+            const options = [
+                document.getElementById('opt0').value,
+                document.getElementById('opt1').value,
+                document.getElementById('opt2').value,
+                document.getElementById('opt3').value
+            ];
+            
+            const question = {
+                id: editingQuestionId || Date.now(),
+                text: text,
+                subject: document.getElementById('questionSubject').value,
+                difficulty: document.getElementById('questionDifficulty').value,
+                options: options,
+                correct: parseInt(document.getElementById('correctAnswer').value)
+            };
+            
+            if (editingQuestionId) {
+                const index = adminQuestions.findIndex(q => q.id === editingQuestionId);
+                adminQuestions[index] = question;
+                showToast('Question updated!', 'success');
+            } else {
+                adminQuestions.push(question);
+                showToast('Question added!', 'success');
+            }
+            
+            localStorage.setItem('exampro_questions', JSON.stringify(adminQuestions));
+            adminStats.totalQuestions = adminQuestions.length;
+            closeQuestionModal();
+            
+            if (document.getElementById('questionsTableBody')) {
+                loadQuestionsTable();
+            }
+        }
+        
+        function editQuestion(id) { openQuestionModal(id); }
+        
+        function deleteQuestion(id) {
+            if (!confirm('Delete this question?')) return;
+            adminQuestions = adminQuestions.filter(q => q.id !== id);
+            localStorage.setItem('exampro_questions', JSON.stringify(adminQuestions));
+            adminStats.totalQuestions = adminQuestions.length;
+            loadQuestionsTable();
+            showToast('Question deleted', 'success');
+        }
+        
+        function closeQuestionModal() {
+            document.getElementById('questionModal').classList.add('hidden');
+            document.getElementById('questionModal').classList.remove('flex');
+            editingQuestionId = null;
+        }
+        
+        // User CRUD
         function openUserModal(id = null) {
             editingUserId = id;
             document.getElementById('userModalTitle').textContent = id ? 'Edit User' : 'Add User';
+            
             if (id) {
                 const u = adminUsers.find(u => u.id === id);
                 const names = u.name.split(' ');
-                document.getElementById('userFirstNameInput').value = names[0];
-                document.getElementById('userLastNameInput').value = names.slice(1).join(' ');
-                document.getElementById('userEmailInput').value = u.email;
+                document.getElementById('userFirstName').value = names[0];
+                document.getElementById('userLastName').value = names.slice(1).join(' ');
+                document.getElementById('userEmail').value = u.email;
                 selectUserRole(u.role);
-                document.getElementById('userPasswordInput').parentElement.style.display = 'none';
+                document.getElementById('userPassword').parentElement.style.display = 'none';
             } else {
-                document.getElementById('userFirstNameInput').value = '';
-                document.getElementById('userLastNameInput').value = '';
-                document.getElementById('userEmailInput').value = '';
-                document.getElementById('userPasswordInput').value = '';
-                document.getElementById('userPasswordInput').parentElement.style.display = '';
+                document.getElementById('userFirstName').value = '';
+                document.getElementById('userLastName').value = '';
+                document.getElementById('userEmail').value = '';
+                document.getElementById('userPassword').value = '';
+                document.getElementById('userPassword').parentElement.style.display = '';
                 selectUserRole('student');
             }
+            
             document.getElementById('userModal').classList.remove('hidden');
             document.getElementById('userModal').classList.add('flex');
         }
+        
         function closeUserModal() {
             document.getElementById('userModal').classList.add('hidden');
             document.getElementById('userModal').classList.remove('flex');
         }
+        
+        function selectUserRole(role) {
+            currentUserRole = role;
+            ['student', 'admin', 'super_admin'].forEach(r => {
+                const btn = document.getElementById(`role${r === 'super_admin' ? 'Super' : r.charAt(0).toUpperCase() + r.slice(1)}Btn`);
+                if (r === role) {
+                    btn.classList.add('role-selected');
+                    btn.classList.remove('role-unselected');
+                } else {
+                    btn.classList.remove('role-selected');
+                    btn.classList.add('role-unselected');
+                }
+            });
+        }
+        
         function saveUser() {
-            const firstName = document.getElementById('userFirstNameInput').value.trim();
-            const lastName = document.getElementById('userLastNameInput').value.trim();
-            const email = document.getElementById('userEmailInput').value.trim();
-
+            const firstName = document.getElementById('userFirstName').value.trim();
+            const lastName = document.getElementById('userLastName').value.trim();
+            const email = document.getElementById('userEmail').value.trim();
+            
             if (!firstName || !email) { showToast('Please fill required fields', 'error'); return; }
-            if (!email.includes('@')) { showToast('Invalid email', 'error'); return; }
-
+            
             if (editingUserId) {
                 const u = adminUsers.find(u => u.id === editingUserId);
                 u.name = firstName + ' ' + lastName;
@@ -127,12 +780,12 @@
                 u.role = currentUserRole;
                 showToast('User updated!', 'success');
             } else {
-                const password = document.getElementById('userPasswordInput').value;
-                if (password.length < 8) { showToast('Password must be 8+ chars', 'error'); return; }
+                const password = document.getElementById('userPassword').value;
+                if (password.length < 6) { showToast('Password must be 6+ chars', 'error'); return; }
                 adminUsers.push({
                     id: Date.now(),
                     name: firstName + ' ' + lastName,
-                    email,
+                    email: email,
                     role: currentUserRole,
                     exams: 0,
                     avgScore: 0,
@@ -140,110 +793,84 @@
                 });
                 showToast('User created!', 'success');
             }
+            
+            localStorage.setItem('exampro_users_list', JSON.stringify(adminUsers));
+            adminStats.totalUsers = adminUsers.length;
             closeUserModal();
-            loadUsersTable();
+            if (document.getElementById('usersTableBody')) loadUsersTable();
         }
+        
         function editUser(id) { openUserModal(id); }
+        
         function toggleUserStatus(id) {
             const u = adminUsers.find(u => u.id === id);
-            u.status = u.status === 'active' ? 'inactive' : 'active';
-            loadUsersTable();
-            showToast(`User ${u.status === 'active' ? 'activated' : 'deactivated'}`, 'success');
+            if (u) {
+                u.status = u.status === 'active' ? 'inactive' : 'active';
+                localStorage.setItem('exampro_users_list', JSON.stringify(adminUsers));
+                if (document.getElementById('usersTableBody')) loadUsersTable();
+                showToast(`User ${u.status === 'active' ? 'activated' : 'deactivated'}`, 'success');
+            }
         }
+        
         function deleteUser(id) {
             if (!isSuperAdmin) { showToast('Super Admin required', 'error'); return; }
             if (!confirm('Permanently delete this user?')) return;
             adminUsers = adminUsers.filter(u => u.id !== id);
-            loadUsersTable();
+            localStorage.setItem('exampro_users_list', JSON.stringify(adminUsers));
+            adminStats.totalUsers = adminUsers.length;
+            if (document.getElementById('usersTableBody')) loadUsersTable();
             showToast('User deleted', 'success');
         }
-
-        // ==================== ANALYTICS ====================
-        function loadAnalytics() {
-            setTimeout(() => {
-                const ctx1 = document.getElementById('subjectPerfChart');
-                if (ctx1) {
-                    new Chart(ctx1, {
-                        type: 'bar',
-                        data: {
-                            labels: ['Math', 'Physics', 'Chemistry', 'Biology', 'English', 'CS'],
-                            datasets: [{
-                                label: 'Avg Score',
-                                data: [78, 72, 68, 81, 75, 83],
-                                backgroundColor: '#3b82f6',
-                                borderRadius: 8
-                            }, {
-                                label: 'Pass Rate',
-                                data: [85, 70, 65, 88, 80, 90],
-                                backgroundColor: '#22c55e',
-                                borderRadius: 8
-                            }]
-                        },
-                        options: {
-                            responsive: true,
-                            maintainAspectRatio: false,
-                            scales: { y: { beginAtZero: true, max: 100, grid: { display: false } }, x: { grid: { display: false } } }
-                        }
-                    });
-                }
-
-                const ctx2 = document.getElementById('mauChart');
-                if (ctx2) {
-                    new Chart(ctx2, {
-                        type: 'line',
-                        data: {
-                            labels: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun'],
-                            datasets: [{
-                                label: 'Active Users',
-                                data: [850, 920, 1050, 1100, 1200, 1247],
-                                borderColor: '#8b5cf6',
-                                backgroundColor: 'rgba(139,92,246,0.1)',
-                                fill: true,
-                                tension: 0.4,
-                                pointRadius: 4
-                            }]
-                        },
-                        options: {
-                            responsive: true,
-                            maintainAspectRatio: false,
-                            plugins: { legend: { display: false } },
-                            scales: { y: { beginAtZero: true, grid: { display: false } }, x: { grid: { display: false } } }
-                        }
-                    });
-                }
-            }, 100);
-
-            const topStudents = [
-                { rank: 1, name: 'Alice Johnson', exams: 15, avgScore: 94, passRate: 100 },
-                { rank: 2, name: 'Bob Williams', exams: 14, avgScore: 91, passRate: 93 },
-                { rank: 3, name: 'Carol Davis', exams: 16, avgScore: 89, passRate: 88 },
-                { rank: 4, name: 'David Brown', exams: 13, avgScore: 87, passRate: 85 },
-                { rank: 5, name: 'Emma Wilson', exams: 11, avgScore: 76, passRate: 82 },
-            ];
-
-            document.getElementById('topStudentsTable').innerHTML = topStudents.map(s => `
-                <tr class="hover:bg-gray-50 transition-colors">
-                    <td class="py-3 px-4">
-                        <div class="w-8 h-8 rounded-full ${s.rank <= 3 ? 'bg-gradient-to-br from-yellow-400 to-yellow-600 text-white' : 'bg-gray-100 text-gray-600'} flex items-center justify-center font-bold text-xs">${s.rank}</div>
-                    </td>
-                    <td class="py-3 px-4 font-medium text-sm text-gray-900">${s.name}</td>
-                    <td class="py-3 px-4 text-center text-sm text-gray-700">${s.exams}</td>
-                    <td class="py-3 px-4 text-center">
-                        <span class="text-sm font-bold ${s.avgScore >= 90 ? 'text-success-600' : 'text-primary-600'}">${s.avgScore}%</span>
-                    </td>
-                    <td class="py-3 px-4 text-right">
-                        <div class="flex items-center justify-end gap-2">
-                            <div class="w-16 h-2 bg-gray-100 rounded-full overflow-hidden">
-                                <div class="h-full bg-success-500 rounded-full" style="width: ${s.passRate}%"></div>
-                            </div>
-                            <span class="text-xs font-bold text-gray-700">${s.passRate}%</span>
-                        </div>
-                    </td>
-                </tr>
-            `).join('');
+        
+        // Exam CRUD
+        function openExamModal() {
+            document.getElementById('examModal').classList.remove('hidden');
+            document.getElementById('examModal').classList.add('flex');
         }
-
-        // ==================== UI HELPERS ====================
+        
+        function closeExamModal() {
+            document.getElementById('examModal').classList.add('hidden');
+            document.getElementById('examModal').classList.remove('flex');
+        }
+        
+        function saveExam() {
+            const title = document.getElementById('examTitle').value;
+            if (!title) { showToast('Please enter exam title', 'error'); return; }
+            
+            adminExams.push({
+                id: Date.now(),
+                title: title,
+                subject: document.getElementById('examSubject').value,
+                questions: parseInt(document.getElementById('examQuestions').value) || 20,
+                duration: parseInt(document.getElementById('examDuration').value) || 30,
+                difficulty: document.getElementById('examDifficulty').value,
+                active: true
+            });
+            
+            adminStats.totalExams = adminExams.length;
+            closeExamModal();
+            if (document.getElementById('examsList')) loadExamsPage(document.getElementById('mainContent'));
+            showToast('Exam created!', 'success');
+        }
+        
+        function toggleExamStatus(id) {
+            const exam = adminExams.find(e => e.id === id);
+            if (exam) {
+                exam.active = !exam.active;
+                if (document.getElementById('examsList')) loadExamsPage(document.getElementById('mainContent'));
+                showToast(`Exam ${exam.active ? 'activated' : 'deactivated'}`, 'success');
+            }
+        }
+        
+        function deleteExam(id) {
+            if (!confirm('Delete this exam?')) return;
+            adminExams = adminExams.filter(e => e.id !== id);
+            adminStats.totalExams = adminExams.length;
+            if (document.getElementById('examsList')) loadExamsPage(document.getElementById('mainContent'));
+            showToast('Exam deleted', 'success');
+        }
+        
+        // UI Helpers
         function showToast(message, type = 'success') {
             const container = document.getElementById('toastContainer');
             const toast = document.createElement('div');
@@ -254,32 +881,68 @@
             container.appendChild(toast);
             setTimeout(() => toast.remove(), 3000);
         }
-
+        
+        function updateUserUI() {
+            const initials = (currentUser.firstName[0] + (currentUser.lastName?.[0] || '')).toUpperCase();
+            document.getElementById('desktopAvatar').textContent = initials;
+            document.getElementById('mobileAvatar').textContent = initials;
+            document.getElementById('desktopUserName').textContent = `${currentUser.firstName} ${currentUser.lastName || ''}`;
+            document.getElementById('desktopUserRole').textContent = currentUser.role === 'super_admin' ? 'Super Administrator' : 'Administrator';
+        }
+        
         function toggleMobileMenu() {
-            const menu = document.getElementById('mobileMenuOverlay');
-            menu.classList.toggle('hidden');
-            menu.classList.toggle('flex');
+            const sidebar = document.getElementById('mobileSidebar');
+            const overlay = document.getElementById('mobileMenuOverlay');
+            if (sidebar.classList.contains('-translate-x-full')) {
+                sidebar.classList.remove('-translate-x-full');
+                overlay.classList.remove('hidden');
+            } else {
+                sidebar.classList.add('-translate-x-full');
+                overlay.classList.add('hidden');
+            }
         }
-
+        
         function showNotifications() {
-            const modal = document.getElementById('notificationsModal');
-            modal.classList.remove('hidden');
-            modal.classList.add('flex');
+            document.getElementById('notificationsModal').classList.remove('hidden');
+            document.getElementById('notificationsModal').classList.add('flex');
         }
+        
         function closeNotifications() {
-            const modal = document.getElementById('notificationsModal');
-            modal.classList.add('hidden');
-            modal.classList.remove('flex');
+            document.getElementById('notificationsModal').classList.add('hidden');
+            document.getElementById('notificationsModal').classList.remove('flex');
         }
-
+        
         function logout() {
             localStorage.removeItem('exampro_session');
             window.location.href = 'login.html';
         }
-
-        // ==================== INIT ====================
-        loadOverview();
-        navigateTo('overview');
+        
+        // Make functions global
+        window.navigateTo = navigateTo;
+        window.openQuestionModal = openQuestionModal;
+        window.editQuestion = editQuestion;
+        window.deleteQuestion = deleteQuestion;
+        window.saveQuestion = saveQuestion;
+        window.closeQuestionModal = closeQuestionModal;
+        window.openUserModal = openUserModal;
+        window.editUser = editUser;
+        window.deleteUser = deleteUser;
+        window.toggleUserStatus = toggleUserStatus;
+        window.saveUser = saveUser;
+        window.closeUserModal = closeUserModal;
+        window.selectUserRole = selectUserRole;
+        window.openExamModal = openExamModal;
+        window.closeExamModal = closeExamModal;
+        window.saveExam = saveExam;
+        window.toggleExamStatus = toggleExamStatus;
+        window.deleteExam = deleteExam;
+        window.toggleMobileMenu = toggleMobileMenu;
+        window.showNotifications = showNotifications;
+        window.closeNotifications = closeNotifications;
+        window.logout = logout;
+        
+        // Start
+        init();
     </script>
 </body>
 </html>
