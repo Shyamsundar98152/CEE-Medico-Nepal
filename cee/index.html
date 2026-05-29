@@ -1,5 +1,7 @@
+```html
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -7,93 +9,313 @@
 <title>CEE Medico Nepal</title>
 
 <script src="https://cdn.tailwindcss.com"></script>
+
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
 </head>
 
-<body class="bg-gray-100">
+<body class="bg-gray-100 min-h-screen flex flex-col">
 
-<header class="bg-blue-700 text-white p-4 text-center text-2xl font-bold">
+<!-- HEADER -->
+<header class="bg-blue-700 text-white shadow-lg">
+
+<div class="max-w-6xl mx-auto px-4 py-4 flex justify-between items-center">
+
+<h1 class="text-3xl font-bold">
 CEE Medico Nepal
+</h1>
+
+<div class="text-sm">
+Medical Entrance Preparation Platform
+</div>
+
+</div>
+
 </header>
 
-<div class="max-w-md mx-auto mt-12 bg-white p-8 rounded-xl shadow">
+<!-- MAIN -->
+<div class="flex-1 flex items-center justify-center p-5">
 
-<h2 class="text-2xl font-bold mb-6 text-center">Login / Signup</h2>
+<div class="bg-white w-full max-w-md rounded-2xl shadow-2xl p-8">
 
-<input id="name" class="w-full border p-3 rounded mb-3" placeholder="Full Name">
+<h2 class="text-3xl font-bold text-center mb-2">
+Welcome
+</h2>
 
-<input id="email" class="w-full border p-3 rounded mb-3" placeholder="Email">
+<p class="text-center text-gray-500 mb-8">
+Login or Create New Account
+</p>
 
-<input id="password" type="password" class="w-full border p-3 rounded mb-4" placeholder="Password">
+<!-- NAME -->
+<input
+type="text"
+id="name"
+placeholder="Full Name"
+class="w-full border border-gray-300 rounded-xl p-3 mb-4 focus:outline-none focus:ring-2 focus:ring-blue-500"
+/>
 
-<div class="flex gap-3">
-<button onclick="signup()" class="flex-1 bg-green-600 text-white p-3 rounded">
+<!-- EMAIL -->
+<input
+type="email"
+id="email"
+placeholder="Email Address"
+class="w-full border border-gray-300 rounded-xl p-3 mb-4 focus:outline-none focus:ring-2 focus:ring-blue-500"
+/>
+
+<!-- PASSWORD -->
+<input
+type="password"
+id="password"
+placeholder="Password"
+class="w-full border border-gray-300 rounded-xl p-3 mb-5 focus:outline-none focus:ring-2 focus:ring-blue-500"
+/>
+
+<!-- BUTTONS -->
+<div class="grid grid-cols-2 gap-4">
+
+<button
+id="signupBtn"
+class="bg-green-600 hover:bg-green-700 text-white font-bold py-3 rounded-xl transition"
+>
 Signup
 </button>
 
-<button onclick="login()" class="flex-1 bg-blue-600 text-white p-3 rounded">
+<button
+id="loginBtn"
+class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 rounded-xl transition"
+>
 Login
 </button>
-</div>
-
-<p id="msg" class="mt-4 text-center"></p>
 
 </div>
 
-<footer class="fixed bottom-0 w-full bg-gray-900 text-white text-center p-3">
+<!-- STATUS -->
+<div
+id="status"
+class="text-center mt-5 font-semibold"
+></div>
+
+</div>
+
+</div>
+
+<!-- FOOTER -->
+<footer class="bg-gray-900 text-white py-4 text-center">
+
+<div class="max-w-6xl mx-auto px-4">
+
+<p>
 © 2026 CEE Medico Nepal
+</p>
+
+<p class="text-sm text-gray-400 mt-1">
+MCQ Practice • Mock Tests • Performance Analytics
+</p>
+
+</div>
+
 </footer>
 
 <script>
- const SUPABASE_URL = 'https://rpudsnrqlhataqfavcjh.supabase.co';
-        const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJwdWRzbnJxbGhhdGFxZmF2Y2poIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzk5NzI0NjgsImV4cCI6MjA5NTU0ODQ2OH0.EEu5t-NPqWARChSAMpEvUPMBkz_JeeNe3bGSCQmH7Xo';
-       
 
-const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+/* =========================
+   SUPABASE CONFIG
+========================= */
 
-async function signup() {
+const SUPABASE_URL =
+'https://rpudsnrqlhataqfavcjh.supabase.co';
 
-const name = document.getElementById("name").value;
-const email = document.getElementById("email").value;
-const password = document.getElementById("password").value;
+const SUPABASE_ANON_KEY =
+'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJwdWRzbnJxbGhhdGFxZmF2Y2poIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzk5NzI0NjgsImV4cCI6MjA5NTU0ODQ2OH0.EEu5t-NPqWARChSAMpEvUPMBkz_JeeNe3bGSCQmH7Xo';
 
-const { data, error } = await supabase.auth.signUp({
-email,
-password
-});
+const supabase = window.supabase.createClient(
+  SUPABASE_URL,
+  SUPABASE_ANON_KEY
+);
 
-if(error){
-document.getElementById("msg").innerText = error.message;
-return;
+/* =========================
+   ELEMENTS
+========================= */
+
+const signupBtn =
+document.getElementById("signupBtn");
+
+const loginBtn =
+document.getElementById("loginBtn");
+
+const statusDiv =
+document.getElementById("status");
+
+/* =========================
+   SIGNUP
+========================= */
+
+signupBtn.addEventListener("click", signup);
+
+async function signup(){
+
+  const name =
+  document.getElementById("name").value.trim();
+
+  const email =
+  document.getElementById("email").value.trim();
+
+  const password =
+  document.getElementById("password").value;
+
+  if(!name || !email || !password){
+
+    showStatus(
+      "Please fill all fields",
+      "red"
+    );
+
+    return;
+  }
+
+  showStatus(
+    "Creating account...",
+    "blue"
+  );
+
+  try{
+
+    const { data, error } =
+    await supabase.auth.signUp({
+      email,
+      password
+    });
+
+    if(error){
+
+      showStatus(
+        error.message,
+        "red"
+      );
+
+      return;
+    }
+
+    const user = data.user;
+
+    if(user){
+
+      const { error: profileError } =
+      await supabase
+      .from("profiles")
+      .upsert({
+        id:user.id,
+        full_name:name,
+        email:email
+      });
+
+      if(profileError){
+        console.log(profileError);
+      }
+
+    }
+
+    showStatus(
+      "Signup successful",
+      "green"
+    );
+
+  }catch(err){
+
+    console.log(err);
+
+    showStatus(
+      "Signup failed",
+      "red"
+    );
+  }
+
 }
 
-await supabase.from("profiles").insert({
-id:data.user.id,
-full_name:name,
-email:email
-});
+/* =========================
+   LOGIN
+========================= */
 
-document.getElementById("msg").innerText = "Signup success";
-}
+loginBtn.addEventListener("click", login);
 
 async function login(){
 
-const email = document.getElementById("email").value;
-const password = document.getElementById("password").value;
+  const email =
+  document.getElementById("email").value.trim();
 
-const { error } = await supabase.auth.signInWithPassword({
-email,
-password
-});
+  const password =
+  document.getElementById("password").value;
 
-if(error){
-document.getElementById("msg").innerText = error.message;
-return;
+  if(!email || !password){
+
+    showStatus(
+      "Enter email and password",
+      "red"
+    );
+
+    return;
+  }
+
+  showStatus(
+    "Logging in...",
+    "blue"
+  );
+
+  try{
+
+    const { data, error } =
+    await supabase.auth.signInWithPassword({
+      email,
+      password
+    });
+
+    if(error){
+
+      showStatus(
+        error.message,
+        "red"
+      );
+
+      return;
+    }
+
+    showStatus(
+      "Login successful",
+      "green"
+    );
+
+    setTimeout(()=>{
+
+      window.location.href =
+      "quiz.html";
+
+    },1000);
+
+  }catch(err){
+
+    console.log(err);
+
+    showStatus(
+      "Login failed",
+      "red"
+    );
+  }
+
 }
 
-window.location.href = "quiz.html";
+/* =========================
+   STATUS FUNCTION
+========================= */
+
+function showStatus(message,color){
+
+  statusDiv.innerText = message;
+
+  statusDiv.style.color = color;
 }
+
 </script>
 
 </body>
 </html>
+```
