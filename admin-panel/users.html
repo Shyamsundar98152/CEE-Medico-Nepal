@@ -1,361 +1,195 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8"/>
-<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-<title>User Management - Admin Panel</title>
-<link rel="apple-touch-icon" sizes="180x180" href="/fevicon/apple-touch-icon.png">
-<link rel="icon" type="image/png" sizes="32x32" href="/fevicon/favicon-32x32.png">
-<link rel="icon" type="image/png" sizes="16x16" href="/fevicon/favicon-16x16.png">
-<link rel="manifest" href="/fevicon/site.webmanifest">
-<link href="https://fonts.googleapis.com/css2?family=Sora:wght@300;400;600;700;800&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
-<style>
-:root{--blue:#0062ff;--blue-dark:#0047cc;--blue-light:#e8f0ff;--green:#00c97a;--red:#ff3b5c;--yellow:#ffa500;--purple:#a855f7;--bg:#f0f4ff;--card:#fff;--text:#0d1b2a;--muted:#6b7c93;--border:#dde5f0;--shadow:0 4px 24px rgba(0,98,255,0.09);}
-*{box-sizing:border-box;margin:0;padding:0;}
-body{font-family:'Sora',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;}
-.layout{display:flex;min-height:100vh;}
-.sidebar{width:260px;background:linear-gradient(180deg,#0d1b2a,#1b2e4a);color:#fff;padding:24px 0;flex-shrink:0;position:sticky;top:0;height:100vh;overflow-y:auto;}
-.sidebar-logo{padding:0 20px 24px;border-bottom:1px solid rgba(255,255,255,0.1);margin-bottom:16px;}
-.sidebar-logo h2{font-size:1.1rem;font-weight:800;}
-.sidebar-logo p{font-size:.72rem;color:rgba(255,255,255,0.5);margin-top:2px;}
-.sidebar-nav{list-style:none;}
-.sidebar-nav a{display:flex;align-items:center;gap:12px;padding:12px 20px;color:rgba(255,255,255,0.7);text-decoration:none;font-size:.85rem;font-weight:600;transition:all .2s;border-left:3px solid transparent;}
-.sidebar-nav a:hover,.sidebar-nav a.active{color:#fff;background:rgba(255,255,255,0.08);border-left-color:var(--blue);}
-.sidebar-nav a i{width:20px;text-align:center;}
-.sidebar-section{padding:16px 20px 6px;font-size:.68rem;text-transform:uppercase;letter-spacing:1px;color:rgba(255,255,255,0.35);font-weight:700;}
-
-.content{flex:1;padding:24px 32px;overflow-x:hidden;}
-.content-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:28px;flex-wrap:wrap;gap:12px;}
-.content-header h1{font-size:1.6rem;font-weight:800;}
-.card{background:var(--card);border-radius:14px;box-shadow:var(--shadow);padding:24px;margin-bottom:20px;border:1px solid var(--border);}
-.section-title{font-size:.95rem;font-weight:800;color:var(--text);margin-bottom:18px;display:flex;align-items:center;gap:10px;}
-.section-title i{color:var(--blue);}
-.section-title::after{content:'';flex:1;height:2px;background:var(--border);}
-
-.search-bar{display:flex;gap:10px;margin-bottom:18px;flex-wrap:wrap;}
-.search-bar input{flex:1;min-width:200px;padding:10px 14px;border:2px solid var(--border);border-radius:8px;font-family:'Sora',sans-serif;font-size:.85rem;}
-.search-bar input:focus{outline:none;border-color:var(--blue);}
-.search-bar select{padding:10px 14px;border:2px solid var(--border);border-radius:8px;font-family:'Sora',sans-serif;font-size:.85rem;}
-
-table{width:100%;border-collapse:collapse;font-size:.82rem;}
-th{background:var(--blue);color:#fff;padding:12px 14px;text-align:left;font-weight:700;font-size:.75rem;text-transform:uppercase;letter-spacing:.3px;}
-th:first-child{border-radius:8px 0 0 0;}
-th:last-child{border-radius:0 8px 0 0;}
-td{padding:12px 14px;border-bottom:1px solid var(--border);}
-tr:hover{background:#fafbff;}
-.user-cell{display:flex;align-items:center;gap:10px;}
-.user-cell .mini-avatar{width:32px;height:32px;border-radius:50%;background:var(--blue);color:#fff;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:.7rem;flex-shrink:0;}
-.user-cell .mini-avatar img{width:100%;height:100%;border-radius:50%;object-fit:cover;}
-.status-badge{display:inline-block;padding:3px 10px;border-radius:12px;font-size:.72rem;font-weight:700;}
-.status-approved{background:#e8fff4;color:var(--green);}
-.status-pending{background:#fff8eb;color:var(--yellow);}
-.status-blocked{background:#fff0f3;color:var(--red);}
-.role-badge{display:inline-block;padding:3px 10px;border-radius:12px;font-size:.72rem;font-weight:700;}
-.role-admin{background:#f3e8ff;color:var(--purple);}
-.role-user{background:var(--blue-light);color:var(--blue);}
-
-.action-btns{display:flex;gap:6px;flex-wrap:wrap;}
-.btn-sm{padding:5px 10px;border:none;border-radius:6px;font-family:'Sora',sans-serif;font-size:.72rem;font-weight:700;cursor:pointer;transition:all .15s;}
-.btn-approve{background:#e8fff4;color:var(--green);}.btn-approve:hover{background:var(--green);color:#fff;}
-.btn-block{background:#fff0f3;color:var(--red);}.btn-block:hover{background:var(--red);color:#fff;}
-.btn-view{background:var(--blue-light);color:var(--blue);}.btn-view:hover{background:var(--blue);color:#fff;}
-.btn-role{background:#f3e8ff;color:var(--purple);}.btn-role:hover{background:var(--purple);color:#fff;}
-.btn-delete{background:#fef2f2;color:#dc2626;}.btn-delete:hover{background:#dc2626;color:#fff;}
-
-.pagination{display:flex;justify-content:center;gap:6px;margin-top:18px;}
-.page-btn{padding:8px 14px;border:1.5px solid var(--border);border-radius:8px;background:#fff;cursor:pointer;font-family:'Sora',sans-serif;font-size:.8rem;font-weight:700;transition:all .15s;}
-.page-btn:hover,.page-btn.active{border-color:var(--blue);color:var(--blue);background:var(--blue-light);}
-
-.modal-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.5);z-index:1000;align-items:center;justify-content:center;}
-.modal-overlay.show{display:flex;}
-.modal{background:#fff;border-radius:16px;width:90%;max-width:650px;max-height:85vh;overflow-y:auto;padding:28px;box-shadow:0 20px 60px rgba(0,0,0,0.2);}
-.modal h2{font-size:1.2rem;font-weight:800;margin-bottom:16px;display:flex;align-items:center;gap:10px;}
-.modal-close{margin-left:auto;cursor:pointer;color:var(--muted);font-size:1.2rem;}
-.modal-close:hover{color:var(--red);}
-.modal-stat{display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid var(--border);font-size:.85rem;}
-.modal-stat:last-child{border-bottom:none;}
-.modal-stat-label{color:var(--muted);font-weight:600;}
-.modal-stat-value{font-weight:700;}
-
-.export-btn{padding:10px 20px;background:var(--green);color:#fff;border:none;border-radius:8px;font-family:'Sora',sans-serif;font-size:.82rem;font-weight:700;cursor:pointer;transition:background .2s;}
-.export-btn:hover{background:#00a366;}
-
-@media(max-width:900px){.sidebar{display:none;}.content{padding:16px;}}
-@media(max-width:600px){table{font-size:.75rem;}td,th{padding:8px 10px;}}
-</style>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ExamPro - Admin</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.6.0/css/all.min.css">
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  
+  <style>
+    .nav-link { transition: all 0.2s; }
+    .nav-link.active { background-color: #1e40af; color: white; }
+  </style>
 </head>
-<body>
+<body class="bg-gray-50 dark:bg-gray-950 text-gray-900 dark:text-gray-100">
 
-<div class="layout">
-  <aside class="sidebar">
-    <div class="sidebar-logo"><h2>CEE Medico Nepal</h2><p>Admin Panel</p></div>
-    <ul class="sidebar-nav">
-      <li class="sidebar-section">Main</li>
-      <li><a href="/admin-panel/index.html"><i class="fas fa-tachometer-alt"></i> Dashboard</a></li>
-      <li><a href="/admin-panel/users.html" class="active"><i class="fas fa-users"></i> User Management</a></li>
-      <li><a href="/admin-panel/analytics.html"><i class="fas fa-chart-bar"></i> Analytics</a></li>
-      <li class="sidebar-section">Navigation</li>
-      <li><a href="/"><i class="fas fa-home"></i> Main Site</a></li>
-      <li><a href="#" id="adminLogout"><i class="fas fa-sign-out-alt"></i> Logout</a></li>
-    </ul>
-  </aside>
+<div class="flex h-screen">
 
-  <main class="content">
-    <div class="content-header">
-      <h1><i class="fas fa-users" style="color:var(--blue);margin-right:8px;"></i> User Management</h1>
-      <button class="export-btn" id="exportBtn"><i class="fas fa-download"></i> Export CSV</button>
+  <!-- Sidebar -->
+  <div class="w-72 bg-gray-900 text-white flex flex-col">
+    <div class="p-6 border-b border-gray-800">
+      <h1 class="text-3xl font-bold flex items-center gap-3">
+        <i class="fas fa-graduation-cap text-blue-500"></i> ExamPro
+      </h1>
+      <p class="text-gray-400 text-sm mt-1">Admin Dashboard</p>
     </div>
 
-    <div class="card">
-      <div class="search-bar">
-        <input type="text" id="searchInput" placeholder="Search by name or email..."/>
-        <select id="statusFilter">
-          <option value="all">All Status</option>
-          <option value="active">Active</option>
-          <option value="pending">Pending</option>
-          <option value="blocked">Blocked</option>
-        </select>
-        <select id="roleFilter">
-          <option value="all">All Roles</option>
-          <option value="admin">Admin</option>
-          <option value="user">User</option>
-        </select>
-      </div>
+    <nav class="flex-1 p-4 space-y-1">
+      <a href="#" onclick="showPage('dashboard')" class="nav-link flex items-center gap-3 px-4 py-3 rounded-xl active">Dashboard</a>
+      <a href="#" onclick="showPage('questions')" class="nav-link flex items-center gap-3 px-4 py-3 rounded-xl">Questions</a>
+      <a href="#" onclick="showPage('sessions')" class="nav-link flex items-center gap-3 px-4 py-3 rounded-xl">Exam Sessions</a>
+      <a href="#" onclick="showPage('attempts')" class="nav-link flex items-center gap-3 px-4 py-3 rounded-xl">Attempts</a>
+      <a href="#" onclick="showPage('profiles')" class="nav-link flex items-center gap-3 px-4 py-3 rounded-xl">Profiles</a>
+      <a href="#" onclick="showPage('logs')" class="nav-link flex items-center gap-3 px-4 py-3 rounded-xl">Activity Logs</a>
+    </nav>
 
-      <div style="overflow-x:auto;">
-        <table>
-          <thead>
-            <tr>
-              <th>User</th>
-              <th>Email</th>
-              <th>Phone</th>
-              <th>College</th>
-              <th>Status</th>
-              <th>Role</th>
-              <th>Sessions</th>
-              <th>Questions</th>
-              <th>Accuracy</th>
-              <th>Score</th>
-              <th>Joined</th>
-              <th>Actions</th>
-            </tr>
-          </thead>
-          <tbody id="usersBody">
-            <tr><td colspan="12" style="text-align:center;padding:24px;color:var(--muted);">Loading users...</td></tr>
-          </tbody>
-        </table>
-      </div>
-
-      <div class="pagination" id="pagination"></div>
+    <div class="p-4 border-t border-gray-800">
+      <div id="user-info" class="mb-4 px-4 text-sm"></div>
+      <button onclick="logout()" class="w-full bg-red-600 hover:bg-red-700 py-3 rounded-xl font-medium">
+        Logout
+      </button>
     </div>
-  </main>
-</div>
+  </div>
 
-<div class="modal-overlay" id="userModal">
-  <div class="modal">
-    <h2 id="modalTitle"><i class="fas fa-user"></i> User Details <span class="modal-close" id="modalClose"><i class="fas fa-times"></i></span></h2>
-    <div id="modalContent"></div>
+  <!-- Main Content -->
+  <div class="flex-1 overflow-auto">
+    <header class="bg-white dark:bg-gray-900 border-b px-8 py-5 flex justify-between items-center">
+      <h2 id="page-title" class="text-2xl font-semibold">Dashboard</h2>
+      <div class="flex items-center gap-4">
+        <button onclick="addNewItem()" class="bg-blue-600 hover:bg-blue-700 px-5 py-2.5 rounded-xl flex items-center gap-2">
+          <i class="fas fa-plus"></i> Add New
+        </button>
+      </div>
+    </header>
+
+    <!-- Pages -->
+    <div id="dashboard" class="page p-8">Loading dashboard...</div>
+    <div id="questions" class="page hidden p-8">Loading questions...</div>
+    <div id="sessions" class="page hidden p-8">Loading sessions...</div>
+    <div id="attempts" class="page hidden p-8">Loading attempts...</div>
+    <div id="profiles" class="page hidden p-8">Loading profiles...</div>
+    <div id="logs" class="page hidden p-8">Loading logs...</div>
   </div>
 </div>
 
-<script type="module">
-import {
-  auth, db, signOut, onAuthStateChanged,
-  ref, get, update, remove, serverTimestamp
-} from "../auth/firebase-init.js";
+<script>
+// ==================== SUPABASE CONFIG ====================
+const SUPABASE_URL = 'https://rpudsnrqlhataqfavcjh.supabase.co';   // ← CHANGE THIS
+const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJwdWRzbnJxbGhhdGFxZmF2Y2poIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzk5NzI0NjgsImV4cCI6MjA5NTU0ODQ2OH0.EEu5t-NPqWARChSAMpEvUPMBkz_JeeNe3bGSCQmH7Xo
+';               // ← CHANGE THIS
 
-const ITEMS_PER_PAGE = 20;
-let allUsers = [];
-let filteredUsers = [];
-let currentPage = 1;
+const supabase = Supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
-document.getElementById("adminLogout").addEventListener("click", async (e) => { e.preventDefault(); await signOut(auth); window.location.href = "/auth/login.html"; });
-document.getElementById("modalClose").addEventListener("click", () => document.getElementById("userModal").classList.remove("show"));
-
-onAuthStateChanged(auth, async (user) => {
-  if (!user) { window.location.href = "/auth/login.html"; return; }
-  const snap = await get(ref(db, `users/${user.uid}`));
-  if (!snap.exists() || snap.val().role !== "admin") {
-    alert("Access denied.");
-    window.location.href = "/user-dashboard/index.html";
-    return;
+// ==================== AUTH ====================
+async function checkAuth() {
+  const { data: { session } } = await supabase.auth.getSession();
+  if (!session) {
+    window.location.href = 'login.html'; // Create a separate login page
+    return false;
   }
-  await loadUsers();
-});
-
-async function loadUsers() {
-  const snap = await get(ref(db, "users"));
-  if (!snap.exists()) return;
-  allUsers = [];
-  snap.forEach(child => allUsers.push({ uid: child.key, ...child.val() }));
-  allUsers.sort((a, b) => (b.createdAt || 0) - (a.createdAt || 0));
-  applyFilters();
+  document.getElementById('user-info').innerHTML = `
+    <div class="flex items-center gap-3">
+      <i class="fas fa-user-circle text-2xl"></i>
+      <div>
+        <p class="font-medium">${session.user.email}</p>
+        <p class="text-xs text-gray-400">Admin</p>
+      </div>
+    </div>`;
+  return true;
 }
 
-function applyFilters() {
-  const search = document.getElementById("searchInput").value.toLowerCase();
-  const status = document.getElementById("statusFilter").value;
-  const role = document.getElementById("roleFilter").value;
+// ==================== REALTIME SUBSCRIPTIONS ====================
+let subscriptions = [];
 
-  filteredUsers = allUsers.filter(u => {
-    const matchSearch = !search || (u.displayName || "").toLowerCase().includes(search) || (u.email || "").toLowerCase().includes(search);
-    let matchStatus = true;
-    if (status === "active") matchStatus = u.isApproved === true;
-    else if (status === "pending") matchStatus = u.isApproved === false;
-    else if (status === "blocked") matchStatus = u.isApproved === false;
-    let matchRole = true;
-    if (role !== "all") matchRole = (u.role || "user") === role;
-    return matchSearch && matchStatus && matchRole;
-  });
-
-  currentPage = 1;
-  renderTable();
-  renderPagination();
+function subscribeToTable(table, renderFn) {
+  const sub = supabase.channel(`public:${table}`)
+    .on('postgres_changes', { event: '*', schema: 'public', table }, renderFn)
+    .subscribe();
+  subscriptions.push(sub);
 }
 
-document.getElementById("searchInput").addEventListener("input", applyFilters);
-document.getElementById("statusFilter").addEventListener("change", applyFilters);
-document.getElementById("roleFilter").addEventListener("change", applyFilters);
+// ==================== RENDER FUNCTIONS ====================
+async function loadQuestions() {
+  const { data, error } = await supabase.from('questions').select('*').order('created_at', { ascending: false });
+  if (error) return console.error(error);
 
-function renderTable() {
-  const tbody = document.getElementById("usersBody");
-  const start = (currentPage - 1) * ITEMS_PER_PAGE;
-  const pageUsers = filteredUsers.slice(start, start + ITEMS_PER_PAGE);
+  let html = `
+    <table class="w-full bg-white dark:bg-gray-900 rounded-2xl overflow-hidden">
+      <thead class="bg-gray-100 dark:bg-gray-800">
+        <tr><th class="p-4 text-left">Subject</th><th class="p-4 text-left">Chapter</th><th class="p-4 text-left">Question</th><th class="p-4 text-center">Actions</th></tr>
+      </thead>
+      <tbody class="text-sm">
+  `;
 
-  if (pageUsers.length === 0) {
-    tbody.innerHTML = `<tr><td colspan="12" style="text-align:center;padding:24px;color:var(--muted);">No users found.</td></tr>`;
-    return;
-  }
-
-  tbody.innerHTML = pageUsers.map(u => {
-    const initial = (u.displayName || u.email || "?")[0].toUpperCase();
-    const stats = u.stats || {};
-    const questions = stats.totalQuestions || 0;
-    const correct = stats.totalCorrect || 0;
-    const acc = questions > 0 ? Math.round((correct / questions) * 100) + "%" : "—";
-    const score = Math.round((stats.totalScore || 0) * 10) / 10;
-    const sessions = stats.totalSessions || 0;
-    const joined = u.createdAt ? new Date(u.createdAt).toLocaleDateString("en-NP", { month: "short", day: "numeric", year: "numeric" }) : "—";
-
-    let statusClass = "status-approved", statusText = "Active";
-    if (u.isApproved === false) { statusClass = "status-pending"; statusText = "Pending"; }
-
-    let roleClass = u.role === "admin" ? "role-admin" : "role-user";
-    let roleText = u.role === "admin" ? "Admin" : "User";
-
-    return `
-      <tr>
-        <td><div class="user-cell"><div class="mini-avatar">${u.photoURL ? `<img src="${u.photoURL}">` : initial}</div><span style="font-weight:600;">${u.displayName || "—"}</span></div></td>
-        <td>${u.email || "—"}</td>
-        <td>${u.phone || "—"}</td>
-        <td>${u.college || "—"}</td>
-        <td><span class="status-badge ${statusClass}">${statusText}</span></td>
-        <td><span class="role-badge ${roleClass}">${roleText}</span></td>
-        <td>${sessions}</td>
-        <td>${questions}</td>
-        <td>${acc}</td>
-        <td>${score}</td>
-        <td style="font-size:.72rem;">${joined}</td>
-        <td>
-          <div class="action-btns">
-            <button class="btn-sm btn-view" onclick="window.viewUser('${u.uid}')"><i class="fas fa-eye"></i></button>
-            ${u.isApproved === false ? `<button class="btn-sm btn-approve" onclick="window.approveUser('${u.uid}')"><i class="fas fa-check"></i></button>` : ""}
-            <button class="btn-sm btn-block" onclick="window.toggleBlock('${u.uid}', ${u.isApproved})">${u.isApproved ? '<i class="fas fa-ban"></i>' : '<i class="fas fa-unlock"></i>'}</button>
-            <button class="btn-sm btn-role" onclick="window.toggleRole('${u.uid}', '${u.role || "user"}')">${u.role === "admin" ? '<i class="fas fa-arrow-down"></i>' : '<i class="fas fa-arrow-up"></i>'}</button>
-            <button class="btn-sm btn-delete" onclick="window.deleteUser('${u.uid}')"><i class="fas fa-trash"></i></button>
-          </div>
+  data.forEach(q => {
+    html += `
+      <tr class="border-t hover:bg-gray-50 dark:hover:bg-gray-800">
+        <td class="p-4">${q.subject}</td>
+        <td class="p-4">${q.chapter}</td>
+        <td class="p-4">${q.question.substring(0, 80)}...</td>
+        <td class="p-4 text-center">
+          <button onclick="editQuestion('${q.id}')" class="text-blue-600 hover:underline mr-3">Edit</button>
+          <button onclick="deleteItem('questions', '${q.id}')" class="text-red-600 hover:underline">Delete</button>
         </td>
       </tr>`;
-  }).join("");
-}
-
-function renderPagination() {
-  const totalPages = Math.ceil(filteredUsers.length / ITEMS_PER_PAGE);
-  const container = document.getElementById("pagination");
-  if (totalPages <= 1) { container.innerHTML = ""; return; }
-
-  let html = "";
-  for (let i = 1; i <= totalPages; i++) {
-    html += `<button class="page-btn ${i === currentPage ? "active" : ""}" onclick="window.goToPage(${i})">${i}</button>`;
-  }
-  container.innerHTML = html;
-}
-
-window.goToPage = function(page) { currentPage = page; renderTable(); renderPagination(); };
-
-window.approveUser = async function(uid) { if (!confirm("Approve this user?")) return; await update(ref(db, `users/${uid}`), { isApproved: true }); await loadUsers(); };
-window.toggleBlock = async function(uid, current) { const action = current ? "block" : "unblock"; if (!confirm(`${action} this user?`)) return; await update(ref(db, `users/${uid}`), { isApproved: !current }); await loadUsers(); };
-window.toggleRole = async function(uid, role) { const newRole = role === "admin" ? "user" : "admin"; if (!confirm(`Change role to ${newRole}?`)) return; await update(ref(db, `users/${uid}`), { role: newRole }); await loadUsers(); };
-window.deleteUser = async function(uid) { if (!confirm("Delete this user's data? This cannot be undone.")) return; await remove(ref(db, `users/${uid}`)); await remove(ref(db, `sessions/${uid}`)); await remove(ref(db, `attempts/${uid}`)); await remove(ref(db, `userDevices/${uid}`)); await loadUsers(); };
-
-window.viewUser = async function(uid) {
-  const snap = await get(ref(db, `users/${uid}`));
-  if (!snap.exists()) return;
-  const u = snap.val();
-  const stats = u.stats || {};
-  const acc = stats.totalQuestions > 0 ? Math.round((stats.totalCorrect / stats.totalQuestions) * 100) : 0;
-
-  let subjectHtml = "";
-  if (stats.subjectWise) {
-    for (const [subj, data] of Object.entries(stats.subjectWise)) {
-      const sAcc = data.total > 0 ? Math.round((data.correct / data.total) * 100) : 0;
-      subjectHtml += `<div class="modal-stat"><span class="modal-stat-label">${subj}</span><span class="modal-stat-value">${data.correct}/${data.total} (${sAcc}%)</span></div>`;
-    }
-  }
-
-  const sessionsSnap = await get(ref(db, `sessions/${uid}`));
-  let sessionsHtml = "<p style='color:var(--muted);font-size:.82rem;'>No sessions recorded.</p>";
-  if (sessionsSnap.exists()) {
-    const sessions = [];
-    sessionsSnap.forEach(c => sessions.push(c.val()));
-    sessions.sort((a, b) => (b.timestamp || 0) - (a.timestamp || 0));
-    sessionsHtml = sessions.slice(0, 10).map(s => {
-      const date = s.timestamp ? new Date(s.timestamp).toLocaleDateString("en-NP", { month: "short", day: "numeric" }) : "—";
-      return `<div class="modal-stat"><span class="modal-stat-label">${s.title || s.subject || "Quiz"} (${date})</span><span class="modal-stat-value">${s.correct}/${s.totalQuestions} correct</span></div>`;
-    }).join("");
-  }
-
-  document.getElementById("modalTitle").innerHTML = `<i class="fas fa-user"></i> ${u.displayName || u.email} <span class="modal-close" id="modalClose2"><i class="fas fa-times"></i></span>`;
-  document.getElementById("modalContent").innerHTML = `
-    <div class="modal-stat"><span class="modal-stat-label">Email</span><span class="modal-stat-value">${u.email}</span></div>
-    <div class="modal-stat"><span class="modal-stat-label">Phone</span><span class="modal-stat-value">${u.phone || "N/A"}</span></div>
-    <div class="modal-stat"><span class="modal-stat-label">College</span><span class="modal-stat-value">${u.college || "N/A"}</span></div>
-    <div class="modal-stat"><span class="modal-stat-label">Target Year</span><span class="modal-stat-value">${u.targetYear || "N/A"}</span></div>
-    <div class="modal-stat"><span class="modal-stat-label">Status</span><span class="modal-stat-value">${u.isApproved === false ? "Pending" : "Active"}</span></div>
-    <div class="modal-stat"><span class="modal-stat-label">Role</span><span class="modal-stat-value">${u.role || "user"}</span></div>
-    <h3 style="margin:16px 0 10px;font-size:.9rem;font-weight:800;color:var(--blue);">Performance</h3>
-    <div class="modal-stat"><span class="modal-stat-label">Sessions</span><span class="modal-stat-value">${stats.totalSessions || 0}</span></div>
-    <div class="modal-stat"><span class="modal-stat-label">Questions</span><span class="modal-stat-value">${stats.totalQuestions || 0}</span></div>
-    <div class="modal-stat"><span class="modal-stat-label">Accuracy</span><span class="modal-stat-value">${acc}%</span></div>
-    <div class="modal-stat"><span class="modal-stat-label">Score</span><span class="modal-stat-value">${Math.round((stats.totalScore || 0) * 10) / 10}</span></div>
-    ${subjectHtml ? `<h3 style="margin:16px 0 10px;font-size:.9rem;font-weight:800;color:var(--blue);">Subject Performance</h3>${subjectHtml}` : ""}
-    <h3 style="margin:16px 0 10px;font-size:.9rem;font-weight:800;color:var(--blue);">Recent Sessions</h3>
-    ${sessionsHtml}
-  `;
-  document.getElementById("userModal").classList.add("show");
-  document.getElementById("modalClose2").addEventListener("click", () => document.getElementById("userModal").classList.remove("show"));
-};
-
-document.getElementById("exportBtn").addEventListener("click", () => {
-  const headers = ["Name", "Email", "Phone", "College", "Target Year", "Status", "Role", "Sessions", "Questions", "Correct", "Wrong", "Accuracy", "Score"];
-  const rows = filteredUsers.map(u => {
-    const s = u.stats || {};
-    const acc = s.totalQuestions > 0 ? Math.round((s.totalCorrect / s.totalQuestions) * 100) + "%" : "0%";
-    return [u.displayName || "", u.email || "", u.phone || "", u.college || "", u.targetYear || "",
-      u.isApproved === false ? "Pending" : "Active", u.role || "user",
-      s.totalSessions || 0, s.totalQuestions || 0, s.totalCorrect || 0, s.totalWrong || 0, acc, Math.round((s.totalScore || 0) * 10) / 10];
   });
 
-  let csv = headers.join(",") + "\n";
-  rows.forEach(r => { csv += r.map(v => `"${v}"`).join(",") + "\n"; });
+  html += '</tbody></table>';
+  document.getElementById('questions').innerHTML = html;
+}
 
-  const blob = new Blob([csv], { type: "text/csv" });
-  const a = document.createElement("a");
-  a.href = URL.createObjectURL(blob);
-  a.download = `cee-users-${new Date().toISOString().split("T")[0]}.csv`;
-  a.click();
-});
+async function loadSessions() {
+  const { data } = await supabase.from('exam_sessions').select('*');
+  // Similar table rendering logic...
+  document.getElementById('sessions').innerHTML = `<p>Exam Sessions Loaded: ${data?.length || 0}</p>`;
+  // Expand this similarly to questions
+}
+
+async function loadAttempts() { /* Similar */ }
+async function loadProfiles() { /* Similar */ }
+async function loadLogs() { /* Similar */ }
+
+// ==================== CRUD ====================
+async function deleteItem(table, id) {
+  if (!confirm('Delete this item?')) return;
+  const { error } = await supabase.from(table).delete().eq('id', id);
+  if (error) alert(error.message);
+}
+
+// Add more CRUD functions as needed
+
+function addNewItem() {
+  const currentPage = document.querySelector('.page:not(.hidden)').id;
+  alert(`Add new item to ${currentPage} - Form coming soon!`);
+}
+
+// ==================== PAGE NAVIGATION ====================
+function showPage(page) {
+  document.querySelectorAll('.page').forEach(p => p.classList.add('hidden'));
+  document.getElementById(page).classList.remove('hidden');
+  document.getElementById('page-title').textContent = page.charAt(0).toUpperCase() + page.slice(1);
+
+  if (page === 'questions') loadQuestions();
+  if (page === 'sessions') loadSessions();
+  if (page === 'attempts') loadAttempts();
+  if (page === 'profiles') loadProfiles();
+  if (page === 'logs') loadLogs();
+}
+
+async function logout() {
+  await supabase.auth.signOut();
+  window.location.href = 'login.html';
+}
+
+// ==================== INIT ====================
+async function init() {
+  const isAuth = await checkAuth();
+  if (!isAuth) return;
+
+  showPage('dashboard');
+
+  // Subscribe to realtime changes
+  subscribeToTable('questions', loadQuestions);
+  subscribeToTable('exam_sessions', loadSessions);
+  subscribeToTable('attempts', loadAttempts);
+  subscribeToTable('profiles', loadProfiles);
+  subscribeToTable('activity_logs', loadLogs);
+}
+
+init();
 </script>
+
 </body>
 </html>
