@@ -823,47 +823,42 @@ h1,h2,h3{font-family:\'Orbitron\',monospace;letter-spacing:0.05em}
 
 </div>
 
-<!-- Firebase SDKs -->
+<!-- Firebase SDKs (for Quiz Content) -->
 <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
-<script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-auth.js"></script>
 <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-firestore.js"></script>
+
+<!-- Supabase SDK (for Auth and User Data) -->
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
 <!-- Chart.js for analytics -->
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
 <script>
 // =================================================================================================
-// Firebase Configurations (REPLACE WITH YOUR ACTUAL CONFIGS)
+// Configurations (REPLACE WITH YOUR ACTUAL CREDENTIALS)
 // =================================================================================================
 
-// Firebase configuration for Project A (Quiz Content - Read Only)
+// Firebase configuration for Quiz Content (Project A - Read Only)
 const firebaseConfigContent = {
-  apiKey: "YOUR_QUIZ_CONTENT_API_KEY",
-  authDomain: "YOUR_QUIZ_CONTENT_AUTH_DOMAIN",
-  projectId: "YOUR_QUIZ_CONTENT_PROJECT_ID",
-  storageBucket: "YOUR_QUIZ_CONTENT_STORAGE_BUCKET",
-  messagingSenderId: "YOUR_QUIZ_CONTENT_MESSAGING_SENDER_ID",
-  appId: "YOUR_QUIZ_CONTENT_APP_ID"
+   apiKey: "AIzaSyDD5xBrSkX_YXzSnsKxjW8-K6W4rBfV3rg",
+  authDomain: "chapter-wise-backup.firebaseapp.com",
+  databaseURL: "https://chapter-wise-backup-default-rtdb.asia-southeast1.firebasedatabase.app",
+  projectId: "chapter-wise-backup",
+  storageBucket: "chapter-wise-backup.firebasestorage.app",
+  messagingSenderId: "864698641587",
+  appId: "1:864698641587:web:d0b550579c6eb7709ed4c6"
 };
 
-// Firebase configuration for Project B (User Data & Analytics - Write Only)
-const firebaseConfigUserData = {
-  apiKey: "YOUR_USER_DATA_API_KEY",
-  authDomain: "YOUR_USER_DATA_AUTH_DOMAIN",
-  projectId: "YOUR_USER_DATA_PROJECT_ID",
-  storageBucket: "YOUR_USER_DATA_STORAGE_BUCKET",
-  messagingSenderId: "YOUR_USER_DATA_MESSAGING_SENDER_ID",
-  appId: "YOUR_USER_DATA_APP_ID"
-};
+// Supabase configuration
+const SUPABASE_URL = "https://rpudsnrqlhataqfavcjh.supabase.co";
+const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJwdWRzbnJxbGhhdGFxZmF2Y2poIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzk5NzI0NjgsImV4cCI6MjA5NTU0ODQ2OH0.EEu5t-NPqWARChSAMpEvUPMBkz_JeeNe3bGSCQmH7Xo";
 
 // Initialize Firebase for Quiz Content
 const appContent = firebase.initializeApp(firebaseConfigContent, "quizContent");
 const dbContent = firebase.firestore(appContent);
 
-// Initialize Firebase for User Data & Analytics
-const appUserData = firebase.initializeApp(firebaseConfigUserData, "userData");
-const auth = firebase.auth(appUserData);
-const dbUserData = firebase.firestore(appUserData);
+// Initialize Supabase client
+const supabase = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
 // =================================================================================================
 // Global Variables and Utility Functions
@@ -904,24 +899,16 @@ function switchScreen(screenId, navTab = null) {
     document.getElementById(screenId).classList.add(\'active\');
     currentScreen = screenId;
 
-    // Update active nav tab
     document.querySelectorAll(\'.nav-tab\').forEach(tab => tab.classList.remove(\'active\'));
     if (navTab) {
       navTab.classList.add(\'active\');
     } else {
-      // Find and activate the corresponding tab if not clicked directly
       const correspondingTab = document.querySelector(`.nav-tab[data-screen=\'${screenId}\']`);
       if (correspondingTab) correspondingTab.classList.add(\'active\');
     }
 
-    // Specific actions for screens
     if (screenId === \'quizScreen\') {
-      // Reset quiz state if navigating to quiz screen from elsewhere
-      if (document.getElementById(\'quizActive\').style.display === \'block\') {
-        // If quiz is active, don't reset unless explicitly starting new quiz
-      } else {
-        resetQuiz();
-      }
+      if (document.getElementById(\'quizActive\').style.display !== \'block\') resetQuiz();
     } else if (screenId === \'leaderboardScreen\') {
       loadLeaderboard();
     } else if (screenId === \'analyticsScreen\') {
@@ -931,7 +918,7 @@ function switchScreen(screenId, navTab = null) {
     }
   } catch (error) {
     console.error("Error switching screen:", error);
-    logErrorToFirebase(error, "switchScreen", { screenId });
+    logErrorToSupabase(error, "switchScreen", { screenId });
     showToast("Error switching screen.", \'error\');
   }
 }
@@ -944,46 +931,46 @@ function closeMobileMenu() {
 }
 
 // =================================================================================================
-// Error Logging to Firebase (Project B)
+// Error Logging to Supabase
 // =================================================================================================
-async function logErrorToFirebase(error, context = "unknown", details = {}) {
+async function logErrorToSupabase(error, context = "unknown", details = {}) {
   try {
-    const user = auth.currentUser;
-    await dbUserData.collection("errorLogs").add({
-      timestamp: firebase.firestore.FieldValue.serverTimestamp(),
+    const { data: { user } } = await supabase.auth.getUser();
+    await supabase.from(\'error_logs\').insert({
+      user_id: user ? user.id : null,
       message: error.message || "An unknown error occurred.",
       stack: error.stack || "No stack trace available.",
       context: context,
-      userId: user ? user.uid : "anonymous",
-      userDetails: user ? { email: user.email, displayName: user.displayName } : null,
-      additionalDetails: details
+      user_details: user ? { email: user.email, display_name: user.user_metadata.full_name } : null,
+      additional_details: details
     });
-    console.log("Error logged to Firebase.");
+    console.log("Error logged to Supabase.");
   } catch (logError) {
-    console.error("Failed to log error to Firebase:", logError);
+    console.error("Failed to log error to Supabase:", logError);
   }
 }
 
 // =================================================================================================
-// Authentication (Project B)
+// Authentication with Supabase
 // =================================================================================================
 document.getElementById(\'googleLoginBtn\').addEventListener(\'click\', async () => {
   showLoading();
   try {
-    const provider = new firebase.auth.GoogleAuthProvider();
-    await auth.signInWithPopup(provider);
-    // User will be handled by onAuthStateChanged
+    const { error } = await supabase.auth.signInWithOAuth({
+      provider: \'google\',
+      options: { redirectTo: window.location.origin }
+    });
+    if (error) throw error;
   } catch (error) {
     hideLoading();
     console.error("Google Sign-In error:", error);
-    logErrorToFirebase(error, "googleLogin");
+    logErrorToSupabase(error, "googleLogin");
     showToast(`Login failed: ${error.message}`, \'error\');
   }
 });
 
 document.getElementById(\'demoLoginBtn\').addEventListener(\'click\', () => {
   showLoading();
-  // Simulate a demo user login
   currentUser = {
     uid: "demoUser",
     displayName: "Demo Student",
@@ -997,36 +984,43 @@ document.getElementById(\'demoLoginBtn\').addEventListener(\'click\', () => {
   showToast("Welcome, Demo Student!", \'info\');
 });
 
-function doLogout() {
+async function doLogout() {
   showLoading();
-  auth.signOut().then(() => {
-    console.log("User signed out.");
+  try {
+    const { error } = await supabase.auth.signOut();
+    if (error) throw error;
     currentUser = null;
     updateUIForUser(null);
     switchScreen(\'loginScreen\');
     document.getElementById(\'demoBanner\').style.display = \'none\';
     hideLoading();
     showToast("Logged out successfully.", \'info\');
-  }).catch(error => {
+  } catch (error) {
     hideLoading();
     console.error("Error signing out:", error);
-    logErrorToFirebase(error, "logout");
+    logErrorToSupabase(error, "logout");
     showToast("Logout failed.", \'error\');
-  });
+  }
 }
 
-auth.onAuthStateChanged(async (user) => {
+// Handle Auth State Changes
+supabase.auth.onAuthStateChange(async (event, session) => {
   hideLoading();
-  if (user) {
-    currentUser = user;
-    console.log("User is logged in:", user.uid);
-    updateUIForUser(user);
+  if (session) {
+    const user = session.user;
+    currentUser = {
+      uid: user.id,
+      email: user.email,
+      displayName: user.user_metadata.full_name || user.email,
+      photoURL: user.user_metadata.avatar_url
+    };
+    console.log("User is logged in:", currentUser.uid);
+    updateUIForUser(currentUser);
     switchScreen(\'homeScreen\');
-    await saveOrUpdateUserProfile(user);
-    showToast(`Welcome back, ${user.displayName || user.email}!`, \'success\');
-  } else {
+    await saveOrUpdateUserProfile(currentUser);
+    showToast(`Welcome back, ${currentUser.displayName}!`, \'success\');
+  } else if (event === \'SIGNED_OUT\') {
     currentUser = null;
-    console.log("User is logged out.");
     updateUIForUser(null);
     switchScreen(\'loginScreen\');
   }
@@ -1034,32 +1028,34 @@ auth.onAuthStateChanged(async (user) => {
 
 async function saveOrUpdateUserProfile(user) {
   try {
-    const userRef = dbUserData.collection("users").doc(user.uid);
-    const doc = await userRef.get();
-    if (!doc.exists) {
-      // New user
-      await userRef.set({
-        email: user.email,
-        displayName: user.displayName,
-        photoURL: user.photoURL,
-        createdAt: firebase.firestore.FieldValue.serverTimestamp(),
-        lastLoginAt: firebase.firestore.FieldValue.serverTimestamp(),
-        totalTestsTaken: 0,
-        bestScore: 0,
-        avgAccuracy: 0,
-        streak: 0
-      });
-      console.log("New user profile created.");
+    const { data, error } = await supabase
+      .from(\'user_profiles\')
+      .select(\'id\')
+      .eq(\'id', user.uid);
+
+    if (error) throw error;
+
+    if (data && data.length === 0) {
+      const { error: insertError } = await supabase
+        .from(\'user_profiles\')
+        .insert({
+          id: user.uid,
+          email: user.email,
+          display_name: user.displayName,
+          photo_url: user.photoURL,
+          created_at: new Date().toISOString(),
+          last_login_at: new Date().toISOString()
+        });
+      if (insertError) throw insertError;
     } else {
-      // Existing user, update last login
-      await userRef.update({
-        lastLoginAt: firebase.firestore.FieldValue.serverTimestamp()
-      });
-      console.log("User last login updated.");
+      await supabase
+        .from(\'user_profiles\')
+        .update({ last_login_at: new Date().toISOString() })
+        .eq(\'id\', user.uid);
     }
   } catch (error) {
-    console.error("Error saving/updating user profile:", error);
-    logErrorToFirebase(error, "saveOrUpdateUserProfile", { userId: user.uid });
+    console.error("Error saving/updating user profile in Supabase:", error);
+    logErrorToSupabase(error, "saveOrUpdateUserProfile", { userId: user.uid });
   }
 }
 
@@ -1075,37 +1071,28 @@ function updateUIForUser(user) {
     loginScreen.style.display = \'none\';
     mainApp.style.display = \'block\';
     headerAvatar.src = user.photoURL || \'https://via.placeholder.com/150/00f0ff/000000?text=U\';
-    headerName.textContent = user.displayName || user.email;
-    dashName.textContent = user.displayName || user.email;
-    resultUserName.textContent = user.displayName || user.email;
+    headerName.textContent = user.displayName;
+    dashName.textContent = user.displayName;
+    resultUserName.textContent = user.displayName;
   } else {
     loginScreen.style.display = \'flex\';
     mainApp.style.display = \'none\';
-    headerAvatar.src = \'\';
-    headerName.textContent = \'\';
-    dashName.textContent = \'Student\';
-    resultUserName.textContent = \'Student\';
   }
 }
 
 // =================================================================================================
-// Quiz Logic (Questions from Project A, Results to Project B)
+// Quiz Logic (Questions from Firebase, Results to Supabase)
 // =================================================================================================
 async function loadQuizQuestions() {
   showLoading();
   try {
-    const snapshot = await dbContent.collection("questions").limit(10).get(); // Limit to 10 questions for daily quiz
-    quizQuestions = snapshot.docs.map(doc => ({
-      id: doc.id,
-      ...doc.data()
-    }));
-
+    const snapshot = await dbContent.collection("questions").limit(10).get();
+    quizQuestions = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
     if (quizQuestions.length === 0) {
-      showToast("No quiz questions available today. Please check back later.", \'warn\');
+      showToast("No quiz questions available today.", \'warn\');
       hideLoading();
       return;
     }
-
     userAnswers = new Array(quizQuestions.length).fill(null);
     currentQuestionIndex = 0;
     renderQuestion();
@@ -1115,8 +1102,8 @@ async function loadQuizQuestions() {
     hideLoading();
   } catch (error) {
     hideLoading();
-    console.error("Error loading quiz questions:", error);
-    logErrorToFirebase(error, "loadQuizQuestions");
+    console.error("Error loading quiz questions from Firebase:", error);
+    logErrorToSupabase(error, "loadQuizQuestions");
     showToast("Failed to load quiz questions.", \'error\');
   }
 }
@@ -1128,9 +1115,7 @@ function renderQuestion() {
   document.getElementById(\'currentQuestionNumber\').textContent = currentQuestionIndex + 1;
   document.getElementById(\'totalQuestions\').textContent = quizQuestions.length;
   document.querySelector(\'.progress-bar-inner\').style.width = `${((currentQuestionIndex + 1) / quizQuestions.length) * 100}%`;
-  document.getElementById(\'progressPercentage\').textContent = `${Math.round(((currentQuestionIndex + 1) / quizQuestions.length) * 100)}%`;
 
-  document.querySelector(\'#questionContainer .question-number\').textContent = `Question ${currentQuestionIndex + 1}`;
   document.querySelector(\'#questionContainer .question-text\').textContent = question.text;
 
   const optionsContainer = document.getElementById(\'optionsContainer\');
@@ -1138,69 +1123,26 @@ function renderQuestion() {
   question.options.forEach((option, index) => {
     const optionBtn = document.createElement(\'button\');
     optionBtn.classList.add(\'option-btn\');
-    if (userAnswers[currentQuestionIndex] === index) {
-      optionBtn.classList.add(\'selected\');
-    }
+    if (userAnswers[currentQuestionIndex] === index) optionBtn.classList.add(\'selected\');
     optionBtn.innerHTML = `<span class="option-letter">${String.fromCharCode(65 + index)}</span> ${option}`;
-    optionBtn.onclick = () => selectOption(index);
+    optionBtn.onclick = () => { userAnswers[currentQuestionIndex] = index; renderQuestion(); };
     optionsContainer.appendChild(optionBtn);
   });
 
-  // Update navigation buttons
   document.getElementById(\'prevQuestionBtn\').style.display = currentQuestionIndex > 0 ? \'inline-flex\' : \'none\';
   document.getElementById(\'nextQuestionBtn\').style.display = currentQuestionIndex < quizQuestions.length - 1 ? \'inline-flex\' : \'none\';
   document.getElementById(\'submitQuizBtn\').style.display = currentQuestionIndex === quizQuestions.length - 1 ? \'inline-flex\' : \'none\';
 }
 
-function selectOption(optionIndex) {
-  userAnswers[currentQuestionIndex] = optionIndex;
-  renderQuestion(); // Re-render to show selection
-}
-
-document.getElementById(\'prevQuestionBtn\').addEventListener(\'click\', () => {
-  if (currentQuestionIndex > 0) {
-    currentQuestionIndex--;
-    renderQuestion();
-  }
-});
-
-document.getElementById(\'nextQuestionBtn\').addEventListener(\'click\', () => {
-  if (currentQuestionIndex < quizQuestions.length - 1) {
-    currentQuestionIndex++;
-    renderQuestion();
-  }
-});
-
-document.getElementById(\'submitQuizBtn\').addEventListener(\'click\', () => {
-  const unanswered = userAnswers.filter(answer => answer === null).length;
-  document.getElementById(\'modalUnanswered\').textContent = unanswered;
-  openModal(\'submitModal\');
-});
-
-function confirmSubmit() {
-  closeModal();
-  submitQuiz();
-}
-
 function startQuizTimer() {
   quizTimeRemaining = QUIZ_DURATION;
-  updateQuizTimerDisplay();
   quizTimerInterval = setInterval(() => {
     quizTimeRemaining--;
-    updateQuizTimerDisplay();
-    if (quizTimeRemaining <= 0) {
-      clearInterval(quizTimerInterval);
-      showToast("Time's up! Submitting your quiz.", \'info\');
-      submitQuiz();
-    }
+    const minutes = Math.floor(quizTimeRemaining / 60);
+    const seconds = quizTimeRemaining % 60;
+    document.getElementById(\'quizTimer\').textContent = `${minutes.toString().padStart(2, \'0\')}:${seconds.toString().padStart(2, \'0\')}`;
+    if (quizTimeRemaining <= 0) { clearInterval(quizTimerInterval); submitQuiz(); }
   }, 1000);
-}
-
-function updateQuizTimerDisplay() {
-  const minutes = Math.floor(quizTimeRemaining / 60);
-  const seconds = quizTimeRemaining % 60;
-  document.getElementById(\'quizTimer\').textContent = 
-    `${minutes.toString().padStart(2, \'0\')}:${seconds.toString().padStart(2, \'0\')}`;
 }
 
 async function submitQuiz() {
@@ -1214,533 +1156,203 @@ async function submitQuiz() {
   const detailedAnswers = quizQuestions.map((q, index) => {
     const userAnswer = userAnswers[index];
     const isCorrect = userAnswer === q.correctAnswerIndex;
-    if (userAnswer === null) {
-      unansweredCount++;
-    } else if (isCorrect) {
-      correctCount++;
-    } else {
-      incorrectCount++;
-    }
-    return {
-      questionId: q.id,
-      userAnswerIndex: userAnswer,
-      correctAnswerIndex: q.correctAnswerIndex,
-      isCorrect: isCorrect
-    };
+    if (userAnswer === null) unansweredCount++;
+    else if (isCorrect) correctCount++;
+    else incorrectCount++;
+    return { questionId: q.id, userAnswerIndex: userAnswer, isCorrect: isCorrect };
   });
 
   const totalQuestions = quizQuestions.length;
-  const score = correctCount * 10; // Assuming 10 points per correct answer
+  const score = correctCount * 10;
   const accuracy = totalQuestions > 0 ? correctCount / totalQuestions : 0;
 
-  // Save quiz result to Project B (User Data)
   if (currentUser && currentUser.uid !== "demoUser") {
     try {
-      await dbUserData.collection("quizResults").add({
-        userId: currentUser.uid,
-        quizId: `daily_quiz_${new Date().toISOString().slice(0, 10)}`,
+      const { error: resultError } = await supabase.from(\'quiz_results\').insert({
+        user_id: currentUser.uid,
+        quiz_id: `daily_quiz_${new Date().toISOString().slice(0, 10)}`,
         score: score,
-        accuracy: accuracy,
-        totalQuestions: totalQuestions,
-        correctAnswers: correctCount,
-        incorrectAnswers: incorrectCount,
-        unansweredQuestions: unansweredCount,
-        timeTakenSeconds: QUIZ_DURATION - quizTimeRemaining,
-        timestamp: firebase.firestore.FieldValue.serverTimestamp(),
-        answers: detailedAnswers // Store detailed answers for review
+        accuracy: accuracy * 100,
+        total_questions: totalQuestions,
+        correct_answers: correctCount,
+        incorrect_answers: incorrectCount,
+        unanswered_questions: unansweredCount,
+        time_taken_seconds: QUIZ_DURATION - quizTimeRemaining,
+        answers: detailedAnswers
       });
-      console.log("Quiz result saved to user data Firebase.");
-      // Update user stats
-      const userRef = dbUserData.collection("users").doc(currentUser.uid);
-      await dbUserData.runTransaction(async (transaction) => {
-        const userDoc = await transaction.get(userRef);
-        if (userDoc.exists) {
-          const userData = userDoc.data();
-          const newTotalTests = (userData.totalTestsTaken || 0) + 1;
-          const newBestScore = Math.max(userData.bestScore || 0, score);
-          const newAvgAccuracy = ((userData.avgAccuracy || 0) * (newTotalTests - 1) + accuracy) / newTotalTests;
-          // Streak logic would be more complex, involving daily checks
-          transaction.update(userRef, {
-            totalTestsTaken: newTotalTests,
-            bestScore: newBestScore,
-            avgAccuracy: newAvgAccuracy,
-            // streak: newStreak, // Implement streak logic if needed
-            lastQuizScore: score,
-            lastQuizAccuracy: accuracy,
-            lastQuizDate: firebase.firestore.FieldValue.serverTimestamp()
-          });
-        }
-      });
+      if (resultError) throw resultError;
+
+      // Update User Stats
+      const { data: userData, error: fetchError } = await supabase.from(\'user_profiles\').select(\'total_tests_taken, best_score, avg_accuracy\').eq(\'id\', currentUser.uid).single();
+      if (!fetchError) {
+        const newTotalTests = (userData.total_tests_taken || 0) + 1;
+        const newBestScore = Math.max(userData.best_score || 0, score);
+        const newAvgAccuracy = ((userData.avg_accuracy || 0) * (newTotalTests - 1) + (accuracy * 100)) / newTotalTests;
+        await supabase.from(\'user_profiles\').update({
+          total_tests_taken: newTotalTests,
+          best_score: newBestScore,
+          avg_accuracy: newAvgAccuracy,
+          last_quiz_score: score,
+          last_quiz_accuracy: accuracy * 100,
+          last_quiz_date: new Date().toISOString()
+        }).eq(\'id\', currentUser.uid);
+      }
     } catch (error) {
-      console.error("Error saving quiz result or updating user stats:", error);
-      logErrorToFirebase(error, "submitQuiz_saveResult", { userId: currentUser.uid, score, accuracy });
-      showToast("Failed to save quiz results.", \'error\');
+      console.error("Error saving quiz result to Supabase:", error);
+      logErrorToSupabase(error, "submitQuiz_saveResult", { userId: currentUser.uid });
     }
   }
 
-  // Display results
   document.getElementById(\'finalScore\').textContent = score;
   document.getElementById(\'correctAnswersCount\').textContent = correctCount;
   document.getElementById(\'incorrectAnswersCount\').textContent = incorrectCount;
   document.getElementById(\'unansweredQuestionsCount\').textContent = unansweredCount;
-
   switchScreen(\'resultScreen\');
   hideLoading();
-
-  // Store results temporarily for review
-  localStorage.setItem(\'lastQuizResults\', JSON.stringify({
-    quizQuestions,
-    userAnswers,
-    detailedAnswers,
-    score,
-    correctCount,
-    incorrectCount,
-    unansweredCount
-  }));
 }
 
 document.getElementById(\'startQuizBtn\').addEventListener(\'click\', loadQuizQuestions);
-
-function resetQuiz() {
-  quizQuestions = [];
-  userAnswers = [];
-  currentQuestionIndex = 0;
-  clearInterval(quizTimerInterval);
-  quizTimeRemaining = QUIZ_DURATION;
-  document.getElementById(\'quizLobby\').style.display = \'block\';
-  document.getElementById(\'quizActive\').style.display = \'none\';
-  document.querySelector(\'.progress-bar-inner\').style.width = \'0%\';
-  document.getElementById(\'progressPercentage\').textContent = \'0%\';
-  document.getElementById(\'quizTimer\').textContent = \'00:00\';
-  document.getElementById(\'reviewSection\').style.display = \'none\';
-}
-
-// Review Answers Logic
-document.getElementById(\'reviewAnswersBtn\').addEventListener(\'click\', () => {
-  const lastQuizResults = JSON.parse(localStorage.getItem(\'lastQuizResults\'));
-  if (!lastQuizResults) {
-    showToast("No quiz results to review.", \'warn\');
-    return;
-  }
-
-  const { quizQuestions, detailedAnswers } = lastQuizResults;
-  const reviewQuestionsContainer = document.getElementById(\'reviewQuestionsContainer\');
-  reviewQuestionsContainer.innerHTML = \'\';
-
-  quizQuestions.forEach((question, qIndex) => {
-    const userAnswerDetail = detailedAnswers.find(da => da.questionId === question.id);
-    const reviewCard = document.createElement(\'div\');
-    reviewCard.classList.add(\'review-question-card\');
-    reviewCard.innerHTML = `
-      <div class="question-number">Question ${qIndex + 1}</div>
-      <div class="review-question-text">${question.text}</div>
-      <div class="options-grid">
-        ${question.options.map((option, oIndex) => {
-          let optionClass = \'\';
-          let icon = \'\';
-          if (oIndex === question.correctAnswerIndex) {
-            optionClass = \'correct\';
-            icon = \'<i class="fas fa-check"></i>\';
-          } else if (oIndex === userAnswerDetail.userAnswerIndex && !userAnswerDetail.isCorrect) {
-            optionClass = \'wrong selected-wrong\';
-            icon = \'<i class="fas fa-times"></i>\';
-          } else if (oIndex === userAnswerDetail.userAnswerIndex && userAnswerDetail.isCorrect) {
-            optionClass = \'correct\'; // User selected correct answer
-            icon = \'<i class="fas fa-check"></i>\';
-          }
-          return `<div class="review-option-item ${optionClass}">${icon} <span class="option-letter">${String.fromCharCode(65 + oIndex)}</span> ${option}</div>`;
-        }).join(\'\')}
-      </div>
-      ${question.explanation ? `<div class="explanation-box"><strong>Explanation:</strong> ${question.explanation}</div>` : \'\'
-    }
-    `;
-    reviewQuestionsContainer.appendChild(reviewCard);
-  });
-
-  document.getElementById(\'reviewSection\').style.display = \'block\';
-  // Scroll to review section
-  document.getElementById(\'reviewSection\').scrollIntoView({ behavior: \'smooth\' });
+document.getElementById(\'submitQuizBtn\').addEventListener(\'click\', () => {
+  document.getElementById(\'modalUnanswered\').textContent = userAnswers.filter(a => a === null).length;
+  openModal(\'submitModal\');
 });
 
+function confirmSubmit() { closeModal(); submitQuiz(); }
+
+function resetQuiz() {
+  quizQuestions = []; userAnswers = []; currentQuestionIndex = 0;
+  clearInterval(quizTimerInterval);
+  document.getElementById(\'quizLobby\').style.display = \'block\';
+  document.getElementById(\'quizActive\').style.display = \'none\';
+}
+
 // =================================================================================================
-// Dashboard Data Loading (from Project B)
+// Data Loading Functions (from Supabase)
 // =================================================================================================
 async function loadDashboardData() {
-  if (!currentUser || currentUser.uid === "demoUser") {
-    // Handle demo user or logged out state
-    document.getElementById(\'dashTotalTests\').textContent = 0;
-    document.getElementById(\'dashBestScore\').textContent = 0;
-    document.getElementById(\'dashAvgAcc\').textContent = \'0%\';
-    document.getElementById(\'dashStreak\').textContent = 0;
-    document.getElementById(\'recentResultPreview\').style.display = \'none\';
-    document.getElementById(\'todayChapterCard\').innerHTML = \'<div style="color:var(--text3);font-size:0.8rem">Schedule not available in demo mode.</div>\';
-    return;
-  }
-
+  if (!currentUser || currentUser.uid === "demoUser") return;
   try {
-    const userDoc = await dbUserData.collection("users").doc(currentUser.uid).get();
-    if (userDoc.exists) {
-      const userData = userDoc.data();
-      document.getElementById(\'dashTotalTests\').textContent = userData.totalTestsTaken || 0;
-      document.getElementById(\'dashBestScore\').textContent = userData.bestScore || 0;
-      document.getElementById(\'dashAvgAcc\').textContent = `${Math.round((userData.avgAccuracy || 0) * 100)}%`;
+    const { data: userData, error } = await supabase.from(\'user_profiles\').select(\'*\').eq(\'id\', currentUser.uid).single();
+    if (!error && userData) {
+      document.getElementById(\'dashTotalTests\').textContent = userData.total_tests_taken || 0;
+      document.getElementById(\'dashBestScore\').textContent = userData.best_score || 0;
+      document.getElementById(\'dashAvgAcc\').textContent = `${Math.round(userData.avg_accuracy || 0)}%`;
       document.getElementById(\'dashStreak\').textContent = userData.streak || 0;
-
-      if (userData.lastQuizScore !== undefined) {
+      if (userData.last_quiz_score !== undefined) {
         document.getElementById(\'recentResultPreview\').style.display = \'block\';
         document.getElementById(\'recentResultCard\').innerHTML = `
           <div class="flex justify-between items-center mb8">
-            <div class="fs085 fw600">Score: <span class="c-cyan">${userData.lastQuizScore}</span></div>
-            <div class="fs085 fw600">Accuracy: <span class="c-green">${Math.round(userData.lastQuizAccuracy * 100)}%</span></div>
+            <div class="fs085 fw600">Score: <span class="c-cyan">${userData.last_quiz_score}</span></div>
+            <div class="fs085 fw600">Accuracy: <span class="c-green">${Math.round(userData.last_quiz_accuracy || 0)}%</span></div>
           </div>
-          <div class="fs085 text-dim">${new Date(userData.lastQuizDate.toDate()).toLocaleString()}</div>
-        `;
-      } else {
-        document.getElementById(\'recentResultPreview\').style.display = \'none\';
+          <div class="fs085 text-dim">${new Date(userData.last_quiz_date).toLocaleString()}</div>`;
       }
     }
-  } catch (error) {
-    console.error("Error loading dashboard data:", error);
-    logErrorToFirebase(error, "loadDashboardData", { userId: currentUser.uid });
-    showToast("Failed to load dashboard data.", \'error\');
-  }
+  } catch (error) { console.error("Error loading dashboard:", error); }
 }
 
-// =================================================================================================
-// Leaderboard Data Loading (from Project B)
-// =================================================================================================
 async function loadLeaderboard() {
   showLoading();
   try {
+    const { data: profiles, error } = await supabase.from(\'user_profiles\').select(\'id, display_name, photo_url, best_score, avg_accuracy, last_quiz_date\').order(\'best_score\', { ascending: false }).limit(100);
+    if (error) throw error;
     const leaderboardList = document.getElementById(\'leaderboardList\');
-    leaderboardList.innerHTML = \'<div style="text-align:center;padding:20px;color:var(--text2);">Loading leaderboard...</div>\';
-
-    const snapshot = await dbUserData.collection("quizResults")
-      .orderBy("score", "desc")
-      .limit(100) // Top 100 users
-      .get();
-
-    const results = [];
-    const userScores = {}; // Aggregate scores per user
-
-    snapshot.docs.forEach(doc => {
-      const data = doc.data();
-      if (!userScores[data.userId]) {
-        userScores[data.userId] = { totalScore: 0, totalAccuracy: 0, quizCount: 0, lastQuizDate: null, displayName: \'Unknown User\', photoURL: \'\' };
-      }
-      userScores[data.userId].totalScore += data.score;
-      userScores[data.userId].totalAccuracy += data.accuracy;
-      userScores[data.userId].quizCount++;
-      if (!userScores[data.userId].lastQuizDate || data.timestamp.toDate() > userScores[data.userId].lastQuizDate) {
-        userScores[data.userId].lastQuizDate = data.timestamp.toDate();
-      }
-    });
-
-    // Fetch user display names and photos
-    const userIds = Object.keys(userScores);
-    if (userIds.length > 0) {
-      const userDocs = await dbUserData.collection("users").where(firebase.firestore.FieldPath.documentId(), \'in\', userIds).get();
-      userDocs.forEach(doc => {
-        const userData = doc.data();
-        if (userScores[doc.id]) {
-          userScores[doc.id].displayName = userData.displayName || userData.email;
-          userScores[doc.id].photoURL = userData.photoURL || \'https://via.placeholder.com/150/cccccc/000000?text=U\';
-        }
-      });
-    }
-
-    for (const userId in userScores) {
-      const avgScore = userScores[userId].totalScore / userScores[userId].quizCount;
-      const avgAccuracy = userScores[userId].totalAccuracy / userScores[userId].quizCount;
-      results.push({
-        userId: userId,
-        displayName: userScores[userId].displayName,
-        photoURL: userScores[userId].photoURL,
-        score: Math.round(avgScore),
-        accuracy: Math.round(avgAccuracy * 100),
-        lastQuizDate: userScores[userId].lastQuizDate
-      });
-    }
-
-    results.sort((a, b) => b.score - a.score);
-
     leaderboardList.innerHTML = \'\';
-    if (results.length === 0) {
-      leaderboardList.innerHTML = \'<div style="text-align:center;padding:20px;color:var(--text2);">No leaderboard data yet.</div>\';
-    } else {
-      results.forEach((entry, index) => {
-        const rankClass = index === 0 ? \'rank-1\' : index === 1 ? \'rank-2\' : index === 2 ? \'rank-3\' : \'\';
-        const isMeClass = currentUser && currentUser.uid === entry.userId ? \'is-me\' : \'\';
-        leaderboardList.innerHTML += `
-          <div class="lb-row ${isMeClass}">
-            <div class="lb-rank ${rankClass}">${index + 1}</div>
-            <div class="lb-user">
-              <img class="lb-avatar" src="${entry.photoURL}" alt="${entry.displayName}">
-              <span class="lb-name">${entry.displayName}</span>
-            </div>
-            <div class="lb-score">${entry.score}</div>
-            <div class="lb-acc">${entry.accuracy}%</div>
-            <div class="lb-date">${entry.lastQuizDate ? new Date(entry.lastQuizDate).toLocaleDateString() : \'N/A\'}</div>
+    profiles.forEach((entry, index) => {
+      const rankClass = index === 0 ? \'rank-1\' : index === 1 ? \'rank-2\' : index === 2 ? \'rank-3\' : \'\';
+      leaderboardList.innerHTML += `
+        <div class="lb-row ${currentUser && currentUser.uid === entry.id ? \'is-me\' : \'\'}">
+          <div class="lb-rank ${rankClass}">${index + 1}</div>
+          <div class="lb-user">
+            <img class="lb-avatar" src="${entry.photo_url || \'https://via.placeholder.com/150/cccccc/000000?text=U\'}" alt="${entry.display_name}">
+            <span class="lb-name">${entry.display_name}</span>
           </div>
-        `;
-      });
-    }
+          <div class="lb-score">${entry.best_score || 0}</div>
+          <div class="lb-acc">${Math.round(entry.avg_accuracy || 0)}%</div>
+          <div class="lb-date">${entry.last_quiz_date ? new Date(entry.last_quiz_date).toLocaleDateString() : \'N/A\'}</div>
+        </div>`;
+    });
     hideLoading();
-  } catch (error) {
-    hideLoading();
-    console.error("Error loading leaderboard:", error);
-    logErrorToFirebase(error, "loadLeaderboard", { userId: currentUser ? currentUser.uid : "anonymous" });
-    showToast("Failed to load leaderboard.", \'error\');
-  }
+  } catch (error) { hideLoading(); console.error("Error loading leaderboard:", error); }
 }
 
-// =================================================================================================
-// Analytics Data Loading (from Project B)
-// =================================================================================================
-let performanceChart = null;
-
 async function loadAnalytics() {
-  if (!currentUser || currentUser.uid === "demoUser") {
-    document.getElementById(\'anaTotalTests\').textContent = 0;
-    document.getElementById(\'anaBestScore\').textContent = 0;
-    document.getElementById(\'anaAvgAcc\').textContent = \'0%\';
-    document.getElementById(\'anaStreak\').textContent = 0;
-    document.getElementById(\'anaAvgTime\').textContent = \'0s\';
-    document.getElementById(\'anaWrongCount\').textContent = 0;
-    document.getElementById(\'quizHistoryTableBody\').innerHTML = \'<tr><td colspan="5" class="text-center text-dim">No quiz history available in demo mode.</td></tr>\';
-    if (performanceChart) performanceChart.destroy();
-    return;
-  }
-
+  if (!currentUser || currentUser.uid === "demoUser") return;
   showLoading();
   try {
-    const userDoc = await dbUserData.collection("users").doc(currentUser.uid).get();
-    if (userDoc.exists) {
-      const userData = userDoc.data();
-      document.getElementById(\'anaTotalTests\').textContent = userData.totalTestsTaken || 0;
-      document.getElementById(\'anaBestScore\').textContent = userData.bestScore || 0;
-      document.getElementById(\'anaAvgAcc\').textContent = `${Math.round((userData.avgAccuracy || 0) * 100)}%`;
+    const { data: userData, error: userError } = await supabase.from(\'user_profiles\').select(\'*\').eq(\'id\', currentUser.uid).single();
+    if (userData) {
+      document.getElementById(\'anaTotalTests\').textContent = userData.total_tests_taken || 0;
+      document.getElementById(\'anaBestScore\').textContent = userData.best_score || 0;
+      document.getElementById(\'anaAvgAcc\').textContent = `${Math.round(userData.avg_accuracy || 0)}%`;
       document.getElementById(\'anaStreak\').textContent = userData.streak || 0;
-      // Avg time and wrong count would need to be calculated from quizResults or stored in user profile
-      // For now, setting placeholders
-      document.getElementById(\'anaAvgTime\').textContent = \'N/A\'; // Requires calculation from quiz results
-      document.getElementById(\'anaWrongCount\').textContent = \'N/A\'; // Requires calculation from quiz results
     }
-
-    const quizResultsSnapshot = await dbUserData.collection("quizResults")
-      .where("userId", "==", currentUser.uid)
-      .orderBy("timestamp", "asc")
-      .limit(30) // Show last 30 quizzes
-      .get();
-
-    const quizHistory = [];
-    let totalTime = 0;
-    let totalWrong = 0;
-
-    quizResultsSnapshot.docs.forEach(doc => {
-      const data = doc.data();
-      quizHistory.push(data);
-      totalTime += data.timeTakenSeconds || 0;
-      totalWrong += data.incorrectAnswers || 0;
-    });
-
-    // Update avg time and wrong count based on fetched history
-    if (quizHistory.length > 0) {
-      document.getElementById(\'anaAvgTime\').textContent = `${Math.round(totalTime / quizHistory.length)}s`;
-      document.getElementById(\'anaWrongCount\').textContent = totalWrong;
+    const { data: quizHistoryData, error: historyError } = await supabase.from(\'quiz_results\').select(\'*\').eq(\'user_id\', currentUser.uid).order(\'created_at\', { ascending: true }).limit(30);
+    if (!historyError) {
+      renderQuizHistoryTable(quizHistoryData);
+      renderPerformanceChart(quizHistoryData);
     }
-
-    renderQuizHistoryTable(quizHistory);
-    renderPerformanceChart(quizHistory);
     hideLoading();
-  } catch (error) {
-    hideLoading();
-    console.error("Error loading analytics data:", error);
-    logErrorToFirebase(error, "loadAnalytics", { userId: currentUser.uid });
-    showToast("Failed to load analytics data.", \'error\');
-  }
+  } catch (error) { hideLoading(); console.error("Error loading analytics:", error); }
 }
 
 function renderQuizHistoryTable(history) {
   const tableBody = document.getElementById(\'quizHistoryTableBody\');
-  tableBody.innerHTML = \'\';
-
-  if (history.length === 0) {
-    tableBody.innerHTML = \'<tr><td colspan="5" class="text-center text-dim">No quiz history available.</td></tr>\';
-    return;
-  }
-
-  history.forEach(entry => {
-    const date = entry.timestamp ? new Date(entry.timestamp.toDate()).toLocaleDateString() : \'N/A\';
-    const score = entry.score || 0;
-    const accuracy = Math.round((entry.accuracy || 0) * 100);
-    const time = entry.timeTakenSeconds ? `${entry.timeTakenSeconds}s` : \'N/A\';
-    let gradeClass = \'grade-D\';
-    let resultText = \'Fail\';
-    if (accuracy >= 80) { gradeClass = \'grade-A\'; resultText = \'Excellent\'; }
-    else if (accuracy >= 60) { gradeClass = \'grade-B\'; resultText = \'Good\'; }
-    else if (accuracy >= 40) { gradeClass = \'grade-C\'; resultText = \'Fair\'; }
-
-    tableBody.innerHTML += `
-      <tr>
-        <td>${date}</td>
-        <td>${score}</td>
-        <td>${accuracy}%</td>
-        <td>${time}</td>
-        <td><span class="grade-badge ${gradeClass}">${resultText}</span></td>
-      </tr>
-    `;
-  });
+  tableBody.innerHTML = history.length ? history.map(entry => `
+    <tr>
+      <td>${new Date(entry.created_at).toLocaleDateString()}</td>
+      <td>${entry.score}</td>
+      <td>${Math.round(entry.accuracy)}%</td>
+      <td>${entry.time_taken_seconds}s</td>
+      <td><span class="grade-badge ${entry.accuracy >= 80 ? \'grade-A\' : entry.accuracy >= 60 ? \'grade-B\' : \'grade-C\'}">${entry.accuracy >= 80 ? \'Excellent\' : entry.accuracy >= 60 ? \'Good\' : \'Fair\'}</span></td>
+    </tr>`).join(\'\') : \'<tr><td colspan="5" class="text-center text-dim">No history.</td></tr>\';
 }
 
+let performanceChart = null;
 function renderPerformanceChart(history) {
   const ctx = document.getElementById(\'performanceChart\').getContext(\'2d\');
-  if (performanceChart) {
-    performanceChart.destroy();
-  }
-
-  const labels = history.map(entry => entry.timestamp ? new Date(entry.timestamp.toDate()).toLocaleDateString() : \'N/A\');
-  const scores = history.map(entry => entry.score || 0);
-  const accuracies = history.map(entry => Math.round((entry.accuracy || 0) * 100));
-
+  if (performanceChart) performanceChart.destroy();
   performanceChart = new Chart(ctx, {
     type: \'line\',
     data: {
-      labels: labels,
+      labels: history.map(e => new Date(e.created_at).toLocaleDateString()),
       datasets: [
-        {
-          label: \'Score\',
-          data: scores,
-          borderColor: \'#00f0ff\', // var(--cyan)
-          backgroundColor: \'rgba(0, 240, 255, 0.1)\',
-          tension: 0.3,
-          fill: true
-        },
-        {
-          label: \'Accuracy (%)\',
-          data: accuracies,
-          borderColor: \'#10f090\', // var(--green)
-          backgroundColor: \'rgba(16, 240, 144, 0.1)\',
-          tension: 0.3,
-          fill: true
-        }
+        { label: \'Score\', data: history.map(e => e.score), borderColor: \'#00f0ff\', tension: 0.3 },
+        { label: \'Accuracy\', data: history.map(e => e.accuracy), borderColor: \'#10f090\', tension: 0.3 }
       ]
     },
-    options: {
-      responsive: true,
-      maintainAspectRatio: false,
-      scales: {
-        x: {
-          grid: { color: \'rgba(255,255,255,0.05)\' },
-          ticks: { color: \'var(--text2)\' }
-        },
-        y: {
-          beginAtZero: true,
-          grid: { color: \'rgba(255,255,255,0.05)\' },
-          ticks: { color: \'var(--text2)\' }
-        }
-      },
-      plugins: {
-        legend: {
-          labels: { color: \'var(--text)\' }
-        }
-      }
-    }
+    options: { responsive: true, maintainAspectRatio: false }
   });
 }
 
-// =================================================================================================
-// Schedule Data Loading (from Project A - assuming schedule is static content)
-// =================================================================================================
+// Schedule from Firebase (Static Content)
 async function loadSchedule() {
   showLoading();
   try {
-    const scheduleGrid = document.getElementById(\'scheduleGrid\');
-    scheduleGrid.innerHTML = \'<div style="text-align:center;padding:20px;color:var(--text2);">Loading schedule...</div>\';
-
-    // Assuming schedule data is in a collection named 'schedule' in Project A
     const snapshot = await dbContent.collection("schedule").orderBy("date", "asc").get();
-    const scheduleItems = snapshot.docs.map(doc => ({
-      id: doc.id,
-      ...doc.data()
-    }));
-
-    scheduleGrid.innerHTML = \'\';
-    if (scheduleItems.length === 0) {
-      scheduleGrid.innerHTML = \'<div style="text-align:center;padding:20px;color:var(--text2);">No schedule available.</div>\';
-    } else {
-      const today = new Date();
-      today.setHours(0, 0, 0, 0);
-
-      scheduleItems.forEach(item => {
-        const itemDate = item.date.toDate(); // Assuming Firebase Timestamp
-        itemDate.setHours(0, 0, 0, 0);
-
-        let cardClass = \'\';
-        if (itemDate.getTime() === today.getTime()) {
-          cardClass = \'today\';
-        } else if (itemDate < today) {
-          cardClass = \'past\';
-        }
-        if (item.isHoliday) {
-          cardClass += \' holiday\';
-        }
-
-        scheduleGrid.innerHTML += `
-          <div class="sched-card ${cardClass}">
-            <div class="sched-day-num">${itemDate.getDate()}</div>
-            <div class="sched-info">
-              <div class="sched-date">${itemDate.toLocaleString(\'en-US\', { month: \'short\', year: \'numeric\'})}</div>
-              <div class="sched-chapter">${item.chapter}</div>
-              <div class="sched-subject" style="background:${getSubjectColor(item.subject, \'bg\')};color:${getSubjectColor(item.subject, \'text\')};">${item.subject}</div>
-            </div>
+    const scheduleItems = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+    const scheduleGrid = document.getElementById(\'scheduleGrid\');
+    scheduleGrid.innerHTML = scheduleItems.map(item => {
+      const date = item.date.toDate();
+      return `
+        <div class="sched-card ${date.toDateString() === new Date().toDateString() ? \'today\' : \'\'}">
+          <div class="sched-day-num">${date.getDate()}</div>
+          <div class="sched-info">
+            <div class="sched-date">${date.toLocaleString(\'en-US\', { month: \'short\', year: \'numeric\'})}</div>
+            <div class="sched-chapter">${item.chapter}</div>
+            <div class="sched-subject">${item.subject}</div>
           </div>
-        `;
-      });
-    }
+        </div>`;
+    }).join(\'\');
     hideLoading();
-  } catch (error) {
-    hideLoading();
-    console.error("Error loading schedule:", error);
-    logErrorToFirebase(error, "loadSchedule");
-    showToast("Failed to load schedule.", \'error\');
-  }
+  } catch (error) { hideLoading(); console.error("Error loading schedule:", error); }
 }
 
-function getSubjectColor(subject, type) {
-  const colors = {
-    Physics: { bg: \'rgba(61,139,255,0.1)\', text: \'var(--blue)\' },
-    Chemistry: { bg: \'rgba(168,85,247,0.1)\', text: \'var(--purple)\' },
-    Biology: { bg: \'rgba(16,240,144,0.1)\', text: \'var(--green)\' },
-    Math: { bg: \'rgba(255,214,10,0.1)\', text: \'var(--yellow)\' },
-    // Add more subjects as needed
-  };
-  const defaultColor = { bg: \'rgba(255,255,255,0.05)\', text: \'var(--text2)\' };
-  return colors[subject] ? colors[subject][type] : defaultColor[type];
-}
-
-// =================================================================================================
-// Initial Load and Event Listeners
-// =================================================================================================
+// Initial Setup
 document.addEventListener(\'DOMContentLoaded\', () => {
-  hideLoading(); // Hide initial loading overlay
-  // Initial screen will be determined by auth.onAuthStateChanged
-
-  document.getElementById(\'hamburgerBtn\').addEventListener(\'click\', () => {
-    document.getElementById(\'mobileDrawer\').classList.toggle(\'open\');
-  });
-
-  // Load dashboard data when home screen is active
-  document.getElementById(\'homeScreen\').addEventListener(\'DOMNodeInserted\', (event) => {
-    if (event.target.classList && event.target.classList.contains(\'active\')) {
-      loadDashboardData();
-    }
-  });
-
-  // Initial load of dashboard data if already on home screen (e.g., after refresh and auto-login)
-  if (document.getElementById(\'homeScreen\').classList.contains(\'active\')) {
-    loadDashboardData();
-  }
+  hideLoading();
+  document.getElementById(\'hamburgerBtn\').addEventListener(\'click\', () => document.getElementById(\'mobileDrawer\').classList.toggle(\'open\'));
+  document.getElementById(\'homeScreen\').addEventListener(\'DOMNodeInserted\', (e) => { if (e.target.classList && e.target.classList.contains(\'active\')) loadDashboardData(); });
 });
 
 </script>
