@@ -1,0 +1,285 @@
+        }
+        function saveQuestion() {
+            const text = document.getElementById('questionTextInput').value;
+            if (!text) { showToast('Please enter question text', 'error'); return; }
+
+            if (editingQuestionId) {
+                const q = adminQuestions.find(q => q.id === editingQuestionId);
+                q.text = text;
+                q.subject = document.getElementById('questionSubjectInput').value;
+                q.difficulty = document.getElementById('questionDifficultyInput').value;
+                showToast('Question updated!', 'success');
+            } else {
+                adminQuestions.push({
+                    id: Date.now(),
+                    text,
+                    subject: document.getElementById('questionSubjectInput').value,
+                    difficulty: document.getElementById('questionDifficultyInput').value
+                });
+                showToast('Question added!', 'success');
+            }
+            closeQuestionModal();
+            loadQuestionsTable();
+        }
+        function editQuestion(id) { openQuestionModal(id); }
+        function deleteQuestion(id) {
+            if (!confirm('Delete this question?')) return;
+            adminQuestions = adminQuestions.filter(q => q.id !== id);
+            loadQuestionsTable();
+            showToast('Question deleted', 'success');
+        }
+
+        // ==================== USERS TABLE ====================
+        function loadUsersTable() {
+            const tbody = document.getElementById('usersTableBody');
+            tbody.innerHTML = adminUsers.map(u => `
+                <tr class="hover:bg-gray-50 transition-colors">
+                    <td class="py-4 px-4 lg:px-6">
+                        <div class="flex items-center gap-3">
+                            <div class="w-10 h-10 rounded-full bg-gradient-to-br from-primary-500 to-primary-700 flex items-center justify-center text-white font-bold text-xs">
+                                ${u.name.split(' ').map(n => n[0]).join('')}
+                            </div>
+                            <div>
+                                <p class="font-medium text-sm text-gray-900">${u.name}</p>
+                                <p class="text-xs text-gray-500">${u.email}</p>
+                            </div>
+                        </div>
+                    </td>
+                    <td class="py-4 px-4 lg:px-6 text-center">
+                        <span class="text-xs font-medium px-2.5 py-1 rounded-full ${
+                            u.role === 'student' ? 'bg-primary-50 text-primary-600' : 
+                            u.role === 'admin' ? 'bg-warning-50 text-warning-600' : 
+                            'bg-purple-50 text-purple-600'
+                        }">${u.role.replace('_', ' ').replace(/\b\w/g, l => l.toUpperCase())}</span>
+                    </td>
+                    <td class="py-4 px-4 lg:px-6 text-center text-sm text-gray-700">${u.exams}</td>
+                    <td class="py-4 px-4 lg:px-6 text-center">
+                        <span class="text-sm font-bold ${u.avgScore >= 90 ? 'text-success-600' : u.avgScore >= 75 ? 'text-primary-600' : 'text-warning-600'}">${u.avgScore > 0 ? u.avgScore + '%' : '-'}</span>
+                    </td>
+                    <td class="py-4 px-4 lg:px-6 text-center">
+                        <span class="text-xs font-medium px-2.5 py-1 rounded-full ${u.status === 'active' ? 'bg-success-50 text-success-600' : 'bg-gray-100 text-gray-600'}">${u.status.charAt(0).toUpperCase() + u.status.slice(1)}</span>
+                    </td>
+                    <td class="py-4 px-4 lg:px-6 text-right">
+                        <div class="flex items-center justify-end gap-2">
+                            <button onclick="editUser(${u.id})" class="w-8 h-8 rounded-lg bg-gray-100 flex items-center justify-center text-gray-600 hover:bg-primary-50 hover:text-primary-600 transition-all">
+                                <i class="fas fa-edit text-xs"></i>
+                            </button>
+                            <button onclick="toggleUserStatus(${u.id})" class="w-8 h-8 rounded-lg bg-gray-100 flex items-center justify-center text-gray-600 hover:bg-warning-50 hover:text-warning-600 transition-all">
+                                <i class="fas ${u.status === 'active' ? 'fa-ban' : 'fa-check'} text-xs"></i>
+                            </button>
+                            ${isSuperAdmin ? `<button onclick="deleteUser(${u.id})" class="w-8 h-8 rounded-lg bg-gray-100 flex items-center justify-center text-gray-600 hover:bg-red-50 hover:text-red-600 transition-all"><i class="fas fa-trash text-xs"></i></button>` : ''}
+                        </div>
+                    </td>
+                </tr>
+            `).join('');
+        }
+
+        let editingUserId = null;
+        let currentUserRole = 'student';
+
+        function selectUserRole(role) {
+            currentUserRole = role;
+            ['student','admin','super_admin'].forEach(r => {
+                const el = document.getElementById('userRole' + r.charAt(0).toUpperCase() + r.slice(1).replace('_',''));
+                if (r === role) { el.classList.add('role-selected'); el.classList.remove('role-unselected'); }
+                else { el.classList.remove('role-selected'); el.classList.add('role-unselected'); }
+            });
+        }
+
+        function openUserModal(id = null) {
+            editingUserId = id;
+            document.getElementById('userModalTitle').textContent = id ? 'Edit User' : 'Add User';
+            if (id) {
+                const u = adminUsers.find(u => u.id === id);
+                const names = u.name.split(' ');
+                document.getElementById('userFirstNameInput').value = names[0];
+                document.getElementById('userLastNameInput').value = names.slice(1).join(' ');
+                document.getElementById('userEmailInput').value = u.email;
+                selectUserRole(u.role);
+                document.getElementById('userPasswordInput').parentElement.style.display = 'none';
+            } else {
+                document.getElementById('userFirstNameInput').value = '';
+                document.getElementById('userLastNameInput').value = '';
+                document.getElementById('userEmailInput').value = '';
+                document.getElementById('userPasswordInput').value = '';
+                document.getElementById('userPasswordInput').parentElement.style.display = '';
+                selectUserRole('student');
+            }
+            document.getElementById('userModal').classList.remove('hidden');
+            document.getElementById('userModal').classList.add('flex');
+        }
+        function closeUserModal() {
+            document.getElementById('userModal').classList.add('hidden');
+            document.getElementById('userModal').classList.remove('flex');
+        }
+        function saveUser() {
+            const firstName = document.getElementById('userFirstNameInput').value.trim();
+            const lastName = document.getElementById('userLastNameInput').value.trim();
+            const email = document.getElementById('userEmailInput').value.trim();
+
+            if (!firstName || !email) { showToast('Please fill required fields', 'error'); return; }
+            if (!email.includes('@')) { showToast('Invalid email', 'error'); return; }
+
+            if (editingUserId) {
+                const u = adminUsers.find(u => u.id === editingUserId);
+                u.name = firstName + ' ' + lastName;
+                u.email = email;
+                u.role = currentUserRole;
+                showToast('User updated!', 'success');
+            } else {
+                const password = document.getElementById('userPasswordInput').value;
+                if (password.length < 8) { showToast('Password must be 8+ chars', 'error'); return; }
+                adminUsers.push({
+                    id: Date.now(),
+                    name: firstName + ' ' + lastName,
+                    email,
+                    role: currentUserRole,
+                    exams: 0,
+                    avgScore: 0,
+                    status: 'active'
+                });
+                showToast('User created!', 'success');
+            }
+            closeUserModal();
+            loadUsersTable();
+        }
+        function editUser(id) { openUserModal(id); }
+        function toggleUserStatus(id) {
+            const u = adminUsers.find(u => u.id === id);
+            u.status = u.status === 'active' ? 'inactive' : 'active';
+            loadUsersTable();
+            showToast(`User ${u.status === 'active' ? 'activated' : 'deactivated'}`, 'success');
+        }
+        function deleteUser(id) {
+            if (!isSuperAdmin) { showToast('Super Admin required', 'error'); return; }
+            if (!confirm('Permanently delete this user?')) return;
+            adminUsers = adminUsers.filter(u => u.id !== id);
+            loadUsersTable();
+            showToast('User deleted', 'success');
+        }
+
+        // ==================== ANALYTICS ====================
+        function loadAnalytics() {
+            setTimeout(() => {
+                const ctx1 = document.getElementById('subjectPerfChart');
+                if (ctx1) {
+                    new Chart(ctx1, {
+                        type: 'bar',
+                        data: {
+                            labels: ['Math', 'Physics', 'Chemistry', 'Biology', 'English', 'CS'],
+                            datasets: [{
+                                label: 'Avg Score',
+                                data: [78, 72, 68, 81, 75, 83],
+                                backgroundColor: '#3b82f6',
+                                borderRadius: 8
+                            }, {
+                                label: 'Pass Rate',
+                                data: [85, 70, 65, 88, 80, 90],
+                                backgroundColor: '#22c55e',
+                                borderRadius: 8
+                            }]
+                        },
+                        options: {
+                            responsive: true,
+                            maintainAspectRatio: false,
+                            scales: { y: { beginAtZero: true, max: 100, grid: { display: false } }, x: { grid: { display: false } } }
+                        }
+                    });
+                }
+
+                const ctx2 = document.getElementById('mauChart');
+                if (ctx2) {
+                    new Chart(ctx2, {
+                        type: 'line',
+                        data: {
+                            labels: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun'],
+                            datasets: [{
+                                label: 'Active Users',
+                                data: [850, 920, 1050, 1100, 1200, 1247],
+                                borderColor: '#8b5cf6',
+                                backgroundColor: 'rgba(139,92,246,0.1)',
+                                fill: true,
+                                tension: 0.4,
+                                pointRadius: 4
+                            }]
+                        },
+                        options: {
+                            responsive: true,
+                            maintainAspectRatio: false,
+                            plugins: { legend: { display: false } },
+                            scales: { y: { beginAtZero: true, grid: { display: false } }, x: { grid: { display: false } } }
+                        }
+                    });
+                }
+            }, 100);
+
+            const topStudents = [
+                { rank: 1, name: 'Alice Johnson', exams: 15, avgScore: 94, passRate: 100 },
+                { rank: 2, name: 'Bob Williams', exams: 14, avgScore: 91, passRate: 93 },
+                { rank: 3, name: 'Carol Davis', exams: 16, avgScore: 89, passRate: 88 },
+                { rank: 4, name: 'David Brown', exams: 13, avgScore: 87, passRate: 85 },
+                { rank: 5, name: 'Emma Wilson', exams: 11, avgScore: 76, passRate: 82 },
+            ];
+
+            document.getElementById('topStudentsTable').innerHTML = topStudents.map(s => `
+                <tr class="hover:bg-gray-50 transition-colors">
+                    <td class="py-3 px-4">
+                        <div class="w-8 h-8 rounded-full ${s.rank <= 3 ? 'bg-gradient-to-br from-yellow-400 to-yellow-600 text-white' : 'bg-gray-100 text-gray-600'} flex items-center justify-center font-bold text-xs">${s.rank}</div>
+                    </td>
+                    <td class="py-3 px-4 font-medium text-sm text-gray-900">${s.name}</td>
+                    <td class="py-3 px-4 text-center text-sm text-gray-700">${s.exams}</td>
+                    <td class="py-3 px-4 text-center">
+                        <span class="text-sm font-bold ${s.avgScore >= 90 ? 'text-success-600' : 'text-primary-600'}">${s.avgScore}%</span>
+                    </td>
+                    <td class="py-3 px-4 text-right">
+                        <div class="flex items-center justify-end gap-2">
+                            <div class="w-16 h-2 bg-gray-100 rounded-full overflow-hidden">
+                                <div class="h-full bg-success-500 rounded-full" style="width: ${s.passRate}%"></div>
+                            </div>
+                            <span class="text-xs font-bold text-gray-700">${s.passRate}%</span>
+                        </div>
+                    </td>
+                </tr>
+            `).join('');
+        }
+
+        // ==================== UI HELPERS ====================
+        function showToast(message, type = 'success') {
+            const container = document.getElementById('toastContainer');
+            const toast = document.createElement('div');
+            const colors = { success: 'bg-green-500', error: 'bg-red-500', warning: 'bg-yellow-500', info: 'bg-blue-500' };
+            const icons = { success: 'fa-check-circle', error: 'fa-exclamation-circle', warning: 'fa-exclamation-triangle', info: 'fa-info-circle' };
+            toast.className = `toast flex items-center gap-3 px-4 py-3 rounded-xl text-white shadow-lg ${colors[type]} max-w-sm`;
+            toast.innerHTML = `<i class="fas ${icons[type]}"></i><span class="text-sm font-medium">${message}</span>`;
+            container.appendChild(toast);
+            setTimeout(() => toast.remove(), 3000);
+        }
+
+        function toggleMobileMenu() {
+            const menu = document.getElementById('mobileMenuOverlay');
+            menu.classList.toggle('hidden');
+            menu.classList.toggle('flex');
+        }
+
+        function showNotifications() {
+            const modal = document.getElementById('notificationsModal');
+            modal.classList.remove('hidden');
+            modal.classList.add('flex');
+        }
+        function closeNotifications() {
+            const modal = document.getElementById('notificationsModal');
+            modal.classList.add('hidden');
+            modal.classList.remove('flex');
+        }
+
+        function logout() {
+            localStorage.removeItem('exampro_session');
+            window.location.href = 'login.html';
+        }
+
+        // ==================== INIT ====================
+        loadOverview();
+        navigateTo('overview');
+    </script>
+</body>
+</html>

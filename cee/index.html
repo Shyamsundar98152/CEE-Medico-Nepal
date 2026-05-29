@@ -1,0 +1,118 @@
+Chart(ctx2, {
+                        type: 'radar',
+                        data: {
+                            labels: ['Math', 'Physics', 'Chemistry', 'Biology', 'English', 'CS'],
+                            datasets: [{
+                                label: 'Your Score',
+                                data: [85, 78, 72, 91, 68, 82],
+                                borderColor: '#3b82f6',
+                                backgroundColor: 'rgba(59,130,246,0.2)',
+                                pointBackgroundColor: '#3b82f6'
+                            }, {
+                                label: 'Class Average',
+                                data: [70, 65, 68, 75, 72, 70],
+                                borderColor: '#9ca3af',
+                                backgroundColor: 'rgba(156,163,175,0.1)',
+                                pointBackgroundColor: '#9ca3af'
+                            }]
+                        },
+                        options: {
+                            responsive: true,
+                            maintainAspectRatio: false,
+                            scales: { r: { beginAtZero: true, max: 100 } }
+                        }
+                    });
+                }
+            }, 100);
+
+            // Attempts table
+            const tbody = document.getElementById('attemptsTable');
+            tbody.innerHTML = attempts.map(a => `
+                <tr class="hover:bg-gray-50 transition-colors">
+                    <td class="py-3 px-4 font-medium text-gray-900">${a.exam}</td>
+                    <td class="py-3 px-4 text-center text-gray-500">${a.date}</td>
+                    <td class="py-3 px-4 text-center">
+                        <span class="font-bold ${a.score >= 75 ? 'text-success-600' : a.score >= 60 ? 'text-warning-600' : 'text-danger-600'}">${a.score}%</span>
+                    </td>
+                    <td class="py-3 px-4 text-center text-gray-500">${a.time}</td>
+                    <td class="py-3 px-4 text-right">
+                        <span class="text-xs font-medium px-2.5 py-1 rounded-full ${a.status === 'passed' ? 'bg-success-50 text-success-600' : 'bg-danger-50 text-danger-600'}">
+                            ${a.status === 'passed' ? 'Passed' : 'Failed'}
+                        </span>
+                    </td>
+                </tr>
+            `).join('');
+        }
+
+        // ==================== PROFILE ====================
+        function saveProfile() {
+            const name = document.getElementById('editName').value;
+            const email = document.getElementById('editEmail').value;
+            if (!name || !email) { showToast('Please fill in all fields', 'error'); return; }
+
+            const names = name.split(' ');
+            user.firstName = names[0];
+            user.lastName = names.slice(1).join(' ') || '';
+            user.email = email;
+
+            session.user = user;
+            localStorage.setItem('exampro_session', JSON.stringify(session));
+
+            document.getElementById('profileName').textContent = name;
+            document.getElementById('profileEmail').textContent = email;
+            document.getElementById('desktopUserName').textContent = name;
+            document.getElementById('mobileUserName').textContent = name;
+
+            const newInitials = (user.firstName[0] + (user.lastName[0] || '')).toUpperCase();
+            document.getElementById('desktopAvatar').textContent = newInitials;
+            document.getElementById('mobileAvatar').textContent = newInitials;
+            document.getElementById('profileAvatar').textContent = newInitials;
+
+            showToast('Profile updated successfully!', 'success');
+        }
+
+        // ==================== UI HELPERS ====================
+        function showToast(message, type = 'success') {
+            const container = document.getElementById('toastContainer');
+            const toast = document.createElement('div');
+            const colors = { success: 'bg-green-500', error: 'bg-red-500', warning: 'bg-yellow-500', info: 'bg-blue-500' };
+            const icons = { success: 'fa-check-circle', error: 'fa-exclamation-circle', warning: 'fa-exclamation-triangle', info: 'fa-info-circle' };
+            toast.className = `toast flex items-center gap-3 px-4 py-3 rounded-xl text-white shadow-lg ${colors[type]} max-w-sm`;
+            toast.innerHTML = `<i class="fas ${icons[type]}"></i><span class="text-sm font-medium">${message}</span>`;
+            container.appendChild(toast);
+            setTimeout(() => toast.remove(), 3000);
+        }
+
+        function toggleMobileMenu() {
+            const menu = document.getElementById('mobileMenuOverlay');
+            menu.classList.toggle('hidden');
+            menu.classList.toggle('flex');
+        }
+
+        function toggleMobileSearch() {
+            document.getElementById('mobileSearch').classList.toggle('hidden');
+        }
+
+        function showNotifications() {
+            const modal = document.getElementById('notificationsModal');
+            modal.classList.remove('hidden');
+            modal.classList.add('flex');
+        }
+
+        function closeNotifications() {
+            const modal = document.getElementById('notificationsModal');
+            modal.classList.add('hidden');
+            modal.classList.remove('flex');
+        }
+
+        function logout() {
+            localStorage.removeItem('exampro_session');
+            window.location.href = 'login.html';
+        }
+
+        // ==================== INIT ====================
+        loadDashboard();
+        navigateTo('dashboard');
+    </script>
+</body>
+</html>

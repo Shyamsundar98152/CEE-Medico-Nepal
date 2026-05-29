@@ -1,0 +1,405 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>ExamPro - Login</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: { sans: ['Inter', 'sans-serif'] },
+                    colors: {
+                        primary: { 50: '#eff6ff', 100: '#dbeafe', 200: '#bfdbfe', 300: '#93c5fd', 400: '#60a5fa', 500: '#3b82f6', 600: '#2563eb', 700: '#1d4ed8', 800: '#1e40af', 900: '#1e3a8a' },
+                        success: { 50: '#f0fdf4', 100: '#dcfce7', 500: '#22c55e', 600: '#16a34a' },
+                        danger: { 50: '#fef2f2', 100: '#fee2e2', 500: '#ef4444', 600: '#dc2626' },
+                        warning: { 50: '#fffbeb', 100: '#fef3c7', 500: '#f59e0b', 600: '#d97706' }
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        * { -webkit-tap-highlight-color: transparent; }
+        body { font-family: 'Inter', sans-serif; background: #f8fafc; }
+        .glass { background: rgba(255,255,255,0.95); backdrop-filter: blur(20px); }
+        .input-focus:focus { box-shadow: 0 0 0 3px rgba(59,130,246,0.15); border-color: #3b82f6; }
+        .slide-up { animation: slideUp 0.5s ease-out; }
+        @keyframes slideUp { from { opacity:0; transform: translateY(20px); } to { opacity:1; transform: translateY(0); } }
+        .shake { animation: shake 0.5s ease-in-out; }
+        @keyframes shake { 0%,100% { transform: translateX(0); } 25% { transform: translateX(-8px); } 75% { transform: translateX(8px); } }
+        .loader { border: 3px solid #f3f4f6; border-top: 3px solid #3b82f6; border-radius: 50%; width: 20px; height: 20px; animation: spin 1s linear infinite; }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+        .tab-active { border-bottom: 2px solid #3b82f6; color: #3b82f6; }
+        .tab-inactive { border-bottom: 2px solid transparent; color: #64748b; }
+        .role-selected { border-color: #3b82f6; background: #eff6ff; color: #3b82f6; }
+        .role-unselected { border-color: #e2e8f0; background: white; color: #64748b; }
+        .role-unselected:hover { border-color: #cbd5e1; background: #f8fafc; }
+        .toast { animation: toastIn 0.3s ease-out, toastOut 0.3s ease-in 2.7s forwards; }
+        @keyframes toastIn { from { transform: translateX(100%); opacity:0; } to { transform: translateX(0); opacity:1; } }
+        @keyframes toastOut { from { transform: translateX(0); opacity:1; } to { transform: translateX(100%); opacity:0; } }
+        .pattern-bg { background-image: url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%233b82f6' fill-opacity='0.03'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E"); }
+    </style>
+</head>
+<body class="min-h-screen flex items-center justify-center pattern-bg p-4">
+
+    <!-- Toast Container -->
+    <div id="toastContainer" class="fixed top-4 right-4 z-50 space-y-2"></div>
+
+    <div class="w-full max-w-md">
+        <!-- Logo Header -->
+        <div class="text-center mb-8 slide-up">
+            <div class="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-gradient-to-br from-primary-500 to-primary-700 shadow-lg shadow-primary-500/30 mb-4">
+                <i class="fas fa-graduation-cap text-white text-2xl"></i>
+            </div>
+            <h1 class="text-3xl font-bold text-gray-900 tracking-tight">ExamPro</h1>
+            <p class="text-gray-500 mt-1 text-sm">Master your exams with confidence</p>
+        </div>
+
+        <!-- Auth Card -->
+        <div class="glass rounded-2xl shadow-xl border border-white/50 slide-up" style="animation-delay: 0.1s">
+            <!-- Tabs -->
+            <div class="flex border-b border-gray-100">
+                <button onclick="switchTab('login')" id="tabLogin" class="flex-1 py-4 text-sm font-semibold tab-active transition-all">
+                    <i class="fas fa-sign-in-alt mr-2"></i>Sign In
+                </button>
+                <button onclick="switchTab('signup')" id="tabSignup" class="flex-1 py-4 text-sm font-semibold tab-inactive transition-all">
+                    <i class="fas fa-user-plus mr-2"></i>Sign Up
+                </button>
+            </div>
+
+            <!-- Login Form -->
+            <div id="loginForm" class="p-6 space-y-5">
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1.5">Email Address</label>
+                    <div class="relative">
+                        <i class="fas fa-envelope absolute left-3.5 top-3.5 text-gray-400 text-sm"></i>
+                        <input type="email" id="loginEmail" placeholder="you@example.com" 
+                            class="w-full pl-10 pr-4 py-3 border border-gray-200 rounded-xl text-sm input-focus outline-none transition-all bg-gray-50/50"
+                            onkeypress="if(event.key==='Enter') handleLogin()">
+                    </div>
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1.5">Password</label>
+                    <div class="relative">
+                        <i class="fas fa-lock absolute left-3.5 top-3.5 text-gray-400 text-sm"></i>
+                        <input type="password" id="loginPassword" placeholder="••••••••" 
+                            class="w-full pl-10 pr-10 py-3 border border-gray-200 rounded-xl text-sm input-focus outline-none transition-all bg-gray-50/50"
+                            onkeypress="if(event.key==='Enter') handleLogin()">
+                        <button onclick="togglePassword('loginPassword', this)" class="absolute right-3.5 top-3.5 text-gray-400 hover:text-gray-600">
+                            <i class="fas fa-eye text-sm"></i>
+                        </button>
+                    </div>
+                </div>
+                <div class="flex items-center justify-between text-sm">
+                    <label class="flex items-center cursor-pointer">
+                        <input type="checkbox" id="rememberMe" class="w-4 h-4 rounded border-gray-300 text-primary-600 focus:ring-primary-500">
+                        <span class="ml-2 text-gray-600">Remember me</span>
+                    </label>
+                    <button onclick="showForgotPassword()" class="text-primary-600 hover:text-primary-700 font-medium">Forgot password?</button>
+                </div>
+                <button onclick="handleLogin()" id="loginBtn" class="w-full bg-gradient-to-r from-primary-600 to-primary-700 text-white py-3 rounded-xl font-semibold text-sm shadow-lg shadow-primary-500/30 hover:shadow-primary-500/40 active:scale-[0.98] transition-all flex items-center justify-center gap-2">
+                    <span id="loginBtnText">Sign In</span>
+                    <div id="loginLoader" class="loader hidden"></div>
+                </button>
+                <div class="relative">
+                    <div class="absolute inset-0 flex items-center"><div class="w-full border-t border-gray-200"></div></div>
+                    <div class="relative flex justify-center text-sm"><span class="px-3 bg-white text-gray-500">or continue with</span></div>
+                </div>
+                <div class="grid grid-cols-2 gap-3">
+                    <button onclick="socialLogin('google')" class="flex items-center justify-center gap-2 py-2.5 border border-gray-200 rounded-xl hover:bg-gray-50 transition-all text-sm font-medium text-gray-700">
+                        <i class="fab fa-google text-red-500"></i> Google
+                    </button>
+                    <button onclick="socialLogin('github')" class="flex items-center justify-center gap-2 py-2.5 border border-gray-200 rounded-xl hover:bg-gray-50 transition-all text-sm font-medium text-gray-700">
+                        <i class="fab fa-github text-gray-900"></i> GitHub
+                    </button>
+                </div>
+            </div>
+
+            <!-- Signup Form -->
+            <div id="signupForm" class="p-6 space-y-4 hidden">
+                <div class="grid grid-cols-2 gap-3">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1.5">First Name</label>
+                        <input type="text" id="signupFirstName" placeholder="John" 
+                            class="w-full px-4 py-3 border border-gray-200 rounded-xl text-sm input-focus outline-none transition-all bg-gray-50/50">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1.5">Last Name</label>
+                        <input type="text" id="signupLastName" placeholder="Doe" 
+                            class="w-full px-4 py-3 border border-gray-200 rounded-xl text-sm input-focus outline-none transition-all bg-gray-50/50">
+                    </div>
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1.5">Email Address</label>
+                    <div class="relative">
+                        <i class="fas fa-envelope absolute left-3.5 top-3.5 text-gray-400 text-sm"></i>
+                        <input type="email" id="signupEmail" placeholder="you@example.com" 
+                            class="w-full pl-10 pr-4 py-3 border border-gray-200 rounded-xl text-sm input-focus outline-none transition-all bg-gray-50/50">
+                    </div>
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1.5">Password</label>
+                    <div class="relative">
+                        <i class="fas fa-lock absolute left-3.5 top-3.5 text-gray-400 text-sm"></i>
+                        <input type="password" id="signupPassword" placeholder="Min 8 characters" 
+                            class="w-full pl-10 pr-10 py-3 border border-gray-200 rounded-xl text-sm input-focus outline-none transition-all bg-gray-50/50"
+                            oninput="checkPasswordStrength()">
+                        <button onclick="togglePassword('signupPassword', this)" class="absolute right-3.5 top-3.5 text-gray-400 hover:text-gray-600">
+                            <i class="fas fa-eye text-sm"></i>
+                        </button>
+                    </div>
+                    <div class="mt-2 flex gap-1">
+                        <div id="strength1" class="h-1 flex-1 rounded-full bg-gray-200 transition-all"></div>
+                        <div id="strength2" class="h-1 flex-1 rounded-full bg-gray-200 transition-all"></div>
+                        <div id="strength3" class="h-1 flex-1 rounded-full bg-gray-200 transition-all"></div>
+                        <div id="strength4" class="h-1 flex-1 rounded-full bg-gray-200 transition-all"></div>
+                    </div>
+                    <p id="strengthText" class="text-xs text-gray-500 mt-1">Enter a password</p>
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1.5">Role</label>
+                    <div class="grid grid-cols-3 gap-2">
+                        <button onclick="selectRole('student')" id="roleStudent" class="role-selected py-2.5 px-3 rounded-xl border-2 text-xs font-semibold transition-all flex flex-col items-center gap-1">
+                            <i class="fas fa-user-graduate text-lg"></i>
+                            Student
+                        </button>
+                        <button onclick="selectRole('admin')" id="roleAdmin" class="role-unselected py-2.5 px-3 rounded-xl border-2 text-xs font-semibold transition-all flex flex-col items-center gap-1">
+                            <i class="fas fa-shield-alt text-lg"></i>
+                            Admin
+                        </button>
+                        <button onclick="selectRole('super_admin')" id="roleSuperAdmin" class="role-unselected py-2.5 px-3 rounded-xl border-2 text-xs font-semibold transition-all flex flex-col items-center gap-1">
+                            <i class="fas fa-crown text-lg"></i>
+                            Super Admin
+                        </button>
+                    </div>
+                </div>
+                <label class="flex items-start cursor-pointer">
+                    <input type="checkbox" id="termsAgree" class="w-4 h-4 mt-0.5 rounded border-gray-300 text-primary-600 focus:ring-primary-500">
+                    <span class="ml-2 text-xs text-gray-600">I agree to the <a href="#" class="text-primary-600 hover:underline">Terms of Service</a> and <a href="#" class="text-primary-600 hover:underline">Privacy Policy</a></span>
+                </label>
+                <button onclick="handleSignup()" id="signupBtn" class="w-full bg-gradient-to-r from-primary-600 to-primary-700 text-white py-3 rounded-xl font-semibold text-sm shadow-lg shadow-primary-500/30 hover:shadow-primary-500/40 active:scale-[0.98] transition-all flex items-center justify-center gap-2">
+                    <span id="signupBtnText">Create Account</span>
+                    <div id="signupLoader" class="loader hidden"></div>
+                </button>
+            </div>
+        </div>
+
+        <!-- Footer -->
+        <p class="text-center text-xs text-gray-400 mt-6">
+            © 2026 ExamPro. All rights reserved. Secure & encrypted.
+        </p>
+    </div>
+
+    <!-- Forgot Password Modal -->
+    <div id="forgotModal" class="fixed inset-0 z-50 hidden items-center justify-center p-4">
+        <div class="absolute inset-0 bg-black/40 backdrop-blur-sm" onclick="closeForgotPassword()"></div>
+        <div class="relative bg-white rounded-2xl shadow-2xl p-6 w-full max-w-sm slide-up">
+            <div class="flex items-center justify-between mb-4">
+                <h3 class="text-lg font-bold text-gray-900">Reset Password</h3>
+                <button onclick="closeForgotPassword()" class="text-gray-400 hover:text-gray-600"><i class="fas fa-times"></i></button>
+            </div>
+            <p class="text-sm text-gray-600 mb-4">Enter your email and we'll send you a reset link.</p>
+            <input type="email" id="forgotEmail" placeholder="you@example.com" class="w-full px-4 py-3 border border-gray-200 rounded-xl text-sm input-focus outline-none mb-4">
+            <button onclick="sendResetLink()" class="w-full bg-primary-600 text-white py-3 rounded-xl font-semibold text-sm hover:bg-primary-700 transition-all">Send Reset Link</button>
+        </div>
+    </div>
+
+    <script>
+        let currentRole = 'student';
+        let currentTab = 'login';
+
+        // Check if already logged in
+        const session = JSON.parse(localStorage.getItem('exampro_session') || 'null');
+        if (session && session.token) {
+            const role = session.user.role;
+            if (role === 'student') window.location.href = 'index.html';
+            else window.location.href = 'admin.html';
+        }
+
+        function switchTab(tab) {
+            currentTab = tab;
+            const loginForm = document.getElementById('loginForm');
+            const signupForm = document.getElementById('signupForm');
+            const tabLogin = document.getElementById('tabLogin');
+            const tabSignup = document.getElementById('tabSignup');
+
+            if (tab === 'login') {
+                loginForm.classList.remove('hidden');
+                signupForm.classList.add('hidden');
+                tabLogin.classList.add('tab-active'); tabLogin.classList.remove('tab-inactive');
+                tabSignup.classList.add('tab-inactive'); tabSignup.classList.remove('tab-active');
+            } else {
+                loginForm.classList.add('hidden');
+                signupForm.classList.remove('hidden');
+                tabSignup.classList.add('tab-active'); tabSignup.classList.remove('tab-inactive');
+                tabLogin.classList.add('tab-inactive'); tabLogin.classList.remove('tab-active');
+            }
+        }
+
+        function selectRole(role) {
+            currentRole = role;
+            ['student','admin','super_admin'].forEach(r => {
+                const el = document.getElementById('role' + r.charAt(0).toUpperCase() + r.slice(1).replace('_',''));
+                if (r === role) { el.classList.add('role-selected'); el.classList.remove('role-unselected'); }
+                else { el.classList.remove('role-selected'); el.classList.add('role-unselected'); }
+            });
+        }
+
+        function togglePassword(inputId, btn) {
+            const input = document.getElementById(inputId);
+            const icon = btn.querySelector('i');
+            if (input.type === 'password') { input.type = 'text'; icon.classList.remove('fa-eye'); icon.classList.add('fa-eye-slash'); }
+            else { input.type = 'password'; icon.classList.remove('fa-eye-slash'); icon.classList.add('fa-eye'); }
+        }
+
+        function checkPasswordStrength() {
+            const pwd = document.getElementById('signupPassword').value;
+            let strength = 0;
+            if (pwd.length >= 8) strength++;
+            if (/[A-Z]/.test(pwd)) strength++;
+            if (/[0-9]/.test(pwd)) strength++;
+            if (/[^A-Za-z0-9]/.test(pwd)) strength++;
+
+            const colors = ['bg-gray-200','bg-red-500','bg-orange-500','bg-yellow-500','bg-green-500'];
+            const texts = ['Enter a password','Weak','Fair','Good','Strong'];
+            const textColors = ['text-gray-500','text-red-500','text-orange-500','text-yellow-600','text-green-600'];
+
+            for (let i = 1; i <= 4; i++) {
+                document.getElementById('strength' + i).className = 'h-1 flex-1 rounded-full transition-all ' + (i <= strength ? colors[strength] : 'bg-gray-200');
+            }
+            document.getElementById('strengthText').textContent = texts[strength];
+            document.getElementById('strengthText').className = 'text-xs mt-1 ' + textColors[strength];
+        }
+
+        function showToast(message, type = 'success') {
+            const container = document.getElementById('toastContainer');
+            const toast = document.createElement('div');
+            const colors = { success: 'bg-green-500', error: 'bg-red-500', warning: 'bg-yellow-500', info: 'bg-blue-500' };
+            const icons = { success: 'fa-check-circle', error: 'fa-exclamation-circle', warning: 'fa-exclamation-triangle', info: 'fa-info-circle' };
+            toast.className = `toast flex items-center gap-3 px-4 py-3 rounded-xl text-white shadow-lg ${colors[type]} max-w-sm`;
+            toast.innerHTML = `<i class="fas ${icons[type]}"></i><span class="text-sm font-medium">${message}</span>`;
+            container.appendChild(toast);
+            setTimeout(() => toast.remove(), 3000);
+        }
+
+        function setLoading(btnId, textId, loaderId, loading) {
+            const btn = document.getElementById(btnId);
+            const text = document.getElementById(textId);
+            const loader = document.getElementById(loaderId);
+            btn.disabled = loading;
+            if (loading) { text.classList.add('hidden'); loader.classList.remove('hidden'); btn.classList.add('opacity-75'); }
+            else { text.classList.remove('hidden'); loader.classList.add('hidden'); btn.classList.remove('opacity-75'); }
+        }
+
+        function handleLogin() {
+            const email = document.getElementById('loginEmail').value.trim();
+            const password = document.getElementById('loginPassword').value;
+
+            if (!email || !password) { showToast('Please fill in all fields', 'error'); return; }
+            if (!email.includes('@')) { showToast('Please enter a valid email', 'error'); return; }
+
+            setLoading('loginBtn', 'loginBtnText', 'loginLoader', true);
+
+            // Simulate API call
+            setTimeout(() => {
+                // Check against local users
+                const users = JSON.parse(localStorage.getItem('exampro_users') || '[]');
+                const user = users.find(u => u.email === email && u.password === password);
+
+                if (!user) {
+                    // Demo accounts
+                    if (email === 'student@exampro.com' && password === 'student123') {
+                        createSession({ id: 'demo-student', email, firstName: 'Demo', lastName: 'Student', role: 'student' });
+                        return;
+                    } else if (email === 'admin@exampro.com' && password === 'admin123') {
+                        createSession({ id: 'demo-admin', email, firstName: 'Demo', lastName: 'Admin', role: 'admin' });
+                        return;
+                    } else if (email === 'super@exampro.com' && password === 'super123') {
+                        createSession({ id: 'demo-super', email, firstName: 'Demo', lastName: 'Super', role: 'super_admin' });
+                        return;
+                    }
+                    setLoading('loginBtn', 'loginBtnText', 'loginLoader', false);
+                    showToast('Invalid email or password', 'error');
+                    document.getElementById('loginForm').classList.add('shake');
+                    setTimeout(() => document.getElementById('loginForm').classList.remove('shake'), 500);
+                    return;
+                }
+
+                createSession(user);
+            }, 1200);
+        }
+
+        function createSession(user) {
+            const session = { token: 'token_' + Date.now(), user, expires: Date.now() + 86400000 };
+            localStorage.setItem('exampro_session', JSON.stringify(session));
+            showToast(`Welcome back, ${user.firstName}!`, 'success');
+            setTimeout(() => {
+                if (user.role === 'student') window.location.href = 'index.html';
+                else window.location.href = 'admin.html';
+            }, 800);
+        }
+
+        function handleSignup() {
+            const firstName = document.getElementById('signupFirstName').value.trim();
+            const lastName = document.getElementById('signupLastName').value.trim();
+            const email = document.getElementById('signupEmail').value.trim();
+            const password = document.getElementById('signupPassword').value;
+            const terms = document.getElementById('termsAgree').checked;
+
+            if (!firstName || !lastName || !email || !password) { showToast('Please fill in all fields', 'error'); return; }
+            if (!email.includes('@')) { showToast('Please enter a valid email', 'error'); return; }
+            if (password.length < 8) { showToast('Password must be at least 8 characters', 'error'); return; }
+            if (!terms) { showToast('Please agree to the terms', 'warning'); return; }
+
+            setLoading('signupBtn', 'signupBtnText', 'signupLoader', true);
+
+            setTimeout(() => {
+                const users = JSON.parse(localStorage.getItem('exampro_users') || '[]');
+                if (users.find(u => u.email === email)) {
+                    setLoading('signupBtn', 'signupBtnText', 'signupLoader', false);
+                    showToast('Email already registered', 'error');
+                    return;
+                }
+
+                const newUser = { id: 'user_' + Date.now(), email, password, firstName, lastName, role: currentRole, createdAt: new Date().toISOString() };
+                users.push(newUser);
+                localStorage.setItem('exampro_users', JSON.stringify(users));
+
+                showToast('Account created successfully!', 'success');
+                setTimeout(() => {
+                    createSession(newUser);
+                }, 500);
+            }, 1200);
+        }
+
+        function socialLogin(provider) {
+            showToast(`${provider.charAt(0).toUpperCase() + provider.slice(1)} login coming soon`, 'info');
+        }
+
+        function showForgotPassword() {
+            document.getElementById('forgotModal').classList.remove('hidden');
+            document.getElementById('forgotModal').classList.add('flex');
+        }
+        function closeForgotPassword() {
+            document.getElementById('forgotModal').classList.add('hidden');
+            document.getElementById('forgotModal').classList.remove('flex');
+        }
+        function sendResetLink() {
+            const email = document.getElementById('forgotEmail').value;
+            if (!email.includes('@')) { showToast('Please enter a valid email', 'error'); return; }
+            showToast('Reset link sent to your email', 'success');
+            closeForgotPassword();
+        }
+
+        // Demo hint
+        console.log('%c ExamPro Demo Accounts ', 'background: #3b82f6; color: white; padding: 4px 8px; border-radius: 4px;');
+        console.log('Student: student@exampro.com / student123');
+        console.log('Admin: admin@exampro.com / admin123');
+        console.log('Super Admin: super@exampro.com / super123');
+    </script>
+</body>
+</html>
