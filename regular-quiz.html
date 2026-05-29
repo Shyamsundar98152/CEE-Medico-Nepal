@@ -902,19 +902,65 @@ h1,h2,h3{font-family:'Orbitron',monospace;letter-spacing:0.05em}
       </div>
     </div>
 
-  </div><!-- end mainApp -->
-</div><!-- end app -->
-
-<script type="module">
+  </div><!-- end mai<script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
-import { getAuth, signInWithPopup, GoogleAuthProvider, signOut, onAuthStateChanged }
-  from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
-import { getFirestore, collection, query, where, getDocs, addDoc, doc, setDoc,
-  updateDoc, onSnapshot, orderBy, limit, serverTimestamp, getDoc }
-  from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
 
-/* ── Firebase config ── */
-const FIREBASE_CONFIG = {
+import {
+  getAuth,
+  signInWithPopup,
+  GoogleAuthProvider,
+  signOut,
+  onAuthStateChanged
+} from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
+
+import {
+  getFirestore,
+  collection,
+  query,
+  where,
+  getDocs,
+  addDoc,
+  doc,
+  setDoc,
+  updateDoc,
+  onSnapshot,
+  orderBy,
+  limit,
+  serverTimestamp,
+  getDoc
+} from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+
+import {
+  getDatabase,
+  ref,
+  set,
+  push,
+  update,
+  onValue
+} from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
+
+
+/* ═══════════════════════════════════════
+   FIREBASE 1 → QUESTIONS DATABASE
+   READ ONLY
+═══════════════════════════════════════ */
+
+const QUESTIONS_FIREBASE = {
+  apiKey: "AIzaSyDD5xBrSkX_YXzSnsKxjW8-K6W4rBfV3rg",
+  authDomain: "chapter-wise-backup.firebaseapp.com",
+  projectId: "chapter-wise-backup",
+  storageBucket: "chapter-wise-backup.firebasestorage.app",
+  messagingSenderId: "864698641587",
+  appId: "1:864698641587:web:d0b550579c6eb7709ed4c6"
+};
+
+
+/* ═══════════════════════════════════════
+   FIREBASE 2 → MAIN APP DATABASE
+   AUTH + USER + RESULTS + LEADERBOARD
+═══════════════════════════════════════ */
+
+const MAIN_FIREBASE = {
   apiKey: "AIzaSyAng6y7NH9RZshoxEqaplOM9LiSMVrsmtI",
   authDomain: "cee-medico-nepal-regular.firebaseapp.com",
   projectId: "cee-medico-nepal-regular",
@@ -923,1001 +969,62 @@ const FIREBASE_CONFIG = {
   appId: "1:568305810313:web:ea50af6a7a1278d8f0bf58"
 };
 
-// FIX 1: Use a single Firebase app — two identical configs cause duplicate app errors
-const firebaseApp = initializeApp(FIREBASE_CONFIG);
-const auth   = getAuth(firebaseApp);
-const db     = getFirestore(firebaseApp);
+
+/* ═══════════════════════════════════════
+   INITIALIZE APPS
+═══════════════════════════════════════ */
+
+// Questions app
+const questionApp = initializeApp(
+  QUESTIONS_FIREBASE,
+  "questionsApp"
+);
+
+// Main app
+const mainApp = initializeApp(
+  MAIN_FIREBASE,
+  "mainApp"
+);
+
+
+/* ═══════════════════════════════════════
+   DATABASE CONNECTIONS
+═══════════════════════════════════════ */
+
+// QUESTIONS FIRESTORE
+// READ QUESTIONS ONLY
+const questionDB = getFirestore(questionApp);
+
+
+// MAIN FIRESTORE
+// USERS + ANALYTICS + RESULTS
+const db = getFirestore(mainApp);
+
+
+// MAIN REALTIME DATABASE
+// LIVE LEADERBOARD + LIVE STATUS
+const rtdb = getDatabase(mainApp);
+
+
+// AUTH
+const auth = getAuth(mainApp);
+
 const provider = new GoogleAuthProvider();
 
-/* ── State ── */
-let currentUser   = null;
-let isDemoMode    = false;
+
+/* ═══════════════════════════════════════
+   GLOBAL STATE
+═══════════════════════════════════════ */
+
+let currentUser = null;
 let quizQuestions = [];
-let currentQIdx   = 0;
-let userAnswers   = [];
-let liveScore     = 0;
-let qTimerInterval = null;
-let qTimeLeft     = 30;
-let lbUnsubscribe = null;
-let todaySchedule = null;
-// Store snapshot of questions used in finished quiz for review
-let finishedQuestions = [];
-let finishedAnswers   = [];
+let userAnswers = [];
+let currentQIdx = 0;
+let liveScore = 0;
 
-const QUIZ_START_HOUR = 22;
-const QUIZ_END_HOUR   = 23;
-const TOTAL_QUESTIONS = 30;
-const Q_TIMER_SECS    = 30;
+</script>nApp -->
+</div><!-- end app -->
 
-/* ── Utilities ── */
-function toast(msg, type = 'info') {
-  const el = document.createElement('div');
-  el.className = `toast toast-${type}`;
-  const icons = { success:'✓', error:'✗', info:'ℹ', warn:'⚠' };
-  el.innerHTML = `<span>${icons[type]||'ℹ'}</span><span>${msg}</span>`;
-  document.getElementById('toastContainer').appendChild(el);
-  setTimeout(() => el.remove(), 3200);
-}
-function hideLoading() { document.getElementById('loadingOverlay').classList.add('hidden'); }
-function showLoading() { document.getElementById('loadingOverlay').classList.remove('hidden'); }
-function $(id) { return document.getElementById(id); }
-function shuffle(arr) { return [...arr].sort(() => Math.random() - 0.5); }
-function getNepalTime() {
-  return new Date(new Date().toLocaleString('en-US', { timeZone: 'Asia/Kathmandu' }));
-}
-function todayDateStr() {
-  const d = getNepalTime();
-  return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
-}
-function getGreeting() {
-  const h = getNepalTime().getHours();
-  if (h < 12) return 'Good morning,';
-  if (h < 17) return 'Good afternoon,';
-  return 'Good evening,';
-}
 
-/* ── Screen switcher ── */
-window.switchScreen = function(id, btn) {
-  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
-  $(id).classList.add('active');
-  document.querySelectorAll('.nav-tab').forEach(t => t.classList.remove('active'));
-  if (btn) btn.classList.add('active');
-  else {
-    const t = document.querySelector(`[data-screen="${id}"]`);
-    if (t) t.classList.add('active');
-  }
-  if (id === 'leaderboardScreen') initLeaderboard();
-  if (id === 'analyticsScreen')   initAnalytics();
-  if (id === 'scheduleScreen')    initSchedule();
-  if (id === 'quizScreen')        initQuizLobby();
-};
-window.closeMobileMenu = function() { $('mobileDrawer').classList.remove('open'); };
-
-/* ── Auth ── */
-window.doLogout = async function() {
-  if (isDemoMode) {
-    isDemoMode = false;
-    currentUser = null;
-    $('mainApp').style.display = 'none';
-    $('loginScreen').style.display = 'flex';
-    return;
-  }
-  await signOut(auth);
-};
-
-document.addEventListener('DOMContentLoaded', () => {
-  $('googleLoginBtn').addEventListener('click', async () => {
-    try {
-      showLoading();
-      await signInWithPopup(auth, provider);
-    } catch(e) {
-      hideLoading();
-      toast('Login failed: ' + e.message, 'error');
-    }
-  });
-
-  // FIX 2: Demo login so quiz is always testable without waiting for 10 PM
-  $('demoLoginBtn').addEventListener('click', () => {
-    isDemoMode = true;
-    currentUser = {
-      uid: 'demo_user_' + Date.now(),
-      displayName: 'Demo Student',
-      email: 'demo@ceemedico.np',
-      photoURL: ''
-    };
-    $('loginScreen').style.display = 'none';
-    $('mainApp').style.display = 'block';
-    $('headerAvatar').src = '';
-    $('headerName').textContent = 'Demo';
-    $('dashName').textContent = 'Demo Student';
-    $('demoBanner').style.display = 'flex';
-    document.querySelectorAll('.hero-greeting').forEach(el => el.textContent = getGreeting());
-    initDashboard();
-    hideLoading();
-    toast('Demo mode — quiz always available! 🚀', 'info');
-  });
-
-  $('hamburgerBtn').addEventListener('click', () => {
-    $('mobileDrawer').classList.toggle('open');
-  });
-});
-
-onAuthStateChanged(auth, async (user) => {
-  if (user) {
-    currentUser = user;
-    isDemoMode  = false;
-    $('loginScreen').style.display = 'none';
-    $('mainApp').style.display = 'block';
-    $('headerAvatar').src = user.photoURL || '';
-    $('headerName').textContent = user.displayName?.split(' ')[0] || 'Student';
-    $('dashName').textContent = user.displayName?.split(' ')[0] || 'Student';
-    document.querySelectorAll('.hero-greeting').forEach(el => el.textContent = getGreeting());
-    $('demoBanner').style.display = 'none';
-    await saveUserProfile(user);
-    initDashboard();
-    hideLoading();
-    toast('Welcome back, ' + (user.displayName?.split(' ')[0] || 'Student') + '! 🚀', 'success');
-  } else if (!isDemoMode) {
-    currentUser = null;
-    $('mainApp').style.display = 'none';
-    $('loginScreen').style.display = 'flex';
-    hideLoading();
-  }
-});
-
-async function saveUserProfile(user) {
-  try {
-    await setDoc(doc(db, 'users', user.uid), {
-      uid: user.uid, name: user.displayName || 'Student',
-      email: user.email || '', photoURL: user.photoURL || '',
-      lastSeen: serverTimestamp()
-    }, { merge: true });
-  } catch(e) { console.warn('Profile save:', e.message); }
-}
-
-/* ── DASHBOARD ── */
-async function initDashboard() {
-  document.querySelectorAll('.hero-greeting').forEach(el => el.textContent = getGreeting());
-  startCountdownTicker();
-  loadUserStats();
-  renderTodayChapter();
-}
-
-function startCountdownTicker() {
-  updateQuizStatusUI();
-  setInterval(updateQuizStatusUI, 1000);
-}
-
-function getQuizState() {
-  // FIX 3: In demo mode, quiz is always "live" so users can always test it
-  if (isDemoMode) return 'live';
-  const now = getNepalTime();
-  const day = now.getDay();
-  const h   = now.getHours();
-  if (day === 6) return 'holiday';
-  if (h < QUIZ_START_HOUR) return 'upcoming';
-  if (h >= QUIZ_START_HOUR && h < QUIZ_END_HOUR) return 'live';
-  return 'ended';
-}
-
-function updateQuizStatusUI() {
-  const state = getQuizState();
-  const now   = getNepalTime();
-  const mainEl    = $('quizStatusMain');
-  const cdSec     = $('countdownSection');
-  const actionSec = $('quizActionSection');
-  const liveBadge = $('liveBadgeHeader');
-
-  if (state === 'holiday') {
-    mainEl.textContent = '🎉 Saturday — Rest day! No quiz today.';
-    mainEl.style.color = 'var(--yellow)';
-    cdSec.style.display = 'none'; actionSec.innerHTML = ''; liveBadge.style.display = 'none';
-  } else if (state === 'upcoming') {
-    const start = new Date(now); start.setHours(QUIZ_START_HOUR,0,0,0);
-    const diff  = start - now;
-    const hh = Math.floor(diff/3600000), mm = Math.floor((diff%3600000)/60000), ss = Math.floor((diff%60000)/1000);
-    mainEl.textContent = '⏳ Quiz starts at 10:00 PM Nepal Time';
-    mainEl.style.color = 'var(--text2)';
-    cdSec.style.display = 'block';
-    $('countdownDisplay').textContent = `${String(hh).padStart(2,'0')}:${String(mm).padStart(2,'0')}:${String(ss).padStart(2,'0')}`;
-    actionSec.innerHTML = ''; liveBadge.style.display = 'none';
-  } else if (state === 'live') {
-    if (isDemoMode) {
-      mainEl.innerHTML = `🟢 <span style="color:var(--green);font-weight:800">Demo Mode</span> — Quiz available anytime`;
-    } else {
-      const end  = new Date(now); end.setHours(QUIZ_END_HOUR,0,0,0);
-      const diff = end - now;
-      const mm = Math.floor(diff/60000), ss = Math.floor((diff%60000)/1000);
-      mainEl.innerHTML = `🔴 <span style="color:var(--red);font-weight:800">LIVE NOW</span> — Ends in ${String(mm).padStart(2,'0')}:${String(ss).padStart(2,'0')}`;
-    }
-    cdSec.style.display = 'none';
-    actionSec.innerHTML = `<button class="btn btn-cyan btn-lg mt16" onclick="switchScreen('quizScreen')"><i class="fas fa-play-circle"></i> Enter Quiz Now</button>`;
-    liveBadge.style.display = isDemoMode ? 'none' : 'block';
-  } else {
-    mainEl.textContent = '🔒 Quiz closed for today. Come back tomorrow at 10 PM!';
-    mainEl.style.color = 'var(--text3)';
-    cdSec.style.display = 'none';
-    actionSec.innerHTML = `<button class="btn btn-ghost mt16" onclick="switchScreen('analyticsScreen')"><i class="fas fa-chart-bar"></i> View Results</button>`;
-    liveBadge.style.display = 'none';
-  }
-}
-
-async function loadUserStats() {
-  if (!currentUser || isDemoMode) return;
-  try {
-    // FIX 4: Remove orderBy to avoid composite index requirement
-    const q = query(
-      collection(db,'testResults'),
-      where('uid','==',currentUser.uid),
-      limit(50)
-    );
-    const snap = await getDocs(q);
-    const results = snap.docs.map(d => d.data())
-      .sort((a,b) => (b.timestamp?.seconds||0) - (a.timestamp?.seconds||0));
-
-    $('dashTotalTests').textContent = results.length;
-    if (results.length > 0) {
-      $('dashBestScore').textContent = Math.max(...results.map(r => r.score||0));
-      const avgAcc = Math.round(results.reduce((s,r) => s+(r.accuracy||0),0)/results.length);
-      $('dashAvgAcc').textContent = avgAcc + '%';
-      let streak = 0;
-      const dates = [...new Set(results.map(r=>r.date||''))].sort().reverse();
-      let expected = todayDateStr();
-      for (const d of dates) {
-        if (d===expected){ streak++; const dt=new Date(expected); dt.setDate(dt.getDate()-1); expected=dt.toISOString().slice(0,10); }
-        else break;
-      }
-      $('dashStreak').textContent = streak;
-      const last = results[0];
-      if (last) {
-        $('recentResultPreview').style.display = 'block';
-        const gradeColor = last.accuracy>=80?'var(--green)':last.accuracy>=60?'var(--yellow)':'var(--red)';
-        $('recentResultCard').innerHTML = `
-          <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px">
-            <div>
-              <div style="font-size:0.78rem;color:var(--text3);text-transform:uppercase;letter-spacing:0.06em">${last.date||'—'}</div>
-              <div style="font-weight:700;margin-top:2px">${last.subject||'Quiz'}</div>
-            </div>
-            <div style="display:flex;gap:16px;text-align:center">
-              <div><div style="font-family:'Orbitron',monospace;font-size:1.2rem;font-weight:900;color:${gradeColor}">${last.score||0}</div><div style="font-size:0.65rem;color:var(--text3)">SCORE</div></div>
-              <div><div style="font-family:'Orbitron',monospace;font-size:1.2rem;font-weight:900;color:var(--cyan)">${last.accuracy||0}%</div><div style="font-size:0.65rem;color:var(--text3)">ACC</div></div>
-            </div>
-          </div>`;
-      }
-    }
-  } catch(e) { console.warn('Stats load:', e.message); }
-}
-
-/* ── TODAY CHAPTER ── */
-function renderTodayChapter() {
-  const schedule = buildSchedule();
-  const today    = todayDateStr();
-  const entry    = schedule.find(s => s.dateStr === today);
-  todaySchedule  = entry || null;
-  const el = $('todayChapterCard');
-  if (!entry) { el.innerHTML = `<div style="color:var(--text3)">No chapter scheduled for today.</div>`; return; }
-  if (entry.isHoliday) { el.innerHTML = `<div style="color:var(--yellow);font-weight:700">🎉 Saturday — Rest Day</div>`; return; }
-  const subColors = { Physics:'var(--blue)', Chemistry:'var(--purple)', Biology:'var(--green)', MAT:'var(--orange)' };
-  const color = subColors[entry.subject] || 'var(--blue)';
-  el.innerHTML = `
-    <div style="display:flex;align-items:center;gap:16px;flex-wrap:wrap">
-      <div style="width:44px;height:44px;border-radius:10px;background:rgba(61,139,255,0.12);border:1px solid var(--border2);display:flex;align-items:center;justify-content:center;font-size:1.4rem;flex-shrink:0">📖</div>
-      <div style="flex:1">
-        <div style="font-size:0.7rem;color:var(--text3);text-transform:uppercase;letter-spacing:0.08em;margin-bottom:4px">Day ${entry.day} · ${entry.subject}</div>
-        <div style="font-size:1.05rem;font-weight:700;color:var(--text)">${entry.chapter}</div>
-        <span style="font-size:0.7rem;padding:2px 8px;border-radius:4px;background:rgba(61,139,255,0.1);color:${color};margin-top:4px;display:inline-block">${entry.subject}</span>
-      </div>
-    </div>`;
-  $('lobbySubjectInfo').textContent = `Today: ${entry.subject} — ${entry.chapter}`;
-}
-
-/* ── SCHEDULE ── */
-const STUDY_PLAN = [
-  {subject:'Physics',chapters:['Physical Quantities','Kinematics','Newton\'s Laws','Work & Energy','Circular Motion','Gravitation','Fluid Mechanics','Heat & Thermodynamics','Waves & Oscillations','Optics','Electrostatics','Current Electricity','Magnetism','Electromagnetic Induction','Modern Physics','Nuclear Physics','Semiconductors']},
-  {subject:'Chemistry',chapters:['Atomic Structure','Periodic Table','Chemical Bonding','States of Matter','Thermodynamics','Chemical Equilibrium','Acids & Bases','Electrochemistry','Chemical Kinetics','Organic Chemistry Basics','Hydrocarbons','Alcohols & Ethers','Aldehydes & Ketones','Carboxylic Acids','Amines','Polymers','Biomolecules']},
-  {subject:'Biology',chapters:['Cell Biology','Cell Division','Biomolecules','Genetics','Evolution','Plant Physiology','Photosynthesis','Respiration','Animal Physiology','Nervous System','Endocrine System','Reproduction','Ecology','Biodiversity','Biotechnology','Human Health','Environmental Science']},
-  {subject:'MAT',chapters:['Verbal Reasoning','Numerical Reasoning','Abstract Reasoning','Spatial Reasoning','Reading Comprehension','Data Interpretation','Logical Deduction','Pattern Recognition']},
-];
-
-function buildSchedule() {
-  const allChapters = [];
-  STUDY_PLAN.forEach(s => s.chapters.forEach(ch => allChapters.push({ subject: s.subject, chapter: ch })));
-  const schedule = [];
-  let ci = 0;
-  // FIX 5: Use a fixed start date (Jan 1 of current year) so schedule is consistent
- const now = getNepalTime();
-const start = new Date(now.getFullYear(), now.getMonth(), now.getDate());
-start.setHours(0, 0, 0, 0);
-  for (let day = 1; day <= 90; day++) {
-    const d = new Date(start);
-    d.setDate(start.getDate() + (day - 1));
-    const year  = d.getFullYear();
-    const month = String(d.getMonth()+1).padStart(2,'0');
-    const date  = String(d.getDate()).padStart(2,'0');
-    const dateStr = `${year}-${month}-${date}`;
-    const isSat = d.getDay() === 6;
-    if (isSat) {
-      schedule.push({ day, dateStr, isHoliday: true, label: 'Saturday Off' });
-    } else {
-      const entry = allChapters[ci % allChapters.length];
-      schedule.push({ day, dateStr, isHoliday: false, ...entry });
-      ci++;
-    }
-  }
-  return schedule;
-}
-
-window.initSchedule = function() {
-  const schedule = buildSchedule();
-  const today = todayDateStr();
-  const grid  = $('scheduleGrid');
-  grid.innerHTML = '';
-  const subColors = { Physics:'rgba(61,139,255,0.15)', Chemistry:'rgba(168,85,247,0.12)', Biology:'rgba(16,240,144,0.1)', MAT:'rgba(255,124,42,0.12)' };
-  const subText   = { Physics:'var(--blue)', Chemistry:'var(--purple)', Biology:'var(--green)', MAT:'var(--orange)' };
-  schedule.forEach(entry => {
-    const isToday = entry.dateStr === today;
-    const isPast  = entry.dateStr < today;
-    const d = new Date(entry.dateStr + 'T00:00:00');
-    const dayLabel = d.toLocaleDateString('en-US',{weekday:'short',month:'short',day:'numeric'});
-    const card = document.createElement('div');
-    card.className = `sched-card${isToday?' today':''}${isPast?' past':''}${entry.isHoliday?' holiday':''}`;
-    if (isToday) card.id = 'todaySchedCard';
-    card.innerHTML = `
-      <div class="sched-day-num" style="color:${isToday?'var(--cyan)':isPast?'var(--text3)':'var(--text2)'}">${entry.day}</div>
-      <div class="sched-info">
-        <div class="sched-date">${dayLabel}</div>
-        ${entry.isHoliday
-          ? `<div class="sched-chapter" style="color:var(--red)">🎉 Saturday Off</div>`
-          : `<div class="sched-chapter">${entry.chapter}</div>
-             <span class="sched-subject" style="background:${subColors[entry.subject]||'rgba(255,255,255,0.06)'};color:${subText[entry.subject]||'var(--text2)'}">${entry.subject}</span>`
-        }
-      </div>
-      ${isToday ? '<div style="color:var(--cyan);font-size:0.75rem;font-weight:800;flex-shrink:0">TODAY</div>' : ''}`;
-    grid.appendChild(card);
-  });
-  setTimeout(() => {
-    const todayEl = document.getElementById('todaySchedCard');
-    if (todayEl) todayEl.scrollIntoView({ behavior:'smooth', block:'center' });
-  }, 200);
-};
-
-/* ── QUIZ LOBBY ── */
-window.initQuizLobby = function() {
-  // FIX 6: Don't skip re-init if quiz was just finished (quizQuestions cleared)
-  if (quizQuestions.length > 0) return; // quiz in progress — don't reset
-  $('quizActive').style.display = 'none';
-  $('quizLobby').style.display = 'block';
-  const state = getQuizState();
-  const wrap  = $('lobbyStatusWrap');
-  if (state === 'holiday') {
-    wrap.innerHTML = `<div class="glass" style="padding:24px;text-align:center;max-width:400px;margin:0 auto"><div style="font-size:2rem;margin-bottom:8px">🎉</div><div style="font-weight:700;color:var(--yellow)">Saturday — Rest Day</div><p style="color:var(--text3);font-size:0.85rem;margin-top:8px">Recharge for tomorrow!</p></div>`;
-  } else if (state === 'upcoming') {
-    wrap.innerHTML = `<div class="glass" style="padding:28px;text-align:center;max-width:400px;margin:0 auto"><div style="font-size:2rem;margin-bottom:12px">⏳</div><div style="font-weight:700;color:var(--yellow);font-size:1rem;font-family:'Orbitron',monospace">Quiz starts at 10:00 PM</div><p style="color:var(--text3);font-size:0.85rem;margin-top:8px">Nepal Standard Time (NST)</p></div>`;
-  } else if (state === 'live') {
-    const demoNote = isDemoMode ? '<p style="color:var(--text3);font-size:0.78rem;margin-top:8px">Demo uses built-in sample questions</p>' : '';
-    wrap.innerHTML = `
-      <button class="btn btn-cyan btn-lg" onclick="startQuiz()"><i class="fas fa-play-circle"></i> Start Daily Quiz</button>
-      <p style="color:var(--text3);font-size:0.8rem;margin-top:12px">30 questions · 30s per question · +4 correct / -1 wrong</p>
-      ${demoNote}`;
-  } else {
-    wrap.innerHTML = `<div class="glass" style="padding:24px;text-align:center;max-width:400px;margin:0 auto"><div style="font-size:2rem;margin-bottom:8px">🔒</div><div style="font-weight:700;color:var(--text3)">Quiz closed for today</div><p style="color:var(--text3);font-size:0.85rem;margin-top:8px">Returns at 10 PM tomorrow</p><button class="btn btn-ghost mt16" onclick="switchScreen('analyticsScreen')"><i class="fas fa-chart-bar"></i> View My Analytics</button></div>`;
-  }
-};
-
-/* ── SAMPLE QUESTIONS (fallback when Firestore is empty) ── */
-// FIX 7: Always have questions available — comprehensive built-in question bank
-const SAMPLE_QUESTIONS = [
-  // Physics
-  {subject:'Physics',chapter:'Physical Quantities',question:'What is the SI unit of electric charge?',options:['Coulomb','Ampere','Volt','Watt'],correct:0},
-  {subject:'Physics',chapter:'Kinematics',question:'A body moving with uniform acceleration. If initial velocity is 0, the distance covered in the nth second is:',options:['a(2n-1)/2','an²/2','an','a(n-1)/2'],correct:0},
-  {subject:'Physics',chapter:'Newton\'s Laws',question:'Newton\'s second law gives the measure of:',options:['Force','Momentum','Acceleration','Inertia'],correct:0},
-  {subject:'Physics',chapter:'Work & Energy',question:'Work done against friction is stored as:',options:['Heat energy','Kinetic energy','Potential energy','Chemical energy'],correct:0},
-  {subject:'Physics',chapter:'Gravitation',question:'The escape velocity from the surface of Earth is approximately:',options:['11.2 km/s','7.9 km/s','3 km/s','17 km/s'],correct:0},
-  {subject:'Physics',chapter:'Optics',question:'A convex lens of focal length 20 cm forms a real image at 60 cm from the lens. The object distance is:',options:['30 cm','40 cm','60 cm','20 cm'],correct:0},
-  {subject:'Physics',chapter:'Electrostatics',question:'The electric potential at a point due to a point charge is proportional to:',options:['1/r','1/r²','r','r²'],correct:0},
-  {subject:'Physics',chapter:'Modern Physics',question:'The photoelectric effect proves the particle nature of:',options:['Light','Electron','Proton','Neutron'],correct:0},
-  // Chemistry
-  {subject:'Chemistry',chapter:'Atomic Structure',question:'The number of protons in the nucleus of an atom is called:',options:['Atomic number','Mass number','Nucleon number','Neutron number'],correct:0},
-  {subject:'Chemistry',chapter:'Periodic Table',question:'Elements in the same group of the periodic table have the same:',options:['Number of valence electrons','Atomic mass','Number of neutrons','Atomic radius'],correct:0},
-  {subject:'Chemistry',chapter:'Chemical Bonding',question:'Which type of bond involves sharing of electron pairs between atoms?',options:['Covalent bond','Ionic bond','Metallic bond','Hydrogen bond'],correct:0},
-  {subject:'Chemistry',chapter:'Acids & Bases',question:'According to Brønsted–Lowry theory, an acid is a:',options:['Proton donor','Proton acceptor','Electron donor','Electron acceptor'],correct:0},
-  {subject:'Chemistry',chapter:'Chemical Equilibrium',question:'Le Chatelier\'s principle states that if stress is applied to an equilibrium system, it will:',options:['Shift to relieve the stress','Shift to increase the stress','Remain unchanged','Stop the reaction'],correct:0},
-  {subject:'Chemistry',chapter:'Organic Chemistry Basics',question:'The general formula of alkanes is:',options:['CₙH₂ₙ₊₂','CₙH₂ₙ','CₙH₂ₙ₋₂','CₙHₙ'],correct:0},
-  {subject:'Chemistry',chapter:'Electrochemistry',question:'In electrolysis, oxidation occurs at the:',options:['Anode','Cathode','Electrolyte','Salt bridge'],correct:0},
-  {subject:'Chemistry',chapter:'Thermodynamics',question:'ΔG < 0 indicates that a reaction is:',options:['Spontaneous','Non-spontaneous','At equilibrium','Endothermic'],correct:0},
-  // Biology
-  {subject:'Biology',chapter:'Cell Biology',question:'The powerhouse of the cell is the:',options:['Mitochondria','Ribosome','Nucleus','Chloroplast'],correct:0},
-  {subject:'Biology',chapter:'Cell Division',question:'Which phase of mitosis is characterized by chromosome alignment at the cell equator?',options:['Metaphase','Anaphase','Prophase','Telophase'],correct:0},
-  {subject:'Biology',chapter:'Genetics',question:'Mendel\'s law of segregation states that:',options:['Alleles separate during gamete formation','Genes are linked on chromosomes','Traits blend together','All offspring are identical'],correct:0},
-  {subject:'Biology',chapter:'Photosynthesis',question:'The light reactions of photosynthesis occur in the:',options:['Thylakoid membranes','Stroma','Cytoplasm','Mitochondria'],correct:0},
-  {subject:'Biology',chapter:'Respiration',question:'How many ATP molecules are produced per glucose in aerobic respiration?',options:['36–38','2','8','18'],correct:0},
-  {subject:'Biology',chapter:'Evolution',question:'The theory of natural selection was proposed by:',options:['Charles Darwin','Gregor Mendel','Jean-Baptiste Lamarck','Thomas Morgan'],correct:0},
-  {subject:'Biology',chapter:'Nervous System',question:'The basic functional unit of the nervous system is the:',options:['Neuron','Synapse','Axon','Dendrite'],correct:0},
-  {subject:'Biology',chapter:'Endocrine System',question:'Insulin is produced by the:',options:['Pancreas','Liver','Thyroid','Adrenal gland'],correct:0},
-  // MAT
-  {subject:'MAT',chapter:'Numerical Reasoning',question:'If 5x + 3 = 28, what is the value of x?',options:['5','4','6','3'],correct:0},
-  {subject:'MAT',chapter:'Verbal Reasoning',question:'Choose the word most similar in meaning to "Ephemeral":',options:['Transient','Permanent','Eternal','Stable'],correct:0},
-  {subject:'MAT',chapter:'Abstract Reasoning',question:'In a series 2, 4, 8, 16, __, what comes next?',options:['32','24','20','18'],correct:0},
-  {subject:'MAT',chapter:'Logical Deduction',question:'All doctors are humans. Some humans are tall. Therefore:',options:['Some doctors may be tall','All doctors are tall','No doctors are tall','All tall humans are doctors'],correct:0},
-  {subject:'MAT',chapter:'Data Interpretation',question:'A class has 40 students. 25% scored above 80. How many scored above 80?',options:['10','8','12','15'],correct:0},
-  {subject:'MAT',chapter:'Pattern Recognition',question:'What is the next letter in the sequence: A, C, E, G, ?',options:['I','H','J','K'],correct:0},
-  // Extra padding questions
-  {subject:'Physics',chapter:'Current Electricity',question:'Ohm\'s law states that current is proportional to:',options:['Voltage','Resistance','Power','Charge'],correct:0},
-  {subject:'Chemistry',chapter:'Chemical Kinetics',question:'A catalyst increases the rate of reaction by:',options:['Lowering activation energy','Increasing temperature','Increasing reactant concentration','Decreasing pressure'],correct:0},
-  {subject:'Biology',chapter:'Ecology',question:'Organisms that break down dead organic matter are called:',options:['Decomposers','Producers','Consumers','Parasites'],correct:0},
-  {subject:'Physics',chapter:'Waves & Oscillations',question:'The time period of a simple pendulum depends on:',options:['Length and gravity','Mass only','Amplitude only','Both mass and length'],correct:0},
-  {subject:'Chemistry',chapter:'Biomolecules',question:'The monomer of proteins is:',options:['Amino acid','Glucose','Nucleotide','Fatty acid'],correct:0},
-  {subject:'Biology',chapter:'Biotechnology',question:'The enzyme used to cut DNA at specific sequences is called:',options:['Restriction endonuclease','DNA ligase','DNA polymerase','RNA polymerase'],correct:0},
-];
-
-/* ── START QUIZ ── */
-window.startQuiz = async function() {
-  showLoading();
-  try {
-    let questionsRaw = [];
-
-    if (!isDemoMode) {
-      // FIX 8: Query without orderBy to avoid missing composite index errors
-      // Try specific chapter first
-      if (todaySchedule && !todaySchedule.isHoliday) {
-        try {
-          const q1 = query(
-            collection(db, 'questions'),
-            where('subject', '==', todaySchedule.subject),
-            where('chapter', '==', todaySchedule.chapter),
-            limit(80)
-          );
-          const snap1 = await getDocs(q1);
-          questionsRaw = snap1.docs.map(d => ({ id: d.id, ...d.data() }));
-          console.log(`[CEE] Found ${questionsRaw.length} questions for ${todaySchedule.subject}/${todaySchedule.chapter}`);
-        } catch(e) {
-          console.warn('[CEE] Specific chapter query failed:', e.message);
-        }
-      }
-
-      // FIX 9: Broader subject fallback if chapter query returns too few
-      if (questionsRaw.length < 10 && todaySchedule && !todaySchedule.isHoliday) {
-        try {
-          const q2 = query(
-            collection(db, 'questions'),
-            where('subject', '==', todaySchedule.subject),
-            limit(150)
-          );
-          const snap2 = await getDocs(q2);
-          questionsRaw = snap2.docs.map(d => ({ id: d.id, ...d.data() }));
-          console.log(`[CEE] Subject fallback: ${questionsRaw.length} questions for ${todaySchedule.subject}`);
-        } catch(e) {
-          console.warn('[CEE] Subject fallback failed:', e.message);
-        }
-      }
-
-      // FIX 10: All-questions fallback (no where clause — avoids ALL index issues)
-      if (questionsRaw.length < 10) {
-        try {
-          const q3 = query(collection(db, 'questions'), limit(200));
-          const snap3 = await getDocs(q3);
-          questionsRaw = snap3.docs.map(d => ({ id: d.id, ...d.data() }));
-          console.log(`[CEE] All-questions fallback: ${questionsRaw.length} questions`);
-        } catch(e) {
-          console.warn('[CEE] All-questions fallback failed:', e.message);
-        }
-      }
-    }
-
-    // FIX 11: If still no questions (Firestore empty OR demo mode), use built-in sample bank
-    if (questionsRaw.length < 10) {
-      console.log('[CEE] Using built-in sample question bank');
-      questionsRaw = SAMPLE_QUESTIONS;
-      if (!isDemoMode) {
-        toast('Using sample questions — add questions to Firestore for live content', 'warn');
-      }
-    }
-
-    // FIX 12: Normalise the data — Firestore docs may store answer as index OR as text
-    const normalised = questionsRaw.map(q => {
-      const opts = Array.isArray(q.options) ? q.options : ['Option A','Option B','Option C','Option D'];
-      // answer can be: number (index), string (text), or undefined
-      let correctIdx = 0;
-      if (typeof q.answer === 'number') {
-        correctIdx = q.answer;
-      } else if (typeof q.answer === 'string') {
-        const idx = opts.indexOf(q.answer);
-        correctIdx = idx >= 0 ? idx : 0;
-      } else if (typeof q.correct === 'number') {
-        correctIdx = q.correct; // already normalised
-      }
-      return {
-        ...q,
-        options: opts,
-        correct: correctIdx,
-        subject: q.subject || 'General',
-        chapter: q.chapter || 'Mixed',
-        question: q.question || q.text || 'Question unavailable'
-      };
-    }).filter(q => q.question && q.options.length >= 2);
-
-    // Shuffle and cap at TOTAL_QUESTIONS
-    const shuffled = shuffle(normalised).slice(0, TOTAL_QUESTIONS);
-
-    // FIX 13: Randomise option order while correctly tracking the new correct index
-    quizQuestions = shuffled.map(q => {
-      const correctText = q.options[q.correct];
-      const shuffledOpts = shuffle(q.options);
-      const newCorrectIdx = shuffledOpts.indexOf(correctText);
-      return { ...q, options: shuffledOpts, correct: newCorrectIdx >= 0 ? newCorrectIdx : 0 };
-    });
-
-    userAnswers  = new Array(quizQuestions.length).fill(null);
-    currentQIdx  = 0;
-    liveScore    = 0;
-
-    $('quizLobby').style.display = 'none';
-    $('quizActive').style.display = 'block';
-    buildQNavigator();
-    renderCurrentQuestion();
-    hideLoading();
-    toast('Quiz started! Good luck! 🚀', 'success');
-  } catch(e) {
-    hideLoading();
-    console.error('[CEE] startQuiz error:', e);
-    toast('Failed to start quiz: ' + e.message, 'error');
-  }
-};
-
-/* ── QUESTION RENDERING ── */
-function buildQNavigator() {
-  const nav = $('qNavigator');
-  nav.innerHTML = '';
-  quizQuestions.forEach((_,i) => {
-    const btn = document.createElement('button');
-    btn.className = 'q-nav-dot unanswered';
-    btn.textContent = i+1;
-    btn.id = `qnav-${i}`;
-    btn.onclick = () => { currentQIdx = i; clearQTimer(); renderCurrentQuestion(); };
-    nav.appendChild(btn);
-  });
-  updateNavDots();
-}
-
-function updateNavDots() {
-  quizQuestions.forEach((_,i) => {
-    const dot = document.getElementById(`qnav-${i}`);
-    if (!dot) return;
-    dot.className = 'q-nav-dot';
-    if (i === currentQIdx) dot.classList.add('active');
-    else if (userAnswers[i] === 'skip') dot.classList.add('skipped');
-    else if (userAnswers[i] !== null) dot.classList.add('answered');
-    else dot.classList.add('unanswered');
-  });
-}
-
-function renderCurrentQuestion() {
-  const q = quizQuestions[currentQIdx];
-  if (!q) return;
-  const total = quizQuestions.length;
-  $('qProgressLabel').textContent  = `Q ${currentQIdx+1} / ${total}`;
-  $('qProgressPct').textContent    = Math.round(((currentQIdx+1)/total)*100) + '%';
-  $('qProgressBar').style.width    = ((currentQIdx+1)/total)*100 + '%';
-  $('qSubjectBadge').textContent   = q.subject || '—';
-  $('qChapterBadge').textContent   = q.chapter || '—';
-  $('questionText').textContent    = q.question;
-  $('qLiveScore').textContent      = liveScore;
-
-  const container = $('optionsContainer');
-  container.innerHTML = '';
-  q.options.forEach((opt,idx) => {
-    const btn = document.createElement('button');
-    btn.className = 'option-btn';
-    btn.innerHTML = `<span class="opt-letter">${String.fromCharCode(65+idx)}</span><span>${opt}</span>`;
-
-    const prev = userAnswers[currentQIdx];
-    if (prev !== null && prev !== 'skip') {
-      // Question already answered — show result
-      btn.disabled = true;
-      if (idx === q.correct)         btn.classList.add('correct');
-      else if (idx === prev)         btn.classList.add('wrong');
-      else                           btn.classList.add('dim');
-    } else {
-      btn.onclick = () => selectOption(idx, btn);
-    }
-    container.appendChild(btn);
-  });
-
-  $('nextBtn').disabled = (userAnswers[currentQIdx] === null);
-  updateNavDots();
-  // Don't restart timer if already answered
-  if (userAnswers[currentQIdx] === null) startQTimer();
-  else clearQTimer();
-}
-
-function selectOption(idx) {
-  if (userAnswers[currentQIdx] !== null) return;
-  const q = quizQuestions[currentQIdx];
-  userAnswers[currentQIdx] = idx;
-  const isCorrect = idx === q.correct;
-  liveScore += isCorrect ? 4 : -1;
-  $('qLiveScore').textContent = liveScore;
-
-  const opts = $('optionsContainer').querySelectorAll('.option-btn');
-  opts.forEach((btn,i) => {
-    btn.disabled = true;
-    if (i === q.correct)  btn.classList.add('correct');
-    else if (i === idx)   btn.classList.add('wrong');
-    else                  btn.classList.add('dim');
-  });
-  $('nextBtn').disabled = false;
-  clearQTimer();
-  updateNavDots();
-  // Auto-advance
-  setTimeout(() => {
-    if (currentQIdx < quizQuestions.length - 1) nextQuestion();
-  }, 1200);
-}
-
-window.skipQuestion = function() {
-  if (userAnswers[currentQIdx] === null) userAnswers[currentQIdx] = 'skip';
-  clearQTimer();
-  updateNavDots();
-  if (currentQIdx < quizQuestions.length - 1) { currentQIdx++; renderCurrentQuestion(); }
-  else openSubmitModal();
-};
-window.nextQuestion = function() {
-  if (currentQIdx < quizQuestions.length - 1) { currentQIdx++; renderCurrentQuestion(); }
-  else openSubmitModal();
-};
-
-/* ── TIMER ── */
-function startQTimer() {
-  clearQTimer();
-  qTimeLeft = Q_TIMER_SECS;
-  updateTimerUI();
-  qTimerInterval = setInterval(() => {
-    qTimeLeft--;
-    updateTimerUI();
-    if (qTimeLeft <= 0) { clearQTimer(); autoSkip(); }
-  }, 1000);
-}
-function clearQTimer() { clearInterval(qTimerInterval); qTimerInterval = null; }
-function updateTimerUI() {
-  const el = $('qTimerVal');
-  el.textContent = qTimeLeft;
-  el.className = 'q-timer-val' + (qTimeLeft <= 8 ? ' danger' : '');
-}
-function autoSkip() {
-  if (userAnswers[currentQIdx] === null) userAnswers[currentQIdx] = 'skip';
-  updateNavDots();
-  toast('Time up! Auto-skipped.', 'warn');
-  if (currentQIdx < quizQuestions.length - 1) { currentQIdx++; renderCurrentQuestion(); }
-  else openSubmitModal();
-}
-
-/* ── SUBMIT MODAL ── */
-window.openSubmitModal = function() {
-  clearQTimer();
-  const unanswered = userAnswers.filter(a => a === null || a === 'skip').length;
-  $('modalUnanswered').textContent = unanswered;
-  $('submitModal').classList.remove('hidden');
-};
-window.closeModal    = function() { $('submitModal').classList.add('hidden'); };
-window.confirmSubmit = function() { closeModal(); finishQuiz(); };
-
-/* ── FINISH QUIZ ── */
-async function finishQuiz() {
-  clearQTimer();
-
-  // FIX 14: Snapshot quiz state BEFORE clearing it
-  finishedQuestions = [...quizQuestions];
-  finishedAnswers   = [...userAnswers];
-
-  const correct  = finishedAnswers.filter((a,i) => a !== null && a !== 'skip' && a === finishedQuestions[i]?.correct).length;
-  const wrong    = finishedAnswers.filter((a,i) => a !== null && a !== 'skip' && a !== finishedQuestions[i]?.correct).length;
-  const skipped  = finishedAnswers.filter(a => a === null || a === 'skip').length;
-  const accuracy = Math.round((correct / finishedQuestions.length) * 100);
-  const score    = correct * 4 - wrong;
-
-  let label = 'Needs Improvement', labelColor = 'var(--red)';
-  if (accuracy >= 90) { label = '🏆 Excellent!';   labelColor = 'var(--yellow)'; }
-  else if (accuracy >= 75) { label = '🎯 Great Job!';   labelColor = 'var(--green)'; }
-  else if (accuracy >= 55) { label = '👍 Good Effort';  labelColor = 'var(--cyan)'; }
-  else if (accuracy >= 35) { label = '💪 Average';      labelColor = 'var(--blue)'; }
-
-  $('resultRing').style.cssText = `--pct:${accuracy}`;
-  $('resultPct').textContent    = accuracy + '%';
-  $('resultLabel').textContent  = label;
-  $('resultLabel').style.color  = labelColor;
-  $('rScore').textContent       = score;
-  $('rCorrect').textContent     = correct;
-  $('rWrong').textContent       = wrong;
-  $('rSkipped').textContent     = skipped;
-  const sub = finishedQuestions[0]?.subject || '—';
-  const ch  = finishedQuestions[0]?.chapter  || '—';
-  $('resultSubMeta').textContent = `${sub} · ${ch} · ${finishedQuestions.length} Questions`;
-
-  buildReview();
-  buildSubjectBreakdown(correct, wrong, skipped, finishedQuestions.length);
-
-  // Clear live quiz state
-  quizQuestions = [];
-  userAnswers   = [];
-
-  // Save to Firestore (skip for demo)
-  if (!isDemoMode && currentUser) {
-    try {
-      const resultDoc = {
-        uid: currentUser.uid, name: currentUser.displayName || 'Student',
-        email: currentUser.email || '', photoURL: currentUser.photoURL || '',
-        subject: sub, chapter: ch,
-        total: finishedQuestions.length, correct, wrong, skipped, accuracy, score,
-        date: todayDateStr(), timestamp: serverTimestamp()
-      };
-      await addDoc(collection(db,'testResults'), resultDoc);
-      await setDoc(doc(db,'leaderboard', currentUser.uid + '_' + todayDateStr()), {
-        uid: currentUser.uid, name: currentUser.displayName || 'Student',
-        photoURL: currentUser.photoURL || '',
-        score, accuracy, date: todayDateStr(), timestamp: serverTimestamp()
-      });
-      toast('Result saved! Check the leaderboard 🏆', 'success');
-    } catch(e) { toast('Could not save result: ' + e.message, 'warn'); }
-  } else if (isDemoMode) {
-    toast('Demo result not saved. Sign in to track progress.', 'info');
-  }
-
-  switchScreen('resultsScreen');
-  loadCompare(score);
-}
-
-/* ── REVIEW ── */
-let _reviewData = [];
-function buildReview() {
-  _reviewData = finishedAnswers.map((ans,i) => {
-    const q       = finishedQuestions[i] || {};
-    const isSkip  = ans === null || ans === 'skip';
-    const isCorrect = !isSkip && ans === q.correct;
-    return { q, ans, isSkip, isCorrect, i };
-  });
-  renderReview(_reviewData);
-}
-function renderReview(data) {
-  const list = $('reviewList');
-  list.innerHTML = '';
-  data.forEach(({q,ans,isSkip,isCorrect,i}) => {
-    if (!q.question) return;
-    const el = document.createElement('div');
-    el.className = `review-item ${isSkip?'skipped':isCorrect?'correct':'wrong'}`;
-    const yourAns = isSkip ? 'Skipped' : (q.options?.[ans] || '—');
-    el.innerHTML = `
-      <div class="review-q-text">${i+1}. ${q.question}</div>
-      <div class="review-badges">
-        <span class="review-badge ${isSkip?'rb-skipped':isCorrect?'rb-correct':'rb-wrong'}">${isSkip?'⏭ Skipped':isCorrect?'✓ Correct':'✗ Wrong'}</span>
-        <span class="review-badge rb-answer">✅ ${q.options?.[q.correct]||'—'}</span>
-        ${!isSkip && !isCorrect ? `<span class="review-badge rb-wrong">Your: ${yourAns}</span>` : ''}
-      </div>`;
-    list.appendChild(el);
-  });
-  if (!data.length) list.innerHTML = '<div style="color:var(--text3);text-align:center;padding:24px">No questions to show.</div>';
-}
-window.filterReview = function(type) {
-  ['rfAll','rfWrong','rfSkipped'].forEach(id => document.getElementById(id).className='btn btn-ghost btn-sm');
-  const key = 'rf'+type.charAt(0).toUpperCase()+type.slice(1);
-  document.getElementById(key).className='btn btn-primary btn-sm';
-  if (type==='all')     renderReview(_reviewData);
-  else if (type==='wrong')   renderReview(_reviewData.filter(d=>!d.isSkip&&!d.isCorrect));
-  else                       renderReview(_reviewData.filter(d=>d.isSkip));
-};
-window.switchResultTab = function(tab, btn) {
-  document.querySelectorAll('.result-tab-content').forEach(el=>el.classList.remove('active'));
-  document.querySelectorAll('.result-tab').forEach(el=>el.classList.remove('active'));
-  $('rt'+tab.charAt(0).toUpperCase()+tab.slice(1)).classList.add('active');
-  btn.classList.add('active');
-};
-function buildSubjectBreakdown(correct, wrong, skipped, total) {
-  total = total || 30;
-  const accuracy = Math.round((correct/total)*100);
-  $('subjectBreakdown').innerHTML = `
-    <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:16px">
-      <div style="text-align:center;background:rgba(16,240,144,0.06);border:1px solid rgba(16,240,144,0.15);border-radius:10px;padding:12px">
-        <div style="font-family:'Orbitron',monospace;font-size:1.3rem;font-weight:900;color:var(--green)">${correct}</div>
-        <div style="font-size:0.65rem;color:var(--text3);text-transform:uppercase">Correct</div>
-        <div style="margin-top:6px;height:4px;background:rgba(255,255,255,0.06);border-radius:2px;overflow:hidden">
-          <div style="width:${(correct/total)*100}%;height:100%;background:var(--green)"></div>
-        </div>
-      </div>
-      <div style="text-align:center;background:rgba(255,77,109,0.06);border:1px solid rgba(255,77,109,0.15);border-radius:10px;padding:12px">
-        <div style="font-family:'Orbitron',monospace;font-size:1.3rem;font-weight:900;color:var(--red)">${wrong}</div>
-        <div style="font-size:0.65rem;color:var(--text3);text-transform:uppercase">Wrong</div>
-        <div style="margin-top:6px;height:4px;background:rgba(255,255,255,0.06);border-radius:2px;overflow:hidden">
-          <div style="width:${(wrong/total)*100}%;height:100%;background:var(--red)"></div>
-        </div>
-      </div>
-      <div style="text-align:center;background:rgba(255,214,10,0.06);border:1px solid rgba(255,214,10,0.15);border-radius:10px;padding:12px">
-        <div style="font-family:'Orbitron',monospace;font-size:1.3rem;font-weight:900;color:var(--yellow)">${skipped}</div>
-        <div style="font-size:0.65rem;color:var(--text3);text-transform:uppercase">Skipped</div>
-        <div style="margin-top:6px;height:4px;background:rgba(255,255,255,0.06);border-radius:2px;overflow:hidden">
-          <div style="width:${(skipped/total)*100}%;height:100%;background:var(--yellow)"></div>
-        </div>
-      </div>
-    </div>
-    <div style="font-size:0.85rem;color:var(--text2)">
-      <b style="color:var(--cyan)">Overall Accuracy: ${accuracy}%</b>
-      <span style="color:var(--text3);margin-left:12px">Score formula: +4 correct / -1 wrong / 0 skipped</span>
-    </div>`;
-}
-async function loadCompare(myScore) {
-  if (isDemoMode) { $('compareData').innerHTML = '<div style="color:var(--text3)">Sign in with Google to compare with other students.</div>'; return; }
-  try {
-    // FIX 15: No orderBy on leaderboard query to avoid index issues
-    const q = query(collection(db,'leaderboard'), limit(100));
-    const snap = await getDocs(q);
-    const all  = snap.docs.map(d => d.data()).sort((a,b)=>(b.score||0)-(a.score||0));
-    const rank = all.filter(r => (r.score||0) > myScore).length + 1;
-    const percentile = Math.round((1 - (rank-1)/Math.max(all.length,1))*100);
-    $('compareData').innerHTML = `
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
-        <div style="background:rgba(61,139,255,0.06);border:1px solid var(--border);border-radius:10px;padding:14px;text-align:center">
-          <div style="font-family:'Orbitron',monospace;font-size:1.5rem;font-weight:900;color:var(--cyan)">#${rank}</div>
-          <div style="font-size:0.68rem;color:var(--text3);text-transform:uppercase;margin-top:2px">Your Rank</div>
-        </div>
-        <div style="background:rgba(168,85,247,0.06);border:1px solid var(--border);border-radius:10px;padding:14px;text-align:center">
-          <div style="font-family:'Orbitron',monospace;font-size:1.5rem;font-weight:900;color:var(--purple)">${percentile}%</div>
-          <div style="font-size:0.68rem;color:var(--text3);text-transform:uppercase;margin-top:2px">Percentile</div>
-        </div>
-      </div>
-      <div style="margin-top:12px;font-size:0.82rem;color:var(--text2)">You scored better than <b style="color:var(--green)">${percentile}%</b> of participants today out of <b style="color:var(--cyan)">${all.length}</b> total.</div>`;
-  } catch(e) { $('compareData').textContent = 'Could not load comparison data.'; }
-}
-
-/* ── LEADERBOARD ── */
-window.initLeaderboard = function() {
-  if (lbUnsubscribe) return;
-  try {
-    // FIX 16: orderBy on a single field is fine — no composite index needed
-    const q = query(collection(db,'leaderboard'), orderBy('score','desc'), limit(20));
-    lbUnsubscribe = onSnapshot(q, snap => {
-      renderLeaderboard(snap.docs.map(d => d.data()));
-    }, err => {
-      // Fallback: query without orderBy if index missing
-      console.warn('[CEE] Leaderboard onSnapshot failed, falling back:', err.message);
-      getDocs(query(collection(db,'leaderboard'), limit(20))).then(snap => {
-        renderLeaderboard(snap.docs.map(d => d.data()).sort((a,b)=>(b.score||0)-(a.score||0)));
-      });
-    });
-  } catch(e) {
-    $('leaderboardList').innerHTML = `<div style="color:var(--red);padding:20px;text-align:center">Error loading leaderboard.</div>`;
-  }
-};
-function renderLeaderboard(rows) {
-  const list = $('leaderboardList');
-  list.innerHTML = '';
-  if (!rows.length) {
-    list.innerHTML = '<div style="text-align:center;padding:32px;color:var(--text3)">No entries yet. Be the first! 🏆</div>';
-    return;
-  }
-  rows.forEach((r,i) => {
-    const isMe = currentUser && r.uid === currentUser.uid;
-    const rankEmoji = i===0?'🥇':i===1?'🥈':i===2?'🥉':'';
-    const row = document.createElement('div');
-    row.className = `lb-row${isMe?' is-me':''}`;
-    row.innerHTML = `
-      <div class="lb-rank rank-${i+1<4?i+1:0}" style="${i>=3?'color:var(--text2)':''}">${rankEmoji||'#'+(i+1)}</div>
-      <div class="lb-user">
-        <img class="lb-avatar" src="${r.photoURL||''}" onerror="this.style.display='none'" alt="">
-        <div><div class="lb-name">${r.name||'Student'}${isMe?' <span style="color:var(--cyan);font-size:0.68rem">(You)</span>':''}</div></div>
-      </div>
-      <div class="lb-score">${r.score||0}</div>
-      <div class="lb-acc">${r.accuracy||0}%</div>
-      <div class="lb-date">${r.date||'—'}</div>`;
-    list.appendChild(row);
-  });
-  if (currentUser) {
-    const myIdx = rows.findIndex(r => r.uid === currentUser.uid);
-    $('myRankInfo').style.display = myIdx === -1 ? 'block' : 'none';
-    if (myIdx === -1) $('myRankInfo').textContent = 'Complete today\'s quiz to appear on the leaderboard!';
-  }
-}
-
-/* ── ANALYTICS ── */
-window.initAnalytics = async function() {
-  if (!currentUser || isDemoMode) {
-    // Show placeholder for demo
-    ['acTotal','acBest','acAvg','acAcc','acRank','acStreak'].forEach(id => $(id).textContent = '—');
-    $('scoreTrendChart').innerHTML = '<div style="color:var(--text3);font-size:0.8rem;text-align:center;padding:20px">Sign in to track your analytics.</div>';
-    return;
-  }
-  try {
-    // FIX 17: No orderBy — sort client-side to avoid index requirement
-    const q = query(collection(db,'testResults'), where('uid','==',currentUser.uid), limit(50));
-    const snap = await getDocs(q);
-    const results = snap.docs.map(d => d.data())
-      .sort((a,b) => (b.timestamp?.seconds||0) - (a.timestamp?.seconds||0));
-
-    if (!results.length) return;
-    const total  = results.length;
-    const avgScore = Math.round(results.reduce((s,r)=>s+(r.score||0),0)/total);
-    const best   = Math.max(...results.map(r=>r.score||0));
-    const avgAcc = Math.round(results.reduce((s,r)=>s+(r.accuracy||0),0)/total);
-
-    $('acTotal').textContent = total;
-    $('acBest').textContent  = best;
-    $('acAvg').textContent   = avgScore;
-    $('acAcc').textContent   = avgAcc + '%';
-
-    let streak = 0;
-    const dates = [...new Set(results.map(r=>r.date||''))].sort().reverse();
-    let expected = todayDateStr();
-    for (const d of dates) {
-      if (d===expected){streak++;const dt=new Date(expected);dt.setDate(dt.getDate()-1);expected=dt.toISOString().slice(0,10);}
-      else break;
-    }
-    $('acStreak').textContent = streak;
-
-    try {
-      const lbSnap = await getDocs(query(collection(db,'leaderboard'), limit(200)));
-      const lbRows = lbSnap.docs.map(d=>d.data()).sort((a,b)=>(b.score||0)-(a.score||0));
-      const myBest = lbRows.filter(r=>r.uid===currentUser.uid).reduce((m,r)=>Math.max(m,r.score||0),0);
-      const rank   = lbRows.filter(r=>(r.score||0)>myBest).length + 1;
-      $('acRank').textContent = '#'+rank;
-    } catch(e) { $('acRank').textContent='—'; }
-
-    buildScoreTrend(results.slice(0,20).reverse());
-
-    const subjectMap = {};
-    results.forEach(r => {
-      const s = r.subject || 'Unknown';
-      if (!subjectMap[s]) subjectMap[s] = { total:0, count:0 };
-      subjectMap[s].total += r.accuracy||0;
-      subjectMap[s].count++;
-    });
-    buildSubjectBars(subjectMap);
-
-    const subArr = Object.entries(subjectMap).map(([s,d])=>({s,avg:Math.round(d.total/d.count)})).sort((a,b)=>b.avg-a.avg);
-    $('strongSubjects').innerHTML = subArr.slice(0,3).map(s=>`<div style="display:flex;align-items:center;justify-content:space-between;padding:6px 0;border-bottom:1px solid var(--border)"><span>${s.s}</span><span style="color:var(--green);font-weight:700">${s.avg}%</span></div>`).join('')||'—';
-    $('weakSubjects').innerHTML   = subArr.slice(-3).reverse().map(s=>`<div style="display:flex;align-items:center;justify-content:space-between;padding:6px 0;border-bottom:1px solid var(--border)"><span>${s.s}</span><span style="color:var(--red);font-weight:700">${s.avg}%</span></div>`).join('')||'—';
-
-    const tbody = $('historyTableBody');
-    tbody.innerHTML = '';
-    results.slice(0,20).forEach(r => {
-      const grade = r.accuracy>=80?'A':r.accuracy>=60?'B':r.accuracy>=40?'C':'D';
-      const tr = document.createElement('tr');
-      tr.innerHTML = `<td>${r.date||'—'}</td><td>${r.subject||'—'}</td><td style="max-width:180px;overflow:hidden;text-overflow:ellipsis">${r.chapter||'—'}</td><td style="color:var(--cyan);font-weight:700">${r.score||0}</td><td>${r.accuracy||0}%</td><td><span class="grade-badge grade-${grade}">${grade}</span></td>`;
-      tbody.appendChild(tr);
-    });
-  } catch(e) { console.warn('Analytics:', e.message); }
-};
-
-function buildScoreTrend(results) {
-  const wrap = $('scoreTrendChart');
-  if (!results.length) { wrap.innerHTML='<div style="color:var(--text3);font-size:0.8rem;text-align:center;padding:20px">No data yet.</div>'; return; }
-  const W=Math.min(wrap.offsetWidth||600,760), H=130, PAD=30;
-  const scores = results.map(r=>r.score||0);
-  const minS = Math.min(...scores,0), maxS = Math.max(...scores,1);
-  const scaleX = i => PAD + (i/(scores.length-1||1))*(W-PAD*2);
-  const scaleY = v => H-PAD - ((v-minS)/(maxS-minS||1))*(H-PAD*2);
-  const pts = scores.map((s,i)=>`${scaleX(i).toFixed(1)},${scaleY(s).toFixed(1)}`).join(' ');
-  const areaPath = `M${scaleX(0)},${H-PAD} ${scores.map((s,i)=>`L${scaleX(i).toFixed(1)},${scaleY(s).toFixed(1)}`).join(' ')} L${scaleX(scores.length-1)},${H-PAD} Z`;
-  wrap.innerHTML = `<svg viewBox="0 0 ${W} ${H}" width="100%" style="display:block">
-    <defs><linearGradient id="scoreGrad" x1="0" y1="0" x2="0" y2="1">
-      <stop offset="0%" stop-color="#3d8bff" stop-opacity="0.3"/>
-      <stop offset="100%" stop-color="#3d8bff" stop-opacity="0.02"/>
-    </linearGradient></defs>
-    <path d="${areaPath}" fill="url(#scoreGrad)"/>
-    <polyline points="${pts}" fill="none" stroke="#00f0ff" stroke-width="2" stroke-linejoin="round"/>
-    ${scores.map((s,i)=>`<circle cx="${scaleX(i).toFixed(1)}" cy="${scaleY(s).toFixed(1)}" r="3.5" fill="#00f0ff" stroke="#040610" stroke-width="1.5"/>`).join('')}
-    ${scores.map((s,i)=>`<text x="${scaleX(i).toFixed(1)}" y="${(scaleY(s)-7).toFixed(1)}" fill="#94a3b8" font-size="9" text-anchor="middle">${s}</text>`).join('')}
-  </svg>`;
-}
-function buildSubjectBars(subjectMap) {
-  const el = $('subjectBars');
-  const entries = Object.entries(subjectMap).map(([s,d])=>({s,avg:Math.round(d.total/d.count)}));
-  const subColors = { Physics:'#3d8bff', Chemistry:'#a855f7', Biology:'#10f090', MAT:'#ff7c2a', Unknown:'#6366f1' };
-  el.innerHTML = entries.map(({s,avg})=>`
-    <div style="display:flex;align-items:center;gap:10px;margin-bottom:10px">
-      <div style="min-width:80px;font-size:0.78rem;font-weight:600;color:var(--text2)">${s}</div>
-      <div style="flex:1;height:10px;background:rgba(255,255,255,0.05);border-radius:5px;overflow:hidden">
-        <div style="width:${avg}%;height:100%;background:${subColors[s]||'#3d8bff'};border-radius:5px;transition:width 0.6s cubic-bezier(0.4,0,0.2,1)"></div>
-      </div>
-      <div style="min-width:38px;font-size:0.8rem;font-weight:700;color:var(--text);text-align:right">${avg}%</div>
-    </div>`).join('')||'<div style="color:var(--text3);font-size:0.8rem">No subject data yet.</div>';
-}
-</script>
 </body>
 </html>
