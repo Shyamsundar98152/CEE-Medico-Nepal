@@ -1,77 +1,703 @@
-Chart(ctx2, {
-                        type: 'radar',
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>ExamPro - Student Dashboard</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: { sans: ['Inter', 'sans-serif'] },
+                    colors: {
+                        primary: { 50: '#eff6ff', 100: '#dbeafe', 200: '#bfdbfe', 300: '#93c5fd', 400: '#60a5fa', 500: '#3b82f6', 600: '#2563eb', 700: '#1d4ed8', 800: '#1e40af', 900: '#1e3a8a' },
+                        success: { 50: '#f0fdf4', 100: '#dcfce7', 500: '#22c55e', 600: '#16a34a' },
+                        danger: { 50: '#fef2f2', 100: '#fee2e2', 500: '#ef4444', 600: '#dc2626' },
+                        warning: { 50: '#fffbeb', 100: '#fef3c7', 500: '#f59e0b', 600: '#d97706' }
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        * { -webkit-tap-highlight-color: transparent; }
+        body { font-family: 'Inter', sans-serif; background: #f8fafc; }
+        .toast { animation: toastIn 0.3s ease-out, toastOut 0.3s ease-in 2.7s forwards; }
+        @keyframes toastIn { from { transform: translateX(100%); opacity:0; } to { transform: translateX(0); opacity:1; } }
+        @keyframes toastOut { from { transform: translateX(0); opacity:1; } to { transform: translateX(100%); opacity:0; } }
+        .sidebar-item.active { background: #3b82f6; color: white; }
+        .sidebar-item.active i { color: white; }
+        .sidebar-item:hover:not(.active) { background: #f1f5f9; }
+        .card-hover { transition: all 0.2s ease; }
+        .card-hover:hover { transform: translateY(-4px); box-shadow: 0 20px 25px -12px rgba(0,0,0,0.1); }
+        .timer-circle { transition: stroke-dashoffset 0.1s linear; }
+        .modal-enter { animation: modalFade 0.2s ease-out; }
+        @keyframes modalFade { from { opacity:0; transform: scale(0.95); } to { opacity:1; transform: scale(1); } }
+        .countdown { font-family: monospace; letter-spacing: 2px; }
+    </style>
+</head>
+<body>
+
+    <!-- Toast Container -->
+    <div id="toastContainer" class="fixed top-4 right-4 z-50 space-y-2"></div>
+
+    <!-- Mobile Menu Overlay -->
+    <div id="mobileMenuOverlay" class="fixed inset-0 bg-black/50 z-40 hidden lg:hidden" onclick="toggleMobileMenu()"></div>
+    <div id="mobileSidebar" class="fixed left-0 top-0 bottom-0 w-72 bg-white z-50 transform -translate-x-full transition-transform duration-300 lg:hidden">
+        <div class="p-6 border-b">
+            <div class="flex items-center justify-between">
+                <div class="flex items-center gap-3">
+                    <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-primary-500 to-primary-700 flex items-center justify-center text-white font-bold">EP</div>
+                    <span class="font-bold text-xl text-gray-800">ExamPro</span>
+                </div>
+                <button onclick="toggleMobileMenu()" class="text-gray-400"><i class="fas fa-times text-xl"></i></button>
+            </div>
+        </div>
+        <div class="p-4" id="mobileNavItems"></div>
+    </div>
+
+    <div class="flex h-screen overflow-hidden">
+        <!-- Desktop Sidebar -->
+        <aside class="hidden lg:flex lg:flex-col lg:w-72 bg-white border-r border-gray-200 fixed h-full overflow-y-auto">
+            <div class="p-6 border-b border-gray-200">
+                <div class="flex items-center gap-3">
+                    <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-primary-500 to-primary-700 flex items-center justify-center text-white font-bold text-lg">EP</div>
+                    <span class="font-bold text-xl text-gray-800">ExamPro</span>
+                </div>
+            </div>
+            <nav class="flex-1 py-6 px-4 space-y-1" id="desktopNavItems"></nav>
+            <div class="p-4 border-t border-gray-200">
+                <div class="flex items-center gap-3 p-3 rounded-xl bg-gray-50">
+                    <div id="desktopAvatar" class="w-10 h-10 rounded-full bg-gradient-to-br from-primary-500 to-primary-700 flex items-center justify-center text-white font-bold text-sm"></div>
+                    <div class="flex-1 min-w-0">
+                        <p id="desktopUserName" class="text-sm font-semibold text-gray-900 truncate"></p>
+                        <p class="text-xs text-gray-500">Student</p>
+                    </div>
+                    <button onclick="logout()" class="text-gray-400 hover:text-red-500"><i class="fas fa-sign-out-alt"></i></button>
+                </div>
+            </div>
+        </aside>
+
+        <!-- Main Content -->
+        <main class="flex-1 lg:ml-72 overflow-y-auto">
+            <!-- Top Header -->
+            <header class="bg-white border-b border-gray-200 sticky top-0 z-30">
+                <div class="px-4 lg:px-8 py-4 flex items-center justify-between">
+                    <button onclick="toggleMobileMenu()" class="lg:hidden text-gray-600"><i class="fas fa-bars text-xl"></i></button>
+                    <h1 class="text-xl font-semibold text-gray-800 lg:hidden">ExamPro</h1>
+                    <div class="flex items-center gap-3">
+                        <button onclick="showNotifications()" class="relative p-2 text-gray-500 hover:bg-gray-100 rounded-xl transition">
+                            <i class="fas fa-bell text-lg"></i>
+                            <span id="notificationBadge" class="absolute top-1 right-1 w-2 h-2 bg-red-500 rounded-full hidden"></span>
+                        </button>
+                        <div class="lg:hidden flex items-center gap-2">
+                            <div id="mobileAvatar" class="w-8 h-8 rounded-full bg-gradient-to-br from-primary-500 to-primary-700 flex items-center justify-center text-white font-bold text-xs"></div>
+                        </div>
+                    </div>
+                </div>
+            </header>
+
+            <!-- Dynamic Content Area -->
+            <div id="mainContent" class="p-4 lg:p-8">
+                <!-- Content loaded dynamically -->
+                <div class="flex items-center justify-center h-64">
+                    <div class="loader border-4 border-gray-200 border-t-primary-600 rounded-full w-12 h-12 animate-spin"></div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- Notifications Modal -->
+    <div id="notificationsModal" class="fixed inset-0 z-50 hidden items-center justify-center p-4">
+        <div class="absolute inset-0 bg-black/40 backdrop-blur-sm" onclick="closeNotifications()"></div>
+        <div class="relative bg-white rounded-2xl shadow-2xl w-full max-w-md modal-enter">
+            <div class="flex items-center justify-between p-5 border-b">
+                <h3 class="text-lg font-bold text-gray-900">Notifications</h3>
+                <button onclick="closeNotifications()" class="text-gray-400 hover:text-gray-600"><i class="fas fa-times"></i></button>
+            </div>
+            <div class="p-5 max-h-96 overflow-y-auto" id="notificationsList">
+                <div class="text-center text-gray-500 py-8">No new notifications</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Exam Modal -->
+    <div id="examModal" class="fixed inset-0 z-50 hidden items-center justify-center p-4">
+        <div class="absolute inset-0 bg-black/60 backdrop-blur-sm" onclick="closeExamModal()"></div>
+        <div class="relative bg-white rounded-2xl shadow-2xl w-full max-w-2xl modal-enter overflow-hidden">
+            <div class="bg-gradient-to-r from-primary-600 to-primary-700 text-white p-5">
+                <div class="flex justify-between items-center">
+                    <h3 id="examModalTitle" class="text-xl font-bold">Start Exam</h3>
+                    <button onclick="closeExamModal()" class="text-white/80 hover:text-white"><i class="fas fa-times text-xl"></i></button>
+                </div>
+            </div>
+            <div class="p-6" id="examModalBody"></div>
+        </div>
+    </div>
+
+    <!-- Take Exam Interface Modal -->
+    <div id="takeExamModal" class="fixed inset-0 z-50 hidden flex-col bg-white overflow-y-auto">
+        <div class="sticky top-0 bg-white border-b z-20 p-4 shadow-sm">
+            <div class="flex items-center justify-between max-w-6xl mx-auto">
+                <h2 id="examTitle" class="text-lg font-bold text-gray-900"></h2>
+                <div class="flex items-center gap-4">
+                    <div class="bg-gray-100 rounded-lg px-4 py-2">
+                        <span class="text-sm text-gray-600">Time Left:</span>
+                        <span id="timerDisplay" class="text-xl font-bold text-primary-600 ml-2 countdown">00:00</span>
+                    </div>
+                    <button onclick="submitExam()" class="bg-primary-600 text-white px-5 py-2 rounded-lg font-semibold hover:bg-primary-700">Submit</button>
+                </div>
+            </div>
+        </div>
+        <div class="flex-1 max-w-4xl mx-auto w-full p-6" id="examQuestionsContainer"></div>
+    </div>
+
+    <style>
+        .loader { border: 3px solid #f3f4f6; border-top: 3px solid #3b82f6; border-radius: 50%; width: 40px; height: 40px; animation: spin 1s linear infinite; }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+        .option-card { transition: all 0.2s; cursor: pointer; }
+        .option-card:hover { background: #f8fafc; border-color: #3b82f6; }
+        .option-card.selected { background: #eff6ff; border-color: #3b82f6; border-width: 2px; }
+        .question-nav { transition: all 0.2s; cursor: pointer; }
+        .question-nav:hover { background: #e2e8f0; }
+        .question-nav.answered { background: #22c55e; color: white; }
+        .question-nav.current { background: #3b82f6; color: white; transform: scale(1.05); }
+    </style>
+
+    <script>
+        // Sample Data
+        let currentUser = null;
+        let currentSession = null;
+        let availableExams = [];
+        let recentAttempts = [];
+        let userStats = { totalAttempts: 0, avgScore: 0, currentStreak: 0 };
+        let leaderboardData = [];
+        
+        // Exam taking state
+        let activeExam = null;
+        let currentQuestions = [];
+        let userAnswers = [];
+        let examTimer = null;
+        let timeRemaining = 0;
+        let currentQuestionIndex = 0;
+
+        // Check authentication
+        const session = JSON.parse(localStorage.getItem('exampro_session') || 'null');
+        if (!session || !session.token) {
+            window.location.href = 'login.html';
+        }
+        currentUser = session.user;
+        if (currentUser.role !== 'student') {
+            window.location.href = 'admin.html';
+        }
+
+        // Initialize dashboard
+        function init() {
+            loadSampleData();
+            renderSidebar();
+            updateUserUI();
+            navigateTo('dashboard');
+        }
+
+        function loadSampleData() {
+            // Sample exams
+            availableExams = [
+                { id: 1, title: 'Biology: Cell Structure', subject: 'Biology', questions: 20, duration: 30, difficulty: 'Medium', attempts: 234 },
+                { id: 2, title: 'Physics: Mechanics', subject: 'Physics', questions: 25, duration: 45, difficulty: 'Hard', attempts: 187 },
+                { id: 3, title: 'Chemistry: Periodic Table', subject: 'Chemistry', questions: 15, duration: 20, difficulty: 'Easy', attempts: 312 },
+                { id: 4, title: 'Mathematics: Calculus', subject: 'Math', questions: 20, duration: 40, difficulty: 'Hard', attempts: 156 },
+                { id: 5, title: 'English: Grammar & Vocab', subject: 'English', questions: 30, duration: 35, difficulty: 'Medium', attempts: 278 },
+            ];
+
+            // Sample recent attempts
+            recentAttempts = [
+                { id: 1, exam: 'Biology: Cell Structure', date: '2024-03-15', score: 85, time: '28:30', status: 'passed' },
+                { id: 2, exam: 'Physics: Mechanics', date: '2024-03-12', score: 72, time: '42:15', status: 'failed' },
+                { id: 3, exam: 'Chemistry: Periodic Table', date: '2024-03-10', score: 94, time: '18:45', status: 'passed' },
+                { id: 4, exam: 'Mathematics: Calculus', date: '2024-03-08', score: 68, time: '38:20', status: 'failed' },
+            ];
+
+            // User stats
+            const scores = recentAttempts.map(a => a.score);
+            userStats = {
+                totalAttempts: recentAttempts.length,
+                avgScore: Math.round(scores.reduce((a,b) => a+b, 0) / scores.length),
+                currentStreak: 3,
+                rank: 12,
+                totalStudents: 1247
+            };
+
+            // Leaderboard
+            leaderboardData = [
+                { rank: 1, name: 'Alice Johnson', score: 94, exams: 12 },
+                { rank: 2, name: 'Bob Williams', score: 91, exams: 11 },
+                { rank: 3, name: 'Carol Davis', score: 89, exams: 14 },
+                { rank: 4, name: 'David Brown', score: 87, exams: 10 },
+                { rank: 5, name: 'Emma Wilson', score: 85, exams: 9 },
+                { rank: 6, name: currentUser.firstName + ' ' + currentUser.lastName, score: userStats.avgScore, exams: userStats.totalAttempts, isCurrentUser: true }
+            ];
+            leaderboardData.sort((a,b) => b.score - a.score);
+            leaderboardData = leaderboardData.map((item, idx) => ({ ...item, rank: idx + 1 }));
+        }
+
+        function renderSidebar() {
+            const navItems = [
+                { id: 'dashboard', icon: 'fa-chart-line', label: 'Dashboard' },
+                { id: 'exams', icon: 'fa-book-open', label: 'Available Exams' },
+                { id: 'attempts', icon: 'fa-history', label: 'My Attempts' },
+                { id: 'leaderboard', icon: 'fa-trophy', label: 'Leaderboard' },
+                { id: 'profile', icon: 'fa-user', label: 'Profile' }
+            ];
+
+            const desktopNav = document.getElementById('desktopNavItems');
+            const mobileNav = document.getElementById('mobileNavItems');
+            
+            const navHtml = navItems.map(item => `
+                <button onclick="navigateTo('${item.id}')" id="nav-${item.id}" class="sidebar-item w-full flex items-center gap-3 px-4 py-3 rounded-xl text-gray-700 font-medium transition-all">
+                    <i class="fas ${item.icon} w-5"></i>
+                    <span>${item.label}</span>
+                </button>
+            `).join('');
+            
+            desktopNav.innerHTML = navHtml;
+            mobileNav.innerHTML = navHtml;
+        }
+
+        function navigateTo(page) {
+            // Update active state
+            ['dashboard', 'exams', 'attempts', 'leaderboard', 'profile'].forEach(p => {
+                const btn = document.getElementById(`nav-${p}`);
+                if (btn) {
+                    if (p === page) btn.classList.add('active', 'bg-primary-600', 'text-white');
+                    else btn.classList.remove('active', 'bg-primary-600', 'text-white');
+                }
+            });
+            
+            // Load content
+            const contentDiv = document.getElementById('mainContent');
+            switch(page) {
+                case 'dashboard': loadDashboard(contentDiv); break;
+                case 'exams': loadExamsPage(contentDiv); break;
+                case 'attempts': loadAttemptsPage(contentDiv); break;
+                case 'leaderboard': loadLeaderboardPage(contentDiv); break;
+                case 'profile': loadProfilePage(contentDiv); break;
+            }
+            
+            if (window.innerWidth < 1024) toggleMobileMenu();
+        }
+
+        function loadDashboard(container) {
+            container.innerHTML = `
+                <div class="max-w-7xl mx-auto">
+                    <!-- Welcome Banner -->
+                    <div class="bg-gradient-to-r from-primary-600 to-primary-700 rounded-2xl p-6 lg:p-8 text-white mb-8">
+                        <h1 class="text-2xl lg:text-3xl font-bold mb-2">Welcome back, ${currentUser.firstName}!</h1>
+                        <p class="text-primary-100">Ready to test your knowledge? Continue your learning journey.</p>
+                    </div>
+
+                    <!-- Stats Grid -->
+                    <div class="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+                        <div class="bg-white rounded-xl p-5 shadow-sm border border-gray-100 card-hover">
+                            <div class="flex items-center justify-between mb-2">
+                                <span class="text-gray-500 text-sm">Total Exams</span>
+                                <i class="fas fa-clipboard-list text-2xl text-primary-500"></i>
+                            </div>
+                            <p class="text-3xl font-bold text-gray-900">${userStats.totalAttempts}</p>
+                        </div>
+                        <div class="bg-white rounded-xl p-5 shadow-sm border border-gray-100 card-hover">
+                            <div class="flex items-center justify-between mb-2">
+                                <span class="text-gray-500 text-sm">Avg Score</span>
+                                <i class="fas fa-chart-line text-2ll text-success-500"></i>
+                            </div>
+                            <p class="text-3xl font-bold text-gray-900">${userStats.avgScore}%</p>
+                        </div>
+                        <div class="bg-white rounded-xl p-5 shadow-sm border border-gray-100 card-hover">
+                            <div class="flex items-center justify-between mb-2">
+                                <span class="text-gray-500 text-sm">Current Streak</span>
+                                <i class="fas fa-fire text-2xl text-orange-500"></i>
+                            </div>
+                            <p class="text-3xl font-bold text-gray-900">${userStats.currentStreak} days</p>
+                        </div>
+                        <div class="bg-white rounded-xl p-5 shadow-sm border border-gray-100 card-hover">
+                            <div class="flex items-center justify-between mb-2">
+                                <span class="text-gray-500 text-sm">Global Rank</span>
+                                <i class="fas fa-trophy text-2xl text-yellow-500"></i>
+                            </div>
+                            <p class="text-3xl font-bold text-gray-900">#${userStats.rank}</p>
+                        </div>
+                    </div>
+
+                    <!-- Performance Chart -->
+                    <div class="bg-white rounded-xl p-6 shadow-sm border border-gray-100 mb-8">
+                        <h3 class="text-lg font-bold text-gray-900 mb-4">Performance Overview</h3>
+                        <div class="h-64">
+                            <canvas id="performanceChart"></canvas>
+                        </div>
+                    </div>
+
+                    <!-- Recent Activity & Recommended -->
+                    <div class="grid lg:grid-cols-2 gap-6">
+                        <div class="bg-white rounded-xl p-6 shadow-sm border border-gray-100">
+                            <div class="flex justify-between items-center mb-4">
+                                <h3 class="text-lg font-bold text-gray-900">Recent Attempts</h3>
+                                <button onclick="navigateTo('attempts')" class="text-primary-600 text-sm hover:underline">View all →</button>
+                            </div>
+                            <div class="space-y-3" id="recentAttemptsList"></div>
+                        </div>
+                        <div class="bg-white rounded-xl p-6 shadow-sm border border-gray-100">
+                            <h3 class="text-lg font-bold text-gray-900 mb-4">Recommended for You</h3>
+                            <div class="space-y-3" id="recommendedExams"></div>
+                        </div>
+                    </div>
+                </div>
+            `;
+            
+            // Load recent attempts
+            const recentList = document.getElementById('recentAttemptsList');
+            recentList.innerHTML = recentAttempts.slice(0, 3).map(a => `
+                <div class="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                    <div>
+                        <p class="font-medium text-gray-900">${a.exam}</p>
+                        <p class="text-xs text-gray-500">${a.date}</p>
+                    </div>
+                    <div class="text-right">
+                        <p class="font-bold ${a.score >= 75 ? 'text-success-600' : 'text-danger-600'}">${a.score}%</p>
+                        <p class="text-xs text-gray-500">${a.time}</p>
+                    </div>
+                </div>
+            `).join('');
+            
+            // Load recommended exams
+            const recommendedList = document.getElementById('recommendedExams');
+            recommendedList.innerHTML = availableExams.slice(0, 2).map(exam => `
+                <div class="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                    <div>
+                        <p class="font-medium text-gray-900">${exam.title}</p>
+                        <p class="text-xs text-gray-500">${exam.questions} questions · ${exam.duration} min</p>
+                    </div>
+                    <button onclick="startExam(${exam.id})" class="bg-primary-600 text-white px-4 py-2 rounded-lg text-sm font-semibold hover:bg-primary-700">Start</button>
+                </div>
+            `).join('');
+            
+            // Initialize chart
+            setTimeout(() => {
+                const ctx = document.getElementById('performanceChart');
+                if (ctx) {
+                    new Chart(ctx, {
+                        type: 'line',
                         data: {
-                            labels: ['Math', 'Physics', 'Chemistry', 'Biology', 'English', 'CS'],
+                            labels: ['Week 1', 'Week 2', 'Week 3', 'Week 4'],
                             datasets: [{
                                 label: 'Your Score',
-                                data: [85, 78, 72, 91, 68, 82],
+                                data: [72, 78, 85, userStats.avgScore],
                                 borderColor: '#3b82f6',
-                                backgroundColor: 'rgba(59,130,246,0.2)',
-                                pointBackgroundColor: '#3b82f6'
-                            }, {
-                                label: 'Class Average',
-                                data: [70, 65, 68, 75, 72, 70],
-                                borderColor: '#9ca3af',
-                                backgroundColor: 'rgba(156,163,175,0.1)',
-                                pointBackgroundColor: '#9ca3af'
+                                backgroundColor: 'rgba(59,130,246,0.1)',
+                                fill: true,
+                                tension: 0.4
                             }]
                         },
                         options: {
                             responsive: true,
                             maintainAspectRatio: false,
-                            scales: { r: { beginAtZero: true, max: 100 } }
+                            plugins: { legend: { display: false } }
                         }
                     });
                 }
             }, 100);
+        }
 
-            // Attempts table
-            const tbody = document.getElementById('attemptsTable');
-            tbody.innerHTML = attempts.map(a => `
-                <tr class="hover:bg-gray-50 transition-colors">
-                    <td class="py-3 px-4 font-medium text-gray-900">${a.exam}</td>
-                    <td class="py-3 px-4 text-center text-gray-500">${a.date}</td>
-                    <td class="py-3 px-4 text-center">
-                        <span class="font-bold ${a.score >= 75 ? 'text-success-600' : a.score >= 60 ? 'text-warning-600' : 'text-danger-600'}">${a.score}%</span>
-                    </td>
-                    <td class="py-3 px-4 text-center text-gray-500">${a.time}</td>
-                    <td class="py-3 px-4 text-right">
-                        <span class="text-xs font-medium px-2.5 py-1 rounded-full ${a.status === 'passed' ? 'bg-success-50 text-success-600' : 'bg-danger-50 text-danger-600'}">
-                            ${a.status === 'passed' ? 'Passed' : 'Failed'}
-                        </span>
-                    </td>
+        function loadExamsPage(container) {
+            container.innerHTML = `
+                <div class="max-w-7xl mx-auto">
+                    <h1 class="text-2xl font-bold text-gray-900 mb-6">📚 Available Exams</h1>
+                    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6" id="examsGrid"></div>
+                </div>
+            `;
+            
+            const examsGrid = document.getElementById('examsGrid');
+            examsGrid.innerHTML = availableExams.map(exam => `
+                <div class="bg-white rounded-xl p-6 shadow-sm border border-gray-100 card-hover">
+                    <div class="flex justify-between items-start mb-3">
+                        <h3 class="text-lg font-bold text-gray-900">${exam.title}</h3>
+                        <span class="text-xs font-medium px-2 py-1 rounded-full ${
+                            exam.difficulty === 'Easy' ? 'bg-success-50 text-success-600' :
+                            exam.difficulty === 'Hard' ? 'bg-danger-50 text-danger-600' :
+                            'bg-warning-50 text-warning-600'
+                        }">${exam.difficulty}</span>
+                    </div>
+                    <div class="flex gap-4 text-sm text-gray-500 mb-4">
+                        <span><i class="far fa-file-alt mr-1"></i> ${exam.questions} questions</span>
+                        <span><i class="far fa-clock mr-1"></i> ${exam.duration} minutes</span>
+                        <span><i class="fas fa-users mr-1"></i> ${exam.attempts} attempts</span>
+                    </div>
+                    <button onclick="startExam(${exam.id})" class="w-full bg-primary-600 text-white py-2.5 rounded-lg font-semibold hover:bg-primary-700 transition">Start Exam →</button>
+                </div>
+            `).join('');
+        }
+
+        function loadAttemptsPage(container) {
+            container.innerHTML = `
+                <div class="max-w-7xl mx-auto">
+                    <h1 class="text-2xl font-bold text-gray-900 mb-6">📊 My Attempt History</h1>
+                    <div class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+                        <table class="w-full">
+                            <thead class="bg-gray-50 border-b">
+                                <tr>
+                                    <th class="text-left p-4">Exam</th>
+                                    <th class="text-left p-4">Date</th>
+                                    <th class="text-left p-4">Score</th>
+                                    <th class="text-left p-4">Time Taken</th>
+                                    <th class="text-left p-4">Status</th>
+                                </tr>
+                            </thead>
+                            <tbody id="attemptsTableBody"></tbody>
+                        </table>
+                    </div>
+                </div>
+            `;
+            
+            const tbody = document.getElementById('attemptsTableBody');
+            tbody.innerHTML = recentAttempts.map(a => `
+                <tr class="border-b hover:bg-gray-50">
+                    <td class="p-4 font-medium text-gray-900">${a.exam}</td>
+                    <td class="p-4 text-gray-600">${a.date}</td>
+                    <td class="p-4"><span class="font-bold ${a.score >= 75 ? 'text-success-600' : 'text-danger-600'}">${a.score}%</span></td>
+                    <td class="p-4 text-gray-600">${a.time}</td>
+                    <td class="p-4"><span class="text-xs font-medium px-2 py-1 rounded-full ${a.status === 'passed' ? 'bg-success-50 text-success-600' : 'bg-danger-50 text-danger-600'}">${a.status === 'passed' ? 'Passed' : 'Failed'}</span></td>
                 </tr>
             `).join('');
         }
 
-        // ==================== PROFILE ====================
-        function saveProfile() {
-            const name = document.getElementById('editName').value;
-            const email = document.getElementById('editEmail').value;
-            if (!name || !email) { showToast('Please fill in all fields', 'error'); return; }
-
-            const names = name.split(' ');
-            user.firstName = names[0];
-            user.lastName = names.slice(1).join(' ') || '';
-            user.email = email;
-
-            session.user = user;
-            localStorage.setItem('exampro_session', JSON.stringify(session));
-
-            document.getElementById('profileName').textContent = name;
-            document.getElementById('profileEmail').textContent = email;
-            document.getElementById('desktopUserName').textContent = name;
-            document.getElementById('mobileUserName').textContent = name;
-
-            const newInitials = (user.firstName[0] + (user.lastName[0] || '')).toUpperCase();
-            document.getElementById('desktopAvatar').textContent = newInitials;
-            document.getElementById('mobileAvatar').textContent = newInitials;
-            document.getElementById('profileAvatar').textContent = newInitials;
-
-            showToast('Profile updated successfully!', 'success');
+        function loadLeaderboardPage(container) {
+            container.innerHTML = `
+                <div class="max-w-7xl mx-auto">
+                    <h1 class="text-2xl font-bold text-gray-900 mb-6">🏆 Global Leaderboard</h1>
+                    <div class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+                        <div class="p-4 bg-gradient-to-r from-yellow-50 to-orange-50 border-b">
+                            <div class="flex items-center gap-2">
+                                <i class="fas fa-trophy text-yellow-500 text-xl"></i>
+                                <span class="font-semibold text-gray-900">Top Performers This Month</span>
+                            </div>
+                        </div>
+                        <div class="divide-y" id="leaderboardList"></div>
+                    </div>
+                </div>
+            `;
+            
+            const leaderboardList = document.getElementById('leaderboardList');
+            leaderboardList.innerHTML = leaderboardData.map(user => `
+                <div class="flex items-center justify-between p-4 ${user.isCurrentUser ? 'bg-primary-50' : ''}">
+                    <div class="flex items-center gap-4">
+                        <div class="w-8 h-8 rounded-full ${user.rank <= 3 ? 'bg-yellow-400' : 'bg-gray-200'} flex items-center justify-center font-bold text-sm">${user.rank}</div>
+                        <div>
+                            <p class="font-medium text-gray-900">${user.name} ${user.isCurrentUser ? '<span class="text-xs text-primary-600 ml-2">(You)</span>' : ''}</p>
+                            <p class="text-xs text-gray-500">${user.exams} exams taken</p>
+                        </div>
+                    </div>
+                    <p class="text-2xl font-bold text-gray-900">${user.score}%</p>
+                </div>
+            `).join('');
         }
 
-        // ==================== UI HELPERS ====================
+        function loadProfilePage(container) {
+            container.innerHTML = `
+                <div class="max-w-3xl mx-auto">
+                    <h1 class="text-2xl font-bold text-gray-900 mb-6">👤 My Profile</h1>
+                    <div class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+                        <div class="p-8 text-center border-b">
+                            <div class="w-24 h-24 rounded-full bg-gradient-to-br from-primary-500 to-primary-700 flex items-center justify-center text-white text-3xl font-bold mx-auto mb-4">
+                                ${(currentUser.firstName[0] + (currentUser.lastName?.[0] || '')).toUpperCase()}
+                            </div>
+                            <h2 class="text-xl font-bold text-gray-900">${currentUser.firstName} ${currentUser.lastName || ''}</h2>
+                            <p class="text-gray-500">${currentUser.email}</p>
+                            <p class="text-sm text-primary-600 mt-2">Student</p>
+                        </div>
+                        <div class="p-6 space-y-4">
+                            <div class="flex justify-between py-2 border-b">
+                                <span class="text-gray-600">Member Since</span>
+                                <span class="font-medium text-gray-900">March 2024</span>
+                            </div>
+                            <div class="flex justify-between py-2 border-b">
+                                <span class="text-gray-600">Total Exams Taken</span>
+                                <span class="font-medium text-gray-900">${userStats.totalAttempts}</span>
+                            </div>
+                            <div class="flex justify-between py-2 border-b">
+                                <span class="text-gray-600">Average Score</span>
+                                <span class="font-medium text-gray-900">${userStats.avgScore}%</span>
+                            </div>
+                            <div class="flex justify-between py-2 border-b">
+                                <span class="text-gray-600">Current Streak</span>
+                                <span class="font-medium text-gray-900">${userStats.currentStreak} days</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+
+        function startExam(examId) {
+            const exam = availableExams.find(e => e.id === examId);
+            if (!exam) return;
+            
+            // Generate random questions
+            currentQuestions = Array.from({ length: exam.questions }, (_, i) => ({
+                id: i + 1,
+                text: `Sample question ${i + 1} for ${exam.title}. This is a demonstration question.`,
+                options: ['Option A: First choice', 'Option B: Second choice', 'Option C: Third choice', 'Option D: Fourth choice'],
+                correct: Math.floor(Math.random() * 4)
+            }));
+            
+            userAnswers = new Array(exam.questions).fill(null);
+            timeRemaining = exam.duration * 60;
+            activeExam = exam;
+            currentQuestionIndex = 0;
+            
+            // Show exam interface
+            document.getElementById('examTitle').textContent = exam.title;
+            document.getElementById('takeExamModal').classList.remove('hidden');
+            document.getElementById('takeExamModal').style.display = 'flex';
+            
+            renderExamQuestion();
+            startExamTimer();
+        }
+        
+        function renderExamQuestion() {
+            const q = currentQuestions[currentQuestionIndex];
+            const container = document.getElementById('examQuestionsContainer');
+            
+            container.innerHTML = `
+                <div class="mb-6">
+                    <div class="flex justify-between items-center mb-4">
+                        <span class="text-sm text-gray-500">Question ${currentQuestionIndex + 1} of ${currentQuestions.length}</span>
+                        <div class="flex gap-2">
+                            ${currentQuestionIndex > 0 ? `<button onclick="previousQuestion()" class="px-4 py-2 border rounded-lg hover:bg-gray-50">← Previous</button>` : ''}
+                            ${currentQuestionIndex < currentQuestions.length - 1 ? `<button onclick="nextQuestion()" class="px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700">Next →</button>` : ''}
+                        </div>
+                    </div>
+                    <div class="bg-gray-50 rounded-xl p-6 mb-6">
+                        <p class="text-lg font-medium text-gray-900">${q.text}</p>
+                    </div>
+                    <div class="space-y-3">
+                        ${q.options.map((opt, idx) => `
+                            <div onclick="selectAnswer(${idx})" class="option-card p-4 border-2 rounded-xl ${userAnswers[currentQuestionIndex] === idx ? 'selected' : 'border-gray-200'}">
+                                <div class="flex items-center gap-3">
+                                    <div class="w-6 h-6 rounded-full border-2 ${userAnswers[currentQuestionIndex] === idx ? 'border-primary-600 bg-primary-600 text-white' : 'border-gray-300'} flex items-center justify-center text-xs font-bold">
+                                        ${String.fromCharCode(65 + idx)}
+                                    </div>
+                                    <span class="text-gray-800">${opt}</span>
+                                </div>
+                            </div>
+                        `).join('')}
+                    </div>
+                </div>
+                <div class="grid grid-cols-8 gap-2 mt-8 pt-6 border-t">
+                    ${currentQuestions.map((_, idx) => `
+                        <button onclick="goToQuestion(${idx})" class="question-nav w-10 h-10 rounded-lg font-semibold text-sm ${userAnswers[idx] !== null ? 'answered' : ''} ${idx === currentQuestionIndex ? 'current' : ''}">
+                            ${idx + 1}
+                        </button>
+                    `).join('')}
+                </div>
+            `;
+        }
+        
+        function selectAnswer(optionIndex) {
+            userAnswers[currentQuestionIndex] = optionIndex;
+            renderExamQuestion();
+        }
+        
+        function nextQuestion() {
+            if (currentQuestionIndex < currentQuestions.length - 1) {
+                currentQuestionIndex++;
+                renderExamQuestion();
+            }
+        }
+        
+        function previousQuestion() {
+            if (currentQuestionIndex > 0) {
+                currentQuestionIndex--;
+                renderExamQuestion();
+            }
+        }
+        
+        function goToQuestion(index) {
+            currentQuestionIndex = index;
+            renderExamQuestion();
+        }
+        
+        function startExamTimer() {
+            if (examTimer) clearInterval(examTimer);
+            
+            examTimer = setInterval(() => {
+                if (timeRemaining <= 0) {
+                    clearInterval(examTimer);
+                    submitExam();
+                } else {
+                    timeRemaining--;
+                    const minutes = Math.floor(timeRemaining / 60);
+                    const seconds = timeRemaining % 60;
+                    document.getElementById('timerDisplay').textContent = `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+                }
+            }, 1000);
+        }
+        
+        function submitExam() {
+            if (examTimer) clearInterval(examTimer);
+            
+            // Calculate score
+            let correctCount = 0;
+            userAnswers.forEach((answer, idx) => {
+                if (answer !== null && answer === currentQuestions[idx].correct) correctCount++;
+            });
+            
+            const score = Math.round((correctCount / currentQuestions.length) * 100);
+            const passed = score >= 60;
+            
+            // Save attempt
+            const newAttempt = {
+                id: Date.now(),
+                exam: activeExam.title,
+                date: new Date().toISOString().split('T')[0],
+                score: score,
+                time: `${Math.floor((activeExam.duration * 60 - timeRemaining) / 60)}:${((activeExam.duration * 60 - timeRemaining) % 60).toString().padStart(2, '0')}`,
+                status: passed ? 'passed' : 'failed'
+            };
+            recentAttempts.unshift(newAttempt);
+            
+            // Update stats
+            const scores = recentAttempts.map(a => a.score);
+            userStats.totalAttempts = recentAttempts.length;
+            userStats.avgScore = Math.round(scores.reduce((a,b) => a+b, 0) / scores.length);
+            
+            // Close exam modal
+            document.getElementById('takeExamModal').classList.add('hidden');
+            document.getElementById('takeExamModal').style.display = 'none';
+            
+            // Show result
+            showToast(`Exam submitted! Your score: ${score}%`, passed ? 'success' : 'warning');
+            
+            // Refresh dashboard if on dashboard
+            const activePage = document.querySelector('.sidebar-item.active span')?.innerText.toLowerCase();
+            if (activePage === 'dashboard') {
+                loadDashboard(document.getElementById('mainContent'));
+            }
+        }
+        
+        function closeExamModal() {
+            document.getElementById('examModal').classList.add('hidden');
+            document.getElementById('examModal').classList.remove('flex');
+        }
+
+        function updateUserUI() {
+            const initials = (currentUser.firstName[0] + (currentUser.lastName?.[0] || '')).toUpperCase();
+            document.getElementById('desktopAvatar').textContent = initials;
+            document.getElementById('mobileAvatar').textContent = initials;
+            document.getElementById('desktopUserName').textContent = `${currentUser.firstName} ${currentUser.lastName || ''}`;
+        }
+
         function showToast(message, type = 'success') {
             const container = document.getElementById('toastContainer');
             const toast = document.createElement('div');
@@ -84,13 +710,15 @@ Chart(ctx2, {
         }
 
         function toggleMobileMenu() {
-            const menu = document.getElementById('mobileMenuOverlay');
-            menu.classList.toggle('hidden');
-            menu.classList.toggle('flex');
-        }
-
-        function toggleMobileSearch() {
-            document.getElementById('mobileSearch').classList.toggle('hidden');
+            const sidebar = document.getElementById('mobileSidebar');
+            const overlay = document.getElementById('mobileMenuOverlay');
+            if (sidebar.classList.contains('-translate-x-full')) {
+                sidebar.classList.remove('-translate-x-full');
+                overlay.classList.remove('hidden');
+            } else {
+                sidebar.classList.add('-translate-x-full');
+                overlay.classList.add('hidden');
+            }
         }
 
         function showNotifications() {
@@ -110,9 +738,22 @@ Chart(ctx2, {
             window.location.href = 'login.html';
         }
 
-        // ==================== INIT ====================
-        loadDashboard();
-        navigateTo('dashboard');
+        // Make functions global
+        window.navigateTo = navigateTo;
+        window.startExam = startExam;
+        window.selectAnswer = selectAnswer;
+        window.nextQuestion = nextQuestion;
+        window.previousQuestion = previousQuestion;
+        window.goToQuestion = goToQuestion;
+        window.submitExam = submitExam;
+        window.toggleMobileMenu = toggleMobileMenu;
+        window.showNotifications = showNotifications;
+        window.closeNotifications = closeNotifications;
+        window.logout = logout;
+        window.closeExamModal = closeExamModal;
+
+        // Start app
+        init();
     </script>
 </body>
 </html>
