@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ExamPro - Admin</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.6.0/css/all.min.css">
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  
+  <style>
+    .nav-link.active { background-color: #1e40af; color: white; }
+    .hidden { display: none !important; }
+  </style>
+</head>
+<body class="bg-gray-50 dark:bg-gray-950">
+
+<!-- LOGIN SCREEN -->
+<div id="login-screen" class="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-900 to-gray-900">
+  <div class="bg-white dark:bg-gray-900 p-10 rounded-3xl shadow-2xl w-full max-w-md">
+    <div class="text-center mb-8">
+      <h1 class="text-4xl font-bold text-blue-600">ExamPro Admin</h1>
+      <p class="text-gray-500 mt-2">Secure Administrator Access</p>
+    </div>
+
+    <div id="error-msg" class="hidden bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded-2xl text-sm mb-6"></div>
+
+    <form id="login-form" class="space-y-5">
+      <input type="email" id="email" placeholder="Admin Email" required
+        class="w-full px-5 py-3 border border-gray-300 rounded-2xl focus:outline-none focus:border-blue-500">
+      
+      <input type="password" id="password" placeholder="Password" required
+        class="w-full px-5 py-3 border border-gray-300 rounded-2xl focus:outline-none focus:border-blue-500">
+
+      <button type="submit" 
+        class="w-full bg-blue-600 hover:bg-blue-700 text-white py-4 rounded-2xl font-bold">
+        Login as Admin
+      </button>
+    </form>
+
+    <p class="text-center text-xs text-gray-500 mt-6">Only authorized admin can login</p>
+  </div>
+</div>
+
+<!-- ADMIN PANEL -->
+<div id="dashboard-screen" class="hidden flex h-screen">
+  <!-- Sidebar + Main Content (same as before) -->
+  <div class="w-72 bg-gray-900 text-white flex flex-col">
+    <div class="p-6 border-b border-gray-800">
+      <h1 class="text-3xl font-bold">ExamPro</h1>
+      <p class="text-green-400 text-sm">Admin Panel</p>
+    </div>
+    <nav class="flex-1 p-4 space-y-1">
+      <a href="#" onclick="showPage('dashboard')" class="nav-link flex items-center gap-3 px-4 py-3 rounded-xl active">Dashboard</a>
+      <a href="#" onclick="showPage('questions')" class="nav-link flex items-center gap-3 px-4 py-3 rounded-xl">Questions</a>
+    </nav>
+    <div class="p-4 border-t">
+      <div id="user-info" class="mb-4"></div>
+      <button onclick="logout()" class="w-full bg-red-600 py-3 rounded-xl">Logout</button>
+    </div>
+  </div>
+
+  <div class="flex-1 overflow-auto p-8">
+    <h2 id="page-title" class="text-2xl font-semibold mb-6">Dashboard</h2>
+    <div id="content-area">Welcome Admin! System is ready.</div>
+  </div>
+</div>
+
+<script>
+// Config
+const SUPABASE_URL = 'https://rpudsnrqlhataqfavcjh.supabase.co';
+const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJwdWRzbnJxbGhhdGFxZmF2Y2poIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzk5NzI0NjgsImV4cCI6MjA5NTU0ODQ2OH0.EEu5t-NPqWARChSAMpEvUPMBkz_JeeNe3bGSCQmH7Xo';
+
+const supabase = Supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+const ADMIN_ID = "a15f22c0-3925-4c3f-b298-12e222503303";
+
+// Login Form
+document.getElementById('login-form').addEventListener('submit', async (e) => {
+  e.preventDefault();
+  
+  const email = document.getElementById('email').value;
+  const password = document.getElementById('password').value;
+  const errorMsg = document.getElementById('error-msg');
+
+  errorMsg.classList.add('hidden');
+
+  const { data, error } = await supabase.auth.signInWithPassword({ email, password });
+
+  if (error) {
+    errorMsg.classList.remove('hidden');
+    errorMsg.textContent = error.message;
+    return;
+  }
+
+  // Check if this is the admin
+  if (data.user.id === ADMIN_ID) {
+    document.getElementById('login-screen').classList.add('hidden');
+    document.getElementById('dashboard-screen').classList.remove('hidden');
+    
+    document.getElementById('user-info').innerHTML = `
+      <p class="text-green-400 font-medium">${data.user.email}</p>
+      <p class="text-xs text-gray-400">Super Administrator</p>`;
+  } else {
+    errorMsg.classList.remove('hidden');
+    errorMsg.innerHTML = "❌ Access Denied.<br>This account is not registered as Admin.";
+    await supabase.auth.signOut();
+  }
+});
+
+// Show Page
+function showPage(page) {
+  document.getElementById('page-title').textContent = page === 'dashboard' ? 'Dashboard' : page;
+  document.getElementById('content-area').innerHTML = `<p class="text-lg">Loading ${page}... (Ready to expand)</p>`;
+}
+
+async function logout() {
+  await supabase.auth.signOut();
+  window.location.reload();
+}
+
+// Auto check if already logged in
+async function checkExistingSession() {
+  const { data: { session } } = await supabase.auth.getSession();
+  if (session && session.user.id === ADMIN_ID) {
+    document.getElementById('login-screen').classList.add('hidden');
+    document.getElementById('dashboard-screen').classList.remove('hidden');
+  }
+}
+
+checkExistingSession();
+</script>
+</body>
+</html>
