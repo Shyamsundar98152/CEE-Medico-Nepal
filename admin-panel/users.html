@@ -7,190 +7,120 @@
   <script src="https://cdn.tailwindcss.com"></script>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.6.0/css/all.min.css">
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-  
   <style>
-    .nav-link { transition: all 0.2s; }
+    .nav-link { transition: all 0.2s; cursor: pointer; }
     .nav-link.active { background-color: #1e40af; color: white; }
-    .hidden { display: none !important; }
+    .page { display: none; }
+    .page.active { display: block; }
   </style>
 </head>
-<body class="bg-gray-50 dark:bg-gray-950 text-gray-900 dark:text-gray-100">
+<body class="bg-gray-50 text-gray-900">
 
 <!-- LOGIN SCREEN -->
 <div id="login-screen" class="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-900 to-gray-900">
-  <div class="bg-white dark:bg-gray-900 p-10 rounded-3xl shadow-2xl w-full max-w-md">
+  <div class="bg-white p-10 rounded-3xl shadow-2xl w-full max-w-md">
     <div class="text-center mb-10">
-      <h1 class="text-4xl font-bold flex items-center justify-center gap-3">
-        <i class="fas fa-graduation-cap text-blue-600"></i> ExamPro
-      </h1>
+      <h1 class="text-4xl font-bold text-gray-800">ExamPro</h1>
       <p class="text-gray-500 mt-2">Administrator Login</p>
     </div>
-
-    <div id="error-msg" class="hidden bg-red-100 text-red-700 p-3 rounded-2xl text-center mb-6"></div>
-
+    <div id="error-msg" class="hidden bg-red-100 text-red-700 p-3 rounded-2xl text-center mb-6 text-sm"></div>
     <form id="login-form" class="space-y-6">
-      <div>
-        <label class="block text-sm font-medium mb-2">Email</label>
-        <input type="email" id="email" required
-          class="w-full px-4 py-3 border border-gray-300 dark:border-gray-700 rounded-2xl focus:outline-none focus:border-blue-500">
-      </div>
-      <div>
-        <label class="block text-sm font-medium mb-2">Password</label>
-        <input type="password" id="password" required
-          class="w-full px-4 py-3 border border-gray-300 dark:border-gray-700 rounded-2xl focus:outline-none focus:border-blue-500">
-      </div>
-
-      <button type="submit"
-        class="w-full bg-blue-600 hover:bg-blue-700 text-white py-4 rounded-2xl font-semibold text-lg">
-        Login as Admin
-      </button>
+      <input type="email" id="email" placeholder="Email" required class="w-full px-4 py-3 border border-gray-300 rounded-2xl">
+      <input type="password" id="password" placeholder="Password" required class="w-full px-4 py-3 border border-gray-300 rounded-2xl">
+      <button type="submit" class="w-full bg-blue-600 hover:bg-blue-700 text-white py-4 rounded-2xl font-semibold">Login</button>
     </form>
-
-    <p class="text-center text-xs text-gray-500 mt-8">
-      Only the authorized admin can access this panel
-    </p>
   </div>
 </div>
 
-<!-- ADMIN DASHBOARD -->
+<!-- DASHBOARD -->
 <div id="dashboard-screen" class="hidden flex h-screen">
-
-  <!-- Sidebar -->
   <div class="w-72 bg-gray-900 text-white flex flex-col">
-    <div class="p-6 border-b border-gray-800">
-      <h1 class="text-3xl font-bold flex items-center gap-3">
-        <i class="fas fa-graduation-cap text-blue-500"></i> ExamPro
-      </h1>
-      <p class="text-gray-400 text-sm mt-1">Admin Dashboard</p>
-    </div>
-
+    <div class="p-6 border-b border-gray-800"><h1 class="text-2xl font-bold">ExamPro Admin</h1></div>
     <nav class="flex-1 p-4 space-y-1">
-      <a href="#" onclick="showPage('dashboard')" class="nav-link flex items-center gap-3 px-4 py-3 rounded-xl active">Dashboard</a>
-      <a href="#" onclick="showPage('questions')" class="nav-link flex items-center gap-3 px-4 py-3 rounded-xl">Questions</a>
-      <a href="#" onclick="showPage('sessions')" class="nav-link flex items-center gap-3 px-4 py-3 rounded-xl">Exam Sessions</a>
-      <a href="#" onclick="showPage('attempts')" class="nav-link flex items-center gap-3 px-4 py-3 rounded-xl">Attempts</a>
-      <a href="#" onclick="showPage('profiles')" class="nav-link flex items-center gap-3 px-4 py-3 rounded-xl">Profiles</a>
-      <a href="#" onclick="showPage('logs')" class="nav-link flex items-center gap-3 px-4 py-3 rounded-xl">Activity Logs</a>
+      <a onclick="showPage('dashboard', this)" class="nav-link flex items-center gap-3 px-4 py-3 rounded-xl active">Dashboard</a>
+      <a onclick="showPage('questions', this)" class="nav-link flex items-center gap-3 px-4 py-3 rounded-xl">Questions</a>
+      <a onclick="showPage('sessions', this)" class="nav-link flex items-center gap-3 px-4 py-3 rounded-xl">Sessions</a>
     </nav>
-
     <div class="p-4 border-t border-gray-800">
-      <div id="user-info" class="mb-4 px-4 text-sm"></div>
-      <button onclick="logout()" class="w-full bg-red-600 hover:bg-red-700 py-3 rounded-xl font-medium">
-        Logout
-      </button>
+      <button onclick="logout()" class="w-full bg-red-600 py-3 rounded-xl font-medium">Logout</button>
     </div>
   </div>
 
-  <!-- Main Content -->
-  <div class="flex-1 overflow-auto">
-    <header class="bg-white dark:bg-gray-900 border-b px-8 py-5 flex justify-between items-center">
-      <h2 id="page-title" class="text-2xl font-semibold">Dashboard</h2>
-      <button onclick="addNewItem()" class="bg-blue-600 hover:bg-blue-700 px-5 py-2.5 rounded-xl flex items-center gap-2">
-        <i class="fas fa-plus"></i> Add New
-      </button>
+  <div class="flex-1 overflow-auto p-8">
+    <header class="flex justify-between items-center mb-8">
+      <h2 id="page-title" class="text-3xl font-bold text-gray-800">Dashboard</h2>
     </header>
 
-    <div id="dashboard" class="page p-8">Welcome to Admin Dashboard</div>
-    <div id="questions" class="page hidden p-8"></div>
-    <div id="sessions" class="page hidden p-8"></div>
-    <div id="attempts" class="page hidden p-8"></div>
-    <div id="profiles" class="page hidden p-8"></div>
-    <div id="logs" class="page hidden p-8"></div>
+    <div id="dashboard" class="page active grid grid-cols-3 gap-6">
+      <div class="bg-white p-6 rounded-2xl shadow-sm border">
+        <h3 class="text-gray-500">Total Questions</h3>
+        <p id="stat-questions" class="text-4xl font-bold mt-2">0</p>
+      </div>
+    </div>
+
+    <div id="questions" class="page">
+      <div class="bg-white rounded-2xl shadow-sm border overflow-hidden">
+        <table class="w-full text-left">
+          <thead class="bg-gray-50 border-b">
+            <tr><th class="p-4">Question Text</th><th class="p-4">Difficulty</th></tr>
+          </thead>
+          <tbody id="questions-table-body"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <div id="sessions" class="page">
+      <p class="text-gray-600">No active sessions found.</p>
+    </div>
   </div>
 </div>
 
 <script>
-// ==================== SUPABASE CONFIG ====================
-const SUPABASE_URL = 'https://rpudsnrqlhataqfavcjh.supabase.co';
-const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJwdWRzbnJxbGhhdGFxZmF2Y2poIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzk5NzI0NjgsImV4cCI6MjA5NTU0ODQ2OH0.EEu5t-NPqWARChSAMpEvUPMBkz_JeeNe3bGSCQmH7Xo';
+const supabase = Supabase.createClient('https://rpudsnrqlhataqfavcjh.supabase.co', 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJwdWRzbnJxbGhhdGFxZmF2Y2poIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzk5NzI0NjgsImV4cCI6MjA5NTU0ODQ2OH0.EEu5t-NPqWARChSAMpEvUPMBkz_JeeNe3bGSCQmH7Xo');
 
-const supabase = Supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-const ADMIN_ID = "a15f22c0-3925-4c3f-b298-12e222503303";
+function showPage(pageId, el) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.nav-link').forEach(n => n.classList.remove('active'));
+  document.getElementById(pageId).classList.add('active');
+  if(el) el.classList.add('active');
+  document.getElementById('page-title').textContent = pageId.charAt(0).toUpperCase() + pageId.slice(1);
+  if(pageId === 'questions') fetchQuestions();
+}
 
-// ==================== LOGIN ====================
-document.getElementById('login-form').addEventListener('submit', async (e) => {
+async function fetchQuestions() {
+  const { data } = await supabase.from('questions').select('*');
+  const tbody = document.getElementById('questions-table-body');
+  document.getElementById('stat-questions').textContent = data?.length || 0;
+  tbody.innerHTML = data?.map(q => `
+    <tr class="border-b"><td class="p-4">${q.question_text || 'Untitled'}</td><td class="p-4">${q.difficulty || 'N/A'}</td></tr>
+  `).join('') || '<tr><td colspan="2" class="p-4 text-center">No data</td></tr>';
+}
+
+document.getElementById('login-form').onsubmit = async (e) => {
   e.preventDefault();
-  
-  const email = document.getElementById('email').value;
-  const password = document.getElementById('password').value;
-  const errorMsg = document.getElementById('error-msg');
-
-  const { data, error } = await supabase.auth.signInWithPassword({ email, password });
-
-  if (error) {
-    errorMsg.classList.remove('hidden');
-    errorMsg.textContent = error.message;
-    return;
-  }
-
-  if (data.user.id === ADMIN_ID) {
-    document.getElementById('login-screen').classList.add('hidden');
-    document.getElementById('dashboard-screen').classList.remove('hidden');
-    loadUserInfo(data.user);
-    showPage('dashboard');
+  const { error } = await supabase.auth.signInWithPassword({
+    email: document.getElementById('email').value,
+    password: document.getElementById('password').value
+  });
+  if(error) {
+    const err = document.getElementById('error-msg');
+    err.textContent = error.message;
+    err.classList.remove('hidden');
   } else {
-    errorMsg.classList.remove('hidden');
-    errorMsg.innerHTML = "Access Denied! This is not the admin account.";
-    await supabase.auth.signOut();
+    location.reload();
   }
-});
+};
 
-// ==================== DASHBOARD FUNCTIONS ====================
-let currentUser = null;
+async function logout() { await supabase.auth.signOut(); location.reload(); }
 
-function loadUserInfo(user) {
-  currentUser = user;
-  document.getElementById('user-info').innerHTML = `
-    <div class="flex items-center gap-3">
-      <i class="fas fa-shield-alt text-green-500 text-xl"></i>
-      <div>
-        <p class="font-medium">${user.email}</p>
-        <p class="text-xs text-green-400">Super Admin</p>
-      </div>
-    </div>`;
-}
-
-function showPage(page) {
-  document.querySelectorAll('.page').forEach(p => p.classList.add('hidden'));
-  document.getElementById(page).classList.remove('hidden');
-  document.getElementById('page-title').textContent = page.charAt(0).toUpperCase() + page.slice(1);
-
-  if (page === 'questions') loadQuestions();
-  if (page === 'sessions') loadSessions();
-}
-
-async function loadQuestions() {
-  const { data } = await supabase.from('questions').select('*').order('created_at', { ascending: false });
-  // ... (same as previous version)
-  document.getElementById('questions').innerHTML = `<p>Questions Loaded: ${data?.length || 0}</p>`;
-}
-
-async function loadSessions() {
-  const { data } = await supabase.from('exam_sessions').select('*');
-  document.getElementById('sessions').innerHTML = `<p>Exam Sessions: ${data?.length || 0}</p>`;
-}
-
-function addNewItem() {
-  alert("Add New Item - Form will be added soon");
-}
-
-async function logout() {
-  await supabase.auth.signOut();
-  window.location.reload();
-}
-
-// Check if already logged in
-async function checkSession() {
+(async () => {
   const { data: { session } } = await supabase.auth.getSession();
-  if (session && session.user.id === ADMIN_ID) {
+  if(session) {
     document.getElementById('login-screen').classList.add('hidden');
     document.getElementById('dashboard-screen').classList.remove('hidden');
-    loadUserInfo(session.user);
-    showPage('dashboard');
+    fetchQuestions();
   }
-}
-
-checkSession();
+})();
 </script>
 </body>
 </html>
