@@ -1,2906 +1,685 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>CEE Medico Nepal — Medical Entrance Preparation</title>
-<script src="https://cdn.tailwindcss.com"></script>
-<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
-<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" />
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<style>
-  @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=Sora:wght@400;600;700&display=swap');
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes" />
+  <title>CEE Medico Nepal — Medical Entrance Preparation Platform</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" />
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
 
-  :root {
-    --medical-50: #eff6ff;
-    --medical-100: #dbeafe;
-    --medical-400: #60a5fa;
-    --medical-500: #3b82f6;
-    --medical-600: #2563eb;
-    --medical-700: #1d4ed8;
-    --medical-800: #1e40af;
-    --medical-900: #1e3a8a;
-  }
+    body {
+      background: #0a0f1e;
+      font-family: 'Inter', system-ui, -apple-system, 'Segoe UI', Roboto, 'Plus Jakarta Sans', sans-serif;
+      color: #eef2ff;
+      overflow-x: hidden;
+    }
 
-  * { box-sizing: border-box; margin: 0; padding: 0; }
+    /* glassmorphism core */
+    .glass-card {
+      background: rgba(15, 23, 42, 0.7);
+      backdrop-filter: blur(12px);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      border-radius: 1.5rem;
+      transition: all 0.2s ease;
+    }
 
-  body {
-    font-family: 'Plus Jakarta Sans', sans-serif;
-    background: #0a0f1e;
-    color: #e2e8f0;
-    overflow-x: hidden;
-  }
+    .glass-card:hover {
+      border-color: rgba(59, 130, 246, 0.4);
+      box-shadow: 0 20px 35px -12px rgba(0, 0, 0, 0.4);
+    }
 
-  .font-sora { font-family: 'Sora', sans-serif; }
+    .gradient-text {
+      background: linear-gradient(135deg, #60a5fa, #c084fc, #34d399);
+      background-clip: text;
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
 
-  /* Glassmorphism */
-  .glass {
-    background: rgba(255,255,255,0.05);
-    backdrop-filter: blur(20px);
-    border: 1px solid rgba(255,255,255,0.08);
-  }
-  .glass-card {
-    background: rgba(255,255,255,0.04);
-    backdrop-filter: blur(16px);
-    border: 1px solid rgba(255,255,255,0.07);
-    border-radius: 1.25rem;
-    transition: all 0.3s ease;
-  }
-  .glass-card:hover { border-color: rgba(59,130,246,0.4); transform: translateY(-2px); box-shadow: 0 20px 40px rgba(59,130,246,0.12); }
+    .btn-primary {
+      background: linear-gradient(105deg, #2563eb, #4f46e5);
+      border: none;
+      border-radius: 1rem;
+      padding: 0.7rem 1.4rem;
+      font-weight: 600;
+      font-size: 0.85rem;
+      transition: 0.2s;
+      cursor: pointer;
+      color: white;
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+      box-shadow: 0 4px 12px rgba(37, 99, 235, 0.2);
+    }
 
-  /* Gradient backgrounds */
-  .bg-mesh {
-    background: #0a0f1e;
-    background-image:
-      radial-gradient(ellipse 80% 60% at 10% 10%, rgba(37,99,235,0.18) 0%, transparent 60%),
-      radial-gradient(ellipse 60% 50% at 90% 80%, rgba(139,92,246,0.10) 0%, transparent 60%),
-      radial-gradient(ellipse 40% 40% at 50% 50%, rgba(6,182,212,0.06) 0%, transparent 70%);
-  }
+    .btn-primary:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 12px 20px -8px #2563eb50;
+    }
 
-  .gradient-text {
-    background: linear-gradient(135deg, #60a5fa, #a78bfa, #34d399);
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-    background-clip: text;
-  }
+    .btn-secondary {
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      border-radius: 1rem;
+      padding: 0.65rem 1.3rem;
+      font-weight: 500;
+      font-size: 0.85rem;
+      transition: 0.2s;
+      cursor: pointer;
+      color: #cbd5e6;
+    }
 
-  .btn-primary {
-    background: linear-gradient(135deg, #2563eb, #4f46e5);
-    color: white;
-    border: none;
-    border-radius: 0.875rem;
-    padding: 0.75rem 1.5rem;
-    font-weight: 600;
-    cursor: pointer;
-    transition: all 0.25s;
-    font-family: 'Plus Jakarta Sans', sans-serif;
-    letter-spacing: 0.01em;
-  }
-  .btn-primary:hover { transform: translateY(-1px); box-shadow: 0 8px 24px rgba(37,99,235,0.4); opacity:0.95; }
-  .btn-primary:active { transform: translateY(0); }
+    .btn-secondary:hover {
+      background: rgba(255, 255, 255, 0.1);
+      color: white;
+    }
 
-  .btn-secondary {
-    background: rgba(255,255,255,0.07);
-    color: #cbd5e1;
-    border: 1px solid rgba(255,255,255,0.1);
-    border-radius: 0.875rem;
-    padding: 0.75rem 1.5rem;
-    font-weight: 500;
-    cursor: pointer;
-    transition: all 0.25s;
-    font-family: 'Plus Jakarta Sans', sans-serif;
-  }
-  .btn-secondary:hover { background: rgba(255,255,255,0.12); color: #fff; }
+    .btn-danger {
+      background: #dc2626;
+      border-radius: 1rem;
+      padding: 0.6rem 1.2rem;
+      font-weight: 600;
+      border: none;
+      color: white;
+      cursor: pointer;
+    }
 
-  .btn-danger {
-    background: linear-gradient(135deg, #dc2626, #b91c1c);
-    color: white;
-    border: none;
-    border-radius: 0.75rem;
-    padding: 0.5rem 1rem;
-    font-weight: 600;
-    cursor: pointer;
-    transition: all 0.25s;
-    font-size: 0.85rem;
-  }
+    .input-field {
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      border-radius: 1rem;
+      padding: 0.8rem 1rem;
+      width: 100%;
+      color: white;
+      font-size: 0.9rem;
+      outline: none;
+      transition: 0.2s;
+    }
 
-  /* Input styles */
-  .input-field {
-    width: 100%;
-    background: rgba(255,255,255,0.06);
-    border: 1px solid rgba(255,255,255,0.1);
-    border-radius: 0.875rem;
-    padding: 0.85rem 1rem;
-    color: #e2e8f0;
-    font-family: 'Plus Jakarta Sans', sans-serif;
-    font-size: 0.9rem;
-    outline: none;
-    transition: border-color 0.2s, box-shadow 0.2s;
-  }
-  .input-field:focus { border-color: #3b82f6; box-shadow: 0 0 0 3px rgba(59,130,246,0.15); }
-  .input-field::placeholder { color: #64748b; }
+    .input-field:focus {
+      border-color: #3b82f6;
+      box-shadow: 0 0 0 3px #3b82f620;
+    }
 
-  /* Navbar */
-  .navbar {
-    position: sticky;
-    top: 0;
-    z-index: 100;
-    background: rgba(10,15,30,0.85);
-    backdrop-filter: blur(20px);
-    border-bottom: 1px solid rgba(255,255,255,0.06);
-  }
+    .sidebar {
+      position: fixed;
+      left: 0;
+      top: 0;
+      bottom: 0;
+      width: 260px;
+      background: rgba(8, 12, 24, 0.96);
+      backdrop-filter: blur(20px);
+      border-right: 1px solid rgba(255, 255, 255, 0.05);
+      z-index: 100;
+      transform: translateX(0);
+      transition: transform 0.25s ease;
+    }
 
-  /* Sidebar */
-  .sidebar {
-    position: fixed;
-    left: 0; top: 0; bottom: 0;
-    width: 260px;
-    background: rgba(10,15,30,0.95);
-    backdrop-filter: blur(24px);
-    border-right: 1px solid rgba(255,255,255,0.06);
-    z-index: 90;
-    transition: transform 0.3s ease;
-    overflow-y: auto;
-  }
-  .sidebar-item {
-    display: flex;
-    align-items: center;
-    gap: 0.75rem;
-    padding: 0.75rem 1.25rem;
-    border-radius: 0.75rem;
-    cursor: pointer;
-    transition: all 0.2s;
-    color: #94a3b8;
-    margin: 2px 8px;
-    font-size: 0.9rem;
-    font-weight: 500;
-  }
-  .sidebar-item:hover { background: rgba(59,130,246,0.1); color: #93c5fd; }
-  .sidebar-item.active { background: rgba(59,130,246,0.18); color: #60a5fa; border: 1px solid rgba(59,130,246,0.25); }
+    .sidebar-item {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 0.7rem 1rem;
+      margin: 0.25rem 0.75rem;
+      border-radius: 0.9rem;
+      font-size: 0.85rem;
+      font-weight: 500;
+      color: #9ca3af;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
 
-  /* Option buttons in quiz */
-  .option-btn {
-    width: 100%;
-    text-align: left;
-    padding: 1rem 1.25rem;
-    border-radius: 1rem;
-    border: 1.5px solid rgba(255,255,255,0.08);
-    background: rgba(255,255,255,0.03);
-    color: #cbd5e1;
-    cursor: pointer;
-    transition: all 0.2s;
-    font-family: 'Plus Jakarta Sans', sans-serif;
-    font-size: 0.93rem;
-    display: flex;
-    align-items: center;
-    gap: 1rem;
-  }
-  .option-btn:hover { border-color: #3b82f6; background: rgba(59,130,246,0.1); color: #fff; }
-  .option-btn.selected { border-color: #3b82f6; background: rgba(59,130,246,0.18); color: #93c5fd; }
-  .option-btn.correct { border-color: #10b981; background: rgba(16,185,129,0.15); color: #6ee7b7; }
-  .option-btn.wrong { border-color: #ef4444; background: rgba(239,68,68,0.15); color: #fca5a5; }
-  .option-btn.show-correct { border-color: #10b981; background: rgba(16,185,129,0.1); color: #6ee7b7; }
+    .sidebar-item:hover, .sidebar-item.active {
+      background: rgba(59, 130, 246, 0.18);
+      color: #93c5fd;
+    }
 
-  /* Question navigator */
-  .q-nav-btn {
-    width: 36px; height: 36px;
-    border-radius: 8px;
-    border: 1.5px solid rgba(255,255,255,0.1);
-    background: rgba(255,255,255,0.04);
-    color: #94a3b8;
-    cursor: pointer;
-    font-size: 0.8rem;
-    font-weight: 600;
-    transition: all 0.2s;
-    display: flex; align-items: center; justify-content: center;
-  }
-  .q-nav-btn.answered { background: rgba(59,130,246,0.25); border-color: #3b82f6; color: #93c5fd; }
-  .q-nav-btn.current { background: #2563eb; border-color: #2563eb; color: white; }
-  .q-nav-btn.marked { background: rgba(245,158,11,0.2); border-color: #f59e0b; color: #fcd34d; }
+    .option-btn {
+      width: 100%;
+      text-align: left;
+      padding: 0.9rem 1rem;
+      background: rgba(255, 255, 255, 0.03);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      border-radius: 1rem;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      cursor: pointer;
+      transition: 0.2s;
+      color: #e2e8f0;
+    }
 
-  /* Stat card */
-  .stat-card {
-    background: rgba(255,255,255,0.04);
-    border: 1px solid rgba(255,255,255,0.07);
-    border-radius: 1.25rem;
-    padding: 1.5rem;
-    transition: all 0.3s;
-  }
-  .stat-card:hover { border-color: rgba(59,130,246,0.3); transform: translateY(-2px); }
+    .option-btn.selected {
+      background: rgba(59, 130, 246, 0.2);
+      border-color: #3b82f6;
+    }
 
-  /* Progress bar */
-  .progress-bar {
-    background: rgba(255,255,255,0.08);
-    border-radius: 999px;
-    height: 8px;
-    overflow: hidden;
-  }
-  .progress-fill {
-    height: 100%;
-    border-radius: 999px;
-    background: linear-gradient(90deg, #2563eb, #7c3aed);
-    transition: width 0.5s ease;
-  }
+    .option-btn.correct-highlight {
+      background: rgba(16, 185, 129, 0.2);
+      border-color: #10b981;
+    }
 
-  /* Toast */
-  #toast-container { position: fixed; bottom: 1.5rem; right: 1.5rem; z-index: 9999; display: flex; flex-direction: column; gap: 0.5rem; }
-  .toast {
-    padding: 0.9rem 1.25rem;
-    border-radius: 0.875rem;
-    font-size: 0.88rem;
-    font-weight: 500;
-    backdrop-filter: blur(20px);
-    border: 1px solid;
-    animation: slideInRight 0.3s ease, fadeOut 0.3s ease 2.7s forwards;
-    min-width: 220px;
-    max-width: 320px;
-    display: flex; align-items: center; gap: 0.5rem;
-  }
-  .toast.success { background: rgba(16,185,129,0.2); border-color: rgba(16,185,129,0.4); color: #6ee7b7; }
-  .toast.error { background: rgba(239,68,68,0.2); border-color: rgba(239,68,68,0.4); color: #fca5a5; }
-  .toast.info { background: rgba(59,130,246,0.2); border-color: rgba(59,130,246,0.4); color: #93c5fd; }
+    .option-btn.wrong-highlight {
+      background: rgba(239, 68, 68, 0.2);
+      border-color: #ef4444;
+    }
 
-  @keyframes slideInRight { from { transform: translateX(100%); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
-  @keyframes fadeOut { from { opacity: 1; } to { opacity: 0; pointer-events: none; } }
+    .q-nav-btn {
+      width: 38px;
+      height: 38px;
+      border-radius: 10px;
+      background: rgba(255, 255, 255, 0.04);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      color: #94a3b8;
+      font-weight: 600;
+      cursor: pointer;
+    }
 
-  /* Modal */
-  .modal-overlay {
-    position: fixed; inset: 0;
-    background: rgba(0,0,0,0.7);
-    backdrop-filter: blur(8px);
-    z-index: 200;
-    display: flex; align-items: center; justify-content: center;
-    padding: 1rem;
-  }
-  .modal-box {
-    background: #0f172a;
-    border: 1px solid rgba(255,255,255,0.1);
-    border-radius: 1.5rem;
-    padding: 2rem;
-    width: 100%; max-width: 480px;
-    animation: modalIn 0.3s ease;
-  }
-  @keyframes modalIn { from { transform: scale(0.92); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+    .q-nav-btn.answered {
+      background: #2563eb30;
+      border-color: #3b82f6;
+      color: #bfdbfe;
+    }
 
-  /* Badge */
-  .badge { padding: 0.25rem 0.65rem; border-radius: 999px; font-size: 0.7rem; font-weight: 700; letter-spacing: 0.05em; text-transform: uppercase; }
-  .badge-blue { background: rgba(59,130,246,0.2); color: #93c5fd; border: 1px solid rgba(59,130,246,0.3); }
-  .badge-green { background: rgba(16,185,129,0.2); color: #6ee7b7; border: 1px solid rgba(16,185,129,0.3); }
-  .badge-yellow { background: rgba(245,158,11,0.2); color: #fcd34d; border: 1px solid rgba(245,158,11,0.3); }
-  .badge-purple { background: rgba(139,92,246,0.2); color: #c4b5fd; border: 1px solid rgba(139,92,246,0.3); }
-  .badge-red { background: rgba(239,68,68,0.2); color: #fca5a5; border: 1px solid rgba(239,68,68,0.3); }
+    .q-nav-btn.current {
+      background: #2563eb;
+      border-color: #2563eb;
+      color: white;
+    }
 
-  /* Scrollbar */
-  ::-webkit-scrollbar { width: 6px; }
-  ::-webkit-scrollbar-track { background: transparent; }
-  ::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.12); border-radius: 3px; }
+    .q-nav-btn.marked {
+      background: #f59e0b30;
+      border-color: #f59e0b;
+      color: #fde68a;
+    }
 
-  /* Animations */
-  .fade-in { animation: fadeIn 0.4s ease; }
-  @keyframes fadeIn { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: translateY(0); } }
+    .modal-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.7);
+      backdrop-filter: blur(8px);
+      z-index: 200;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
 
-  .spin { animation: spin 1s linear infinite; }
-  @keyframes spin { to { transform: rotate(360deg); } }
+    .modal-box {
+      background: #0f172ad9;
+      backdrop-filter: blur(20px);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      border-radius: 2rem;
+      padding: 2rem;
+      max-width: 460px;
+      width: 90%;
+    }
 
-  /* Hidden */
-  .hidden { display: none !important; }
+    .toast {
+      position: fixed;
+      bottom: 20px;
+      right: 20px;
+      background: #1e293bdd;
+      backdrop-filter: blur(12px);
+      padding: 12px 18px;
+      border-radius: 40px;
+      font-size: 0.85rem;
+      border-left: 4px solid #3b82f6;
+      z-index: 1000;
+      animation: slideIn 0.2s ease;
+    }
 
-  /* Mobile sidebar overlay */
-  #sidebar-overlay {
-    position: fixed; inset: 0; background: rgba(0,0,0,0.6); z-index: 89; display: none;
-  }
+    @keyframes slideIn {
+      from { opacity: 0; transform: translateX(60px);}
+      to { opacity: 1; transform: translateX(0);}
+    }
 
-  @media (max-width: 768px) {
-    .sidebar { transform: translateX(-100%); }
-    .sidebar.open { transform: translateX(0); }
-    .main-content { margin-left: 0 !important; }
-  }
+    .progress-bar-custom {
+      background: #1e293b;
+      border-radius: 40px;
+      height: 6px;
+      overflow: hidden;
+    }
+    .progress-fill {
+      background: linear-gradient(90deg, #3b82f6, #c084fc);
+      width: 0%;
+      height: 100%;
+    }
 
-  /* Subject colors */
-  .subj-physics { color: #60a5fa; }
-  .subj-chemistry { color: #34d399; }
-  .subj-botany { color: #a3e635; }
-  .subj-zoology { color: #fb923c; }
-  .subj-mat { color: #c084fc; }
+    .hidden {
+      display: none;
+    }
 
-  /* Premium lock */
-  .premium-lock {
-    position: absolute; inset: 0;
-    background: rgba(10,15,30,0.8);
-    backdrop-filter: blur(4px);
-    border-radius: 1.25rem;
-    display: flex; align-items: center; justify-content: center;
-    flex-direction: column; gap: 0.5rem;
-  }
+    @media (max-width: 768px) {
+      .sidebar {
+        transform: translateX(-100%);
+      }
+      .sidebar.open {
+        transform: translateX(0);
+      }
+      .main-content {
+        margin-left: 0 !important;
+      }
+    }
 
-  /* Timer warning */
-  .timer-warning { color: #ef4444; animation: pulse 1s ease infinite; }
-  @keyframes pulse { 0%,100% { opacity: 1; } 50% { opacity: 0.5; } }
-
-  /* Leaderboard rank colors */
-  .rank-1 { color: #fbbf24; }
-  .rank-2 { color: #94a3b8; }
-  .rank-3 { color: #fb923c; }
-
-  /* Upload drop zone */
-  .drop-zone {
-    border: 2px dashed rgba(59,130,246,0.3);
-    border-radius: 1.25rem;
-    padding: 3rem 2rem;
-    text-align: center;
-    cursor: pointer;
-    transition: all 0.3s;
-  }
-  .drop-zone:hover, .drop-zone.drag-over {
-    border-color: #3b82f6;
-    background: rgba(59,130,246,0.05);
-  }
-
-  /* Table styles */
-  .data-table { width: 100%; border-collapse: collapse; }
-  .data-table th {
-    background: rgba(255,255,255,0.04);
-    padding: 0.75rem 1rem;
-    text-align: left;
-    font-size: 0.8rem;
-    color: #64748b;
-    font-weight: 600;
-    text-transform: uppercase;
-    letter-spacing: 0.05em;
-    border-bottom: 1px solid rgba(255,255,255,0.06);
-  }
-  .data-table td {
-    padding: 0.875rem 1rem;
-    font-size: 0.88rem;
-    color: #cbd5e1;
-    border-bottom: 1px solid rgba(255,255,255,0.04);
-  }
-  .data-table tr:hover td { background: rgba(255,255,255,0.02); }
-
-  /* Dark mode toggle */
-  .toggle-switch {
-    position: relative; width: 48px; height: 26px;
-    background: rgba(255,255,255,0.1);
-    border-radius: 13px; cursor: pointer; transition: 0.3s;
-    border: 1px solid rgba(255,255,255,0.1);
-  }
-  .toggle-switch.on { background: #2563eb; }
-  .toggle-switch::after {
-    content: '';
-    position: absolute; top: 3px; left: 3px;
-    width: 18px; height: 18px;
-    background: white; border-radius: 50%; transition: 0.3s;
-  }
-  .toggle-switch.on::after { transform: translateX(22px); }
-</style>
+    .badge {
+      padding: 0.2rem 0.7rem;
+      border-radius: 40px;
+      font-size: 0.7rem;
+      font-weight: 600;
+      background: rgba(255, 255, 255, 0.1);
+    }
+  </style>
 </head>
-<body class="bg-mesh min-h-screen">
+<body class="bg-[#0a0f1e]">
 
-<!-- ==================== TOAST CONTAINER ==================== -->
-<div id="toast-container"></div>
+<div id="toast-root"></div>
 
-<!-- ==================== SIDEBAR OVERLAY ==================== -->
-<div id="sidebar-overlay" onclick="closeSidebar()"></div>
-
-<!-- ==================== AUTH SECTION ==================== -->
-<div id="auth-section" class="min-h-screen flex items-center justify-center p-4 fade-in">
-  <div style="width:100%;max-width:420px;">
-
-    <!-- Logo -->
-    <div class="text-center mb-8">
-      <div class="inline-flex items-center justify-center w-16 h-16 rounded-2xl mb-4"
-           style="background:linear-gradient(135deg,#2563eb,#4f46e5);">
+<!-- AUTH SECTION -->
+<div id="auth-container" class="min-h-screen flex items-center justify-center px-4">
+  <div class="w-full max-w-md">
+    <div class="text-center mb-6">
+      <div class="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-gradient-to-tr from-blue-600 to-purple-600 mb-4">
         <i class="fa-solid fa-stethoscope text-2xl text-white"></i>
       </div>
-      <h1 class="font-sora text-3xl font-bold gradient-text">CEE Medico Nepal</h1>
-      <p class="text-slate-400 text-sm mt-1">Medical Entrance Preparation Platform</p>
+      <h1 class="text-3xl font-bold gradient-text">CEE Medico Nepal</h1>
+      <p class="text-slate-400 text-sm mt-1">Medical Entrance · Mock Tests & Analytics</p>
     </div>
-
-    <!-- Auth Card -->
-    <div class="glass-card p-8">
-
-      <!-- Tabs -->
-      <div class="flex rounded-xl overflow-hidden mb-6" style="background:rgba(255,255,255,0.04);">
-        <button onclick="showAuthTab('login')" id="tab-login"
-          class="flex-1 py-2.5 text-sm font-600 transition-all rounded-xl"
-          style="background:linear-gradient(135deg,#2563eb,#4f46e5);color:white;">Login</button>
-        <button onclick="showAuthTab('signup')" id="tab-signup"
-          class="flex-1 py-2.5 text-sm font-medium text-slate-400 transition-all">Sign Up</button>
+    <div class="glass-card p-6">
+      <div class="flex gap-2 mb-6 rounded-xl bg-white/5 p-1">
+        <button id="auth-login-btn" class="flex-1 py-2 rounded-lg text-sm font-semibold bg-blue-600 text-white transition">Login</button>
+        <button id="auth-signup-btn" class="flex-1 py-2 rounded-lg text-sm text-slate-300">Sign Up</button>
       </div>
 
-      <!-- Login Form -->
-      <div id="form-login">
-        <div class="space-y-4">
-          <div>
-            <label class="text-xs text-slate-400 font-medium uppercase tracking-wider mb-1.5 block">Email</label>
-            <input type="email" id="login-email" class="input-field" placeholder="your@email.com" />
-          </div>
-          <div class="relative">
-            <label class="text-xs text-slate-400 font-medium uppercase tracking-wider mb-1.5 block">Password</label>
-            <input type="password" id="login-password" class="input-field" placeholder="••••••••" />
-            <button onclick="togglePassword('login-password')" class="absolute right-3 bottom-3 text-slate-500 hover:text-slate-300">
-              <i class="fa-regular fa-eye text-sm"></i>
-            </button>
-          </div>
-          <div class="text-right">
-            <button onclick="showForgotPassword()" class="text-xs text-blue-400 hover:text-blue-300">Forgot password?</button>
-          </div>
-          <button onclick="login()" id="btn-login" class="btn-primary w-full text-sm py-3">
-            <i class="fa-solid fa-arrow-right-to-bracket mr-2"></i> Sign In
-          </button>
-        </div>
-
-        <div class="my-5 flex items-center gap-3">
-          <div class="flex-1 h-px" style="background:rgba(255,255,255,0.07)"></div>
-          <span class="text-slate-500 text-xs">or continue with</span>
-          <div class="flex-1 h-px" style="background:rgba(255,255,255,0.07)"></div>
-        </div>
-
-        <div class="grid grid-cols-2 gap-3">
-          <button onclick="loginWithGoogle()" class="btn-secondary text-sm py-2.5 flex items-center justify-center gap-2">
-            <i class="fa-brands fa-google text-red-400"></i> Google
-          </button>
-          <button onclick="showPhoneLogin()" class="btn-secondary text-sm py-2.5 flex items-center justify-center gap-2">
-            <i class="fa-solid fa-mobile-screen text-green-400"></i> Phone OTP
-          </button>
-        </div>
+      <div id="login-panel">
+        <input type="email" id="login-email" class="input-field mb-3" placeholder="Email address" autocomplete="email">
+        <input type="password" id="login-password" class="input-field mb-4" placeholder="Password">
+        <button onclick="handleLogin()" class="btn-primary w-full justify-center"> Sign In</button>
+        <div class="text-center text-xs text-slate-500 mt-4">Demo: any email + password "demo123" or just click login</div>
       </div>
 
-      <!-- Signup Form -->
-      <div id="form-signup" class="hidden">
-        <div class="space-y-4">
-          <div>
-            <label class="text-xs text-slate-400 font-medium uppercase tracking-wider mb-1.5 block">Full Name</label>
-            <input type="text" id="signup-name" class="input-field" placeholder="Your full name" />
-          </div>
-          <div>
-            <label class="text-xs text-slate-400 font-medium uppercase tracking-wider mb-1.5 block">Email</label>
-            <input type="email" id="signup-email" class="input-field" placeholder="your@email.com" />
-          </div>
-          <div class="relative">
-            <label class="text-xs text-slate-400 font-medium uppercase tracking-wider mb-1.5 block">Password</label>
-            <input type="password" id="signup-password" class="input-field" placeholder="Create password" />
-            <button onclick="togglePassword('signup-password')" class="absolute right-3 bottom-3 text-slate-500 hover:text-slate-300">
-              <i class="fa-regular fa-eye text-sm"></i>
-            </button>
-          </div>
-          <button onclick="signup()" id="btn-signup" class="btn-primary w-full text-sm py-3">
-            <i class="fa-solid fa-user-plus mr-2"></i> Create Account
-          </button>
-        </div>
+      <div id="signup-panel" class="hidden">
+        <input type="text" id="signup-name" class="input-field mb-3" placeholder="Full Name">
+        <input type="email" id="signup-email" class="input-field mb-3" placeholder="Email">
+        <input type="password" id="signup-password" class="input-field mb-4" placeholder="Password">
+        <button onclick="handleSignup()" class="btn-primary w-full justify-center"> Create account</button>
       </div>
-
-      <!-- Phone OTP Form -->
-      <div id="form-phone" class="hidden">
-        <div class="space-y-4">
-          <div>
-            <label class="text-xs text-slate-400 font-medium uppercase tracking-wider mb-1.5 block">Phone Number</label>
-            <input type="tel" id="phone-number" class="input-field" placeholder="+977 98XXXXXXXX" />
-          </div>
-          <button onclick="sendOTP()" class="btn-primary w-full text-sm py-3">Send OTP</button>
-          <div id="otp-section" class="hidden">
-            <label class="text-xs text-slate-400 font-medium uppercase tracking-wider mb-1.5 block">Enter OTP</label>
-            <input type="text" id="otp-code" class="input-field text-center text-2xl tracking-widest" placeholder="000000" maxlength="6" />
-            <button onclick="verifyOTP()" class="btn-primary w-full text-sm py-3 mt-3">Verify OTP</button>
-          </div>
-          <button onclick="showAuthTab('login')" class="btn-secondary w-full text-sm py-2.5">Back to Login</button>
-        </div>
-      </div>
-
-      <!-- Forgot Password Form -->
-      <div id="form-forgot" class="hidden">
-        <p class="text-slate-400 text-sm mb-4">Enter your email to receive a reset link.</p>
-        <div class="space-y-4">
-          <input type="email" id="forgot-email" class="input-field" placeholder="your@email.com" />
-          <button onclick="resetPassword()" class="btn-primary w-full text-sm py-3">Send Reset Link</button>
-          <button onclick="showAuthTab('login')" class="btn-secondary w-full text-sm py-2.5">Back to Login</button>
-        </div>
-      </div>
-
     </div>
-
-    <p class="text-center text-slate-600 text-xs mt-4">
-      © 2026 CEE Medico Nepal. All rights reserved.
-    </p>
   </div>
 </div>
 
-<!-- ==================== MAIN APP ==================== -->
-<div id="app-section" class="hidden">
-
-  <!-- SIDEBAR -->
-  <nav class="sidebar" id="sidebar">
-    <div class="p-5 border-b border-white border-opacity-5">
+<!-- MAIN APP -->
+<div id="app-container" class="hidden">
+  <!-- Sidebar -->
+  <div id="sidebar" class="sidebar">
+    <div class="p-5 border-b border-white/5">
       <div class="flex items-center gap-3">
-        <div class="w-9 h-9 rounded-xl flex items-center justify-center"
-             style="background:linear-gradient(135deg,#2563eb,#4f46e5);">
-          <i class="fa-solid fa-stethoscope text-white text-sm"></i>
-        </div>
-        <div>
-          <div class="font-sora font-bold text-white text-sm">CEE Medico</div>
-          <div class="text-slate-500 text-xs">Nepal</div>
-        </div>
+        <div class="w-9 h-9 rounded-xl bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center"><i class="fa-solid fa-stethoscope text-white text-sm"></i></div>
+        <div><div class="font-bold text-white">CEE Medico</div><div class="text-slate-500 text-[11px]">Nepal</div></div>
       </div>
     </div>
-
-    <div class="p-3 mt-2">
-      <div class="sidebar-item active" id="nav-dashboard" onclick="navigateTo('dashboard')">
-        <i class="fa-solid fa-gauge-high w-4"></i> Dashboard
-      </div>
-      <div class="sidebar-item" id="nav-quizzes" onclick="navigateTo('quizzes')">
-        <i class="fa-solid fa-clipboard-question w-4"></i> Quiz Library
-      </div>
-      <div class="sidebar-item" id="nav-results" onclick="navigateTo('results')">
-        <i class="fa-solid fa-chart-bar w-4"></i> My Results
-      </div>
-      <div class="sidebar-item" id="nav-leaderboard" onclick="navigateTo('leaderboard')">
-        <i class="fa-solid fa-trophy w-4"></i> Leaderboard
-      </div>
-
-      <div class="mt-4 mb-2 px-3">
-        <span class="text-slate-600 text-xs font-semibold uppercase tracking-wider">Admin</span>
-      </div>
-      <div class="sidebar-item" id="nav-admin" onclick="navigateTo('admin')">
-        <i class="fa-solid fa-shield-halved w-4"></i> Admin Panel
-      </div>
-      <div class="sidebar-item" id="nav-upload" onclick="navigateTo('upload')">
-        <i class="fa-solid fa-cloud-arrow-up w-4"></i> Upload Quiz
-      </div>
+    <div class="p-3">
+      <div class="sidebar-item active" onclick="navigateTo('dashboard')"><i class="fa-solid fa-gauge-high w-5"></i>Dashboard</div>
+      <div class="sidebar-item" onclick="navigateTo('quizzes')"><i class="fa-solid fa-clipboard-list w-5"></i>Quiz Library</div>
+      <div class="sidebar-item" onclick="navigateTo('results')"><i class="fa-solid fa-chart-line w-5"></i>My Results</div>
+      <div class="sidebar-item" onclick="navigateTo('leaderboard')"><i class="fa-solid fa-trophy w-5"></i>Leaderboard</div>
+      <div class="sidebar-item" onclick="navigateTo('admin')"><i class="fa-solid fa-shield w-5"></i>Admin Panel</div>
     </div>
-
-    <div class="absolute bottom-0 left-0 right-0 p-4 border-t border-white border-opacity-5">
-      <div class="flex items-center gap-3 mb-3">
-        <div class="w-8 h-8 rounded-full bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center text-white font-bold text-xs" id="sidebar-avatar">A</div>
-        <div class="flex-1 min-w-0">
-          <div class="text-white text-sm font-medium truncate" id="sidebar-name">Student</div>
-          <div class="text-slate-500 text-xs" id="sidebar-role">Free</div>
-        </div>
-      </div>
-      <button onclick="logout()" class="btn-secondary w-full text-xs py-2">
-        <i class="fa-solid fa-right-from-bracket mr-1"></i> Logout
-      </button>
+    <div class="absolute bottom-0 w-full p-4 border-t border-white/5">
+      <div class="flex items-center gap-2 mb-2"><div class="w-8 h-8 rounded-full bg-blue-600 flex items-center justify-center text-white text-xs font-bold" id="avatar-letter">U</div><div><div id="sidebar-name" class="text-sm font-medium">Student</div><div id="sidebar-plan" class="text-[10px] text-slate-400">Free</div></div></div>
+      <button onclick="logout()" class="btn-secondary w-full text-sm py-2"><i class="fa-solid fa-right-from-bracket mr-1"></i> Logout</button>
     </div>
-  </nav>
+  </div>
 
-  <!-- MAIN CONTENT -->
   <div class="main-content" style="margin-left:260px;">
-
-    <!-- TOPBAR -->
-    <div class="navbar px-4 py-3 flex items-center gap-4">
-      <button onclick="toggleSidebar()" class="md:hidden text-slate-400 text-lg">
-        <i class="fa-solid fa-bars"></i>
-      </button>
-      <div class="flex-1">
-        <div class="relative max-w-xs">
-          <i class="fa-solid fa-search absolute left-3 top-1/2 -translate-y-1/2 text-slate-500 text-xs"></i>
-          <input type="text" placeholder="Search quizzes..." id="search-input"
-            oninput="debounceSearch(this.value)"
-            class="input-field pl-9 py-2 text-sm" style="border-radius:999px;" />
-        </div>
-      </div>
-      <div class="flex items-center gap-3">
-        <button onclick="toggleDarkMode()" class="text-slate-400 hover:text-white text-sm">
-          <i class="fa-solid fa-moon"></i>
-        </button>
-        <div class="relative">
-          <button onclick="toggleNotifications()" class="text-slate-400 hover:text-white text-sm relative">
-            <i class="fa-solid fa-bell"></i>
-            <span class="absolute -top-1 -right-1 w-2 h-2 bg-red-500 rounded-full"></span>
-          </button>
-          <div id="notif-dropdown" class="hidden absolute right-0 top-8 w-72 glass rounded-2xl p-4 shadow-2xl">
-            <p class="text-slate-400 text-xs font-semibold mb-3">NOTIFICATIONS</p>
-            <div class="space-y-2">
-              <div class="p-2.5 rounded-xl" style="background:rgba(59,130,246,0.1)">
-                <p class="text-sm text-slate-200">New mock test available!</p>
-                <p class="text-xs text-slate-500 mt-0.5">2 hours ago</p>
-              </div>
-              <div class="p-2.5 rounded-xl" style="background:rgba(255,255,255,0.04)">
-                <p class="text-sm text-slate-200">Your rank improved to #42</p>
-                <p class="text-xs text-slate-500 mt-0.5">Yesterday</p>
-              </div>
-            </div>
-          </div>
-        </div>
-        <div class="w-8 h-8 rounded-full bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center text-white font-bold text-xs cursor-pointer" id="topbar-avatar" onclick="navigateTo('dashboard')">A</div>
-      </div>
+    <div class="sticky top-0 z-50 bg-[#0a0f1e]/80 backdrop-blur-xl border-b border-white/5 px-6 py-3 flex justify-between items-center">
+      <button onclick="toggleMobileSidebar()" class="md:hidden text-white text-xl"><i class="fa-solid fa-bars"></i></button>
+      <div class="relative w-64"><i class="fa-solid fa-search absolute left-3 top-2.5 text-slate-500 text-xs"></i><input type="text" id="global-search" placeholder="Search quizzes..." class="input-field py-2 pl-9 text-sm rounded-full" oninput="filterQuizLibrary()"></div>
+      <div class="flex gap-3"><span class="text-slate-300 text-sm"><i class="fa-regular fa-bell"></i></span><div class="w-8 h-8 rounded-full bg-blue-500 flex items-center justify-center text-white text-xs font-bold" id="top-avatar">A</div></div>
     </div>
 
-    <!-- PAGE CONTENT -->
-    <div class="p-4 md:p-6" id="page-content">
-
-      <!-- ====== DASHBOARD PAGE ====== -->
-      <div id="page-dashboard" class="fade-in">
-        <!-- Welcome -->
-        <div class="flex flex-col md:flex-row items-start md:items-center justify-between gap-4 mb-6">
-          <div>
-            <h2 class="font-sora text-2xl font-bold text-white">Welcome back, <span class="gradient-text" id="welcome-name">Student</span> 👋</h2>
-            <p class="text-slate-400 text-sm mt-1">Ready to ace CEE? Your next test awaits.</p>
-          </div>
-          <div class="flex items-center gap-2">
-            <span class="badge badge-yellow"><i class="fa-solid fa-crown mr-1"></i> Free Plan</span>
-            <button onclick="navigateTo('quizzes')" class="btn-primary text-sm py-2 px-4">
-              <i class="fa-solid fa-play mr-2"></i> Start Practicing
-            </button>
-          </div>
+    <div id="page-container" class="p-5">
+      <!-- DASHBOARD -->
+      <div id="dashboard-page">
+        <div class="flex flex-wrap justify-between items-center mb-5"><div><h2 class="text-2xl font-bold">Welcome back, <span id="welcome-name" class="gradient-text">Student</span> 👋</h2><p class="text-slate-400 text-sm">Track your CEE prep journey</p></div><button onclick="navigateTo('quizzes')" class="btn-primary text-sm">Start Practice →</button></div>
+        <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+          <div class="glass-card p-4 text-center"><p class="text-slate-400 text-xs">Total Score</p><p id="stat-score" class="text-2xl font-bold text-white">0</p></div>
+          <div class="glass-card p-4 text-center"><p class="text-slate-400 text-xs">Tests Taken</p><p id="stat-tests" class="text-2xl font-bold text-white">0</p></div>
+          <div class="glass-card p-4 text-center"><p class="text-slate-400 text-xs">Accuracy</p><p id="stat-accuracy" class="text-2xl font-bold text-emerald-400">0%</p></div>
+          <div class="glass-card p-4 text-center"><p class="text-slate-400 text-xs">National Rank</p><p id="stat-rank" class="text-2xl font-bold text-amber-400">#—</p></div>
         </div>
-
-        <!-- Stats Row -->
-        <div class="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
-          <div class="stat-card">
-            <div class="flex items-center justify-between mb-3">
-              <span class="text-slate-500 text-xs font-semibold uppercase tracking-wider">Total Score</span>
-              <div class="w-8 h-8 rounded-lg flex items-center justify-center" style="background:rgba(59,130,246,0.15)">
-                <i class="fa-solid fa-star text-blue-400 text-xs"></i>
-              </div>
-            </div>
-            <div class="font-sora text-2xl font-bold text-white" id="stat-score">0</div>
-            <div class="text-slate-500 text-xs mt-1">cumulative marks</div>
-          </div>
-          <div class="stat-card">
-            <div class="flex items-center justify-between mb-3">
-              <span class="text-slate-500 text-xs font-semibold uppercase tracking-wider">Tests Taken</span>
-              <div class="w-8 h-8 rounded-lg flex items-center justify-center" style="background:rgba(16,185,129,0.15)">
-                <i class="fa-solid fa-clipboard-check text-emerald-400 text-xs"></i>
-              </div>
-            </div>
-            <div class="font-sora text-2xl font-bold text-white" id="stat-tests">0</div>
-            <div class="text-slate-500 text-xs mt-1">completed</div>
-          </div>
-          <div class="stat-card">
-            <div class="flex items-center justify-between mb-3">
-              <span class="text-slate-500 text-xs font-semibold uppercase tracking-wider">Accuracy</span>
-              <div class="w-8 h-8 rounded-lg flex items-center justify-center" style="background:rgba(245,158,11,0.15)">
-                <i class="fa-solid fa-bullseye text-yellow-400 text-xs"></i>
-              </div>
-            </div>
-            <div class="font-sora text-2xl font-bold text-white" id="stat-accuracy">0%</div>
-            <div class="text-slate-500 text-xs mt-1">correct rate</div>
-          </div>
-          <div class="stat-card">
-            <div class="flex items-center justify-between mb-3">
-              <span class="text-slate-500 text-xs font-semibold uppercase tracking-wider">National Rank</span>
-              <div class="w-8 h-8 rounded-lg flex items-center justify-center" style="background:rgba(139,92,246,0.15)">
-                <i class="fa-solid fa-trophy text-purple-400 text-xs"></i>
-              </div>
-            </div>
-            <div class="font-sora text-2xl font-bold text-white" id="stat-rank">#—</div>
-            <div class="text-slate-500 text-xs mt-1">nationwide</div>
-          </div>
-        </div>
-
-        <!-- Two Column -->
-        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-6">
-
-          <!-- Subject Progress -->
-          <div class="glass-card p-5 lg:col-span-1">
-            <h3 class="text-white font-semibold text-sm mb-4 flex items-center gap-2">
-              <i class="fa-solid fa-chart-pie text-blue-400"></i> Subject Progress
-            </h3>
-            <div class="space-y-3">
-              <div>
-                <div class="flex justify-between mb-1">
-                  <span class="text-xs text-slate-400 subj-physics"><i class="fa-solid fa-atom mr-1"></i>Physics</span>
-                  <span class="text-xs text-slate-500 subj-progress-physics">0%</span>
-                </div>
-                <div class="progress-bar"><div class="progress-fill subj-bar-physics" style="width:0%;background:linear-gradient(90deg,#3b82f6,#60a5fa)"></div></div>
-              </div>
-              <div>
-                <div class="flex justify-between mb-1">
-                  <span class="text-xs text-slate-400 subj-chemistry"><i class="fa-solid fa-flask mr-1"></i>Chemistry</span>
-                  <span class="text-xs text-slate-500 subj-progress-chemistry">0%</span>
-                </div>
-                <div class="progress-bar"><div class="progress-fill subj-bar-chemistry" style="width:0%;background:linear-gradient(90deg,#10b981,#34d399)"></div></div>
-              </div>
-              <div>
-                <div class="flex justify-between mb-1">
-                  <span class="text-xs text-slate-400 subj-botany"><i class="fa-solid fa-leaf mr-1"></i>Botany</span>
-                  <span class="text-xs text-slate-500 subj-progress-botany">0%</span>
-                </div>
-                <div class="progress-bar"><div class="progress-fill subj-bar-botany" style="width:0%;background:linear-gradient(90deg,#84cc16,#a3e635)"></div></div>
-              </div>
-              <div>
-                <div class="flex justify-between mb-1">
-                  <span class="text-xs text-slate-400 subj-zoology"><i class="fa-solid fa-paw mr-1"></i>Zoology</span>
-                  <span class="text-xs text-slate-500 subj-progress-zoology">0%</span>
-                </div>
-                <div class="progress-bar"><div class="progress-fill subj-bar-zoology" style="width:0%;background:linear-gradient(90deg,#f97316,#fb923c)"></div></div>
-              </div>
-              <div>
-                <div class="flex justify-between mb-1">
-                  <span class="text-xs text-slate-400 subj-mat"><i class="fa-solid fa-calculator mr-1"></i>MAT</span>
-                  <span class="text-xs text-slate-500 subj-progress-mat">0%</span>
-                </div>
-                <div class="progress-bar"><div class="progress-fill subj-bar-mat" style="width:0%;background:linear-gradient(90deg,#a855f7,#c084fc)"></div></div>
-              </div>
-            </div>
-          </div>
-
-          <!-- Performance Chart -->
-          <div class="glass-card p-5 lg:col-span-2">
-            <h3 class="text-white font-semibold text-sm mb-4 flex items-center gap-2">
-              <i class="fa-solid fa-chart-line text-blue-400"></i> Score Trend (Last 7 Tests)
-            </h3>
-            <canvas id="dashboardChart" height="150"></canvas>
-          </div>
-        </div>
-
-        <!-- Recent Quizzes -->
-        <div class="glass-card p-5">
-          <div class="flex items-center justify-between mb-4">
-            <h3 class="text-white font-semibold text-sm flex items-center gap-2">
-              <i class="fa-solid fa-clock-rotate-left text-blue-400"></i> Recent Attempts
-            </h3>
-            <button onclick="navigateTo('results')" class="text-blue-400 text-xs hover:text-blue-300">View all →</button>
-          </div>
-          <div id="recent-quizzes-list">
-            <div class="text-center py-8 text-slate-500 text-sm">
-              <i class="fa-solid fa-inbox text-3xl mb-3 block opacity-30"></i>
-              No quizzes attempted yet. Start practicing!
-            </div>
-          </div>
-        </div>
+        <div class="glass-card p-5"><h3 class="font-semibold mb-3">Recent Attempts</h3><div id="recent-list" class="space-y-2 text-sm"></div></div>
       </div>
 
-      <!-- ====== QUIZ LIST PAGE ====== -->
-      <div id="page-quizzes" class="hidden fade-in">
-        <div class="flex flex-col md:flex-row items-start md:items-center justify-between gap-4 mb-6">
-          <div>
-            <h2 class="font-sora text-2xl font-bold text-white">Quiz Library</h2>
-            <p class="text-slate-400 text-sm mt-1">Browse and start practice tests</p>
-          </div>
-          <div class="flex gap-2 flex-wrap">
-            <button onclick="filterQuizzes('all')" id="filter-all" class="btn-primary text-xs py-1.5 px-3">All</button>
-            <button onclick="filterQuizzes('chapter')" id="filter-chapter" class="btn-secondary text-xs py-1.5 px-3">Chapter</button>
-            <button onclick="filterQuizzes('mock')" id="filter-mock" class="btn-secondary text-xs py-1.5 px-3">Mock</button>
-            <button onclick="filterQuizzes('daily')" id="filter-daily" class="btn-secondary text-xs py-1.5 px-3">Daily</button>
-            <button onclick="filterQuizzes('premium')" id="filter-premium" class="btn-secondary text-xs py-1.5 px-3">
-              <i class="fa-solid fa-crown text-yellow-400 mr-1"></i>Premium
-            </button>
-          </div>
-        </div>
-
-        <!-- Subject Filter -->
-        <div class="flex gap-2 flex-wrap mb-6">
-          <button onclick="filterBySubject('all')" class="badge badge-blue cursor-pointer">All Subjects</button>
-          <button onclick="filterBySubject('Physics')" class="badge cursor-pointer" style="background:rgba(59,130,246,0.15);color:#60a5fa;border:1px solid rgba(59,130,246,0.25)">Physics</button>
-          <button onclick="filterBySubject('Chemistry')" class="badge cursor-pointer" style="background:rgba(16,185,129,0.15);color:#34d399;border:1px solid rgba(16,185,129,0.25)">Chemistry</button>
-          <button onclick="filterBySubject('Botany')" class="badge cursor-pointer" style="background:rgba(132,204,22,0.15);color:#a3e635;border:1px solid rgba(132,204,22,0.25)">Botany</button>
-          <button onclick="filterBySubject('Zoology')" class="badge cursor-pointer" style="background:rgba(249,115,22,0.15);color:#fb923c;border:1px solid rgba(249,115,22,0.25)">Zoology</button>
-          <button onclick="filterBySubject('MAT')" class="badge cursor-pointer" style="background:rgba(168,85,247,0.15);color:#c084fc;border:1px solid rgba(168,85,247,0.25)">MAT</button>
-        </div>
-
-        <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4" id="quiz-grid">
-          <!-- Quiz cards rendered here -->
-        </div>
+      <!-- QUIZ LIBRARY -->
+      <div id="quizzes-page" class="hidden">
+        <div class="flex gap-2 mb-4 flex-wrap"><button onclick="setFilter('all')" class="btn-primary text-xs px-4">All</button><button onclick="setFilter('chapter')" class="btn-secondary text-xs">Chapter wise</button><button onclick="setFilter('mock')" class="btn-secondary text-xs">Mock Tests</button><button onclick="setFilter('daily')" class="btn-secondary text-xs">Daily Drills</button></div>
+        <div id="quiz-grid" class="grid md:grid-cols-2 lg:grid-cols-3 gap-5"></div>
       </div>
 
-      <!-- ====== RESULTS PAGE ====== -->
-      <div id="page-results" class="hidden fade-in">
-        <div class="mb-6">
-          <h2 class="font-sora text-2xl font-bold text-white">My Results</h2>
-          <p class="text-slate-400 text-sm mt-1">All your quiz attempts and performance</p>
-        </div>
-        <div class="glass-card overflow-hidden">
-          <div class="overflow-x-auto">
-            <table class="data-table">
-              <thead>
-                <tr>
-                  <th>Quiz</th>
-                  <th>Subject</th>
-                  <th>Score</th>
-                  <th>Accuracy</th>
-                  <th>Duration</th>
-                  <th>Date</th>
-                  <th>Action</th>
-                </tr>
-              </thead>
-              <tbody id="results-tbody">
-                <tr><td colspan="7" class="text-center text-slate-500 py-8">No results yet</td></tr>
-              </tbody>
-            </table>
-          </div>
-        </div>
+      <!-- RESULTS -->
+      <div id="results-page" class="hidden"><div class="glass-card p-0 overflow-hidden"><table class="w-full text-left"><thead class="bg-white/5"><tr><th class="p-3">Quiz</th><th>Score</th><th>%</th><th>Date</th></tr></thead><tbody id="results-tbody"></tbody></table></div></div>
+
+      <!-- LEADERBOARD -->
+      <div id="leaderboard-page" class="hidden"><div class="glass-card overflow-hidden"><table class="w-full"><thead class="bg-white/5"><tr><th class="p-3">Rank</th><th>Student</th><th>Score</th><th>Tests</th></tr></thead><tbody id="leaderboard-body"></tbody></table></div></div>
+
+      <!-- ADMIN PANEL -->
+      <div id="admin-page" class="hidden">
+        <div class="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-5"><div class="glass-card p-3 text-center"><div id="admin-quiz-count" class="text-2xl font-bold">0</div><div class="text-xs">Quizzes</div></div><div class="glass-card p-3 text-center"><div id="admin-q-count" class="text-2xl font-bold">0</div><div class="text-xs">Questions</div></div></div>
+        <div class="glass-card p-5"><h3 class="font-semibold mb-3">➕ Add New Question</h3><div class="grid md:grid-cols-2 gap-3"><input id="new-question-text" class="input-field" placeholder="Question text"><input id="new-opt-a" class="input-field" placeholder="Option A"><input id="new-opt-b" class="input-field" placeholder="Option B"><input id="new-opt-c" class="input-field" placeholder="Option C"><input id="new-opt-d" class="input-field" placeholder="Option D"><select id="new-correct" class="input-field"><option value="0">A</option><option value="1">B</option><option value="2">C</option><option value="3">D</option></select><input id="new-explanation" class="input-field" placeholder="Explanation"></div><button onclick="adminAddQuestion()" class="btn-primary mt-4 w-full">Save Question</button></div>
+        <div class="mt-6 glass-card p-4"><h4 class="font-semibold mb-2">Local Quiz Sets</h4><div id="admin-quiz-list" class="space-y-2"></div></div>
       </div>
 
-      <!-- ====== LEADERBOARD PAGE ====== -->
-      <div id="page-leaderboard" class="hidden fade-in">
-        <div class="mb-6 flex items-center justify-between">
-          <div>
-            <h2 class="font-sora text-2xl font-bold text-white">National Leaderboard</h2>
-            <p class="text-slate-400 text-sm mt-1">Top 50 students across Nepal</p>
-          </div>
-          <div class="flex items-center gap-2 text-emerald-400 text-xs">
-            <div class="w-1.5 h-1.5 rounded-full bg-emerald-400" style="animation:pulse 1.5s infinite"></div>
-            Live
-          </div>
-        </div>
-        <div class="glass-card overflow-hidden">
-          <div class="overflow-x-auto">
-            <table class="data-table">
-              <thead>
-                <tr>
-                  <th>Rank</th>
-                  <th>Student</th>
-                  <th>Score</th>
-                  <th>Tests</th>
-                  <th>Accuracy</th>
-                  <th>Badge</th>
-                </tr>
-              </thead>
-              <tbody id="leaderboard-tbody">
-                <!-- Populated by JS -->
-              </tbody>
-            </table>
-          </div>
-        </div>
+      <!-- QUIZ ENGINE VIEW -->
+      <div id="quiz-engine-page" class="hidden max-w-4xl mx-auto">
+        <div class="flex justify-between items-center mb-3"><button onclick="exitQuiz()" class="btn-secondary text-sm"><i class="fa-regular fa-circle-left"></i> Exit</button><div><span id="quiz-timer" class="font-mono text-xl font-bold">00:00</span></div></div>
+        <div class="progress-bar-custom mb-4"><div id="quiz-progress-fill" class="progress-fill"></div></div>
+        <div class="glass-card p-6 mb-4"><div class="flex justify-between"><span id="q-counter" class="text-blue-300 text-sm">Question 1</span><button onclick="toggleMarkReview()" id="mark-review-btn" class="text-sm text-yellow-500"><i class="fa-regular fa-bookmark"></i> Mark</button></div><p id="question-text" class="text-white text-lg my-5"></p><div id="options-container" class="space-y-3"></div><div class="flex justify-between mt-8"><button onclick="prevQuestion()" class="btn-secondary">Previous</button><button onclick="nextOrSubmit()" id="next-btn" class="btn-primary">Next</button></div></div>
+        <div class="glass-card p-4"><div class="grid grid-cols-5 gap-2" id="nav-buttons"></div></div>
       </div>
 
-      <!-- ====== ADMIN PAGE ====== -->
-      <div id="page-admin" class="hidden fade-in">
-        <div class="mb-6">
-          <h2 class="font-sora text-2xl font-bold text-white">Admin Panel</h2>
-          <p class="text-slate-400 text-sm mt-1">Manage quizzes, questions, and users</p>
-        </div>
-
-        <!-- Admin Stats -->
-        <div class="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
-          <div class="stat-card text-center">
-            <div class="text-2xl font-bold text-blue-400" id="admin-stat-quizzes">0</div>
-            <div class="text-slate-500 text-xs mt-1">Total Quizzes</div>
-          </div>
-          <div class="stat-card text-center">
-            <div class="text-2xl font-bold text-emerald-400" id="admin-stat-questions">0</div>
-            <div class="text-slate-500 text-xs mt-1">Questions</div>
-          </div>
-          <div class="stat-card text-center">
-            <div class="text-2xl font-bold text-yellow-400" id="admin-stat-users">0</div>
-            <div class="text-slate-500 text-xs mt-1">Users</div>
-          </div>
-          <div class="stat-card text-center">
-            <div class="text-2xl font-bold text-purple-400" id="admin-stat-attempts">0</div>
-            <div class="text-slate-500 text-xs mt-1">Attempts</div>
-          </div>
-        </div>
-
-        <!-- Tabs -->
-        <div class="flex gap-2 mb-6 flex-wrap">
-          <button onclick="showAdminTab('quizzes')" id="admin-tab-quizzes"
-            class="btn-primary text-sm py-2 px-4">Quizzes</button>
-          <button onclick="showAdminTab('questions')" id="admin-tab-questions"
-            class="btn-secondary text-sm py-2 px-4">Add Question</button>
-          <button onclick="showAdminTab('users')" id="admin-tab-users"
-            class="btn-secondary text-sm py-2 px-4">Users</button>
-          <button onclick="showAdminTab('analytics')" id="admin-tab-analytics"
-            class="btn-secondary text-sm py-2 px-4">Analytics</button>
-        </div>
-
-        <!-- Admin Quizzes Tab -->
-        <div id="admin-tab-quizzes-panel" class="glass-card overflow-hidden">
-          <div class="p-4 border-b border-white border-opacity-5 flex items-center justify-between">
-            <span class="text-white font-medium text-sm">All Quizzes</span>
-            <button onclick="navigateTo('upload')" class="btn-primary text-xs py-1.5 px-3">
-              <i class="fa-solid fa-plus mr-1"></i> Add Quiz
-            </button>
-          </div>
-          <div class="overflow-x-auto">
-            <table class="data-table">
-              <thead>
-                <tr>
-                  <th>Title</th>
-                  <th>Subject</th>
-                  <th>Questions</th>
-                  <th>Type</th>
-                  <th>Status</th>
-                  <th>Actions</th>
-                </tr>
-              </thead>
-              <tbody id="admin-quizzes-tbody">
-                <tr><td colspan="6" class="text-center text-slate-500 py-6">No quizzes yet</td></tr>
-              </tbody>
-            </table>
-          </div>
-        </div>
-
-        <!-- Admin Questions Tab -->
-        <div id="admin-tab-questions-panel" class="hidden">
-          <div class="glass-card p-6">
-            <h3 class="text-white font-semibold mb-4">Add Question Manually</h3>
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
-              <div>
-                <label class="text-xs text-slate-400 uppercase tracking-wider mb-1.5 block">Subject</label>
-                <select id="aq-subject" class="input-field">
-                  <option value="Physics">Physics</option>
-                  <option value="Chemistry">Chemistry</option>
-                  <option value="Botany">Botany</option>
-                  <option value="Zoology">Zoology</option>
-                  <option value="MAT">MAT</option>
-                </select>
-              </div>
-              <div>
-                <label class="text-xs text-slate-400 uppercase tracking-wider mb-1.5 block">Chapter</label>
-                <input type="text" id="aq-chapter" class="input-field" placeholder="Chapter name" />
-              </div>
-              <div>
-                <label class="text-xs text-slate-400 uppercase tracking-wider mb-1.5 block">Difficulty</label>
-                <select id="aq-difficulty" class="input-field">
-                  <option value="easy">Easy</option>
-                  <option value="medium">Medium</option>
-                  <option value="hard">Hard</option>
-                </select>
-              </div>
-              <div>
-                <label class="text-xs text-slate-400 uppercase tracking-wider mb-1.5 block">Quiz Set</label>
-                <select id="aq-quiz" class="input-field">
-                  <option value="">-- Select Quiz --</option>
-                </select>
-              </div>
-            </div>
-            <div class="mb-4">
-              <label class="text-xs text-slate-400 uppercase tracking-wider mb-1.5 block">Question</label>
-              <textarea id="aq-question" class="input-field" rows="3" placeholder="Enter question text..."></textarea>
-            </div>
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-3 mb-4" id="aq-options-grid">
-              <div>
-                <label class="text-xs text-slate-400 mb-1 block">Option A</label>
-                <input type="text" id="aq-opt-0" class="input-field" placeholder="Option A" />
-              </div>
-              <div>
-                <label class="text-xs text-slate-400 mb-1 block">Option B</label>
-                <input type="text" id="aq-opt-1" class="input-field" placeholder="Option B" />
-              </div>
-              <div>
-                <label class="text-xs text-slate-400 mb-1 block">Option C</label>
-                <input type="text" id="aq-opt-2" class="input-field" placeholder="Option C" />
-              </div>
-              <div>
-                <label class="text-xs text-slate-400 mb-1 block">Option D</label>
-                <input type="text" id="aq-opt-3" class="input-field" placeholder="Option D" />
-              </div>
-            </div>
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
-              <div>
-                <label class="text-xs text-slate-400 uppercase tracking-wider mb-1.5 block">Correct Option</label>
-                <select id="aq-correct" class="input-field">
-                  <option value="0">A</option>
-                  <option value="1">B</option>
-                  <option value="2">C</option>
-                  <option value="3">D</option>
-                </select>
-              </div>
-            </div>
-            <div class="mb-4">
-              <label class="text-xs text-slate-400 uppercase tracking-wider mb-1.5 block">Explanation</label>
-              <textarea id="aq-explanation" class="input-field" rows="2" placeholder="Explain the correct answer..."></textarea>
-            </div>
-            <button onclick="addQuestionManually()" class="btn-primary">
-              <i class="fa-solid fa-plus mr-2"></i> Add Question
-            </button>
-          </div>
-        </div>
-
-        <!-- Admin Users Tab -->
-        <div id="admin-tab-users-panel" class="hidden glass-card overflow-hidden">
-          <div class="p-4 border-b border-white border-opacity-5">
-            <span class="text-white font-medium text-sm">User Management</span>
-          </div>
-          <div class="overflow-x-auto">
-            <table class="data-table">
-              <thead>
-                <tr>
-                  <th>Name</th>
-                  <th>Email</th>
-                  <th>Plan</th>
-                  <th>Tests Taken</th>
-                  <th>Joined</th>
-                  <th>Actions</th>
-                </tr>
-              </thead>
-              <tbody id="admin-users-tbody">
-                <tr><td colspan="6" class="text-center text-slate-500 py-6">No users found</td></tr>
-              </tbody>
-            </table>
-          </div>
-        </div>
-
-        <!-- Admin Analytics Tab -->
-        <div id="admin-tab-analytics-panel" class="hidden">
-          <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            <div class="glass-card p-5">
-              <h3 class="text-white text-sm font-semibold mb-4">Questions by Subject</h3>
-              <canvas id="adminSubjectChart" height="200"></canvas>
-            </div>
-            <div class="glass-card p-5">
-              <h3 class="text-white text-sm font-semibold mb-4">Difficulty Distribution</h3>
-              <canvas id="adminDiffChart" height="200"></canvas>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <!-- ====== UPLOAD PAGE ====== -->
-      <div id="page-upload" class="hidden fade-in">
-        <div class="mb-6">
-          <h2 class="font-sora text-2xl font-bold text-white">Upload Quiz JSON</h2>
-          <p class="text-slate-400 text-sm mt-1">Bulk import questions from structured JSON files</p>
-        </div>
-
-        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          <!-- Drop Zone -->
-          <div class="glass-card p-6">
-            <div class="drop-zone" id="drop-zone" onclick="document.getElementById('json-file-input').click()"
-              ondragover="handleDragOver(event)" ondragleave="handleDragLeave(event)" ondrop="handleDrop(event)">
-              <i class="fa-solid fa-cloud-arrow-up text-4xl text-blue-400 mb-3 block"></i>
-              <p class="text-white font-semibold mb-1">Drop JSON file here</p>
-              <p class="text-slate-500 text-sm">or click to browse</p>
-              <p class="text-slate-600 text-xs mt-3">Supports: .json</p>
-              <input type="file" id="json-file-input" accept=".json" class="hidden" onchange="handleFileSelect(event)" />
-            </div>
-
-            <!-- Progress -->
-            <div id="upload-progress" class="hidden mt-4">
-              <div class="flex items-center justify-between mb-2">
-                <span class="text-slate-400 text-sm" id="upload-status">Parsing...</span>
-                <span class="text-blue-400 text-sm" id="upload-pct">0%</span>
-              </div>
-              <div class="progress-bar h-2">
-                <div class="progress-fill" id="upload-progress-bar" style="width:0%"></div>
-              </div>
-            </div>
-
-            <!-- Preview -->
-            <div id="upload-preview" class="hidden mt-4 p-4 rounded-xl" style="background:rgba(59,130,246,0.07);border:1px solid rgba(59,130,246,0.2)">
-              <h4 class="text-blue-300 font-semibold text-sm mb-2" id="preview-title">Quiz Title</h4>
-              <div class="grid grid-cols-2 gap-2 text-xs text-slate-400">
-                <span>Subject: <span class="text-slate-200" id="preview-subject">—</span></span>
-                <span>Questions: <span class="text-slate-200" id="preview-qcount">—</span></span>
-                <span>Duration: <span class="text-slate-200" id="preview-duration">—</span> min</span>
-                <span>Type: <span class="text-slate-200" id="preview-type">—</span></span>
-              </div>
-              <div class="mt-3 flex gap-2">
-                <button onclick="confirmUpload()" class="btn-primary text-sm py-2 px-4">
-                  <i class="fa-solid fa-upload mr-1"></i> Import to DB
-                </button>
-                <button onclick="cancelUpload()" class="btn-secondary text-sm py-2 px-3">Cancel</button>
-              </div>
-            </div>
-
-            <!-- Error Log -->
-            <div id="upload-errors" class="hidden mt-4 p-4 rounded-xl" style="background:rgba(239,68,68,0.07);border:1px solid rgba(239,68,68,0.2)">
-              <h4 class="text-red-400 font-semibold text-sm mb-2">Validation Errors</h4>
-              <ul id="error-list" class="text-xs text-red-300 space-y-1"></ul>
-            </div>
-          </div>
-
-          <!-- JSON Format Guide -->
-          <div class="glass-card p-6">
-            <h3 class="text-white font-semibold text-sm mb-4">Supported JSON Format</h3>
-            <pre class="text-xs text-slate-400 overflow-x-auto leading-relaxed"
-              style="background:rgba(0,0,0,0.3);padding:1rem;border-radius:0.75rem;font-family:monospace">{
-  "quiz_meta": {
-    "title": "Digestive System Test",
-    "subject": "Biology",
-    "chapter": "Digestive System",
-    "duration_minutes": 60,
-    "quiz_type": "chapter",
-    "difficulty": "medium",
-    "is_premium": false,
-    "negative_marking": true,
-    "negative_marks_per_wrong": 0.25
-  },
-  "questions": [
-    {
-      "question": "Where are Paneth cells?",
-      "options": [
-        "Stomach lining",
-        "Crypts of Lieberkuhn",
-        "Duodenum",
-        "Pancreas"
-      ],
-      "correct_option": 1,
-      "explanation": "Paneth cells are in Crypts.",
-      "difficulty": "easy",
-      "topic": "Small Intestine"
-    }
-  ]
-}</pre>
-            <div class="mt-4 space-y-2">
-              <div class="flex items-center gap-2 text-xs text-slate-400">
-                <i class="fa-solid fa-check text-emerald-400"></i> Minimum 2, maximum 6 options per question
-              </div>
-              <div class="flex items-center gap-2 text-xs text-slate-400">
-                <i class="fa-solid fa-check text-emerald-400"></i> correct_option is zero-indexed (0 = A)
-              </div>
-              <div class="flex items-center gap-2 text-xs text-slate-400">
-                <i class="fa-solid fa-check text-emerald-400"></i> explanation is required for all questions
-              </div>
-              <div class="flex items-center gap-2 text-xs text-slate-400">
-                <i class="fa-solid fa-check text-emerald-400"></i> Duplicate detection is automatic
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <!-- ====== QUIZ ENGINE PAGE ====== -->
-      <div id="page-quiz-engine" class="hidden fade-in">
-        <div class="max-w-4xl mx-auto">
-
-          <!-- Quiz Header -->
-          <div class="flex items-center gap-4 mb-4">
-            <button onclick="confirmExit()" class="btn-secondary text-sm py-2 px-3">
-              <i class="fa-solid fa-arrow-left mr-1"></i> Exit
-            </button>
-            <div class="flex-1">
-              <div class="flex items-center justify-between mb-1">
-                <span class="text-slate-400 text-xs" id="quiz-progress-text">Q 1 / 0</span>
-                <span class="text-sm font-bold" id="quiz-timer"
-                  style="font-family:'Sora',sans-serif">00:00</span>
-              </div>
-              <div class="progress-bar h-1.5">
-                <div class="progress-fill" id="quiz-progress-bar" style="width:0%"></div>
-              </div>
-            </div>
-          </div>
-
-          <div class="grid grid-cols-1 lg:grid-cols-4 gap-4">
-
-            <!-- Question Panel -->
-            <div class="lg:col-span-3">
-              <div class="glass-card p-6">
-                <!-- Question number & difficulty -->
-                <div class="flex items-center justify-between mb-4">
-                  <span class="text-blue-400 text-xs font-semibold uppercase tracking-wider" id="q-number">Question 1</span>
-                  <div class="flex gap-2">
-                    <span class="badge" id="q-difficulty-badge">Easy</span>
-                    <button onclick="markForReview()" id="mark-btn"
-                      class="text-slate-500 hover:text-yellow-400 text-sm transition-colors">
-                      <i class="fa-regular fa-bookmark"></i>
-                    </button>
-                  </div>
-                </div>
-
-                <!-- Question Text -->
-                <p class="text-white text-base leading-relaxed mb-6" id="q-text">Loading question...</p>
-
-                <!-- Question Image -->
-                <div id="q-image-container" class="hidden mb-4">
-                  <img id="q-image" class="rounded-xl max-w-full" alt="Question image" />
-                </div>
-
-                <!-- Options -->
-                <div class="space-y-3" id="q-options"></div>
-
-                <!-- Navigation -->
-                <div class="flex items-center justify-between mt-6">
-                  <button onclick="prevQuestion()" id="btn-prev"
-                    class="btn-secondary text-sm py-2 px-4">
-                    <i class="fa-solid fa-arrow-left mr-1"></i> Previous
-                  </button>
-                  <button onclick="clearAnswer()" class="text-slate-500 hover:text-slate-300 text-xs">
-                    Clear Answer
-                  </button>
-                  <button onclick="nextQuestion()" id="btn-next"
-                    class="btn-primary text-sm py-2 px-4">
-                    Next <i class="fa-solid fa-arrow-right ml-1"></i>
-                  </button>
-                </div>
-              </div>
-            </div>
-
-            <!-- Navigator Panel -->
-            <div class="lg:col-span-1">
-              <div class="glass-card p-4 sticky top-20">
-                <h4 class="text-slate-400 text-xs font-semibold uppercase tracking-wider mb-3">Navigator</h4>
-                <div class="grid grid-cols-5 gap-1.5 mb-4" id="q-navigator"></div>
-
-                <!-- Legend -->
-                <div class="space-y-1.5 mb-4">
-                  <div class="flex items-center gap-2 text-xs text-slate-400">
-                    <div class="w-4 h-4 rounded" style="background:rgba(59,130,246,0.25);border:1.5px solid #3b82f6"></div>
-                    Answered
-                  </div>
-                  <div class="flex items-center gap-2 text-xs text-slate-400">
-                    <div class="w-4 h-4 rounded" style="background:rgba(245,158,11,0.2);border:1.5px solid #f59e0b"></div>
-                    Marked
-                  </div>
-                  <div class="flex items-center gap-2 text-xs text-slate-400">
-                    <div class="w-4 h-4 rounded" style="background:rgba(255,255,255,0.04);border:1.5px solid rgba(255,255,255,0.1)"></div>
-                    Unanswered
-                  </div>
-                </div>
-
-                <button onclick="confirmSubmit()" class="btn-primary w-full text-sm py-2.5">
-                  <i class="fa-solid fa-paper-plane mr-1"></i> Submit Quiz
-                </button>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <!-- ====== RESULT PAGE ====== -->
-      <div id="page-result" class="hidden fade-in">
-        <div class="max-w-3xl mx-auto">
-
-          <!-- Score Card -->
-          <div class="glass-card p-8 text-center mb-6">
-            <div class="mb-4">
-              <div class="inline-flex items-center justify-center w-20 h-20 rounded-full mb-4"
-                   style="background:linear-gradient(135deg,#2563eb,#4f46e5);">
-                <span class="font-sora text-3xl font-bold text-white" id="result-score-display">0</span>
-              </div>
-            </div>
-            <h2 class="font-sora text-2xl font-bold text-white mb-1" id="result-title">Quiz Complete!</h2>
-            <p class="text-slate-400 text-sm mb-4" id="result-quiz-name">—</p>
-            <div class="inline-flex items-center gap-2 px-4 py-2 rounded-full mb-6"
-                 id="result-grade-badge"
-                 style="background:rgba(59,130,246,0.15);border:1px solid rgba(59,130,246,0.3)">
-              <i class="fa-solid fa-award text-blue-400"></i>
-              <span class="text-blue-300 font-semibold text-sm" id="result-grade">—</span>
-            </div>
-
-            <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mt-2">
-              <div class="p-3 rounded-xl" style="background:rgba(255,255,255,0.04)">
-                <div class="font-bold text-white" id="r-total">—</div>
-                <div class="text-slate-500 text-xs">Total Marks</div>
-              </div>
-              <div class="p-3 rounded-xl" style="background:rgba(16,185,129,0.08)">
-                <div class="font-bold text-emerald-400" id="r-correct">—</div>
-                <div class="text-slate-500 text-xs">Correct</div>
-              </div>
-              <div class="p-3 rounded-xl" style="background:rgba(239,68,68,0.08)">
-                <div class="font-bold text-red-400" id="r-wrong">—</div>
-                <div class="text-slate-500 text-xs">Wrong</div>
-              </div>
-              <div class="p-3 rounded-xl" style="background:rgba(255,255,255,0.04)">
-                <div class="font-bold text-slate-400" id="r-skip">—</div>
-                <div class="text-slate-500 text-xs">Skipped</div>
-              </div>
-            </div>
-          </div>
-
-          <!-- Analytics Charts -->
-          <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
-            <div class="glass-card p-5">
-              <h3 class="text-white font-semibold text-sm mb-3">Performance Breakdown</h3>
-              <canvas id="resultPieChart" height="180"></canvas>
-            </div>
-            <div class="glass-card p-5">
-              <h3 class="text-white font-semibold text-sm mb-3">Time Analysis</h3>
-              <canvas id="resultTimeChart" height="180"></canvas>
-            </div>
-          </div>
-
-          <div class="flex gap-3 justify-center">
-            <button onclick="reviewAnswers()" class="btn-secondary py-2.5 px-6 text-sm">
-              <i class="fa-solid fa-eye mr-2"></i> Review Answers
-            </button>
-            <button onclick="navigateTo('quizzes')" class="btn-primary py-2.5 px-6 text-sm">
-              <i class="fa-solid fa-rotate-right mr-2"></i> Next Quiz
-            </button>
-          </div>
-        </div>
-      </div>
-
-      <!-- ====== REVIEW PAGE ====== -->
-      <div id="page-review" class="hidden fade-in">
-        <div class="mb-4 flex items-center gap-3">
-          <button onclick="navigateTo('result')" class="btn-secondary text-sm py-2 px-3">
-            <i class="fa-solid fa-arrow-left mr-1"></i> Back to Results
-          </button>
-          <h2 class="font-sora text-xl font-bold text-white">Answer Review</h2>
-        </div>
-        <div class="space-y-4" id="review-list"></div>
-      </div>
-
-    </div><!-- end page-content -->
-  </div><!-- end main-content -->
-</div><!-- end app-section -->
-
-<!-- ==================== MODALS ==================== -->
-
-<!-- Confirm Submit Modal -->
-<div id="modal-submit" class="modal-overlay hidden">
-  <div class="modal-box">
-    <div class="text-center mb-5">
-      <div class="w-14 h-14 rounded-2xl flex items-center justify-center mx-auto mb-4"
-           style="background:rgba(59,130,246,0.15)">
-        <i class="fa-solid fa-paper-plane text-blue-400 text-xl"></i>
-      </div>
-      <h3 class="font-sora text-xl font-bold text-white mb-2">Submit Quiz?</h3>
-      <p class="text-slate-400 text-sm" id="submit-modal-msg">You still have unanswered questions.</p>
-    </div>
-    <div class="grid grid-cols-3 gap-3 text-center mb-5">
-      <div class="p-3 rounded-xl" style="background:rgba(16,185,129,0.08)">
-        <div class="font-bold text-emerald-400" id="modal-answered">0</div>
-        <div class="text-slate-500 text-xs">Answered</div>
-      </div>
-      <div class="p-3 rounded-xl" style="background:rgba(245,158,11,0.08)">
-        <div class="font-bold text-yellow-400" id="modal-marked">0</div>
-        <div class="text-slate-500 text-xs">Marked</div>
-      </div>
-      <div class="p-3 rounded-xl" style="background:rgba(255,255,255,0.04)">
-        <div class="font-bold text-slate-400" id="modal-unanswered">0</div>
-        <div class="text-slate-500 text-xs">Unanswered</div>
-      </div>
-    </div>
-    <div class="flex gap-3">
-      <button onclick="closeModal('modal-submit')" class="btn-secondary flex-1 text-sm py-2.5">Continue</button>
-      <button onclick="submitQuiz()" class="btn-primary flex-1 text-sm py-2.5">Submit Now</button>
+      <!-- RESULT REVIEW -->
+      <div id="result-page" class="hidden max-w-3xl mx-auto"><div class="glass-card p-6 text-center"><h2 id="result-heading" class="text-3xl font-bold">Your Score: 0/0</h2><p id="result-percent" class="text-lg mt-2"></p><button onclick="navigateTo('quizzes')" class="btn-primary mt-5">Try another quiz</button></div></div>
     </div>
   </div>
 </div>
 
-<!-- Confirm Exit Modal -->
-<div id="modal-exit" class="modal-overlay hidden">
-  <div class="modal-box">
-    <div class="text-center mb-5">
-      <div class="w-14 h-14 rounded-2xl flex items-center justify-center mx-auto mb-4"
-           style="background:rgba(239,68,68,0.12)">
-        <i class="fa-solid fa-triangle-exclamation text-red-400 text-xl"></i>
-      </div>
-      <h3 class="font-sora text-xl font-bold text-white mb-2">Exit Quiz?</h3>
-      <p class="text-slate-400 text-sm">Your progress will be lost and the quiz will be marked as incomplete.</p>
-    </div>
-    <div class="flex gap-3">
-      <button onclick="closeModal('modal-exit')" class="btn-secondary flex-1 text-sm py-2.5">Keep Going</button>
-      <button onclick="exitQuiz()" class="btn-danger flex-1 text-sm py-2.5">Exit Quiz</button>
-    </div>
-  </div>
-</div>
-
-<!-- Delete Quiz Modal -->
-<div id="modal-delete" class="modal-overlay hidden">
-  <div class="modal-box">
-    <div class="text-center mb-5">
-      <div class="w-14 h-14 rounded-2xl flex items-center justify-center mx-auto mb-4"
-           style="background:rgba(239,68,68,0.12)">
-        <i class="fa-solid fa-trash text-red-400 text-xl"></i>
-      </div>
-      <h3 class="font-sora text-xl font-bold text-white mb-2">Delete Quiz?</h3>
-      <p class="text-slate-400 text-sm">This will permanently delete the quiz and all its questions.</p>
-    </div>
-    <div class="flex gap-3">
-      <button onclick="closeModal('modal-delete')" class="btn-secondary flex-1 text-sm py-2.5">Cancel</button>
-      <button onclick="confirmDeleteQuiz()" class="btn-danger flex-1 text-sm py-2.5">Delete</button>
-    </div>
-  </div>
-</div>
-
-<!-- ==================== JAVASCRIPT ==================== -->
 <script>
-// ===========================
-// CONFIG & INIT
-// ===========================
-const SUPABASE_URL = "https://rpudsnrqlhataqfavcjh.supabase.co";
-const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJwdWRzbnJxbGhhdGFxZmF2Y2poIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzk5NzI0NjgsImV4cCI6MjA5NTU0ODQ2OH0.EEu5t-NPqWARChSAMpEvUPMBkz_JeeNe3bGSCQmH7Xo"; // Replace with actual key
-
-let supabase = null;
-let currentUser = null;
-let currentProfile = null;
-
-// Quiz engine state
-let quizState = {
-  quiz: null,
-  questions: [],
-  answers: {},
-  marked: new Set(),
-  currentIndex: 0,
-  timer: null,
-  timeLeft: 0,
-  totalTime: 0,
-  startTime: null,
-  questionTimes: {},
-  questionStart: null
-};
-
-// App state
-let allQuizzes = [];
-let currentFilter = 'all';
-let currentSubjectFilter = 'all';
-let pendingUploadData = null;
-let deleteQuizId = null;
-let realtimeChannel = null;
-let searchTimer = null;
-
-// ===========================
-// SUPABASE INIT
-// ===========================
-function initSupabase() {
-  try {
-    if (SUPABASE_ANON_KEY === "YOUR_ANON_KEY") {
-      showToast("⚠️ Add your Supabase ANON_KEY to enable database features", "info");
-      return false;
-    }
-    supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-    return true;
-  } catch (e) {
-    console.error("Supabase init failed:", e);
-    return false;
-  }
-}
-
-// ===========================
-// TOAST NOTIFICATIONS
-// ===========================
-function showToast(message, type = "info") {
-  const container = document.getElementById("toast-container");
-  const icons = { success: "fa-check-circle", error: "fa-circle-xmark", info: "fa-circle-info" };
-  const toast = document.createElement("div");
-  toast.className = `toast ${type}`;
-  toast.innerHTML = `<i class="fa-solid ${icons[type] || icons.info}"></i><span>${message}</span>`;
-  container.appendChild(toast);
-  setTimeout(() => toast.remove(), 3200);
-}
-
-// ===========================
-// MODAL HELPERS
-// ===========================
-function openModal(id) { document.getElementById(id).classList.remove("hidden"); }
-function closeModal(id) { document.getElementById(id).classList.add("hidden"); }
-
-// ===========================
-// AUTH FUNCTIONS
-// ===========================
-function showAuthTab(tab) {
-  const forms = ["login", "signup", "phone", "forgot"];
-  forms.forEach(f => document.getElementById(`form-${f}`).classList.add("hidden"));
-  document.getElementById(`form-${tab}`).classList.remove("hidden");
-
-  const tabBtns = ["login", "signup"];
-  tabBtns.forEach(t => {
-    const btn = document.getElementById(`tab-${t}`);
-    if (btn) {
-      if (t === tab) {
-        btn.style.background = "linear-gradient(135deg,#2563eb,#4f46e5)";
-        btn.style.color = "white";
-      } else {
-        btn.style.background = "";
-        btn.style.color = "#94a3b8";
-      }
-    }
-  });
-}
-
-function showForgotPassword() {
-  const forms = ["login","signup","phone","forgot"];
-  forms.forEach(f => document.getElementById(`form-${f}`).classList.add("hidden"));
-  document.getElementById("form-forgot").classList.remove("hidden");
-}
-
-function showPhoneLogin() {
-  const forms = ["login","signup","phone","forgot"];
-  forms.forEach(f => document.getElementById(`form-${f}`).classList.add("hidden"));
-  document.getElementById("form-phone").classList.remove("hidden");
-}
-
-function togglePassword(id) {
-  const input = document.getElementById(id);
-  input.type = input.type === "password" ? "text" : "password";
-}
-
-async function login() {
-  const email = document.getElementById("login-email").value.trim();
-  const password = document.getElementById("login-password").value;
-  if (!email || !password) { showToast("Please fill all fields", "error"); return; }
-
-  const btn = document.getElementById("btn-login");
-  btn.innerHTML = '<i class="fa-solid fa-spinner spin mr-2"></i> Signing in...';
-  btn.disabled = true;
-
-  try {
-    if (!supabase) {
-      // Demo mode - no Supabase
-      demoLogin(email);
-      return;
-    }
-    const { data, error } = await supabase.auth.signInWithPassword({ email, password });
-    if (error) throw error;
-    currentUser = data.user;
-    await loadProfile();
-    enterApp();
-  } catch (e) {
-    showToast(e.message || "Login failed", "error");
-  } finally {
-    btn.innerHTML = '<i class="fa-solid fa-arrow-right-to-bracket mr-2"></i> Sign In';
-    btn.disabled = false;
-  }
-}
-
-async function signup() {
-  const name = document.getElementById("signup-name").value.trim();
-  const email = document.getElementById("signup-email").value.trim();
-  const password = document.getElementById("signup-password").value;
-  if (!name || !email || !password) { showToast("Please fill all fields", "error"); return; }
-  if (password.length < 6) { showToast("Password must be at least 6 characters", "error"); return; }
-
-  const btn = document.getElementById("btn-signup");
-  btn.innerHTML = '<i class="fa-solid fa-spinner spin mr-2"></i> Creating...';
-  btn.disabled = true;
-
-  try {
-    if (!supabase) {
-      demoLogin(email, name);
-      return;
-    }
-    const { data, error } = await supabase.auth.signUp({ email, password, options: { data: { full_name: name } } });
-    if (error) throw error;
-    showToast("Account created! Check email to verify.", "success");
-    showAuthTab("login");
-  } catch (e) {
-    showToast(e.message || "Signup failed", "error");
-  } finally {
-    btn.innerHTML = '<i class="fa-solid fa-user-plus mr-2"></i> Create Account';
-    btn.disabled = false;
-  }
-}
-
-async function loginWithGoogle() {
-  try {
-    if (!supabase) { demoLogin("google@demo.com", "Google User"); return; }
-    const { error } = await supabase.auth.signInWithOAuth({ provider: "google" });
-    if (error) throw error;
-  } catch (e) {
-    showToast(e.message || "Google login failed", "error");
-  }
-}
-
-async function sendOTP() {
-  const phone = document.getElementById("phone-number").value.trim();
-  if (!phone) { showToast("Enter phone number", "error"); return; }
-  try {
-    if (!supabase) { document.getElementById("otp-section").classList.remove("hidden"); showToast("OTP sent (demo)", "info"); return; }
-    const { error } = await supabase.auth.signInWithOtp({ phone });
-    if (error) throw error;
-    document.getElementById("otp-section").classList.remove("hidden");
-    showToast("OTP sent!", "success");
-  } catch (e) {
-    showToast(e.message || "Failed to send OTP", "error");
-  }
-}
-
-async function verifyOTP() {
-  const phone = document.getElementById("phone-number").value.trim();
-  const token = document.getElementById("otp-code").value.trim();
-  try {
-    if (!supabase) { demoLogin(phone, "Phone User"); return; }
-    const { data, error } = await supabase.auth.verifyOtp({ phone, token, type: "sms" });
-    if (error) throw error;
-    currentUser = data.user;
-    await loadProfile();
-    enterApp();
-  } catch (e) {
-    showToast(e.message || "OTP verification failed", "error");
-  }
-}
-
-async function resetPassword() {
-  const email = document.getElementById("forgot-email").value.trim();
-  if (!email) { showToast("Enter your email", "error"); return; }
-  try {
-    if (!supabase) { showToast("Reset link sent (demo)", "success"); return; }
-    const { error } = await supabase.auth.resetPasswordForEmail(email);
-    if (error) throw error;
-    showToast("Reset link sent to your email!", "success");
-    showAuthTab("login");
-  } catch (e) {
-    showToast(e.message || "Failed to send reset", "error");
-  }
-}
-
-function demoLogin(email, name) {
-  currentUser = { id: "demo-user-001", email };
-  currentProfile = {
-    id: "demo-user-001",
-    full_name: name || email.split("@")[0],
-    email,
-    is_premium: false,
-    is_admin: true,
-    total_score: 0,
-    tests_taken: 0,
-    accuracy: 0
-  };
-  enterApp();
-  showToast("Demo mode — Connect Supabase for full features", "info");
-}
-
-async function loadProfile() {
-  if (!supabase || !currentUser) return;
-  try {
-    const { data } = await supabase.from("profiles").select("*").eq("id", currentUser.id).single();
-    currentProfile = data || {
-      id: currentUser.id,
-      full_name: currentUser.user_metadata?.full_name || currentUser.email?.split("@")[0] || "Student",
-      email: currentUser.email,
-      is_premium: false,
-      is_admin: false,
-      total_score: 0,
-      tests_taken: 0,
-      accuracy: 0
-    };
-  } catch { currentProfile = { full_name: "Student", is_admin: false }; }
-}
-
-async function logout() {
-  if (supabase) await supabase.auth.signOut();
-  if (realtimeChannel) supabase?.removeChannel(realtimeChannel);
-  currentUser = null; currentProfile = null;
-  stopTimer();
-  document.getElementById("app-section").classList.add("hidden");
-  document.getElementById("auth-section").classList.remove("hidden");
-  showToast("Logged out successfully", "info");
-}
-
-// ===========================
-// APP ENTRY
-// ===========================
-function enterApp() {
-  document.getElementById("auth-section").classList.add("hidden");
-  document.getElementById("app-section").classList.remove("hidden");
-  const name = currentProfile?.full_name || "Student";
-  const initial = name.charAt(0).toUpperCase();
-  document.getElementById("welcome-name").textContent = name.split(" ")[0];
-  document.getElementById("sidebar-name").textContent = name;
-  document.getElementById("sidebar-role").textContent = currentProfile?.is_admin ? "Admin" : (currentProfile?.is_premium ? "Premium" : "Free");
-  document.getElementById("sidebar-avatar").textContent = initial;
-  document.getElementById("topbar-avatar").textContent = initial;
-  navigateTo("dashboard");
-  loadDashboard();
-  loadQuizzes();
-  loadLeaderboard();
-  if (currentProfile?.is_admin) loadAdminStats();
-  setupRealtime();
-  initDashboardChart();
-}
-
-// ===========================
-// NAVIGATION
-// ===========================
-function navigateTo(page) {
-  const pages = ["dashboard","quizzes","results","leaderboard","admin","upload","quiz-engine","result","review"];
-  pages.forEach(p => {
-    const el = document.getElementById(`page-${p}`);
-    if (el) el.classList.add("hidden");
-  });
-  const target = document.getElementById(`page-${page}`);
-  if (target) { target.classList.remove("hidden"); target.classList.add("fade-in"); }
-
-  // Update nav
-  const navItems = ["dashboard","quizzes","results","leaderboard","admin","upload"];
-  navItems.forEach(n => {
-    const el = document.getElementById(`nav-${n}`);
-    if (el) el.classList.remove("active");
-  });
-  const activeNav = document.getElementById(`nav-${page}`);
-  if (activeNav) activeNav.classList.add("active");
-
-  closeSidebar();
-}
-
-function toggleSidebar() {
-  const sb = document.getElementById("sidebar");
-  const overlay = document.getElementById("sidebar-overlay");
-  sb.classList.toggle("open");
-  overlay.style.display = sb.classList.contains("open") ? "block" : "none";
-}
-
-function closeSidebar() {
-  const sb = document.getElementById("sidebar");
-  const overlay = document.getElementById("sidebar-overlay");
-  sb.classList.remove("open");
-  overlay.style.display = "none";
-}
-
-function toggleNotifications() {
-  document.getElementById("notif-dropdown").classList.toggle("hidden");
-}
-
-function toggleDarkMode() { showToast("Dark mode is already on 🌙", "info"); }
-
-// ===========================
-// DASHBOARD
-// ===========================
-async function loadDashboard() {
-  if (!currentProfile) return;
-  const results = getLocalResults();
-  const score = results.reduce((s, r) => s + (r.score || 0), 0);
-  const tests = results.length;
-  const totalCorrect = results.reduce((s, r) => s + (r.correct || 0), 0);
-  const totalQs = results.reduce((s, r) => s + (r.totalQuestions || 0), 0);
-  const accuracy = totalQs ? Math.round((totalCorrect / totalQs) * 100) : 0;
-
-  animateCount("stat-score", score);
-  animateCount("stat-tests", tests);
-  document.getElementById("stat-accuracy").textContent = accuracy + "%";
-  document.getElementById("stat-rank").textContent = "#" + Math.max(1, 1000 - score);
-
-  // Subject progress
-  const subjectData = {};
-  results.forEach(r => {
-    if (!subjectData[r.subject]) subjectData[r.subject] = { correct: 0, total: 0 };
-    subjectData[r.subject].correct += r.correct || 0;
-    subjectData[r.subject].total += r.totalQuestions || 0;
-  });
-
-  ["Physics","Chemistry","Botany","Zoology","MAT"].forEach(s => {
-    const key = s.toLowerCase();
-    const d = subjectData[s];
-    const pct = d && d.total ? Math.round((d.correct / d.total) * 100) : 0;
-    const bar = document.querySelector(`.subj-bar-${key}`);
-    const lbl = document.querySelector(`.subj-progress-${key}`);
-    if (bar) bar.style.width = pct + "%";
-    if (lbl) lbl.textContent = pct + "%";
-  });
-
-  // Recent quizzes
-  const list = document.getElementById("recent-quizzes-list");
-  if (results.length === 0) {
-    list.innerHTML = `<div class="text-center py-8 text-slate-500 text-sm"><i class="fa-solid fa-inbox text-3xl mb-3 block opacity-30"></i>No quizzes attempted yet. Start practicing!</div>`;
-  } else {
-    list.innerHTML = results.slice(-5).reverse().map(r => `
-      <div class="flex items-center justify-between py-3 border-b border-white border-opacity-5">
-        <div>
-          <p class="text-white text-sm font-medium">${r.quizTitle || "Quiz"}</p>
-          <p class="text-slate-500 text-xs">${r.subject || "General"} · ${formatDate(r.date)}</p>
-        </div>
-        <div class="text-right">
-          <p class="text-white font-semibold text-sm">${r.score}/${r.totalMarks}</p>
-          <p class="text-xs ${r.percentage >= 50 ? "text-emerald-400" : "text-red-400"}">${r.percentage}%</p>
-        </div>
-      </div>
-    `).join("");
-  }
-
-  updateDashboardChart(results);
-}
-
-function animateCount(id, target) {
-  const el = document.getElementById(id);
-  if (!el) return;
-  let current = 0;
-  const step = Math.max(1, Math.floor(target / 30));
-  const interval = setInterval(() => {
-    current = Math.min(current + step, target);
-    el.textContent = current;
-    if (current >= target) clearInterval(interval);
-  }, 30);
-}
-
-let dashChart = null;
-function initDashboardChart() {
-  const ctx = document.getElementById("dashboardChart");
-  if (!ctx) return;
-  dashChart = new Chart(ctx, {
-    type: "line",
-    data: {
-      labels: ["1","2","3","4","5","6","7"],
-      datasets: [{
-        label: "Score %",
-        data: [0,0,0,0,0,0,0],
-        borderColor: "#3b82f6",
-        backgroundColor: "rgba(59,130,246,0.1)",
-        borderWidth: 2,
-        pointBackgroundColor: "#2563eb",
-        pointRadius: 4,
-        tension: 0.4,
-        fill: true
-      }]
-    },
-    options: {
-      responsive: true,
-      plugins: { legend: { display: false } },
-      scales: {
-        x: { grid: { color: "rgba(255,255,255,0.04)" }, ticks: { color: "#64748b", font: { size: 11 } } },
-        y: { grid: { color: "rgba(255,255,255,0.04)" }, ticks: { color: "#64748b", font: { size: 11 } }, max: 100, min: 0 }
-      }
-    }
-  });
-}
-
-function updateDashboardChart(results) {
-  if (!dashChart) return;
-  const last7 = results.slice(-7);
-  const labels = last7.map((_, i) => `T${i+1}`);
-  const data = last7.map(r => r.percentage || 0);
-  dashChart.data.labels = labels.length ? labels : ["1","2","3","4","5","6","7"];
-  dashChart.data.datasets[0].data = data.length ? data : [0,0,0,0,0,0,0];
-  dashChart.update();
-}
-
-// ===========================
-// QUIZ LIST
-// ===========================
-async function loadQuizzes() {
-  // Load from Supabase or use demo data
-  if (supabase) {
-    try {
-      const { data } = await supabase.from("quiz_sets").select("*").eq("status", "published");
-      allQuizzes = data || getDemoQuizzes();
-    } catch { allQuizzes = getDemoQuizzes(); }
-  } else {
-    allQuizzes = getDemoQuizzes();
-  }
-  // Also load from localStorage (uploaded quizzes)
-  const localQuizzes = getLocalQuizzes();
-  allQuizzes = [...allQuizzes, ...localQuizzes];
-  renderQuizGrid(allQuizzes);
-  updateAdminQuizList();
-}
-
-function getDemoQuizzes() {
-  return [
-    { id: "demo-1", title: "Digestive System MCQ", subject: "Biology", chapter: "Digestive System", quiz_type: "chapter", difficulty: "medium", total_questions: 5, duration_minutes: 10, is_premium: false, tags: ["biology","digestive"] },
-    { id: "demo-2", title: "Physics Full Mock Test", subject: "Physics", chapter: "Mixed", quiz_type: "mock", difficulty: "hard", total_questions: 5, duration_minutes: 15, is_premium: false, tags: ["physics","mock"] },
-    { id: "demo-3", title: "Organic Chemistry Quick Test", subject: "Chemistry", chapter: "Organic Chemistry", quiz_type: "chapter", difficulty: "medium", total_questions: 5, duration_minutes: 10, is_premium: true, tags: ["chemistry","organic"] },
-    { id: "demo-4", title: "Daily Botany Drill", subject: "Botany", chapter: "Plant Physiology", quiz_type: "daily", difficulty: "easy", total_questions: 5, duration_minutes: 8, is_premium: false, tags: ["botany","daily"] },
-    { id: "demo-5", title: "CEE Grand Mock 2025", subject: "Mixed", chapter: "All Subjects", quiz_type: "grand_test", difficulty: "hard", total_questions: 5, duration_minutes: 120, is_premium: true, tags: ["mock","cee"] },
-    { id: "demo-6", title: "Zoology Cell Biology", subject: "Zoology", chapter: "Cell Biology", quiz_type: "chapter", difficulty: "easy", total_questions: 5, duration_minutes: 10, is_premium: false, tags: ["zoology","cell"] }
+  // ---------- FAKE DATABASE (LOCAL STORAGE + DEMO)
+  let currentUser = null;
+  let allQuizzes = [
+    { id: "q1", title: "Human Physiology (Chapter)", subject: "Biology", type: "chapter", totalQuestions: 5, duration: 600, difficulty: "medium", questions: [
+      { text: "Which organ produces bile?", options: ["Liver", "Gallbladder", "Pancreas", "Stomach"], correct: 0, explanation: "Liver produces bile, stored in gallbladder." },
+      { text: "What is the main function of hemoglobin?", options: ["Carry oxygen", "Digest fats", "Fight infection", "Clot blood"], correct: 0, explanation: "Hemoglobin binds oxygen in RBCs." },
+      { text: "Which chamber of heart pumps blood to lungs?", options: ["Right ventricle", "Left ventricle", "Right atrium", "Left atrium"], correct: 0, explanation: "Right ventricle pumps to pulmonary artery." },
+      { text: "Which enzyme breaks down protein?", options: ["Pepsin", "Amylase", "Lipase", "Maltase"], correct: 0, explanation: "Pepsin acts on proteins in stomach." },
+      { text: "Insulin is produced by?", options: ["Pancreas", "Liver", "Thyroid", "Adrenal"], correct: 0, explanation: "Beta cells of pancreas secrete insulin." }
+    ] },
+    { id: "q2", title: "Physics Mock Test", subject: "Physics", type: "mock", totalQuestions: 5, duration: 600, questions: [
+      { text: "SI unit of force?", options: ["Newton", "Joule", "Watt", "Pascal"], correct: 0, explanation: "Newton = kg m/s²." },
+      { text: "Which law relates voltage and current?", options: ["Ohm's law", "Faraday's law", "Coulomb's law", "Newton's law"], correct: 0, explanation: "V = IR" },
+      { text: "Refractive index of water is approx?", options: ["1.33", "1.5", "2.4", "1"], correct: 0, explanation: "1.33" },
+      { text: "Which particle has positive charge?", options: ["Proton", "Electron", "Neutron", "Positron"], correct: 0, explanation: "Proton positive." },
+      { text: "Unit of power?", options: ["Watt", "Volt", "Ampere", "Ohm"], correct: 0, explanation: "Watt = J/s" }
+    ] },
+    { id: "q3", title: "Botany: Plant Anatomy", subject: "Botany", type: "daily", totalQuestions: 5, duration: 600, questions: [
+      { text: "Xylem transports?", options: ["Water", "Food", "Hormones", "Oxygen"], correct: 0, explanation: "Xylem conducts water." },
+      { text: "Photosynthesis takes place in?", options: ["Chloroplast", "Mitochondria", "Nucleus", "Ribosome"], correct: 0, explanation: "Chloroplast site of photosynthesis." },
+      { text: "Which is a C4 plant?", options: ["Maize", "Wheat", "Rice", "Pea"], correct: 0, explanation: "Maize (corn) C4." },
+      { text: "Stomata helps in?", options: ["Transpiration", "Respiration only", "Reproduction", "Support"], correct: 0, explanation: "Gas exchange & transpiration." },
+      { text: "Root cap is derived from?", options: ["Calyptrogen", "Dermatogen", "Periblem", "Plerome"], correct: 0, explanation: "Calyptrogen produces root cap." }
+    ] }
   ];
-}
 
-function getDemoQuestions(quizId) {
-  const banks = {
-    "demo-1": [
-      { question: "Paneth cells are present in?", options: ["Stomach lining","Crypts of Lieberkuhn","Duodenum submucosa","Pancreas"], correct_option: 1, explanation: "Paneth cells are found in the crypts of Lieberkuhn in the small intestine and help in innate immunity.", difficulty: "easy" },
-      { question: "Brunner's glands are found in?", options: ["Stomach","Jejunum","Duodenum","Ileum"], correct_option: 2, explanation: "Brunner's glands are mucus-secreting glands present in the submucosa of the duodenum.", difficulty: "easy" },
-      { question: "Bile is produced by?", options: ["Pancreas","Gallbladder","Liver","Small intestine"], correct_option: 2, explanation: "Bile is produced by hepatocytes (liver cells) and stored in the gallbladder.", difficulty: "easy" },
-      { question: "Peristalsis is controlled by which nervous system?", options: ["Somatic","Enteric","Central","Sympathetic only"], correct_option: 1, explanation: "The enteric nervous system (ENS), often called the 'second brain', controls peristalsis.", difficulty: "medium" },
-      { question: "Which enzyme digests starch in the mouth?", options: ["Pepsin","Lipase","Salivary amylase","Trypsin"], correct_option: 2, explanation: "Salivary amylase (ptyalin) is secreted by salivary glands and begins starch digestion in the mouth.", difficulty: "easy" }
-    ],
-    "demo-2": [
-      { question: "Which law relates pressure and volume at constant temperature?", options: ["Charles's Law","Boyle's Law","Gay-Lussac's Law","Avogadro's Law"], correct_option: 1, explanation: "Boyle's Law states that at constant temperature, pressure and volume are inversely proportional: PV = constant.", difficulty: "easy" },
-      { question: "The unit of electric resistance is?", options: ["Ampere","Volt","Ohm","Watt"], correct_option: 2, explanation: "The ohm (Ω) is the SI unit of electrical resistance, defined as V/A.", difficulty: "easy" },
-      { question: "Which particle has no charge?", options: ["Proton","Electron","Neutron","Positron"], correct_option: 2, explanation: "Neutrons are electrically neutral particles found in the nucleus of an atom.", difficulty: "easy" },
-      { question: "The speed of light in vacuum is approximately?", options: ["3×10⁶ m/s","3×10⁸ m/s","3×10¹⁰ m/s","3×10⁴ m/s"], correct_option: 1, explanation: "The speed of light in vacuum (c) ≈ 3×10⁸ m/s, which is the universal speed limit.", difficulty: "medium" },
-      { question: "Electromagnetic waves are?", options: ["Mechanical waves","Transverse waves","Longitudinal waves","Sound waves"], correct_option: 1, explanation: "Electromagnetic waves are transverse waves that do not require a medium to travel.", difficulty: "medium" }
-    ],
-    "demo-4": [
-      { question: "Which pigment is found in chloroplast?", options: ["Haemoglobin","Chlorophyll","Myoglobin","Melanin"], correct_option: 1, explanation: "Chlorophyll, the green photosynthetic pigment, is found in chloroplasts of plant cells.", difficulty: "easy" },
-      { question: "Photosynthesis occurs in which organelle?", options: ["Mitochondria","Nucleus","Chloroplast","Ribosome"], correct_option: 2, explanation: "Photosynthesis takes place in the chloroplasts, specifically in the thylakoid membranes and stroma.", difficulty: "easy" },
-      { question: "Which gas is released during photosynthesis?", options: ["CO₂","H₂","O₂","N₂"], correct_option: 2, explanation: "Oxygen (O₂) is released as a byproduct of the light-dependent reactions when water is split.", difficulty: "easy" },
-      { question: "The light-independent reactions occur in?", options: ["Thylakoid","Stroma","Grana","Matrix"], correct_option: 1, explanation: "The Calvin cycle (light-independent reactions) occurs in the stroma of the chloroplast.", difficulty: "medium" },
-      { question: "C4 plants include?", options: ["Wheat","Rice","Sugarcane","Potato"], correct_option: 2, explanation: "Sugarcane is a classic example of a C4 plant, which uses a specialized carbon fixation pathway to minimize photorespiration.", difficulty: "medium" }
-    ],
-    "demo-6": [
-      { question: "The powerhouse of the cell is?", options: ["Nucleus","Ribosome","Mitochondria","Golgi body"], correct_option: 2, explanation: "Mitochondria are called the 'powerhouse of the cell' because they produce ATP through cellular respiration.", difficulty: "easy" },
-      { question: "Which organelle is involved in protein synthesis?", options: ["Lysosome","Ribosome","Vacuole","Centriole"], correct_option: 1, explanation: "Ribosomes are the sites of protein synthesis, translating mRNA into polypeptide chains.", difficulty: "easy" },
-      { question: "Cell membrane is mainly composed of?", options: ["Proteins only","Lipids and proteins","Carbohydrates","Nucleic acids"], correct_option: 1, explanation: "The cell membrane (plasma membrane) is composed of a phospholipid bilayer with embedded proteins (fluid mosaic model).", difficulty: "easy" },
-      { question: "Which cell organelle has its own DNA?", options: ["Lysosome","Ribosome","Mitochondria","Vacuole"], correct_option: 2, explanation: "Mitochondria have their own circular DNA, supporting the endosymbiotic theory of their evolutionary origin.", difficulty: "medium" },
-      { question: "The Golgi apparatus is responsible for?", options: ["Energy production","Protein modification and packaging","DNA replication","Photosynthesis"], correct_option: 1, explanation: "The Golgi apparatus modifies, sorts, and packages proteins and lipids for secretion or use within the cell.", difficulty: "medium" }
-    ]
-  };
-  return banks[quizId] || banks["demo-1"];
-}
+  let userResults = [];
+  let currentQuizSession = null;
+  let quizAnswers = {};
+  let markedSet = new Set();
+  let currentQIndex = 0;
+  let timerInterval = null;
+  let timeLeft = 0;
 
-function renderQuizGrid(quizzes) {
-  const grid = document.getElementById("quiz-grid");
-  let filtered = quizzes;
-  if (currentFilter !== "all") filtered = filtered.filter(q => q.quiz_type === currentFilter);
-  if (currentSubjectFilter !== "all") filtered = filtered.filter(q => q.subject === currentSubjectFilter || (currentSubjectFilter === "Biology" && (q.subject === "Botany" || q.subject === "Zoology")));
-
-  const searchVal = document.getElementById("search-input")?.value?.toLowerCase() || "";
-  if (searchVal) filtered = filtered.filter(q =>
-    q.title?.toLowerCase().includes(searchVal) ||
-    q.subject?.toLowerCase().includes(searchVal) ||
-    q.chapter?.toLowerCase().includes(searchVal)
-  );
-
-  if (filtered.length === 0) {
-    grid.innerHTML = `<div class="col-span-3 text-center py-12 text-slate-500"><i class="fa-solid fa-magnifying-glass text-3xl mb-3 block opacity-30"></i>No quizzes found</div>`;
-    return;
-  }
-
-  const subjectColors = {
-    Physics: "rgba(59,130,246,0.15)", Chemistry: "rgba(16,185,129,0.15)",
-    Botany: "rgba(132,204,22,0.15)", Zoology: "rgba(249,115,22,0.15)",
-    MAT: "rgba(168,85,247,0.15)", Mixed: "rgba(99,102,241,0.15)", Biology: "rgba(16,185,129,0.15)"
-  };
-  const subjectTextColors = {
-    Physics: "#60a5fa", Chemistry: "#34d399", Botany: "#a3e635",
-    Zoology: "#fb923c", MAT: "#c084fc", Mixed: "#818cf8", Biology: "#34d399"
-  };
-  const diffBadge = { easy: "badge-green", medium: "badge-yellow", hard: "badge-red" };
-  const typeIcon = { chapter: "fa-book-open", mock: "fa-graduation-cap", daily: "fa-calendar-day", premium: "fa-crown", grand_test: "fa-trophy", weekly: "fa-calendar-week" };
-
-  grid.innerHTML = filtered.map(q => `
-    <div class="glass-card p-5 relative">
-      ${q.is_premium ? `<div class="absolute top-3 right-3"><span class="badge badge-yellow"><i class="fa-solid fa-crown mr-1"></i>Premium</span></div>` : ""}
-      <div class="flex items-center gap-2 mb-3">
-        <div class="w-8 h-8 rounded-lg flex items-center justify-center"
-             style="background:${subjectColors[q.subject] || "rgba(59,130,246,0.15)"}">
-          <i class="fa-solid ${typeIcon[q.quiz_type] || "fa-circle-question"} text-xs"
-             style="color:${subjectTextColors[q.subject] || "#60a5fa"}"></i>
-        </div>
-        <span class="badge ${diffBadge[q.difficulty] || "badge-blue"}">${q.difficulty}</span>
-      </div>
-      <h3 class="text-white font-semibold text-sm leading-snug mb-1">${q.title}</h3>
-      <p class="text-slate-500 text-xs mb-3">${q.subject} · ${q.chapter || "General"}</p>
-      <div class="flex items-center gap-3 text-xs text-slate-500 mb-4">
-        <span><i class="fa-solid fa-circle-question mr-1"></i>${q.total_questions} Qs</span>
-        <span><i class="fa-solid fa-clock mr-1"></i>${q.duration_minutes} min</span>
-      </div>
-      ${q.is_premium && !currentProfile?.is_premium
-        ? `<button class="btn-secondary w-full text-xs py-2" onclick="showToast('Upgrade to Premium to access this quiz','info')">
-              <i class="fa-solid fa-lock mr-1"></i> Unlock Premium
-           </button>`
-        : `<button class="btn-primary w-full text-xs py-2" onclick="startQuiz('${q.id}')">
-              <i class="fa-solid fa-play mr-1"></i> Start Quiz
-           </button>`
-      }
-    </div>
-  `).join("");
-}
-
-function filterQuizzes(type) {
-  currentFilter = type;
-  document.querySelectorAll("[id^='filter-']").forEach(b => {
-    b.className = "btn-secondary text-xs py-1.5 px-3";
-  });
-  const active = document.getElementById(`filter-${type}`);
-  if (active) active.className = "btn-primary text-xs py-1.5 px-3";
-  renderQuizGrid(allQuizzes);
-}
-
-function filterBySubject(subj) {
-  currentSubjectFilter = subj;
-  renderQuizGrid(allQuizzes);
-}
-
-function debounceSearch(val) {
-  clearTimeout(searchTimer);
-  searchTimer = setTimeout(() => renderQuizGrid(allQuizzes), 300);
-}
-
-// ===========================
-// QUIZ ENGINE
-// ===========================
-async function startQuiz(quizId) {
-  const quiz = allQuizzes.find(q => q.id === quizId);
-  if (!quiz) { showToast("Quiz not found", "error"); return; }
-
-  let questions = [];
-  if (quiz.id.startsWith("demo-")) {
-    questions = getDemoQuestions(quiz.id);
-  } else if (quiz._local) {
-    questions = quiz._questions || [];
-  } else if (supabase) {
-    try {
-      const { data } = await supabase.from("quiz_questions").select("*").eq("quiz_set_id", quizId).order("created_at");
-      questions = data || [];
-    } catch { showToast("Failed to load questions", "error"); return; }
-  }
-
-  if (!questions.length) { showToast("No questions available for this quiz", "error"); return; }
-
-  quizState = {
-    quiz,
-    questions,
-    answers: {},
-    marked: new Set(),
-    currentIndex: 0,
-    timeLeft: (quiz.duration_minutes || 30) * 60,
-    totalTime: (quiz.duration_minutes || 30) * 60,
-    startTime: Date.now(),
-    questionTimes: {},
-    questionStart: Date.now()
-  };
-
-  navigateTo("quiz-engine");
-  renderQuestion();
-  buildNavigator();
-  startTimer();
-  showToast(`Quiz started: ${quiz.title}`, "info");
-}
-
-function renderQuestion() {
-  const q = quizState.questions[quizState.currentIndex];
-  if (!q) return;
-
-  quizState.questionStart = Date.now();
-  const idx = quizState.currentIndex;
-  const total = quizState.questions.length;
-
-  document.getElementById("q-number").textContent = `Question ${idx + 1}`;
-  document.getElementById("q-text").textContent = q.question;
-  document.getElementById("quiz-progress-text").textContent = `Q ${idx + 1} / ${total}`;
-
-  const pct = ((idx) / total) * 100;
-  document.getElementById("quiz-progress-bar").style.width = pct + "%";
-
-  // Difficulty badge
-  const diffColors = { easy: "#10b981", medium: "#f59e0b", hard: "#ef4444" };
-  const badge = document.getElementById("q-difficulty-badge");
-  badge.textContent = q.difficulty || "Medium";
-  badge.style.background = `rgba(${q.difficulty === "easy" ? "16,185,129" : q.difficulty === "hard" ? "239,68,68" : "245,158,11"},0.15)`;
-  badge.style.color = diffColors[q.difficulty] || "#f59e0b";
-  badge.style.border = `1px solid ${diffColors[q.difficulty] || "#f59e0b"}40`;
-
-  // Mark button
-  const markBtn = document.getElementById("mark-btn");
-  markBtn.classList.toggle("text-yellow-400", quizState.marked.has(idx));
-  markBtn.classList.toggle("text-slate-500", !quizState.marked.has(idx));
-  markBtn.innerHTML = quizState.marked.has(idx)
-    ? '<i class="fa-solid fa-bookmark"></i>'
-    : '<i class="fa-regular fa-bookmark"></i>';
-
-  // Image
-  const imgContainer = document.getElementById("q-image-container");
-  if (q.question_image) {
-    document.getElementById("q-image").src = q.question_image;
-    imgContainer.classList.remove("hidden");
-  } else {
-    imgContainer.classList.add("hidden");
-  }
-
-  // Options
-  const labels = ["A","B","C","D","E","F"];
-  const opts = document.getElementById("q-options");
-  const optData = Array.isArray(q.options) ? q.options : [];
-  opts.innerHTML = optData.map((opt, i) => {
-    const isSelected = quizState.answers[idx] === i;
-    const text = typeof opt === "object" ? opt.text : opt;
-    return `
-      <button class="option-btn ${isSelected ? "selected" : ""}" onclick="selectAnswer(${i})">
-        <span class="w-7 h-7 rounded-lg flex-shrink-0 flex items-center justify-center text-xs font-bold"
-              style="background:rgba(255,255,255,0.06)">${labels[i]}</span>
-        ${text}
-      </button>
-    `;
-  }).join("");
-
-  document.getElementById("btn-prev").disabled = idx === 0;
-  document.getElementById("btn-prev").style.opacity = idx === 0 ? "0.4" : "1";
-
-  const isLast = idx === total - 1;
-  const nextBtn = document.getElementById("btn-next");
-  nextBtn.innerHTML = isLast
-    ? 'Submit <i class="fa-solid fa-paper-plane ml-1"></i>'
-    : 'Next <i class="fa-solid fa-arrow-right ml-1"></i>';
-  nextBtn.onclick = isLast ? confirmSubmit : nextQuestion;
-}
-
-function saveAnswer(optionIndex) {
-  const elapsed = Date.now() - (quizState.questionStart || Date.now());
-  quizState.questionTimes[quizState.currentIndex] = (quizState.questionTimes[quizState.currentIndex] || 0) + elapsed;
-  quizState.answers[quizState.currentIndex] = optionIndex;
-  saveQuizProgress();
-}
-
-function selectAnswer(optionIndex) {
-  saveAnswer(optionIndex);
-  const opts = document.querySelectorAll(".option-btn");
-  opts.forEach((btn, i) => {
-    btn.classList.toggle("selected", i === optionIndex);
-  });
-  updateNavigator();
-}
-
-function clearAnswer() {
-  delete quizState.answers[quizState.currentIndex];
-  renderQuestion();
-  updateNavigator();
-}
-
-function nextQuestion() {
-  if (quizState.currentIndex < quizState.questions.length - 1) {
-    quizState.currentIndex++;
-    renderQuestion();
-    updateNavigator();
-  }
-}
-
-function prevQuestion() {
-  if (quizState.currentIndex > 0) {
-    quizState.currentIndex--;
-    renderQuestion();
-    updateNavigator();
-  }
-}
-
-function markForReview() {
-  const idx = quizState.currentIndex;
-  if (quizState.marked.has(idx)) {
-    quizState.marked.delete(idx);
-    showToast("Removed from review", "info");
-  } else {
-    quizState.marked.add(idx);
-    showToast("Marked for review", "info");
-  }
-  renderQuestion();
-  updateNavigator();
-}
-
-function buildNavigator() {
-  const nav = document.getElementById("q-navigator");
-  nav.innerHTML = quizState.questions.map((_, i) => `
-    <button class="q-nav-btn ${i === quizState.currentIndex ? "current" : ""}"
-      onclick="jumpToQuestion(${i})" id="nav-q-${i}">${i + 1}</button>
-  `).join("");
-}
-
-function updateNavigator() {
-  quizState.questions.forEach((_, i) => {
-    const btn = document.getElementById(`nav-q-${i}`);
-    if (!btn) return;
-    btn.className = "q-nav-btn";
-    if (i === quizState.currentIndex) btn.classList.add("current");
-    else if (quizState.marked.has(i)) btn.classList.add("marked");
-    else if (quizState.answers[i] !== undefined) btn.classList.add("answered");
-  });
-}
-
-function jumpToQuestion(i) {
-  quizState.currentIndex = i;
-  renderQuestion();
-  updateNavigator();
-}
-
-// Timer
-function startTimer() {
-  stopTimer();
-  updateTimerDisplay();
-  quizState.timer = setInterval(() => {
-    quizState.timeLeft--;
-    updateTimerDisplay();
-    if (quizState.timeLeft <= 0) {
-      stopTimer();
-      showToast("⏰ Time's up! Auto-submitting...", "error");
-      setTimeout(submitQuiz, 1500);
+  function loadData() {
+    const stored = localStorage.getItem("cee_medico_results");
+    if(stored) userResults = JSON.parse(stored);
+    const storedQuizzes = localStorage.getItem("cee_custom_quizzes");
+    if(storedQuizzes) {
+      let custom = JSON.parse(storedQuizzes);
+      allQuizzes = [...allQuizzes, ...custom];
     }
-  }, 1000);
-}
-
-function stopTimer() {
-  if (quizState.timer) { clearInterval(quizState.timer); quizState.timer = null; }
-}
-
-function updateTimerDisplay() {
-  const t = quizState.timeLeft;
-  const m = Math.floor(t / 60).toString().padStart(2, "0");
-  const s = (t % 60).toString().padStart(2, "0");
-  const el = document.getElementById("quiz-timer");
-  if (el) {
-    el.textContent = `${m}:${s}`;
-    el.className = t < 60 ? "text-sm font-bold timer-warning" : "text-sm font-bold text-white";
-    (document.querySelector(".font-sora") || el).style.fontFamily = "'Sora',sans-serif";
+    updateStats();
   }
-}
+  function saveResults() { localStorage.setItem("cee_medico_results", JSON.stringify(userResults)); }
+  function saveCustomQuizzes() { let custom = allQuizzes.filter(q => q.isCustom); localStorage.setItem("cee_custom_quizzes", JSON.stringify(custom)); }
 
-function confirmSubmit() {
-  const answered = Object.keys(quizState.answers).length;
-  const total = quizState.questions.length;
-  const marked = quizState.marked.size;
-  const unanswered = total - answered;
-  document.getElementById("modal-answered").textContent = answered;
-  document.getElementById("modal-marked").textContent = marked;
-  document.getElementById("modal-unanswered").textContent = unanswered;
-  document.getElementById("submit-modal-msg").textContent =
-    unanswered === 0 ? "All questions answered. Ready to submit!" :
-    `You have ${unanswered} unanswered question${unanswered > 1 ? "s" : ""}.`;
-  openModal("modal-submit");
-}
-
-function confirmExit() { openModal("modal-exit"); }
-function exitQuiz() {
-  stopTimer();
-  closeModal("modal-exit");
-  navigateTo("quizzes");
-}
-
-function calculateScore() {
-  const questions = quizState.questions;
-  let correct = 0, wrong = 0, skipped = 0;
-  let score = 0;
-  const negMarks = quizState.quiz.negative_marks_per_wrong ?? 0.25;
-  const marksPerQ = 1;
-
-  questions.forEach((q, i) => {
-    const ans = quizState.answers[i];
-    if (ans === undefined) { skipped++; return; }
-    if (ans === q.correct_option) { correct++; score += marksPerQ; }
-    else { wrong++; score -= negMarks; }
-  });
-
-  score = Math.max(0, score);
-  const total = questions.length * marksPerQ;
-  const percentage = Math.round((score / total) * 100);
-
-  return { correct, wrong, skipped, score: Math.round(score * 100) / 100, total, percentage };
-}
-
-async function submitQuiz() {
-  closeModal("modal-submit");
-  stopTimer();
-
-  const result = calculateScore();
-  const timeUsed = Math.floor((Date.now() - quizState.startTime) / 1000);
-  const grade = result.percentage >= 80 ? "Excellent" :
-                result.percentage >= 60 ? "Good" :
-                result.percentage >= 40 ? "Average" : "Needs Improvement";
-
-  const resultData = {
-    quizId: quizState.quiz.id,
-    quizTitle: quizState.quiz.title,
-    subject: quizState.quiz.subject || "Mixed",
-    ...result,
-    totalMarks: result.total,
-    totalQuestions: quizState.questions.length,
-    grade,
-    timeUsed,
-    date: new Date().toISOString(),
-    answers: { ...quizState.answers }
-  };
-
-  // Save to localStorage
-  saveLocalResult(resultData);
-
-  // Save to Supabase if available
-  if (supabase && currentUser) {
-    try {
-      await supabase.from("quiz_results").insert({
-        user_id: currentUser.id,
-        quiz_set_id: quizState.quiz.id,
-        score: result.score,
-        total_marks: result.total,
-        correct_answers: result.correct,
-        wrong_answers: result.wrong,
-        skipped_answers: result.skipped,
-        percentage: result.percentage,
-        time_taken_seconds: timeUsed,
-        answers: quizState.answers
-      });
-    } catch (e) { console.warn("Supabase result save failed:", e); }
+  function updateStats() {
+    if(!currentUser) return;
+    let totalScore = userResults.reduce((acc, r) => acc + r.score, 0);
+    let tests = userResults.length;
+    let totalCorrect = userResults.reduce((acc,r)=> acc + r.correct,0);
+    let totalQs = userResults.reduce((acc,r)=> acc + r.total,0);
+    let accuracy = totalQs ? Math.round((totalCorrect/totalQs)*100):0;
+    document.getElementById("stat-score").innerText = totalScore;
+    document.getElementById("stat-tests").innerText = tests;
+    document.getElementById("stat-accuracy").innerText = accuracy+"%";
+    let rank = Math.max(1, 250 - totalScore/3);
+    document.getElementById("stat-rank").innerHTML = "#"+Math.floor(rank);
+    let recent = userResults.slice(-3).reverse();
+    let recentHtml = recent.map(r=>`<div class="flex justify-between border-b border-white/10 py-2"><span>${r.quizTitle}</span><span>${r.score}/${r.totalMarks}</span></div>`).join("");
+    if(!recentHtml) recentHtml = "<div class='text-slate-500 text-sm'>No attempts yet</div>";
+    document.getElementById("recent-list").innerHTML = recentHtml;
+    document.getElementById("welcome-name").innerText = currentUser.name.split(" ")[0];
+    document.getElementById("sidebar-name").innerText = currentUser.name;
+    document.getElementById("avatar-letter").innerText = currentUser.name.charAt(0);
+    document.getElementById("top-avatar").innerText = currentUser.name.charAt(0);
+    document.getElementById("sidebar-plan").innerText = currentUser.isAdmin ? "Admin" : "Free";
+    loadResultsTable();
+    loadLeaderboard();
+    if(currentUser.isAdmin) { document.getElementById("admin-quiz-count").innerText = allQuizzes.length; let totalQ = allQuizzes.reduce((s,q)=>s+q.questions.length,0); document.getElementById("admin-q-count").innerText = totalQ; renderAdminQuizList(); }
   }
 
-  showResults(resultData);
-}
-
-function showResults(data) {
-  navigateTo("result");
-
-  document.getElementById("result-score-display").textContent = data.score;
-  document.getElementById("result-title").textContent = data.grade + "! 🎉";
-  document.getElementById("result-quiz-name").textContent = data.quizTitle;
-  document.getElementById("result-grade").textContent = `${data.percentage}% · ${data.grade}`;
-  document.getElementById("r-total").textContent = `${data.score}/${data.total}`;
-  document.getElementById("r-correct").textContent = data.correct;
-  document.getElementById("r-wrong").textContent = data.wrong;
-  document.getElementById("r-skip").textContent = data.skipped;
-
-  // Grade badge color
-  const gradeColors = {
-    Excellent: ["rgba(16,185,129,0.15)","rgba(16,185,129,0.3)","#6ee7b7"],
-    Good: ["rgba(59,130,246,0.15)","rgba(59,130,246,0.3)","#93c5fd"],
-    Average: ["rgba(245,158,11,0.15)","rgba(245,158,11,0.3)","#fcd34d"],
-    "Needs Improvement": ["rgba(239,68,68,0.15)","rgba(239,68,68,0.3)","#fca5a5"]
-  };
-  const gc = gradeColors[data.grade] || gradeColors.Average;
-  const badge = document.getElementById("result-grade-badge");
-  badge.style.background = gc[0]; badge.style.borderColor = gc[1];
-  document.getElementById("result-grade").style.color = gc[2];
-
-  // Charts
-  renderResultCharts(data);
-  loadDashboard();
-}
-
-let resultPieChart = null, resultTimeChart = null;
-function renderResultCharts(data) {
-  if (resultPieChart) resultPieChart.destroy();
-  if (resultTimeChart) resultTimeChart.destroy();
-
-  const pieCtx = document.getElementById("resultPieChart");
-  if (pieCtx) {
-    resultPieChart = new Chart(pieCtx, {
-      type: "doughnut",
-      data: {
-        labels: ["Correct","Wrong","Skipped"],
-        datasets: [{ data: [data.correct, data.wrong, data.skipped], backgroundColor: ["#10b981","#ef4444","#64748b"], borderWidth: 0, hoverOffset: 4 }]
-      },
-      options: { responsive: true, plugins: { legend: { labels: { color: "#94a3b8", font: { size: 11 } } } } }
-    });
+  function loadResultsTable() {
+    let tbody = document.getElementById("results-tbody");
+    tbody.innerHTML = userResults.map(r=>`<tr class="border-b border-white/5"><td class="p-3">${r.quizTitle}</td><td>${r.score}/${r.totalMarks}</td><td class="text-emerald-400">${r.percent}%</td><td class="text-slate-400">${new Date(r.date).toLocaleDateString()}</td></tr>`).join("");
+    if(userResults.length===0) tbody.innerHTML = "<tr><td colspan='4' class='p-4 text-center text-slate-500'>No data</td></tr>";
   }
 
-  const timeCtx = document.getElementById("resultTimeChart");
-  if (timeCtx) {
-    const avgTime = quizState.questions.map((_, i) => Math.round((quizState.questionTimes[i] || 30000) / 1000));
-    resultTimeChart = new Chart(timeCtx, {
-      type: "bar",
-      data: {
-        labels: quizState.questions.map((_, i) => `Q${i+1}`),
-        datasets: [{ label: "Seconds", data: avgTime, backgroundColor: "rgba(59,130,246,0.5)", borderColor: "#3b82f6", borderWidth: 1, borderRadius: 4 }]
-      },
-      options: {
-        responsive: true,
-        plugins: { legend: { display: false } },
-        scales: {
-          x: { ticks: { color: "#64748b", font: { size: 10 } }, grid: { color: "rgba(255,255,255,0.04)" } },
-          y: { ticks: { color: "#64748b", font: { size: 10 } }, grid: { color: "rgba(255,255,255,0.04)" } }
-        }
-      }
-    });
-  }
-}
-
-function reviewAnswers() {
-  navigateTo("review");
-  const list = document.getElementById("review-list");
-  const labels = ["A","B","C","D","E","F"];
-  list.innerHTML = quizState.questions.map((q, i) => {
-    const userAns = quizState.answers[i];
-    const correct = q.correct_option;
-    const optData = Array.isArray(q.options) ? q.options : [];
-    const isCorrect = userAns === correct;
-    const isSkipped = userAns === undefined;
-
-    return `
-      <div class="glass-card p-5">
-        <div class="flex items-start justify-between mb-3">
-          <div class="flex items-center gap-2">
-            <span class="text-blue-400 text-xs font-semibold">Q${i+1}</span>
-            <span class="badge ${isSkipped ? "badge-blue" : isCorrect ? "badge-green" : "badge-red"}">
-              ${isSkipped ? "Skipped" : isCorrect ? "✓ Correct" : "✗ Wrong"}
-            </span>
-          </div>
-          ${isSkipped ? "" : `<span class="text-xs text-slate-500">${isCorrect ? "+1" : "-0.25"}</span>`}
-        </div>
-        <p class="text-white text-sm mb-3">${q.question}</p>
-        <div class="space-y-2 mb-3">
-          ${optData.map((opt, j) => {
-            const text = typeof opt === "object" ? opt.text : opt;
-            let cls = "option-btn pointer-events-none text-sm py-2.5";
-            if (j === correct) cls += " show-correct";
-            else if (j === userAns && !isCorrect) cls += " wrong";
-            else cls += " opacity-50";
-            return `<div class="${cls}">
-              <span class="w-6 h-6 rounded-md flex-shrink-0 flex items-center justify-center text-xs font-bold"
-                    style="background:rgba(255,255,255,0.06)">${labels[j]}</span>
-              ${text}
-              ${j === correct ? '<i class="fa-solid fa-check ml-auto text-emerald-400"></i>' : ""}
-              ${j === userAns && !isCorrect ? '<i class="fa-solid fa-xmark ml-auto text-red-400"></i>' : ""}
-            </div>`;
-          }).join("")}
-        </div>
-        ${q.explanation ? `
-          <div class="p-3 rounded-xl text-xs text-slate-300 leading-relaxed"
-               style="background:rgba(59,130,246,0.08);border:1px solid rgba(59,130,246,0.15)">
-            <i class="fa-solid fa-lightbulb text-blue-400 mr-1"></i>
-            <strong>Explanation:</strong> ${q.explanation}
-          </div>` : ""}
-      </div>
-    `;
-  }).join("");
-}
-
-// ===========================
-// LEADERBOARD
-// ===========================
-async function loadLeaderboard() {
-  let data = [];
-  if (supabase) {
-    try {
-      const { data: d } = await supabase
-        .from("profiles")
-        .select("full_name, total_score, tests_taken, accuracy")
-        .order("total_score", { ascending: false })
-        .limit(50);
-      data = d || [];
-    } catch {}
+  function loadLeaderboard() {
+    let dummy = [{name:"Aayush Sharma",score:1250,tests:12},{name:"Priya Thapa",score:1180,tests:10},{name:"Rohan Adhikari",score:1090,tests:9},{name:"Sita Rai",score:980,tests:8}];
+    if(currentUser) dummy.unshift({name:currentUser.name,score:userResults.reduce((s,r)=>s+r.score,0),tests:userResults.length});
+    let html = dummy.map((u,i)=>`<tr class="border-b border-white/10"><td class="p-2">${i+1}</td><td>${u.name}</td><td>${u.score}</td><td>${u.tests}</td></tr>`).join("");
+    document.getElementById("leaderboard-body").innerHTML = html;
   }
 
-  if (!data.length) {
-    data = generateDemoLeaderboard();
+  function renderQuizGrid() {
+    let filter = window.activeFilter || "all";
+    let search = document.getElementById("global-search")?.value.toLowerCase() || "";
+    let filtered = allQuizzes.filter(q => filter==="all" || q.type === filter);
+    if(search) filtered = filtered.filter(q=> q.title.toLowerCase().includes(search) || q.subject.toLowerCase().includes(search));
+    let grid = document.getElementById("quiz-grid");
+    if(!grid) return;
+    grid.innerHTML = filtered.map(q => `<div class="glass-card p-5"><h3 class="font-bold text-white text-lg">${q.title}</h3><p class="text-slate-400 text-sm">${q.subject} · ${q.totalQuestions} Qs</p><button onclick="startQuiz('${q.id}')" class="btn-primary w-full mt-3 text-sm">Start Quiz</button></div>`).join("");
   }
 
-  // Add current user
-  if (currentProfile) {
-    const exists = data.find(u => u.full_name === currentProfile.full_name);
-    if (!exists) data.push({ ...currentProfile, total_score: currentProfile.total_score || 0 });
-    data.sort((a, b) => (b.total_score || 0) - (a.total_score || 0));
+  function startQuiz(quizId) {
+    let quiz = allQuizzes.find(q=>q.id===quizId);
+    if(!quiz) return;
+    currentQuizSession = quiz;
+    quizAnswers = {};
+    markedSet.clear();
+    currentQIndex = 0;
+    timeLeft = quiz.duration;
+    clearInterval(timerInterval);
+    timerInterval = setInterval(()=>{ if(timeLeft<=0){ clearInterval(timerInterval); finishQuiz(); } else { timeLeft--; let mins=Math.floor(timeLeft/60); let secs=timeLeft%60; document.getElementById("quiz-timer").innerText=`${mins.toString().padStart(2,"0")}:${secs.toString().padStart(2,"0")}`; } },1000);
+    showQuizEngine();
+    renderCurrentQuestion();
+    buildNavigator();
   }
 
-  const tbody = document.getElementById("leaderboard-tbody");
-  tbody.innerHTML = data.slice(0, 50).map((u, i) => {
-    const rank = i + 1;
-    const rankClass = rank === 1 ? "rank-1" : rank === 2 ? "rank-2" : rank === 3 ? "rank-3" : "";
-    const rankIcon = rank <= 3 ? `<i class="fa-solid fa-trophy ${rankClass} mr-1"></i>` : "";
-    const isMe = u.full_name === currentProfile?.full_name;
-    return `<tr ${isMe ? 'style="background:rgba(59,130,246,0.08)"' : ""}>
-      <td class="font-bold ${rankClass}">${rankIcon}${rank}</td>
-      <td>
-        <div class="flex items-center gap-2">
-          <div class="w-7 h-7 rounded-full flex items-center justify-center text-white font-bold text-xs"
-               style="background:linear-gradient(135deg,#2563eb,#4f46e5)">${(u.full_name || "?").charAt(0).toUpperCase()}</div>
-          <span class="${isMe ? "text-blue-300 font-semibold" : ""}">${u.full_name || "Student"}${isMe ? " (You)" : ""}</span>
-        </div>
-      </td>
-      <td class="font-semibold">${u.total_score || 0}</td>
-      <td>${u.tests_taken || 0}</td>
-      <td>${u.accuracy || 0}%</td>
-      <td>${rank <= 3 ? `<span class="badge ${rank===1?"badge-yellow":rank===2?"":"badge-red"}">${rank===1?"🥇 Gold":rank===2?"🥈 Silver":"🥉 Bronze"}</span>` : ""}</td>
-    </tr>`;
-  }).join("");
-}
-
-function generateDemoLeaderboard() {
-  const names = ["Aayush Sharma","Priya Thapa","Rohan Adhikari","Sita Rai","Bikash KC","Anita Gurung",
-    "Rajesh Poudel","Mina Shrestha","Dipak Tamang","Sunita Bista","Hari Rijal","Laxmi Koirala",
-    "Sunil Bhattarai","Kavita Sapkota","Nabin Karki","Rekha Oli","Prakash Dhakal","Nisha Chaudhary",
-    "Bimal Pandey","Shreya Magar"];
-  return names.map((name, i) => ({
-    full_name: name,
-    total_score: Math.floor(Math.random() * 800) + 200 - i * 15,
-    tests_taken: Math.floor(Math.random() * 30) + 5,
-    accuracy: Math.floor(Math.random() * 40) + 50
-  })).sort((a, b) => b.total_score - a.total_score);
-}
-
-function setupRealtime() {
-  if (!supabase) return;
-  try {
-    realtimeChannel = supabase
-      .channel("leaderboard")
-      .on("postgres_changes", { event: "*", schema: "public", table: "profiles" }, () => loadLeaderboard())
-      .subscribe();
-  } catch {}
-}
-
-// ===========================
-// ADMIN FUNCTIONS
-// ===========================
-function showAdminTab(tab) {
-  const tabs = ["quizzes","questions","users","analytics"];
-  tabs.forEach(t => {
-    document.getElementById(`admin-tab-${t}-panel`).classList.add("hidden");
-    const btn = document.getElementById(`admin-tab-${t}`);
-    if (btn) {
-      btn.className = t === tab ? "btn-primary text-sm py-2 px-4" : "btn-secondary text-sm py-2 px-4";
-    }
-  });
-  document.getElementById(`admin-tab-${tab}-panel`).classList.remove("hidden");
-
-  if (tab === "analytics") renderAdminCharts();
-  if (tab === "users") loadAdminUsers();
-}
-
-async function loadAdminStats() {
-  const quizzes = allQuizzes.length;
-  const localResults = getLocalResults();
-  const questions = allQuizzes.reduce((s, q) => s + (q.total_questions || 0), 0);
-
-  document.getElementById("admin-stat-quizzes").textContent = quizzes;
-  document.getElementById("admin-stat-questions").textContent = questions;
-  document.getElementById("admin-stat-users").textContent = localResults.length ? "1+" : "1";
-  document.getElementById("admin-stat-attempts").textContent = localResults.length;
-}
-
-function updateAdminQuizList() {
-  const tbody = document.getElementById("admin-quizzes-tbody");
-  if (!allQuizzes.length) {
-    tbody.innerHTML = `<tr><td colspan="6" class="text-center text-slate-500 py-6">No quizzes yet</td></tr>`;
-    return;
-  }
-  tbody.innerHTML = allQuizzes.map(q => `
-    <tr>
-      <td class="font-medium text-white">${q.title}</td>
-      <td>${q.subject}</td>
-      <td>${q.total_questions}</td>
-      <td><span class="badge badge-blue">${q.quiz_type}</span></td>
-      <td><span class="badge ${q.is_premium ? "badge-yellow" : "badge-green"}">${q.is_premium ? "Premium" : "Free"}</span></td>
-      <td>
-        <div class="flex gap-2">
-          <button onclick="startQuiz('${q.id}')" class="text-blue-400 hover:text-blue-300 text-xs">
-            <i class="fa-solid fa-play"></i>
-          </button>
-          ${q._local ? `<button onclick="deleteLocalQuiz('${q.id}')" class="text-red-400 hover:text-red-300 text-xs"><i class="fa-solid fa-trash"></i></button>` : ""}
-        </div>
-      </td>
-    </tr>
-  `).join("");
-
-  // Update quiz select in add question form
-  const sel = document.getElementById("aq-quiz");
-  if (sel) {
-    sel.innerHTML = `<option value="">-- Select Quiz --</option>` +
-      allQuizzes.map(q => `<option value="${q.id}">${q.title}</option>`).join("");
-  }
-}
-
-async function loadAdminUsers() {
-  const tbody = document.getElementById("admin-users-tbody");
-  if (!supabase) {
-    tbody.innerHTML = `<tr>
-      <td>${currentProfile?.full_name || "Demo User"}</td>
-      <td>${currentProfile?.email || "demo@cee.np"}</td>
-      <td><span class="badge badge-yellow">Admin</span></td>
-      <td>${getLocalResults().length}</td>
-      <td>${formatDate(new Date().toISOString())}</td>
-      <td>—</td>
-    </tr>`;
-    return;
-  }
-  try {
-    const { data } = await supabase.from("profiles").select("*").limit(50);
-    if (!data?.length) { tbody.innerHTML = `<tr><td colspan="6" class="text-center text-slate-500 py-6">No users</td></tr>`; return; }
-    tbody.innerHTML = data.map(u => `<tr>
-      <td>${u.full_name || "—"}</td>
-      <td>${u.email || "—"}</td>
-      <td><span class="badge ${u.is_premium ? "badge-yellow" : "badge-green"}">${u.is_premium ? "Premium" : "Free"}</span></td>
-      <td>${u.tests_taken || 0}</td>
-      <td>${formatDate(u.created_at)}</td>
-      <td><button class="text-red-400 hover:text-red-300 text-xs">Remove</button></td>
-    </tr>`).join("");
-  } catch { tbody.innerHTML = `<tr><td colspan="6" class="text-center text-slate-500 py-4">Error loading users</td></tr>`; }
-}
-
-async function addQuestionManually() {
-  const question = document.getElementById("aq-question").value.trim();
-  const opts = [0,1,2,3].map(i => document.getElementById(`aq-opt-${i}`).value.trim()).filter(Boolean);
-  const correct = parseInt(document.getElementById("aq-correct").value);
-  const explanation = document.getElementById("aq-explanation").value.trim();
-  const subject = document.getElementById("aq-subject").value;
-  const chapter = document.getElementById("aq-chapter").value.trim();
-  const difficulty = document.getElementById("aq-difficulty").value;
-  const quizId = document.getElementById("aq-quiz").value;
-
-  if (!question || opts.length < 2) { showToast("Fill question and at least 2 options", "error"); return; }
-  if (!explanation) { showToast("Explanation is required", "error"); return; }
-
-  const qData = { question, options: opts, correct_option: correct, explanation, subject, chapter, difficulty, question_type: "single_correct", marks: 1, negative_marks: 0.25, status: "published" };
-
-  if (supabase && quizId) {
-    try {
-      const { error } = await supabase.from("quiz_questions").insert({ ...qData, quiz_set_id: quizId });
-      if (error) throw error;
-      showToast("Question added to database!", "success");
-    } catch (e) {
-      showToast(e.message || "Failed to save to DB", "error");
-      return;
-    }
-  } else {
-    // Add to local quiz
-    const quiz = allQuizzes.find(q => q.id === quizId || q._local);
-    if (quiz) {
-      if (!quiz._questions) quiz._questions = [];
-      quiz._questions.push(qData);
-      quiz.total_questions = (quiz.total_questions || 0) + 1;
-      saveLocalQuizzes(allQuizzes.filter(q => q._local));
-    }
-    showToast("Question added (local)!", "success");
+  function renderCurrentQuestion() {
+    let q = currentQuizSession.questions[currentQIndex];
+    if(!q) return;
+    document.getElementById("question-text").innerText = q.text;
+    let container = document.getElementById("options-container");
+    container.innerHTML = q.options.map((opt,idx)=>`<button class="option-btn ${quizAnswers[currentQIndex]===idx ? 'selected':''}" onclick="selectOption(${idx})"><span class="w-7 h-7 rounded-full bg-white/10 inline-flex items-center justify-center">${String.fromCharCode(65+idx)}</span>${opt}</button>`).join("");
+    document.getElementById("q-counter").innerHTML = `Question ${currentQIndex+1} of ${currentQuizSession.questions.length}`;
+    let markBtn = document.getElementById("mark-review-btn");
+    if(markedSet.has(currentQIndex)) markBtn.innerHTML = '<i class="fa-solid fa-bookmark"></i> Marked'; else markBtn.innerHTML = '<i class="fa-regular fa-bookmark"></i> Mark';
   }
 
-  // Clear form
-  document.getElementById("aq-question").value = "";
-  [0,1,2,3].forEach(i => document.getElementById(`aq-opt-${i}`).value = "");
-  document.getElementById("aq-explanation").value = "";
-}
+  function selectOption(optIdx) {
+    quizAnswers[currentQIndex] = optIdx;
+    renderCurrentQuestion();
+    buildNavigator();
+  }
 
-let adminSubjChart = null, adminDiffChart = null;
-function renderAdminCharts() {
-  const bySubject = {};
-  const byDiff = { easy: 0, medium: 0, hard: 0 };
-  allQuizzes.forEach(q => {
-    bySubject[q.subject] = (bySubject[q.subject] || 0) + (q.total_questions || 0);
-    byDiff[q.difficulty] = (byDiff[q.difficulty] || 0) + (q.total_questions || 0);
-  });
+  function toggleMarkReview() {
+    if(markedSet.has(currentQIndex)) markedSet.delete(currentQIndex);
+    else markedSet.add(currentQIndex);
+    renderCurrentQuestion();
+    buildNavigator();
+  }
 
-  const sCtx = document.getElementById("adminSubjectChart");
-  const dCtx = document.getElementById("adminDiffChart");
-  if (!sCtx || !dCtx) return;
-
-  if (adminSubjChart) adminSubjChart.destroy();
-  if (adminDiffChart) adminDiffChart.destroy();
-
-  adminSubjChart = new Chart(sCtx, {
-    type: "bar",
-    data: {
-      labels: Object.keys(bySubject),
-      datasets: [{ data: Object.values(bySubject), backgroundColor: ["#3b82f6","#10b981","#a3e635","#fb923c","#c084fc"], borderRadius: 6 }]
-    },
-    options: { responsive: true, plugins: { legend: { display: false } }, scales: { x: { ticks: { color: "#64748b" }, grid: { color: "rgba(255,255,255,0.04)" } }, y: { ticks: { color: "#64748b" }, grid: { color: "rgba(255,255,255,0.04)" } } } }
-  });
-
-  adminDiffChart = new Chart(dCtx, {
-    type: "doughnut",
-    data: {
-      labels: ["Easy","Medium","Hard"],
-      datasets: [{ data: [byDiff.easy, byDiff.medium, byDiff.hard], backgroundColor: ["#10b981","#f59e0b","#ef4444"], borderWidth: 0 }]
-    },
-    options: { responsive: true, plugins: { legend: { labels: { color: "#94a3b8", font: { size: 11 } } } } }
-  });
-}
-
-// ===========================
-// UPLOAD / BULK IMPORT
-// ===========================
-function handleDragOver(e) { e.preventDefault(); document.getElementById("drop-zone").classList.add("drag-over"); }
-function handleDragLeave() { document.getElementById("drop-zone").classList.remove("drag-over"); }
-function handleDrop(e) {
-  e.preventDefault();
-  document.getElementById("drop-zone").classList.remove("drag-over");
-  const file = e.dataTransfer.files[0];
-  if (file) processJsonFile(file);
-}
-function handleFileSelect(e) {
-  const file = e.target.files[0];
-  if (file) processJsonFile(file);
-}
-
-function processJsonFile(file) {
-  if (!file.name.endsWith(".json")) { showToast("Only .json files accepted", "error"); return; }
-
-  const progress = document.getElementById("upload-progress");
-  const pbar = document.getElementById("upload-progress-bar");
-  const pct = document.getElementById("upload-pct");
-  const statusEl = document.getElementById("upload-status");
-
-  progress.classList.remove("hidden");
-  document.getElementById("upload-preview").classList.add("hidden");
-  document.getElementById("upload-errors").classList.add("hidden");
-
-  let p = 0;
-  const interval = setInterval(() => {
-    p = Math.min(p + 10, 90);
-    pbar.style.width = p + "%"; pct.textContent = p + "%";
-  }, 80);
-
-  const reader = new FileReader();
-  reader.onload = (e) => {
-    clearInterval(interval);
-    try {
-      const json = JSON.parse(e.target.result);
-      pbar.style.width = "100%"; pct.textContent = "100%";
-      statusEl.textContent = "Validating...";
-
-      const errors = validateQuizJSON(json);
-      if (errors.length) {
-        document.getElementById("upload-errors").classList.remove("hidden");
-        document.getElementById("error-list").innerHTML = errors.map(err => `<li>• ${err}</li>`).join("");
-        progress.classList.add("hidden");
-        return;
-      }
-
-      pendingUploadData = json;
-      const meta = json.quiz_meta || json;
-      const qCount = json.questions?.length || 0;
-
-      document.getElementById("preview-title").textContent = meta.title || "Untitled Quiz";
-      document.getElementById("preview-subject").textContent = meta.subject || "Mixed";
-      document.getElementById("preview-qcount").textContent = qCount;
-      document.getElementById("preview-duration").textContent = meta.duration_minutes || 30;
-      document.getElementById("preview-type").textContent = meta.quiz_type || "chapter";
-
-      statusEl.textContent = "Ready to import";
-      document.getElementById("upload-preview").classList.remove("hidden");
-      showToast(`Parsed ${qCount} questions successfully!`, "success");
-    } catch {
-      showToast("Invalid JSON format", "error");
-      progress.classList.add("hidden");
-    }
-  };
-  reader.readAsText(file);
-}
-
-function validateQuizJSON(json) {
-  const errors = [];
-  const questions = json.questions;
-  if (!questions || !Array.isArray(questions)) { errors.push("Missing or invalid 'questions' array"); return errors; }
-  if (questions.length === 0) errors.push("No questions found");
-
-  questions.forEach((q, i) => {
-    if (!q.question) errors.push(`Question ${i+1}: missing 'question' text`);
-    if (!Array.isArray(q.options) || q.options.length < 2) errors.push(`Question ${i+1}: needs at least 2 options`);
-    if (q.correct_option === undefined || q.correct_option === null) errors.push(`Question ${i+1}: missing correct_option`);
-    if (!q.explanation) errors.push(`Question ${i+1}: missing explanation`);
-    if (q.options?.length > 6) errors.push(`Question ${i+1}: too many options (max 6)`);
-  });
-
-  return errors;
-}
-
-async function confirmUpload() {
-  if (!pendingUploadData) return;
-  const meta = pendingUploadData.quiz_meta || pendingUploadData;
-  const questions = pendingUploadData.questions;
-
-  const statusEl = document.getElementById("upload-status");
-  statusEl.textContent = "Uploading...";
-
-  const quizId = "local-" + Date.now();
-  const newQuiz = {
-    id: quizId,
-    title: meta.title || "Imported Quiz",
-    subject: meta.subject || "Mixed",
-    chapter: meta.chapter || "General",
-    quiz_type: meta.quiz_type || "chapter",
-    difficulty: meta.difficulty || "medium",
-    total_questions: questions.length,
-    duration_minutes: meta.duration_minutes || 30,
-    is_premium: meta.is_premium || false,
-    negative_marking: meta.negative_marking !== false,
-    negative_marks_per_wrong: meta.negative_marks_per_wrong || 0.25,
-    _local: true,
-    _questions: questions
-  };
-
-  if (supabase) {
-    try {
-      const { data: quizData, error: quizError } = await supabase.from("quiz_sets").insert({
-        title: newQuiz.title, subject: newQuiz.subject, chapter: newQuiz.chapter,
-        quiz_type: newQuiz.quiz_type, difficulty: newQuiz.difficulty,
-        total_questions: questions.length, duration_minutes: newQuiz.duration_minutes,
-        is_premium: newQuiz.is_premium, status: "published",
-        created_by: currentUser?.id
-      }).select().single();
-
-      if (!quizError && quizData) {
-        const qRows = questions.map(q => ({
-          quiz_set_id: quizData.id,
-          question: q.question,
-          options: Array.isArray(q.options) ? q.options : q.options,
-          correct_option: q.correct_option,
-          explanation: q.explanation,
-          subject: q.subject || meta.subject,
-          chapter: q.chapter || meta.chapter,
-          difficulty: q.difficulty || meta.difficulty || "medium",
-          question_type: q.question_type || "single_correct",
-          marks: q.marks || 1,
-          negative_marks: q.negative_marks || 0.25,
-          tags: q.tags || [],
-          status: "published"
-        }));
-        await supabase.from("quiz_questions").insert(qRows);
-        newQuiz.id = quizData.id;
-        newQuiz._local = false;
-        showToast(`${questions.length} questions uploaded to database!`, "success");
-      }
-    } catch (e) {
-      console.warn("DB upload failed, saving locally:", e);
+  function nextOrSubmit() {
+    if(currentQIndex+1 < currentQuizSession.questions.length){
+      currentQIndex++;
+      renderCurrentQuestion();
+      buildNavigator();
+    } else {
+      finishQuiz();
     }
   }
 
-  // Save locally regardless
-  const localQuizzes = getLocalQuizzes();
-  localQuizzes.push(newQuiz);
-  saveLocalQuizzes(localQuizzes);
-  allQuizzes.push(newQuiz);
-
-  updateAdminQuizList();
-  renderQuizGrid(allQuizzes);
-  loadAdminStats();
-
-  document.getElementById("upload-status").textContent = "Import complete!";
-  document.getElementById("upload-preview").classList.add("hidden");
-  pendingUploadData = null;
-  document.getElementById("json-file-input").value = "";
-
-  showToast(`Quiz "${newQuiz.title}" imported successfully!`, "success");
-  setTimeout(() => navigateTo("admin"), 1500);
-}
-
-function cancelUpload() {
-  pendingUploadData = null;
-  document.getElementById("upload-preview").classList.add("hidden");
-  document.getElementById("upload-progress").classList.add("hidden");
-  document.getElementById("json-file-input").value = "";
-}
-
-function deleteLocalQuiz(id) {
-  deleteQuizId = id;
-  openModal("modal-delete");
-}
-
-function confirmDeleteQuiz() {
-  const localQuizzes = getLocalQuizzes().filter(q => q.id !== deleteQuizId);
-  saveLocalQuizzes(localQuizzes);
-  allQuizzes = allQuizzes.filter(q => q.id !== deleteQuizId);
-  renderQuizGrid(allQuizzes);
-  updateAdminQuizList();
-  loadAdminStats();
-  closeModal("modal-delete");
-  showToast("Quiz deleted", "success");
-}
-
-// ===========================
-// RESULTS TABLE
-// ===========================
-function loadResultsTable() {
-  const results = getLocalResults();
-  const tbody = document.getElementById("results-tbody");
-  if (!results.length) {
-    tbody.innerHTML = `<tr><td colspan="7" class="text-center text-slate-500 py-8">No results yet</td></tr>`;
-    return;
-  }
-  tbody.innerHTML = results.slice().reverse().map(r => `
-    <tr>
-      <td class="font-medium text-white">${r.quizTitle}</td>
-      <td>${r.subject}</td>
-      <td class="font-semibold">${r.score}/${r.totalMarks}</td>
-      <td><span class="${r.percentage >= 60 ? "text-emerald-400" : r.percentage >= 40 ? "text-yellow-400" : "text-red-400"}">${r.percentage}%</span></td>
-      <td>${formatTime(r.timeUsed)}</td>
-      <td>${formatDate(r.date)}</td>
-      <td><span class="badge ${r.grade === "Excellent" ? "badge-green" : r.grade === "Good" ? "badge-blue" : r.grade === "Average" ? "badge-yellow" : "badge-red"}">${r.grade}</span></td>
-    </tr>
-  `).join("");
-}
-
-// ===========================
-// LOCAL STORAGE HELPERS
-// ===========================
-function getLocalResults() {
-  try { return JSON.parse(localStorage.getItem("cee_results") || "[]"); } catch { return []; }
-}
-function saveLocalResult(result) {
-  const results = getLocalResults();
-  results.push(result);
-  localStorage.setItem("cee_results", JSON.stringify(results));
-}
-function getLocalQuizzes() {
-  try { return JSON.parse(localStorage.getItem("cee_local_quizzes") || "[]"); } catch { return []; }
-}
-function saveLocalQuizzes(quizzes) {
-  localStorage.setItem("cee_local_quizzes", JSON.stringify(quizzes));
-}
-function saveQuizProgress() {
-  try {
-    localStorage.setItem("cee_quiz_progress_" + quizState.quiz?.id, JSON.stringify({
-      answers: quizState.answers,
-      currentIndex: quizState.currentIndex
-    }));
-  } catch {}
-}
-
-// ===========================
-// UTILITY
-// ===========================
-function formatDate(iso) {
-  if (!iso) return "—";
-  try {
-    const d = new Date(iso);
-    return d.toLocaleDateString("en-IN", { day: "2-digit", month: "short", year: "numeric" });
-  } catch { return "—"; }
-}
-function formatTime(seconds) {
-  if (!seconds) return "—";
-  const m = Math.floor(seconds / 60), s = seconds % 60;
-  return `${m}m ${s}s`;
-}
-
-// ===========================
-// INIT
-// ===========================
-document.addEventListener("DOMContentLoaded", async () => {
-  initSupabase();
-
-  // Check existing session
-  if (supabase) {
-    try {
-      const { data: { session } } = await supabase.auth.getSession();
-      if (session) {
-        currentUser = session.user;
-        await loadProfile();
-        enterApp();
-        return;
-      }
-    } catch {}
+  function prevQuestion() {
+    if(currentQIndex>0){ currentQIndex--; renderCurrentQuestion(); buildNavigator();}
   }
 
-  // Close notifications on outside click
-  document.addEventListener("click", (e) => {
-    const nd = document.getElementById("notif-dropdown");
-    if (nd && !nd.contains(e.target) && !e.target.closest("button[onclick='toggleNotifications()']")) {
-      nd.classList.add("hidden");
+  function buildNavigator() {
+    let navDiv = document.getElementById("nav-buttons");
+    let html = "";
+    for(let i=0;i<currentQuizSession.questions.length;i++){
+      let cls = "q-nav-btn ";
+      if(quizAnswers[i]!==undefined) cls+="answered ";
+      if(markedSet.has(i)) cls+="marked ";
+      if(i===currentQIndex) cls+="current";
+      html += `<button class="${cls}" onclick="jumpToQuestion(${i})">${i+1}</button>`;
     }
-  });
-});
+    navDiv.innerHTML = html;
+    let fillPercent = ((currentQIndex+1)/currentQuizSession.questions.length)*100;
+    document.getElementById("quiz-progress-fill").style.width = fillPercent+"%";
+  }
 
-// Page visibility for results table
-const origNav = navigateTo;
-window.navigateTo = function(page) {
-  origNav(page);
-  if (page === "results") loadResultsTable();
-  if (page === "admin") { loadAdminStats(); updateAdminQuizList(); }
-};
+  function jumpToQuestion(idx) { currentQIndex=idx; renderCurrentQuestion(); buildNavigator(); }
+
+  function finishQuiz() {
+    clearInterval(timerInterval);
+    let totalMarks = currentQuizSession.questions.length;
+    let correctCount = 0;
+    for(let i=0;i<currentQuizSession.questions.length;i++){
+      if(quizAnswers[i] !== undefined && quizAnswers[i] === currentQuizSession.questions[i].correct) correctCount++;
+    }
+    let score = correctCount;
+    let percent = Math.round((score/totalMarks)*100);
+    let resultEntry = {
+      quizId: currentQuizSession.id,
+      quizTitle: currentQuizSession.title,
+      score: score,
+      totalMarks: totalMarks,
+      correct: correctCount,
+      total: totalMarks,
+      percent: percent,
+      date: new Date().toISOString()
+    };
+    userResults.push(resultEntry);
+    saveResults();
+    updateStats();
+    document.getElementById("result-heading").innerHTML = `Your Score: ${score}/${totalMarks}`;
+    document.getElementById("result-percent").innerHTML = `Accuracy: ${percent}%`;
+    navigateTo("result");
+  }
+
+  function exitQuiz() { clearInterval(timerInterval); navigateTo("quizzes"); }
+  function showQuizEngine() {
+    document.querySelectorAll("#dashboard-page, #quizzes-page, #results-page, #leaderboard-page, #admin-page, #result-page").forEach(p=>p.classList.add("hidden"));
+    document.getElementById("quiz-engine-page").classList.remove("hidden");
+  }
+
+  function navigateTo(page){
+    document.querySelectorAll("#dashboard-page, #quizzes-page, #results-page, #leaderboard-page, #admin-page, #quiz-engine-page, #result-page").forEach(p=>p.classList.add("hidden"));
+    document.getElementById(`${page}-page`).classList.remove("hidden");
+    if(page==="quizzes") renderQuizGrid();
+    if(page==="dashboard") updateStats();
+  }
+
+  function setFilter(f){ window.activeFilter = f; renderQuizGrid();}
+  function filterQuizLibrary(){ renderQuizGrid();}
+
+  function adminAddQuestion() {
+    let qtext = document.getElementById("new-question-text").value.trim();
+    let optA = document.getElementById("new-opt-a").value.trim();
+    let optB = document.getElementById("new-opt-b").value.trim();
+    let optC = document.getElementById("new-opt-c").value.trim();
+    let optD = document.getElementById("new-opt-d").value.trim();
+    let correct = parseInt(document.getElementById("new-correct").value);
+    let explanation = document.getElementById("new-explanation").value.trim();
+    if(!qtext || !optA || !optB || !optC || !optD) { alert("Fill all fields"); return; }
+    let newQuizId = "custom_" + Date.now();
+    let newQuiz = {
+      id: newQuizId,
+      title: "Custom Quiz",
+      subject: "Mixed",
+      type: "chapter",
+      totalQuestions: 1,
+      duration: 600,
+      isCustom: true,
+      questions: [{ text: qtext, options: [optA,optB,optC,optD], correct: correct, explanation: explanation }]
+    };
+    allQuizzes.push(newQuiz);
+    saveCustomQuizzes();
+    renderQuizGrid();
+    if(currentUser.isAdmin) renderAdminQuizList();
+    alert("Question added as new quiz set!");
+    document.getElementById("new-question-text").value = "";
+    document.getElementById("new-opt-a").value = ""; document.getElementById("new-opt-b").value = "";
+    document.getElementById("new-opt-c").value = ""; document.getElementById("new-opt-d").value = "";
+  }
+
+  function renderAdminQuizList() {
+    let container = document.getElementById("admin-quiz-list");
+    if(!container) return;
+    let custom = allQuizzes.filter(q=>q.isCustom);
+    container.innerHTML = custom.map(q=>`<div class="flex justify-between items-center bg-white/5 p-2 rounded-lg"><span>${q.title}</span><button onclick="deleteCustomQuiz('${q.id}')" class="text-red-400 text-sm">Delete</button></div>`).join("");
+  }
+
+  function deleteCustomQuiz(id) {
+    allQuizzes = allQuizzes.filter(q=>q.id !== id);
+    saveCustomQuizzes();
+    renderQuizGrid();
+    renderAdminQuizList();
+    updateStats();
+  }
+
+  function handleLogin() {
+    let email = document.getElementById("login-email").value;
+    let pass = document.getElementById("login-password").value;
+    if(!email) email = "student@cee.np";
+    currentUser = { name: email.split("@")[0], email: email, isAdmin: email.includes("admin") };
+    document.getElementById("auth-container").classList.add("hidden");
+    document.getElementById("app-container").classList.remove("hidden");
+    loadData();
+    navigateTo("dashboard");
+    showToast("Logged in successfully");
+  }
+  function handleSignup() {
+    let name = document.getElementById("signup-name").value;
+    let email = document.getElementById("signup-email").value;
+    if(!name) name = "Student";
+    currentUser = { name: name, email: email, isAdmin: false };
+    document.getElementById("auth-container").classList.add("hidden");
+    document.getElementById("app-container").classList.remove("hidden");
+    loadData();
+    navigateTo("dashboard");
+  }
+  function logout() {
+    currentUser = null;
+    clearInterval(timerInterval);
+    document.getElementById("app-container").classList.add("hidden");
+    document.getElementById("auth-container").classList.remove("hidden");
+    showToast("Logged out");
+  }
+  function toggleMobileSidebar() { document.getElementById("sidebar").classList.toggle("open"); }
+  function showToast(msg) { let toastDiv = document.getElementById("toast-root"); let t = document.createElement("div"); t.className="toast"; t.innerText=msg; toastDiv.appendChild(t); setTimeout(()=>t.remove(),2500); }
+
+  window.onclick = (e) => { if(!e.target.closest("#sidebar") && !e.target.closest(".sidebar-item") && document.getElementById("sidebar")?.classList?.contains("open")) document.getElementById("sidebar").classList.remove("open"); };
+  document.getElementById("auth-login-btn").onclick = () => { document.getElementById("login-panel").classList.remove("hidden"); document.getElementById("signup-panel").classList.add("hidden"); };
+  document.getElementById("auth-signup-btn").onclick = () => { document.getElementById("login-panel").classList.add("hidden"); document.getElementById("signup-panel").classList.remove("hidden"); };
+  window.navigateTo = navigateTo; window.startQuiz = startQuiz; window.selectOption = selectOption; window.nextOrSubmit = nextOrSubmit; window.prevQuestion = prevQuestion; window.toggleMarkReview = toggleMarkReview; window.jumpToQuestion = jumpToQuestion; window.exitQuiz = exitQuiz; window.finishQuiz = finishQuiz; window.setFilter = setFilter; window.filterQuizLibrary = filterQuizLibrary; window.adminAddQuestion = adminAddQuestion; window.deleteCustomQuiz = deleteCustomQuiz;
+  window.handleLogin = handleLogin; window.handleSignup = handleSignup; window.logout = logout; window.toggleMobileSidebar = toggleMobileSidebar;
 </script>
 </body>
 </html>
