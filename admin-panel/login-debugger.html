@@ -1,101 +1,207 @@
 <!DOCTYPE html>
-<html lang="en">
+<html>
 <head>
-<meta charset="UTF-8">
-<title>ExamPro Admin</title>
-<script src="https://cdn.tailwindcss.com"></script>
+<meta charset="UTF-8" />
+<title>ExamPro Ultimate</title>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+<style>
+body { font-family: Arial; margin:0; background:#0f172a; color:white; }
+.container { padding:20px; }
+.box { background:#111827; padding:15px; border-radius:10px; margin-bottom:15px; }
+input, button { padding:10px; margin:5px 0; width:100%; }
+button { cursor:pointer; }
+.hidden { display:none; }
+</style>
 </head>
 
-<body class="bg-gray-100">
+<body>
+
+<div class="container">
 
 <!-- LOGIN -->
-<div id="login" class="flex items-center justify-center h-screen">
-  <div class="bg-white p-6 rounded-xl shadow w-96">
-    <h2 class="text-xl font-bold mb-4">Admin Login</h2>
-
-    <input id="email" class="w-full border p-2 mb-2" placeholder="Email">
-    <input id="password" type="password" class="w-full border p-2 mb-2" placeholder="Password">
-
-    <button onclick="login()" class="w-full bg-blue-600 text-white p-2 rounded">
-      Login
-    </button>
-
-    <p id="msg" class="text-red-500 mt-2 text-sm"></p>
-  </div>
+<div id="authBox" class="box">
+  <h2>Login / Signup</h2>
+  <input id="email" placeholder="Email">
+  <input id="password" type="password" placeholder="Password">
+  <button onclick="signup()">Signup</button>
+  <button onclick="login()">Login</button>
+  <p id="msg"></p>
 </div>
 
 <!-- DASHBOARD -->
-<div id="dashboard" class="hidden p-6">
-  <h1 class="text-2xl font-bold">Admin Dashboard</h1>
-  <p id="user"></p>
-  <button onclick="logout()" class="bg-red-600 text-white px-4 py-2 mt-4">
-    Logout
-  </button>
+<div id="appBox" class="hidden">
+
+  <h2>Exam Platform</h2>
+  <button onclick="logout()">Logout</button>
+
+  <!-- TIMER -->
+  <div class="box">
+    <h3>⏱ Timer: <span id="timer">0</span></h3>
+  </div>
+
+  <!-- QUESTION -->
+  <div class="box">
+    <h3>Question</h3>
+    <div id="question"></div>
+    <div id="options"></div>
+    <button onclick="submitExam()">Submit Exam</button>
+  </div>
+
+  <!-- LEADERBOARD -->
+  <div class="box">
+    <h3>🏆 Live Leaderboard</h3>
+    <div id="leaderboard"></div>
+  </div>
+
+  <!-- ANALYTICS -->
+  <div class="box">
+    <h3>📊 Analytics</h3>
+    <div id="analytics"></div>
+  </div>
+
+</div>
+
 </div>
 
 <script>
-// ---------------- SUPABASE ----------------
 const SUPABASE_URL = "https://rpudsnrqlhataqfavcjh.supabase.co";
 const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJwdWRzbnJxbGhhdGFxZmF2Y2poIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzk5NzI0NjgsImV4cCI6MjA5NTU0ODQ2OH0.EEu5t-NPqWARChSAMpEvUPMBkz_JeeNe3bGSCQmH7Xo";
 
 const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
-// IMPORTANT: change this to your real admin UUID
-const ADMIN_ID = "a15f22c0-3925-4c3f-b298-12e222503303";
+let questions = [];
+let current = 0;
+let answers = {};
+let timeLeft = 300;
+let timer;
 
-// ---------------- LOGIN ----------------
+// ---------------- AUTH ----------------
+async function signup() {
+  const { error } = await supabase.auth.signUp({
+    email: email.value,
+    password: password.value
+  });
+  msg.innerText = error ? error.message : "Check email!";
+}
+
 async function login() {
-  const email = document.getElementById("email").value;
-  const password = document.getElementById("password").value;
-
-  document.getElementById("msg").innerText = "Logging in...";
-
   const { data, error } = await supabase.auth.signInWithPassword({
-    email,
-    password
+    email: email.value,
+    password: password.value
   });
 
-  if (error) {
-    document.getElementById("msg").innerText = error.message;
-    return;
-  }
+  if (error) return msg.innerText = error.message;
 
-  console.log("USER:", data.user);
+  document.getElementById("authBox").classList.add("hidden");
+  document.getElementById("appBox").classList.remove("hidden");
 
-  if (data.user.id === ADMIN_ID) {
-    showDashboard(data.user);
-  } else {
-    document.getElementById("msg").innerText = "Not admin account!";
-    await supabase.auth.signOut();
-  }
+  loadApp();
 }
 
-// ---------------- DASHBOARD ----------------
-function showDashboard(user) {
-  document.getElementById("login").classList.add("hidden");
-  document.getElementById("dashboard").classList.remove("hidden");
-
-  document.getElementById("user").innerText =
-    "Logged in as: " + user.email;
-}
-
-// ---------------- LOGOUT ----------------
 async function logout() {
   await supabase.auth.signOut();
   location.reload();
 }
 
-// ---------------- AUTO LOGIN ----------------
-async function checkSession() {
-  const { data: { session } } = await supabase.auth.getSession();
-
-  if (session && session.user.id === ADMIN_ID) {
-    showDashboard(session.user);
-  }
+// ---------------- LOAD APP ----------------
+async function loadApp() {
+  await loadQuestions();
+  startTimer();
+  loadLeaderboard();
+  loadAnalytics();
 }
 
-checkSession();
+// ---------------- QUESTIONS ----------------
+async function loadQuestions() {
+  const { data } = await supabase.from("questions").select("*");
+  questions = data || [];
+
+  showQuestion();
+}
+
+function showQuestion() {
+  if (!questions.length) return;
+
+  const q = questions[current];
+
+  document.getElementById("question").innerText = q.question;
+
+  document.getElementById("options").innerHTML =
+    q.options.map((o, i) =>
+      `<button onclick="selectAnswer(${i})">${o}</button>`
+    ).join("");
+}
+
+function selectAnswer(i) {
+  answers[current] = i;
+  current++;
+  if (current < questions.length) showQuestion();
+}
+
+// ---------------- TIMER ----------------
+function startTimer() {
+  timer = setInterval(() => {
+    timeLeft--;
+    document.getElementById("timer").innerText = timeLeft;
+
+    if (timeLeft <= 0) submitExam();
+  }, 1000);
+}
+
+// ---------------- SUBMIT ----------------
+async function submitExam() {
+  clearInterval(timer);
+
+  const user = (await supabase.auth.getUser()).data.user;
+
+  let score = 0;
+
+  questions.forEach((q, i) => {
+    if (answers[i] == q.answer) score++;
+  });
+
+  await supabase.from("attempts").insert({
+    user_id: user.id,
+    score,
+    total: questions.length
+  });
+
+  alert("Exam Submitted! Score: " + score);
+
+  loadLeaderboard();
+  loadAnalytics();
+}
+
+// ---------------- LEADERBOARD (REALTIME) ----------------
+async function loadLeaderboard() {
+  const { data } = await supabase
+    .from("attempts")
+    .select("user_id, score");
+
+  const map = {};
+
+  data.forEach(d => {
+    map[d.user_id] = (map[d.user_id] || 0) + d.score;
+  });
+
+  document.getElementById("leaderboard").innerHTML =
+    Object.entries(map)
+      .sort((a,b)=>b[1]-a[1])
+      .map((u,i)=>`#${i+1} ${u[0]} - ${u[1]}`)
+      .join("<br>");
+}
+
+// ---------------- ANALYTICS ----------------
+async function loadAnalytics() {
+  const { data } = await supabase.from("attempts").select("*");
+
+  const total = data.length;
+  const avg = total ? data.reduce((a,b)=>a+b.score,0)/total : 0;
+
+  document.getElementById("analytics").innerHTML =
+    `Attempts: ${total} <br> Average Score: ${avg.toFixed(2)}`;
+}
 </script>
 
 </body>
