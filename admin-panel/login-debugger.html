@@ -1,78 +1,102 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <title>Supabase Login Debugger</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<meta charset="UTF-8">
+<title>ExamPro Admin</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 </head>
-<body class="p-8 bg-gray-100">
 
-<div class="max-w-lg mx-auto bg-white p-8 rounded-3xl shadow">
-    <h1 class="text-2xl font-bold mb-6">Supabase Login Debugger</h1>
-    
-    <input id="email" placeholder="Email" class="border p-3 w-full mb-3 rounded-xl">
-    <input id="password" type="password" placeholder="Password" class="border p-3 w-full mb-6 rounded-xl">
-    
-    <div class="grid grid-cols-3 gap-3">
-        <button onclick="signup()" class="bg-green-600 text-white py-3 rounded-xl">Sign Up</button>
-        <button onclick="login()" class="bg-blue-600 text-white py-3 rounded-xl">Login</button>
-        <button onclick="checkCurrentUser()" class="bg-purple-600 text-white py-3 rounded-xl">Check User ID</button>
-    </div>
+<body class="bg-gray-100">
 
-    <div id="msg" class="mt-6 p-4 bg-gray-100 rounded-2xl text-sm"></div>
+<!-- LOGIN -->
+<div id="login" class="flex items-center justify-center h-screen">
+  <div class="bg-white p-6 rounded-xl shadow w-96">
+    <h2 class="text-xl font-bold mb-4">Admin Login</h2>
+
+    <input id="email" class="w-full border p-2 mb-2" placeholder="Email">
+    <input id="password" type="password" class="w-full border p-2 mb-2" placeholder="Password">
+
+    <button onclick="login()" class="w-full bg-blue-600 text-white p-2 rounded">
+      Login
+    </button>
+
+    <p id="msg" class="text-red-500 mt-2 text-sm"></p>
+  </div>
+</div>
+
+<!-- DASHBOARD -->
+<div id="dashboard" class="hidden p-6">
+  <h1 class="text-2xl font-bold">Admin Dashboard</h1>
+  <p id="user"></p>
+  <button onclick="logout()" class="bg-red-600 text-white px-4 py-2 mt-4">
+    Logout
+  </button>
 </div>
 
 <script>
+// ---------------- SUPABASE ----------------
 const SUPABASE_URL = "https://rpudsnrqlhataqfavcjh.supabase.co";
 const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJwdWRzbnJxbGhhdGFxZmF2Y2poIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzk5NzI0NjgsImV4cCI6MjA5NTU0ODQ2OH0.EEu5t-NPqWARChSAMpEvUPMBkz_JeeNe3bGSCQmH7Xo";
 
-const supabase = Supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
-function msg(text, color = "black") {
-    document.getElementById("msg").innerHTML = `<span style="color:${color}">${text}</span>`;
-}
+// IMPORTANT: change this to your real admin UUID
+const ADMIN_ID = "a15f22c0-3925-4c3f-b298-12e222503303";
 
-// Signup
-async function signup() {
-    const email = document.getElementById("email").value;
-    const password = document.getElementById("password").value;
-    msg("Signing up...");
-    const { data, error } = await supabase.auth.signUp({ email, password });
-    if (error) msg("Error: " + error.message, "red");
-    else msg("Signup successful! Check email.", "green");
-}
-
-// Login
+// ---------------- LOGIN ----------------
 async function login() {
-    const email = document.getElementById("email").value;
-    const password = document.getElementById("password").value;
-    msg("Logging in...");
-    const { data, error } = await supabase.auth.signInWithPassword({ email, password });
-    if (error) msg("Login Error: " + error.message, "red");
-    else {
-        msg("Login Success! User ID: " + data.user.id, "green");
-        console.log("Current User:", data.user);
-    }
+  const email = document.getElementById("email").value;
+  const password = document.getElementById("password").value;
+
+  document.getElementById("msg").innerText = "Logging in...";
+
+  const { data, error } = await supabase.auth.signInWithPassword({
+    email,
+    password
+  });
+
+  if (error) {
+    document.getElementById("msg").innerText = error.message;
+    return;
+  }
+
+  console.log("USER:", data.user);
+
+  if (data.user.id === ADMIN_ID) {
+    showDashboard(data.user);
+  } else {
+    document.getElementById("msg").innerText = "Not admin account!";
+    await supabase.auth.signOut();
+  }
 }
 
-// Check Current Logged-in User
-async function checkCurrentUser() {
-    const { data: { session }, error } = await supabase.auth.getSession();
-    if (error || !session) {
-        msg("No active session. Please login first.", "red");
-    } else {
-        const userId = session.user.id;
-        msg(`✅ Logged in as:<br><b>${session.user.email}</b><br><b>User ID:</b> ${userId}`, "green");
-        console.log("Full User Object:", session.user);
-        
-        if (userId === "a15f22c0-3925-4c3f-b298-12e222503303") {
-            msg("🎉 This is the Admin Account!", "green");
-        } else {
-            msg("⚠️ This is NOT the admin account.", "orange");
-        }
-    }
+// ---------------- DASHBOARD ----------------
+function showDashboard(user) {
+  document.getElementById("login").classList.add("hidden");
+  document.getElementById("dashboard").classList.remove("hidden");
+
+  document.getElementById("user").innerText =
+    "Logged in as: " + user.email;
 }
+
+// ---------------- LOGOUT ----------------
+async function logout() {
+  await supabase.auth.signOut();
+  location.reload();
+}
+
+// ---------------- AUTO LOGIN ----------------
+async function checkSession() {
+  const { data: { session } } = await supabase.auth.getSession();
+
+  if (session && session.user.id === ADMIN_ID) {
+    showDashboard(session.user);
+  }
+}
+
+checkSession();
 </script>
+
 </body>
 </html>
