@@ -902,49 +902,26 @@ h1,h2,h3{font-family:'Orbitron',monospace;letter-spacing:0.05em}
       </div>
     </div>
 
-  </div><!-- end mai<script type="module">
+  </div>
+
+  
+
+<script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
-
 import {
-  getAuth,
-  signInWithPopup,
-  GoogleAuthProvider,
-  signOut,
-  onAuthStateChanged
+  getAuth, signInWithPopup, GoogleAuthProvider, signOut, onAuthStateChanged
 } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
-
 import {
-  getFirestore,
-  collection,
-  query,
-  where,
-  getDocs,
-  addDoc,
-  doc,
-  setDoc,
-  updateDoc,
-  onSnapshot,
-  orderBy,
-  limit,
-  serverTimestamp,
-  getDoc
+  getFirestore, collection, query, where, getDocs, addDoc, doc,
+  setDoc, updateDoc, onSnapshot, orderBy, limit, serverTimestamp, getDoc
 } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
-
 import {
-  getDatabase,
-  ref,
-  set,
-  push,
-  update,
-  onValue
+  getDatabase, ref, set, push, update, onValue
 } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
 
-
 /* ═══════════════════════════════════════
-   FIREBASE 1 → QUESTIONS DATABASE
-   READ ONLY
+   FIREBASE CONFIG
 ═══════════════════════════════════════ */
-
 const QUESTIONS_FIREBASE = {
   apiKey: "AIzaSyDD5xBrSkX_YXzSnsKxjW8-K6W4rBfV3rg",
   authDomain: "chapter-wise-backup.firebaseapp.com",
@@ -953,13 +930,6 @@ const QUESTIONS_FIREBASE = {
   messagingSenderId: "864698641587",
   appId: "1:864698641587:web:d0b550579c6eb7709ed4c6"
 };
-
-
-/* ═══════════════════════════════════════
-   FIREBASE 2 → MAIN APP DATABASE
-   AUTH + USER + RESULTS + LEADERBOARD
-═══════════════════════════════════════ */
-
 const MAIN_FIREBASE = {
   apiKey: "AIzaSyAng6y7NH9RZshoxEqaplOM9LiSMVrsmtI",
   authDomain: "cee-medico-nepal-regular.firebaseapp.com",
@@ -969,60 +939,1125 @@ const MAIN_FIREBASE = {
   appId: "1:568305810313:web:ea50af6a7a1278d8f0bf58"
 };
 
-
 /* ═══════════════════════════════════════
-   INITIALIZE APPS
+   INITIALIZE
 ═══════════════════════════════════════ */
-
-// Questions app
-const questionApp = initializeApp(
-  QUESTIONS_FIREBASE,
-  "questionsApp"
-);
-
-// Main app
-const mainApp = initializeApp(
-  MAIN_FIREBASE,
-  "mainApp"
-);
-
-
-/* ═══════════════════════════════════════
-   DATABASE CONNECTIONS
-═══════════════════════════════════════ */
-
-// QUESTIONS FIRESTORE
-// READ QUESTIONS ONLY
-const questionDB = getFirestore(questionApp);
-
-
-// MAIN FIRESTORE
-// USERS + ANALYTICS + RESULTS
-const db = getFirestore(mainApp);
-
-
-// MAIN REALTIME DATABASE
-// LIVE LEADERBOARD + LIVE STATUS
-const rtdb = getDatabase(mainApp);
-
-
-// AUTH
-const auth = getAuth(mainApp);
-
-const provider = new GoogleAuthProvider();
-
+const questionApp = initializeApp(QUESTIONS_FIREBASE, "questionsApp");
+const mainApp     = initializeApp(MAIN_FIREBASE,     "mainApp");
+const questionDB  = getFirestore(questionApp);
+const db          = getFirestore(mainApp);
+const rtdb        = getDatabase(mainApp);
+const auth        = getAuth(mainApp);
+const provider    = new GoogleAuthProvider();
 
 /* ═══════════════════════════════════════
    GLOBAL STATE
 ═══════════════════════════════════════ */
+let currentUser      = null;
+let quizQuestions    = [];
+let userAnswers      = [];
+let currentQIdx      = 0;
+let liveScore        = 0;
+let quizTimer        = null;
+let questionTimer    = null;
+let quizStartTime    = null;
+let isDemo           = false;
+let todaySchedule    = null;
+let leaderboardUnsub = null;
+let QUESTION_TIME    = 30; // seconds per question
+const TOTAL_Q        = 30;
+const MARKS_CORRECT  = 4;
+const MARKS_WRONG    = -1;
 
-let currentUser = null;
-let quizQuestions = [];
-let userAnswers = [];
-let currentQIdx = 0;
-let liveScore = 0;
+/* ═══════════════════════════════════════
+   90-DAY STUDY SCHEDULE DATA
+═══════════════════════════════════════ */
+const SCHEDULE_DATA = [
+  {subject:"Physics",color:"#3d8bff",chapters:[
+    "Physical Quantities & Measurement","Vectors","Kinematics","Newton's Laws",
+    "Work, Energy & Power","Circular Motion","Gravitation","Fluid Mechanics",
+    "Heat & Thermodynamics","Waves & Sound","Light & Optics","Electrostatics",
+    "Current Electricity","Magnetism","Electromagnetic Induction","Modern Physics"
+  ]},
+  {subject:"Chemistry",color:"#a855f7",chapters:[
+    "Atomic Structure","Periodic Table","Chemical Bonding","States of Matter",
+    "Chemical Equilibrium","Acids & Bases","Electrochemistry","Thermochemistry",
+    "Organic Chemistry Basics","Hydrocarbons","Alcohols & Ethers","Carbonyl Compounds",
+    "Amines","Polymers","Biomolecules","Environmental Chemistry"
+  ]},
+  {subject:"Biology",color:"#10f090",chapters:[
+    "Cell Biology","Biomolecules","Cell Division","Genetics",
+    "Molecular Biology","Evolution","Plant Physiology","Animal Physiology",
+    "Human Anatomy","Digestion","Respiration","Circulation",
+    "Excretion","Nervous System","Endocrine System","Reproduction"
+  ]},
+  {subject:"Botany",color:"#ffd60a",chapters:[
+    "Plant Kingdom","Morphology","Anatomy","Cell Structure",
+    "Photosynthesis","Respiration in Plants","Plant Growth","Reproduction",
+    "Genetics & Heredity","Biotechnology","Ecology","Environmental Issues"
+  ]},
+  {subject:"Zoology",color:"#ff7c2a",chapters:[
+    "Animal Kingdom","Structural Organisation","Human Physiology I","Human Physiology II",
+    "Genetics","Evolution","Biotechnology","Ecology"
+  ]}
+];
 
-</script>nApp -->
+/* ═══════════════════════════════════════
+   UTILITY HELPERS
+═══════════════════════════════════════ */
+function $(id){ return document.getElementById(id); }
+
+function showToast(msg, type='info'){
+  const c = $('toastContainer');
+  const t = document.createElement('div');
+  t.className = `toast toast-${type}`;
+  t.innerHTML = `<i class="fas fa-${type==='success'?'check-circle':type==='error'?'times-circle':type==='warn'?'exclamation-triangle':'info-circle'}"></i>${msg}`;
+  c.appendChild(t);
+  setTimeout(()=>{ if(t.parentNode) t.parentNode.removeChild(t); }, 3200);
+}
+
+function hideLoading(){
+  const ov = $('loadingOverlay');
+  if(ov){ ov.classList.add('hidden'); setTimeout(()=>ov.style.display='none',500); }
+}
+
+function formatDate(d){
+  return d ? new Date(d.seconds?d.seconds*1000:d).toLocaleDateString('en-NP',{day:'2-digit',month:'short'}) : '—';
+}
+
+function gradeFromPct(pct){
+  if(pct>=80) return {g:'A+',cls:'grade-A'};
+  if(pct>=65) return {g:'A', cls:'grade-A'};
+  if(pct>=50) return {g:'B', cls:'grade-B'};
+  if(pct>=35) return {g:'C', cls:'grade-C'};
+  return {g:'D',cls:'grade-D'};
+}
+
+function getGreeting(){
+  const h = new Date().getHours();
+  if(h<12) return 'Good morning,'; if(h<17) return 'Good afternoon,'; return 'Good evening,';
+}
+
+function todayKey(){
+  const d = new Date();
+  return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+}
+
+/* ═══════════════════════════════════════
+   SCREEN NAVIGATION
+═══════════════════════════════════════ */
+window.switchScreen = function(screenId, btn){
+  document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
+  const s = $(screenId);
+  if(s) s.classList.add('active');
+  document.querySelectorAll('.nav-tab').forEach(t=>t.classList.remove('active'));
+  if(btn) btn.classList.add('active');
+  else {
+    document.querySelectorAll(`[data-screen="${screenId}"]`).forEach(t=>t.classList.add('active'));
+  }
+  if(screenId==='leaderboardScreen') loadLeaderboard();
+  if(screenId==='analyticsScreen')   loadAnalytics();
+  if(screenId==='scheduleScreen')    renderSchedule();
+  if(screenId==='homeScreen')        updateDashboard();
+};
+
+window.closeMobileMenu = function(){
+  const md = $('mobileDrawer');
+  if(md) md.classList.remove('open');
+};
+
+/* ═══════════════════════════════════════
+   HAMBURGER MENU
+═══════════════════════════════════════ */
+const hamburgerBtn = $('hamburgerBtn');
+if(hamburgerBtn){
+  hamburgerBtn.addEventListener('click',()=>{
+    const md = $('mobileDrawer');
+    if(md) md.classList.toggle('open');
+  });
+}
+
+/* ═══════════════════════════════════════
+   AUTH
+═══════════════════════════════════════ */
+const googleLoginBtn = $('googleLoginBtn');
+const demoLoginBtn   = $('demoLoginBtn');
+
+if(googleLoginBtn){
+  googleLoginBtn.addEventListener('click', async()=>{
+    try {
+      googleLoginBtn.disabled = true;
+      googleLoginBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Signing in...';
+      await signInWithPopup(auth, provider);
+    } catch(e){
+      showToast('Sign-in failed: ' + e.message, 'error');
+      googleLoginBtn.disabled = false;
+      googleLoginBtn.innerHTML = '<svg class="google-icon" viewBox="0 0 24 24"><path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/><path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/><path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/><path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/></svg>Continue with Google';
+    }
+  });
+}
+
+if(demoLoginBtn){
+  demoLoginBtn.addEventListener('click',()=>{
+    isDemo = true;
+    currentUser = { uid:'demo', displayName:'Demo Student', photoURL:'', email:'demo@test.com' };
+    enterApp();
+  });
+}
+
+window.doLogout = async function(){
+  if(isDemo){ currentUser=null; isDemo=false; showLoginScreen(); return; }
+  try { await signOut(auth); } catch(e){ showToast('Logout error','error'); }
+};
+
+onAuthStateChanged(auth, user=>{
+  if(user){
+    currentUser = user;
+    isDemo = false;
+    enterApp();
+  } else if(!isDemo){
+    showLoginScreen();
+  }
+});
+
+function showLoginScreen(){
+  $('loginScreen').style.display='flex';
+  $('mainApp').style.display='none';
+  hideLoading();
+}
+
+async function enterApp(){
+  $('loginScreen').style.display='none';
+  $('mainApp').style.display='block';
+  hideLoading();
+  // Update header
+  const av = $('headerAvatar');
+  const nm = $('headerName');
+  if(av) av.src = currentUser.photoURL || 'https://ui-avatars.com/api/?name='+encodeURIComponent(currentUser.displayName||'U')+'&background=3d8bff&color=fff';
+  if(nm) nm.textContent = (currentUser.displayName||'Student').split(' ')[0];
+  // Demo banner
+  const db2 = $('demoBanner');
+  if(db2) db2.style.display = isDemo ? 'flex' : 'none';
+  // Ensure user doc exists
+  if(!isDemo) await ensureUserDoc();
+  await updateDashboard();
+  switchScreen('homeScreen');
+}
+
+/* ═══════════════════════════════════════
+   USER DOCUMENT (FIRESTORE)
+═══════════════════════════════════════ */
+async function ensureUserDoc(){
+  if(isDemo||!currentUser) return;
+  const ref2 = doc(db,'users',currentUser.uid);
+  const snap = await getDoc(ref2);
+  if(!snap.exists()){
+    await setDoc(ref2,{
+      uid: currentUser.uid,
+      name: currentUser.displayName||'',
+      email: currentUser.email||'',
+      photo: currentUser.photoURL||'',
+      createdAt: serverTimestamp(),
+      streak: 0, lastQuizDate: null, totalTests: 0, bestScore: 0, totalScore: 0
+    });
+  }
+}
+
+async function getUserDoc(){
+  if(isDemo||!currentUser) return null;
+  const snap = await getDoc(doc(db,'users',currentUser.uid));
+  return snap.exists() ? snap.data() : null;
+}
+
+/* ═══════════════════════════════════════
+   DASHBOARD
+═══════════════════════════════════════ */
+async function updateDashboard(){
+  const gEl = document.querySelector('.hero-greeting');
+  if(gEl) gEl.textContent = getGreeting();
+  const dn = $('dashName');
+  if(dn) dn.textContent = currentUser ? (currentUser.displayName||'Student').split(' ')[0] : 'Student';
+
+  // Compute today's schedule chapter
+  const sched = computeTodaySchedule();
+  todaySchedule = sched;
+  const tcc = $('todayChapterCard');
+  if(tcc){
+    if(sched){
+      tcc.innerHTML = `
+        <div style="display:flex;align-items:center;gap:14px;flex-wrap:wrap">
+          <div style="width:46px;height:46px;border-radius:12px;background:${sched.color}22;border:1px solid ${sched.color}44;display:flex;align-items:center;justify-content:center;font-size:1.3rem">📖</div>
+          <div>
+            <div style="font-size:0.68rem;color:var(--text3);font-weight:700;text-transform:uppercase;letter-spacing:0.1em;margin-bottom:4px">Day ${sched.day}</div>
+            <div style="font-size:1rem;font-weight:700;color:var(--text);margin-bottom:4px">${sched.chapter}</div>
+            <span style="font-size:0.72rem;font-weight:700;padding:2px 10px;border-radius:5px;background:${sched.color}18;color:${sched.color};border:1px solid ${sched.color}33">${sched.subject}</span>
+          </div>
+        </div>`;
+    } else {
+      tcc.innerHTML = `<div style="color:var(--text3);font-size:0.85rem">No chapter scheduled today. Rest day! 🎉</div>`;
+    }
+  }
+
+  // Load user stats
+  if(!isDemo && currentUser){
+    try {
+      const ud = await getUserDoc();
+      if(ud){
+        setEl('dashTotalTests', ud.totalTests||0);
+        setEl('dashBestScore',  ud.bestScore||0);
+        const totalTests = ud.totalTests||0;
+        const avgAcc = totalTests > 0 ? Math.round(((ud.totalScore||0)/(totalTests*TOTAL_Q*MARKS_CORRECT))*100) : 0;
+        setEl('dashAvgAcc', avgAcc+'%');
+        setEl('dashStreak',  ud.streak||0);
+        // Last result
+        const q = query(collection(db,'results'),where('uid','==',currentUser.uid),orderBy('createdAt','desc'),limit(1));
+        const snap = await getDocs(q);
+        if(!snap.empty){
+          const r = snap.docs[0].data();
+          const pct = Math.round((r.correct/(r.correct+r.wrong+r.skipped))*100)||0;
+          const gr = gradeFromPct(pct);
+          const rc = $('recentResultCard');
+          const rp = $('recentResultPreview');
+          if(rc && rp){
+            rp.style.display='block';
+            rc.innerHTML=`<div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px">
+              <div><div style="font-size:0.75rem;color:var(--text3)">${r.subject||''} · ${r.chapter||''}</div>
+              <div style="font-size:1rem;font-weight:700;color:var(--cyan);font-family:'Orbitron',monospace">${r.score} pts · ${pct}%</div></div>
+              <span class="grade-badge ${gr.cls}">${gr.g}</span></div>`;
+          }
+        }
+      }
+    } catch(e){ console.error('Dashboard stats error',e); }
+  }
+
+  // Quiz status
+  await updateQuizStatus();
+}
+
+function setEl(id, val){ const e=$(id); if(e) e.textContent=val; }
+
+/* ═══════════════════════════════════════
+   QUIZ STATUS & COUNTDOWN
+═══════════════════════════════════════ */
+async function updateQuizStatus(){
+  const sm  = $('quizStatusMain');
+  const qas = $('quizActionSection');
+  const cs  = $('countdownSection');
+  if(!sm) return;
+
+  const now = new Date();
+  const hour = now.getHours();
+  const min  = now.getMinutes();
+  const QUIZ_START_H = 22; // 10 PM
+  const QUIZ_END_H   = 23; // 11 PM
+
+  // Check if user already took today's quiz
+  let tookToday = false;
+  if(!isDemo && currentUser){
+    try {
+      const q = query(collection(db,'results'),
+        where('uid','==',currentUser.uid),
+        where('dateKey','==',todayKey()));
+      const snap = await getDocs(q);
+      tookToday = !snap.empty;
+    } catch(e){}
+  }
+
+  if(tookToday){
+    sm.textContent = '✅ Quiz Completed Today!';
+    sm.style.color = 'var(--green)';
+    cs.style.display='none';
+    qas.innerHTML = `<button class="btn btn-ghost btn-sm mt8" onclick="switchScreen('resultsScreen')"><i class="fas fa-eye"></i> View Results</button>
+      <button class="btn btn-ghost btn-sm mt8" onclick="switchScreen('leaderboardScreen')"><i class="fas fa-ranking-star"></i> Leaderboard</button>`;
+    return;
+  }
+
+  if(hour>=QUIZ_START_H && hour<QUIZ_END_H){
+    sm.textContent = '🔴 Quiz is LIVE Now!';
+    sm.style.color = 'var(--red)';
+    cs.style.display='none';
+    qas.innerHTML = `<button class="btn btn-cyan btn-lg mt8" onclick="startQuiz()"><i class="fas fa-play"></i> Start Quiz Now</button>`;
+    $('liveBadgeHeader').style.display='block';
+  } else if(hour<QUIZ_START_H){
+    sm.textContent = 'Quiz starts at 10:00 PM';
+    sm.style.color = 'var(--text2)';
+    cs.style.display='block';
+    startCountdown();
+    qas.innerHTML = `<button class="btn btn-ghost btn-sm mt8" onclick="startQuiz()"><i class="fas fa-flask"></i> Practice Now</button>`;
+  } else {
+    sm.textContent = '⏰ Quiz has ended for today';
+    sm.style.color = 'var(--text3)';
+    cs.style.display='none';
+    qas.innerHTML = `<button class="btn btn-ghost btn-sm mt8" onclick="startQuiz()"><i class="fas fa-redo"></i> Practice Mode</button>`;
+  }
+}
+
+let countdownInterval = null;
+function startCountdown(){
+  if(countdownInterval) clearInterval(countdownInterval);
+  function update(){
+    const now = new Date();
+    const target = new Date(); target.setHours(22,0,0,0);
+    if(target <= now){ target.setDate(target.getDate()+1); }
+    const diff = target - now;
+    const h = Math.floor(diff/3600000);
+    const m = Math.floor((diff%3600000)/60000);
+    const s = Math.floor((diff%60000)/1000);
+    const cd = $('countdownDisplay');
+    if(cd) cd.textContent = `${String(h).padStart(2,'0')}:${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`;
+  }
+  update();
+  countdownInterval = setInterval(update, 1000);
+}
+
+/* ═══════════════════════════════════════
+   LOAD QUESTIONS FROM FIREBASE
+═══════════════════════════════════════ */
+async function loadQuestions(){
+  // Try to fetch from Firestore questions database
+  // Collection: questions, pick random 30
+  try {
+    const sched = todaySchedule || computeTodaySchedule();
+    let q;
+    if(sched){
+      q = query(collection(questionDB,'questions'),
+        where('subject','==', sched.subject),
+        where('chapter','==', sched.chapter),
+        limit(60));
+    } else {
+      q = query(collection(questionDB,'questions'), limit(60));
+    }
+    const snap = await getDocs(q);
+    let docs = snap.docs.map(d=>({id:d.id,...d.data()}));
+    // Shuffle & take 30
+    docs = shuffle(docs).slice(0, TOTAL_Q);
+    if(docs.length > 0) return docs;
+  } catch(e){ console.error('Firestore questions error',e); }
+
+  // Fallback: demo questions
+  return generateDemoQuestions();
+}
+
+function shuffle(arr){
+  const a=[...arr];
+  for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]];}
+  return a;
+}
+
+function generateDemoQuestions(){
+  const demos = [
+    {question:"Which of the following is the SI unit of electric charge?",options:["Ampere","Coulomb","Volt","Farad"],correct:1,subject:"Physics",chapter:"Electrostatics",explanation:"The SI unit of electric charge is Coulomb (C), named after physicist Charles-Augustin de Coulomb."},
+    {question:"The process by which plants make food using sunlight is called:",options:["Respiration","Fermentation","Photosynthesis","Digestion"],correct:2,subject:"Biology",chapter:"Plant Physiology",explanation:"Photosynthesis is the process by which green plants convert sunlight, CO₂, and water into glucose and oxygen."},
+    {question:"What is the atomic number of Carbon?",options:["4","6","8","12"],correct:1,subject:"Chemistry",chapter:"Atomic Structure",explanation:"Carbon has atomic number 6, meaning it has 6 protons in its nucleus."},
+    {question:"Newton's second law of motion states that F = ?",options:["mv","ma","m/a","m+a"],correct:1,subject:"Physics",chapter:"Newton's Laws",explanation:"Newton's second law states F = ma (Force = mass × acceleration)."},
+    {question:"The powerhouse of the cell is:",options:["Nucleus","Ribosome","Mitochondria","Chloroplast"],correct:2,subject:"Biology",chapter:"Cell Biology",explanation:"Mitochondria produce ATP through cellular respiration and are called the powerhouse of the cell."},
+    {question:"pH of pure water at 25°C is:",options:["5","6","7","8"],correct:2,subject:"Chemistry",chapter:"Acids & Bases",explanation:"Pure water is neutral with pH = 7 at 25°C."},
+    {question:"Which gas is produced during electrolysis of water at cathode?",options:["Oxygen","Hydrogen","Nitrogen","Carbon dioxide"],correct:1,subject:"Chemistry",chapter:"Electrochemistry",explanation:"Hydrogen gas is produced at the cathode during electrolysis of water."},
+    {question:"The speed of light in vacuum is approximately:",options:["3×10⁶ m/s","3×10⁸ m/s","3×10¹⁰ m/s","3×10⁴ m/s"],correct:1,subject:"Physics",chapter:"Light & Optics",explanation:"The speed of light in vacuum is approximately 3×10⁸ m/s."},
+    {question:"Which organ produces insulin?",options:["Liver","Kidney","Pancreas","Spleen"],correct:2,subject:"Biology",chapter:"Endocrine System",explanation:"Insulin is produced by the beta cells of the islets of Langerhans in the pancreas."},
+    {question:"Avogadro's number is:",options:["6.022×10²³","6.022×10²²","6.022×10²⁴","6.022×10²⁰"],correct:0,subject:"Chemistry",chapter:"Atomic Structure",explanation:"Avogadro's number (Nₐ) = 6.022 × 10²³ mol⁻¹."},
+    {question:"A convex lens is also known as:",options:["Diverging lens","Converging lens","Plano lens","Concave lens"],correct:1,subject:"Physics",chapter:"Light & Optics",explanation:"A convex lens converges parallel rays to a focal point and is called a converging lens."},
+    {question:"Which vitamin is synthesized by human skin on exposure to sunlight?",options:["Vitamin A","Vitamin B","Vitamin C","Vitamin D"],correct:3,subject:"Biology",chapter:"Human Anatomy",explanation:"Vitamin D is synthesized in the skin when exposed to UVB radiation from sunlight."},
+    {question:"The valency of Nitrogen in NH₃ is:",options:["1","2","3","5"],correct:2,subject:"Chemistry",chapter:"Chemical Bonding",explanation:"Nitrogen forms 3 covalent bonds with 3 hydrogen atoms in ammonia (NH₃), showing valency of 3."},
+    {question:"Ohm's law states that V =",options:["I+R","I/R","I×R","I-R"],correct:2,subject:"Physics",chapter:"Current Electricity",explanation:"Ohm's law states V = IR, where V is voltage, I is current, and R is resistance."},
+    {question:"Which part of the brain controls balance and coordination?",options:["Cerebrum","Cerebellum","Medulla","Thalamus"],correct:1,subject:"Biology",chapter:"Nervous System",explanation:"The cerebellum coordinates movement, balance, and fine motor control."},
+    {question:"The IUPAC name of acetone is:",options:["Propan-1-ol","Propan-2-ol","Propan-1-one","Propan-2-one"],correct:3,subject:"Chemistry",chapter:"Carbonyl Compounds",explanation:"Acetone (CH₃COCH₃) is named propan-2-one in IUPAC nomenclature."},
+    {question:"Which of the following is a scalar quantity?",options:["Velocity","Force","Acceleration","Speed"],correct:3,subject:"Physics",chapter:"Vectors",explanation:"Speed is a scalar quantity as it has only magnitude and no direction."},
+    {question:"DNA replication occurs during which phase of the cell cycle?",options:["G1","S","G2","M"],correct:1,subject:"Biology",chapter:"Cell Division",explanation:"DNA replication occurs during the S (Synthesis) phase of the cell cycle."},
+    {question:"Hybridization of carbon in ethene (C₂H₄) is:",options:["sp","sp²","sp³","sp³d"],correct:1,subject:"Chemistry",chapter:"Hydrocarbons",explanation:"Each carbon in ethene forms a double bond, involving sp² hybridization with one unhybridized p orbital."},
+    {question:"The unit of frequency is:",options:["Meter","Joule","Hertz","Newton"],correct:2,subject:"Physics",chapter:"Waves & Sound",explanation:"Frequency is measured in Hertz (Hz), where 1 Hz = 1 cycle per second."},
+    {question:"Which blood group is the universal donor?",options:["A","B","AB","O"],correct:3,subject:"Biology",chapter:"Circulation",explanation:"Blood group O⁻ is the universal donor as it lacks A, B antigens and Rh factor."},
+    {question:"Rust is chemically:",options:["FeO","Fe₂O₃·xH₂O","Fe₃O₄","FeCO₃"],correct:1,subject:"Chemistry",chapter:"Electrochemistry",explanation:"Rust is hydrated iron(III) oxide with formula Fe₂O₃·xH₂O."},
+    {question:"A body is in free fall. What is its acceleration?",options:["0 m/s²","5 m/s²","9.8 m/s²","14 m/s²"],correct:2,subject:"Physics",chapter:"Kinematics",explanation:"A freely falling body accelerates at g = 9.8 m/s² due to Earth's gravity."},
+    {question:"The functional unit of the kidney is called:",options:["Axon","Nephron","Alveolus","Villus"],correct:1,subject:"Biology",chapter:"Excretion",explanation:"The nephron is the structural and functional unit of the kidney responsible for filtration."},
+    {question:"What is the molecular formula of glucose?",options:["C₆H₁₂O₆","C₁₂H₂₂O₁₁","C₂H₅OH","CH₂O"],correct:0,subject:"Chemistry",chapter:"Biomolecules",explanation:"Glucose is a monosaccharide with molecular formula C₆H₁₂O₆."},
+    {question:"Which type of mirror is used in a car's rear-view mirror?",options:["Concave","Plane","Convex","Parabolic"],correct:2,subject:"Physics",chapter:"Light & Optics",explanation:"Convex mirrors are used in rear-view mirrors as they provide a wider field of view."},
+    {question:"The hormone responsible for the fight-or-flight response is:",options:["Insulin","Thyroxine","Adrenaline","Cortisol"],correct:2,subject:"Biology",chapter:"Endocrine System",explanation:"Adrenaline (epinephrine) triggers the fight-or-flight response by increasing heart rate and energy."},
+    {question:"What is the product of mass and velocity?",options:["Force","Energy","Momentum","Power"],correct:2,subject:"Physics",chapter:"Newton's Laws",explanation:"Momentum (p) = mass × velocity (mv). It is a vector quantity."},
+    {question:"Which element is liquid at room temperature?",options:["Iron","Mercury","Gold","Copper"],correct:1,subject:"Chemistry",chapter:"Periodic Table",explanation:"Mercury (Hg) is the only metallic element that is liquid at room temperature (25°C)."},
+    {question:"Meiosis results in how many daughter cells?",options:["1","2","3","4"],correct:3,subject:"Biology",chapter:"Cell Division",explanation:"Meiosis produces 4 haploid daughter cells from one diploid parent cell through two successive divisions."},
+  ];
+  return demos.map((d,i)=>({id:`demo_${i}`, ...d}));
+}
+
+/* ═══════════════════════════════════════
+   START QUIZ
+═══════════════════════════════════════ */
+window.startQuiz = async function(){
+  const lobby = $('quizLobby');
+  const active = $('quizActive');
+  if(lobby) lobby.innerHTML = `<div style="text-align:center;padding:60px 20px"><div class="loader-ring" style="margin:0 auto 16px"></div><div class="loader-text">Loading Questions...</div></div>`;
+
+  switchScreen('quizScreen');
+
+  quizQuestions = await loadQuestions();
+  userAnswers   = new Array(quizQuestions.length).fill(null);
+  currentQIdx   = 0;
+  liveScore     = 0;
+  quizStartTime = Date.now();
+
+  // Update lobby subject info
+  const sched = todaySchedule || computeTodaySchedule();
+  const li = $('lobbySubjectInfo');
+  if(li) li.textContent = sched ? `${sched.subject} · ${sched.chapter} · ${quizQuestions.length} Questions` : `Mixed Practice · ${quizQuestions.length} Questions`;
+
+  if(lobby) lobby.style.display='none';
+  if(active){ active.style.display='block'; }
+
+  renderNavigator();
+  showQuestion(0);
+};
+
+/* ═══════════════════════════════════════
+   QUESTION RENDERING
+═══════════════════════════════════════ */
+function showQuestion(idx){
+  if(idx < 0 || idx >= quizQuestions.length) return;
+  currentQIdx = idx;
+  const q = quizQuestions[idx];
+
+  // Update progress
+  const pct = Math.round(((idx+1)/quizQuestions.length)*100);
+  setEl('qProgressLabel', `Q ${idx+1} / ${quizQuestions.length}`);
+  setEl('qProgressPct', pct+'%');
+  const pb = $('qProgressBar');
+  if(pb) pb.style.width = Math.max(3,pct)+'%';
+
+  // Live score
+  setEl('qLiveScore', liveScore);
+
+  // Subject/chapter badges
+  setEl('qSubjectBadge', q.subject||'');
+  setEl('qChapterBadge', q.chapter||'');
+
+  // Question text
+  setEl('questionText', q.question||'');
+
+  // Options
+  const oc = $('optionsContainer');
+  if(oc){
+    oc.innerHTML='';
+    const letters=['A','B','C','D','E'];
+    (q.options||[]).forEach((opt,i)=>{
+      const btn = document.createElement('button');
+      btn.className='option-btn';
+      btn.innerHTML=`<span class="opt-letter">${letters[i]}</span><span>${opt}</span>`;
+      const ans = userAnswers[idx];
+      if(ans !== null){
+        btn.disabled = true;
+        if(i === q.correct)  btn.classList.add('correct');
+        else if(i === ans)   btn.classList.add('wrong');
+        else                 btn.classList.add('dim');
+      } else {
+        btn.onclick = ()=> selectAnswer(idx, i);
+      }
+      oc.appendChild(btn);
+    });
+  }
+
+  // Navigator highlight
+  document.querySelectorAll('.q-nav-dot').forEach((d,i)=>d.classList.toggle('active',i===idx));
+
+  // Next button state
+  const nb = $('nextBtn');
+  if(nb) nb.disabled = (userAnswers[idx] === null && !isSkipped(idx));
+
+  // Start per-question timer
+  startQuestionTimer();
+}
+
+function isSkipped(idx){ return userAnswers[idx] === -1; }
+
+function selectAnswer(qIdx, optIdx){
+  if(userAnswers[qIdx] !== null) return;
+  const q = quizQuestions[qIdx];
+  userAnswers[qIdx] = optIdx;
+
+  // Score
+  if(optIdx === q.correct) liveScore += MARKS_CORRECT;
+  else liveScore += MARKS_WRONG;
+  if(liveScore < 0) liveScore = 0;
+  setEl('qLiveScore', liveScore);
+
+  // Re-render question to show correct/wrong
+  showQuestion(qIdx);
+  renderNavigator();
+
+  // Enable next
+  const nb = $('nextBtn');
+  if(nb) nb.disabled = false;
+  clearQuestionTimer();
+}
+
+window.skipQuestion = function(){
+  userAnswers[currentQIdx] = -1; // -1 = skipped
+  renderNavigator();
+  clearQuestionTimer();
+  if(currentQIdx < quizQuestions.length - 1) nextQuestion();
+  else { const nb=$('nextBtn'); if(nb) nb.disabled=false; }
+};
+
+window.nextQuestion = function(){
+  if(currentQIdx < quizQuestions.length - 1){
+    showQuestion(currentQIdx + 1);
+  } else {
+    openSubmitModal();
+  }
+};
+
+/* ═══════════════════════════════════════
+   QUESTION TIMER
+═══════════════════════════════════════ */
+function startQuestionTimer(){
+  clearQuestionTimer();
+  let remaining = QUESTION_TIME;
+  setEl('qTimerVal', remaining);
+  const tv = $('qTimerVal');
+  if(tv) tv.classList.remove('danger');
+
+  questionTimer = setInterval(()=>{
+    remaining--;
+    setEl('qTimerVal', remaining);
+    if(tv && remaining <= 10) tv.classList.add('danger');
+    if(remaining <= 0){
+      clearQuestionTimer();
+      // Auto-skip on timeout
+      if(userAnswers[currentQIdx] === null){
+        userAnswers[currentQIdx] = -1;
+        renderNavigator();
+        if(currentQIdx < quizQuestions.length-1) showQuestion(currentQIdx+1);
+        else openSubmitModal();
+      }
+    }
+  }, 1000);
+}
+
+function clearQuestionTimer(){
+  if(questionTimer){ clearInterval(questionTimer); questionTimer=null; }
+}
+
+/* ═══════════════════════════════════════
+   QUESTION NAVIGATOR
+═══════════════════════════════════════ */
+function renderNavigator(){
+  const nav = $('qNavigator');
+  if(!nav) return;
+  nav.innerHTML='';
+  quizQuestions.forEach((_,i)=>{
+    const d = document.createElement('button');
+    d.className = 'q-nav-dot';
+    d.textContent = i+1;
+    const ans = userAnswers[i];
+    if(i === currentQIdx) d.classList.add('active');
+    else if(ans === null) d.classList.add('unanswered');
+    else if(ans === -1)  d.classList.add('skipped');
+    else                 d.classList.add('answered');
+    d.onclick = ()=> showQuestion(i);
+    nav.appendChild(d);
+  });
+}
+
+/* ═══════════════════════════════════════
+   SUBMIT MODAL
+═══════════════════════════════════════ */
+window.openSubmitModal = function(){
+  clearQuestionTimer();
+  const unanswered = userAnswers.filter(a=>a===null).length;
+  setEl('modalUnanswered', unanswered);
+  const m = $('submitModal');
+  if(m) m.classList.remove('hidden');
+};
+
+window.closeModal = function(){
+  const m = $('submitModal');
+  if(m) m.classList.add('hidden');
+};
+
+window.confirmSubmit = async function(){
+  closeModal();
+  clearQuestionTimer();
+  // Fill remaining nulls as skipped
+  userAnswers = userAnswers.map(a=> a===null ? -1 : a);
+  await submitQuiz();
+};
+
+/* ═══════════════════════════════════════
+   SUBMIT QUIZ & SAVE RESULTS
+═══════════════════════════════════════ */
+async function submitQuiz(){
+  const correct = userAnswers.filter((a,i)=> a !== -1 && a === quizQuestions[i].correct).length;
+  const wrong   = userAnswers.filter((a,i)=> a !== -1 && a !== quizQuestions[i].correct).length;
+  const skipped = userAnswers.filter(a=> a === -1).length;
+  const score   = (correct * MARKS_CORRECT) + (wrong * MARKS_WRONG);
+  const finalScore = Math.max(0, score);
+  const accuracy= Math.round((correct / quizQuestions.length) * 100);
+  const timeTaken = quizStartTime ? Math.round((Date.now()-quizStartTime)/1000) : 0;
+  const sched   = todaySchedule || computeTodaySchedule();
+
+  const resultData = {
+    uid: currentUser.uid,
+    name: currentUser.displayName||'Student',
+    photo: currentUser.photoURL||'',
+    score: finalScore,
+    correct, wrong, skipped,
+    accuracy,
+    total: quizQuestions.length,
+    timeTaken,
+    subject: sched?.subject||'Mixed',
+    chapter: sched?.chapter||'Mixed',
+    dateKey: todayKey(),
+    createdAt: serverTimestamp()
+  };
+
+  if(!isDemo && currentUser.uid !== 'demo'){
+    try {
+      // Save to Firestore results collection
+      await addDoc(collection(db,'results'), resultData);
+
+      // Update user aggregate stats
+      const ud = await getUserDoc();
+      const newTotal = (ud?.totalTests||0) + 1;
+      const newBest  = Math.max(ud?.bestScore||0, finalScore);
+      const newTotalScore = (ud?.totalScore||0) + finalScore;
+
+      // Update streak
+      const lastDate = ud?.lastQuizDate;
+      const today = todayKey();
+      let streak = ud?.streak||0;
+      if(lastDate){
+        const last = new Date(lastDate);
+        const diff = Math.floor((new Date(today)-last)/(1000*60*60*24));
+        if(diff===1) streak++;
+        else if(diff>1) streak=1;
+      } else streak=1;
+
+      await updateDoc(doc(db,'users',currentUser.uid),{
+        totalTests: newTotal,
+        bestScore: newBest,
+        totalScore: newTotalScore,
+        streak, lastQuizDate: today
+      });
+
+      // Save to Realtime DB leaderboard
+      const lbEntry = {
+        uid: currentUser.uid,
+        name: currentUser.displayName||'Student',
+        photo: currentUser.photoURL||'',
+        score: finalScore,
+        accuracy,
+        dateKey: todayKey(),
+        timestamp: Date.now()
+      };
+      await set(ref(rtdb, `leaderboard/${todayKey()}/${currentUser.uid}`), lbEntry);
+
+      showToast('Result saved! 🎉','success');
+    } catch(e){
+      console.error('Save result error',e);
+      showToast('Result saved locally (offline mode)','warn');
+    }
+  }
+
+  // Show results screen
+  showResults({ correct, wrong, skipped, score: finalScore, accuracy, sched });
+}
+
+/* ═══════════════════════════════════════
+   RESULTS SCREEN
+═══════════════════════════════════════ */
+function showResults({ correct, wrong, skipped, score, accuracy, sched }){
+  switchScreen('resultsScreen');
+
+  // Ring
+  const ring = $('resultRing');
+  if(ring) ring.style.setProperty('--pct', accuracy);
+  setEl('resultPct', accuracy+'%');
+
+  // Label
+  const gr = gradeFromPct(accuracy);
+  const labels = {A:['Excellent! 🌟','Outstanding! 🏆'],B:['Good Job! 👍','Well Done! ✅'],C:['Average 📊','Keep Practicing 💪'],D:['Needs Improvement ❌','Study More 📚']};
+  const lk = gr.g[0];
+  const rl = $('resultLabel');
+  if(rl){ rl.textContent=(labels[lk]||['Keep Going! 💡'])[Math.floor(Math.random()*2)]; rl.style.color = accuracy>=65?'var(--green)':accuracy>=50?'var(--yellow)':'var(--red)'; }
+
+  setEl('resultSubMeta', `${sched?.subject||'Mixed'} · ${sched?.chapter||'Practice'} · ${new Date().toLocaleDateString('en-NP')}`);
+  setEl('rScore',   score);
+  setEl('rCorrect', correct);
+  setEl('rWrong',   wrong);
+  setEl('rSkipped', skipped);
+
+  // Subject breakdown
+  buildSubjectBreakdown();
+  // Review
+  buildReview('all');
+  // Compare
+  loadCompare();
+}
+
+function buildSubjectBreakdown(){
+  const sb = $('subjectBreakdown');
+  if(!sb) return;
+  // Group by subject
+  const groups = {};
+  quizQuestions.forEach((q,i)=>{
+    const s = q.subject||'General';
+    if(!groups[s]) groups[s]={total:0,correct:0,wrong:0,skipped:0};
+    groups[s].total++;
+    const a = userAnswers[i];
+    if(a===-1) groups[s].skipped++;
+    else if(a===q.correct) groups[s].correct++;
+    else groups[s].wrong++;
+  });
+  sb.innerHTML = Object.entries(groups).map(([sub,g])=>{
+    const pct = Math.round((g.correct/g.total)*100);
+    return `<div style="margin-bottom:14px">
+      <div style="display:flex;justify-content:space-between;margin-bottom:5px;font-size:0.82rem">
+        <span style="font-weight:600">${sub}</span>
+        <span style="color:var(--cyan);font-family:'Orbitron',monospace">${g.correct}/${g.total} · ${pct}%</span>
+      </div>
+      <div class="progress-bar-outer"><div class="progress-bar-inner" style="width:${pct}%"></div></div>
+      <div style="display:flex;gap:12px;margin-top:5px;font-size:0.72rem;color:var(--text3)">
+        <span style="color:var(--green)">✓ ${g.correct}</span>
+        <span style="color:var(--red)">✗ ${g.wrong}</span>
+        <span style="color:var(--yellow)">− ${g.skipped}</span>
+      </div></div>`;
+  }).join('');
+}
+
+window.switchResultTab = function(tab, btn){
+  document.querySelectorAll('.result-tab').forEach(t=>t.classList.remove('active'));
+  document.querySelectorAll('.result-tab-content').forEach(t=>t.classList.remove('active'));
+  if(btn) btn.classList.add('active');
+  const c = $('rt'+tab.charAt(0).toUpperCase()+tab.slice(1));
+  if(c) c.classList.add('active');
+};
+
+window.filterReview = function(filter){
+  ['All','Wrong','Skipped'].forEach(f=>{ const b=$('rf'+f); if(b) b.classList.remove('btn-primary'); });
+  const active=$('rf'+filter.charAt(0).toUpperCase()+filter.slice(1));
+  if(active) active.classList.add('btn-primary');
+  buildReview(filter);
+};
+
+function buildReview(filter){
+  const rl = $('reviewList');
+  if(!rl) return;
+  const letters=['A','B','C','D','E'];
+  const items = quizQuestions.map((q,i)=>({q,i,a:userAnswers[i]}))
+    .filter(({q,i,a})=>{
+      if(filter==='wrong')   return a!==-1 && a!==q.correct;
+      if(filter==='skipped') return a===-1;
+      return true;
+    });
+
+  if(!items.length){ rl.innerHTML=`<div style="text-align:center;padding:24px;color:var(--text3)">No items for this filter.</div>`; return; }
+
+  rl.innerHTML = items.map(({q,i,a})=>{
+    const isC = a===q.correct;
+    const isS = a===-1;
+    const cls = isC?'correct':isS?'skipped':'wrong';
+    const yourAns = a===-1?'Skipped':letters[a]+') '+(q.options[a]||'');
+    const correctAns = letters[q.correct]+') '+(q.options[q.correct]||'');
+    return `<div class="review-item ${cls}">
+      <div class="review-q-text"><span style="color:var(--text3);font-size:0.75rem">Q${i+1}.</span> ${q.question}</div>
+      <div class="review-badges">
+        <span class="review-badge ${isC?'rb-correct':isS?'rb-skipped':'rb-wrong'}">${isC?'✓ Correct':isS?'— Skipped':'✗ Wrong'}</span>
+        ${!isC?`<span class="review-badge rb-answer">✓ ${correctAns}</span>`:''}
+        ${!isC&&!isS?`<span class="review-badge rb-wrong">✗ ${yourAns}</span>`:''}
+      </div>
+      ${q.explanation?`<div style="font-size:0.78rem;color:var(--text2);margin-top:8px;padding:8px 10px;background:rgba(255,255,255,0.03);border-radius:7px;line-height:1.5">${q.explanation}</div>`:''}
+    </div>`;
+  }).join('');
+}
+
+async function loadCompare(){
+  const cd = $('compareData');
+  if(!cd) return;
+  cd.innerHTML='<div style="color:var(--text3)"><i class="fas fa-spinner fa-spin"></i> Loading comparison...</div>';
+  try {
+    const q = query(
+      collection(db,'results'),
+      where('dateKey','==',todayKey()),
+      orderBy('score','desc'),
+      limit(50)
+    );
+    const snap = await getDocs(q);
+    if(snap.empty){ cd.innerHTML='<div style="color:var(--text3)">No other results yet today.</div>'; return; }
+    const scores = snap.docs.map(d=>d.data().score);
+    const myScore = parseInt($('rScore')?.textContent||'0');
+    const avg = Math.round(scores.reduce((a,b)=>a+b,0)/scores.length);
+    const max = Math.max(...scores);
+    const above = scores.filter(s=>s<myScore).length;
+    const pctile = Math.round((above/scores.length)*100);
+    cd.innerHTML=`
+      <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:12px;text-align:center;margin-bottom:16px">
+        <div style="background:rgba(255,255,255,0.03);border-radius:10px;padding:12px">
+          <div style="font-family:'Orbitron',monospace;font-size:1.1rem;font-weight:700;color:var(--cyan)">${myScore}</div>
+          <div style="font-size:0.7rem;color:var(--text3)">Your Score</div>
+        </div>
+        <div style="background:rgba(255,255,255,0.03);border-radius:10px;padding:12px">
+          <div style="font-family:'Orbitron',monospace;font-size:1.1rem;font-weight:700;color:var(--blue)">${avg}</div>
+          <div style="font-size:0.7rem;color:var(--text3)">Avg Score</div>
+        </div>
+        <div style="background:rgba(255,255,255,0.03);border-radius:10px;padding:12px">
+          <div style="font-family:'Orbitron',monospace;font-size:1.1rem;font-weight:700;color:var(--yellow)">${max}</div>
+          <div style="font-size:0.7rem;color:var(--text3)">Top Score</div>
+        </div>
+      </div>
+      <div style="text-align:center;font-size:0.875rem;color:var(--text2)">
+        You scored better than <strong style="color:var(--green)">${pctile}%</strong> of students today (${scores.length} participants)
+      </div>`;
+  } catch(e){ cd.innerHTML='<div style="color:var(--text3)">Comparison unavailable offline.</div>'; }
+}
+
+/* ═══════════════════════════════════════
+   LEADERBOARD
+═══════════════════════════════════════ */
+async function loadLeaderboard(){
+  const ll = $('leaderboardList');
+  if(!ll) return;
+  ll.innerHTML='<div style="text-align:center;padding:32px;color:var(--text3)"><i class="fas fa-spinner fa-spin"></i> Loading leaderboard...</div>';
+
+  try {
+    // Listen to today's leaderboard from RTDB
+    const lbRef = ref(rtdb, `leaderboard/${todayKey()}`);
+    onValue(lbRef, snap=>{
+      const data = snap.val();
+      if(!data){ ll.innerHTML='<div style="text-align:center;padding:32px;color:var(--text3)">No entries yet today. Be the first! 🚀</div>'; return; }
+      const entries = Object.values(data).sort((a,b)=>b.score-a.score);
+      renderLeaderboard(entries, ll);
+    }, {onlyOnce:true});
+  } catch(e){
+    // Fallback to Firestore
+    try {
+      const q = query(collection(db,'results'),where('dateKey','==',todayKey()),orderBy('score','desc'),limit(50));
+      const snap = await getDocs(q);
+      if(snap.empty){ ll.innerHTML='<div style="text-align:center;padding:32px;color:var(--text3)">No entries today.</div>'; return; }
+      const entries = snap.docs.map(d=>d.data());
+      renderLeaderboard(entries, ll);
+    } catch(e2){ ll.innerHTML='<div style="text-align:center;padding:32px;color:var(--text3)">Leaderboard unavailable.</div>'; }
+  }
+}
+
+function renderLeaderboard(entries, container){
+  const rankIcons=['🥇','🥈','🥉'];
+  container.innerHTML = entries.map((e,i)=>{
+    const isMe = currentUser && e.uid===currentUser.uid;
+    const acc  = e.accuracy ? e.accuracy+'%' : '—';
+    const rnk  = i<3 ? `<span title="Rank ${i+1}">${rankIcons[i]}</span>` : `<span class="lb-rank ${i===0?'rank-1':i===1?'rank-2':i===2?'rank-3':''}">#${i+1}</span>`;
+    const av   = e.photo || `https://ui-avatars.com/api/?name=${encodeURIComponent(e.name||'U')}&background=3d8bff&color=fff&size=32`;
+    const dt   = e.dateKey || todayKey();
+    return `<div class="lb-row${isMe?' is-me':''}">
+      <div class="lb-rank">${rnk}</div>
+      <div class="lb-user"><img class="lb-avatar" src="${av}" alt="" onerror="this.src='https://ui-avatars.com/api/?name=U&background=3d8bff&color=fff&size=32'">
+        <span class="lb-name">${e.name||'Anonymous'}${isMe?' <span style="color:var(--cyan);font-size:0.7rem">(You)</span>':''}</span></div>
+      <div class="lb-score">${e.score}</div>
+      <div class="lb-acc">${acc}</div>
+      <div class="lb-date">${dt.slice(5)}</div>
+    </div>`;
+  }).join('');
+
+  // My rank
+  if(currentUser){
+    const myIdx = entries.findIndex(e=>e.uid===currentUser.uid);
+    const mri = $('myRankInfo');
+    if(mri && myIdx>=0){
+      mri.style.display='block';
+      mri.textContent=`Your rank today: #${myIdx+1} out of ${entries.length} students`;
+    }
+  }
+}
+
+/* ═══════════════════════════════════════
+   ANALYTICS
+═══════════════════════════════════════ */
+async function loadAnalytics(){
+  if(isDemo||!currentUser){ renderDemoAnalytics(); return; }
+  try {
+    const ud = await getUserDoc();
+    const totalTests = ud?.totalTests||0;
+    setEl('acTotal',  totalTests);
+    setEl('acBest',   ud?.bestScore||0);
+    const avgScore = totalTests>0 ? Math.round((ud?.totalScore||0)/totalTests) : 0;
+    setEl('acAvg',    avgScore);
+    const avgAcc = totalTests>0 ? Math.round(((ud?.totalScore||0)/(totalTests*TOTAL_Q*MARKS_CORRECT))*100) : 0;
+    setEl('acAcc',    avgAcc+'%');
+    setEl('acStreak', (ud?.streak||0)+'🔥');
+
+    // Load all results for history & charts
+    const q = query(collection(db,'results'),where('uid','==',currentUser.uid),orderBy('createdAt','desc'),limit(30));
+    const snap = await getDocs(q);
+    const results = snap.docs.map(d=>d.data());
+
+    // Global rank
+    try {
+      const allQ = query(collection(db,'results'),where('dateKey','==',todayKey()),orderBy('score','desc'));
+      const allSnap = await getDocs(allQ);
+      const allEntries = allSnap.docs.map(d=>d.data());
+      const myIdx = allEntries.findIndex(e=>e.uid===currentUser.uid);
+      setEl('acRank', myIdx>=0 ? '#'+(myIdx+1) : '—');
+    } catch(e){ setEl('acRank','—'); }
+
+    renderScoreTrend(results.slice(0,15).reverse());
+    renderSubjectBars(results);
+    renderHistoryTable(results);
+    renderStrengthWeakness(results);
+  } catch(e){ console.error('Analytics error',e); }
+}
+
+function renderDemoAnalytics(){
+  ['acTotal','acBest','acAvg','acAcc','acRank','acStreak'].forEach(id=>setEl(id,'—'));
+  const tb = $('historyTableBody');
+  if(tb) tb.innerHTML='<tr><td colspan="6" style="text-align:center;padding:24px;color:var(--text3)">Sign in to see your analytics.</td></tr>';
+}
+
+function renderScoreTrend(results){
+  const c = $('scoreTrendChart');
+  if(!c||!results.length){ if(c) c.innerHTML='<div style="color:var(--text3);text-align:center;padding:24px">No data yet.</div>'; return; }
+  const max = Math.max(...results.map(r=>r.score), 1);
+  const bars = results.map((r,i)=>{
+    const h = Math.round((r.score/max)*100);
+    const gr = gradeFromPct(r.accuracy||0);
+    return `<div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:4px">
+      <div style="font-size:0.6rem;color:var(--cyan);font-family:'Orbitron',monospace">${r.score}</div>
+      <div style="width:100%;background:linear-gradient(180deg,var(--cyan),var(--blue));border-radius:4px 4px 0 0;height:${h}px;min-height:4px;transition:height 0.5s"></div>
+      <div style="font-size:0.55rem;color:var(--text3);writing-mode:vertical-rl;transform:rotate(180deg);white-space:nowrap">${r.dateKey||''}</div>
+    </div>`;
+  }).join('');
+  c.innerHTML=`<div style="display:flex;align-items:flex-end;gap:4px;height:120px;padding:0 4px">${bars}</div>`;
+}
+
+function renderSubjectBars(results){
+  const sb = $('subjectBars');
+  if(!sb) return;
+  const groups={};
+  results.forEach(r=>{
+    const s=r.subject||'General';
+    if(!groups[s]){groups[s]={total:0,correct:0};}
+    groups[s].total++;
+    groups[s].correct += Math.round(((r.accuracy||0)/100)*(r.total||TOTAL_Q));
+  });
+  if(!Object.keys(groups).length){ sb.innerHTML='<div style="color:var(--text3);font-size:0.85rem">No data yet.</div>'; return; }
+  sb.innerHTML=Object.entries(groups).map(([sub,g])=>{
+    const pct=g.total?Math.round((g.correct/(g.total*(results[0]?.total||TOTAL_Q)))*100):0;
+    return `<div style="margin-bottom:12px">
+      <div style="display:flex;justify-content:space-between;margin-bottom:4px;font-size:0.82rem">
+        <span>${sub}</span><span style="color:var(--cyan);font-family:'Orbitron',monospace">${pct}%</span>
+      </div>
+      <div class="progress-bar-outer" style="height:8px"><div class="progress-bar-inner" style="width:${pct}%"></div></div>
+    </div>`;
+  }).join('');
+}
+
+function renderHistoryTable(results){
+  const tb = $('historyTableBody');
+  if(!tb) return;
+  if(!results.length){ tb.innerHTML='<tr><td colspan="6" style="text-align:center;padding:24px;color:var(--text3)">No quiz history yet.</td></tr>'; return; }
+  tb.innerHTML=results.map(r=>{
+    const gr=gradeFromPct(r.accuracy||0);
+    return `<tr>
+      <td>${r.dateKey||'—'}</td>
+      <td>${r.subject||'—'}</td>
+      <td style="max-width:140px;overflow:hidden;text-overflow:ellipsis">${r.chapter||'—'}</td>
+      <td style="font-family:'Orbitron',monospace;color:var(--cyan)">${r.score}</td>
+      <td style="color:var(--green)">${r.accuracy||0}%</td>
+      <td><span class="grade-badge ${gr.cls}">${gr.g}</span></td>
+    </tr>`;
+  }).join('');
+}
+
+function renderStrengthWeakness(results){
+  const groups={};
+  results.forEach(r=>{
+    const s=r.subject||'General';
+    if(!groups[s]){groups[s]={tests:0,totalAcc:0};}
+    groups[s].tests++;
+    groups[s].totalAcc+=(r.accuracy||0);
+  });
+  const withAvg=Object.entries(groups).map(([s,g])=>({s,avg:Math.round(g.totalAcc/g.tests)})).sort((a,b)=>b.avg-a.avg);
+  const ss=$('strongSubjects');
+  const ws=$('weakSubjects');
+  if(ss) ss.innerHTML=withAvg.slice(0,3).map(({s,avg})=>`<div style="padding:6px 0;border-bottom:1px solid var(--border);display:flex;justify-content:space-between"><span>${s}</span><span style="color:var(--green)">${avg}%</span></div>`).join('')||'<span style="color:var(--text3)">No data</span>';
+  if(ws) ws.innerHTML=[...withAvg].reverse().slice(0,3).map(({s,avg})=>`<div style="padding:6px 0;border-bottom:1px solid var(--border);display:flex;justify-content:space-between"><span>${s}</span><span style="color:var(--red)">${avg}%</span></div>`).join('')||'<span style="color:var(--text3)">No data</span>';
+}
+
+/* ═══════════════════════════════════════
+   90-DAY SCHEDULE GENERATION
+═══════════════════════════════════════ */
+function computeTodaySchedule(){
+  const start = new Date('2025-06-01'); // Schedule start date
+  const today = new Date();
+  today.setHours(0,0,0,0); start.setHours(0,0,0,0);
+  let diffDays = Math.floor((today - start)/(1000*60*60*24));
+  if(diffDays < 0) diffDays = 0;
+
+  // Build flat chapter list (skip Saturdays in schedule)
+  const chapters = [];
+  SCHEDULE_DATA.forEach(subj=>{
+    subj.chapters.forEach(ch=>{ chapters.push({subject:subj.subject,chapter:ch,color:subj.color}); });
+  });
+
+  // Skip Saturdays
+  let dayCount = 0, calDay = 0;
+  while(dayCount <= diffDays && calDay < 300){
+    const d = new Date(start); d.setDate(d.getDate()+calDay);
+    if(d.getDay()!==6){ // 6=Saturday
+      if(dayCount===diffDays) return {...chapters[calDay%chapters.length], day:dayCount+1};
+      dayCount++;
+    }
+    calDay++;
+  }
+  return null;
+}
+
+function renderSchedule(){
+  const grid = $('scheduleGrid');
+  if(!grid) return;
+  grid.innerHTML='';
+  const chapters=[];
+  SCHEDULE_DATA.forEach(subj=>{
+    subj.chapters.forEach(ch=>chapters.push({subject:subj.subject,chapter:ch,color:subj.color}));
+  });
+
+  const start=new Date('2025-06-01'); start.setHours(0,0,0,0);
+  const today=new Date(); today.setHours(0,0,0,0);
+  let chIdx=0, day=1;
+  for(let i=0;i<120&&chIdx<90;i++){
+    const d=new Date(start); d.setDate(d.getDate()+i);
+    const isSat=d.getDay()===6;
+    const isPast=d<today;
+    const isToday=d.getTime()===today.getTime();
+    const dateStr=d.toLocaleDateString('en-NP',{day:'2-digit',month:'short',weekday:'short'});
+    const card=document.createElement('div');
+    card.className='sched-card'+(isToday?' today':isSat?' holiday':isPast?' past':'');
+    if(isSat){
+      card.innerHTML=`<div class="sched-day-num" style="color:var(--red)">OFF</div><div class="sched-info"><div class="sched-date">${dateStr}</div><div class="sched-chapter">Saturday Holiday 🎉</div></div>`;
+    } else {
+      const ch=chapters[chIdx%chapters.length];
+      card.innerHTML=`
+        <div class="sched-day-num" style="color:${ch.color}">${day}</div>
+        <div class="sched-info">
+          <div class="sched-date">${dateStr}${isToday?' · TODAY':''}</div>
+          <div class="sched-chapter">${ch.chapter}</div>
+          <span class="sched-subject" style="background:${ch.color}18;color:${ch.color};border:1px solid ${ch.color}33">${ch.subject}</span>
+        </div>`;
+      chIdx++; day++;
+    }
+    grid.appendChild(card);
+  }
+}
+
+/* ═══════════════════════════════════════
+   INITIAL BOOT
+═══════════════════════════════════════ */
+// If auth takes too long, show login after 3s
+setTimeout(()=>{
+  if(!currentUser && !isDemo){
+    showLoginScreen();
+  }
+}, 3000);
+
+</script>
+
 </div><!-- end app -->
 
 
