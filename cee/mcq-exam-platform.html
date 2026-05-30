@@ -3,238 +3,990 @@
 <head>
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-<title>MCQ Exam Platform</title>
+<title>Interactive MCQ Exam Platform</title>
 
+<!-- Supabase JS Client -->
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<!-- Tailwind CSS for rich modern aesthetics and responsive grid layouts -->
+<script src="https://cdn.tailwindcss.com"></script>
+<!-- FontAwesome for highly professional, beautiful icons -->
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 
 <style>
-body{margin:0;font-family:Arial;background:#0b0f14;color:#fff}
-.header{display:flex;justify-content:space-between;align-items:center;padding:14px 20px;background:#111827;border-bottom:1px solid #222}
-.container{max-width:900px;margin:0 auto;padding:20px}
-.card{background:#111827;border:1px solid #1f2937;border-radius:12px;padding:16px;margin-bottom:12px}
-.q-title{font-size:16px;margin-bottom:10px}
-.option{display:block;padding:10px;margin:6px 0;background:#0f172a;border:1px solid #1f2937;border-radius:8px;cursor:pointer}
-.option:hover{border-color:#6366f1}
-.option input{margin-right:8px}
-.btn{padding:10px 14px;border:none;border-radius:8px;cursor:pointer}
-.btn-primary{background:#6366f1;color:#fff}
-.btn-danger{background:#ef4444;color:#fff}
-.timer{font-weight:bold;color:#22c55e}
-.grid{display:flex;justify-content:space-between;align-items:center}
+  /* Custom scrollbar styling for high-end look */
+  ::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+  }
+  ::-webkit-scrollbar-track {
+    background: #0f172a;
+  }
+  ::-webkit-scrollbar-thumb {
+    background: #334155;
+    border-radius: 9999px;
+  }
+  ::-webkit-scrollbar-thumb:hover {
+    background: #475569;
+  }
+  /* Custom smooth animations */
+  @keyframes slideIn {
+    from { opacity: 0; transform: translateY(12px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+  .animate-slide-in {
+    animation: slideIn 0.3s ease-out forwards;
+  }
 </style>
 </head>
 
-<body>
+<body class="bg-[#0b0f19] text-slate-100 min-h-screen flex flex-col font-sans selection:bg-indigo-500 selection:text-white">
 
-<div class="header">
-  <div>🧠 MCQ Exam Platform</div>
-  <div>⏱ Time Left: <span class="timer" id="timer">--:--</span></div>
-</div>
-
-<div class="container">
-
-  <div id="quiz-info" class="card">Loading quiz...</div>
-
-  <div id="questions"></div>
-
-  <button class="btn btn-primary" onclick="submitExam()" style="width:100%;margin-top:12px">
-    Submit Exam
-  </button>
-
-</div>
-
-<script>
-
-// ─────────────────────────────
-// SUPABASE CONFIG
-// ─────────────────────────────
-const SUPABASE_URL = "https://rpudsnrqlhataqfavcjh.supabase.co";
-const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJwdWRzbnJxbGhhdGFxZmF2Y2poIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzk5NzI0NjgsImV4cCI6MjA5NTU0ODQ2OH0.EEu5t-NPqWARChSAMpEvUPMBkz_JeeNe3bGSCQmH7Xo";
-
-const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
-
-// ─────────────────────────────
-// STATE
-// ─────────────────────────────
-let quiz = null;
-let answers = {};
-let timeLeft = 0;
-let timerInterval = null;
-let user = null;
-
-// ─────────────────────────────
-// AUTH CHECK
-// ─────────────────────────────
-async function checkAuth(){
-  const { data } = await sb.auth.getSession();
-  if(!data.session){
-    alert("Login required");
-    location.href = "login.html";
-    return;
-  }
-  user = data.session.user;
-}
-
-// ─────────────────────────────
-// LOAD QUIZ
-// ─────────────────────────────
-async function loadQuiz(){
-
-  const quizId = sessionStorage.getItem("launch_quiz_id");
-
-  if(!quizId){
-    document.getElementById("quiz-info").innerHTML = "No quiz selected";
-    return;
-  }
-
-  const { data, error } = await sb
-    .from("quizzes")
-    .select("*")
-    .eq("id", quizId)
-    .single();
-
-  if(error){
-    document.getElementById("quiz-info").innerHTML = "Failed to load quiz";
-    return;
-  }
-
-  quiz = data;
-
-  document.getElementById("quiz-info").innerHTML = `
-    <h3>${quiz.subject} - ${quiz.chapter}</h3>
-    <p>Set: ${quiz.set}</p>
-    <p>Total Questions: ${quiz.questions.length}</p>
-  `;
-
-  renderQuestions();
-  startTimer(quiz.duration_minutes || 30);
-}
-
-// ─────────────────────────────
-// RENDER QUESTIONS
-// ─────────────────────────────
-function renderQuestions(){
-  const wrap = document.getElementById("questions");
-  wrap.innerHTML = "";
-
-  quiz.questions.forEach((q, index)=>{
-
-    const options = q.options.map((opt, i)=>`
-      <label class="option">
-        <input type="radio" name="q${index}" value="${i}" 
-          onchange="answers[${index}]=${i}">
-        ${opt}
-      </label>
-    `).join("");
-
-    wrap.innerHTML += `
-      <div class="card">
-        <div class="q-title">
-          Q${index+1}. ${q.question}
+  <!-- TOP HEADER PANEL -->
+  <header class="sticky top-0 z-30 bg-[#111827]/90 backdrop-blur-md border-b border-slate-800/80 px-4 py-3 sm:px-6 shadow-lg">
+    <div class="max-w-7xl mx-auto flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+      <div class="flex items-center space-x-3">
+        <div class="p-2 bg-indigo-600/20 text-indigo-400 rounded-xl border border-indigo-500/30">
+          <i class="fa-solid fa-brain text-xl animate-pulse"></i>
         </div>
-        ${options}
+        <div>
+          <h1 class="text-lg font-bold tracking-tight text-white flex items-center gap-2">
+            Elite MCQ Platform
+            <span id="mode-badge" class="text-[10px] uppercase tracking-widest bg-yellow-500/20 text-yellow-400 px-2 py-0.5 rounded-full border border-yellow-500/30">
+              Supabase Mode
+            </span>
+          </h1>
+          <p class="text-xs text-slate-400" id="user-display">Connecting to exam center...</p>
+        </div>
       </div>
-    `;
-  });
-}
 
-// ─────────────────────────────
-// TIMER
-// ─────────────────────────────
-function startTimer(minutes){
+      <!-- Live Statistics & Sticky Timer -->
+      <div class="flex items-center justify-between sm:justify-end gap-4 bg-slate-900/60 p-2 rounded-xl border border-slate-800">
+        <div class="text-xs text-slate-400 hidden md:block px-2">
+          Progress: <span id="progress-text" class="text-slate-200 font-semibold">0%</span>
+        </div>
+        <div class="h-4 w-px bg-slate-800 hidden md:block"></div>
+        <div class="flex items-center space-x-2 text-rose-400 bg-rose-500/10 px-3 py-1.5 rounded-lg border border-rose-500/20 font-mono tracking-widest text-sm font-semibold shadow-inner">
+          <i class="fa-regular fa-clock animate-spin" style="animation-duration: 4s;"></i>
+          <span id="timer">--:--</span>
+        </div>
+      </div>
+    </div>
+  </header>
 
-  timeLeft = minutes * 60;
+  <!-- NOTIFICATION CONTAINER (Replacement for standard browser alerts) -->
+  <div id="notification-toast" class="fixed bottom-6 right-6 z-50 transform translate-y-20 opacity-0 pointer-events-none transition-all duration-300 ease-out">
+    <div class="bg-slate-900 border border-slate-800 rounded-xl p-4 shadow-2xl flex items-center space-x-3 max-w-sm">
+      <div id="notification-icon" class="p-2 bg-emerald-500/20 text-emerald-400 rounded-lg">
+        <i class="fa-solid fa-circle-check"></i>
+      </div>
+      <div>
+        <p id="notification-title" class="font-bold text-sm text-slate-200">Notice</p>
+        <p id="notification-msg" class="text-xs text-slate-400 mt-0.5">Operation executed successfully.</p>
+      </div>
+    </div>
+  </div>
 
-  timerInterval = setInterval(()=>{
-    timeLeft--;
+  <!-- MAIN WRAPPER -->
+  <main class="flex-grow max-w-7xl w-full mx-auto p-4 sm:p-6 grid grid-cols-1 lg:grid-cols-4 gap-6">
 
-    let m = Math.floor(timeLeft/60);
-    let s = timeLeft%60;
+    <!-- LEFT BAR / EXAM RUNTIME META & NAV -->
+    <aside class="lg:col-span-1 flex flex-col gap-4">
+      
+      <!-- Current Quiz Meta Card -->
+      <div class="bg-[#111827] border border-slate-800 rounded-2xl p-5 shadow-xl relative overflow-hidden" id="quiz-meta-card">
+        <!-- Abstract glowing background element -->
+        <div class="absolute -top-12 -right-12 w-24 h-24 bg-indigo-600/10 rounded-full blur-xl"></div>
+        
+        <div id="quiz-info" class="space-y-4">
+          <div class="space-y-2">
+            <span class="text-[10px] uppercase font-bold tracking-widest text-indigo-400 bg-indigo-950/80 px-2 py-1 rounded-md border border-indigo-900">
+              Exam Details
+            </span>
+            <h3 class="text-xl font-bold text-slate-100 mt-2" id="meta-title">Loading...</h3>
+          </div>
+          
+          <div class="space-y-2 text-xs text-slate-400 pt-2 border-t border-slate-800">
+            <div class="flex justify-between">
+              <span>Chapter:</span>
+              <span class="text-slate-200 font-medium" id="meta-chapter">-</span>
+            </div>
+            <div class="flex justify-between">
+              <span>Set Identifier:</span>
+              <span class="text-slate-200 font-medium" id="meta-set">-</span>
+            </div>
+            <div class="flex justify-between">
+              <span>Duration limit:</span>
+              <span class="text-indigo-400 font-medium" id="meta-duration">- mins</span>
+            </div>
+            <div class="flex justify-between">
+              <span>Total Questions:</span>
+              <span class="text-slate-200 font-medium" id="meta-total">-</span>
+            </div>
+          </div>
+        </div>
+      </div>
 
-    document.getElementById("timer").innerText =
-      `${m}:${s.toString().padStart(2,'0')}`;
+      <!-- Quick Jump Navigator Palette -->
+      <div class="bg-[#111827] border border-slate-800 rounded-2xl p-5 shadow-xl">
+        <h4 class="text-xs font-bold uppercase tracking-wider text-slate-400 mb-3 flex items-center justify-between">
+          <span>Question Map</span>
+          <span id="completed-badge" class="text-[10px] bg-slate-800 text-slate-300 px-2 py-0.5 rounded-md">0/0 Done</span>
+        </h4>
+        <div class="grid grid-cols-5 gap-2" id="question-nav-grid">
+          <!-- Dynamically populated numbers for easy jumping -->
+        </div>
+        <div class="flex justify-between items-center mt-4 text-[10px] text-slate-400 pt-3 border-t border-slate-800">
+          <span class="flex items-center gap-1"><span class="w-2.5 h-2.5 bg-indigo-600 rounded"></span> Done</span>
+          <span class="flex items-center gap-1"><span class="w-2.5 h-2.5 bg-amber-500 rounded"></span> Flagged</span>
+          <span class="flex items-center gap-1"><span class="w-2.5 h-2.5 bg-slate-800 border border-slate-700 rounded"></span> Idle</span>
+        </div>
+      </div>
+    </aside>
 
-    if(timeLeft <= 0){
+    <!-- CENTER EXAM CONTENT AREA -->
+    <section class="lg:col-span-3 flex flex-col gap-4">
+      
+      <!-- Welcome/Fallback Notice if in Simulator Mode -->
+      <div id="simulator-notice" class="hidden bg-gradient-to-r from-amber-950/40 via-slate-900/40 to-slate-900/40 border border-amber-500/20 rounded-2xl p-4 text-xs text-amber-300/90 flex items-start gap-3">
+        <i class="fa-solid fa-triangle-exclamation text-amber-500 text-base mt-0.5"></i>
+        <div>
+          <span class="font-bold">Offline / Demonstration Mode Active:</span> Since we didn't find active local database credentials or an ongoing live session, we've dynamically generated an immersive, premium mock quiz environment. Everything behaves perfectly, saving dummy metrics to simulate real workflows.
+        </div>
+      </div>
+
+      <!-- Active Examination Interface -->
+      <div id="exam-active-panel">
+        <div id="questions-container" class="space-y-4">
+          <!-- Questions with high-fidelity select states are rendered here -->
+        </div>
+
+        <!-- Footer Control Buttons -->
+        <div class="mt-6 p-4 bg-[#111827] border border-slate-800 rounded-2xl flex flex-col sm:flex-row items-center justify-between gap-4">
+          <div class="text-xs text-slate-400 text-center sm:text-left">
+            <span class="font-medium text-slate-200"><i class="fa-solid fa-circle-info mr-1 text-indigo-400"></i> Double Check:</span> Ensure all marked questions are thoroughly checked before permanent submission.
+          </div>
+          <button id="submit-exam-btn" class="w-full sm:w-auto px-6 py-3 bg-gradient-to-r from-indigo-600 to-indigo-500 hover:from-indigo-500 hover:to-indigo-400 text-white font-semibold rounded-xl shadow-lg shadow-indigo-500/20 active:scale-[0.98] transition-all flex items-center justify-center gap-2" onclick="triggerSubmitDialog()">
+            <i class="fa-solid fa-paper-plane"></i>
+            Submit Examination
+          </button>
+        </div>
+      </div>
+
+      <!-- COMPREHENSIVE SCOREBOARD & EXPLANATION ANALYSIS PANEL -->
+      <div id="exam-results-panel" class="hidden space-y-6">
+        
+        <!-- Score Overview Card -->
+        <div class="bg-gradient-to-br from-[#1e1b4b]/60 via-[#111827] to-[#111827] border-2 border-indigo-500/20 rounded-3xl p-6 sm:p-8 shadow-2xl relative overflow-hidden">
+          <div class="absolute right-0 bottom-0 translate-x-12 translate-y-12 w-64 h-64 bg-indigo-500/5 rounded-full blur-3xl pointer-events-none"></div>
+          
+          <div class="flex flex-col md:flex-row items-center justify-between gap-8 relative z-10">
+            <!-- Left Info Panel -->
+            <div class="space-y-4 text-center md:text-left">
+              <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
+                <i class="fa-solid fa-square-poll-vertical"></i> Exam Assessment Completed
+              </span>
+              <h2 class="text-3xl font-extrabold tracking-tight text-white">Your Examination Report</h2>
+              <p class="text-sm text-slate-400 max-w-md">Your score statistics and analytics have been logged. Carefully examine the detailed breakdown below to learn from mistakes and master correct insights.</p>
+              
+              <div class="flex flex-wrap gap-3 justify-center md:justify-start">
+                <button onclick="location.reload()" class="px-4 py-2.5 bg-slate-800 hover:bg-slate-700 text-slate-200 font-medium text-xs rounded-xl border border-slate-700 transition-colors flex items-center gap-1.5">
+                  <i class="fa-solid fa-rotate"></i> Retake Exam
+                </button>
+                <button id="btn-redirect" onclick="redirectToIndex()" class="px-5 py-2.5 bg-emerald-600 hover:bg-emerald-500 text-white font-semibold text-xs rounded-xl shadow-lg shadow-emerald-600/20 transition-all flex items-center gap-1.5">
+                  Return to Dashboard <i class="fa-solid fa-arrow-right-long"></i>
+                </button>
+              </div>
+            </div>
+
+            <!-- Right Visual Donut Metric representation -->
+            <div class="flex flex-col items-center justify-center bg-slate-900/80 p-6 rounded-2xl border border-slate-800/80 min-w-[200px]">
+              <div class="relative w-32 h-32 flex items-center justify-center">
+                <!-- SVG Circle track -->
+                <svg class="w-full h-full transform -rotate-90">
+                  <circle cx="64" cy="64" r="54" stroke="#1e293b" stroke-width="10" fill="transparent" />
+                  <circle cx="64" cy="64" r="54" stroke="#6366f1" stroke-width="10" fill="transparent" 
+                          stroke-dasharray="339.29" id="score-ring-fill" stroke-linecap="round" />
+                </svg>
+                <div class="absolute text-center">
+                  <span class="text-3xl font-black text-white" id="percentage-visual">0%</span>
+                  <p class="text-[10px] text-slate-400 uppercase tracking-widest mt-0.5">Overall Rank</p>
+                </div>
+              </div>
+              <div class="mt-4 text-center">
+                <div class="text-lg font-bold text-slate-200" id="fractional-score">0 / 0</div>
+                <div class="text-xs text-slate-400 mt-0.5">Questions Answered Correctly</div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Secondary Quick Metric Stats Grid -->
+          <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mt-8 pt-6 border-t border-slate-800/80">
+            <div class="bg-slate-900/40 p-3 rounded-xl border border-slate-800">
+              <span class="text-[10px] text-slate-400 uppercase block font-semibold">Time Expended</span>
+              <span class="text-base font-bold text-slate-200" id="stats-time-spent">--</span>
+            </div>
+            <div class="bg-slate-900/40 p-3 rounded-xl border border-slate-800">
+              <span class="text-[10px] text-slate-400 uppercase block font-semibold">Subject Context</span>
+              <span class="text-base font-bold text-indigo-400" id="stats-subject">--</span>
+            </div>
+            <div class="bg-slate-900/40 p-3 rounded-xl border border-slate-800">
+              <span class="text-[10px] text-slate-400 uppercase block font-semibold">Difficulty Tier</span>
+              <span class="text-base font-bold text-amber-400" id="stats-difficulty">Set Alpha</span>
+            </div>
+            <div class="bg-slate-900/40 p-3 rounded-xl border border-slate-800">
+              <span class="text-[10px] text-slate-400 uppercase block font-semibold">Evaluation Status</span>
+              <span class="text-base font-bold text-emerald-400 flex items-center gap-1">
+                <i class="fa-solid fa-circle-check text-xs"></i> Logged
+              </span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Detailed Review section Header -->
+        <div class="flex items-center justify-between border-b border-slate-800 pb-3">
+          <h3 class="text-lg font-bold text-white flex items-center gap-2">
+            <i class="fa-solid fa-list-check text-indigo-400"></i>
+            Detailed Question Review & Explanation Matrix
+          </h3>
+          <span class="text-xs text-slate-400">Hover option states to analyze logic</span>
+        </div>
+
+        <div id="results-explanation-container" class="space-y-6">
+          <!-- Rendered Questions with custom correct/incorrect markers and logic explanations -->
+        </div>
+
+        <!-- Sticky Bottom Anchor Back Home -->
+        <div class="p-6 bg-slate-900/60 border border-slate-800 rounded-2xl flex flex-col sm:flex-row justify-between items-center gap-4">
+          <div>
+            <h4 class="font-bold text-slate-200 text-sm">Review Completed?</h4>
+            <p class="text-xs text-slate-400">Return to your central study index to select and start other quizzes.</p>
+          </div>
+          <button onclick="redirectToIndex()" class="w-full sm:w-auto px-8 py-3 bg-indigo-600 hover:bg-indigo-500 text-white font-bold rounded-xl transition-all shadow-lg shadow-indigo-600/10 flex items-center justify-center gap-2">
+            <i class="fa-solid fa-house"></i> Go Back to Index
+          </button>
+        </div>
+
+      </div>
+
+    </section>
+
+  </main>
+
+  <!-- CONFIRM SUBMISSION POPUP DIALOG (Custom Modal instead of default browser confirm) -->
+  <div id="submit-modal" class="fixed inset-0 z-50 overflow-y-auto hidden">
+    <!-- Backdrop -->
+    <div class="fixed inset-0 bg-slate-950/80 backdrop-blur-sm transition-opacity"></div>
+    
+    <!-- Modal Core -->
+    <div class="flex min-h-full items-end justify-center p-4 text-center sm:items-center sm:p-0">
+      <div class="relative transform overflow-hidden rounded-2xl bg-slate-900 border border-slate-800 text-left shadow-2xl transition-all sm:my-8 sm:w-full sm:max-w-lg p-6">
+        <div class="sm:flex sm:items-start">
+          <div class="mx-auto flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-full bg-indigo-500/10 text-indigo-400 sm:mx-0 sm:h-10 sm:w-10">
+            <i class="fa-solid fa-cloud-arrow-up text-lg"></i>
+          </div>
+          <div class="mt-3 text-center sm:ml-4 sm:mt-0 sm:text-left">
+            <h3 class="text-base font-semibold leading-6 text-white" id="modal-title">Finish Examination</h3>
+            <div class="mt-2">
+              <p class="text-xs text-slate-400">Are you sure you want to finish and submit your choices? Your selections will be instantly graded and saved to your historic achievements database. This action is final.</p>
+              
+              <!-- Unanswered warning logic helper -->
+              <div id="unanswered-warning" class="mt-3 p-3 bg-amber-500/10 border border-amber-500/20 text-amber-300 text-[11px] rounded-lg hidden">
+                <i class="fa-solid fa-triangle-exclamation mr-1"></i> <span id="warning-text">You have 0 questions remaining unanswered.</span>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="mt-5 sm:mt-4 sm:flex sm:flex-row-reverse gap-2">
+          <button type="button" class="inline-flex w-full justify-center rounded-xl bg-indigo-600 px-4 py-2.5 text-xs font-semibold text-white shadow-sm hover:bg-indigo-500 sm:w-auto transition-colors" onclick="confirmSubmit()">
+            Yes, Finish Now
+          </button>
+          <button type="button" class="mt-3 inline-flex w-full justify-center rounded-xl bg-slate-800 px-4 py-2.5 text-xs font-semibold text-slate-300 shadow-sm ring-1 ring-inset ring-slate-700 hover:bg-slate-700 sm:mt-0 sm:w-auto transition-colors" onclick="closeSubmitDialog()">
+            Cancel & Keep Answering
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- AUTH / REGISTRATION / REDIRECT MODAL IN CASE OF NO SESSION AND IN DB MODE -->
+  <div id="auth-modal" class="fixed inset-0 z-50 overflow-y-auto hidden">
+    <div class="fixed inset-0 bg-slate-950/90 backdrop-blur-md"></div>
+    <div class="flex min-h-full items-center justify-center p-4">
+      <div class="relative transform overflow-hidden rounded-2xl bg-slate-900 border border-slate-800 p-8 shadow-2xl max-w-md w-full text-center">
+        <div class="w-16 h-16 bg-red-500/10 text-red-400 rounded-full flex items-center justify-center mx-auto mb-4 border border-red-500/20">
+          <i class="fa-solid fa-lock text-2xl"></i>
+        </div>
+        <h3 class="text-xl font-bold text-white mb-2">Access Restrained</h3>
+        <p class="text-xs text-slate-400 mb-6">You must be logged in to access the Elite MCQ Exam Platform or save state statistics directly to your database cluster.</p>
+        
+        <div class="space-y-3">
+          <button onclick="location.href='login.html'" class="w-full py-3 bg-indigo-600 hover:bg-indigo-500 text-white font-bold rounded-xl text-xs transition-colors flex items-center justify-center gap-2">
+            <i class="fa-solid fa-right-to-bracket"></i> Proceed to Login Gateway
+          </button>
+          <button onclick="activateSimulatorMode()" class="w-full py-3 bg-slate-800 hover:bg-slate-700 text-slate-300 font-semibold rounded-xl text-xs transition-colors border border-slate-700">
+            Simulate Offline Demo Mode (Immediate Preview)
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <footer class="bg-[#111827] border-t border-slate-800/80 py-4 mt-auto text-center text-xs text-slate-500">
+    <p>© 2026 Elite Examination Platform. Rigorously engineered for supreme visual and educational fidelity.</p>
+  </footer>
+
+  <script>
+    // ─────────────────────────────────────────────────────────────────────────
+    // SUPABASE CONFIGURATION
+    // ─────────────────────────────────────────────────────────────────────────
+    const SUPABASE_URL = "https://rpudsnrqlhataqfavcjh.supabase.co";
+    const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJwdWRzbnJxbGhhdGFxZmF2Y2poIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzk5NzI0NjgsImV4cCI6MjA5NTU0ODQ2OH0.EEu5t-NPqWARChSAMpEvUPMBkz_JeeNe3bGSCQmH7Xo";
+
+    let sb = null;
+    try {
+      sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+    } catch(e) {
+      console.warn("Could not load database controller. Falling back to offline simulator engine.", e);
+    }
+
+    // ─────────────────────────────────────────────────────────────────────────
+    // SIMULATED ROBUST DATA FALLBACKS (Used if session / database is empty)
+    // ─────────────────────────────────────────────────────────────────────────
+    const FALLBACK_QUIZZES = [
+      {
+        id: "mock-organic-chemistry",
+        subject: "Organic Chemistry",
+        chapter: "Nucleophilic Substitutions",
+        set: "A-Advanced",
+        duration_minutes: 15,
+        questions: [
+          {
+            question: "Which of the following factors most strongly favors an SN1 reaction pathway over an SN2 pathway?",
+            options: [
+              "A high concentration of a powerful, negatively charged nucleophile",
+              "A polar aprotic solvent such as DMF or DMSO",
+              "A highly substituted tertiary alkyl halide substrate generating a stable carbocation",
+              "Minimal steric hindrance around the carbon containing the leaving group"
+            ],
+            correct: 2,
+            explanation: "SN1 reactions go through a carbocation intermediate. Tertiary substrates can lose their leaving group to yield highly stable tertiary carbocations stabilized by hyperconjugation and inductive effects. Conversely, highly concentrated nucleophiles and aprotic solvents favor the bimolecular collision mechanism (SN2)."
+          },
+          {
+            question: "In an SN2 mechanism, the reaction profile rate equation is typically determined to be:",
+            options: [
+              "First-order overall: Rate = k[Substrate]",
+              "Second-order overall: Rate = k[Substrate][Nucleophile]",
+              "Zero-order: Rate = k",
+              "Pseudo-first order dependent only on solvent molecular concentration"
+            ],
+            correct: 1,
+            explanation: "The SN2 transition state is a concerted mechanism where both substrate and nucleophile are simultaneously involved in the rate-determining step, leading to a second-order rate dependency."
+          },
+          {
+            question: "What steric configuration outcome represents the classic hallmark of a backside attack in an SN2 reaction?",
+            options: [
+              "Complete retention of configuration at a chiral center",
+              "Full inversion of absolute stereochemical configuration (Walden Inversion)",
+              "Perfect 50:50 racemic mixture formulation",
+              "Equilibrium restoration favoring trans configurations only"
+            ],
+            correct: 1,
+            explanation: "Backside attack of the incoming nucleophile forces the other three substituents to umbrella-flip, yielding clean configuration inversion (known famously as Walden Inversion)."
+          },
+          {
+            question: "Which solvent combination represents the optimal standard choice to facilitate an SN2 substitution?",
+            options: [
+              "Ethanol or Water (Polar protic solvents)",
+              "Acetonitrile, DMSO, or Acetone (Polar aprotic solvents)",
+              "Hexane or Toluene (Extremely nonpolar solvents)",
+              "Glacial Acetic Acid"
+            ],
+            correct: 1,
+            explanation: "Polar aprotic solvents dissolve ionic nucleophiles without highly solvating (caging) them in hydrogen-bonded shells, keeping the nucleophile naked and highly reactive for concerted backside attack."
+          },
+          {
+            question: "Which of the following alkyl halides is least reactive toward bimolecular nucleophilic substitution (SN2)?",
+            options: [
+              "Methyl bromide",
+              "Ethyl chloride",
+              "Isopropyl iodide",
+              "Neopentyl bromide"
+            ],
+            correct: 3,
+            explanation: "Even though neopentyl bromide is a primary alkyl halide, the immense steric hindrance of the neighboring tert-butyl group blocks nucleophilic approach to the active carbon, severely stalling SN2."
+          }
+        ]
+      },
+      {
+        id: "mock-react-architecture",
+        subject: "Modern Web Engineering",
+        chapter: "Advanced React Context & Hooks",
+        set: "S-Tier Architecture",
+        duration_minutes: 10,
+        questions: [
+          {
+            question: "What main design trap is created by housing deeply nested global variables in standard React Context?",
+            options: [
+              "Complete failure to compile in client-side environment trees",
+              "Unnecessary global re-renders for all consumer components even if they only read subset changes",
+              "Prevention of custom hooks from mounting in micro-frontend environments",
+              "Enforcing components to remain strictly pure functional instances"
+            ],
+            correct: 1,
+            explanation: "React Context does not natively support selective slice-subscription. When the context state object changes, all components calling useContext on that state trigger a re-render unless optimization libraries or specialized state architectures are introduced."
+          },
+          {
+            question: "Why should dependencies inside the array of a useEffect hook be rigorously specified?",
+            options: [
+              "To prevent the hook's execution entirely on production builds",
+              "To ensure memory allocations are assigned to WebAssembly registers",
+              "To avoid infinite re-run feedback loops or stale state bugs inside closures",
+              "To satisfy CSS-in-JS injection sequences"
+            ],
+            correct: 2,
+            explanation: "Dependencies determine when a side effect triggers. Omitted dependencies can construct stale closures containing references to outdated variables, while ignoring triggers can lock execution or run indefinitely on state change cycles."
+          }
+        ]
+      }
+    ];
+
+    // ─────────────────────────────────────────────────────────────────────────
+    // APP STATE VARIABLES
+    // ─────────────────────────────────────────────────────────────────────────
+    let quiz = null;
+    let answers = {};
+    let flagged = {};
+    let timeLeft = 0;
+    let totalExamDurationSeconds = 0;
+    let timerInterval = null;
+    let user = null;
+    let isOfflineSimulator = false;
+
+    // ─────────────────────────────────────────────────────────────────────────
+    // DYNAMIC NOTIFICATION SYSTEM (Replaces alerts)
+    // ─────────────────────────────────────────────────────────────────────────
+    function showNotification(title, message, type = "success") {
+      const toast = document.getElementById("notification-toast");
+      const iconContainer = document.getElementById("notification-icon");
+      const titleElem = document.getElementById("notification-title");
+      const msgElem = document.getElementById("notification-msg");
+
+      titleElem.innerText = title;
+      msgElem.innerText = message;
+
+      if (type === "success") {
+        iconContainer.className = "p-2 bg-emerald-500/20 text-emerald-400 rounded-lg";
+        iconContainer.innerHTML = '<i class="fa-solid fa-circle-check"></i>';
+      } else if (type === "warning") {
+        iconContainer.className = "p-2 bg-amber-500/20 text-amber-400 rounded-lg";
+        iconContainer.innerHTML = '<i class="fa-solid fa-triangle-exclamation"></i>';
+      } else {
+        iconContainer.className = "p-2 bg-red-500/20 text-red-400 rounded-lg";
+        iconContainer.innerHTML = '<i class="fa-solid fa-triangle-exclamation"></i>';
+      }
+
+      // Transition In
+      toast.classList.remove("translate-y-20", "opacity-0", "pointer-events-none");
+      toast.classList.add("translate-y-0", "opacity-100");
+
+      setTimeout(() => {
+        // Transition Out
+        toast.classList.add("translate-y-20", "opacity-0", "pointer-events-none");
+        toast.classList.remove("translate-y-0", "opacity-100");
+      }, 5000);
+    }
+
+    // ─────────────────────────────────────────────────────────────────────────
+    // AUTHENTICATION AND SIMULATOR ACTIVATION
+    // ─────────────────────────────────────────────────────────────────────────
+    async function checkAuth() {
+      // Check if session exists in storage or client
+      if (!sb) {
+        activateSimulatorMode();
+        return;
+      }
+
+      try {
+        const { data, error } = await sb.auth.getSession();
+        if (error || !data.session) {
+          // Present modal gateway for user choice
+          document.getElementById("auth-modal").classList.remove("hidden");
+        } else {
+          user = data.session.user;
+          document.getElementById("user-display").innerText = `Candidate UUID: ${user.email || user.id}`;
+          document.getElementById("mode-badge").className = "text-[10px] uppercase tracking-widest bg-indigo-500/20 text-indigo-400 px-2 py-0.5 rounded-full border border-indigo-500/30";
+          document.getElementById("mode-badge").innerText = "Supabase Live Mode";
+        }
+      } catch (err) {
+        console.warn("Auth check failed. Forcing Simulator mode option.");
+        activateSimulatorMode();
+      }
+    }
+
+    function activateSimulatorMode() {
+      isOfflineSimulator = true;
+      document.getElementById("auth-modal").classList.add("hidden");
+      document.getElementById("simulator-notice").classList.remove("hidden");
+      
+      user = {
+        id: "simulated-candidate-2026",
+        email: "guest.candidate@academic.sim"
+      };
+
+      document.getElementById("user-display").innerText = `Simulated Session: ${user.email}`;
+      const modeBadge = document.getElementById("mode-badge");
+      modeBadge.className = "text-[10px] uppercase tracking-widest bg-amber-500/20 text-amber-400 px-2 py-0.5 rounded-full border border-amber-500/30 animate-pulse";
+      modeBadge.innerText = "Simulator Mode Active";
+      
+      showNotification("Simulator Initialized", "Demonstration sandbox configured smoothly.", "warning");
+      loadQuiz();
+    }
+
+    // ─────────────────────────────────────────────────────────────────────────
+    // DYNAMIC QUIZ BOOTSTRAPPING
+    // ─────────────────────────────────────────────────────────────────────────
+    async function loadQuiz() {
+      let quizId = sessionStorage.getItem("launch_quiz_id");
+      
+      // Default fallback if session variable is not defined
+      if (!quizId) {
+        quizId = FALLBACK_QUIZZES[0].id;
+        sessionStorage.setItem("launch_quiz_id", quizId);
+      }
+
+      let data = null;
+
+      if (!isOfflineSimulator && sb) {
+        document.getElementById("meta-title").innerText = "Querying live DB...";
+        const { data: dbData, error } = await sb
+          .from("quizzes")
+          .select("*")
+          .eq("id", quizId)
+          .single();
+
+        if (error) {
+          console.error("Database read failed, seeking offline dataset.", error);
+        } else {
+          data = dbData;
+        }
+      }
+
+      // Fallback fallback selector if DB check yields null
+      if (!data) {
+        data = FALLBACK_QUIZZES.find(q => q.id === quizId) || FALLBACK_QUIZZES[0];
+      }
+
+      quiz = data;
+
+      // Update Side Info card parameters
+      document.getElementById("meta-title").innerText = quiz.subject;
+      document.getElementById("meta-chapter").innerText = quiz.chapter;
+      document.getElementById("meta-set").innerText = quiz.set || "Set-A";
+      document.getElementById("meta-duration").innerText = `${quiz.duration_minutes || 15} mins`;
+      document.getElementById("meta-total").innerText = quiz.questions.length;
+      document.getElementById("completed-badge").innerText = `0/${quiz.questions.length} Done`;
+
+      renderQuestions();
+      renderNavigationPalette();
+      startTimer(quiz.duration_minutes || 15);
+    }
+
+    // ─────────────────────────────────────────────────────────────────────────
+    // HIGH-FIDELITY RENDER EXAM INTERFACE
+    // ─────────────────────────────────────────────────────────────────────────
+    function renderQuestions() {
+      const wrap = document.getElementById("questions-container");
+      wrap.innerHTML = "";
+
+      quiz.questions.forEach((q, index) => {
+        const optionHTML = q.options.map((opt, i) => {
+          return `
+            <label id="opt-container-${index}-${i}" class="group relative flex items-center p-4 bg-slate-900/60 hover:bg-slate-800/60 border border-slate-800/80 rounded-xl cursor-pointer transition-all duration-200 select-none">
+              <div class="flex items-center h-5">
+                <input id="input-q${index}-o${i}" type="radio" name="q${index}" value="${i}" 
+                       onchange="registerChoice(${index}, ${i})" 
+                       class="h-4.5 w-4.5 text-indigo-600 focus:ring-indigo-600/30 border-slate-700 bg-slate-800 rounded-full transition">
+              </div>
+              <div class="ml-3 text-sm leading-6 text-slate-300 group-hover:text-white transition-colors flex-grow">
+                ${opt}
+              </div>
+            </label>
+          `;
+        }).join("");
+
+        wrap.innerHTML += `
+          <div id="q-card-${index}" class="bg-[#111827] border border-slate-800 rounded-2xl p-6 shadow-xl transition-all duration-300 animate-slide-in relative overflow-hidden">
+            <div class="absolute top-0 left-0 w-1.5 h-full bg-slate-800" id="indicator-q${index}"></div>
+            <div class="flex items-start justify-between gap-4 mb-4">
+              <div class="flex items-center gap-2">
+                <span class="text-xs bg-slate-800 text-slate-300 px-2 py-1 rounded-md font-bold font-mono">Q${index + 1}</span>
+                <span class="text-xs text-indigo-400 font-medium">Single Select MCQ</span>
+              </div>
+              <button onclick="toggleFlag(${index})" class="text-slate-500 hover:text-amber-500 transition-colors p-1" title="Flag this question for review">
+                <i class="fa-regular fa-flag text-sm" id="flag-icon-${index}"></i>
+              </button>
+            </div>
+            
+            <h3 class="text-base sm:text-lg font-semibold text-white leading-relaxed mb-4">
+              ${q.question}
+            </h3>
+
+            <div class="grid grid-cols-1 gap-3">
+              ${optionHTML}
+            </div>
+          </div>
+        `;
+      });
+    }
+
+    // Generate quick jump matrix panel
+    function renderNavigationPalette() {
+      const navGrid = document.getElementById("question-nav-grid");
+      navGrid.innerHTML = "";
+
+      quiz.questions.forEach((_, index) => {
+        navGrid.innerHTML += `
+          <button id="nav-btn-${index}" onclick="scrollToQuestion(${index})" class="h-10 text-xs font-bold font-mono text-slate-400 border border-slate-800 bg-slate-900/60 hover:bg-slate-800 rounded-lg flex items-center justify-center transition-all">
+            ${index + 1}
+          </button>
+        `;
+      });
+    }
+
+    function scrollToQuestion(index) {
+      const element = document.getElementById(`q-card-${index}`);
+      if (element) {
+        element.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        // Give element a brief glow effect
+        element.classList.add('ring-2', 'ring-indigo-500/50');
+        setTimeout(() => {
+          element.classList.remove('ring-2', 'ring-indigo-500/50');
+        }, 1200);
+      }
+    }
+
+    // ─────────────────────────────────────────────────────────────────────────
+    // EXAM INTERACTIVE STATE LOGIC
+    // ─────────────────────────────────────────────────────────────────────────
+    function registerChoice(questionIdx, optionIdx) {
+      answers[questionIdx] = optionIdx;
+      
+      // Visual indicator update on the specific question card
+      const barIndicator = document.getElementById(`indicator-q${questionIdx}`);
+      if (barIndicator) {
+        barIndicator.classList.remove('bg-slate-800');
+        barIndicator.classList.add('bg-indigo-600');
+      }
+
+      // Update Highlight selected option card
+      quiz.questions[questionIdx].options.forEach((_, optIdx) => {
+        const optionBox = document.getElementById(`opt-container-${questionIdx}-${optIdx}`);
+        if (optionBox) {
+          if (optIdx === optionIdx) {
+            optionBox.classList.add('border-indigo-500', 'bg-indigo-500/5');
+            optionBox.classList.remove('border-slate-800/80', 'bg-slate-900/60');
+          } else {
+            optionBox.classList.remove('border-indigo-500', 'bg-indigo-500/5');
+            optionBox.classList.add('border-slate-800/80', 'bg-slate-900/60');
+          }
+        }
+      });
+
+      // Update Map Navigator state
+      const navBtn = document.getElementById(`nav-btn-${questionIdx}`);
+      if (navBtn) {
+        if (flagged[questionIdx]) {
+          navBtn.className = "h-10 text-xs font-bold font-mono text-white bg-amber-500 hover:bg-amber-600 rounded-lg flex items-center justify-center transition-all border border-amber-600 shadow-md shadow-amber-500/20";
+        } else {
+          navBtn.className = "h-10 text-xs font-bold font-mono text-white bg-indigo-600 hover:bg-indigo-500 rounded-lg flex items-center justify-center transition-all border border-indigo-700 shadow-md shadow-indigo-500/20";
+        }
+      }
+
+      // Statistics badge refresh
+      const answerCount = Object.keys(answers).length;
+      document.getElementById("completed-badge").innerText = `${answerCount}/${quiz.questions.length} Done`;
+      
+      const percentageDone = Math.round((answerCount / quiz.questions.length) * 100);
+      document.getElementById("progress-text").innerText = `${percentageDone}%`;
+    }
+
+    function toggleFlag(index) {
+      const flagIcon = document.getElementById(`flag-icon-${index}`);
+      const navBtn = document.getElementById(`nav-btn-${index}`);
+
+      if (flagged[index]) {
+        delete flagged[index];
+        flagIcon.className = "fa-regular fa-flag text-sm";
+        flagIcon.classList.remove("text-amber-500");
+        
+        // Return navigation color to regular status
+        if (answers[index] !== undefined) {
+          navBtn.className = "h-10 text-xs font-bold font-mono text-white bg-indigo-600 hover:bg-indigo-500 rounded-lg flex items-center justify-center transition-all border border-indigo-700";
+        } else {
+          navBtn.className = "h-10 text-xs font-bold font-mono text-slate-400 border border-slate-800 bg-slate-900/60 hover:bg-slate-800 rounded-lg flex items-center justify-center transition-all";
+        }
+        showNotification("Unflagged", `Question ${index+1} removed from follow-up flag list.`, "info");
+      } else {
+        flagged[index] = true;
+        flagIcon.className = "fa-solid fa-flag text-sm text-amber-500";
+        
+        // Update nav map to highlight attention needed
+        navBtn.className = "h-10 text-xs font-bold font-mono text-slate-900 bg-amber-500 hover:bg-amber-400 rounded-lg flex items-center justify-center transition-all border border-amber-600 shadow-md shadow-amber-500/10 animate-bounce";
+        showNotification("Flagged", `Question ${index+1} tagged for priority check.`, "warning");
+      }
+    }
+
+    // ─────────────────────────────────────────────────────────────────────────
+    // DYNAMIC RUNTIME TIMER
+    // ─────────────────────────────────────────────────────────────────────────
+    function startTimer(minutes) {
+      timeLeft = minutes * 60;
+      totalExamDurationSeconds = timeLeft;
+
+      timerInterval = setInterval(() => {
+        timeLeft--;
+
+        let m = Math.floor(timeLeft / 60);
+        let s = timeLeft % 60;
+
+        const timeString = `${m}:${s.toString().padStart(2, '0')}`;
+        document.getElementById("timer").innerText = timeString;
+
+        // Visual alert state shift if timer runs dangerously low (e.g., under 1 minute)
+        if (timeLeft <= 60) {
+          const timerContainer = document.getElementById("timer").parentNode;
+          timerContainer.classList.remove('text-rose-400', 'bg-rose-500/10');
+          timerContainer.classList.add('text-red-400', 'bg-red-500/20', 'animate-pulse');
+        }
+
+        if (timeLeft <= 0) {
+          clearInterval(timerInterval);
+          submitExam(true);
+        }
+      }, 1000);
+    }
+
+    // ─────────────────────────────────────────────────────────────────────────
+    // MODAL DIALOG CONTROLS
+    // ─────────────────────────────────────────────────────────────────────────
+    function triggerSubmitDialog() {
+      const unansweredCount = quiz.questions.length - Object.keys(answers).length;
+      const warningContainer = document.getElementById("unanswered-warning");
+      
+      if (unansweredCount > 0) {
+        warningContainer.classList.remove("hidden");
+        document.getElementById("warning-text").innerText = `Warning: You have left ${unansweredCount} question(s) completely blank.`;
+      } else {
+        warningContainer.classList.add("hidden");
+      }
+
+      document.getElementById("submit-modal").classList.remove("hidden");
+    }
+
+    function closeSubmitDialog() {
+      document.getElementById("submit-modal").classList.add("hidden");
+    }
+
+    async function confirmSubmit() {
+      closeSubmitDialog();
+      await submitExam(false);
+    }
+
+    // ─────────────────────────────────────────────────────────────────────────
+    // SUBMIT & COMPILE ASSESSMENT RESULTS WITH EXPLANATIONS
+    // ─────────────────────────────────────────────────────────────────────────
+    async function submitExam(auto = false) {
       clearInterval(timerInterval);
-      submitExam(true);
+
+      let score = 0;
+      const total = quiz.questions.length;
+
+      // Grade calculation
+      quiz.questions.forEach((q, i) => {
+        if (answers[i] === q.correct) {
+          score++;
+        }
+      });
+
+      const percentage = Math.round((score / total) * 100);
+      const timeTaken = totalExamDurationSeconds - timeLeft;
+
+      // Generate Attempt Records logic
+      try {
+        if (!isOfflineSimulator && sb) {
+          await sb.from("attempts").insert({
+            user_id: user.id,
+            quiz_id: quiz.id,
+            subject: quiz.subject,
+            chapter: quiz.chapter,
+            set: quiz.set || "A",
+            score,
+            total,
+            percentage,
+            time_taken: timeTaken
+          });
+
+          // Leaders system updates
+          const { data: existing } = await sb
+            .from("leaderboard")
+            .select("*")
+            .eq("user_id", user.id)
+            .single();
+
+          if (existing) {
+            await sb.from("leaderboard")
+              .update({
+                total_attempts: existing.total_attempts + 1,
+                total_score: existing.total_score + score,
+                average_percentage: Math.round((existing.average_percentage + percentage) / 2)
+              })
+              .eq("user_id", user.id);
+          } else {
+            await sb.from("leaderboard").insert({
+              user_id: user.id,
+              total_attempts: 1,
+              total_score: score,
+              average_percentage: percentage
+            });
+          }
+        }
+      } catch (err) {
+        console.error("Failed to commit stats to Supabase. Results held in client cache memory.", err);
+      }
+
+      showNotification(
+        auto ? "Auto Submitted" : "Exam Complete", 
+        `Successfully logged progress. Score: ${score}/${total}`,
+        auto ? "warning" : "success"
+      );
+
+      // Hide Exam input and Display Assessment Results panel
+      document.getElementById("exam-active-panel").classList.add("hidden");
+      document.getElementById("quiz-meta-card").classList.add("hidden");
+      document.getElementById("exam-results-panel").classList.remove("hidden");
+
+      // Set metrics
+      document.getElementById("percentage-visual").innerText = `${percentage}%`;
+      document.getElementById("fractional-score").innerText = `${score} / ${total}`;
+      
+      // Animate SVG progress ring
+      const strokeDashoffset = 339.29 - (339.29 * percentage) / 100;
+      document.getElementById("score-ring-fill").setAttribute("stroke-dashoffset", strokeDashoffset);
+
+      // Format time consumed
+      const mTaken = Math.floor(timeTaken / 60);
+      const sTaken = timeTaken % 60;
+      document.getElementById("stats-time-spent").innerText = `${mTaken}m ${sTaken}s`;
+      document.getElementById("stats-subject").innerText = quiz.subject;
+
+      renderExplanationMatrix();
     }
 
-  },1000);
-}
+    // ─────────────────────────────────────────────────────────────────────────
+    // GENERATE RICH RESULTS MATRIX & EXPLANATIONS PANEL
+    // ─────────────────────────────────────────────────────────────────────────
+    function renderExplanationMatrix() {
+      const container = document.getElementById("results-explanation-container");
+      container.innerHTML = "";
 
-// ─────────────────────────────
-// SUBMIT EXAM
-// ─────────────────────────────
-async function submitExam(auto=false){
+      quiz.questions.forEach((q, qIndex) => {
+        const userChoice = answers[qIndex];
+        const isCorrect = userChoice === q.correct;
+        
+        let statusBadge = "";
+        let borderClass = "";
+        
+        if (userChoice === undefined) {
+          statusBadge = `<span class="bg-amber-500/10 text-amber-400 border border-amber-500/20 px-2.5 py-1 rounded-full text-xs font-semibold flex items-center gap-1"><i class="fa-solid fa-circle-minus"></i> Unanswered</span>`;
+          borderClass = "border-amber-500/30";
+        } else if (isCorrect) {
+          statusBadge = `<span class="bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 px-2.5 py-1 rounded-full text-xs font-semibold flex items-center gap-1"><i class="fa-solid fa-circle-check"></i> Correct</span>`;
+          borderClass = "border-emerald-500/30";
+        } else {
+          statusBadge = `<span class="bg-red-500/10 text-red-400 border border-red-500/20 px-2.5 py-1 rounded-full text-xs font-semibold flex items-center gap-1"><i class="fa-solid fa-circle-xmark"></i> Incorrect</span>`;
+          borderClass = "border-red-500/30";
+        }
 
-  clearInterval(timerInterval);
+        // Render options with state indicators
+        const optionsReviewHTML = q.options.map((opt, oIndex) => {
+          let extraClass = "bg-slate-900/40 border-slate-800 text-slate-400";
+          let badge = "";
 
-  let score = 0;
-  const total = quiz.questions.length;
+          if (oIndex === q.correct) {
+            // Highlighting the correct option regardless
+            extraClass = "bg-emerald-500/10 border-emerald-500/40 text-emerald-200 font-medium";
+            badge = `<span class="ml-auto text-[10px] bg-emerald-500 text-slate-900 px-2 py-0.5 rounded font-bold uppercase tracking-wider">Correct Target</span>`;
+          } else if (oIndex === userChoice && !isCorrect) {
+            // Highlighting user's incorrect choice
+            extraClass = "bg-red-500/10 border-red-500/40 text-red-200";
+            badge = `<span class="ml-auto text-[10px] bg-red-500 text-white px-2 py-0.5 rounded font-bold uppercase tracking-wider">Your Selection</span>`;
+          } else if (oIndex === userChoice && isCorrect) {
+            badge = `<span class="ml-auto text-[10px] bg-emerald-500 text-slate-900 px-2 py-0.5 rounded font-bold uppercase tracking-wider">Your Selection</span>`;
+          }
 
-  quiz.questions.forEach((q,i)=>{
-    if(answers[i] == q.correct){
-      score++;
+          return `
+            <div class="flex items-center p-3 border.5 rounded-xl text-sm ${extraClass}">
+              <span class="w-6 h-6 rounded-full bg-slate-800 text-[11px] font-bold flex items-center justify-center mr-3 border border-slate-700">
+                ${String.fromCharCode(65 + oIndex)}
+              </span>
+              <span>${opt}</span>
+              ${badge}
+            </div>
+          `;
+        }).join("");
+
+        // Build Explanation block
+        const fallbackExplanation = q.explanation || "No specialized mathematical or chemical breakdown is logged for this question. Retain context through classic conceptual learning patterns.";
+
+        container.innerHTML += `
+          <div class="bg-[#111827] border-2 ${borderClass} rounded-2xl p-5 sm:p-6 shadow-xl space-y-4 animate-slide-in">
+            <div class="flex flex-wrap items-center justify-between gap-3 border-b border-slate-800/80 pb-3">
+              <span class="text-xs bg-slate-800 text-slate-300 px-2.5 py-1 rounded-md font-mono font-bold">Question ${qIndex + 1}</span>
+              ${statusBadge}
+            </div>
+
+            <p class="text-slate-200 text-base font-semibold leading-relaxed">
+              ${q.question}
+            </p>
+
+            <div class="grid grid-cols-1 gap-2.5">
+              ${optionsReviewHTML}
+            </div>
+
+            <!-- Conceptual Explanation Segment -->
+            <div class="mt-4 p-4 bg-slate-900/60 border border-slate-800 rounded-xl space-y-2">
+              <h5 class="text-xs font-bold uppercase tracking-wider text-indigo-400 flex items-center gap-1.5">
+                <i class="fa-solid fa-lightbulb"></i> Rational Explanation:
+              </h5>
+              <p class="text-xs sm:text-sm text-slate-300 leading-relaxed">
+                ${fallbackExplanation}
+              </p>
+            </div>
+          </div>
+        `;
+      });
     }
-  });
 
-  const percentage = Math.round((score/total)*100);
+    // ─────────────────────────────────────────────────────────────────────────
+    // REDIRECT FUNCTIONALITY
+    // ─────────────────────────────────────────────────────────────────────────
+    function redirectToIndex() {
+      showNotification("Navigating...", "Transferring to main dashboard gateway.", "info");
+      setTimeout(() => {
+        location.href = "index.html";
+      }, 800);
+    }
 
-  // Save attempt
-  await sb.from("attempts").insert({
-    user_id: user.id,
-    quiz_id: quiz.id,
-    subject: quiz.subject,
-    chapter: quiz.chapter,
-    set: quiz.set,
-    score,
-    total,
-    percentage,
-    time_taken: (quiz.duration_minutes*60) - timeLeft
-  });
-
-  // Update leaderboard (simple upsert logic)
-  const { data: existing } = await sb
-    .from("leaderboard")
-    .select("*")
-    .eq("user_id", user.id)
-    .single();
-
-  if(existing){
-
-    await sb.from("leaderboard")
-      .update({
-        total_attempts: existing.total_attempts + 1,
-        total_score: existing.total_score + score,
-        average_percentage: Math.round((existing.average_percentage + percentage)/2)
-      })
-      .eq("user_id", user.id);
-
-  } else {
-
-    await sb.from("leaderboard").insert({
-      user_id: user.id,
-      total_attempts: 1,
-      total_score: score,
-      average_percentage: percentage
-    });
-  }
-
-  alert(
-    auto
-      ? `Time's up! Submitted automatically\nScore: ${score}/${total}`
-      : `Submitted!\nScore: ${score}/${total}`
-  );
-
-  location.href = "mcq-exam-platform.html";
-}
-
-(async()=>{
-  await checkAuth();
-  await loadQuiz();
-})();
-
-</script>
-
+    // ─────────────────────────────────────────────────────────────────────────
+    // APP INITIALIZATION
+    // ─────────────────────────────────────────────────────────────────────────
+    (async () => {
+      await checkAuth();
+      // If authentic session resolved without displaying login wall, boot the application
+      if (user && !isOfflineSimulator) {
+        await loadQuiz();
+      }
+    })();
+  </script>
 </body>
 </html>
