@@ -1,0 +1,201 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<title>ExamForge - Quiz Loader</title>
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+<style>
+body{
+margin:0;
+font-family:Arial;
+background:#020617;
+color:white;
+display:flex;
+justify-content:center;
+align-items:center;
+height:100vh;
+}
+
+.card{
+background:#0f172a;
+padding:20px;
+border-radius:12px;
+width:90%;
+max-width:600px;
+border:1px solid #334155;
+}
+
+.btn{
+padding:10px;
+background:#22c55e;
+border:none;
+width:100%;
+border-radius:999px;
+cursor:pointer;
+font-weight:bold;
+}
+
+.hidden{display:none}
+
+.question{
+margin-top:15px;
+padding:10px;
+background:#111827;
+border-radius:10px;
+}
+
+.option{
+padding:8px;
+background:#1e293b;
+margin:5px 0;
+border-radius:8px;
+cursor:pointer;
+}
+
+.option:hover{
+background:#334155;
+}
+</style>
+</head>
+
+<body>
+
+<div class="card" id="loader">
+<h2>Checking Schedule...</h2>
+<p id="status">Please wait</p>
+</div>
+
+<div class="card hidden" id="quiz">
+<h2 id="quiz-title">Quiz</h2>
+<div id="questions"></div>
+<button class="btn" onclick="submitQuiz()">Submit</button>
+</div>
+
+<script>
+/* ========= SUPABASE ========= */
+const supabase = window.supabase.createClient(
+"https://rpudsnrqlhataqfavcjh.supabase.co",
+"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJwdWRzbnJxbGhhdGFxZmF2Y2poIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzk5NzI0NjgsImV4cCI6MjA5NTU0ODQ2OH0.EEu5t-NPqWARChSAMpEvUPMBkz_JeeNe3bGSCQmH7Xo"
+);
+
+let currentQuiz = null;
+let answers = {};
+
+/* ========= INIT ========= */
+window.onload = async () => {
+checkSchedule();
+};
+
+/* ========= STEP 1: CHECK SCHEDULE ========= */
+async function checkSchedule(){
+
+const { data: userData } = await supabase.auth.getUser();
+const user = userData?.user;
+
+if(!user){
+document.getElementById("status").innerText = "Not logged in";
+return;
+}
+
+/* get active schedule */
+const now = new Date().toISOString();
+
+const { data: schedule } = await supabase
+.from("schedules")
+.select("*")
+.lte("start_time", now)
+.gte("end_time", now)
+.limit(1)
+.single();
+
+if(!schedule){
+document.getElementById("status").innerText = "No active quiz right now";
+return;
+}
+
+document.getElementById("status").innerText = "Loading quiz...";
+
+/* load quiz */
+loadQuiz(schedule.quiz_id);
+}
+
+/* ========= STEP 2: LOAD QUIZ ========= */
+async function loadQuiz(quizId){
+
+const { data: quiz } = await supabase
+.from("quizzes")
+.select("*")
+.eq("id", quizId)
+.single();
+
+currentQuiz = quiz;
+
+document.getElementById("loader").classList.add("hidden");
+document.getElementById("quiz").classList.remove("hidden");
+
+document.getElementById("quiz-title").innerText =
+quiz.subject + " - " + quiz.chapter;
+
+/* render questions */
+const container = document.getElementById("questions");
+container.innerHTML = "";
+
+quiz.questions.forEach((q, index) => {
+
+const div = document.createElement("div");
+div.className = "question";
+
+div.innerHTML = `
+<h4>${index+1}. ${q.question}</h4>
+`;
+
+q.options.forEach((opt, i) => {
+const btn = document.createElement("div");
+btn.className = "option";
+btn.innerText = opt;
+
+btn.onclick = () => {
+answers[index] = i;
+btn.style.background = "#22c55e";
+};
+
+div.appendChild(btn);
+});
+
+container.appendChild(div);
+});
+}
+
+/* ========= STEP 3: SUBMIT ========= */
+async function submitQuiz(){
+
+let score = 0;
+
+currentQuiz.questions.forEach((q, i) => {
+if(answers[i] === q.correct){
+score++;
+}
+});
+
+alert("Score: " + score + "/" + currentQuiz.questions.length);
+
+/* save attempt */
+const user = await supabase.auth.getUser();
+
+await supabase.from("attempts").insert([{
+user_id: user.data.user.id,
+quiz_id: currentQuiz.id,
+score: score,
+total: currentQuiz.questions.length,
+percentage: (score/currentQuiz.questions.length)*100,
+subject: currentQuiz.subject,
+chapter: currentQuiz.chapter
+}]);
+}
+</script>
+
+</body>
+</html>
