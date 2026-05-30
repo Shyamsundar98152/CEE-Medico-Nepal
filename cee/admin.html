@@ -1,0 +1,1842 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+<title>ExamForge — Admin Control Panel</title>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600&family=Outfit:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet"/>
+<style>
+:root{
+  --bg:#07080d;--bg2:#0d0f17;--bg3:#11141f;
+  --card:#141720;--card2:#181c28;--card3:#1c2030;
+  --border:#232840;--border2:#2d3450;--border3:#3a4168;
+  --accent:#4f6ef7;--accent2:#7b93ff;--accent3:#3355ee;
+  --green:#10b981;--green2:#34d399;
+  --red:#f43f5e;--red2:#fb7185;
+  --yellow:#f59e0b;--yellow2:#fbbf24;
+  --cyan:#06b6d4;--cyan2:#22d3ee;
+  --purple:#8b5cf6;--purple2:#a78bfa;
+  --orange:#f97316;--orange2:#fb923c;
+  --text:#dde1f0;--text2:#8892b0;--text3:#4a5578;
+  --sidebar:220px;
+  --r:12px;--r-sm:8px;--r-lg:16px;
+  --sh:0 4px 24px rgba(0,0,0,.5);--sh-lg:0 12px 48px rgba(0,0,0,.7);
+  --tr:all .18s cubic-bezier(.4,0,.2,1);
+  --font:'Outfit',sans-serif;--mono:'JetBrains Mono',monospace;
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth}
+body{font-family:var(--font);background:var(--bg);color:var(--text);min-height:100vh;overflow-x:hidden;font-size:14px}
+h1,h2,h3,h4,h5{font-family:var(--font)}
+a{color:inherit;text-decoration:none}
+button,input,select,textarea{font-family:var(--font)}
+::-webkit-scrollbar{width:5px;height:5px}
+::-webkit-scrollbar-track{background:var(--bg2)}
+::-webkit-scrollbar-thumb{background:var(--border2);border-radius:3px}
+::-webkit-scrollbar-thumb:hover{background:var(--border3)}
+
+/* ── TOAST ── */
+#tc{position:fixed;top:18px;right:18px;z-index:9999;display:flex;flex-direction:column;gap:8px;pointer-events:none}
+.t{display:flex;align-items:center;gap:9px;padding:11px 16px;border-radius:var(--r-sm);font-size:13px;font-weight:500;min-width:240px;max-width:340px;pointer-events:all;animation:tIn .25s ease;box-shadow:var(--sh-lg);border:1px solid transparent}
+.t.s{background:#0d2218;border-color:rgba(16,185,129,.3);color:var(--green2)}
+.t.e{background:#210d12;border-color:rgba(244,63,94,.3);color:var(--red2)}
+.t.i{background:#0d1230;border-color:rgba(79,110,247,.3);color:var(--accent2)}
+.t.w{background:#201708;border-color:rgba(245,158,11,.3);color:var(--yellow2)}
+.tout{animation:tOut .25s ease forwards}
+@keyframes tIn{from{opacity:0;transform:translateX(60px)}to{opacity:1;transform:none}}
+@keyframes tOut{to{opacity:0;transform:translateX(60px)}}
+
+/* ── AUTH GATE ── */
+#auth-gate{display:flex;align-items:center;justify-content:center;min-height:100vh;
+  background:radial-gradient(ellipse 60% 70% at 50% -10%,rgba(79,110,247,.25) 0%,transparent 70%),var(--bg);
+  padding:20px}
+.auth-card{background:var(--card);border:1px solid var(--border);border-radius:20px;padding:44px;width:100%;max-width:400px;box-shadow:var(--sh-lg)}
+.auth-logo{font-size:28px;font-weight:900;letter-spacing:-.5px;margin-bottom:4px}
+.auth-logo span{color:var(--accent)}
+.auth-desc{font-size:13px;color:var(--text3);margin-bottom:32px}
+.auth-label{display:inline-flex;align-items:center;gap:5px;font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.08em;color:var(--text3);margin-bottom:6px}
+.auth-input{width:100%;padding:11px 14px;background:var(--bg2);border:1px solid var(--border);border-radius:var(--r-sm);color:var(--text);font-size:14px;outline:none;transition:var(--tr);margin-bottom:14px}
+.auth-input:focus{border-color:var(--accent);box-shadow:0 0 0 3px rgba(79,110,247,.15)}
+.auth-input::placeholder{color:var(--text3)}
+.auth-btn{width:100%;padding:13px;background:var(--accent);border:none;border-radius:var(--r-sm);color:#fff;font-size:15px;font-weight:700;cursor:pointer;transition:var(--tr);margin-top:4px;letter-spacing:.01em}
+.auth-btn:hover{background:var(--accent2);transform:translateY(-1px);box-shadow:0 6px 20px rgba(79,110,247,.4)}
+.auth-btn:disabled{opacity:.5;cursor:not-allowed;transform:none;box-shadow:none}
+
+/* ── MAIN APP ── */
+#app{display:none;min-height:100vh}
+.layout{display:flex;min-height:100vh}
+
+/* ── SIDEBAR ── */
+.sidebar{width:var(--sidebar);background:var(--bg2);border-right:1px solid var(--border);display:flex;flex-direction:column;position:fixed;top:0;left:0;height:100vh;z-index:100;overflow-y:auto}
+.sb-logo{padding:22px 18px 18px;border-bottom:1px solid var(--border)}
+.sb-logo-txt{font-size:20px;font-weight:900;letter-spacing:-.3px}
+.sb-logo-txt span{color:var(--accent)}
+.sb-logo-sub{font-size:10px;color:var(--text3);margin-top:2px;text-transform:uppercase;letter-spacing:.1em;font-weight:600}
+.sb-admin-badge{display:inline-flex;align-items:center;gap:4px;padding:3px 8px;background:rgba(79,110,247,.15);border:1px solid rgba(79,110,247,.3);border-radius:20px;font-size:10px;font-weight:700;color:var(--accent2);text-transform:uppercase;letter-spacing:.06em;margin-top:6px}
+.sb-user{padding:14px 18px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:10px}
+.sb-av{width:34px;height:34px;border-radius:50%;background:linear-gradient(135deg,var(--accent),var(--purple));display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:800;flex-shrink:0;color:#fff}
+.sb-uname{font-size:13px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.sb-uemail{font-size:11px;color:var(--text3);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.sb-nav{flex:1;padding:10px 0}
+.sb-sec{padding:12px 18px 4px;font-size:10px;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:.1em}
+.sb-item{display:flex;align-items:center;gap:10px;padding:9px 18px;color:var(--text2);font-size:13px;font-weight:500;cursor:pointer;transition:var(--tr);border:none;background:transparent;width:100%;text-align:left;position:relative}
+.sb-item:hover{background:rgba(79,110,247,.07);color:var(--text)}
+.sb-item.act{background:rgba(79,110,247,.14);color:var(--accent2);font-weight:600}
+.sb-item.act::before{content:'';position:absolute;left:0;top:5px;bottom:5px;width:3px;background:var(--accent);border-radius:0 2px 2px 0}
+.sb-icon{font-size:15px;width:20px;text-align:center;flex-shrink:0}
+.sb-badge{margin-left:auto;background:var(--accent);color:#fff;font-size:10px;font-weight:700;padding:1px 6px;border-radius:10px}
+.sb-footer{padding:14px 18px;border-top:1px solid var(--border)}
+.logout-btn{width:100%;padding:9px;background:rgba(244,63,94,.1);border:1px solid rgba(244,63,94,.25);border-radius:var(--r-sm);color:var(--red2);font-size:13px;font-weight:600;cursor:pointer;transition:var(--tr)}
+.logout-btn:hover{background:rgba(244,63,94,.2)}
+
+/* ── MAIN ── */
+.main{margin-left:var(--sidebar);flex:1;background:var(--bg);min-height:100vh}
+.topbar{display:flex;align-items:center;justify-content:space-between;padding:16px 28px;border-bottom:1px solid var(--border);background:var(--bg2);position:sticky;top:0;z-index:50}
+.topbar-title{font-size:17px;font-weight:700;display:flex;align-items:center;gap:10px}
+.topbar-right{display:flex;align-items:center;gap:10px}
+.live-dot{width:7px;height:7px;border-radius:50%;background:var(--green);animation:blink 1.2s ease infinite;flex-shrink:0}
+@keyframes blink{0%,100%{opacity:1}50%{opacity:.3}}
+.topbar-clock{font-family:var(--mono);font-size:13px;color:var(--cyan2);font-weight:500;letter-spacing:.04em}
+
+/* ── PAGE ── */
+.page{display:none;padding:28px;animation:pgIn .2s ease}
+.page.act{display:block}
+@keyframes pgIn{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+.pg-head{margin-bottom:24px}
+.pg-title{font-size:22px;font-weight:800;letter-spacing:-.3px}
+.pg-sub{font-size:13px;color:var(--text3);margin-top:4px}
+
+/* ── BUTTONS ── */
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:7px;padding:9px 18px;border:none;border-radius:var(--r-sm);font-size:13px;font-weight:600;cursor:pointer;transition:var(--tr);outline:none;white-space:nowrap;font-family:var(--font)}
+.btn-p{background:var(--accent);color:#fff}
+.btn-p:hover{background:var(--accent2);transform:translateY(-1px);box-shadow:0 4px 16px rgba(79,110,247,.4)}
+.btn-s{background:var(--bg2);border:1px solid var(--border);color:var(--text2)}
+.btn-s:hover{border-color:var(--border2);color:var(--text)}
+.btn-g{background:rgba(16,185,129,.15);border:1px solid rgba(16,185,129,.3);color:var(--green2)}
+.btn-g:hover{background:rgba(16,185,129,.25)}
+.btn-r{background:rgba(244,63,94,.12);border:1px solid rgba(244,63,94,.25);color:var(--red2)}
+.btn-r:hover{background:rgba(244,63,94,.22)}
+.btn-y{background:rgba(245,158,11,.12);border:1px solid rgba(245,158,11,.25);color:var(--yellow2)}
+.btn-y:hover{background:rgba(245,158,11,.22)}
+.btn-c{background:rgba(6,182,212,.12);border:1px solid rgba(6,182,212,.25);color:var(--cyan2)}
+.btn-c:hover{background:rgba(6,182,212,.22)}
+.btn-full{width:100%}
+.btn-sm{padding:6px 12px;font-size:12px}
+.btn-xs{padding:4px 9px;font-size:11px;border-radius:6px}
+.btn-lg{padding:13px 28px;font-size:15px;font-weight:700}
+.btn:disabled{opacity:.45;cursor:not-allowed;transform:none !important;box-shadow:none !important}
+
+/* ── CARDS ── */
+.card{background:var(--card);border:1px solid var(--border);border-radius:var(--r);padding:22px}
+.card-sm{padding:14px}
+
+/* ── STAT GRID ── */
+.stat-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(170px,1fr));gap:14px;margin-bottom:24px}
+.stat{background:var(--card);border:1px solid var(--border);border-radius:var(--r);padding:18px 20px;position:relative;overflow:hidden}
+.stat::after{content:'';position:absolute;bottom:-20px;right:-20px;width:70px;height:70px;border-radius:50%;opacity:.08}
+.stat.blue::after{background:var(--accent)}
+.stat.green::after{background:var(--green)}
+.stat.purple::after{background:var(--purple)}
+.stat.orange::after{background:var(--orange)}
+.stat.cyan::after{background:var(--cyan)}
+.stat.red::after{background:var(--red)}
+.stat-icon{font-size:22px;margin-bottom:10px}
+.stat-val{font-size:26px;font-weight:800;letter-spacing:-.5px;line-height:1}
+.stat-lbl{font-size:12px;color:var(--text3);margin-top:5px;font-weight:500}
+.stat-trend{font-size:11px;margin-top:6px;font-weight:600}
+.stat.blue .stat-val{color:var(--accent2)}
+.stat.green .stat-val{color:var(--green2)}
+.stat.purple .stat-val{color:var(--purple2)}
+.stat.orange .stat-val{color:var(--orange2)}
+.stat.cyan .stat-val{color:var(--cyan2)}
+.stat.red .stat-val{color:var(--red2)}
+
+/* ── FORM ── */
+.fg{display:flex;flex-direction:column;gap:5px;margin-bottom:14px}
+.fl{font-size:12px;font-weight:600;color:var(--text2);letter-spacing:.02em}
+.fi{padding:10px 13px;background:var(--bg2);border:1px solid var(--border);border-radius:var(--r-sm);color:var(--text);font-size:13px;outline:none;transition:var(--tr);width:100%}
+.fi:focus{border-color:var(--accent);box-shadow:0 0 0 3px rgba(79,110,247,.12)}
+.fi::placeholder{color:var(--text3)}
+.fi-mono{font-family:var(--mono);font-size:12px}
+select.fi{-webkit-appearance:none;appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='10' viewBox='0 0 10 10'%3E%3Cpath fill='%234a5578' d='M5 7L0 2h10z'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 11px center;cursor:pointer}
+textarea.fi{resize:vertical;line-height:1.5}
+.grid-2{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+.grid-3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:14px}
+.grid-4{display:grid;grid-template-columns:repeat(4,1fr);gap:14px}
+
+/* ── TABLE ── */
+.tbl-wrap{overflow-x:auto;border-radius:var(--r);border:1px solid var(--border)}
+table{width:100%;border-collapse:collapse;font-size:13px}
+thead{background:var(--bg2)}
+th{padding:10px 14px;text-align:left;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--text3);white-space:nowrap}
+td{padding:10px 14px;border-top:1px solid var(--border);color:var(--text2);vertical-align:middle}
+tr:hover td{background:rgba(255,255,255,.015)}
+.tbl-empty{padding:36px;text-align:center;color:var(--text3)}
+
+/* ── BADGES ── */
+.badge{display:inline-flex;align-items:center;gap:3px;padding:2px 9px;border-radius:20px;font-size:11px;font-weight:600;white-space:nowrap}
+.b-green{background:rgba(16,185,129,.14);color:var(--green2)}
+.b-red{background:rgba(244,63,94,.14);color:var(--red2)}
+.b-yellow{background:rgba(245,158,11,.14);color:var(--yellow2)}
+.b-blue{background:rgba(79,110,247,.14);color:var(--accent2)}
+.b-purple{background:rgba(139,92,246,.14);color:var(--purple2)}
+.b-cyan{background:rgba(6,182,212,.14);color:var(--cyan2)}
+.b-gray{background:rgba(74,85,120,.2);color:var(--text2)}
+.b-orange{background:rgba(249,115,22,.14);color:var(--orange2)}
+
+/* ── UPLOAD ZONE ── */
+.drop-zone{border:2px dashed var(--border2);border-radius:var(--r);padding:32px;text-align:center;cursor:pointer;transition:var(--tr)}
+.drop-zone:hover,.drop-zone.drag{border-color:var(--accent);background:rgba(79,110,247,.05)}
+.drop-icon{font-size:36px;margin-bottom:8px}
+.drop-txt{font-size:14px;color:var(--text2);font-weight:500}
+.drop-sub{font-size:12px;color:var(--text3);margin-top:3px}
+
+/* ── CODE EDITOR AREA ── */
+.code-box{width:100%;background:var(--bg);border:1px solid var(--border);border-radius:var(--r-sm);color:var(--text);padding:14px;font-family:var(--mono);font-size:12px;resize:vertical;min-height:160px;outline:none;transition:var(--tr);line-height:1.6}
+.code-box:focus{border-color:var(--accent)}
+
+/* ── TABS ── */
+.tabs{display:flex;background:var(--bg2);border:1px solid var(--border);border-radius:var(--r-sm);padding:3px;flex-wrap:wrap;gap:2px}
+.tab{padding:7px 14px;border:none;background:transparent;color:var(--text3);font-size:13px;font-weight:500;border-radius:6px;cursor:pointer;transition:var(--tr);font-family:var(--font)}
+.tab.act{background:var(--accent);color:#fff}
+.tab-panel{display:none}
+.tab-panel.act{display:block}
+
+/* ── MODAL ── */
+.modal-ov{display:none;position:fixed;inset:0;background:rgba(0,0,0,.8);z-index:500;align-items:center;justify-content:center;padding:20px;backdrop-filter:blur(4px)}
+.modal-ov.open{display:flex}
+.modal{background:var(--card);border:1px solid var(--border);border-radius:20px;padding:28px;width:100%;max-width:580px;max-height:90vh;overflow-y:auto;box-shadow:var(--sh-lg);animation:mIn .2s ease}
+.modal-wide{max-width:800px}
+@keyframes mIn{from{opacity:0;transform:scale(.95)}to{opacity:1;transform:scale(1)}}
+.modal-hd{display:flex;align-items:center;justify-content:space-between;margin-bottom:20px}
+.modal-title{font-size:17px;font-weight:700}
+.modal-x{background:var(--bg2);border:1px solid var(--border);border-radius:6px;color:var(--text3);width:28px;height:28px;display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:13px;transition:var(--tr)}
+.modal-x:hover{border-color:var(--red);color:var(--red2)}
+
+/* ── SECTION HEADER ── */
+.sec-hd{display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;flex-wrap:wrap;gap:10px}
+.sec-title{font-size:15px;font-weight:700;display:flex;align-items:center;gap:8px}
+.sec-count{font-size:11px;font-weight:700;padding:2px 8px;background:var(--bg2);border:1px solid var(--border);border-radius:10px;color:var(--text3)}
+
+/* ── QUESTION PREVIEW ── */
+.q-prev{background:var(--bg2);border:1px solid var(--border);border-radius:var(--r-sm);padding:14px;margin-bottom:8px}
+.q-prev-num{font-size:10px;font-weight:700;text-transform:uppercase;color:var(--text3);letter-spacing:.06em;margin-bottom:6px}
+.q-prev-text{font-size:14px;font-weight:500;margin-bottom:10px;line-height:1.5}
+.q-options{display:grid;grid-template-columns:1fr 1fr;gap:5px}
+.q-opt{padding:6px 10px;border-radius:6px;font-size:12px;background:var(--bg);border:1px solid var(--border);color:var(--text2)}
+.q-opt.correct{background:rgba(16,185,129,.12);border-color:rgba(16,185,129,.3);color:var(--green2);font-weight:600}
+.q-expl{font-size:11px;color:var(--text3);margin-top:8px;padding:6px 10px;background:rgba(79,110,247,.07);border-radius:5px;border-left:2px solid var(--accent)}
+
+/* ── QUIZ BUILDER ── */
+.builder-card{background:var(--card2);border:1px solid var(--border);border-radius:var(--r);padding:18px;margin-bottom:10px;cursor:pointer;transition:var(--tr)}
+.builder-card:hover{border-color:var(--border2)}
+.builder-card.selected{border-color:var(--accent);background:rgba(79,110,247,.07)}
+.builder-card-hd{display:flex;align-items:center;justify-content:space-between}
+.builder-type{font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;margin-bottom:4px}
+.builder-desc{font-size:12px;color:var(--text3)}
+.check-circle{width:20px;height:20px;border-radius:50%;border:2px solid var(--border2);transition:var(--tr);flex-shrink:0}
+.builder-card.selected .check-circle{background:var(--accent);border-color:var(--accent);position:relative}
+.builder-card.selected .check-circle::after{content:'✓';position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:800;color:#fff}
+
+/* ── SCHEDULE ── */
+.sched-card{background:var(--card);border:1px solid var(--border);border-radius:var(--r);padding:18px;margin-bottom:10px;display:flex;gap:16px;align-items:flex-start}
+.sched-time-col{min-width:100px;text-align:center;background:var(--bg2);border:1px solid var(--border);border-radius:var(--r-sm);padding:10px}
+.sched-date{font-size:22px;font-weight:800;line-height:1;color:var(--accent2)}
+.sched-month{font-size:11px;font-weight:600;text-transform:uppercase;color:var(--text3);letter-spacing:.06em}
+.sched-time{font-size:12px;font-weight:600;color:var(--cyan2);margin-top:4px;font-family:var(--mono)}
+
+/* ── PROGRESS BAR ── */
+.prog{height:4px;background:var(--border);border-radius:2px;overflow:hidden;margin-top:6px}
+.prog-fill{height:100%;background:linear-gradient(90deg,var(--accent),var(--cyan));border-radius:2px;transition:width .4s ease}
+
+/* ── CHIP ── */
+.chip{display:inline-flex;align-items:center;gap:3px;padding:2px 9px;border-radius:20px;font-size:11px;background:var(--bg2);border:1px solid var(--border);color:var(--text2)}
+.chip-selected{background:rgba(79,110,247,.15);border-color:rgba(79,110,247,.35);color:var(--accent2)}
+
+/* ── MISC ── */
+.divider{height:1px;background:var(--border);margin:18px 0}
+.flex-r{display:flex;align-items:center;gap:10px}
+.flex-b{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap}
+.mt-2{margin-top:8px}.mt-4{margin-top:16px}.mt-6{margin-top:24px}
+.mb-2{margin-bottom:8px}.mb-4{margin-bottom:16px}.mb-6{margin-bottom:24px}
+.gap-2{gap:8px}
+.hidden{display:none!important}
+.spin{display:inline-block;width:14px;height:14px;border:2px solid rgba(255,255,255,.25);border-top-color:#fff;border-radius:50%;animation:spin .5s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+.empty{text-align:center;padding:44px 20px;color:var(--text3)}
+.empty-ic{font-size:44px;margin-bottom:12px}
+.empty-t{font-size:15px;font-weight:600;color:var(--text2);margin-bottom:5px}
+.empty-s{font-size:13px;line-height:1.6}
+.notice{display:flex;align-items:flex-start;gap:9px;padding:11px 14px;border-radius:var(--r-sm);font-size:13px;border:1px solid;margin-bottom:12px;line-height:1.5}
+.ni{background:rgba(79,110,247,.08);border-color:rgba(79,110,247,.2);color:var(--accent2)}
+.nw{background:rgba(245,158,11,.08);border-color:rgba(245,158,11,.2);color:var(--yellow2)}
+.ns{background:rgba(16,185,129,.08);border-color:rgba(16,185,129,.2);color:var(--green2)}
+.search-box{padding:8px 12px;background:var(--bg2);border:1px solid var(--border);border-radius:var(--r-sm);color:var(--text);font-size:13px;outline:none;width:220px;transition:var(--tr)}
+.search-box:focus{border-color:var(--accent);width:260px}
+.search-box::placeholder{color:var(--text3)}
+
+/* ── RESPONSIVE ── */
+@media(max-width:900px){
+  .sidebar{transform:translateX(-100%)}
+  .sidebar.open{transform:translateX(0)}
+  .sb-ov{display:block}
+  .main{margin-left:0}
+  .grid-2,.grid-3,.grid-4{grid-template-columns:1fr}
+  .q-options{grid-template-columns:1fr}
+  .page{padding:16px}
+  .topbar{padding:12px 16px}
+}
+.sb-ov{display:none;position:fixed;inset:0;background:rgba(0,0,0,.7);z-index:99}
+.sb-ov.open{display:block}
+.ham{background:none;border:none;color:var(--text);font-size:20px;cursor:pointer;display:none}
+@media(max-width:900px){.ham{display:flex}}
+</style>
+</head>
+<body>
+<div id="tc"></div>
+
+<!-- ═══════════════════════════════════════════
+     AUTH GATE
+═══════════════════════════════════════════ -->
+<div id="auth-gate">
+  <div class="auth-card">
+    <div class="auth-logo">Exam<span>Forge</span></div>
+    <div class="auth-desc">Admin Control Panel — Restricted Access</div>
+    <div>
+      <label class="auth-label">📧 Email Address</label>
+      <input class="auth-input" type="email" id="ag-email" placeholder="admin@example.com"/>
+      <label class="auth-label">🔒 Password</label>
+      <input class="auth-input" type="password" id="ag-pass" placeholder="Your password"/>
+      <button class="auth-btn" id="ag-btn" onclick="agLogin()">Enter Admin Panel</button>
+    </div>
+    <div style="margin-top:16px;font-size:12px;color:var(--text3);text-align:center">Only users with <code style="color:var(--accent2);background:rgba(79,110,247,.1);padding:1px 5px;border-radius:3px">role = admin</code> can access this panel</div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════
+     MAIN APP
+═══════════════════════════════════════════ -->
+<div id="app">
+<div class="layout">
+
+  <!-- Sidebar overlay (mobile) -->
+  <div class="sb-ov" id="sb-ov" onclick="closeSb()"></div>
+
+  <!-- SIDEBAR -->
+  <nav class="sidebar" id="sidebar">
+    <div class="sb-logo">
+      <div class="sb-logo-txt">Exam<span>Forge</span></div>
+      <div class="sb-logo-sub">Control Panel</div>
+      <div class="sb-admin-badge">⚡ Admin</div>
+    </div>
+    <div class="sb-user">
+      <div class="sb-av" id="sb-av">A</div>
+      <div>
+        <div class="sb-uname" id="sb-name">Admin</div>
+        <div class="sb-uemail" id="sb-email">—</div>
+      </div>
+    </div>
+    <div class="sb-nav">
+      <div class="sb-sec">Overview</div>
+      <button class="sb-item act" data-pg="dashboard" onclick="goTo('dashboard')"><span class="sb-icon">📊</span>Dashboard</button>
+
+      <div class="sb-sec">Content</div>
+      <button class="sb-item" data-pg="upload" onclick="goTo('upload')"><span class="sb-icon">📤</span>Upload Questions</button>
+      <button class="sb-item" data-pg="qbank" onclick="goTo('qbank')"><span class="sb-icon">🗃️</span>Question Bank</button>
+      <button class="sb-item" data-pg="quizzes" onclick="goTo('quizzes')"><span class="sb-icon">📚</span>Quiz Sets</button>
+
+      <div class="sb-sec">Exam Tools</div>
+      <button class="sb-item" data-pg="builder" onclick="goTo('builder')"><span class="sb-icon">🔨</span>Quiz Builder</button>
+      <button class="sb-item" data-pg="schedule" onclick="goTo('schedule')"><span class="sb-icon">📅</span>Schedules</button>
+
+      <div class="sb-sec">Management</div>
+      <button class="sb-item" data-pg="users" onclick="goTo('users')"><span class="sb-icon">👥</span>Users<span class="sb-badge" id="pending-badge" style="display:none">0</span></button>
+      <button class="sb-item" data-pg="analytics" onclick="goTo('analytics')"><span class="sb-icon">📈</span>Analytics</button>
+    </div>
+    <div class="sb-footer">
+      <button class="logout-btn" onclick="doLogout()">🚪 Sign Out</button>
+    </div>
+  </nav>
+
+  <!-- MAIN CONTENT -->
+  <div class="main" id="main-content">
+    <!-- Topbar -->
+    <div class="topbar">
+      <div style="display:flex;align-items:center;gap:12px">
+        <button class="ham" onclick="openSb()">☰</button>
+        <div class="topbar-title" id="topbar-title"><span>📊</span> Dashboard</div>
+      </div>
+      <div class="topbar-right">
+        <div class="flex-r gap-2">
+          <div class="live-dot"></div>
+          <div class="topbar-clock" id="top-clock">--:--:--</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ══════════ PAGE: DASHBOARD ══════════ -->
+    <div class="page act" id="pg-dashboard">
+      <div class="pg-head">
+        <div class="pg-title">Welcome back, <span id="dash-name" style="color:var(--accent2)">Admin</span></div>
+        <div class="pg-sub">Here's your platform overview</div>
+      </div>
+      <div class="stat-grid" id="dash-stats">
+        <div class="stat blue"><div class="stat-icon">👥</div><div class="stat-val" id="ds-users">—</div><div class="stat-lbl">Total Users</div></div>
+        <div class="stat green"><div class="stat-icon">✅</div><div class="stat-val" id="ds-approved">—</div><div class="stat-lbl">Approved Users</div></div>
+        <div class="stat orange"><div class="stat-icon">⏳</div><div class="stat-val" id="ds-pending">—</div><div class="stat-lbl">Pending Approval</div></div>
+        <div class="stat purple"><div class="stat-icon">🗃️</div><div class="stat-val" id="ds-questions">—</div><div class="stat-lbl">Total Questions</div></div>
+        <div class="stat cyan"><div class="stat-icon">📚</div><div class="stat-val" id="ds-quizzes">—</div><div class="stat-lbl">Quiz Sets</div></div>
+        <div class="stat green"><div class="stat-icon">📝</div><div class="stat-val" id="ds-attempts">—</div><div class="stat-lbl">Total Attempts</div></div>
+      </div>
+      <div class="grid-2 mb-4">
+        <div class="card">
+          <div class="sec-hd"><div class="sec-title">⏳ Pending Approvals</div><button class="btn btn-s btn-sm" onclick="goTo('users')">View All</button></div>
+          <div id="dash-pending-list"><div class="empty"><div class="empty-ic">✅</div><div class="empty-t">All caught up!</div></div></div>
+        </div>
+        <div class="card">
+          <div class="sec-hd"><div class="sec-title">📅 Upcoming Schedules</div><button class="btn btn-s btn-sm" onclick="goTo('schedule')">View All</button></div>
+          <div id="dash-sched-list"><div class="empty"><div class="empty-ic">📅</div><div class="empty-t">No upcoming exams</div></div></div>
+        </div>
+      </div>
+      <div class="card">
+        <div class="sec-hd"><div class="sec-title">🏆 Recent Attempts</div></div>
+        <div class="tbl-wrap">
+          <table>
+            <thead><tr><th>User</th><th>Subject</th><th>Set</th><th>Score</th><th>%</th><th>Time</th></tr></thead>
+            <tbody id="dash-attempts-tbody"><tr><td colspan="6" class="tbl-empty">Loading…</td></tr></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- ══════════ PAGE: UPLOAD ══════════ -->
+    <div class="page" id="pg-upload">
+      <div class="pg-head">
+        <div class="pg-title">📤 Upload Questions</div>
+        <div class="pg-sub">Supports 5 JSON formats — auto-detected on parse</div>
+      </div>
+
+      <div class="notice ni">ℹ️ All 5 question formats are supported. Paste JSON, upload a file, or type questions manually. The parser auto-detects the format.</div>
+
+      <div class="grid-2">
+        <!-- Left: Input -->
+        <div>
+          <div class="card mb-4">
+            <div class="sec-hd mb-4"><div class="sec-title">Input Method</div></div>
+            <div class="tabs mb-4" id="upload-method-tabs">
+              <button class="tab act" onclick="switchUTab('paste',this)">📋 Paste JSON</button>
+              <button class="tab" onclick="switchUTab('file',this)">📁 Upload File</button>
+              <button class="tab" onclick="switchUTab('manual',this)">✏️ Manual</button>
+            </div>
+
+            <!-- Paste -->
+            <div class="tab-panel act" id="up-paste">
+              <div class="fg">
+                <label class="fl">JSON Content</label>
+                <textarea class="code-box" id="json-input" rows="14" placeholder='Paste any of the 5 supported JSON formats here…
+
+Format 1: Simple array  [{...}]
+Format 2: Category-based  {"subject":"...","questions":[...]}
+Format 3: Full exam  {"examTitle":"...","questions":[...]}
+Format 4: Firebase/Supabase  {"setId":"...","questions":{...}}
+Format 5: Advanced CEE/NEET  {"id":"...","question":"...","options":[{"id":"A","text":"..."}]}'></textarea>
+              </div>
+            </div>
+
+            <!-- File -->
+            <div class="tab-panel" id="up-file">
+              <div class="drop-zone" id="drop-zone" onclick="document.getElementById('file-up').click()" ondragover="dragOv(event)" ondragleave="dragLv(event)" ondrop="dropF(event)">
+                <div class="drop-icon">📁</div>
+                <div class="drop-txt">Click or drag & drop JSON file</div>
+                <div class="drop-sub">Supports all 5 question formats</div>
+              </div>
+              <input type="file" id="file-up" accept=".json,.txt" style="display:none" onchange="loadF(event)"/>
+              <div id="file-loaded-info" class="mt-4" style="display:none">
+                <div class="notice ns" id="file-loaded-msg"></div>
+              </div>
+            </div>
+
+            <!-- Manual -->
+            <div class="tab-panel" id="up-manual">
+              <div class="grid-2">
+                <div class="fg"><label class="fl">Subject</label><input class="fi" id="man-subject" placeholder="e.g. Chemistry"/></div>
+                <div class="fg"><label class="fl">Chapter</label><input class="fi" id="man-chapter" placeholder="e.g. Organic Chemistry"/></div>
+              </div>
+              <div class="grid-2">
+                <div class="fg"><label class="fl">Set Name</label><input class="fi" id="man-set" placeholder="e.g. Set-1"/></div>
+                <div class="fg"><label class="fl">Difficulty</label>
+                  <select class="fi" id="man-diff"><option value="">Any</option><option>Easy</option><option>Medium</option><option>Hard</option></select>
+                </div>
+              </div>
+              <div class="divider"></div>
+              <div id="man-questions">
+                <div class="man-q-block" id="mq-0">
+                  <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px">
+                    <div style="font-size:12px;font-weight:700;color:var(--text3)">QUESTION 1</div>
+                    <button class="btn btn-r btn-xs" onclick="removeManQ(0)" style="display:none">✕</button>
+                  </div>
+                  <div class="fg"><label class="fl">Question Text</label><textarea class="fi" rows="2" placeholder="Enter question…" data-field="question"></textarea></div>
+                  <div class="grid-2">
+                    <div class="fg"><label class="fl">Option A</label><input class="fi" placeholder="Option A" data-field="opt0"/></div>
+                    <div class="fg"><label class="fl">Option B</label><input class="fi" placeholder="Option B" data-field="opt1"/></div>
+                    <div class="fg"><label class="fl">Option C</label><input class="fi" placeholder="Option C" data-field="opt2"/></div>
+                    <div class="fg"><label class="fl">Option D</label><input class="fi" placeholder="Option D" data-field="opt3"/></div>
+                  </div>
+                  <div class="grid-2">
+                    <div class="fg"><label class="fl">Correct Answer (0=A, 1=B…)</label><input class="fi" type="number" min="0" max="3" placeholder="0" data-field="correct"/></div>
+                    <div class="fg"><label class="fl">Explanation (optional)</label><input class="fi" placeholder="Explanation…" data-field="explanation"/></div>
+                  </div>
+                </div>
+              </div>
+              <button class="btn btn-s btn-sm mt-4" onclick="addManQ()">➕ Add Another Question</button>
+              <button class="btn btn-c btn-sm mt-4" onclick="buildManualJSON()" style="margin-left:8px">🔧 Build JSON</button>
+              <div id="man-json-out" style="display:none;margin-top:14px">
+                <label class="fl">Generated JSON (auto-filled in paste box)</label>
+                <textarea class="code-box fi-mono" id="man-json-area" rows="6" readonly></textarea>
+              </div>
+            </div>
+          </div>
+
+          <!-- Format Guide -->
+          <div class="card">
+            <div class="sec-hd"><div class="sec-title">📖 Supported Formats</div></div>
+            <div style="display:flex;flex-direction:column;gap:6px">
+              <div class="notice ni" style="margin:0">
+                <div>
+                  <div style="font-weight:700;margin-bottom:2px">Format 1 — Simple MCQ Array</div>
+                  <code style="font-size:11px;color:var(--text2)">[{"question":"...","options":[...],"correct":1,"explanation":"..."}]</code>
+                </div>
+              </div>
+              <div class="notice ni" style="margin:0">
+                <div>
+                  <div style="font-weight:700;margin-bottom:2px">Format 2 — Category-Based</div>
+                  <code style="font-size:11px;color:var(--text2)">{"subject":"...","chapter":"...","questions":[...]}</code>
+                </div>
+              </div>
+              <div class="notice ni" style="margin:0">
+                <div>
+                  <div style="font-weight:700;margin-bottom:2px">Format 3 — Full Exam / Mock Test</div>
+                  <code style="font-size:11px;color:var(--text2)">{"examTitle":"...","duration":60,"totalMarks":40,"questions":[...]}</code>
+                </div>
+              </div>
+              <div class="notice ni" style="margin:0">
+                <div>
+                  <div style="font-weight:700;margin-bottom:2px">Format 4 — Firebase/Supabase Ready</div>
+                  <code style="font-size:11px;color:var(--text2)">{"setId":"...","questions":{"q1":{...},"q2":{...}}}</code>
+                </div>
+              </div>
+              <div class="notice ni" style="margin:0">
+                <div>
+                  <div style="font-weight:700;margin-bottom:2px">Format 5 — Advanced CEE/NEET</div>
+                  <code style="font-size:11px;color:var(--text2)">{"id":"...","options":[{"id":"A","text":"..."}],"correctOption":"D"}</code>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Right: Preview & Upload -->
+        <div>
+          <div class="card mb-4">
+            <div class="sec-hd mb-4">
+              <div class="sec-title">🔍 Parse & Preview</div>
+              <button class="btn btn-c btn-sm" onclick="parseJSON()">Parse JSON</button>
+            </div>
+            <div class="grid-2 mb-4">
+              <div class="fg"><label class="fl">Subject (override)</label><input class="fi" id="up-subject" placeholder="Auto-detected or override"/></div>
+              <div class="fg"><label class="fl">Chapter (override)</label><input class="fi" id="up-chapter" placeholder="Auto-detected or override"/></div>
+              <div class="fg"><label class="fl">Set Name</label><input class="fi" id="up-set" placeholder="e.g. Set-1"/></div>
+              <div class="fg"><label class="fl">Difficulty</label>
+                <select class="fi" id="up-difficulty">
+                  <option value="">Any</option>
+                  <option>Easy</option><option>Medium</option><option>Hard</option>
+                </select>
+              </div>
+            </div>
+            <div id="parse-result" style="display:none">
+              <div class="divider"></div>
+              <div id="parse-summary" style="margin-bottom:12px"></div>
+              <div id="parse-preview" style="max-height:320px;overflow-y:auto"></div>
+            </div>
+            <div id="parse-error" class="notice nw mt-4" style="display:none"></div>
+            <div class="flex-r mt-4" style="flex-wrap:wrap;gap:8px">
+              <button class="btn btn-p" onclick="uploadToBank()" id="upload-btn" style="display:none">⬆️ Upload to Question Bank</button>
+              <button class="btn btn-s btn-sm" onclick="clearUpload()">🗑 Clear</button>
+            </div>
+          </div>
+          <!-- Parsed JSON Editor -->
+          <div class="card">
+            <div class="sec-hd mb-2"><div class="sec-title">✏️ Parsed JSON Editor</div></div>
+            <textarea class="code-box fi-mono" id="json-editor" rows="12" placeholder="Parsed and editable JSON appears here…"></textarea>
+            <div class="flex-r mt-2">
+              <button class="btn btn-y btn-sm" onclick="reformatEditor()">Format JSON</button>
+              <button class="btn btn-s btn-sm" onclick="parseFromEditor()">Parse from Editor</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ══════════ PAGE: QUESTION BANK ══════════ -->
+    <div class="page" id="pg-qbank">
+      <div class="pg-head">
+        <div class="pg-title">🗃️ Question Bank</div>
+        <div class="pg-sub">View, search, edit and delete individual questions</div>
+      </div>
+      <div class="card mb-4">
+        <div class="flex-b">
+          <div class="flex-r" style="flex-wrap:wrap;gap:8px">
+            <input class="search-box" id="qb-search" placeholder="🔍 Search questions…" oninput="filterQBank()"/>
+            <select class="fi" id="qb-subj-filter" style="width:160px" onchange="filterQBank()">
+              <option value="">All Subjects</option>
+            </select>
+            <select class="fi" id="qb-chap-filter" style="width:160px" onchange="filterQBank()">
+              <option value="">All Chapters</option>
+            </select>
+            <select class="fi" id="qb-diff-filter" style="width:130px" onchange="filterQBank()">
+              <option value="">All Difficulty</option>
+              <option>Easy</option><option>Medium</option><option>Hard</option>
+            </select>
+          </div>
+          <div class="flex-r gap-2">
+            <span class="chip" id="qb-count">0 questions</span>
+            <button class="btn btn-s btn-sm" onclick="loadQBank()">🔄</button>
+          </div>
+        </div>
+      </div>
+      <div id="qbank-list">
+        <div class="empty"><div class="empty-ic">🗃️</div><div class="empty-t">Loading question bank…</div></div>
+      </div>
+      <div id="qb-pagination" class="flex-r mt-4" style="justify-content:center;gap:6px"></div>
+    </div>
+
+    <!-- ══════════ PAGE: QUIZ SETS ══════════ -->
+    <div class="page" id="pg-quizzes">
+      <div class="pg-head">
+        <div class="pg-title">📚 Quiz Sets</div>
+        <div class="pg-sub">Manage all uploaded quiz sets</div>
+      </div>
+      <div class="card mb-4">
+        <div class="flex-b">
+          <div class="flex-r gap-2">
+            <input class="search-box" id="qz-search" placeholder="🔍 Search quizzes…" oninput="filterQuizzes()"/>
+            <select class="fi" id="qz-subj-f" style="width:160px" onchange="filterQuizzes()"><option value="">All Subjects</option></select>
+          </div>
+          <button class="btn btn-s btn-sm" onclick="loadQuizzes()">🔄 Refresh</button>
+        </div>
+      </div>
+      <div class="tbl-wrap">
+        <table>
+          <thead><tr><th>Subject</th><th>Chapter</th><th>Set</th><th>Questions</th><th>Difficulty</th><th>Attempts</th><th>Actions</th></tr></thead>
+          <tbody id="quizzes-tbody"><tr><td colspan="7" class="tbl-empty">Loading…</td></tr></tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- ══════════ PAGE: QUIZ BUILDER ══════════ -->
+    <div class="page" id="pg-builder">
+      <div class="pg-head">
+        <div class="pg-title">🔨 Quiz Builder</div>
+        <div class="pg-sub">Create custom quizzes with advanced selection modes</div>
+      </div>
+      <div class="grid-2">
+        <div>
+          <div class="card mb-4">
+            <div class="sec-hd mb-4"><div class="sec-title">1. Quiz Mode</div></div>
+            <div id="quiz-mode-cards">
+              <div class="builder-card selected" data-mode="full" onclick="selectMode(this,'full')">
+                <div class="builder-card-hd"><div><div class="builder-type" style="color:var(--accent2)">📋 Full Length</div><div class="builder-desc">All questions from a set in order</div></div><div class="check-circle"></div></div>
+              </div>
+              <div class="builder-card" data-mode="random" onclick="selectMode(this,'random')">
+                <div class="builder-card-hd"><div><div class="builder-type" style="color:var(--yellow2)">🎲 Random Mix</div><div class="builder-desc">Random questions from selected subjects/chapters</div></div><div class="check-circle"></div></div>
+              </div>
+              <div class="builder-card" data-mode="subject" onclick="selectMode(this,'subject')">
+                <div class="builder-card-hd"><div><div class="builder-type" style="color:var(--green2)">📘 Subject-Wise</div><div class="builder-desc">All questions from a specific subject</div></div><div class="check-circle"></div></div>
+              </div>
+              <div class="builder-card" data-mode="chapter" onclick="selectMode(this,'chapter')">
+                <div class="builder-card-hd"><div><div class="builder-type" style="color:var(--purple2)">📖 Chapter-Wise</div><div class="builder-desc">Questions from specific chapter(s)</div></div><div class="check-circle"></div></div>
+              </div>
+              <div class="builder-card" data-mode="manual" onclick="selectMode(this,'manual')">
+                <div class="builder-card-hd"><div><div class="builder-type" style="color:var(--cyan2)">🤌 Manual Selection</div><div class="builder-desc">Hand-pick individual questions</div></div><div class="check-circle"></div></div>
+              </div>
+              <div class="builder-card" data-mode="mock" onclick="selectMode(this,'mock')">
+                <div class="builder-card-hd"><div><div class="builder-type" style="color:var(--red2)">🎯 Mock / CEE Test</div><div class="builder-desc">Weighted exam with marks & negative marking</div></div><div class="check-circle"></div></div>
+              </div>
+            </div>
+          </div>
+
+          <div class="card">
+            <div class="sec-hd mb-4"><div class="sec-title">2. Configuration</div></div>
+            <div class="fg"><label class="fl">Quiz Title</label><input class="fi" id="bld-title" placeholder="e.g. Chemistry Full Mock Test"/></div>
+            <div class="grid-2">
+              <div class="fg"><label class="fl">Subject</label>
+                <select class="fi" id="bld-subject" onchange="loadBldChapters()"><option value="">Select Subject</option></select>
+              </div>
+              <div class="fg"><label class="fl">Chapter (optional)</label>
+                <select class="fi" id="bld-chapter"><option value="">All Chapters</option></select>
+              </div>
+            </div>
+            <div class="grid-2">
+              <div class="fg"><label class="fl">No. of Questions</label><input class="fi" type="number" id="bld-count" placeholder="e.g. 50" min="1"/></div>
+              <div class="fg"><label class="fl">Duration (minutes)</label><input class="fi" type="number" id="bld-duration" placeholder="e.g. 60" min="1"/></div>
+            </div>
+            <div class="grid-2" id="bld-marks-row" style="display:none">
+              <div class="fg"><label class="fl">Marks per Question</label><input class="fi" type="number" id="bld-marks" value="1" min="0"/></div>
+              <div class="fg"><label class="fl">Negative Marks</label><input class="fi" type="number" id="bld-neg" value="0.25" min="0" step="0.25"/></div>
+            </div>
+            <div class="fg"><label class="fl">Difficulty Filter</label>
+              <select class="fi" id="bld-diff"><option value="">Any Difficulty</option><option>Easy</option><option>Medium</option><option>Hard</option></select>
+            </div>
+            <div class="fg"><label class="fl">Set Name</label><input class="fi" id="bld-set" placeholder="e.g. Mock-1"/></div>
+          </div>
+        </div>
+
+        <div>
+          <div class="card mb-4" id="manual-selector" style="display:none">
+            <div class="sec-hd mb-4">
+              <div class="sec-title">Manual Question Selection</div>
+              <span class="chip" id="manual-sel-count">0 selected</span>
+            </div>
+            <input class="fi mb-2" id="manual-q-search" placeholder="🔍 Search questions…" oninput="filterManualQs()"/>
+            <div id="manual-q-list" style="max-height:320px;overflow-y:auto;display:flex;flex-direction:column;gap:6px">
+              <div class="empty"><div class="empty-ic">🔍</div><div class="empty-t">Select a subject first</div></div>
+            </div>
+          </div>
+
+          <div class="card">
+            <div class="sec-hd mb-4"><div class="sec-title">3. Build & Save</div></div>
+            <button class="btn btn-c btn-full mb-4" onclick="previewBuilderQuiz()">👁 Preview Questions</button>
+            <div id="builder-preview" style="display:none;max-height:280px;overflow-y:auto;margin-bottom:14px"></div>
+            <div id="builder-preview-count" class="notice ns mb-4" style="display:none"></div>
+            <button class="btn btn-p btn-full btn-lg" id="bld-save-btn" onclick="saveBuilderQuiz()">💾 Create Quiz Set</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ══════════ PAGE: SCHEDULES ══════════ -->
+    <div class="page" id="pg-schedule">
+      <div class="pg-head">
+        <div class="pg-title">📅 Exam Schedules</div>
+        <div class="pg-sub">Create and manage scheduled exams with countdowns</div>
+      </div>
+      <div class="card mb-4">
+        <div class="sec-hd mb-4"><div class="sec-title">➕ New Schedule</div></div>
+        <div class="grid-2">
+          <div class="fg"><label class="fl">Exam Title</label><input class="fi" id="sc-title" placeholder="e.g. Physics Mid-Term"/></div>
+          <div class="fg"><label class="fl">Select Quiz Set</label>
+            <select class="fi" id="sc-quiz"><option value="">-- Choose Quiz --</option></select>
+          </div>
+          <div class="fg"><label class="fl">Start Date & Time</label><input class="fi" type="datetime-local" id="sc-start"/></div>
+          <div class="fg"><label class="fl">End Date & Time</label><input class="fi" type="datetime-local" id="sc-end"/></div>
+          <div class="fg"><label class="fl">Duration (minutes)</label><input class="fi" type="number" id="sc-dur" placeholder="60"/></div>
+          <div class="fg"><label class="fl">Instructions</label><input class="fi" id="sc-instr" placeholder="e.g. No calculator allowed"/></div>
+        </div>
+        <div class="fg"><label class="fl">Description</label><textarea class="fi" id="sc-desc" rows="2" placeholder="Brief description…"></textarea></div>
+        <button class="btn btn-p mt-4" onclick="createSchedule()">📅 Create Schedule</button>
+      </div>
+      <div class="card">
+        <div class="sec-hd mb-4"><div class="sec-title">All Schedules</div><button class="btn btn-s btn-sm" onclick="loadSchedules()">🔄</button></div>
+        <div class="tbl-wrap">
+          <table>
+            <thead><tr><th>Title</th><th>Quiz</th><th>Start</th><th>End</th><th>Duration</th><th>Status</th><th>Actions</th></tr></thead>
+            <tbody id="sched-tbody"><tr><td colspan="7" class="tbl-empty">Loading…</td></tr></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- ══════════ PAGE: USERS ══════════ -->
+    <div class="page" id="pg-users">
+      <div class="pg-head">
+        <div class="pg-title">👥 User Management</div>
+        <div class="pg-sub">Approve, block, and manage user roles</div>
+      </div>
+      <div class="card mb-4">
+        <div class="flex-b">
+          <div class="flex-r gap-2" style="flex-wrap:wrap">
+            <input class="search-box" id="usr-search" placeholder="🔍 Search users…" oninput="filterUsers()"/>
+            <select class="fi" id="usr-status-f" style="width:140px" onchange="filterUsers()">
+              <option value="">All Status</option>
+              <option value="pending">Pending</option>
+              <option value="approved">Approved</option>
+              <option value="blocked">Blocked</option>
+            </select>
+            <select class="fi" id="usr-role-f" style="width:130px" onchange="filterUsers()">
+              <option value="">All Roles</option>
+              <option value="admin">Admin</option>
+              <option value="student">Student</option>
+            </select>
+          </div>
+          <div class="flex-r gap-2">
+            <span class="chip" id="usr-count">0 users</span>
+            <button class="btn btn-s btn-sm" onclick="loadUsers()">🔄</button>
+          </div>
+        </div>
+      </div>
+      <div class="tbl-wrap">
+        <table>
+          <thead><tr><th>Name</th><th>Email</th><th>Role</th><th>Status</th><th>Joined</th><th>Attempts</th><th>Actions</th></tr></thead>
+          <tbody id="users-tbody"><tr><td colspan="7" class="tbl-empty">Loading…</td></tr></tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- ══════════ PAGE: ANALYTICS ══════════ -->
+    <div class="page" id="pg-analytics">
+      <div class="pg-head">
+        <div class="pg-title">📈 Analytics</div>
+        <div class="pg-sub">Platform performance and leaderboard data</div>
+      </div>
+      <div class="stat-grid mb-4" id="analytics-stats">
+        <div class="stat blue"><div class="stat-icon">📝</div><div class="stat-val" id="an-total-att">—</div><div class="stat-lbl">Total Attempts</div></div>
+        <div class="stat green"><div class="stat-icon">⭐</div><div class="stat-val" id="an-avg">—</div><div class="stat-lbl">Avg Score %</div></div>
+        <div class="stat purple"><div class="stat-icon">🏆</div><div class="stat-val" id="an-best">—</div><div class="stat-lbl">Highest Score</div></div>
+        <div class="stat orange"><div class="stat-icon">👤</div><div class="stat-val" id="an-top-user">—</div><div class="stat-lbl">Top User</div></div>
+      </div>
+      <div class="grid-2">
+        <div class="card">
+          <div class="sec-hd mb-4"><div class="sec-title">🏆 Overall Leaderboard</div></div>
+          <div id="lb-list"><div class="empty"><div class="empty-ic">🏆</div><div class="empty-t">Loading…</div></div></div>
+        </div>
+        <div class="card">
+          <div class="sec-hd mb-4">
+            <div class="sec-title">📊 Quiz-wise Stats</div>
+            <select class="fi" id="an-quiz-filter" style="width:180px" onchange="loadQuizStats()"><option value="">All Quizzes</option></select>
+          </div>
+          <div id="quiz-stats-list"><div class="empty"><div class="empty-ic">📊</div><div class="empty-t">Select a quiz to view stats</div></div></div>
+        </div>
+      </div>
+    </div>
+
+  </div><!-- /main-content -->
+</div><!-- /layout -->
+</div><!-- /app -->
+
+<!-- ══════════════════════════════════════════
+     MODALS
+══════════════════════════════════════════ -->
+<!-- Edit Question -->
+<div class="modal-ov" id="edit-q-modal">
+  <div class="modal modal-wide">
+    <div class="modal-hd">
+      <div class="modal-title">✏️ Edit Question</div>
+      <button class="modal-x" onclick="closeM('edit-q-modal')">✕</button>
+    </div>
+    <input type="hidden" id="eq-id"/>
+    <div class="fg"><label class="fl">Question Text</label><textarea class="fi" id="eq-question" rows="3"></textarea></div>
+    <div class="grid-2">
+      <div class="fg"><label class="fl">Option A</label><input class="fi" id="eq-opt0"/></div>
+      <div class="fg"><label class="fl">Option B</label><input class="fi" id="eq-opt1"/></div>
+      <div class="fg"><label class="fl">Option C</label><input class="fi" id="eq-opt2"/></div>
+      <div class="fg"><label class="fl">Option D</label><input class="fi" id="eq-opt3"/></div>
+    </div>
+    <div class="grid-2">
+      <div class="fg"><label class="fl">Correct (0=A,1=B,2=C,3=D)</label><input class="fi" type="number" id="eq-correct" min="0" max="3"/></div>
+      <div class="fg"><label class="fl">Difficulty</label>
+        <select class="fi" id="eq-diff"><option value="">Any</option><option>Easy</option><option>Medium</option><option>Hard</option></select>
+      </div>
+    </div>
+    <div class="fg"><label class="fl">Subject</label><input class="fi" id="eq-subject"/></div>
+    <div class="fg"><label class="fl">Chapter</label><input class="fi" id="eq-chapter"/></div>
+    <div class="fg"><label class="fl">Explanation</label><textarea class="fi" id="eq-expl" rows="2"></textarea></div>
+    <div class="fg"><label class="fl">Tags (comma separated)</label><input class="fi" id="eq-tags" placeholder="e.g. polymer,organic,rubber"/></div>
+    <button class="btn btn-p btn-full mt-4" onclick="saveQuestion()">💾 Save Question</button>
+  </div>
+</div>
+
+<!-- Edit Quiz Set -->
+<div class="modal-ov" id="edit-quiz-modal">
+  <div class="modal">
+    <div class="modal-hd">
+      <div class="modal-title">✏️ Edit Quiz Set</div>
+      <button class="modal-x" onclick="closeM('edit-quiz-modal')">✕</button>
+    </div>
+    <input type="hidden" id="eqz-id"/>
+    <div class="fg"><label class="fl">Subject</label><input class="fi" id="eqz-subj"/></div>
+    <div class="fg"><label class="fl">Chapter</label><input class="fi" id="eqz-chap"/></div>
+    <div class="fg"><label class="fl">Set Name</label><input class="fi" id="eqz-set"/></div>
+    <div class="fg"><label class="fl">Difficulty</label>
+      <select class="fi" id="eqz-diff"><option value="">Any</option><option>Easy</option><option>Medium</option><option>Hard</option></select>
+    </div>
+    <div class="fg"><label class="fl">Questions JSON (array)</label><textarea class="code-box fi-mono" id="eqz-questions" rows="10"></textarea></div>
+    <button class="btn btn-p btn-full mt-4" onclick="saveQuizSet()">💾 Save Changes</button>
+  </div>
+</div>
+
+<!-- Edit Schedule -->
+<div class="modal-ov" id="edit-sc-modal">
+  <div class="modal">
+    <div class="modal-hd">
+      <div class="modal-title">✏️ Edit Schedule</div>
+      <button class="modal-x" onclick="closeM('edit-sc-modal')">✕</button>
+    </div>
+    <input type="hidden" id="esc-id"/>
+    <div class="fg"><label class="fl">Title</label><input class="fi" id="esc-title"/></div>
+    <div class="grid-2">
+      <div class="fg"><label class="fl">Start</label><input class="fi" type="datetime-local" id="esc-start"/></div>
+      <div class="fg"><label class="fl">End</label><input class="fi" type="datetime-local" id="esc-end"/></div>
+    </div>
+    <div class="grid-2">
+      <div class="fg"><label class="fl">Duration (min)</label><input class="fi" type="number" id="esc-dur"/></div>
+      <div class="fg"><label class="fl">Instructions</label><input class="fi" id="esc-instr"/></div>
+    </div>
+    <div class="fg"><label class="fl">Description</label><textarea class="fi" id="esc-desc" rows="2"></textarea></div>
+    <button class="btn btn-p btn-full mt-4" onclick="saveSchedule()">💾 Save</button>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════
+     JAVASCRIPT
+══════════════════════════════════════════ -->
+<script>
+// ─── SUPABASE ───
+const SB_URL='https://rpudsnrqlhataqfavcjh.supabase.co';
+const SB_KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJwdWRzbnJxbGhhdGFmY2poIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzk5NzI0NjgsImV4cCI6MjA5NTU0ODQ2OH0.EEu5t-NPqWARChSAMpEvUPMBkz_JeeNe3bGSCQmH7Xo';
+const sb=window.supabase.createClient(SB_URL,SB_KEY);
+
+// ─── STATE ───
+let CU=null,CP=null;
+let allQuestions=[],allQuizzes=[],allUsers=[],allSchedules=[];
+let qbPage=0,qbPageSize=20,qbFiltered=[];
+let parsedQuestions=[],parsedMeta={};
+let builderMode='full',manQCount=1;
+let manualSelectedIds=new Set();
+let builderPreviewQs=[];
+
+// ─── TOAST ───
+function toast(msg,type='i',dur=3500){
+  const el=document.createElement('div');
+  el.className=`t ${type}`;
+  el.innerHTML=`<span>${{s:'✓',e:'✕',i:'ℹ',w:'⚠'}[type]||'ℹ'}</span><span>${msg}</span>`;
+  document.getElementById('tc').appendChild(el);
+  setTimeout(()=>{el.classList.add('tout');setTimeout(()=>el.remove(),300)},dur);
+}
+
+// ─── AUTH ───
+async function agLogin(){
+  const email=document.getElementById('ag-email').value.trim();
+  const pass=document.getElementById('ag-pass').value;
+  if(!email||!pass){toast('Fill in all fields','w');return;}
+  const btn=document.getElementById('ag-btn');
+  btn.disabled=true;btn.innerHTML='<span class="spin"></span> Signing in…';
+  try{
+    const{data,error}=await sb.auth.signInWithPassword({email,password:pass});
+    if(error)throw error;
+    const{data:profile,error:pe}=await sb.from('profiles').select('*').eq('id',data.user.id).single();
+    if(pe||!profile)throw new Error('Profile not found. Run the SQL setup first.');
+    if(profile.role!=='admin')throw new Error('Access denied. Admin accounts only.');
+    if(profile.status==='blocked')throw new Error('Account blocked.');
+    if(profile.status!=='approved')throw new Error('Account pending approval.');
+    CU=data.user;CP=profile;
+    initAdmin();
+  }catch(e){toast(e.message,'e');}
+  finally{btn.disabled=false;btn.textContent='Enter Admin Panel';}
+}
+
+async function doLogout(){
+  await sb.auth.signOut();location.reload();
+}
+
+// ─── INIT ───
+async function initAdmin(){
+  document.getElementById('auth-gate').style.display='none';
+  document.getElementById('app').style.display='block';
+  const ini=(CP.full_name||'A').split(' ').map(w=>w[0]).join('').toUpperCase().slice(0,2);
+  document.getElementById('sb-av').textContent=ini;
+  document.getElementById('sb-name').textContent=CP.full_name||'Admin';
+  document.getElementById('sb-email').textContent=CP.email;
+  document.getElementById('dash-name').textContent=CP.full_name?.split(' ')[0]||'Admin';
+  startClock();
+  await Promise.all([loadDashboard(),loadQBank(),loadQuizzes(),loadUsers(),loadSchedules()]);
+}
+
+function startClock(){
+  setInterval(()=>{
+    document.getElementById('top-clock').textContent=
+      new Date().toLocaleTimeString('en-US',{hour:'2-digit',minute:'2-digit',second:'2-digit'});
+  },1000);
+}
+
+// ─── NAV ───
+const pgTitles={dashboard:'📊 Dashboard',upload:'📤 Upload Questions',qbank:'🗃️ Question Bank',quizzes:'📚 Quiz Sets',builder:'🔨 Quiz Builder',schedule:'📅 Schedules',users:'👥 Users',analytics:'📈 Analytics'};
+function goTo(pg){
+  document.querySelectorAll('.page').forEach(p=>p.classList.remove('act'));
+  document.querySelectorAll('.sb-item').forEach(n=>n.classList.remove('act'));
+  document.getElementById('pg-'+pg)?.classList.add('act');
+  document.querySelectorAll(`[data-pg="${pg}"]`).forEach(n=>n.classList.add('act'));
+  document.getElementById('topbar-title').innerHTML=`<span>${pgTitles[pg]?.split(' ')[0]}</span> ${pgTitles[pg]?.split(' ').slice(1).join(' ')}`;
+  closeSb();
+}
+function openSb(){document.getElementById('sidebar').classList.add('open');document.getElementById('sb-ov').classList.add('open');}
+function closeSb(){document.getElementById('sidebar').classList.remove('open');document.getElementById('sb-ov').classList.remove('open');}
+function closeM(id){document.getElementById(id).classList.remove('open');}
+
+// ─── DASHBOARD ───
+async function loadDashboard(){
+  try{
+    const[{count:uc},{data:profiles},{count:qc},{count:qzc},{count:ac}]=await Promise.all([
+      sb.from('profiles').select('id',{count:'exact',head:true}),
+      sb.from('profiles').select('id,status'),
+      sb.from('question_bank').select('id',{count:'exact',head:true}),
+      sb.from('quizzes').select('id',{count:'exact',head:true}),
+      sb.from('attempts').select('id',{count:'exact',head:true})
+    ]);
+    const approved=(profiles||[]).filter(p=>p.status==='approved').length;
+    const pending=(profiles||[]).filter(p=>p.status==='pending').length;
+    document.getElementById('ds-users').textContent=uc||0;
+    document.getElementById('ds-approved').textContent=approved;
+    document.getElementById('ds-pending').textContent=pending;
+    document.getElementById('ds-questions').textContent=qc||0;
+    document.getElementById('ds-quizzes').textContent=qzc||0;
+    document.getElementById('ds-attempts').textContent=ac||0;
+    if(pending>0){document.getElementById('pending-badge').textContent=pending;document.getElementById('pending-badge').style.display='inline';}
+    // Pending users list
+    const pendingUsers=(profiles||[]).filter(p=>p.status==='pending');
+    if(pendingUsers.length){
+      const{data:full}=await sb.from('profiles').select('*').eq('status','pending').limit(4);
+      document.getElementById('dash-pending-list').innerHTML=(full||[]).map(u=>`
+        <div class="flex-b mb-2" style="padding:8px 0;border-bottom:1px solid var(--border)">
+          <div><div style="font-size:13px;font-weight:600">${esc(u.full_name||'—')}</div><div style="font-size:11px;color:var(--text3)">${esc(u.email)}</div></div>
+          <button class="btn btn-g btn-xs" onclick="quickApprove('${u.id}')">✓ Approve</button>
+        </div>`).join('');
+    }
+    // Upcoming schedules
+    const{data:scheds}=await sb.from('schedules').select('*,quizzes(subject,set)').gte('end_time',new Date().toISOString()).order('start_time').limit(3);
+    if(scheds?.length){
+      document.getElementById('dash-sched-list').innerHTML=(scheds||[]).map(s=>{
+        const start=new Date(s.start_time);
+        const status=schedStatus(s);
+        return`<div class="flex-b mb-2" style="padding:8px 0;border-bottom:1px solid var(--border)">
+          <div><div style="font-size:13px;font-weight:600">${esc(s.title)}</div>
+          <div style="font-size:11px;color:var(--text3)">${start.toLocaleDateString('en-US',{month:'short',day:'numeric'})} · ${start.toLocaleTimeString('en-US',{hour:'2-digit',minute:'2-digit'})}</div></div>
+          <span class="badge ${status==='live'?'b-green':status==='today'?'b-yellow':'b-blue'}">${status}</span>
+        </div>`;}).join('');
+    }
+    // Recent attempts
+    const{data:attempts}=await sb.from('attempts').select('*,profiles(full_name)').order('created_at',{ascending:false}).limit(8);
+    const tbody=document.getElementById('dash-attempts-tbody');
+    if(!attempts?.length){tbody.innerHTML='<tr><td colspan="6" class="tbl-empty">No attempts yet</td></tr>';return;}
+    tbody.innerHTML=attempts.map(a=>`<tr>
+      <td style="font-weight:500">${esc(a.profiles?.full_name||'—')}</td>
+      <td>${esc(a.subject)}</td>
+      <td>${esc(a.set)}</td>
+      <td>${a.score}/${a.total}</td>
+      <td><span class="badge ${a.percentage>=75?'b-green':a.percentage>=50?'b-yellow':'b-red'}">${a.percentage}%</span></td>
+      <td style="font-size:12px;color:var(--text3)">${a.time_taken?`${Math.floor(a.time_taken/60)}m ${a.time_taken%60}s`:'—'}</td>
+    </tr>`).join('');
+  }catch(e){toast('Dashboard load error: '+e.message,'e');}
+}
+
+async function quickApprove(uid){
+  await sb.from('profiles').update({status:'approved'}).eq('id',uid);
+  toast('User approved','s');
+  loadDashboard();loadUsers();
+}
+
+// ─── UPLOAD & PARSE ───
+function switchUTab(t,btn){
+  document.querySelectorAll('#upload-method-tabs .tab').forEach(b=>b.classList.remove('act'));
+  btn.classList.add('act');
+  ['paste','file','manual'].forEach(id=>document.getElementById('up-'+id).classList.remove('act'));
+  document.getElementById('up-'+t).classList.add('act');
+}
+
+// ── All 5 JSON Formats Parser ──
+function detectAndParse(raw){
+  let data;
+  try{data=JSON.parse(raw);}catch(e){throw new Error('Invalid JSON: '+e.message);}
+
+  let questions=[];
+  let meta={subject:'',chapter:'',set:'',title:'',duration:null,totalMarks:null,passMarks:null};
+
+  // Format 5: Single advanced object with "correctOption" as letter
+  if(data.correctOption!==undefined&&data.options&&Array.isArray(data.options)&&data.options[0]?.id){
+    const opts=data.options.map(o=>o.text||o.id);
+    const correctIdx='ABCDE'.indexOf(data.correctOption);
+    questions=[{question:data.question,options:opts,correct:correctIdx,explanation:data.explanation||'',
+      subject:data.subject||'',chapter:data.chapter||'',difficulty:data.difficulty||'',
+      marks:data.marks||1,negativeMarks:data.negativeMarks||0,tags:data.tags||[]}];
+    meta.subject=data.subject||'';meta.chapter=data.chapter||'';
+    return{questions,meta};
+  }
+
+  // Format 1: Simple array
+  if(Array.isArray(data)){
+    questions=data.map(q=>normalizeQ(q));
+    return{questions,meta};
+  }
+
+  // Format 4: Firebase/Supabase with questions as object {q1:{...},q2:{...}}
+  if(data.questions&&!Array.isArray(data.questions)&&typeof data.questions==='object'){
+    questions=Object.values(data.questions).map(q=>normalizeQ(q));
+    meta.subject=data.subject||'';meta.chapter=data.chapter||data.setId||'';
+    meta.set=data.title||data.setId||'';meta.duration=data.duration||null;
+    return{questions,meta};
+  }
+
+  // Format 2 & 3 & general: object with questions array
+  if(data.questions&&Array.isArray(data.questions)){
+    questions=data.questions.map(q=>normalizeQ(q));
+    meta.subject=data.subject||'';
+    meta.chapter=data.chapter||'';
+    meta.set=data.set||data.setId||'';
+    meta.title=data.examTitle||data.title||'';
+    meta.duration=data.duration||null;
+    meta.totalMarks=data.totalMarks||null;
+    meta.passMarks=data.passMarks||null;
+    return{questions,meta};
+  }
+
+  // Single question object
+  if(data.question&&data.options){
+    questions=[normalizeQ(data)];
+    return{questions,meta};
+  }
+
+  throw new Error('Unrecognized format. Please check the format guide.');
+}
+
+function normalizeQ(q){
+  // Handle options as objects {id:"A",text:"..."} (Format 5 sub-questions)
+  let opts=q.options||[];
+  if(opts.length&&typeof opts[0]==='object'&&opts[0].text){
+    opts=opts.map(o=>o.text);
+  }
+  // Handle correctOption as letter
+  let correct=q.correct??q.answer??q.correctOption??0;
+  if(typeof correct==='string'){
+    const li='ABCDE'.indexOf(correct.toUpperCase());
+    if(li>=0)correct=li;
+    else correct=parseInt(correct)||0;
+  }
+  return{
+    question:q.question||q.text||'',
+    options:opts,
+    correct,
+    explanation:q.explanation||q.hint||'',
+    subject:q.subject||'',
+    chapter:q.chapter||'',
+    difficulty:q.difficulty||'',
+    marks:q.marks||1,
+    negativeMarks:q.negativeMarks||q.negative_marks||0,
+    tags:Array.isArray(q.tags)?q.tags:[]
+  };
+}
+
+function parseJSON(){
+  const raw=document.getElementById('json-input').value.trim()||document.getElementById('json-editor').value.trim();
+  if(!raw){toast('No JSON to parse','w');return;}
+  try{
+    const{questions,meta}=detectAndParse(raw);
+    parsedQuestions=questions;parsedMeta=meta;
+    // Fill override fields if empty
+    if(meta.subject&&!document.getElementById('up-subject').value)document.getElementById('up-subject').value=meta.subject;
+    if(meta.chapter&&!document.getElementById('up-chapter').value)document.getElementById('up-chapter').value=meta.chapter;
+    if(meta.set&&!document.getElementById('up-set').value)document.getElementById('up-set').value=meta.set;
+    // Fill editor
+    document.getElementById('json-editor').value=JSON.stringify(questions,null,2);
+    // Preview
+    const prev=document.getElementById('parse-result');
+    prev.style.display='block';
+    document.getElementById('parse-error').style.display='none';
+    document.getElementById('parse-summary').innerHTML=`
+      <div class="flex-r" style="flex-wrap:wrap;gap:7px">
+        <span class="chip chip-selected">✅ ${questions.length} questions parsed</span>
+        ${meta.subject?`<span class="chip">📘 ${esc(meta.subject)}</span>`:''}
+        ${meta.chapter?`<span class="chip">📖 ${esc(meta.chapter)}</span>`:''}
+        ${meta.title?`<span class="chip">📋 ${esc(meta.title)}</span>`:''}
+        ${meta.duration?`<span class="chip">⏱ ${meta.duration}min</span>`:''}
+      </div>`;
+    document.getElementById('parse-preview').innerHTML=questions.slice(0,5).map((q,i)=>renderQPrev(q,i)).join('')
+      +(questions.length>5?`<div style="text-align:center;padding:10px;font-size:12px;color:var(--text3)">…and ${questions.length-5} more questions</div>`:'');
+    document.getElementById('upload-btn').style.display='inline-flex';
+    toast(`${questions.length} questions parsed successfully`,'s');
+  }catch(e){
+    document.getElementById('parse-error').style.display='flex';
+    document.getElementById('parse-error').textContent='⚠️ '+e.message;
+    document.getElementById('parse-result').style.display='none';
+    document.getElementById('upload-btn').style.display='none';
+    toast('Parse error: '+e.message,'e');
+  }
+}
+
+function parseFromEditor(){
+  const raw=document.getElementById('json-editor').value.trim();
+  if(!raw){toast('Editor is empty','w');return;}
+  document.getElementById('json-input').value=raw;
+  parseJSON();
+}
+
+function reformatEditor(){
+  try{
+    const raw=document.getElementById('json-editor').value.trim();
+    document.getElementById('json-editor').value=JSON.stringify(JSON.parse(raw),null,2);
+    toast('JSON formatted','s');
+  }catch(e){toast('Invalid JSON','e');}
+}
+
+function renderQPrev(q,i){
+  const labels=['A','B','C','D','E'];
+  return`<div class="q-prev">
+    <div class="q-prev-num">Q${i+1} ${q.difficulty?`· <span class="badge ${q.difficulty==='Easy'?'b-green':q.difficulty==='Hard'?'b-red':'b-yellow'}">${q.difficulty}</span>`:''}</div>
+    <div class="q-prev-text">${esc(q.question)}</div>
+    <div class="q-options">${q.options.map((o,j)=>`<div class="q-opt${j===q.correct?' correct':''}">${labels[j]}) ${esc(o)}</div>`).join('')}</div>
+    ${q.explanation?`<div class="q-expl">💡 ${esc(q.explanation)}</div>`:''}
+  </div>`;
+}
+
+async function uploadToBank(){
+  if(!parsedQuestions.length){toast('No parsed questions','w');return;}
+  const subject=document.getElementById('up-subject').value.trim();
+  const chapter=document.getElementById('up-chapter').value.trim();
+  const set=document.getElementById('up-set').value.trim();
+  const difficulty=document.getElementById('up-difficulty').value;
+  if(!subject||!set){toast('Subject and Set Name are required','w');return;}
+  const btn=document.getElementById('upload-btn');
+  btn.disabled=true;btn.innerHTML='<span class="spin"></span> Uploading…';
+  try{
+    // Insert into question_bank
+    const rows=parsedQuestions.map(q=>({
+      question:q.question,options:q.options,correct:q.correct,explanation:q.explanation||null,
+      subject:q.subject||subject,chapter:q.chapter||chapter||null,
+      set_name:set,difficulty:q.difficulty||difficulty||null,
+      marks:q.marks||1,negative_marks:q.negativeMarks||0,tags:q.tags||[]
+    }));
+    const{error:qe}=await sb.from('question_bank').insert(rows);
+    if(qe)throw qe;
+    // Also insert into quizzes table for use in quiz system
+    const{error:ze}=await sb.from('quizzes').insert({
+      subject,chapter:chapter||null,set,
+      questions:parsedQuestions.map(q=>({question:q.question,options:q.options,answer:q.correct,explanation:q.explanation||''})),
+      difficulty:difficulty||null
+    });
+    if(ze)throw ze;
+    toast(`${parsedQuestions.length} questions uploaded to bank!`,'s');
+    clearUpload();
+    loadQBank();loadQuizzes();loadDashboard();
+  }catch(e){toast('Upload failed: '+e.message,'e');}
+  finally{btn.disabled=false;btn.innerHTML='⬆️ Upload to Question Bank';}
+}
+
+function clearUpload(){
+  document.getElementById('json-input').value='';
+  document.getElementById('json-editor').value='';
+  document.getElementById('parse-result').style.display='none';
+  document.getElementById('parse-error').style.display='none';
+  document.getElementById('upload-btn').style.display='none';
+  parsedQuestions=[];parsedMeta={};
+  ['up-subject','up-chapter','up-set'].forEach(id=>document.getElementById(id).value='');
+  document.getElementById('up-difficulty').value='';
+}
+
+// ── File drag/drop ──
+function dragOv(e){e.preventDefault();document.getElementById('drop-zone').classList.add('drag');}
+function dragLv(){document.getElementById('drop-zone').classList.remove('drag');}
+function dropF(e){e.preventDefault();dragLv();const f=e.dataTransfer.files[0];if(f)readFile(f);}
+function loadF(e){const f=e.target.files[0];if(f)readFile(f);}
+function readFile(f){
+  const r=new FileReader();
+  r.onload=ev=>{
+    const txt=ev.target.result;
+    document.getElementById('json-input').value=txt;
+    const info=document.getElementById('file-loaded-info');
+    info.style.display='block';
+    document.getElementById('file-loaded-msg').textContent=`✅ File loaded: ${f.name} (${(f.size/1024).toFixed(1)} KB)`;
+    switchUTab('paste',document.querySelector('#upload-method-tabs .tab'));
+    parseJSON();
+  };
+  r.readAsText(f);
+}
+
+// ── Manual question builder ──
+function addManQ(){
+  const id=manQCount++;
+  const div=document.createElement('div');
+  div.className='man-q-block';div.id=`mq-${id}`;
+  div.innerHTML=`<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px">
+    <div style="font-size:12px;font-weight:700;color:var(--text3)">QUESTION ${id+1}</div>
+    <button class="btn btn-r btn-xs" onclick="removeManQ(${id})">✕ Remove</button>
+  </div>
+  <div class="fg"><label class="fl">Question Text</label><textarea class="fi" rows="2" placeholder="Enter question…" data-field="question"></textarea></div>
+  <div class="grid-2">
+    <div class="fg"><label class="fl">Option A</label><input class="fi" placeholder="Option A" data-field="opt0"/></div>
+    <div class="fg"><label class="fl">Option B</label><input class="fi" placeholder="Option B" data-field="opt1"/></div>
+    <div class="fg"><label class="fl">Option C</label><input class="fi" placeholder="Option C" data-field="opt2"/></div>
+    <div class="fg"><label class="fl">Option D</label><input class="fi" placeholder="Option D" data-field="opt3"/></div>
+  </div>
+  <div class="grid-2">
+    <div class="fg"><label class="fl">Correct (0-3)</label><input class="fi" type="number" min="0" max="3" placeholder="0" data-field="correct"/></div>
+    <div class="fg"><label class="fl">Explanation</label><input class="fi" placeholder="Explanation…" data-field="explanation"/></div>
+  </div>`;
+  document.getElementById('man-questions').appendChild(div);
+}
+function removeManQ(id){document.getElementById('mq-'+id)?.remove();}
+function buildManualJSON(){
+  const blocks=document.querySelectorAll('.man-q-block');
+  const qs=Array.from(blocks).map(b=>{
+    return{
+      question:b.querySelector('[data-field=question]')?.value||'',
+      options:[0,1,2,3].map(i=>b.querySelector(`[data-field=opt${i}]`)?.value||''),
+      correct:parseInt(b.querySelector('[data-field=correct]')?.value)||0,
+      explanation:b.querySelector('[data-field=explanation]')?.value||''
+    };
+  }).filter(q=>q.question&&q.options[0]);
+  const json=JSON.stringify(qs,null,2);
+  document.getElementById('man-json-out').style.display='block';
+  document.getElementById('man-json-area').value=json;
+  document.getElementById('json-input').value=json;
+  const s=document.getElementById('man-subject').value;
+  const c=document.getElementById('man-chapter').value;
+  const set=document.getElementById('man-set').value;
+  if(s)document.getElementById('up-subject').value=s;
+  if(c)document.getElementById('up-chapter').value=c;
+  if(set)document.getElementById('up-set').value=set;
+  parseJSON();
+  toast('JSON built from manual questions','s');
+}
+
+// ─── QUESTION BANK ───
+async function loadQBank(){
+  try{
+    const{data,error}=await sb.from('question_bank').select('*').order('created_at',{ascending:false});
+    if(error)throw error;
+    allQuestions=data||[];
+    // Populate filters
+    const subjects=[...new Set(allQuestions.map(q=>q.subject).filter(Boolean))].sort();
+    const sf=document.getElementById('qb-subj-filter');
+    const cv=sf.value;
+    sf.innerHTML='<option value="">All Subjects</option>';
+    subjects.forEach(s=>{const o=document.createElement('option');o.value=s;o.textContent=s;sf.appendChild(o);});
+    sf.value=cv;
+    filterQBank();
+  }catch(e){toast('Failed to load question bank: '+e.message,'e');}
+}
+
+function filterQBank(){
+  const search=document.getElementById('qb-search').value.toLowerCase();
+  const subj=document.getElementById('qb-subj-filter').value;
+  const chap=document.getElementById('qb-chap-filter').value;
+  const diff=document.getElementById('qb-diff-filter').value;
+  qbFiltered=allQuestions.filter(q=>{
+    return(!search||q.question?.toLowerCase().includes(search))
+      &&(!subj||q.subject===subj)&&(!chap||q.chapter===chap)
+      &&(!diff||q.difficulty===diff);
+  });
+  // Populate chapter filter
+  const chapters=[...new Set(qbFiltered.map(q=>q.chapter).filter(Boolean))].sort();
+  const cf=document.getElementById('qb-chap-filter');const cv=cf.value;
+  cf.innerHTML='<option value="">All Chapters</option>';
+  chapters.forEach(c=>{const o=document.createElement('option');o.value=c;o.textContent=c;cf.appendChild(o);});
+  cf.value=cv;
+  qbPage=0;
+  document.getElementById('qb-count').textContent=`${qbFiltered.length} question${qbFiltered.length!==1?'s':''}`;
+  renderQBankPage();
+}
+
+function renderQBankPage(){
+  const start=qbPage*qbPageSize;
+  const slice=qbFiltered.slice(start,start+qbPageSize);
+  const container=document.getElementById('qbank-list');
+  if(!slice.length){container.innerHTML='<div class="empty"><div class="empty-ic">🔍</div><div class="empty-t">No questions found</div></div>';renderQBankPager();return;}
+  const labels=['A','B','C','D','E'];
+  container.innerHTML=slice.map((q,i)=>`
+    <div class="q-prev" style="margin-bottom:8px;cursor:default">
+      <div class="flex-b mb-2">
+        <div style="display:flex;gap:6px;align-items:center">
+          <span style="font-size:10px;font-weight:700;color:var(--text3)">#${start+i+1}</span>
+          ${q.subject?`<span class="badge b-blue">${esc(q.subject)}</span>`:''}
+          ${q.chapter?`<span class="badge b-purple">${esc(q.chapter)}</span>`:''}
+          ${q.difficulty?`<span class="badge ${q.difficulty==='Easy'?'b-green':q.difficulty==='Hard'?'b-red':'b-yellow'}">${q.difficulty}</span>`:''}
+        </div>
+        <div class="flex-r gap-2">
+          <button class="btn btn-c btn-xs" onclick="openEditQ('${q.id}')">✏️ Edit</button>
+          <button class="btn btn-r btn-xs" onclick="deleteQ('${q.id}')">🗑</button>
+        </div>
+      </div>
+      <div class="q-prev-text">${esc(q.question)}</div>
+      <div class="q-options">${(q.options||[]).map((o,j)=>`<div class="q-opt${j===q.correct?' correct':''}">${labels[j]}) ${esc(o)}</div>`).join('')}</div>
+      ${q.explanation?`<div class="q-expl">💡 ${esc(q.explanation)}</div>`:''}
+      ${(q.tags||[]).length?`<div style="margin-top:6px;display:flex;flex-wrap:wrap;gap:4px">${q.tags.map(t=>`<span class="chip" style="font-size:10px">#${esc(t)}</span>`).join('')}</div>`:''}
+    </div>`).join('');
+  renderQBankPager();
+}
+
+function renderQBankPager(){
+  const total=Math.ceil(qbFiltered.length/qbPageSize);
+  const pg=document.getElementById('qb-pagination');
+  if(total<=1){pg.innerHTML='';return;}
+  let html='';
+  if(qbPage>0)html+=`<button class="btn btn-s btn-sm" onclick="qbGoPage(${qbPage-1})">←</button>`;
+  for(let i=Math.max(0,qbPage-2);i<=Math.min(total-1,qbPage+2);i++){
+    html+=`<button class="btn ${i===qbPage?'btn-p':'btn-s'} btn-sm" onclick="qbGoPage(${i})">${i+1}</button>`;
+  }
+  if(qbPage<total-1)html+=`<button class="btn btn-s btn-sm" onclick="qbGoPage(${qbPage+1})">→</button>`;
+  pg.innerHTML=html;
+}
+
+function qbGoPage(p){qbPage=p;renderQBankPage();}
+
+function openEditQ(id){
+  const q=allQuestions.find(x=>x.id===id);if(!q)return;
+  document.getElementById('eq-id').value=id;
+  document.getElementById('eq-question').value=q.question||'';
+  [0,1,2,3].forEach(i=>document.getElementById(`eq-opt${i}`).value=(q.options||[])[i]||'');
+  document.getElementById('eq-correct').value=q.correct??0;
+  document.getElementById('eq-diff').value=q.difficulty||'';
+  document.getElementById('eq-subject').value=q.subject||'';
+  document.getElementById('eq-chapter').value=q.chapter||'';
+  document.getElementById('eq-expl').value=q.explanation||'';
+  document.getElementById('eq-tags').value=(q.tags||[]).join(', ');
+  document.getElementById('edit-q-modal').classList.add('open');
+}
+
+async function saveQuestion(){
+  const id=document.getElementById('eq-id').value;
+  const opts=[0,1,2,3].map(i=>document.getElementById(`eq-opt${i}`).value.trim()).filter(Boolean);
+  const{error}=await sb.from('question_bank').update({
+    question:document.getElementById('eq-question').value.trim(),
+    options:opts,correct:parseInt(document.getElementById('eq-correct').value)||0,
+    difficulty:document.getElementById('eq-diff').value||null,
+    subject:document.getElementById('eq-subject').value.trim(),
+    chapter:document.getElementById('eq-chapter').value.trim()||null,
+    explanation:document.getElementById('eq-expl').value.trim()||null,
+    tags:document.getElementById('eq-tags').value.split(',').map(t=>t.trim()).filter(Boolean)
+  }).eq('id',id);
+  if(error){toast('Save failed: '+error.message,'e');return;}
+  toast('Question updated','s');closeM('edit-q-modal');loadQBank();
+}
+
+async function deleteQ(id){
+  if(!confirm('Delete this question from the bank?'))return;
+  const{error}=await sb.from('question_bank').delete().eq('id',id);
+  if(error){toast('Delete failed: '+error.message,'e');return;}
+  toast('Question deleted','s');loadQBank();
+}
+
+// ─── QUIZ SETS ───
+async function loadQuizzes(){
+  try{
+    const{data,error}=await sb.from('quizzes').select('*').order('subject').order('chapter').order('set');
+    if(error)throw error;
+    allQuizzes=data||[];
+    // Populate subject filter
+    const subjects=[...new Set(allQuizzes.map(q=>q.subject).filter(Boolean))].sort();
+    const sf=document.getElementById('qz-subj-f');
+    sf.innerHTML='<option value="">All Subjects</option>';
+    subjects.forEach(s=>{const o=document.createElement('option');o.value=s;o.textContent=s;sf.appendChild(o);});
+    // Load attempt counts
+    const{data:ats}=await sb.from('attempts').select('quiz_id');
+    const atMap={};(ats||[]).forEach(a=>{atMap[a.quiz_id]=(atMap[a.quiz_id]||0)+1;});
+    filterQuizzes(atMap);
+    // Populate quiz selects (builder, schedule)
+    populateQuizSelects();
+  }catch(e){toast('Failed to load quizzes: '+e.message,'e');}
+}
+
+function filterQuizzes(atMap={}){
+  const search=document.getElementById('qz-search').value.toLowerCase();
+  const subj=document.getElementById('qz-subj-f').value;
+  const filtered=allQuizzes.filter(q=>
+    (!search||(q.subject+q.chapter+q.set).toLowerCase().includes(search))
+    &&(!subj||q.subject===subj)
+  );
+  const tbody=document.getElementById('quizzes-tbody');
+  if(!filtered.length){tbody.innerHTML='<tr><td colspan="7" class="tbl-empty">No quiz sets found</td></tr>';return;}
+  tbody.innerHTML=filtered.map(q=>`<tr>
+    <td style="font-weight:600">${esc(q.subject)}</td>
+    <td>${esc(q.chapter||'—')}</td>
+    <td>${esc(q.set)}</td>
+    <td><span class="chip">${(q.questions||[]).length} Qs</span></td>
+    <td>${q.difficulty?`<span class="badge ${q.difficulty==='Easy'?'b-green':q.difficulty==='Hard'?'b-red':'b-yellow'}">${q.difficulty}</span>`:'<span style="color:var(--text3)">—</span>'}</td>
+    <td style="color:var(--text3)">${atMap[q.id]||0}</td>
+    <td>
+      <div class="flex-r gap-2">
+        <button class="btn btn-c btn-xs" onclick="openEditQuiz('${q.id}')">✏️</button>
+        <button class="btn btn-r btn-xs" onclick="deleteQuiz('${q.id}')">🗑</button>
+      </div>
+    </td>
+  </tr>`).join('');
+}
+
+function openEditQuiz(id){
+  const q=allQuizzes.find(x=>x.id===id);if(!q)return;
+  document.getElementById('eqz-id').value=id;
+  document.getElementById('eqz-subj').value=q.subject||'';
+  document.getElementById('eqz-chap').value=q.chapter||'';
+  document.getElementById('eqz-set').value=q.set||'';
+  document.getElementById('eqz-diff').value=q.difficulty||'';
+  document.getElementById('eqz-questions').value=JSON.stringify(q.questions||[],null,2);
+  document.getElementById('edit-quiz-modal').classList.add('open');
+}
+
+async function saveQuizSet(){
+  const id=document.getElementById('eqz-id').value;
+  let qs;
+  try{qs=JSON.parse(document.getElementById('eqz-questions').value);}catch(e){toast('Invalid JSON','e');return;}
+  const{error}=await sb.from('quizzes').update({
+    subject:document.getElementById('eqz-subj').value.trim(),
+    chapter:document.getElementById('eqz-chap').value.trim()||null,
+    set:document.getElementById('eqz-set').value.trim(),
+    difficulty:document.getElementById('eqz-diff').value||null,
+    questions:qs
+  }).eq('id',id);
+  if(error){toast('Save failed: '+error.message,'e');return;}
+  toast('Quiz set updated','s');closeM('edit-quiz-modal');loadQuizzes();
+}
+
+async function deleteQuiz(id){
+  if(!confirm('Delete this quiz set?'))return;
+  const{error}=await sb.from('quizzes').delete().eq('id',id);
+  if(error){toast('Delete failed: '+error.message,'e');return;}
+  toast('Quiz deleted','s');loadQuizzes();
+}
+
+function populateQuizSelects(){
+  // Schedule page
+  const sc=document.getElementById('sc-quiz');
+  sc.innerHTML='<option value="">-- Choose Quiz --</option>';
+  allQuizzes.forEach(q=>{const o=document.createElement('option');o.value=q.id;o.textContent=`${q.subject} › ${q.chapter||'—'} › ${q.set}`;sc.appendChild(o);});
+  // Builder subjects
+  const subjects=[...new Set(allQuizzes.map(q=>q.subject).filter(Boolean))].sort();
+  const bldS=document.getElementById('bld-subject');
+  bldS.innerHTML='<option value="">Select Subject</option>';
+  subjects.forEach(s=>{const o=document.createElement('option');o.value=s;o.textContent=s;bldS.appendChild(o);});
+  // Analytics filter
+  const af=document.getElementById('an-quiz-filter');
+  af.innerHTML='<option value="">All Quizzes</option>';
+  allQuizzes.forEach(q=>{const o=document.createElement('option');o.value=q.id;o.textContent=`${q.subject} › ${q.set}`;af.appendChild(o);});
+}
+
+// ─── QUIZ BUILDER ───
+function selectMode(el,mode){
+  builderMode=mode;
+  document.querySelectorAll('.builder-card').forEach(c=>c.classList.remove('selected'));
+  el.classList.add('selected');
+  document.getElementById('bld-marks-row').style.display=mode==='mock'?'grid':'none';
+  document.getElementById('manual-selector').style.display=mode==='manual'?'block':'none';
+  if(mode==='manual')loadManualQList();
+}
+
+function loadBldChapters(){
+  const subj=document.getElementById('bld-subject').value;
+  const chapters=[...new Set(allQuizzes.filter(q=>q.subject===subj).map(q=>q.chapter).filter(Boolean))].sort();
+  const sel=document.getElementById('bld-chapter');
+  sel.innerHTML='<option value="">All Chapters</option>';
+  chapters.forEach(c=>{const o=document.createElement('option');o.value=c;o.textContent=c;sel.appendChild(o);});
+  if(builderMode==='manual')loadManualQList();
+}
+
+function loadManualQList(){
+  const subj=document.getElementById('bld-subject').value;
+  const chap=document.getElementById('bld-chapter').value;
+  let filtered=allQuestions.filter(q=>(!subj||q.subject===subj)&&(!chap||q.chapter===chap));
+  renderManualList(filtered);
+}
+
+function filterManualQs(){
+  const s=document.getElementById('manual-q-search').value.toLowerCase();
+  const subj=document.getElementById('bld-subject').value;
+  const chap=document.getElementById('bld-chapter').value;
+  let filtered=allQuestions.filter(q=>(!subj||q.subject===subj)&&(!chap||q.chapter===chap)&&(!s||q.question?.toLowerCase().includes(s)));
+  renderManualList(filtered);
+}
+
+function renderManualList(qs){
+  const container=document.getElementById('manual-q-list');
+  if(!qs.length){container.innerHTML='<div class="empty"><div class="empty-ic">🔍</div><div class="empty-t">No questions</div></div>';return;}
+  container.innerHTML=qs.slice(0,80).map((q,i)=>`
+    <div style="display:flex;align-items:flex-start;gap:8px;padding:8px;background:var(--bg2);border-radius:var(--r-sm);border:1px solid ${manualSelectedIds.has(q.id)?'var(--accent)':'var(--border)'};cursor:pointer;transition:var(--tr)"
+      onclick="toggleManualQ('${q.id}',this)">
+      <div style="width:16px;height:16px;border-radius:3px;background:${manualSelectedIds.has(q.id)?'var(--accent)':'var(--border)'};display:flex;align-items:center;justify-content:center;flex-shrink:0;margin-top:1px;font-size:10px;color:#fff">${manualSelectedIds.has(q.id)?'✓':''}</div>
+      <div style="font-size:12px;line-height:1.4">${esc(q.question)}</div>
+    </div>`).join('');
+  document.getElementById('manual-sel-count').textContent=`${manualSelectedIds.size} selected`;
+}
+
+function toggleManualQ(id){
+  if(manualSelectedIds.has(id))manualSelectedIds.delete(id);
+  else manualSelectedIds.add(id);
+  loadManualQList();
+}
+
+async function previewBuilderQuiz(){
+  builderPreviewQs=await getBuilderQuestions();
+  const prev=document.getElementById('builder-preview');
+  if(!builderPreviewQs.length){
+    document.getElementById('builder-preview-count').style.display='none';
+    prev.style.display='none';
+    toast('No questions match your selection','w');return;
+  }
+  prev.style.display='block';
+  document.getElementById('builder-preview-count').style.display='flex';
+  document.getElementById('builder-preview-count').textContent=`✅ ${builderPreviewQs.length} questions selected for this quiz`;
+  prev.innerHTML=builderPreviewQs.slice(0,6).map((q,i)=>renderQPrev(q,i)).join('')
+    +(builderPreviewQs.length>6?`<div style="text-align:center;padding:8px;font-size:12px;color:var(--text3)">…and ${builderPreviewQs.length-6} more</div>`:'');
+}
+
+async function getBuilderQuestions(){
+  const subj=document.getElementById('bld-subject').value;
+  const chap=document.getElementById('bld-chapter').value;
+  const count=parseInt(document.getElementById('bld-count').value)||0;
+  const diff=document.getElementById('bld-diff').value;
+  let qs=allQuestions.filter(q=>(!subj||q.subject===subj)&&(!chap||q.chapter===chap)&&(!diff||q.difficulty===diff));
+  if(builderMode==='manual')qs=qs.filter(q=>manualSelectedIds.has(q.id));
+  if(builderMode==='random')qs=qs.sort(()=>Math.random()-.5);
+  if(count>0)qs=qs.slice(0,count);
+  return qs;
+}
+
+async function saveBuilderQuiz(){
+  const title=document.getElementById('bld-title').value.trim();
+  const subj=document.getElementById('bld-subject').value.trim();
+  const set=document.getElementById('bld-set').value.trim();
+  const dur=document.getElementById('bld-duration').value;
+  if(!title||!subj||!set){toast('Title, Subject and Set Name required','w');return;}
+  const qs=await getBuilderQuestions();
+  if(!qs.length){toast('No questions for this selection','w');return;}
+  const btn=document.getElementById('bld-save-btn');
+  btn.disabled=true;btn.innerHTML='<span class="spin"></span> Creating…';
+  try{
+    const{error}=await sb.from('quizzes').insert({
+      subject:subj,
+      chapter:document.getElementById('bld-chapter').value||null,
+      set,
+      questions:qs.map(q=>({question:q.question,options:q.options,answer:q.correct,explanation:q.explanation||''})),
+      difficulty:document.getElementById('bld-diff').value||null,
+      duration_minutes:dur?parseInt(dur):null
+    });
+    if(error)throw error;
+    toast(`Quiz "${title}" created with ${qs.length} questions!`,'s');
+    loadQuizzes();loadDashboard();
+  }catch(e){toast('Failed: '+e.message,'e');}
+  finally{btn.disabled=false;btn.textContent='💾 Create Quiz Set';}
+}
+
+// ─── SCHEDULES ───
+async function loadSchedules(){
+  try{
+    const{data,error}=await sb.from('schedules').select('*,quizzes(id,subject,chapter,set)').order('start_time',{ascending:false});
+    if(error)throw error;
+    allSchedules=data||[];
+    renderScheduleTable();
+  }catch(e){toast('Failed to load schedules: '+e.message,'e');}
+}
+
+function schedStatus(s){
+  const now=new Date();const start=new Date(s.start_time);const end=new Date(s.end_time);
+  if(now<start){return start.toDateString()===now.toDateString()?'today':'upcoming';}
+  if(now>=start&&now<=end)return 'live';
+  return 'ended';
+}
+
+function renderScheduleTable(){
+  const tbody=document.getElementById('sched-tbody');
+  if(!allSchedules.length){tbody.innerHTML='<tr><td colspan="7" class="tbl-empty">No schedules yet</td></tr>';return;}
+  const fmt=d=>new Date(d).toLocaleString('en-US',{month:'short',day:'numeric',hour:'2-digit',minute:'2-digit'});
+  tbody.innerHTML=allSchedules.map(s=>{
+    const status=schedStatus(s);
+    const bc={live:'b-green',today:'b-yellow',upcoming:'b-blue',ended:'b-gray'}[status];
+    return`<tr>
+      <td style="font-weight:600">${esc(s.title)}</td>
+      <td style="font-size:12px;color:var(--text2)">${esc(s.quizzes?.subject||'—')} › ${esc(s.quizzes?.set||'—')}</td>
+      <td style="font-size:12px">${fmt(s.start_time)}</td>
+      <td style="font-size:12px">${fmt(s.end_time)}</td>
+      <td style="color:var(--text2)">${s.duration_minutes?s.duration_minutes+' min':'—'}</td>
+      <td><span class="badge ${bc}">${status}</span></td>
+      <td><div class="flex-r gap-2">
+        <button class="btn btn-c btn-xs" onclick="openEditSched('${s.id}')">✏️</button>
+        <button class="btn btn-r btn-xs" onclick="deleteSched('${s.id}')">🗑</button>
+      </div></td>
+    </tr>`;}).join('');
+}
+
+async function createSchedule(){
+  const title=document.getElementById('sc-title').value.trim();
+  const quizId=document.getElementById('sc-quiz').value;
+  const start=document.getElementById('sc-start').value;
+  const end=document.getElementById('sc-end').value;
+  const dur=document.getElementById('sc-dur').value;
+  const instr=document.getElementById('sc-instr').value.trim();
+  const desc=document.getElementById('sc-desc').value.trim();
+  if(!title||!quizId||!start||!end){toast('Title, Quiz, Start and End required','w');return;}
+  if(new Date(end)<=new Date(start)){toast('End must be after start','e');return;}
+  const{error}=await sb.from('schedules').insert({
+    title,quiz_id:quizId,start_time:new Date(start).toISOString(),
+    end_time:new Date(end).toISOString(),duration_minutes:dur?parseInt(dur):null,
+    instructions:instr||null,description:desc||null,created_by:CU.id
+  });
+  if(error){toast('Failed: '+error.message,'e');return;}
+  toast('Schedule created!','s');
+  ['sc-title','sc-start','sc-end','sc-dur','sc-instr','sc-desc'].forEach(id=>document.getElementById(id).value='');
+  document.getElementById('sc-quiz').value='';
+  loadSchedules();loadDashboard();
+}
+
+function openEditSched(id){
+  const s=allSchedules.find(x=>x.id===id);if(!s)return;
+  document.getElementById('esc-id').value=id;
+  document.getElementById('esc-title').value=s.title||'';
+  document.getElementById('esc-start').value=localDT(new Date(s.start_time));
+  document.getElementById('esc-end').value=localDT(new Date(s.end_time));
+  document.getElementById('esc-dur').value=s.duration_minutes||'';
+  document.getElementById('esc-instr').value=s.instructions||'';
+  document.getElementById('esc-desc').value=s.description||'';
+  document.getElementById('edit-sc-modal').classList.add('open');
+}
+
+async function saveSchedule(){
+  const id=document.getElementById('esc-id').value;
+  const start=document.getElementById('esc-start').value;
+  const end=document.getElementById('esc-end').value;
+  if(new Date(end)<=new Date(start)){toast('End must be after start','e');return;}
+  const{error}=await sb.from('schedules').update({
+    title:document.getElementById('esc-title').value.trim(),
+    start_time:new Date(start).toISOString(),end_time:new Date(end).toISOString(),
+    duration_minutes:parseInt(document.getElementById('esc-dur').value)||null,
+    instructions:document.getElementById('esc-instr').value.trim()||null,
+    description:document.getElementById('esc-desc').value.trim()||null
+  }).eq('id',id);
+  if(error){toast('Save failed: '+error.message,'e');return;}
+  toast('Schedule updated','s');closeM('edit-sc-modal');loadSchedules();
+}
+
+async function deleteSched(id){
+  if(!confirm('Delete this schedule?'))return;
+  const{error}=await sb.from('schedules').delete().eq('id',id);
+  if(error){toast('Delete failed: '+error.message,'e');return;}
+  toast('Deleted','s');loadSchedules();
+}
+
+function localDT(d){const p=n=>String(n).padStart(2,'0');return`${d.getFullYear()}-${p(d.getMonth()+1)}-${p(d.getDate())}T${p(d.getHours())}:${p(d.getMinutes())}`;}
+
+// ─── USERS ───
+async function loadUsers(){
+  try{
+    const{data,error}=await sb.from('profiles').select('*').order('created_at',{ascending:false});
+    if(error)throw error;
+    allUsers=data||[];
+    filterUsers();
+  }catch(e){toast('Failed to load users: '+e.message,'e');}
+}
+
+function filterUsers(){
+  const search=document.getElementById('usr-search').value.toLowerCase();
+  const status=document.getElementById('usr-status-f').value;
+  const role=document.getElementById('usr-role-f').value;
+  const filtered=allUsers.filter(u=>
+    (!search||(u.full_name+u.email).toLowerCase().includes(search))
+    &&(!status||u.status===status)&&(!role||u.role===role)
+  );
+  document.getElementById('usr-count').textContent=`${filtered.length} user${filtered.length!==1?'s':''}`;
+  const tbody=document.getElementById('users-tbody');
+  if(!filtered.length){tbody.innerHTML='<tr><td colspan="7" class="tbl-empty">No users found</td></tr>';return;}
+  tbody.innerHTML=filtered.map(u=>`<tr>
+    <td style="font-weight:600">${esc(u.full_name||'—')}</td>
+    <td style="color:var(--text2)">${esc(u.email)}</td>
+    <td><span class="badge ${u.role==='admin'?'b-purple':'b-cyan'}">${u.role}</span></td>
+    <td><span class="badge ${u.status==='approved'?'b-green':u.status==='blocked'?'b-red':'b-yellow'}">${u.status||'pending'}</span></td>
+    <td style="font-size:12px;color:var(--text3)">${u.created_at?new Date(u.created_at).toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'}):'—'}</td>
+    <td style="color:var(--text3)">—</td>
+    <td>
+      <div class="flex-r" style="flex-wrap:wrap;gap:4px">
+        ${u.status!=='approved'?`<button class="btn btn-g btn-xs" onclick="setUserStatus('${u.id}','approved')">✓</button>`:''}
+        ${u.status!=='blocked'?`<button class="btn btn-r btn-xs" onclick="setUserStatus('${u.id}','blocked')">✕</button>`:''}
+        ${u.role!=='admin'?`<button class="btn btn-c btn-xs" onclick="setUserRole('${u.id}','admin')">↑ Admin</button>`:`<button class="btn btn-s btn-xs" onclick="setUserRole('${u.id}','student')">↓ Student</button>`}
+      </div>
+    </td>
+  </tr>`).join('');
+}
+
+async function setUserStatus(uid,status){
+  const{error}=await sb.from('profiles').update({status}).eq('id',uid);
+  if(error){toast('Failed: '+error.message,'e');return;}
+  toast(`User ${status}`,'s');loadUsers();loadDashboard();
+}
+async function setUserRole(uid,role){
+  const{error}=await sb.from('profiles').update({role}).eq('id',uid);
+  if(error){toast('Failed: '+error.message,'e');return;}
+  toast(`Role → ${role}`,'s');loadUsers();
+}
+
+// ─── ANALYTICS ───
+async function loadAnalytics(){
+  try{
+    const{data:attempts}=await sb.from('attempts').select('*,profiles(full_name,email)').order('created_at',{ascending:false});
+    if(!attempts?.length)return;
+    const avg=Math.round(attempts.reduce((s,a)=>s+a.percentage,0)/attempts.length);
+    const best=Math.max(...attempts.map(a=>a.percentage));
+    document.getElementById('an-total-att').textContent=attempts.length;
+    document.getElementById('an-avg').textContent=avg+'%';
+    document.getElementById('an-best').textContent=best+'%';
+    // Top user
+    const uMap={};
+    attempts.forEach(a=>{if(!uMap[a.user_id])uMap[a.user_id]={name:a.profiles?.full_name||'Unknown',total:0,sum:0};uMap[a.user_id].total++;uMap[a.user_id].sum+=a.percentage;});
+    const topUser=Object.values(uMap).sort((a,b)=>b.sum/b.total-a.sum/a.total)[0];
+    document.getElementById('an-top-user').textContent=topUser?.name?.split(' ')[0]||'—';
+    // Leaderboard
+    const bestMap={};
+    attempts.forEach(a=>{
+      const k=a.user_id;
+      if(!bestMap[k]||a.percentage>bestMap[k].percentage)bestMap[k]={...a,name:a.profiles?.full_name||a.profiles?.email||'Unknown'};
+    });
+    const ranked=Object.values(bestMap).sort((a,b)=>b.percentage-a.percentage).slice(0,15);
+    const medals=['🥇','🥈','🥉'];
+    document.getElementById('lb-list').innerHTML=ranked.map((a,i)=>`
+      <div style="display:flex;align-items:center;gap:12px;padding:10px 12px;background:${i<3?'rgba(79,110,247,.07)':'var(--bg2)'};border-radius:var(--r-sm);margin-bottom:6px;border:1px solid ${i<3?'rgba(79,110,247,.2)':'var(--border)'}">
+        <div style="font-size:16px;font-weight:800;width:28px;text-align:center">${medals[i]||`#${i+1}`}</div>
+        <div style="flex:1"><div style="font-size:13px;font-weight:600">${esc(a.name)}</div><div style="font-size:11px;color:var(--text3)">${esc(a.subject)} › ${esc(a.set)}</div></div>
+        <span class="badge ${a.percentage>=75?'b-green':a.percentage>=50?'b-yellow':'b-red'}">${a.percentage}%</span>
+      </div>`).join('');
+  }catch(e){toast('Analytics error: '+e.message,'e');}
+}
+
+async function loadQuizStats(){
+  const qid=document.getElementById('an-quiz-filter').value;
+  let q=sb.from('attempts').select('*,profiles(full_name)');
+  if(qid)q=q.eq('quiz_id',qid);
+  const{data:ats}=await q.order('percentage',{ascending:false}).limit(20);
+  const container=document.getElementById('quiz-stats-list');
+  if(!ats?.length){container.innerHTML='<div class="empty"><div class="empty-ic">📊</div><div class="empty-t">No attempts</div></div>';return;}
+  const avg=Math.round(ats.reduce((s,a)=>s+a.percentage,0)/ats.length);
+  container.innerHTML=`
+    <div class="flex-r mb-4" style="flex-wrap:wrap;gap:8px">
+      <span class="chip chip-selected">${ats.length} attempts</span>
+      <span class="chip">Avg: ${avg}%</span>
+      <span class="chip">Best: ${Math.max(...ats.map(a=>a.percentage))}%</span>
+    </div>
+    ${ats.slice(0,12).map((a,i)=>`
+    <div class="flex-b mb-2" style="padding:8px 10px;background:var(--bg2);border-radius:var(--r-sm)">
+      <div><div style="font-size:13px;font-weight:500">${esc(a.profiles?.full_name||'Unknown')}</div>
+      <div style="font-size:11px;color:var(--text3)">${a.score}/${a.total} · ${a.time_taken?Math.floor(a.time_taken/60)+'m':'—'}</div></div>
+      <span class="badge ${a.percentage>=75?'b-green':a.percentage>=50?'b-yellow':'b-red'}">${a.percentage}%</span>
+    </div>`).join('')}`;
+}
+
+// ─── HELPERS ───
+function esc(s){if(s==null)return'';return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
+
+// ─── STARTUP ───
+(async()=>{
+  const{data:{session}}=await sb.auth.getSession();
+  if(session){
+    const{data:profile}=await sb.from('profiles').select('*').eq('id',session.user.id).single();
+    if(profile?.role==='admin'&&profile?.status==='approved'){CU=session.user;CP=profile;initAdmin();return;}
+  }
+  document.getElementById('auth-gate').style.display='flex';
+})();
+
+// Page change hook for lazy loading
+const _goTo=goTo;
+window.goTo=function(pg){
+  _goTo(pg);
+  if(pg==='analytics')loadAnalytics();
+  if(pg==='builder')loadQBank();
+};
+
+// Enter key on auth
+document.addEventListener('keydown',e=>{if(e.key==='Enter'&&document.getElementById('auth-gate').style.display!=='none')agLogin();});
+</script>
+</body>
+</html>
