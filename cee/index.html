@@ -1,0 +1,1469 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>ExamForge — MCQ Platform</title>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;500;600;700;800&family=DM+Sans:ital,wght@0,300;0,400;0,500;0,600;1,400&display=swap" rel="stylesheet"/>
+<style>
+:root {
+  --bg: #0a0c10;
+  --bg2: #111318;
+  --bg3: #181b22;
+  --card: #1a1d26;
+  --card2: #1f2330;
+  --border: #2a2f3d;
+  --border2: #343a4d;
+  --accent: #6c63ff;
+  --accent2: #8b83ff;
+  --accent3: #4f46e5;
+  --green: #22c55e;
+  --red: #ef4444;
+  --yellow: #f59e0b;
+  --cyan: #06b6d4;
+  --text: #e8eaf0;
+  --text2: #9ca3b8;
+  --text3: #6b7280;
+  --radius: 14px;
+  --radius-sm: 8px;
+  --shadow: 0 4px 24px rgba(0,0,0,0.4);
+  --shadow-lg: 0 8px 48px rgba(0,0,0,0.6);
+  --sidebar-w: 240px;
+  --transition: all 0.2s cubic-bezier(0.4,0,0.2,1);
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth}
+body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;overflow-x:hidden}
+h1,h2,h3,h4,h5{font-family:'Syne',sans-serif}
+a{color:inherit;text-decoration:none}
+button{cursor:pointer;font-family:'DM Sans',sans-serif}
+input,textarea,select{font-family:'DM Sans',sans-serif}
+::-webkit-scrollbar{width:6px;height:6px}
+::-webkit-scrollbar-track{background:var(--bg2)}
+::-webkit-scrollbar-thumb{background:var(--border2);border-radius:3px}
+
+/* ─── TOAST ─── */
+#toast-container{position:fixed;top:20px;right:20px;z-index:9999;display:flex;flex-direction:column;gap:10px;pointer-events:none}
+.toast{display:flex;align-items:center;gap:10px;padding:12px 18px;border-radius:var(--radius-sm);font-size:14px;font-weight:500;min-width:260px;max-width:360px;pointer-events:all;animation:toastIn .3s ease;box-shadow:var(--shadow-lg);border:1px solid transparent}
+.toast.success{background:#14271a;border-color:#22c55e33;color:#4ade80}
+.toast.error{background:#271414;border-color:#ef444433;color:#f87171}
+.toast.info{background:#141827;border-color:#6c63ff33;color:var(--accent2)}
+.toast.warning{background:#272014;border-color:#f59e0b33;color:#fbbf24}
+.toast-icon{font-size:16px;flex-shrink:0}
+.toast-out{animation:toastOut .3s ease forwards}
+@keyframes toastIn{from{opacity:0;transform:translateX(100%)}to{opacity:1;transform:translateX(0)}}
+@keyframes toastOut{from{opacity:1;transform:translateX(0)}to{opacity:0;transform:translateX(100%)}}
+
+/* ─── AUTH ─── */
+#auth-screen{display:flex;align-items:center;justify-content:center;min-height:100vh;padding:20px;background:radial-gradient(ellipse 80% 60% at 50% 0%,#2d1b69 0%,transparent 70%),var(--bg)}
+.auth-box{background:var(--card);border:1px solid var(--border);border-radius:20px;padding:40px;width:100%;max-width:420px;box-shadow:var(--shadow-lg)}
+.auth-logo{font-family:'Syne',sans-serif;font-size:26px;font-weight:800;color:var(--text);margin-bottom:6px}
+.auth-logo span{color:var(--accent)}
+.auth-sub{color:var(--text3);font-size:14px;margin-bottom:32px}
+.auth-tabs{display:flex;background:var(--bg2);border-radius:var(--radius-sm);padding:4px;margin-bottom:28px}
+.auth-tab{flex:1;padding:8px;border:none;background:transparent;color:var(--text3);font-size:14px;font-weight:500;border-radius:6px;transition:var(--transition)}
+.auth-tab.active{background:var(--accent);color:#fff}
+.form-group{margin-bottom:18px}
+.form-label{display:block;font-size:13px;font-weight:500;color:var(--text2);margin-bottom:6px}
+.form-input{width:100%;padding:11px 14px;background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius-sm);color:var(--text);font-size:14px;transition:var(--transition);outline:none}
+.form-input:focus{border-color:var(--accent);box-shadow:0 0 0 3px rgba(108,99,255,.15)}
+.form-input::placeholder{color:var(--text3)}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;padding:11px 20px;border:none;border-radius:var(--radius-sm);font-size:14px;font-weight:600;transition:var(--transition);outline:none}
+.btn-primary{background:var(--accent);color:#fff}
+.btn-primary:hover{background:var(--accent2);transform:translateY(-1px);box-shadow:0 4px 16px rgba(108,99,255,.4)}
+.btn-secondary{background:var(--bg2);border:1px solid var(--border);color:var(--text2)}
+.btn-secondary:hover{border-color:var(--border2);color:var(--text)}
+.btn-danger{background:rgba(239,68,68,.15);border:1px solid rgba(239,68,68,.3);color:#f87171}
+.btn-danger:hover{background:rgba(239,68,68,.25)}
+.btn-success{background:rgba(34,197,94,.15);border:1px solid rgba(34,197,94,.3);color:#4ade80}
+.btn-success:hover{background:rgba(34,197,94,.25)}
+.btn-sm{padding:7px 14px;font-size:13px}
+.btn-xs{padding:5px 10px;font-size:12px;border-radius:6px}
+.btn-full{width:100%}
+.btn:disabled{opacity:.5;cursor:not-allowed;transform:none !important}
+.auth-note{text-align:center;font-size:13px;color:var(--text3);margin-top:20px}
+
+/* ─── LAYOUT ─── */
+#app{display:none;min-height:100vh}
+.layout{display:flex;min-height:100vh}
+
+/* ─── SIDEBAR ─── */
+.sidebar{width:var(--sidebar-w);background:var(--bg2);border-right:1px solid var(--border);display:flex;flex-direction:column;position:fixed;top:0;left:0;height:100vh;z-index:100;transition:transform .3s ease}
+.sidebar-logo{padding:24px 20px 20px;border-bottom:1px solid var(--border)}
+.sidebar-logo-txt{font-family:'Syne',sans-serif;font-size:20px;font-weight:800;color:var(--text)}
+.sidebar-logo-txt span{color:var(--accent)}
+.sidebar-logo-sub{font-size:11px;color:var(--text3);margin-top:2px}
+.sidebar-user{padding:16px 20px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:10px}
+.sidebar-avatar{width:36px;height:36px;border-radius:50%;background:linear-gradient(135deg,var(--accent),var(--cyan));display:flex;align-items:center;justify-content:center;font-weight:700;font-size:13px;flex-shrink:0}
+.sidebar-user-info{overflow:hidden}
+.sidebar-user-name{font-size:13px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.sidebar-user-role{font-size:11px;color:var(--text3);text-transform:capitalize}
+.sidebar-nav{flex:1;padding:12px 0;overflow-y:auto}
+.nav-section{padding:8px 20px 4px;font-size:11px;font-weight:600;color:var(--text3);text-transform:uppercase;letter-spacing:.08em}
+.nav-item{display:flex;align-items:center;gap:12px;padding:10px 20px;color:var(--text2);font-size:14px;font-weight:500;cursor:pointer;transition:var(--transition);position:relative;border:none;background:transparent;width:100%;text-align:left}
+.nav-item:hover{background:rgba(108,99,255,.08);color:var(--text)}
+.nav-item.active{background:rgba(108,99,255,.15);color:var(--accent)}
+.nav-item.active::before{content:'';position:absolute;left:0;top:4px;bottom:4px;width:3px;background:var(--accent);border-radius:0 3px 3px 0}
+.nav-icon{font-size:16px;width:20px;text-align:center;flex-shrink:0}
+.sidebar-footer{padding:16px 20px;border-top:1px solid var(--border)}
+.main-content{margin-left:var(--sidebar-w);flex:1;padding:28px;min-height:100vh;background:var(--bg)}
+.mobile-topbar{display:none;align-items:center;justify-content:space-between;padding:14px 20px;background:var(--bg2);border-bottom:1px solid var(--border);position:sticky;top:0;z-index:50}
+.hamburger{background:none;border:none;color:var(--text);font-size:20px;cursor:pointer;padding:4px}
+.sidebar-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:99}
+
+/* ─── PAGE HEADER ─── */
+.page-header{margin-bottom:28px}
+.page-title{font-size:24px;font-weight:700;color:var(--text)}
+.page-sub{font-size:14px;color:var(--text3);margin-top:4px}
+
+/* ─── CARDS ─── */
+.card{background:var(--card);border:1px solid var(--border);border-radius:var(--radius);padding:24px}
+.card-sm{padding:16px}
+.stats-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:16px;margin-bottom:28px}
+.stat-card{background:var(--card);border:1px solid var(--border);border-radius:var(--radius);padding:20px;position:relative;overflow:hidden}
+.stat-card::before{content:'';position:absolute;top:0;right:0;width:60px;height:60px;background:radial-gradient(circle,rgba(108,99,255,.15),transparent);border-radius:50%}
+.stat-icon{font-size:24px;margin-bottom:12px}
+.stat-val{font-family:'Syne',sans-serif;font-size:28px;font-weight:700;color:var(--text)}
+.stat-lbl{font-size:13px;color:var(--text3);margin-top:4px}
+.stat-card.green .stat-val{color:var(--green)}
+.stat-card.yellow .stat-val{color:var(--yellow)}
+.stat-card.cyan .stat-val{color:var(--cyan)}
+.stat-card.purple .stat-val{color:var(--accent2)}
+
+/* ─── TABLE ─── */
+.table-wrap{overflow-x:auto;border-radius:var(--radius);border:1px solid var(--border)}
+table{width:100%;border-collapse:collapse;font-size:14px}
+thead{background:var(--bg2)}
+th{padding:12px 16px;text-align:left;font-size:12px;font-weight:600;text-transform:uppercase;letter-spacing:.05em;color:var(--text3);white-space:nowrap}
+td{padding:12px 16px;border-top:1px solid var(--border);color:var(--text2)}
+tr:hover td{background:rgba(255,255,255,.02)}
+.badge{display:inline-flex;align-items:center;padding:3px 10px;border-radius:20px;font-size:12px;font-weight:600;white-space:nowrap}
+.badge-green{background:rgba(34,197,94,.15);color:#4ade80}
+.badge-red{background:rgba(239,68,68,.15);color:#f87171}
+.badge-yellow{background:rgba(245,158,11,.15);color:#fbbf24}
+.badge-purple{background:rgba(108,99,255,.15);color:var(--accent2)}
+.badge-gray{background:rgba(107,114,128,.15);color:var(--text3)}
+.badge-cyan{background:rgba(6,182,212,.15);color:#22d3ee}
+
+/* ─── QUIZ TREE ─── */
+.quiz-tree{display:flex;flex-direction:column;gap:8px}
+.subject-node{border:1px solid var(--border);border-radius:var(--radius);overflow:hidden}
+.subject-header{display:flex;align-items:center;justify-content:space-between;padding:14px 18px;background:var(--card2);cursor:pointer;user-select:none}
+.subject-name{font-weight:600;font-size:15px;display:flex;align-items:center;gap:10px}
+.subject-icon{font-size:18px}
+.chapter-list{padding:8px;display:flex;flex-direction:column;gap:4px;background:var(--card)}
+.chapter-node{border-radius:var(--radius-sm);overflow:hidden}
+.chapter-header{display:flex;align-items:center;justify-content:space-between;padding:10px 14px;background:var(--bg2);cursor:pointer;font-size:14px;font-weight:500}
+.set-list{padding:6px;display:flex;flex-direction:column;gap:3px}
+.set-item{display:flex;align-items:center;justify-content:space-between;padding:9px 14px;border-radius:6px;background:var(--bg);font-size:13px;cursor:pointer;transition:var(--transition);border:1px solid transparent}
+.set-item:hover{border-color:var(--accent);background:rgba(108,99,255,.06);color:var(--accent2)}
+.chevron{transition:transform .2s;font-size:12px}
+.open .chevron{transform:rotate(180deg)}
+
+/* ─── QUIZ SCREEN ─── */
+#quiz-screen{display:none;position:fixed;inset:0;background:var(--bg);z-index:200;overflow-y:auto;padding:24px}
+.quiz-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:24px;background:var(--card);border:1px solid var(--border);border-radius:var(--radius);padding:16px 20px}
+.quiz-meta{font-size:13px;color:var(--text3)}
+.quiz-meta strong{color:var(--text);font-size:15px;display:block;margin-bottom:2px}
+.quiz-timer{font-family:'Syne',sans-serif;font-size:22px;font-weight:700;color:var(--yellow);display:flex;align-items:center;gap:8px}
+.quiz-timer.danger{color:var(--red);animation:pulse 1s infinite}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.6}}
+.progress-bar{height:4px;background:var(--border);border-radius:2px;margin-bottom:24px;overflow:hidden}
+.progress-fill{height:100%;background:linear-gradient(90deg,var(--accent),var(--cyan));border-radius:2px;transition:width .3s ease}
+.question-card{background:var(--card);border:1px solid var(--border);border-radius:var(--radius);padding:28px;margin-bottom:20px}
+.q-num{font-size:12px;font-weight:600;color:var(--text3);text-transform:uppercase;letter-spacing:.06em;margin-bottom:10px}
+.q-text{font-size:17px;font-weight:500;line-height:1.6;margin-bottom:24px}
+.options-list{display:flex;flex-direction:column;gap:10px}
+.option-btn{display:flex;align-items:center;gap:14px;padding:14px 18px;border:2px solid var(--border);border-radius:var(--radius-sm);background:var(--bg2);color:var(--text);font-size:14px;text-align:left;cursor:pointer;transition:var(--transition);width:100%}
+.option-btn:hover:not(:disabled){border-color:var(--accent);background:rgba(108,99,255,.07)}
+.option-btn.selected{border-color:var(--accent);background:rgba(108,99,255,.12);color:var(--accent2)}
+.option-btn.correct{border-color:var(--green);background:rgba(34,197,94,.12);color:#4ade80}
+.option-btn.wrong{border-color:var(--red);background:rgba(239,68,68,.12);color:#f87171}
+.option-label{width:28px;height:28px;border-radius:50%;background:var(--bg3);display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;flex-shrink:0;transition:var(--transition)}
+.option-btn.selected .option-label{background:var(--accent);color:#fff}
+.option-btn.correct .option-label{background:var(--green);color:#fff}
+.option-btn.wrong .option-label{background:var(--red);color:#fff}
+.quiz-nav{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap}
+.q-dots{display:flex;flex-wrap:wrap;gap:6px;max-width:400px}
+.q-dot{width:28px;height:28px;border-radius:50%;border:2px solid var(--border);background:var(--bg2);cursor:pointer;transition:var(--transition);font-size:10px;font-weight:700;display:flex;align-items:center;justify-content:center;color:var(--text3)}
+.q-dot.answered{background:var(--accent);border-color:var(--accent);color:#fff}
+.q-dot.current{border-color:var(--cyan);color:var(--cyan)}
+
+/* ─── RESULT ─── */
+.result-card{text-align:center;padding:40px}
+.result-score-ring{width:140px;height:140px;border-radius:50%;margin:0 auto 24px;display:flex;flex-direction:column;align-items:center;justify-content:center;font-family:'Syne',sans-serif;position:relative}
+.result-score-ring::before{content:'';position:absolute;inset:0;border-radius:50%;background:conic-gradient(var(--accent) var(--pct),var(--border) 0);padding:6px}
+.result-score-ring::after{content:'';position:absolute;inset:6px;border-radius:50%;background:var(--card)}
+.result-score-inner{position:relative;z-index:1;text-align:center}
+.result-pct{font-size:30px;font-weight:800}
+.result-label{font-size:12px;color:var(--text3)}
+.result-grade{font-family:'Syne',sans-serif;font-size:32px;font-weight:800;margin-bottom:6px}
+.result-stats{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;margin-top:24px}
+.result-stat{background:var(--bg2);border-radius:var(--radius-sm);padding:16px;text-align:center}
+.result-stat-val{font-family:'Syne',sans-serif;font-size:22px;font-weight:700}
+.result-stat-lbl{font-size:12px;color:var(--text3);margin-top:4px}
+
+/* ─── LEADERBOARD ─── */
+.lb-row{display:grid;grid-template-columns:48px 1fr auto auto;gap:12px;align-items:center;padding:12px 16px;border-radius:var(--radius-sm);margin-bottom:6px;background:var(--card2);border:1px solid transparent}
+.lb-row.top-1{border-color:#f59e0b44;background:rgba(245,158,11,.06)}
+.lb-row.top-2{border-color:#9ca3b844;background:rgba(156,163,184,.05)}
+.lb-row.top-3{border-color:#b4521444;background:rgba(180,82,20,.05)}
+.lb-rank{font-family:'Syne',sans-serif;font-weight:800;font-size:16px;text-align:center}
+.lb-name{font-weight:500;font-size:14px}
+.lb-sub{font-size:12px;color:var(--text3)}
+.lb-score{font-family:'Syne',sans-serif;font-weight:700;font-size:15px;text-align:right}
+.lb-pct{font-size:12px;color:var(--text3);text-align:right}
+
+/* ─── ADMIN ─── */
+.admin-tabs{display:flex;gap:4px;background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius-sm);padding:4px;margin-bottom:24px;flex-wrap:wrap}
+.admin-tab{padding:8px 16px;border:none;background:transparent;color:var(--text3);font-size:13px;font-weight:500;border-radius:6px;cursor:pointer;transition:var(--transition)}
+.admin-tab.active{background:var(--accent);color:#fff}
+.admin-panel{display:none}
+.admin-panel.active{display:block}
+.upload-zone{border:2px dashed var(--border2);border-radius:var(--radius);padding:32px;text-align:center;cursor:pointer;transition:var(--transition)}
+.upload-zone:hover,.upload-zone.drag{border-color:var(--accent);background:rgba(108,99,255,.05)}
+.upload-icon{font-size:36px;margin-bottom:10px}
+.upload-txt{font-size:14px;color:var(--text2)}
+.upload-sub{font-size:12px;color:var(--text3);margin-top:4px}
+textarea.code-area{width:100%;background:var(--bg);border:1px solid var(--border);border-radius:var(--radius-sm);color:var(--text);padding:14px;font-family:'DM Mono',monospace,sans-serif;font-size:12px;resize:vertical;min-height:180px;outline:none;transition:var(--transition)}
+textarea.code-area:focus{border-color:var(--accent)}
+.grid-2{display:grid;grid-template-columns:1fr 1fr;gap:20px}
+.grid-3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:16px}
+
+/* ─── HISTORY TABLE ─── */
+.history-item{display:flex;align-items:center;justify-content:space-between;padding:12px 16px;background:var(--card2);border-radius:var(--radius-sm);margin-bottom:8px;border:1px solid var(--border)}
+.history-meta{font-size:13px}
+.history-title{font-weight:600;margin-bottom:2px}
+.history-date{font-size:12px;color:var(--text3)}
+
+/* ─── MODAL ─── */
+.modal-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.7);z-index:500;align-items:center;justify-content:center;padding:20px}
+.modal-overlay.open{display:flex}
+.modal{background:var(--card);border:1px solid var(--border);border-radius:20px;padding:28px;width:100%;max-width:560px;max-height:90vh;overflow-y:auto;box-shadow:var(--shadow-lg)}
+.modal-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:20px}
+.modal-title{font-family:'Syne',sans-serif;font-size:18px;font-weight:700}
+.modal-close{background:var(--bg2);border:1px solid var(--border);border-radius:6px;color:var(--text2);width:30px;height:30px;display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:14px;transition:var(--transition)}
+.modal-close:hover{border-color:var(--red);color:var(--red)}
+
+/* ─── EMPTY STATE ─── */
+.empty-state{text-align:center;padding:48px 24px;color:var(--text3)}
+.empty-icon{font-size:48px;margin-bottom:14px}
+.empty-title{font-size:16px;font-weight:600;color:var(--text2);margin-bottom:6px}
+.empty-sub{font-size:13px}
+
+/* ─── SELECT ─── */
+select.form-input{-webkit-appearance:none;appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%236b7280' d='M6 8L1 3h10z'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 12px center}
+
+/* ─── TRANSITIONS ─── */
+.page{display:none;animation:fadeSlide .25s ease}
+.page.active{display:block}
+@keyframes fadeSlide{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+
+/* ─── SCROLLABLE QUIZ NAV ─── */
+.quiz-container{max-width:760px;margin:0 auto}
+
+/* ─── WARNING BANNER ─── */
+.tab-warning{display:none;position:fixed;top:0;left:0;right:0;background:var(--red);color:#fff;text-align:center;padding:10px;font-size:14px;font-weight:600;z-index:9998;animation:warningSlide .3s ease}
+@keyframes warningSlide{from{transform:translateY(-100%)}to{transform:translateY(0)}}
+
+/* ─── RESPONSIVE ─── */
+@media(max-width:768px){
+  .sidebar{transform:translateX(-100%)}
+  .sidebar.open{transform:translateX(0)}
+  .sidebar-overlay.open{display:block}
+  .main-content{margin-left:0;padding:16px}
+  .mobile-topbar{display:flex}
+  .stats-grid{grid-template-columns:1fr 1fr}
+  .grid-2,.grid-3{grid-template-columns:1fr}
+  .result-stats{grid-template-columns:1fr 1fr}
+  .quiz-nav{flex-direction:column}
+  .q-dots{max-width:100%}
+  #quiz-screen{padding:16px}
+  .quiz-header{flex-direction:column;gap:12px;text-align:center}
+}
+@media(max-width:400px){
+  .stats-grid{grid-template-columns:1fr}
+  .result-stats{grid-template-columns:1fr}
+}
+
+/* ─── MISC ─── */
+.divider{height:1px;background:var(--border);margin:20px 0}
+.text-right{text-align:right}
+.text-center{text-align:center}
+.flex-row{display:flex;align-items:center;gap:12px}
+.flex-between{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap}
+.mt-4{margin-top:16px}
+.mt-6{margin-top:24px}
+.mb-4{margin-bottom:16px}
+.gap-2{gap:8px}
+.hidden{display:none !important}
+.spinner{display:inline-block;width:16px;height:16px;border:2px solid rgba(255,255,255,.3);border-top-color:#fff;border-radius:50%;animation:spin .6s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+.chip{display:inline-flex;align-items:center;gap:4px;padding:3px 10px;border-radius:20px;font-size:12px;background:var(--bg2);border:1px solid var(--border);color:var(--text2)}
+</style>
+</head>
+<body>
+
+<!-- TAB WARNING -->
+<div class="tab-warning" id="tab-warning">⚠️ Warning: Switching tabs during an exam is not allowed!</div>
+
+<!-- TOAST -->
+<div id="toast-container"></div>
+
+<!-- AUTH SCREEN -->
+<div id="auth-screen">
+  <div class="auth-box">
+    <div class="auth-logo">Exam<span>Forge</span></div>
+    <div class="auth-sub">Your intelligent MCQ examination platform</div>
+    <div class="auth-tabs">
+      <button class="auth-tab active" onclick="switchAuthTab('login')">Sign In</button>
+      <button class="auth-tab" onclick="switchAuthTab('signup')">Register</button>
+    </div>
+
+    <!-- LOGIN -->
+    <div id="login-form">
+      <div class="form-group">
+        <label class="form-label">Email Address</label>
+        <input class="form-input" type="email" id="login-email" placeholder="you@example.com"/>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Password</label>
+        <input class="form-input" type="password" id="login-password" placeholder="Enter password"/>
+      </div>
+      <button class="btn btn-primary btn-full" onclick="handleLogin()" id="login-btn">Sign In</button>
+    </div>
+
+    <!-- SIGNUP -->
+    <div id="signup-form" style="display:none">
+      <div class="form-group">
+        <label class="form-label">Full Name</label>
+        <input class="form-input" type="text" id="signup-name" placeholder="John Doe"/>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Email Address</label>
+        <input class="form-input" type="email" id="signup-email" placeholder="you@example.com"/>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Password</label>
+        <input class="form-input" type="password" id="signup-password" placeholder="Min 6 characters"/>
+      </div>
+      <button class="btn btn-primary btn-full" onclick="handleSignup()" id="signup-btn">Create Account</button>
+      <p class="auth-note">Account requires admin approval before access.</p>
+    </div>
+  </div>
+</div>
+
+<!-- MAIN APP -->
+<div id="app">
+  <div class="layout">
+    <!-- Sidebar Overlay -->
+    <div class="sidebar-overlay" id="sidebar-overlay" onclick="closeSidebar()"></div>
+
+    <!-- Sidebar -->
+    <nav class="sidebar" id="sidebar">
+      <div class="sidebar-logo">
+        <div class="sidebar-logo-txt">Exam<span>Forge</span></div>
+        <div class="sidebar-logo-sub">MCQ Platform</div>
+      </div>
+      <div class="sidebar-user">
+        <div class="sidebar-avatar" id="sidebar-avatar">?</div>
+        <div class="sidebar-user-info">
+          <div class="sidebar-user-name" id="sidebar-name">Loading…</div>
+          <div class="sidebar-user-role" id="sidebar-role">student</div>
+        </div>
+      </div>
+      <div class="sidebar-nav" id="sidebar-nav">
+        <div class="nav-section">Navigation</div>
+        <button class="nav-item active" data-page="dashboard" onclick="goTo('dashboard')">
+          <span class="nav-icon">🏠</span>Dashboard
+        </button>
+        <button class="nav-item" data-page="quiz" onclick="goTo('quiz')">
+          <span class="nav-icon">📝</span>Take Quiz
+        </button>
+        <button class="nav-item" data-page="results" onclick="goTo('results')">
+          <span class="nav-icon">📊</span>My Results
+        </button>
+        <button class="nav-item" data-page="leaderboard" onclick="goTo('leaderboard')">
+          <span class="nav-icon">🏆</span>Leaderboard
+        </button>
+        <div id="admin-nav-section" style="display:none">
+          <div class="nav-section" style="margin-top:8px">Admin</div>
+          <button class="nav-item" data-page="admin" onclick="goTo('admin')">
+            <span class="nav-icon">⚙️</span>Admin Panel
+          </button>
+        </div>
+      </div>
+      <div class="sidebar-footer">
+        <button class="btn btn-secondary btn-full btn-sm" onclick="handleLogout()">🚪 Sign Out</button>
+      </div>
+    </nav>
+
+    <!-- Main -->
+    <main class="main-content" id="main-content">
+      <!-- Mobile Topbar -->
+      <div class="mobile-topbar">
+        <button class="hamburger" onclick="openSidebar()">☰</button>
+        <div style="font-family:'Syne',sans-serif;font-weight:700;font-size:16px">Exam<span style="color:var(--accent)">Forge</span></div>
+        <div style="width:32px"></div>
+      </div>
+
+      <!-- DASHBOARD PAGE -->
+      <div class="page active" id="page-dashboard">
+        <div class="page-header">
+          <h1 class="page-title">Dashboard</h1>
+          <p class="page-sub">Welcome back, <span id="dash-name">—</span></p>
+        </div>
+        <div class="stats-grid" id="dash-stats">
+          <div class="stat-card purple">
+            <div class="stat-icon">📚</div>
+            <div class="stat-val" id="stat-subjects">0</div>
+            <div class="stat-lbl">Subjects</div>
+          </div>
+          <div class="stat-card cyan">
+            <div class="stat-icon">📝</div>
+            <div class="stat-val" id="stat-quizzes">0</div>
+            <div class="stat-lbl">Available Quizzes</div>
+          </div>
+          <div class="stat-card green">
+            <div class="stat-icon">✅</div>
+            <div class="stat-val" id="stat-attempts">0</div>
+            <div class="stat-lbl">My Attempts</div>
+          </div>
+          <div class="stat-card yellow">
+            <div class="stat-icon">⭐</div>
+            <div class="stat-val" id="stat-avg">—</div>
+            <div class="stat-lbl">Avg Score %</div>
+          </div>
+        </div>
+
+        <div class="grid-2">
+          <div class="card">
+            <div class="flex-between mb-4">
+              <h3 style="font-size:16px;font-weight:600">Recent Attempts</h3>
+              <button class="btn btn-secondary btn-xs" onclick="goTo('results')">View All</button>
+            </div>
+            <div id="recent-attempts-list"><div class="empty-state"><div class="empty-icon">📋</div><div class="empty-title">No attempts yet</div><div class="empty-sub">Take a quiz to see results here</div></div></div>
+          </div>
+          <div class="card">
+            <h3 style="font-size:16px;font-weight:600;margin-bottom:16px">Quick Stats</h3>
+            <div id="quick-stats-content">
+              <div style="display:flex;flex-direction:column;gap:12px">
+                <div class="flex-between"><span style="font-size:14px;color:var(--text2)">Best Score</span><span style="font-weight:700;color:var(--green)" id="qs-best">—</span></div>
+                <div class="flex-between"><span style="font-size:14px;color:var(--text2)">Total Questions Answered</span><span style="font-weight:700" id="qs-total-q">—</span></div>
+                <div class="flex-between"><span style="font-size:14px;color:var(--text2)">Last Activity</span><span style="font-size:13px;color:var(--text3)" id="qs-last">—</span></div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- QUIZ PAGE -->
+      <div class="page" id="page-quiz">
+        <div class="page-header">
+          <h1 class="page-title">Take a Quiz</h1>
+          <p class="page-sub">Select a quiz from the list below to begin</p>
+        </div>
+        <div class="card">
+          <div id="quiz-tree-container">
+            <div class="empty-state"><div class="empty-icon">📚</div><div class="empty-title">Loading quizzes…</div></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- RESULTS PAGE -->
+      <div class="page" id="page-results">
+        <div class="page-header">
+          <h1 class="page-title">My Results</h1>
+          <p class="page-sub">View your exam history and performance</p>
+        </div>
+        <div id="results-content">
+          <div class="empty-state"><div class="empty-icon">📊</div><div class="empty-title">Loading…</div></div>
+        </div>
+      </div>
+
+      <!-- LEADERBOARD PAGE -->
+      <div class="page" id="page-leaderboard">
+        <div class="page-header">
+          <h1 class="page-title">Leaderboard</h1>
+          <p class="page-sub">Top performers across all quizzes</p>
+        </div>
+        <div class="card mb-4">
+          <div class="flex-row">
+            <div style="flex:1">
+              <label class="form-label">Filter by Quiz</label>
+              <select class="form-input" id="lb-filter" onchange="loadLeaderboard()">
+                <option value="">All Quizzes</option>
+              </select>
+            </div>
+            <div style="flex:1">
+              <label class="form-label">Subject</label>
+              <select class="form-input" id="lb-subject" onchange="filterLbSubject()">
+                <option value="">All Subjects</option>
+              </select>
+            </div>
+          </div>
+        </div>
+        <div id="leaderboard-content">
+          <div class="empty-state"><div class="empty-icon">🏆</div><div class="empty-title">Loading…</div></div>
+        </div>
+      </div>
+
+      <!-- ADMIN PAGE -->
+      <div class="page" id="page-admin">
+        <div class="page-header">
+          <h1 class="page-title">Admin Panel</h1>
+          <p class="page-sub">Manage users, quizzes, and platform settings</p>
+        </div>
+
+        <!-- Admin Stats -->
+        <div class="stats-grid">
+          <div class="stat-card purple">
+            <div class="stat-icon">👥</div>
+            <div class="stat-val" id="admin-stat-users">0</div>
+            <div class="stat-lbl">Total Users</div>
+          </div>
+          <div class="stat-card cyan">
+            <div class="stat-icon">📚</div>
+            <div class="stat-val" id="admin-stat-quizzes">0</div>
+            <div class="stat-lbl">Active Quizzes</div>
+          </div>
+          <div class="stat-card green">
+            <div class="stat-icon">✅</div>
+            <div class="stat-val" id="admin-stat-attempts">0</div>
+            <div class="stat-lbl">Total Attempts</div>
+          </div>
+          <div class="stat-card yellow">
+            <div class="stat-icon">⏳</div>
+            <div class="stat-val" id="admin-stat-pending">0</div>
+            <div class="stat-lbl">Pending Approvals</div>
+          </div>
+        </div>
+
+        <div class="admin-tabs">
+          <button class="admin-tab active" onclick="switchAdminTab('upload')">📤 Upload Quiz</button>
+          <button class="admin-tab" onclick="switchAdminTab('quizzes')">📚 Manage Quizzes</button>
+          <button class="admin-tab" onclick="switchAdminTab('users')">👥 Users</button>
+        </div>
+
+        <!-- UPLOAD TAB -->
+        <div class="admin-panel active" id="admin-upload">
+          <div class="card mb-4">
+            <h3 style="font-size:16px;font-weight:600;margin-bottom:16px">Upload Quiz JSON</h3>
+            <div class="grid-2">
+              <div>
+                <label class="form-label">Upload Method</label>
+                <div class="admin-tabs" style="margin-bottom:12px">
+                  <button class="admin-tab active" onclick="switchUploadMethod('paste')">Paste JSON</button>
+                  <button class="admin-tab" onclick="switchUploadMethod('file')">Upload File</button>
+                  <button class="admin-tab" onclick="switchUploadMethod('txt')">Paste TXT</button>
+                </div>
+                <div id="upload-paste">
+                  <textarea class="code-area" id="json-paste" placeholder='{"subject":"Physics","chapter":"Motion","set":"Set-1","questions":[{"question":"What is velocity?","options":["Speed","Speed with direction","Distance","Time"],"answer":1}]}'></textarea>
+                </div>
+                <div id="upload-file" style="display:none">
+                  <div class="upload-zone" id="drop-zone" onclick="document.getElementById('file-input').click()" ondragover="dragOver(event)" ondragleave="dragLeave(event)" ondrop="dropFile(event)">
+                    <div class="upload-icon">📁</div>
+                    <div class="upload-txt">Click or drag & drop .json file</div>
+                    <div class="upload-sub">Supports JSON format only</div>
+                  </div>
+                  <input type="file" id="file-input" accept=".json" style="display:none" onchange="loadFile(event)"/>
+                </div>
+                <div id="upload-txt" style="display:none">
+                  <textarea class="code-area" id="txt-paste" placeholder="Paste raw text questions here (JSON format required)"></textarea>
+                </div>
+              </div>
+              <div>
+                <label class="form-label">Preview / Edit</label>
+                <textarea class="code-area" id="json-editor" placeholder="Parsed JSON will appear here for editing…" style="min-height:220px"></textarea>
+                <div class="flex-row mt-4">
+                  <button class="btn btn-secondary btn-sm" onclick="parseJsonInput()">🔍 Parse & Preview</button>
+                  <button class="btn btn-primary btn-sm" onclick="uploadQuiz()">⬆️ Upload Quiz</button>
+                </div>
+              </div>
+            </div>
+
+            <div id="json-preview" style="display:none;margin-top:20px">
+              <div class="divider"></div>
+              <h4 style="font-size:14px;font-weight:600;margin-bottom:12px;color:var(--text2)">Preview</h4>
+              <div id="preview-content"></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- QUIZZES TAB -->
+        <div class="admin-panel" id="admin-quizzes">
+          <div class="card">
+            <div class="flex-between mb-4">
+              <h3 style="font-size:16px;font-weight:600">All Quizzes</h3>
+              <button class="btn btn-secondary btn-sm" onclick="loadAdminQuizzes()">🔄 Refresh</button>
+            </div>
+            <div class="table-wrap">
+              <table>
+                <thead><tr><th>Subject</th><th>Chapter</th><th>Set</th><th>Questions</th><th>Actions</th></tr></thead>
+                <tbody id="admin-quizzes-tbody">
+                  <tr><td colspan="5" class="text-center" style="padding:32px;color:var(--text3)">Loading…</td></tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+
+        <!-- USERS TAB -->
+        <div class="admin-panel" id="admin-users">
+          <div class="card">
+            <div class="flex-between mb-4">
+              <h3 style="font-size:16px;font-weight:600">All Users</h3>
+              <button class="btn btn-secondary btn-sm" onclick="loadAdminUsers()">🔄 Refresh</button>
+            </div>
+            <div class="table-wrap">
+              <table>
+                <thead><tr><th>Name</th><th>Email</th><th>Role</th><th>Status</th><th>Actions</th></tr></thead>
+                <tbody id="admin-users-tbody">
+                  <tr><td colspan="5" class="text-center" style="padding:32px;color:var(--text3)">Loading…</td></tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </main>
+  </div>
+</div>
+
+<!-- QUIZ SCREEN (full screen overlay) -->
+<div id="quiz-screen">
+  <div class="quiz-container">
+    <div class="quiz-header">
+      <div class="quiz-meta">
+        <strong id="quiz-title-display">Quiz Title</strong>
+        <span id="quiz-progress-text">Question 1 of 10</span>
+      </div>
+      <div style="display:flex;align-items:center;gap:16px">
+        <div class="quiz-timer" id="quiz-timer">⏱ 00:00</div>
+        <button class="btn btn-danger btn-sm" onclick="confirmQuit()">✕ Quit</button>
+      </div>
+    </div>
+    <div class="progress-bar"><div class="progress-fill" id="progress-fill" style="width:0%"></div></div>
+
+    <div id="question-container"></div>
+
+    <div class="quiz-nav">
+      <div class="q-dots" id="q-dots"></div>
+      <div style="display:flex;gap:10px">
+        <button class="btn btn-secondary btn-sm" id="prev-btn" onclick="prevQuestion()">← Prev</button>
+        <button class="btn btn-primary btn-sm" id="next-btn" onclick="nextQuestion()">Next →</button>
+        <button class="btn btn-success btn-sm hidden" id="submit-btn" onclick="submitQuiz()">Submit Quiz ✓</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL: Quiz Result -->
+<div class="modal-overlay" id="result-modal">
+  <div class="modal">
+    <div class="modal-header">
+      <h3 class="modal-title">Quiz Complete 🎉</h3>
+      <button class="modal-close" onclick="closeResultModal()">✕</button>
+    </div>
+    <div id="result-modal-content"></div>
+    <div style="display:flex;gap:10px;margin-top:20px">
+      <button class="btn btn-secondary btn-full" onclick="closeResultModal()">🏠 Dashboard</button>
+      <button class="btn btn-primary btn-full" onclick="viewDetailedResult()">📊 View Details</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL: Edit Quiz -->
+<div class="modal-overlay" id="edit-quiz-modal">
+  <div class="modal">
+    <div class="modal-header">
+      <h3 class="modal-title">Edit Quiz</h3>
+      <button class="modal-close" onclick="closeModal('edit-quiz-modal')">✕</button>
+    </div>
+    <div class="form-group">
+      <label class="form-label">Subject</label>
+      <input class="form-input" id="edit-subject" type="text"/>
+    </div>
+    <div class="form-group">
+      <label class="form-label">Chapter</label>
+      <input class="form-input" id="edit-chapter" type="text"/>
+    </div>
+    <div class="form-group">
+      <label class="form-label">Set Name</label>
+      <input class="form-input" id="edit-set" type="text"/>
+    </div>
+    <div class="form-group">
+      <label class="form-label">Questions JSON</label>
+      <textarea class="code-area" id="edit-questions" style="min-height:200px"></textarea>
+    </div>
+    <input type="hidden" id="edit-quiz-id"/>
+    <button class="btn btn-primary btn-full" onclick="saveEditQuiz()">💾 Save Changes</button>
+  </div>
+</div>
+
+<script>
+// ─────────────────────────────────────────────
+// SUPABASE INIT
+// ─────────────────────────────────────────────
+const SUPABASE_URL = 'https://rpudsnrqlhataqfavcjh.supabase.co';
+const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJwdWRzbnJxbGhhdGFmY2poIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzk5NzI0NjgsImV4cCI6MjA5NTU0ODQ2OH0.EEu5t-NPqWARChSAMpEvUPMBkz_JeeNe3bGSCQmH7Xo';
+const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+// ─────────────────────────────────────────────
+// GLOBAL STATE
+// ─────────────────────────────────────────────
+let currentUser = null;
+let currentProfile = null;
+let currentPage = 'dashboard';
+let quizState = null;
+let quizTimer = null;
+let quizSeconds = 0;
+let tabWarnings = 0;
+let lastResult = null;
+let allQuizzes = [];
+let allAttempts = [];
+
+// ─────────────────────────────────────────────
+// TOAST
+// ─────────────────────────────────────────────
+function toast(msg, type='info', dur=3500){
+  const icons={success:'✓',error:'✕',info:'ℹ',warning:'⚠'};
+  const el=document.createElement('div');
+  el.className=`toast ${type}`;
+  el.innerHTML=`<span class="toast-icon">${icons[type]||'ℹ'}</span><span>${msg}</span>`;
+  document.getElementById('toast-container').appendChild(el);
+  setTimeout(()=>{el.classList.add('toast-out');setTimeout(()=>el.remove(),350)},dur);
+}
+
+// ─────────────────────────────────────────────
+// AUTH
+// ─────────────────────────────────────────────
+function switchAuthTab(tab){
+  document.querySelectorAll('.auth-tab').forEach((t,i)=>{
+    t.classList.toggle('active',(i===0&&tab==='login')||(i===1&&tab==='signup'));
+  });
+  document.getElementById('login-form').style.display=tab==='login'?'block':'none';
+  document.getElementById('signup-form').style.display=tab==='signup'?'block':'none';
+}
+
+async function handleLogin(){
+  const email=document.getElementById('login-email').value.trim();
+  const pass=document.getElementById('login-password').value;
+  if(!email||!pass){toast('Please fill in all fields','warning');return;}
+  const btn=document.getElementById('login-btn');
+  btn.disabled=true;btn.innerHTML='<span class="spinner"></span> Signing in…';
+  try{
+    const{data,error}=await sb.auth.signInWithPassword({email,password:pass});
+    if(error)throw error;
+    const profile=await getProfile(data.user.id);
+    if(!profile){toast('Profile not found. Contact admin.','error');await sb.auth.signOut();return;}
+    if(profile.status==='blocked'){toast('Your account has been blocked. Contact admin.','error');await sb.auth.signOut();return;}
+    if(profile.status!=='approved'){toast('Your account is pending approval.','warning');await sb.auth.signOut();return;}
+    currentUser=data.user;currentProfile=profile;
+    initApp();
+  }catch(e){toast(e.message||'Login failed','error');}
+  finally{btn.disabled=false;btn.textContent='Sign In';}
+}
+
+async function handleSignup(){
+  const name=document.getElementById('signup-name').value.trim();
+  const email=document.getElementById('signup-email').value.trim();
+  const pass=document.getElementById('signup-password').value;
+  if(!name||!email||!pass){toast('Please fill in all fields','warning');return;}
+  if(pass.length<6){toast('Password must be at least 6 characters','warning');return;}
+  const btn=document.getElementById('signup-btn');
+  btn.disabled=true;btn.innerHTML='<span class="spinner"></span> Creating account…';
+  try{
+    const{data,error}=await sb.auth.signUp({email,password:pass});
+    if(error)throw error;
+    // Create profile
+    const{error:pe}=await sb.from('profiles').insert({
+      id:data.user.id,email,full_name:name,role:'student',status:'pending'
+    });
+    if(pe)console.warn('Profile insert error:',pe);
+    toast('Account created! Waiting for admin approval.','success',5000);
+    switchAuthTab('login');
+  }catch(e){toast(e.message||'Signup failed','error');}
+  finally{btn.disabled=false;btn.textContent='Create Account';}
+}
+
+async function getProfile(uid){
+  const{data}=await sb.from('profiles').select('*').eq('id',uid).single();
+  return data;
+}
+
+async function handleLogout(){
+  if(quizState){if(!confirm('You have an active quiz. Quit and logout?'))return;}
+  exitQuiz();
+  await sb.auth.signOut();
+  currentUser=null;currentProfile=null;
+  document.getElementById('app').style.display='none';
+  document.getElementById('auth-screen').style.display='flex';
+  toast('Signed out','info');
+}
+
+// ─────────────────────────────────────────────
+// APP INIT
+// ─────────────────────────────────────────────
+async function initApp(){
+  document.getElementById('auth-screen').style.display='none';
+  document.getElementById('app').style.display='block';
+  // Sidebar info
+  document.getElementById('sidebar-name').textContent=currentProfile.full_name||currentProfile.email;
+  document.getElementById('sidebar-role').textContent=currentProfile.role;
+  document.getElementById('dash-name').textContent=currentProfile.full_name?.split(' ')[0]||'there';
+  const initials=(currentProfile.full_name||'U').split(' ').map(w=>w[0]).join('').toUpperCase().slice(0,2);
+  document.getElementById('sidebar-avatar').textContent=initials;
+  if(currentProfile.role==='admin'){
+    document.getElementById('admin-nav-section').style.display='block';
+  }
+  setupTabWarning();
+  await loadDashboard();
+  await loadQuizTree();
+  goTo(currentProfile.role==='admin'?'dashboard':'dashboard');
+}
+
+// ─────────────────────────────────────────────
+// NAVIGATION
+// ─────────────────────────────────────────────
+function goTo(page){
+  if(quizState&&page!==currentPage){
+    toast('Please finish or quit the current quiz first','warning');
+    return;
+  }
+  document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('active'));
+  const pg=document.getElementById('page-'+page);
+  if(pg)pg.classList.add('active');
+  document.querySelectorAll(`[data-page="${page}"]`).forEach(n=>n.classList.add('active'));
+  currentPage=page;
+  closeSidebar();
+  // Lazy load
+  if(page==='results')loadResults();
+  if(page==='leaderboard')loadLeaderboard();
+  if(page==='admin'){loadAdminStats();loadAdminUsers();loadAdminQuizzes();}
+}
+
+function openSidebar(){document.getElementById('sidebar').classList.add('open');document.getElementById('sidebar-overlay').classList.add('open');}
+function closeSidebar(){document.getElementById('sidebar').classList.remove('open');document.getElementById('sidebar-overlay').classList.remove('open');}
+function closeModal(id){document.getElementById(id).classList.remove('open');}
+
+// ─────────────────────────────────────────────
+// DASHBOARD
+// ─────────────────────────────────────────────
+async function loadDashboard(){
+  try{
+    const[{data:quizzes},{data:attempts}]=await Promise.all([
+      sb.from('quizzes').select('id,subject'),
+      sb.from('attempts').select('*').eq('user_id',currentUser.id).order('created_at',{ascending:false})
+    ]);
+    allQuizzes=quizzes||[];
+    allAttempts=attempts||[];
+    const subjects=[...new Set(allQuizzes.map(q=>q.subject))];
+    document.getElementById('stat-subjects').textContent=subjects.length;
+    document.getElementById('stat-quizzes').textContent=allQuizzes.length;
+    document.getElementById('stat-attempts').textContent=allAttempts.length;
+    const avg=allAttempts.length?Math.round(allAttempts.reduce((a,b)=>a+b.percentage,0)/allAttempts.length):null;
+    document.getElementById('stat-avg').textContent=avg!=null?avg+'%':'—';
+    // Recent attempts
+    const recent=allAttempts.slice(0,4);
+    const rl=document.getElementById('recent-attempts-list');
+    if(recent.length===0){rl.innerHTML='<div class="empty-state"><div class="empty-icon">📋</div><div class="empty-title">No attempts yet</div><div class="empty-sub">Take a quiz to see results here</div></div>';return;}
+    rl.innerHTML=recent.map(a=>`
+      <div class="history-item">
+        <div class="history-meta">
+          <div class="history-title">${esc(a.subject)} › ${esc(a.chapter)} › ${esc(a.set)}</div>
+          <div class="history-date">${new Date(a.created_at).toLocaleDateString('en-US',{month:'short',day:'numeric',hour:'2-digit',minute:'2-digit'})}</div>
+        </div>
+        <div style="text-align:right">
+          <div style="font-family:'Syne',sans-serif;font-weight:700;font-size:15px;color:${a.percentage>=75?'var(--green)':a.percentage>=50?'var(--yellow)':'var(--red)'}">${a.percentage}%</div>
+          <div style="font-size:12px;color:var(--text3)">${a.score}/${a.total}</div>
+        </div>
+      </div>
+    `).join('');
+    // Quick stats
+    const best=allAttempts.length?Math.max(...allAttempts.map(a=>a.percentage)):null;
+    const totalQ=allAttempts.reduce((s,a)=>s+a.total,0);
+    const last=allAttempts.length?new Date(allAttempts[0].created_at).toLocaleDateString():null;
+    document.getElementById('qs-best').textContent=best!=null?best+'%':'—';
+    document.getElementById('qs-total-q').textContent=totalQ||'—';
+    document.getElementById('qs-last').textContent=last||'—';
+  }catch(e){console.error(e);}
+}
+
+// ─────────────────────────────────────────────
+// QUIZ TREE
+// ─────────────────────────────────────────────
+async function loadQuizTree(){
+  try{
+    const{data:quizzes,error}=await sb.from('quizzes').select('*').order('subject').order('chapter').order('set');
+    if(error)throw error;
+    allQuizzes=quizzes||[];
+    renderQuizTree(allQuizzes);
+  }catch(e){
+    document.getElementById('quiz-tree-container').innerHTML='<div class="empty-state"><div class="empty-icon">⚠️</div><div class="empty-title">Failed to load quizzes</div></div>';
+  }
+}
+
+function renderQuizTree(quizzes){
+  const container=document.getElementById('quiz-tree-container');
+  if(!quizzes.length){container.innerHTML='<div class="empty-state"><div class="empty-icon">📚</div><div class="empty-title">No quizzes available</div><div class="empty-sub">Admin has not uploaded any quizzes yet</div></div>';return;}
+  // Group
+  const tree={};
+  quizzes.forEach(q=>{
+    if(!tree[q.subject])tree[q.subject]={};
+    if(!tree[q.subject][q.chapter])tree[q.subject][q.chapter]=[];
+    tree[q.subject][q.chapter].push(q);
+  });
+  let html='<div class="quiz-tree">';
+  for(const[subj,chapters] of Object.entries(tree)){
+    const sId=`s_${subj.replace(/\s+/g,'_')}`;
+    html+=`<div class="subject-node">
+      <div class="subject-header" onclick="toggleNode('${sId}')">
+        <div class="subject-name"><span class="subject-icon">📘</span>${esc(subj)}</div>
+        <span class="chevron" id="ch_${sId}">▼</span>
+      </div>
+      <div class="chapter-list" id="${sId}" style="display:none">`;
+    for(const[chap,sets] of Object.entries(chapters)){
+      const cId=`c_${subj}_${chap}`.replace(/\s+/g,'_');
+      html+=`<div class="chapter-node">
+        <div class="chapter-header" onclick="toggleNode('${cId}')">
+          <span>📖 ${esc(chap)}</span>
+          <span class="chevron" id="ch_${cId}">▼</span>
+        </div>
+        <div class="set-list" id="${cId}" style="display:none">`;
+      sets.forEach(s=>{
+        html+=`<div class="set-item" onclick="startQuiz('${s.id}')">
+          <span>📝 ${esc(s.set)}</span>
+          <div style="display:flex;align-items:center;gap:8px">
+            <span class="chip">${(s.questions||[]).length} Qs</span>
+            <span style="color:var(--accent);font-size:12px;font-weight:600">START →</span>
+          </div>
+        </div>`;
+      });
+      html+=`</div></div>`;
+    }
+    html+=`</div></div>`;
+  }
+  html+='</div>';
+  container.innerHTML=html;
+}
+
+function toggleNode(id){
+  const el=document.getElementById(id);
+  const ch=document.getElementById('ch_'+id);
+  const open=el.style.display!=='none';
+  el.style.display=open?'none':'block';
+  if(ch)ch.parentElement?.classList.toggle('open',!open);
+}
+
+// ─────────────────────────────────────────────
+// QUIZ ENGINE
+// ─────────────────────────────────────────────
+async function startQuiz(quizId){
+  const quiz=allQuizzes.find(q=>q.id===quizId);
+  if(!quiz){toast('Quiz not found','error');return;}
+  if(!quiz.questions||!quiz.questions.length){toast('This quiz has no questions','warning');return;}
+  quizState={
+    quiz,questions:quiz.questions,current:0,
+    answers:new Array(quiz.questions.length).fill(null),
+    startTime:Date.now()
+  };
+  quizSeconds=0;
+  tabWarnings=0;
+  document.getElementById('quiz-screen').style.display='block';
+  document.body.style.overflow='hidden';
+  startTimer();
+  renderQuestion();
+  saveProgress();
+}
+
+function renderQuestion(){
+  const{questions,current,answers}=quizState;
+  const q=questions[current];
+  const total=questions.length;
+  document.getElementById('quiz-title-display').textContent=`${quizState.quiz.subject} › ${quizState.quiz.chapter} › ${quizState.quiz.set}`;
+  document.getElementById('quiz-progress-text').textContent=`Question ${current+1} of ${total}`;
+  document.getElementById('progress-fill').style.width=`${((current+1)/total)*100}%`;
+  const labels=['A','B','C','D','E'];
+  document.getElementById('question-container').innerHTML=`
+    <div class="question-card">
+      <div class="q-num">Question ${current+1} of ${total}</div>
+      <div class="q-text">${esc(q.question)}</div>
+      <div class="options-list">
+        ${q.options.map((opt,i)=>`
+          <button class="option-btn${answers[current]===i?' selected':''}" onclick="selectAnswer(${i})">
+            <span class="option-label">${labels[i]||i+1}</span>
+            <span>${esc(opt)}</span>
+          </button>`).join('')}
+      </div>
+    </div>`;
+  // Dots
+  const dots=document.getElementById('q-dots');
+  dots.innerHTML=questions.map((_,i)=>`<button class="q-dot${answers[i]!==null?' answered':''}${i===current?' current':''}" onclick="goToQuestion(${i})">${i+1}</button>`).join('');
+  // Buttons
+  document.getElementById('prev-btn').disabled=current===0;
+  const isLast=current===total-1;
+  document.getElementById('next-btn').classList.toggle('hidden',isLast);
+  document.getElementById('submit-btn').classList.toggle('hidden',!isLast);
+}
+
+function selectAnswer(idx){
+  quizState.answers[quizState.current]=idx;
+  renderQuestion();
+  saveProgress();
+}
+
+function nextQuestion(){
+  if(quizState.current<quizState.questions.length-1){quizState.current++;renderQuestion();}
+}
+function prevQuestion(){
+  if(quizState.current>0){quizState.current--;renderQuestion();}
+}
+function goToQuestion(idx){quizState.current=idx;renderQuestion();}
+
+function startTimer(){
+  clearInterval(quizTimer);
+  quizTimer=setInterval(()=>{
+    quizSeconds++;
+    const m=String(Math.floor(quizSeconds/60)).padStart(2,'0');
+    const s=String(quizSeconds%60).padStart(2,'0');
+    const el=document.getElementById('quiz-timer');
+    el.textContent=`⏱ ${m}:${s}`;
+    el.classList.toggle('danger',quizSeconds>1800);
+  },1000);
+}
+
+function saveProgress(){
+  try{sessionStorage.setItem('quiz_progress',JSON.stringify({qid:quizState.quiz.id,answers:quizState.answers,current:quizState.current,seconds:quizSeconds}));}catch(e){}
+}
+
+async function submitQuiz(){
+  const unanswered=quizState.answers.filter(a=>a===null).length;
+  if(unanswered>0){
+    if(!confirm(`You have ${unanswered} unanswered question(s). Submit anyway?`))return;
+  }
+  clearInterval(quizTimer);
+  // Calculate score
+  let score=0;
+  quizState.questions.forEach((q,i)=>{if(quizState.answers[i]===q.answer)score++;});
+  const total=quizState.questions.length;
+  const pct=Math.round((score/total)*100);
+  const timeTaken=quizSeconds;
+  // Save attempt
+  const{error}=await sb.from('attempts').insert({
+    user_id:currentUser.id,
+    subject:quizState.quiz.subject,
+    chapter:quizState.quiz.chapter,
+    set:quizState.quiz.set,
+    score,total,percentage:pct,
+    time_taken:timeTaken,
+    quiz_id:quizState.quiz.id
+  });
+  if(error)toast('Failed to save result: '+error.message,'error');
+  lastResult={score,total,pct,timeTaken,quiz:quizState.quiz,answers:quizState.answers,questions:quizState.questions};
+  sessionStorage.removeItem('quiz_progress');
+  exitQuiz();
+  showResultModal(lastResult);
+  loadDashboard();
+}
+
+function confirmQuit(){
+  if(confirm('Are you sure you want to quit? Your progress will be lost.'))exitQuiz();
+}
+
+function exitQuiz(){
+  clearInterval(quizTimer);
+  quizState=null;
+  document.getElementById('quiz-screen').style.display='none';
+  document.body.style.overflow='';
+}
+
+function showResultModal(r){
+  const grade=r.pct>=90?'A+':r.pct>=80?'A':r.pct>=70?'B':r.pct>=60?'C':r.pct>=50?'D':'F';
+  const col=r.pct>=75?'var(--green)':r.pct>=50?'var(--yellow)':'var(--red)';
+  document.getElementById('result-modal-content').innerHTML=`
+    <div class="result-card">
+      <div class="result-score-ring" style="--pct:${r.pct*3.6}deg">
+        <div class="result-score-inner">
+          <div class="result-pct" style="color:${col}">${r.pct}%</div>
+          <div class="result-label">${r.score}/${r.total}</div>
+        </div>
+      </div>
+      <div class="result-grade" style="color:${col}">${grade}</div>
+      <div style="font-size:14px;color:var(--text3)">${r.quiz.subject} › ${r.quiz.chapter} › ${r.quiz.set}</div>
+      <div class="result-stats">
+        <div class="result-stat"><div class="result-stat-val" style="color:var(--green)">${r.score}</div><div class="result-stat-lbl">Correct</div></div>
+        <div class="result-stat"><div class="result-stat-val" style="color:var(--red)">${r.total-r.score}</div><div class="result-stat-lbl">Wrong</div></div>
+        <div class="result-stat"><div class="result-stat-val">${Math.floor(r.timeTaken/60)}m ${r.timeTaken%60}s</div><div class="result-stat-lbl">Time</div></div>
+      </div>
+    </div>`;
+  document.getElementById('result-modal').classList.add('open');
+}
+
+function closeResultModal(){
+  document.getElementById('result-modal').classList.remove('open');
+  goTo('dashboard');
+}
+
+function viewDetailedResult(){
+  document.getElementById('result-modal').classList.remove('open');
+  goTo('results');
+}
+
+// ─────────────────────────────────────────────
+// TAB WARNING
+// ─────────────────────────────────────────────
+function setupTabWarning(){
+  document.addEventListener('visibilitychange',()=>{
+    if(!quizState)return;
+    if(document.hidden){
+      tabWarnings++;
+      const w=document.getElementById('tab-warning');
+      w.textContent=`⚠️ Tab switch detected! Warning ${tabWarnings}/3. Your activity is being monitored.`;
+      w.style.display='block';
+      toast(`Tab switch warning ${tabWarnings}/3`,'warning');
+      setTimeout(()=>w.style.display='none',4000);
+    }
+  });
+}
+
+// ─────────────────────────────────────────────
+// RESULTS
+// ─────────────────────────────────────────────
+async function loadResults(){
+  const container=document.getElementById('results-content');
+  container.innerHTML='<div class="empty-state"><div class="empty-icon">📊</div><div class="empty-title">Loading…</div></div>';
+  try{
+    const{data:attempts,error}=await sb.from('attempts').select('*').eq('user_id',currentUser.id).order('created_at',{ascending:false});
+    if(error)throw error;
+    if(!attempts.length){container.innerHTML='<div class="empty-state"><div class="empty-icon">📋</div><div class="empty-title">No attempts yet</div><div class="empty-sub">Take a quiz to see results here</div></div>';return;}
+    const avg=Math.round(attempts.reduce((s,a)=>s+a.percentage,0)/attempts.length);
+    const best=Math.max(...attempts.map(a=>a.percentage));
+    container.innerHTML=`
+      <div class="stats-grid" style="margin-bottom:20px">
+        <div class="stat-card purple"><div class="stat-icon">📝</div><div class="stat-val">${attempts.length}</div><div class="stat-lbl">Total Attempts</div></div>
+        <div class="stat-card green"><div class="stat-icon">⭐</div><div class="stat-val">${avg}%</div><div class="stat-lbl">Average Score</div></div>
+        <div class="stat-card yellow"><div class="stat-icon">🏆</div><div class="stat-val">${best}%</div><div class="stat-lbl">Best Score</div></div>
+      </div>
+      <div class="card">
+        <h3 style="font-size:16px;font-weight:600;margin-bottom:16px">Attempt History</h3>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Subject</th><th>Chapter</th><th>Set</th><th>Score</th><th>%</th><th>Time</th><th>Date</th></tr></thead>
+            <tbody>
+              ${attempts.map(a=>`<tr>
+                <td>${esc(a.subject)}</td>
+                <td>${esc(a.chapter)}</td>
+                <td>${esc(a.set)}</td>
+                <td>${a.score}/${a.total}</td>
+                <td><span class="badge ${a.percentage>=75?'badge-green':a.percentage>=50?'badge-yellow':'badge-red'}">${a.percentage}%</span></td>
+                <td style="color:var(--text3)">${a.time_taken?`${Math.floor(a.time_taken/60)}m ${a.time_taken%60}s`:'—'}</td>
+                <td style="color:var(--text3);font-size:12px">${new Date(a.created_at).toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'})}</td>
+              </tr>`).join('')}
+            </tbody>
+          </table>
+        </div>
+      </div>`;
+  }catch(e){container.innerHTML='<div class="empty-state"><div class="empty-icon">⚠️</div><div class="empty-title">Failed to load results</div></div>';}
+}
+
+// ─────────────────────────────────────────────
+// LEADERBOARD
+// ─────────────────────────────────────────────
+async function loadLeaderboard(){
+  const container=document.getElementById('leaderboard-content');
+  container.innerHTML='<div class="empty-state"><div class="empty-icon">🏆</div><div class="empty-title">Loading…</div></div>';
+  try{
+    const quizFilter=document.getElementById('lb-filter').value;
+    let q=sb.from('attempts').select('*').order('percentage',{ascending:false}).order('time_taken',{ascending:true});
+    if(quizFilter)q=q.eq('quiz_id',quizFilter);
+    const{data:attempts,error}=await q;
+    if(error)throw error;
+    // Get profiles
+    const uids=[...new Set(attempts.map(a=>a.user_id))];
+    const{data:profiles}=await sb.from('profiles').select('id,full_name,email').in('id',uids);
+    const profileMap={};(profiles||[]).forEach(p=>profileMap[p.id]=p);
+
+    // Populate quiz filter
+    const{data:quizzes}=await sb.from('quizzes').select('id,subject,chapter,set');
+    const lbFilter=document.getElementById('lb-filter');
+    if(lbFilter.options.length<=1){
+      (quizzes||[]).forEach(quiz=>{
+        const opt=document.createElement('option');
+        opt.value=quiz.id;opt.textContent=`${quiz.subject} › ${quiz.chapter} › ${quiz.set}`;
+        lbFilter.appendChild(opt);
+      });
+    }
+    // Populate subject filter
+    const subjFilter=document.getElementById('lb-subject');
+    if(subjFilter.options.length<=1){
+      const subjects=[...new Set((quizzes||[]).map(q=>q.subject))];
+      subjects.forEach(s=>{const o=document.createElement('option');o.value=s;o.textContent=s;subjFilter.appendChild(o);});
+    }
+
+    if(!attempts.length){container.innerHTML='<div class="empty-state"><div class="empty-icon">🏆</div><div class="empty-title">No data yet</div></div>';return;}
+    // Deduplicate: best attempt per user per quiz
+    const bestMap={};
+    attempts.forEach(a=>{
+      const k=`${a.user_id}_${a.quiz_id||a.subject+'_'+a.chapter+'_'+a.set}`;
+      if(!bestMap[k]||a.percentage>bestMap[k].percentage||(a.percentage===bestMap[k].percentage&&(a.time_taken||9999)<(bestMap[k].time_taken||9999)))bestMap[k]=a;
+    });
+    const ranked=Object.values(bestMap).sort((a,b)=>b.percentage-a.percentage||(a.time_taken||9999)-(b.time_taken||9999));
+    const medals=['🥇','🥈','🥉'];
+    container.innerHTML=`<div class="card">
+      ${ranked.slice(0,50).map((a,i)=>{
+        const p=profileMap[a.user_id];
+        const name=p?.full_name||p?.email||'Unknown';
+        const cls=i===0?'top-1':i===1?'top-2':i===2?'top-3':'';
+        return`<div class="lb-row ${cls}">
+          <div class="lb-rank">${medals[i]||`#${i+1}`}</div>
+          <div><div class="lb-name">${esc(name)}</div><div class="lb-sub">${esc(a.subject)} › ${esc(a.set)}</div></div>
+          <div><div class="lb-score">${a.score}/${a.total}</div><div class="lb-pct">${a.time_taken?`${Math.floor(a.time_taken/60)}m ${a.time_taken%60}s`:''}</div></div>
+          <div><span class="badge ${a.percentage>=75?'badge-green':a.percentage>=50?'badge-yellow':'badge-red'}">${a.percentage}%</span></div>
+        </div>`;}).join('')}
+    </div>`;
+  }catch(e){container.innerHTML='<div class="empty-state"><div class="empty-icon">⚠️</div><div class="empty-title">Failed to load leaderboard</div></div>';console.error(e);}
+}
+
+function filterLbSubject(){loadLeaderboard();}
+
+// ─────────────────────────────────────────────
+// ADMIN
+// ─────────────────────────────────────────────
+function switchAdminTab(tab){
+  document.querySelectorAll('.admin-tab').forEach(t=>t.classList.remove('active'));
+  document.querySelectorAll('.admin-panel').forEach(p=>p.classList.remove('active'));
+  event.target.classList.add('active');
+  document.getElementById('admin-'+tab).classList.add('active');
+  if(tab==='quizzes')loadAdminQuizzes();
+  if(tab==='users')loadAdminUsers();
+}
+
+async function loadAdminStats(){
+  try{
+    const[{count:uc},{count:qc},{count:ac},{data:pending}]=await Promise.all([
+      sb.from('profiles').select('id',{count:'exact',head:true}),
+      sb.from('quizzes').select('id',{count:'exact',head:true}),
+      sb.from('attempts').select('id',{count:'exact',head:true}),
+      sb.from('profiles').select('id').eq('status','pending')
+    ]);
+    document.getElementById('admin-stat-users').textContent=uc||0;
+    document.getElementById('admin-stat-quizzes').textContent=qc||0;
+    document.getElementById('admin-stat-attempts').textContent=ac||0;
+    document.getElementById('admin-stat-pending').textContent=(pending||[]).length;
+  }catch(e){console.error(e);}
+}
+
+async function loadAdminUsers(){
+  const tbody=document.getElementById('admin-users-tbody');
+  tbody.innerHTML='<tr><td colspan="5" class="text-center" style="padding:32px;color:var(--text3)">Loading…</td></tr>';
+  try{
+    const{data:users,error}=await sb.from('profiles').select('*').order('full_name');
+    if(error)throw error;
+    if(!users.length){tbody.innerHTML='<tr><td colspan="5" class="text-center" style="padding:32px;color:var(--text3)">No users found</td></tr>';return;}
+    tbody.innerHTML=users.map(u=>`<tr>
+      <td style="font-weight:500">${esc(u.full_name||'—')}</td>
+      <td style="color:var(--text3)">${esc(u.email)}</td>
+      <td><span class="badge ${u.role==='admin'?'badge-purple':'badge-cyan'}">${u.role}</span></td>
+      <td><span class="badge ${u.status==='approved'?'badge-green':u.status==='blocked'?'badge-red':'badge-yellow'}">${u.status||'pending'}</span></td>
+      <td>
+        <div style="display:flex;gap:6px;flex-wrap:wrap">
+          ${u.status!=='approved'?`<button class="btn btn-success btn-xs" onclick="updateUserStatus('${u.id}','approved')">✓ Approve</button>`:''}
+          ${u.status!=='blocked'?`<button class="btn btn-danger btn-xs" onclick="updateUserStatus('${u.id}','blocked')">✕ Block</button>`:''}
+          ${u.role!=='admin'?`<button class="btn btn-secondary btn-xs" onclick="updateUserRole('${u.id}','admin')">↑ Admin</button>`:`<button class="btn btn-secondary btn-xs" onclick="updateUserRole('${u.id}','student')">↓ Student</button>`}
+        </div>
+      </td>
+    </tr>`).join('');
+  }catch(e){tbody.innerHTML=`<tr><td colspan="5" style="padding:32px;text-align:center;color:var(--red)">Error: ${e.message}</td></tr>`;}
+}
+
+async function updateUserStatus(uid,status){
+  const{error}=await sb.from('profiles').update({status}).eq('id',uid);
+  if(error){toast('Update failed: '+error.message,'error');return;}
+  toast(`User ${status}`,'success');
+  loadAdminUsers();loadAdminStats();
+}
+
+async function updateUserRole(uid,role){
+  const{error}=await sb.from('profiles').update({role}).eq('id',uid);
+  if(error){toast('Update failed: '+error.message,'error');return;}
+  toast(`Role changed to ${role}`,'success');
+  loadAdminUsers();
+}
+
+async function loadAdminQuizzes(){
+  const tbody=document.getElementById('admin-quizzes-tbody');
+  tbody.innerHTML='<tr><td colspan="5" class="text-center" style="padding:32px;color:var(--text3)">Loading…</td></tr>';
+  try{
+    const{data:quizzes,error}=await sb.from('quizzes').select('*').order('subject').order('chapter').order('set');
+    if(error)throw error;
+    allQuizzes=quizzes||[];
+    if(!quizzes.length){tbody.innerHTML='<tr><td colspan="5" class="text-center" style="padding:32px;color:var(--text3)">No quizzes uploaded yet</td></tr>';return;}
+    tbody.innerHTML=quizzes.map(q=>`<tr>
+      <td style="font-weight:500">${esc(q.subject)}</td>
+      <td>${esc(q.chapter)}</td>
+      <td>${esc(q.set)}</td>
+      <td><span class="chip">${(q.questions||[]).length} Qs</span></td>
+      <td><div style="display:flex;gap:6px">
+        <button class="btn btn-secondary btn-xs" onclick="openEditQuiz('${q.id}')">✏️ Edit</button>
+        <button class="btn btn-danger btn-xs" onclick="deleteQuiz('${q.id}')">🗑 Delete</button>
+      </div></td>
+    </tr>`).join('');
+  }catch(e){tbody.innerHTML=`<tr><td colspan="5" style="padding:32px;text-align:center;color:var(--red)">Error: ${e.message}</td></tr>`;}
+}
+
+function openEditQuiz(id){
+  const quiz=allQuizzes.find(q=>q.id===id);
+  if(!quiz)return;
+  document.getElementById('edit-quiz-id').value=id;
+  document.getElementById('edit-subject').value=quiz.subject;
+  document.getElementById('edit-chapter').value=quiz.chapter;
+  document.getElementById('edit-set').value=quiz.set;
+  document.getElementById('edit-questions').value=JSON.stringify(quiz.questions,null,2);
+  document.getElementById('edit-quiz-modal').classList.add('open');
+}
+
+async function saveEditQuiz(){
+  const id=document.getElementById('edit-quiz-id').value;
+  const subject=document.getElementById('edit-subject').value.trim();
+  const chapter=document.getElementById('edit-chapter').value.trim();
+  const set=document.getElementById('edit-set').value.trim();
+  let questions;
+  try{questions=JSON.parse(document.getElementById('edit-questions').value);}catch(e){toast('Invalid JSON in questions','error');return;}
+  const{error}=await sb.from('quizzes').update({subject,chapter,set,questions}).eq('id',id);
+  if(error){toast('Save failed: '+error.message,'error');return;}
+  toast('Quiz updated','success');
+  closeModal('edit-quiz-modal');
+  loadAdminQuizzes();loadQuizTree();
+}
+
+async function deleteQuiz(id){
+  if(!confirm('Delete this quiz? This cannot be undone.'))return;
+  const{error}=await sb.from('quizzes').delete().eq('id',id);
+  if(error){toast('Delete failed: '+error.message,'error');return;}
+  toast('Quiz deleted','success');
+  loadAdminQuizzes();loadQuizTree();loadAdminStats();
+}
+
+// ─────────────────────────────────────────────
+// UPLOAD
+// ─────────────────────────────────────────────
+function switchUploadMethod(method){
+  document.querySelectorAll('#admin-upload .admin-tab').forEach(t=>t.classList.remove('active'));
+  event.target.classList.add('active');
+  ['paste','file','txt'].forEach(m=>document.getElementById('upload-'+m).style.display=m===method?'block':'none');
+}
+
+function parseJsonInput(){
+  let raw='';
+  const paste=document.getElementById('json-paste').value.trim();
+  const txt=document.getElementById('txt-paste').value.trim();
+  raw=paste||txt;
+  if(!raw){toast('No input to parse','warning');return;}
+  try{
+    const data=JSON.parse(raw);
+    document.getElementById('json-editor').value=JSON.stringify(data,null,2);
+    renderPreview(data);
+    toast('JSON parsed successfully','success');
+  }catch(e){toast('Invalid JSON: '+e.message,'error');}
+}
+
+function renderPreview(data){
+  const p=document.getElementById('json-preview');
+  const pc=document.getElementById('preview-content');
+  p.style.display='block';
+  if(!data.questions){pc.innerHTML='<p style="color:var(--red)">Missing "questions" array</p>';return;}
+  pc.innerHTML=`
+    <div style="display:flex;gap:16px;flex-wrap:wrap;margin-bottom:14px">
+      <span class="chip">📘 ${esc(data.subject||'Unknown')}</span>
+      <span class="chip">📖 ${esc(data.chapter||'Unknown')}</span>
+      <span class="chip">📝 ${esc(data.set||'Unknown')}</span>
+      <span class="chip">${data.questions.length} questions</span>
+    </div>
+    ${data.questions.slice(0,3).map((q,i)=>`
+      <div style="padding:10px 14px;background:var(--bg2);border-radius:6px;margin-bottom:8px;font-size:13px">
+        <div style="font-weight:600;margin-bottom:6px">Q${i+1}: ${esc(q.question)}</div>
+        ${q.options.map((o,j)=>`<span style="margin-right:12px;color:${j===q.answer?'var(--green)':'var(--text3)'}">${j===q.answer?'✓':String.fromCharCode(65+j)}) ${esc(o)}</span>`).join('')}
+      </div>`).join('')}
+    ${data.questions.length>3?`<p style="color:var(--text3);font-size:13px">… and ${data.questions.length-3} more questions</p>`:''}`;
+}
+
+function loadFile(e){
+  const file=e.target.files[0];
+  if(!file)return;
+  const reader=new FileReader();
+  reader.onload=ev=>{
+    try{
+      const data=JSON.parse(ev.target.result);
+      document.getElementById('json-editor').value=JSON.stringify(data,null,2);
+      renderPreview(data);
+      toast('File loaded','success');
+    }catch(err){toast('Invalid JSON file','error');}
+  };
+  reader.readAsText(file);
+}
+
+function dragOver(e){e.preventDefault();document.getElementById('drop-zone').classList.add('drag');}
+function dragLeave(){document.getElementById('drop-zone').classList.remove('drag');}
+function dropFile(e){
+  e.preventDefault();dragLeave();
+  const file=e.dataTransfer.files[0];
+  if(file){const ev={target:{files:[file]}};loadFile(ev);}
+}
+
+async function uploadQuiz(){
+  const raw=document.getElementById('json-editor').value.trim();
+  if(!raw){toast('Please parse or paste JSON first','warning');return;}
+  let data;
+  try{data=JSON.parse(raw);}catch(e){toast('Invalid JSON: '+e.message,'error');return;}
+  if(!data.subject||!data.chapter||!data.set||!data.questions){toast('Missing required fields: subject, chapter, set, questions','error');return;}
+  if(!Array.isArray(data.questions)||!data.questions.length){toast('Questions must be a non-empty array','error');return;}
+  const{error}=await sb.from('quizzes').insert({
+    subject:data.subject,chapter:data.chapter,set:data.set,questions:data.questions
+  });
+  if(error){toast('Upload failed: '+error.message,'error');return;}
+  toast('Quiz uploaded successfully!','success');
+  document.getElementById('json-editor').value='';
+  document.getElementById('json-paste').value='';
+  document.getElementById('json-preview').style.display='none';
+  loadAdminStats();loadAdminQuizzes();loadQuizTree();
+}
+
+// ─────────────────────────────────────────────
+// HELPERS
+// ─────────────────────────────────────────────
+function esc(str){
+  if(str==null)return'';
+  return String(str).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+// ─────────────────────────────────────────────
+// STARTUP
+// ─────────────────────────────────────────────
+(async()=>{
+  // Check existing session
+  const{data:{session}}=await sb.auth.getSession();
+  if(session){
+    const profile=await getProfile(session.user.id);
+    if(profile&&profile.status==='approved'){
+      currentUser=session.user;currentProfile=profile;
+      initApp();
+      return;
+    }
+  }
+  document.getElementById('auth-screen').style.display='flex';
+})();
+
+// Enter key support
+document.addEventListener('keydown',e=>{
+  if(e.key==='Enter'){
+    if(document.getElementById('login-form').style.display!=='none'&&document.activeElement.closest('#login-form'))handleLogin();
+    if(document.getElementById('signup-form').style.display!=='none'&&document.activeElement.closest('#signup-form'))handleSignup();
+  }
+});
+</script>
+</body>
+</html>
