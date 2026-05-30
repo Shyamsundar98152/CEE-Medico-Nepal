@@ -1,200 +1,239 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8" />
-<title>ExamForge - Quiz Loader</title>
-<meta name="viewport" content="width=device-width, initial-scale=1" />
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>MCQ Exam Platform</title>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
 <style>
-body{
-margin:0;
-font-family:Arial;
-background:#020617;
-color:white;
-display:flex;
-justify-content:center;
-align-items:center;
-height:100vh;
-}
-
-.card{
-background:#0f172a;
-padding:20px;
-border-radius:12px;
-width:90%;
-max-width:600px;
-border:1px solid #334155;
-}
-
-.btn{
-padding:10px;
-background:#22c55e;
-border:none;
-width:100%;
-border-radius:999px;
-cursor:pointer;
-font-weight:bold;
-}
-
-.hidden{display:none}
-
-.question{
-margin-top:15px;
-padding:10px;
-background:#111827;
-border-radius:10px;
-}
-
-.option{
-padding:8px;
-background:#1e293b;
-margin:5px 0;
-border-radius:8px;
-cursor:pointer;
-}
-
-.option:hover{
-background:#334155;
-}
+body{margin:0;font-family:Arial;background:#0b0f14;color:#fff}
+.header{display:flex;justify-content:space-between;align-items:center;padding:14px 20px;background:#111827;border-bottom:1px solid #222}
+.container{max-width:900px;margin:0 auto;padding:20px}
+.card{background:#111827;border:1px solid #1f2937;border-radius:12px;padding:16px;margin-bottom:12px}
+.q-title{font-size:16px;margin-bottom:10px}
+.option{display:block;padding:10px;margin:6px 0;background:#0f172a;border:1px solid #1f2937;border-radius:8px;cursor:pointer}
+.option:hover{border-color:#6366f1}
+.option input{margin-right:8px}
+.btn{padding:10px 14px;border:none;border-radius:8px;cursor:pointer}
+.btn-primary{background:#6366f1;color:#fff}
+.btn-danger{background:#ef4444;color:#fff}
+.timer{font-weight:bold;color:#22c55e}
+.grid{display:flex;justify-content:space-between;align-items:center}
 </style>
 </head>
 
 <body>
 
-<div class="card" id="loader">
-<h2>Checking Schedule...</h2>
-<p id="status">Please wait</p>
+<div class="header">
+  <div>🧠 MCQ Exam Platform</div>
+  <div>⏱ Time Left: <span class="timer" id="timer">--:--</span></div>
 </div>
 
-<div class="card hidden" id="quiz">
-<h2 id="quiz-title">Quiz</h2>
-<div id="questions"></div>
-<button class="btn" onclick="submitQuiz()">Submit</button>
+<div class="container">
+
+  <div id="quiz-info" class="card">Loading quiz...</div>
+
+  <div id="questions"></div>
+
+  <button class="btn btn-primary" onclick="submitExam()" style="width:100%;margin-top:12px">
+    Submit Exam
+  </button>
+
 </div>
 
 <script>
-/* ========= SUPABASE ========= */
-const supabase = window.supabase.createClient(
-"https://rpudsnrqlhataqfavcjh.supabase.co",
-"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJwdWRzbnJxbGhhdGFxZmF2Y2poIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzk5NzI0NjgsImV4cCI6MjA5NTU0ODQ2OH0.EEu5t-NPqWARChSAMpEvUPMBkz_JeeNe3bGSCQmH7Xo"
-);
 
-let currentQuiz = null;
+// ─────────────────────────────
+// SUPABASE CONFIG
+// ─────────────────────────────
+const SUPABASE_URL = "https://rpudsnrqlhataqfavcjh.supabase.co";
+const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJwdWRzbnJxbGhhdGFxZmF2Y2poIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzk5NzI0NjgsImV4cCI6MjA5NTU0ODQ2OH0.EEu5t-NPqWARChSAMpEvUPMBkz_JeeNe3bGSCQmH7Xo";
+
+const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+// ─────────────────────────────
+// STATE
+// ─────────────────────────────
+let quiz = null;
 let answers = {};
+let timeLeft = 0;
+let timerInterval = null;
+let user = null;
 
-/* ========= INIT ========= */
-window.onload = async () => {
-checkSchedule();
-};
-
-/* ========= STEP 1: CHECK SCHEDULE ========= */
-async function checkSchedule(){
-
-const { data: userData } = await supabase.auth.getUser();
-const user = userData?.user;
-
-if(!user){
-document.getElementById("status").innerText = "Not logged in";
-return;
+// ─────────────────────────────
+// AUTH CHECK
+// ─────────────────────────────
+async function checkAuth(){
+  const { data } = await sb.auth.getSession();
+  if(!data.session){
+    alert("Login required");
+    location.href = "login.html";
+    return;
+  }
+  user = data.session.user;
 }
 
-/* get active schedule */
-const now = new Date().toISOString();
+// ─────────────────────────────
+// LOAD QUIZ
+// ─────────────────────────────
+async function loadQuiz(){
 
-const { data: schedule } = await supabase
-.from("schedules")
-.select("*")
-.lte("start_time", now)
-.gte("end_time", now)
-.limit(1)
-.single();
+  const quizId = sessionStorage.getItem("launch_quiz_id");
 
-if(!schedule){
-document.getElementById("status").innerText = "No active quiz right now";
-return;
+  if(!quizId){
+    document.getElementById("quiz-info").innerHTML = "No quiz selected";
+    return;
+  }
+
+  const { data, error } = await sb
+    .from("quizzes")
+    .select("*")
+    .eq("id", quizId)
+    .single();
+
+  if(error){
+    document.getElementById("quiz-info").innerHTML = "Failed to load quiz";
+    return;
+  }
+
+  quiz = data;
+
+  document.getElementById("quiz-info").innerHTML = `
+    <h3>${quiz.subject} - ${quiz.chapter}</h3>
+    <p>Set: ${quiz.set}</p>
+    <p>Total Questions: ${quiz.questions.length}</p>
+  `;
+
+  renderQuestions();
+  startTimer(quiz.duration_minutes || 30);
 }
 
-document.getElementById("status").innerText = "Loading quiz...";
+// ─────────────────────────────
+// RENDER QUESTIONS
+// ─────────────────────────────
+function renderQuestions(){
+  const wrap = document.getElementById("questions");
+  wrap.innerHTML = "";
 
-/* load quiz */
-loadQuiz(schedule.quiz_id);
+  quiz.questions.forEach((q, index)=>{
+
+    const options = q.options.map((opt, i)=>`
+      <label class="option">
+        <input type="radio" name="q${index}" value="${i}" 
+          onchange="answers[${index}]=${i}">
+        ${opt}
+      </label>
+    `).join("");
+
+    wrap.innerHTML += `
+      <div class="card">
+        <div class="q-title">
+          Q${index+1}. ${q.question}
+        </div>
+        ${options}
+      </div>
+    `;
+  });
 }
 
-/* ========= STEP 2: LOAD QUIZ ========= */
-async function loadQuiz(quizId){
+// ─────────────────────────────
+// TIMER
+// ─────────────────────────────
+function startTimer(minutes){
 
-const { data: quiz } = await supabase
-.from("quizzes")
-.select("*")
-.eq("id", quizId)
-.single();
+  timeLeft = minutes * 60;
 
-currentQuiz = quiz;
+  timerInterval = setInterval(()=>{
+    timeLeft--;
 
-document.getElementById("loader").classList.add("hidden");
-document.getElementById("quiz").classList.remove("hidden");
+    let m = Math.floor(timeLeft/60);
+    let s = timeLeft%60;
 
-document.getElementById("quiz-title").innerText =
-quiz.subject + " - " + quiz.chapter;
+    document.getElementById("timer").innerText =
+      `${m}:${s.toString().padStart(2,'0')}`;
 
-/* render questions */
-const container = document.getElementById("questions");
-container.innerHTML = "";
+    if(timeLeft <= 0){
+      clearInterval(timerInterval);
+      submitExam(true);
+    }
 
-quiz.questions.forEach((q, index) => {
-
-const div = document.createElement("div");
-div.className = "question";
-
-div.innerHTML = `
-<h4>${index+1}. ${q.question}</h4>
-`;
-
-q.options.forEach((opt, i) => {
-const btn = document.createElement("div");
-btn.className = "option";
-btn.innerText = opt;
-
-btn.onclick = () => {
-answers[index] = i;
-btn.style.background = "#22c55e";
-};
-
-div.appendChild(btn);
-});
-
-container.appendChild(div);
-});
+  },1000);
 }
 
-/* ========= STEP 3: SUBMIT ========= */
-async function submitQuiz(){
+// ─────────────────────────────
+// SUBMIT EXAM
+// ─────────────────────────────
+async function submitExam(auto=false){
 
-let score = 0;
+  clearInterval(timerInterval);
 
-currentQuiz.questions.forEach((q, i) => {
-if(answers[i] === q.correct){
-score++;
+  let score = 0;
+  const total = quiz.questions.length;
+
+  quiz.questions.forEach((q,i)=>{
+    if(answers[i] == q.correct){
+      score++;
+    }
+  });
+
+  const percentage = Math.round((score/total)*100);
+
+  // Save attempt
+  await sb.from("attempts").insert({
+    user_id: user.id,
+    quiz_id: quiz.id,
+    subject: quiz.subject,
+    chapter: quiz.chapter,
+    set: quiz.set,
+    score,
+    total,
+    percentage,
+    time_taken: (quiz.duration_minutes*60) - timeLeft
+  });
+
+  // Update leaderboard (simple upsert logic)
+  const { data: existing } = await sb
+    .from("leaderboard")
+    .select("*")
+    .eq("user_id", user.id)
+    .single();
+
+  if(existing){
+
+    await sb.from("leaderboard")
+      .update({
+        total_attempts: existing.total_attempts + 1,
+        total_score: existing.total_score + score,
+        average_percentage: Math.round((existing.average_percentage + percentage)/2)
+      })
+      .eq("user_id", user.id);
+
+  } else {
+
+    await sb.from("leaderboard").insert({
+      user_id: user.id,
+      total_attempts: 1,
+      total_score: score,
+      average_percentage: percentage
+    });
+  }
+
+  alert(
+    auto
+      ? `Time's up! Submitted automatically\nScore: ${score}/${total}`
+      : `Submitted!\nScore: ${score}/${total}`
+  );
+
+  location.href = "mcq-exam-platform.html";
 }
-});
 
-alert("Score: " + score + "/" + currentQuiz.questions.length);
+(async()=>{
+  await checkAuth();
+  await loadQuiz();
+})();
 
-/* save attempt */
-const user = await supabase.auth.getUser();
-
-await supabase.from("attempts").insert([{
-user_id: user.data.user.id,
-quiz_id: currentQuiz.id,
-score: score,
-total: currentQuiz.questions.length,
-percentage: (score/currentQuiz.questions.length)*100,
-subject: currentQuiz.subject,
-chapter: currentQuiz.chapter
-}]);
-}
 </script>
 
 </body>
