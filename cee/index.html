@@ -354,6 +354,7 @@ select.fi-dark{-webkit-appearance:none;background-image:url("data:image/svg+xml,
 .notice{display:flex;align-items:flex-start;gap:8px;padding:11px 14px;border-radius:var(--r-sm);font-size:13px;border:1px solid;margin-bottom:14px;line-height:1.5}
 .notice-info{background:rgba(0,245,212,.05);border-color:rgba(0,245,212,.2);color:var(--neon)}
 .notice-warn{background:rgba(245,158,11,.06);border-color:rgba(245,158,11,.2);color:var(--warn)}
+.notice-err{background:rgba(244,63,94,.08);border-color:rgba(244,63,94,.3);color:#fb7185}
 
 /* ─── RESPONSIVE ─── */
 @media(max-width:900px){
@@ -1139,6 +1140,22 @@ function renderScheduleCards(){
     grid.innerHTML=groups[k].map(s=>buildSchedCard(s,k)).join('');
     groups[k].forEach(s=>{if(k!=='ended')startSchedCd(s,k);});
   });
+  // Async: stamp "Submitted" badges on cards user already took
+  stampTakenBadges(filtered);
+}
+
+async function stampTakenBadges(schedules){
+  if(!CU||!schedules.length)return;
+  const ids=schedules.map(s=>s.id);
+  try{
+    const{data}=await sb.from('attempts').select('schedule_id').eq('user_id',CU.id).in('schedule_id',ids);
+    if(!data)return;
+    const taken=new Set(data.map(a=>a.schedule_id));
+    taken.forEach(sid=>{
+      const el=document.getElementById(`taken-badge-${sid}`);
+      if(el)el.outerHTML=`<span class="badge" style="background:rgba(16,185,129,.14);color:#34d399">✓ Submitted</span>`;
+    });
+  }catch(e){}
 }
 
 function buildSchedCard(s,status){
@@ -1161,8 +1178,10 @@ function buildSchedCard(s,status){
     ?`<button class="btn btn-volt btn-sm" onclick="openTakeExamModal('${s.id}')">▶ Start</button>`
     :status==='ended'?`<button class="btn btn-ghost btn-sm" disabled>Closed</button>`
     :`<button class="btn btn-ghost btn-sm" disabled>🔒 Locked</button>`;
+  // Check if already taken (mark with a badge in the card) - will be updated async
+  const takenBadge=`<span id="taken-badge-${s.id}"></span>`;
   return`<div class="sched-card"><div class="sched-stripe ${status}"></div><div class="sched-body">
-    <div class="sched-status-badges">${statusBadge}<span class="badge b-neon">📘 ${esc(quiz.subject||'?')}</span>${s.duration_minutes?`<span class="badge b-blue">⏱ ${s.duration_minutes}m</span>`:''}</div>
+    <div class="sched-status-badges">${statusBadge}<span class="badge b-neon">📘 ${esc(quiz.subject||'?')}</span>${s.duration_minutes?`<span class="badge b-blue">⏱ ${s.duration_minutes}m</span>`:''}${takenBadge}</div>
     <div class="sched-title">${esc(s.title||`${quiz.subject} — ${quiz.set}`)}</div>
     <div class="sched-sub">${esc(quiz.chapter||'')}${quiz.set?' › '+esc(quiz.set):''}</div>
     <div class="sched-meta">
@@ -1191,27 +1210,58 @@ function startSchedCd(s,status){
   tick();schedCdIntervals[s.id]=setInterval(tick,1000);
 }
 
-function openTakeExamModal(schedId){
+async function openTakeExamModal(schedId){
   const s=allSchedules.find(x=>x.id===schedId);if(!s)return;
   const quiz=s.quizzes||{};
+  // Check if user has already attempted this scheduled exam
+  const{data:existingAttempts}=await sb.from('attempts').select('id,percentage,score,total,created_at').eq('user_id',CU.id).eq('schedule_id',schedId);
+  const alreadyTaken=existingAttempts&&existingAttempts.length>0;
   document.getElementById('take-exam-modal-title').textContent=s.title||'Start Exam';
-  document.getElementById('take-exam-modal-body').innerHTML=`
-    <div style="background:var(--ink2);border-radius:var(--r-sm);padding:16px;margin-bottom:14px">
-      <div style="font-size:14px;font-weight:600;margin-bottom:10px">${esc(s.title)}</div>
-      <div style="display:flex;flex-direction:column;gap:7px;font-size:13px;color:var(--text2)">
-        <div>📘 Subject: <strong>${esc(quiz.subject)}</strong></div>
-        <div>📖 Chapter: <strong>${esc(quiz.chapter||'—')}</strong></div>
-        <div>📝 Questions: <strong>${(quiz.questions||[]).length}</strong></div>
-        ${s.duration_minutes?`<div>⏱ Duration: <strong>${s.duration_minutes} minutes</strong></div>`:''}
+  if(alreadyTaken){
+    const prev=existingAttempts[0];
+    const d=new Date(prev.created_at);
+    document.getElementById('take-exam-modal-body').innerHTML=`
+      <div style="background:rgba(244,63,94,.08);border:1px solid rgba(244,63,94,.3);border-radius:var(--r-sm);padding:18px;margin-bottom:14px;text-align:center">
+        <div style="font-size:28px;margin-bottom:8px">🔒</div>
+        <div style="font-size:15px;font-weight:700;color:#fb7185;margin-bottom:6px">Already Submitted</div>
+        <div style="font-size:13px;color:var(--text2)">You completed this scheduled exam on <strong>${d.toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'})}</strong></div>
+        <div style="margin-top:14px;display:flex;gap:12px;justify-content:center">
+          <div style="background:var(--ink2);border-radius:var(--r-sm);padding:12px 20px;text-align:center">
+            <div style="font-family:var(--display);font-size:24px;font-weight:700;color:${prev.percentage>=75?'var(--ok)':prev.percentage>=50?'var(--warn)':'var(--err)'}">${prev.percentage}%</div>
+            <div style="font-size:11px;color:var(--text3)">Your Score</div>
+          </div>
+          <div style="background:var(--ink2);border-radius:var(--r-sm);padding:12px 20px;text-align:center">
+            <div style="font-family:var(--display);font-size:24px;font-weight:700;color:var(--text)">${prev.score}/${prev.total}</div>
+            <div style="font-size:11px;color:var(--text3)">Correct</div>
+          </div>
+        </div>
       </div>
-    </div>
-    ${s.instructions?`<div class="notice notice-warn">⚠️ ${esc(s.instructions)}</div>`:''}
-    <div class="notice notice-info">ℹ️ Tab switching will be flagged. Good luck!</div>`;
-  document.getElementById('take-exam-confirm-btn').onclick=()=>{
-    closeModal('take-exam-modal');
-    const q={id:quiz.id||schedId,...quiz};
-    launchQuizDirect(q);
-  };
+      <div class="notice notice-warn">⚠️ Scheduled exams can only be taken once. This ensures fair assessment for all participants.</div>`;
+    document.getElementById('take-exam-confirm-btn').textContent='View Leaderboard';
+    document.getElementById('take-exam-confirm-btn').className='btn btn-ghost btn-full';
+    document.getElementById('take-exam-confirm-btn').onclick=()=>{closeModal('take-exam-modal');goTo('leaderboard');};
+  }else{
+    document.getElementById('take-exam-modal-body').innerHTML=`
+      <div style="background:var(--ink2);border-radius:var(--r-sm);padding:16px;margin-bottom:14px">
+        <div style="font-size:14px;font-weight:600;margin-bottom:10px">${esc(s.title)}</div>
+        <div style="display:flex;flex-direction:column;gap:7px;font-size:13px;color:var(--text2)">
+          <div>📘 Subject: <strong>${esc(quiz.subject)}</strong></div>
+          <div>📖 Chapter: <strong>${esc(quiz.chapter||'—')}</strong></div>
+          <div>📝 Questions: <strong>${(quiz.questions||[]).length}</strong></div>
+          ${s.duration_minutes?`<div>⏱ Duration: <strong>${s.duration_minutes} minutes</strong></div>`:''}
+        </div>
+      </div>
+      ${s.instructions?`<div class="notice notice-warn">⚠️ ${esc(s.instructions)}</div>`:''}
+      <div class="notice notice-err" style="background:rgba(244,63,94,.08);border-color:rgba(244,63,94,.3)">🔒 <strong>One attempt only</strong> — Scheduled exams cannot be retaken once submitted.</div>
+      <div class="notice notice-info">ℹ️ Tab switching will be flagged. Good luck!</div>`;
+    document.getElementById('take-exam-confirm-btn').textContent='▶ Start Now';
+    document.getElementById('take-exam-confirm-btn').className='btn btn-volt btn-full';
+    document.getElementById('take-exam-confirm-btn').onclick=()=>{
+      closeModal('take-exam-modal');
+      const q={id:quiz.id||schedId,...quiz};
+      launchQuizDirect(q,schedId);
+    };
+  }
   document.getElementById('take-exam-modal').classList.add('open');
 }
 
@@ -1266,8 +1316,8 @@ function startQuiz(quizId){
   launchQuizDirect(quiz);
 }
 
-function launchQuizDirect(quiz){
-  quizState={quiz,questions:quiz.questions,current:0,answers:new Array(quiz.questions.length).fill(null),startTime:Date.now()};
+function launchQuizDirect(quiz,scheduleId=null){
+  quizState={quiz,questions:quiz.questions,current:0,answers:new Array(quiz.questions.length).fill(null),startTime:Date.now(),scheduleId};
   quizSecs=0;tabWarnCount=0;
   document.getElementById('quiz-screen').style.display='block';
   document.body.style.overflow='hidden';
@@ -1324,7 +1374,7 @@ async function submitQuiz(){
   let score=0;
   quizState.questions.forEach((q,i)=>{const ans=q.answer??q.correct??null;if(quizState.answers[i]===ans)score++;});
   const total=quizState.questions.length;const pct=Math.round((score/total)*100);
-  const{error}=await sb.from('attempts').insert({user_id:CU.id,quiz_id:quizState.quiz.id,subject:quizState.quiz.subject,chapter:quizState.quiz.chapter||null,set:quizState.quiz.set,score,total,percentage:pct,time_taken:quizSecs});
+  const{error}=await sb.from('attempts').insert({user_id:CU.id,quiz_id:quizState.quiz.id,schedule_id:quizState.scheduleId||null,subject:quizState.quiz.subject,chapter:quizState.quiz.chapter||null,set:quizState.quiz.set,score,total,percentage:pct,time_taken:quizSecs});
   if(error)toast('Result save failed: '+error.message,'err');
   lastResult={score,total,pct,secs:quizSecs,quiz:quizState.quiz,answers:quizState.answers,questions:quizState.questions};
   sessionStorage.removeItem('qp');
@@ -1415,20 +1465,138 @@ async function loadLeaderboard(){
     const{data:ats,error}=await q;
     if(error)throw error;
     if(!ats?.length){wrap.innerHTML='<div class="empty-state"><div class="empty-icon">🏆</div><div class="empty-title">No data yet</div></div>';return;}
+
+    // Best attempt per user per quiz
     const best={};
     ats.forEach(a=>{const k=`${a.user_id}_${a.quiz_id||a.set}`;if(!best[k]||a.percentage>best[k].percentage||(a.percentage===best[k].percentage&&(a.time_taken||9999)<(best[k].time_taken||9999)))best[k]=a;});
     const ranked=Object.values(best).sort((a,b)=>b.percentage-a.percentage||(a.time_taken||9999)-(b.time_taken||9999));
+
+    // Current user stats
+    const myAttempts=ats.filter(a=>a.user_id===CU.id);
+    const myBest=ranked.filter(a=>a.user_id===CU.id);
+    const myRank=myBest.length?ranked.findIndex(a=>a.user_id===CU.id)+1:null;
+    const myAvg=myAttempts.length?Math.round(myAttempts.reduce((s,a)=>s+a.percentage,0)/myAttempts.length):null;
+    const myBestPct=myBest.length?Math.max(...myBest.map(a=>a.percentage)):null;
+    const allPcts=ranked.map(a=>a.percentage);
+    const globalAvg=Math.round(allPcts.reduce((s,v)=>s+v,0)/allPcts.length);
+    const globalBest=Math.max(...allPcts);
+
+    // Score distribution buckets
+    const dist=[0,0,0,0,0]; // 0-20,21-40,41-60,61-80,81-100
+    ats.forEach(a=>{const b=Math.min(4,Math.floor(a.percentage/20));dist[b]++;});
+    const distMax=Math.max(...dist,1);
+    const distLabels=['0–20%','21–40%','41–60%','61–80%','81–100%'];
+    const distColors=['var(--err)','var(--plasma)','var(--warn)','var(--ice)','var(--ok)'];
+
+    // Subject breakdown for current user
+    const mySubjectMap={};
+    myAttempts.forEach(a=>{if(!mySubjectMap[a.subject])mySubjectMap[a.subject]={sum:0,count:0};mySubjectMap[a.subject].sum+=a.percentage;mySubjectMap[a.subject].count++;});
+    const mySubjects=Object.entries(mySubjectMap).map(([s,v])=>({subject:s,avg:Math.round(v.sum/v.count),count:v.count})).sort((a,b)=>b.avg-a.avg);
+
+    // All user scores for comparison
+    const allUserMap={};
+    ranked.forEach(a=>{const name=a.profiles?.full_name||a.profiles?.email||'Unknown';if(!allUserMap[a.user_id])allUserMap[a.user_id]={name,scores:[]};allUserMap[a.user_id].scores.push(a.percentage);});
+    const allUserStats=Object.values(allUserMap).map(u=>({name:u.name,avg:Math.round(u.scores.reduce((s,v)=>s+v,0)/u.scores.length),attempts:u.scores.length})).sort((a,b)=>b.avg-a.avg).slice(0,8);
+
     const medals=['🥇','🥈','🥉'];
-    wrap.innerHTML=`<div class="card">${ranked.slice(0,50).map((a,i)=>{
-      const name=a.profiles?.full_name||a.profiles?.email||'Unknown';
-      const rankCls=i<3?`rank-${i+1}`:'';
-      return`<div class="lb-item ${rankCls}">
-        <div class="lb-rank">${medals[i]||`#${i+1}`}</div>
-        <div><div class="lb-name">${esc(name)}</div><div class="lb-detail">${esc(a.subject)} › ${esc(a.set)}</div></div>
-        <div><div class="lb-score-val">${a.score}/${a.total}</div><div style="font-size:11px;color:var(--text3);text-align:right">${a.time_taken?`${Math.floor(a.time_taken/60)}m ${a.time_taken%60}s`:''}</div></div>
-        <span class="badge ${a.percentage>=75?'b-ok':a.percentage>=50?'b-warn':'b-err'}">${a.percentage}%</span>
-      </div>`;}).join('')}</div>`;
-  }catch(e){wrap.innerHTML='<div class="empty-state"><div class="empty-icon">⚠️</div><div class="empty-title">Load failed</div></div>';}
+
+    wrap.innerHTML=`
+      <!-- My Position Banner -->
+      ${myRank?`<div style="background:linear-gradient(135deg,rgba(0,245,212,.1),rgba(168,85,247,.1));border:1px solid rgba(0,245,212,.25);border-radius:var(--r);padding:18px 22px;margin-bottom:20px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px">
+        <div style="display:flex;align-items:center;gap:14px">
+          <div style="width:50px;height:50px;border-radius:50%;background:linear-gradient(135deg,var(--neon2),var(--pulse));display:flex;align-items:center;justify-content:center;font-size:18px;font-weight:900;color:var(--ink);flex-shrink:0">${(CP.full_name||'?').split(' ').map(w=>w[0]).join('').slice(0,2).toUpperCase()}</div>
+          <div><div style="font-family:var(--display);font-size:17px;font-weight:700">${esc(CP.full_name||CP.email)}</div><div style="font-size:12px;color:var(--text3);margin-top:2px">Your performance vs. everyone else</div></div>
+        </div>
+        <div style="display:flex;gap:16px;flex-wrap:wrap">
+          <div style="text-align:center"><div style="font-family:var(--display);font-size:26px;font-weight:700;color:var(--neon)">#${myRank}</div><div style="font-size:11px;color:var(--text3)">Rank</div></div>
+          <div style="text-align:center"><div style="font-family:var(--display);font-size:26px;font-weight:700;color:var(--ice)">${myAvg}%</div><div style="font-size:11px;color:var(--text3)">My Avg</div></div>
+          <div style="text-align:center"><div style="font-family:var(--display);font-size:26px;font-weight:700;color:${myAvg>=globalAvg?'var(--ok)':'var(--warn)'}">${myAvg>=globalAvg?'+':''}${myAvg-globalAvg}%</div><div style="font-size:11px;color:var(--text3)">vs Global Avg</div></div>
+          <div style="text-align:center"><div style="font-family:var(--display);font-size:26px;font-weight:700;color:var(--pulse)">${myAttempts.length}</div><div style="font-size:11px;color:var(--text3)">Attempts</div></div>
+        </div>
+      </div>`:''}
+
+      <!-- Global Stats Row -->
+      <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:12px;margin-bottom:20px">
+        <div class="stat teal" style="padding:16px"><div class="stat-icon" style="font-size:18px;margin-bottom:8px">👥</div><div class="stat-val" style="font-size:22px">${Object.keys(allUserMap).length}</div><div class="stat-lbl">Participants</div></div>
+        <div class="stat blue" style="padding:16px"><div class="stat-icon" style="font-size:18px;margin-bottom:8px">📊</div><div class="stat-val" style="font-size:22px">${globalAvg}%</div><div class="stat-lbl">Global Avg</div></div>
+        <div class="stat green" style="padding:16px"><div class="stat-icon" style="font-size:18px;margin-bottom:8px">🏆</div><div class="stat-val" style="font-size:22px">${globalBest}%</div><div class="stat-lbl">Top Score</div></div>
+        <div class="stat purple" style="padding:16px"><div class="stat-icon" style="font-size:18px;margin-bottom:8px">📝</div><div class="stat-val" style="font-size:22px">${ats.length}</div><div class="stat-lbl">Total Attempts</div></div>
+      </div>
+
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:20px">
+
+        <!-- Score Distribution Chart -->
+        <div class="card">
+          <div style="font-family:var(--display);font-size:14px;font-weight:700;margin-bottom:16px;display:flex;align-items:center;gap:8px">📊 Score Distribution</div>
+          <div style="display:flex;align-items:flex-end;gap:8px;height:110px">
+            ${dist.map((v,i)=>`<div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:4px">
+              <div style="font-size:10px;color:var(--text3);font-weight:700">${v}</div>
+              <div style="width:100%;background:${distColors[i]};border-radius:4px 4px 0 0;height:${Math.round((v/distMax)*80)}px;min-height:${v?4:0}px;opacity:.85;transition:height .4s ease"></div>
+            </div>`).join('')}
+          </div>
+          <div style="display:flex;gap:8px;margin-top:8px">${distLabels.map((l,i)=>`<div style="flex:1;font-size:9px;color:${distColors[i]};text-align:center;font-weight:700">${l}</div>`).join('')}</div>
+        </div>
+
+        <!-- My vs Global Comparison -->
+        <div class="card">
+          <div style="font-family:var(--display);font-size:14px;font-weight:700;margin-bottom:16px">⚡ You vs. Global</div>
+          ${myAvg!=null?`
+          <div style="display:flex;flex-direction:column;gap:10px">
+            <div>
+              <div style="display:flex;justify-content:space-between;font-size:11px;font-weight:700;margin-bottom:5px"><span style="color:var(--neon)">You</span><span>${myAvg}%</span></div>
+              <div style="height:10px;background:var(--rim);border-radius:5px;overflow:hidden"><div style="height:100%;width:${myAvg}%;background:linear-gradient(90deg,var(--neon),var(--ice));border-radius:5px"></div></div>
+            </div>
+            <div>
+              <div style="display:flex;justify-content:space-between;font-size:11px;font-weight:700;margin-bottom:5px"><span style="color:var(--text3)">Global Avg</span><span>${globalAvg}%</span></div>
+              <div style="height:10px;background:var(--rim);border-radius:5px;overflow:hidden"><div style="height:100%;width:${globalAvg}%;background:linear-gradient(90deg,var(--text3),var(--rim3));border-radius:5px"></div></div>
+            </div>
+            <div>
+              <div style="display:flex;justify-content:space-between;font-size:11px;font-weight:700;margin-bottom:5px"><span style="color:var(--ok)">Top Score</span><span>${globalBest}%</span></div>
+              <div style="height:10px;background:var(--rim);border-radius:5px;overflow:hidden"><div style="height:100%;width:${globalBest}%;background:linear-gradient(90deg,var(--ok),var(--volt));border-radius:5px"></div></div>
+            </div>
+            ${mySubjects.slice(0,2).map(s=>`<div>
+              <div style="display:flex;justify-content:space-between;font-size:11px;font-weight:700;margin-bottom:5px"><span style="color:var(--pulse)">${esc(s.subject)}</span><span>${s.avg}%</span></div>
+              <div style="height:10px;background:var(--rim);border-radius:5px;overflow:hidden"><div style="height:100%;width:${s.avg}%;background:linear-gradient(90deg,var(--pulse),var(--ice));border-radius:5px"></div></div>
+            </div>`).join('')}
+          </div>`:'<div style="color:var(--text3);font-size:13px;text-align:center;padding:20px">Take a quiz to see your comparison!</div>'}
+        </div>
+      </div>
+
+      <!-- Top Performers Bar Chart -->
+      <div class="card" style="margin-bottom:20px">
+        <div style="font-family:var(--display);font-size:14px;font-weight:700;margin-bottom:16px">👑 Top Performers (Average Score)</div>
+        <div style="display:flex;flex-direction:column;gap:8px">
+          ${allUserStats.map((u,i)=>{
+            const isMe=u.name===(CP.full_name||CP.email);
+            const barColor=isMe?'linear-gradient(90deg,var(--neon),var(--ice))':i===0?'linear-gradient(90deg,#ffd700,#ffb300)':i===1?'linear-gradient(90deg,#c0c0c0,#a0a0a0)':i===2?'linear-gradient(90deg,#cd7f32,#b06020)':'linear-gradient(90deg,var(--rim3),var(--rim2))';
+            return`<div style="display:flex;align-items:center;gap:10px">
+              <div style="width:24px;text-align:center;font-size:12px;font-weight:700;color:var(--text3);flex-shrink:0">${medals[i]||`#${i+1}`}</div>
+              <div style="width:130px;font-size:12px;font-weight:${isMe?'800':'600'};color:${isMe?'var(--neon)':'var(--text2)'};white-space:nowrap;overflow:hidden;text-overflow:ellipsis;flex-shrink:0">${esc(u.name)}${isMe?' (you)':''}</div>
+              <div style="flex:1;height:18px;background:var(--rim);border-radius:4px;overflow:hidden">
+                <div style="height:100%;width:${u.avg}%;background:${barColor};border-radius:4px;transition:width .5s ease;display:flex;align-items:center;justify-content:flex-end;padding-right:6px">
+                  ${u.avg>20?`<span style="font-size:10px;font-weight:800;color:${isMe?'var(--ink)':'rgba(255,255,255,.8)'}">${u.avg}%</span>`:''}
+                </div>
+              </div>
+              <div style="width:34px;font-size:11px;color:var(--text3);text-align:right;flex-shrink:0">${u.avg<21?u.avg+'%':''}</div>
+              <div style="width:24px;font-size:10px;color:var(--text3);text-align:right;flex-shrink:0">${u.attempts}x</div>
+            </div>`;}).join('')}
+        </div>
+      </div>
+
+      <!-- Full Ranked List -->
+      <div class="card">
+        <div style="font-family:var(--display);font-size:14px;font-weight:700;margin-bottom:16px">📋 Full Rankings (Best Attempt Per Quiz)</div>
+        ${ranked.slice(0,50).map((a,i)=>{
+          const name=a.profiles?.full_name||a.profiles?.email||'Unknown';
+          const isMe=a.user_id===CU.id;
+          return`<div class="lb-item ${i<3?'rank-'+(i+1):''}" style="${isMe?'background:rgba(0,245,212,.07);border-color:rgba(0,245,212,.25);':''}">
+            <div class="lb-rank">${medals[i]||`#${i+1}`}</div>
+            <div><div class="lb-name" style="${isMe?'color:var(--neon)':''}">${esc(name)}${isMe?' 👈':''}</div><div class="lb-detail">${esc(a.subject)} › ${esc(a.set)}</div></div>
+            <div><div class="lb-score-val">${a.score}/${a.total}</div><div style="font-size:11px;color:var(--text3);text-align:right">${a.time_taken?`${Math.floor(a.time_taken/60)}m ${a.time_taken%60}s`:''}</div></div>
+            <span class="badge ${a.percentage>=75?'b-ok':a.percentage>=50?'b-warn':'b-err'}">${a.percentage}%</span>
+          </div>`;}).join('')}
+      </div>`;
+  }catch(e){wrap.innerHTML='<div class="empty-state"><div class="empty-icon">⚠️</div><div class="empty-title">Load failed</div></div>';console.error(e);}
 }
 
 // ══════════════════════════════════════════════
@@ -1731,5 +1899,3 @@ document.addEventListener('keydown',e=>{
 </script>
 </body>
 </html>
-
-
