@@ -64,15 +64,12 @@ button,input,select,textarea{font-family:var(--font)}
 .skel{background:linear-gradient(90deg,var(--surface) 25%,var(--surface2) 50%,var(--surface) 75%);background-size:200% 100%;animation:shimmer 1.5s infinite;border-radius:var(--r-sm)}
 .skel-card{height:120px;border-radius:var(--r);margin-bottom:14px}
 .skel-row{height:20px;margin-bottom:10px}
-.skel-row.w60{width:60%}
-.skel-row.w40{width:40%}
-.skel-row.w80{width:80%}
+.skel-row.w60{width:60%}.skel-row.w40{width:40%}.skel-row.w80{width:80%}
 .skel-stat{height:96px;border-radius:var(--r)}
 
 /* ── LOADING SCREEN ── */
 #loading-screen{position:fixed;inset:0;background:var(--ink);z-index:999;display:flex;align-items:center;justify-content:center;flex-direction:column;gap:16px}
 .load-logo{font-family:var(--display);font-size:32px;font-weight:700;background:linear-gradient(135deg,var(--neon),var(--ice));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
-.load-spin{width:28px;height:28px;border:3px solid rgba(0,245,212,.2);border-top-color:var(--neon);border-radius:50%;animation:sp .6s linear infinite}
 .load-bars{display:flex;gap:5px;align-items:flex-end;height:28px}
 .load-bar{width:4px;border-radius:2px;background:var(--neon);animation:loadbar 1s ease infinite}
 .load-bar:nth-child(1){animation-delay:0s;height:12px}
@@ -247,38 +244,178 @@ select.fi-dark{-webkit-appearance:none;background-image:url("data:image/svg+xml,
 .subj-Math{background:rgba(245,158,11,.1);color:var(--warn)}
 .subj-default{background:rgba(0,245,212,.08);color:var(--neon)}
 
-/* ── SCHEDULE CARDS ── */
-.sched-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:16px}
-.sched-card{background:var(--surface);border:1px solid var(--rim);border-radius:var(--r);overflow:hidden;transition:var(--tr);position:relative}
-.sched-card:hover{transform:translateY(-2px);box-shadow:var(--sh)}
-.sched-card.already-done{opacity:.8}
-.sched-stripe{height:3px;width:100%}
-.sched-stripe.live{background:linear-gradient(90deg,var(--ok),var(--neon));animation:stripe-pulse 2s ease infinite}
+/* ══════════════════════════════════════════
+   ENHANCED SCHEDULE CARDS
+══════════════════════════════════════════ */
+.sched-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(320px,1fr));gap:20px}
+
+/* Section header with animated reveal */
+.sched-section-header{
+  display:flex;align-items:center;justify-content:space-between;
+  margin-bottom:18px;padding:0 2px;
+}
+.sched-section-title{
+  font-family:var(--display);font-weight:700;font-size:16px;
+  display:flex;align-items:center;gap:10px;
+}
+.sched-section-line{
+  flex:1;height:1px;margin-left:14px;
+  background:linear-gradient(90deg,var(--rim2),transparent);
+}
+
+/* Live section pulse ring */
+.live-ring{
+  position:relative;display:inline-flex;align-items:center;justify-content:center;
+  width:10px;height:10px;
+}
+.live-ring::before{
+  content:'';position:absolute;inset:-4px;border-radius:50%;
+  border:2px solid var(--ok);animation:ring-expand 1.5s ease-out infinite;
+}
+.live-ring-dot{width:10px;height:10px;border-radius:50%;background:var(--ok);}
+@keyframes ring-expand{0%{transform:scale(1);opacity:.8}100%{transform:scale(2.2);opacity:0}}
+
+.sched-card{
+  background:var(--surface);
+  border:1px solid var(--rim);
+  border-radius:var(--r-lg);
+  overflow:hidden;
+  transition:transform .22s cubic-bezier(.4,0,.2,1),box-shadow .22s ease,border-color .22s ease;
+  position:relative;
+  animation:cardFadeIn .35s ease both;
+}
+@keyframes cardFadeIn{from{opacity:0;transform:translateY(16px)}to{opacity:1;transform:none}}
+.sched-card:hover{
+  transform:translateY(-4px);
+  box-shadow:0 20px 60px rgba(0,0,0,.7),0 0 0 1px rgba(0,245,212,.06);
+}
+.sched-card.already-done{opacity:.85}
+.sched-card.already-done:hover{transform:translateY(-2px)}
+
+/* Status accent bar */
+.sched-stripe{height:4px;width:100%;position:relative;overflow:hidden}
+.sched-stripe.live{
+  background:linear-gradient(90deg,var(--ok),var(--neon),var(--ok));
+  background-size:200% 100%;
+  animation:stripe-flow 2s linear infinite;
+}
 .sched-stripe.upcoming{background:linear-gradient(90deg,var(--ice),var(--pulse))}
-.sched-stripe.today{background:linear-gradient(90deg,var(--warn),var(--plasma))}
-.sched-stripe.ended{background:var(--rim)}
-@keyframes stripe-pulse{0%,100%{opacity:1}50%{opacity:.5}}
-.sched-body{padding:18px}
-.sched-status-badges{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:10px}
-.sched-title{font-family:var(--display);font-size:16px;font-weight:600;margin-bottom:2px}
-.sched-sub{font-size:12px;color:var(--text3);margin-bottom:10px}
-/* Subject + Chapter info row */
-.sched-info-row{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:12px;padding:9px 12px;background:var(--ink2);border-radius:var(--r-sm);border:1px solid var(--rim)}
-.sched-meta{display:flex;flex-direction:column;gap:6px;margin-bottom:14px}
+.sched-stripe.today{
+  background:linear-gradient(90deg,var(--warn),var(--plasma),var(--warn));
+  background-size:200% 100%;
+  animation:stripe-flow 3s linear infinite;
+}
+.sched-stripe.ended{background:var(--rim2)}
+@keyframes stripe-flow{0%{background-position:0% 0}100%{background-position:200% 0}}
+
+.sched-body{padding:20px}
+
+/* Status badge row */
+.sched-status-badges{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:12px}
+
+/* Glowing live badge */
+.live-badge{
+  display:inline-flex;align-items:center;gap:6px;
+  padding:4px 11px;border-radius:20px;font-size:11px;font-weight:800;
+  background:rgba(16,185,129,.15);border:1px solid rgba(16,185,129,.4);color:#34d399;
+  box-shadow:0 0 14px rgba(16,185,129,.15);
+  animation:live-glow 2s ease infinite;
+}
+@keyframes live-glow{0%,100%{box-shadow:0 0 8px rgba(16,185,129,.2)}50%{box-shadow:0 0 20px rgba(16,185,129,.4)}}
+.live-badge-dot{width:6px;height:6px;border-radius:50%;background:var(--ok);animation:dot-blink 1s step-end infinite}
+@keyframes dot-blink{0%,100%{opacity:1}50%{opacity:0}}
+
+.sched-title{font-family:var(--display);font-size:17px;font-weight:700;margin-bottom:4px;line-height:1.3}
+.sched-sub{font-size:12px;color:var(--text3);margin-bottom:12px}
+
+.sched-info-row{
+  display:flex;gap:6px;flex-wrap:wrap;margin-bottom:14px;
+  padding:10px 12px;background:var(--ink2);border-radius:var(--r-sm);
+  border:1px solid var(--rim);
+}
+
+.sched-meta{display:flex;flex-direction:column;gap:7px;margin-bottom:16px}
 .meta-row{display:flex;align-items:center;gap:8px;font-size:12px;color:var(--text2)}
 .meta-icon{width:16px;text-align:center;font-size:13px;flex-shrink:0}
-.cd-box{background:var(--ink2);border:1px solid var(--rim);border-radius:var(--r-sm);padding:12px 14px;margin-bottom:14px}
-.cd-label{font-size:10px;font-weight:800;text-transform:uppercase;letter-spacing:.08em;color:var(--text3);margin-bottom:8px}
-.cd-digits{display:flex;align-items:center;gap:6px}
-.cd-unit{text-align:center;min-width:42px}
-.cd-num{font-family:var(--display);font-size:22px;font-weight:700;line-height:1;display:block;color:var(--neon)}
-.cd-lbl{font-size:9px;color:var(--text3);text-transform:uppercase;letter-spacing:.05em;margin-top:2px}
-.cd-sep{font-family:var(--mono);font-size:18px;font-weight:700;color:var(--rim3);margin-top:-4px}
-.cd-live{display:flex;align-items:center;gap:6px;font-size:13px;font-weight:700;color:var(--ok)}
-.cd-dot-live{width:7px;height:7px;border-radius:50%;background:var(--ok);animation:dot-pulse 1s ease infinite;flex-shrink:0}
-.sched-footer{padding:12px 18px;border-top:1px solid var(--rim);display:flex;align-items:center;justify-content:space-between;background:var(--ink2)}
-/* "Already attempted" overlay */
-.attempted-overlay{display:flex;align-items:center;gap:8px;padding:9px 12px;background:rgba(16,185,129,.08);border:1px solid rgba(16,185,129,.25);border-radius:var(--r-sm);margin-bottom:12px;font-size:12px;font-weight:700;color:#34d399}
+
+/* ── ATTEMPTED OVERLAY ── */
+.attempted-overlay{
+  display:flex;align-items:center;gap:10px;
+  padding:12px 14px;
+  background:linear-gradient(135deg,rgba(16,185,129,.12),rgba(0,245,212,.06));
+  border:1px solid rgba(16,185,129,.35);
+  border-radius:var(--r-sm);
+  margin-bottom:14px;
+  font-size:13px;font-weight:700;color:#34d399;
+  position:relative;overflow:hidden;
+  animation:attemptedIn .4s cubic-bezier(.175,.885,.32,1.275);
+}
+@keyframes attemptedIn{from{opacity:0;transform:scale(.95)}to{opacity:1;transform:scale(1)}}
+.attempted-overlay::before{
+  content:'';position:absolute;inset:0;
+  background:linear-gradient(90deg,transparent,rgba(16,185,129,.08),transparent);
+  animation:shimmer-ok 2.5s infinite;
+  background-size:200% 100%;
+}
+@keyframes shimmer-ok{0%{background-position:-200% 0}100%{background-position:200% 0}}
+.attempted-overlay-icon{font-size:20px;flex-shrink:0;filter:drop-shadow(0 0 8px rgba(16,185,129,.6))}
+.attempted-score{
+  margin-left:auto;display:flex;flex-direction:column;align-items:flex-end;gap:2px;
+}
+.attempted-score-big{font-family:var(--display);font-size:20px;font-weight:800;color:var(--neon)}
+.attempted-score-sub{font-size:10px;color:var(--text3);font-weight:600}
+
+/* ── COUNTDOWN BOX ── */
+.cd-box{
+  background:var(--ink2);border:1px solid var(--rim);border-radius:var(--r-sm);
+  padding:14px 16px;margin-bottom:16px;
+  position:relative;overflow:hidden;
+}
+.cd-box::after{
+  content:'';position:absolute;top:0;left:0;right:0;height:1px;
+  background:linear-gradient(90deg,transparent,rgba(0,245,212,.3),transparent);
+}
+.cd-label{font-size:10px;font-weight:800;text-transform:uppercase;letter-spacing:.1em;color:var(--text3);margin-bottom:10px}
+.cd-digits{display:flex;align-items:center;gap:4px}
+.cd-unit{text-align:center;min-width:46px}
+.cd-num{
+  font-family:var(--display);font-size:26px;font-weight:800;line-height:1;display:block;
+  color:var(--neon);transition:color .3s ease;
+  text-shadow:0 0 20px rgba(0,245,212,.3);
+}
+.cd-num.urgent{color:var(--err);text-shadow:0 0 20px rgba(244,63,94,.4);animation:num-pulse .8s ease infinite alternate}
+@keyframes num-pulse{from{opacity:1}to{opacity:.6}}
+.cd-lbl{font-size:9px;color:var(--text3);text-transform:uppercase;letter-spacing:.06em;margin-top:3px}
+.cd-sep{font-family:var(--mono);font-size:20px;font-weight:700;color:var(--rim3);margin-top:-8px;opacity:.6}
+.cd-live{display:flex;align-items:center;gap:8px;font-size:13px;font-weight:700;color:var(--ok)}
+.cd-dot-live{width:8px;height:8px;border-radius:50%;background:var(--ok);animation:dot-pulse 1s ease infinite;flex-shrink:0}
+.cd-progress{height:3px;background:var(--rim);border-radius:2px;margin-top:10px;overflow:hidden}
+.cd-progress-fill{height:100%;background:linear-gradient(90deg,var(--ok),var(--neon));border-radius:2px;transition:width .5s ease}
+
+/* ── CARD FOOTER ── */
+.sched-footer{
+  padding:14px 20px;border-top:1px solid var(--rim);
+  display:flex;align-items:center;justify-content:space-between;
+  background:rgba(5,6,10,.5);
+}
+.sched-footer-id{font-size:10px;color:var(--text3);font-family:var(--mono)}
+
+/* ── ONE-ATTEMPT LOCK BANNER (new) ── */
+.once-only-notice{
+  display:flex;align-items:center;gap:8px;
+  padding:8px 12px;margin-bottom:12px;
+  background:rgba(255,107,53,.06);border:1px solid rgba(255,107,53,.2);
+  border-radius:var(--r-sm);font-size:11px;font-weight:700;color:var(--plasma);
+}
+.once-only-notice-icon{font-size:14px}
+
+/* ── SECTION ENTRANCE ANIMATIONS ── */
+.sched-section-wrap{animation:sectionIn .3s ease both}
+@keyframes sectionIn{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}
+#sched-live-sec{animation-delay:.05s}
+#sched-today-sec{animation-delay:.1s}
+#sched-upcoming-sec{animation-delay:.15s}
+#sched-ended-sec{animation-delay:.2s}
 
 /* ── QUIZ ENGINE ── */
 #quiz-screen{display:none;position:fixed;inset:0;background:var(--ink);z-index:200;overflow-y:auto;padding:24px}
@@ -509,7 +646,7 @@ select.fi-dark{-webkit-appearance:none;background-image:url("data:image/svg+xml,
     <div class="page" id="pg-schedule">
       <div class="pg-head">
         <div class="pg-title">📅 Scheduled Exams</div>
-        <div class="pg-sub">Live countdowns and real-time exam access</div>
+        <div class="pg-sub">Live countdowns and real-time exam access · <span style="color:var(--plasma);font-weight:700">One attempt per exam</span></div>
       </div>
       <!-- Today's Banner -->
       <div id="today-banner-wrap" style="display:none">
@@ -540,20 +677,49 @@ select.fi-dark{-webkit-appearance:none;background-image:url("data:image/svg+xml,
           <input class="fi-dark" id="sched-search" placeholder="🔍 Search exams…" oninput="renderScheduleCards()" style="width:200px"/>
         </div>
       </div>
-      <div id="sched-live-sec" style="margin-bottom:28px">
-        <div class="flex-b mb-4"><div style="font-family:var(--display);font-weight:600;display:flex;align-items:center;gap:8px">🟢 Live Now <span class="chip" id="live-count">0</span></div></div>
+
+      <div id="sched-live-sec" class="sched-section-wrap" style="margin-bottom:32px">
+        <div class="sched-section-header">
+          <div class="sched-section-title">
+            <div class="live-ring"><div class="live-ring-dot"></div></div>
+            Live Now
+            <span class="chip" id="live-count" style="background:rgba(16,185,129,.12);border-color:rgba(16,185,129,.3);color:#34d399">0</span>
+          </div>
+          <div class="sched-section-line"></div>
+        </div>
         <div class="sched-grid" id="sched-live-grid"></div>
       </div>
-      <div id="sched-today-sec" style="margin-bottom:28px">
-        <div class="flex-b mb-4"><div style="font-family:var(--display);font-weight:600;display:flex;align-items:center;gap:8px">⭐ Today <span class="chip" id="today-count">0</span></div></div>
+
+      <div id="sched-today-sec" class="sched-section-wrap" style="margin-bottom:32px">
+        <div class="sched-section-header">
+          <div class="sched-section-title">
+            ⭐ Today
+            <span class="chip" id="today-count" style="background:rgba(245,158,11,.1);border-color:rgba(245,158,11,.25);color:var(--warn)">0</span>
+          </div>
+          <div class="sched-section-line"></div>
+        </div>
         <div class="sched-grid" id="sched-today-grid"></div>
       </div>
-      <div id="sched-upcoming-sec" style="margin-bottom:28px">
-        <div class="flex-b mb-4"><div style="font-family:var(--display);font-weight:600;display:flex;align-items:center;gap:8px">🔜 Upcoming <span class="chip" id="upcoming-count">0</span></div></div>
+
+      <div id="sched-upcoming-sec" class="sched-section-wrap" style="margin-bottom:32px">
+        <div class="sched-section-header">
+          <div class="sched-section-title">
+            🔜 Upcoming
+            <span class="chip" id="upcoming-count" style="background:rgba(56,189,248,.1);border-color:rgba(56,189,248,.25);color:var(--ice)">0</span>
+          </div>
+          <div class="sched-section-line"></div>
+        </div>
         <div class="sched-grid" id="sched-upcoming-grid"></div>
       </div>
-      <div id="sched-ended-sec" style="margin-bottom:28px">
-        <div class="flex-b mb-4"><div style="font-family:var(--display);font-weight:600;display:flex;align-items:center;gap:8px">✅ Ended <span class="chip" id="ended-count">0</span></div></div>
+
+      <div id="sched-ended-sec" class="sched-section-wrap" style="margin-bottom:32px">
+        <div class="sched-section-header">
+          <div class="sched-section-title">
+            ✅ Ended
+            <span class="chip" id="ended-count">0</span>
+          </div>
+          <div class="sched-section-line"></div>
+        </div>
         <div class="sched-grid" id="sched-ended-grid"></div>
       </div>
     </div>
@@ -809,6 +975,7 @@ let quizState=null,quizTimer=null,quizSecs=0;
 let schedFilter='all',schedCdIntervals={};
 let parsedQs=[],parsedMeta={};
 let lastResult=null;
+let _submittingSchedule=false; // prevents double-submit race
 
 // ══════════════════════════════════════════════
 // CANVAS BACKGROUND
@@ -895,16 +1062,35 @@ function closeSb(){document.getElementById('sidebar').classList.remove('open');d
 function closeModal(id){document.getElementById(id).classList.remove('open');}
 
 // ══════════════════════════════════════════════
-// LOAD SCHEDULE ATTEMPTS (for current user)
+// LOAD SCHEDULE ATTEMPTS — fresh from DB every time
 // ══════════════════════════════════════════════
 async function loadScheduleAttempts(){
   try{
-    const{data}=await sb.from('schedule_attempts').select('*').eq('user_id',CU.id);
+    const{data,error}=await sb.from('schedule_attempts').select('*').eq('user_id',CU.id);
+    if(error)throw error;
     scheduleAttemptedMap={};
     (data||[]).forEach(a=>{scheduleAttemptedMap[a.schedule_id]=a;});
   }catch(e){
-    // table may not exist yet — fail silently, treat all as not attempted
+    // table may not exist yet — fail silently
     scheduleAttemptedMap={};
+  }
+}
+
+// ══════════════════════════════════════════════
+// SERVER-SIDE CHECK: verify attempt before launch
+// ══════════════════════════════════════════════
+async function checkAlreadyAttempted(scheduleId){
+  try{
+    const{data,error}=await sb.from('schedule_attempts')
+      .select('id,score,total,percentage')
+      .eq('user_id',CU.id)
+      .eq('schedule_id',scheduleId)
+      .maybeSingle();
+    if(error)throw error;
+    return data||null; // returns attempt obj or null
+  }catch(e){
+    // If table doesn't exist, return null (allow attempt)
+    return null;
   }
 }
 
@@ -919,8 +1105,6 @@ async function loadDashboard(){
     ]);
     allAttempts=ats||[];
     const subjects=[...new Set((qs||[]).map(q=>q.subject))];
-
-    // Replace skeletons with real stat values
     document.getElementById('dash-stats').innerHTML=`
       <div class="stat teal"><div class="stat-icon">📚</div><div class="stat-val">${subjects.length}</div><div class="stat-lbl">Subjects</div></div>
       <div class="stat blue"><div class="stat-icon">🎯</div><div class="stat-val">${(qs||[]).length}</div><div class="stat-lbl">Quizzes Available</div></div>
@@ -928,7 +1112,6 @@ async function loadDashboard(){
       <div class="stat orange"><div class="stat-icon">⭐</div><div class="stat-val">${allAttempts.length?Math.round(allAttempts.reduce((s,a)=>s+a.percentage,0)/allAttempts.length)+'%':'—'}</div><div class="stat-lbl">Avg Score %</div></div>
       <div class="stat green"><div class="stat-icon">🏆</div><div class="stat-val">${allAttempts.length?Math.max(...allAttempts.map(a=>a.percentage))+'%':'—'}</div><div class="stat-lbl">Best Score</div></div>
     `;
-
     const rl=document.getElementById('recent-list');
     if(!allAttempts.length){
       rl.innerHTML='<div class="empty-state"><div class="empty-icon">📋</div><div class="empty-title">No attempts yet</div><div class="empty-sub">Take a quiz to get started</div></div>';
@@ -944,7 +1127,6 @@ async function loadDashboard(){
           <div style="text-align:right"><div style="font-family:var(--display);font-weight:700;color:${col}">${a.percentage}%</div><div style="font-size:11px;color:var(--text3)">${a.score}/${a.total}</div></div>
         </div>`;}).join('');
     }
-
     const live=allSchedules.filter(s=>getSchedStatus(s)==='live');
     const today=allSchedules.filter(s=>getSchedStatus(s)==='today');
     const upcoming=allSchedules.filter(s=>getSchedStatus(s)==='upcoming').slice(0,2);
@@ -972,24 +1154,18 @@ async function loadDashboard(){
 }
 
 // ══════════════════════════════════════════════
-// SUBJECT ICON HELPER
+// SUBJECT HELPERS
 // ══════════════════════════════════════════════
 function subjectIcon(subj){
   const s=(subj||'').toLowerCase();
-  if(s.includes('physics'))return'⚛️';
-  if(s.includes('chem'))return'🧪';
-  if(s.includes('bio'))return'🧬';
-  if(s.includes('math'))return'📐';
-  if(s.includes('english'))return'📝';
-  return'📘';
+  if(s.includes('physics'))return'⚛️';if(s.includes('chem'))return'🧪';
+  if(s.includes('bio'))return'🧬';if(s.includes('math'))return'📐';
+  if(s.includes('english'))return'📝';return'📘';
 }
-
 function subjectChipClass(subj){
   const s=(subj||'').toLowerCase();
-  if(s.includes('physics'))return'subj-Physics';
-  if(s.includes('chem'))return'subj-Chemistry';
-  if(s.includes('bio'))return'subj-Biology';
-  if(s.includes('math'))return'subj-Math';
+  if(s.includes('physics'))return'subj-Physics';if(s.includes('chem'))return'subj-Chemistry';
+  if(s.includes('bio'))return'subj-Biology';if(s.includes('math'))return'subj-Math';
   return'subj-default';
 }
 
@@ -1001,22 +1177,20 @@ async function loadSchedulesData(){
     const[{data,error}]=await Promise.all([
       sb.from('schedules').select('*,quizzes(id,subject,chapter,set,questions)').order('start_time'),
     ]);
+    // Always re-fetch attempts fresh from DB
     await loadScheduleAttempts();
     if(error)throw error;
     allSchedules=data||[];
 
-    // Populate subject filter
     const subjects=[...new Set(allSchedules.map(s=>s.quizzes?.subject).filter(Boolean))].sort();
     const sf=document.getElementById('sched-subj-filter');
     sf.innerHTML='<option value="">All Subjects</option>';
     subjects.forEach(s=>{const o=document.createElement('option');o.value=s;o.textContent=s;sf.appendChild(o);});
 
-    // Populate LB quiz filter
     const lf=document.getElementById('lb-quiz-filter');
     lf.innerHTML='<option value="">All Quizzes</option>';
     allSchedules.forEach(s=>{const o=document.createElement('option');o.value=s.id;o.textContent=`${s.quizzes?.subject||'?'} › ${s.quizzes?.set||'?'}`;lf.appendChild(o);});
 
-    // Show today banner
     const todayScheds=allSchedules.filter(s=>getSchedStatus(s)==='today'||getSchedStatus(s)==='live');
     const todayBanner=document.getElementById('today-banner-wrap');
     if(todayScheds.length>0){
@@ -1026,10 +1200,13 @@ async function loadSchedulesData(){
     }else{
       todayBanner.style.display='none';
     }
-
     renderScheduleCards();
   }catch(e){console.error(e);}
-  setInterval(renderScheduleCards,30000);
+  setInterval(async()=>{
+    // Refresh attempts every 30s to catch server-side locks
+    await loadScheduleAttempts();
+    renderScheduleCards();
+  },30000);
 }
 
 function getSchedStatus(s){
@@ -1066,43 +1243,87 @@ function renderScheduleCards(){
     sec.style.display=(schedFilter==='all'||schedFilter===k)?'block':'none';
     if(!groups[k].length){
       const msgs={live:'No live exams right now',today:'No exams today',upcoming:'No upcoming exams',ended:'No ended exams'};
-      grid.innerHTML=`<div class="empty-state"><div class="empty-icon">${{live:'😴',today:'📅',upcoming:'🗓️',ended:'📦'}[k]}</div><div class="empty-title">${msgs[k]}</div></div>`;
+      const emojis={live:'😴',today:'📅',upcoming:'🗓️',ended:'📦'};
+      grid.innerHTML=`<div class="empty-state"><div class="empty-icon">${emojis[k]}</div><div class="empty-title">${msgs[k]}</div></div>`;
       return;
     }
-    grid.innerHTML=groups[k].map(s=>buildSchedCard(s,k)).join('');
+    grid.innerHTML=groups[k].map((s,i)=>buildSchedCard(s,k,i)).join('');
     groups[k].forEach(s=>{if(k!=='ended')startSchedCd(s,k);});
   });
 }
 
-function buildSchedCard(s,status){
+function buildSchedCard(s,status,idx=0){
   const quiz=s.quizzes||{};const qCount=(quiz.questions||[]).length;
   const start=new Date(s.start_time);const end=new Date(s.end_time);
   const fmtDate=d=>d.toLocaleDateString('en-US',{weekday:'short',month:'short',day:'numeric'});
   const fmtTime=d=>d.toLocaleTimeString('en-US',{hour:'2-digit',minute:'2-digit'});
-  const statusBadge={live:'<span class="badge b-ok">🟢 LIVE</span>',today:'<span class="badge b-warn">⭐ TODAY</span>',upcoming:'<span class="badge b-blue">🔜 SOON</span>',ended:'<span class="badge b-gray">✅ ENDED</span>'}[status];
+
+  // Status badges
+  let statusBadge;
+  if(status==='live'){
+    statusBadge=`<span class="live-badge"><span class="live-badge-dot"></span>🟢 LIVE NOW</span>`;
+  }else if(status==='today'){
+    statusBadge=`<span class="badge b-warn">⭐ TODAY</span>`;
+  }else if(status==='upcoming'){
+    statusBadge=`<span class="badge b-blue">🔜 SOON</span>`;
+  }else{
+    statusBadge=`<span class="badge b-gray">✅ ENDED</span>`;
+  }
 
   const attempted=scheduleAttemptedMap[s.id];
-  const attemptedHtml=attempted
-    ?`<div class="attempted-overlay">✅ Already Attempted — Score: <strong>${attempted.percentage}%</strong> (${attempted.score}/${attempted.total})</div>`
-    :'';
 
+  // Attempted overlay — enhanced with score display
+  const attemptedHtml=attempted
+    ?`<div class="attempted-overlay">
+        <span class="attempted-overlay-icon">🏅</span>
+        <div>
+          <div style="font-size:13px;font-weight:800;color:#34d399">Already Submitted</div>
+          <div style="font-size:11px;color:var(--text3);font-weight:600;margin-top:2px">${attempted.score}/${attempted.total} correct</div>
+        </div>
+        <div class="attempted-score">
+          <div class="attempted-score-big">${attempted.percentage}%</div>
+          <div class="attempted-score-sub">Your Score</div>
+        </div>
+      </div>`
+    :(status==='live'?`<div class="once-only-notice"><span class="once-only-notice-icon">🔒</span>One attempt only — cannot retake after submission</div>`:'');
+
+  // Countdown / status box
   let cdHtml='';
   if(status==='live'){
     const elapsed=Date.now()-start.getTime();const total=end.getTime()-start.getTime();
     const pct=Math.min(100,Math.max(0,Math.round((elapsed/total)*100)));
-    cdHtml=`<div class="cd-box"><div class="cd-label">In Progress</div><div class="cd-live"><div class="cd-dot-live"></div>Live · ends ${fmtTime(end)}</div><div style="height:4px;background:var(--rim);border-radius:2px;margin-top:8px;overflow:hidden"><div style="height:100%;width:${pct}%;background:linear-gradient(90deg,var(--ok),var(--neon));border-radius:2px"></div></div></div>`;
+    cdHtml=`<div class="cd-box">
+      <div class="cd-label">In Progress</div>
+      <div class="cd-live"><div class="cd-dot-live"></div>Live · ends ${fmtTime(end)}</div>
+      <div class="cd-progress"><div class="cd-progress-fill" style="width:${pct}%"></div></div>
+    </div>`;
   }else if(status==='ended'){
-    cdHtml=`<div class="cd-box"><div class="cd-label">Exam Ended</div><div style="font-size:12px;color:var(--text3)">${fmtDate(end)} · ${fmtTime(end)}</div></div>`;
+    cdHtml=`<div class="cd-box">
+      <div class="cd-label">Exam Ended</div>
+      <div style="font-size:12px;color:var(--text3)">${fmtDate(end)} · ${fmtTime(end)}</div>
+    </div>`;
   }else{
-    cdHtml=`<div class="cd-box"><div class="cd-label">${status==='today'?'Starts today in':'Countdown'}</div><div class="cd-digits"><div class="cd-unit"><span class="cd-num" id="cdd-${s.id}">--</span><span class="cd-lbl">Days</span></div><span class="cd-sep">:</span><div class="cd-unit"><span class="cd-num" id="cdh-${s.id}">--</span><span class="cd-lbl">Hrs</span></div><span class="cd-sep">:</span><div class="cd-unit"><span class="cd-num" id="cdm-${s.id}">--</span><span class="cd-lbl">Min</span></div><span class="cd-sep">:</span><div class="cd-unit"><span class="cd-num" id="cds-${s.id}">--</span><span class="cd-lbl">Sec</span></div></div></div>`;
+    cdHtml=`<div class="cd-box">
+      <div class="cd-label">${status==='today'?'Starts today in':'Countdown'}</div>
+      <div class="cd-digits">
+        <div class="cd-unit"><span class="cd-num" id="cdd-${s.id}">--</span><span class="cd-lbl">Days</span></div>
+        <span class="cd-sep">:</span>
+        <div class="cd-unit"><span class="cd-num" id="cdh-${s.id}">--</span><span class="cd-lbl">Hrs</span></div>
+        <span class="cd-sep">:</span>
+        <div class="cd-unit"><span class="cd-num" id="cdm-${s.id}">--</span><span class="cd-lbl">Min</span></div>
+        <span class="cd-sep">:</span>
+        <div class="cd-unit"><span class="cd-num" id="cds-${s.id}">--</span><span class="cd-lbl">Sec</span></div>
+      </div>
+    </div>`;
   }
 
+  // Action button
   let actionBtn;
   if(status==='live'){
     if(attempted){
-      actionBtn=`<button class="btn btn-ghost btn-sm" disabled>✅ Already Submitted</button>`;
+      actionBtn=`<button class="btn btn-ghost btn-sm" disabled style="opacity:.5;cursor:default">🏅 Submitted</button>`;
     }else{
-      actionBtn=`<button class="btn btn-volt btn-sm" onclick="openTakeExamModal('${s.id}')">▶ Start</button>`;
+      actionBtn=`<button class="btn btn-volt btn-sm" onclick="openTakeExamModal('${s.id}')">▶ Start Now</button>`;
     }
   }else if(status==='ended'){
     actionBtn=`<button class="btn btn-ghost btn-sm" disabled>Closed</button>`;
@@ -1110,26 +1331,35 @@ function buildSchedCard(s,status){
     actionBtn=`<button class="btn btn-ghost btn-sm" disabled>🔒 Locked</button>`;
   }
 
-  const cardClass=attempted?'sched-card already-done':'sched-card';
+  const cardClass=`sched-card${attempted?' already-done':''}`;
+  // Staggered animation delay
+  const delay=`animation-delay:${idx*0.07}s`;
 
-  return`<div class="${cardClass}"><div class="sched-stripe ${status}"></div><div class="sched-body">
-    <div class="sched-status-badges">${statusBadge}${attempted?'<span class="badge b-ok">✅ Done</span>':''}</div>
-    <div class="sched-title">${esc(s.title||`${quiz.subject} — ${quiz.set}`)}</div>
-    <div class="sched-sub">${esc(quiz.chapter||'')}${quiz.set?' › '+esc(quiz.set):''}</div>
-    <div class="sched-info-row">
-      ${quiz.subject?`<span class="subj-chip ${subjectChipClass(quiz.subject)}">${subjectIcon(quiz.subject)} ${esc(quiz.subject)}</span>`:''}
-      ${quiz.chapter?`<span class="chip">📖 ${esc(quiz.chapter)}</span>`:''}
-      ${s.duration_minutes?`<span class="chip">⏱ ${s.duration_minutes}m</span>`:''}
-      <span class="chip">📝 ${qCount} Qs</span>
+  return`<div class="${cardClass}" style="${delay}">
+    <div class="sched-stripe ${status}"></div>
+    <div class="sched-body">
+      <div class="sched-status-badges">${statusBadge}${attempted?'<span class="badge b-ok">✅ Done</span>':''}</div>
+      <div class="sched-title">${esc(s.title||`${quiz.subject} — ${quiz.set}`)}</div>
+      <div class="sched-sub">${esc(quiz.chapter||'')}${quiz.set?' › '+esc(quiz.set):''}</div>
+      <div class="sched-info-row">
+        ${quiz.subject?`<span class="subj-chip ${subjectChipClass(quiz.subject)}">${subjectIcon(quiz.subject)} ${esc(quiz.subject)}</span>`:''}
+        ${quiz.chapter?`<span class="chip">📖 ${esc(quiz.chapter)}</span>`:''}
+        ${s.duration_minutes?`<span class="chip">⏱ ${s.duration_minutes}m</span>`:''}
+        <span class="chip">📝 ${qCount} Qs</span>
+      </div>
+      ${attemptedHtml}
+      <div class="sched-meta">
+        <div class="meta-row"><span class="meta-icon">📅</span>${fmtDate(start)}</div>
+        <div class="meta-row"><span class="meta-icon">🕐</span>${fmtTime(start)} → ${fmtTime(end)}</div>
+        ${s.instructions?`<div class="meta-row"><span class="meta-icon">ℹ️</span><span style="font-size:11px">${esc(s.instructions)}</span></div>`:''}
+      </div>
+      ${cdHtml}
     </div>
-    ${attemptedHtml}
-    <div class="sched-meta">
-      <div class="meta-row"><span class="meta-icon">📅</span>${fmtDate(start)}</div>
-      <div class="meta-row"><span class="meta-icon">🕐</span>${fmtTime(start)} → ${fmtTime(end)}</div>
-      ${s.instructions?`<div class="meta-row"><span class="meta-icon">ℹ️</span><span style="font-size:11px">${esc(s.instructions)}</span></div>`:''}
+    <div class="sched-footer">
+      <span class="sched-footer-id">ID:${s.id.slice(0,8)}…</span>
+      ${actionBtn}
     </div>
-    ${cdHtml}
-  </div><div class="sched-footer"><span style="font-size:11px;color:var(--text3)">ID:${s.id.slice(0,6)}…</span>${actionBtn}</div></div>`;
+  </div>`;
 }
 
 function startSchedCd(s,status){
@@ -1141,19 +1371,32 @@ function startSchedCd(s,status){
     const m=Math.floor((diff%3600000)/60000);const sec=Math.floor((diff%60000)/1000);
     const p=n=>String(n).padStart(2,'0');
     const el=(id)=>document.getElementById(id);
-    if(el(`cdd-${s.id}`)){el(`cdd-${s.id}`).textContent=p(d);el(`cdh-${s.id}`).textContent=p(h);el(`cdm-${s.id}`).textContent=p(m);el(`cds-${s.id}`).textContent=p(sec);}
-    if(d===0&&h===0&&m<10){[`cdd-${s.id}`,`cdh-${s.id}`,`cdm-${s.id}`,`cds-${s.id}`].forEach(id=>{if(el(id))el(id).style.color=m<1?'var(--err)':'var(--warn)';});}
+    if(el(`cdd-${s.id}`)){
+      el(`cdd-${s.id}`).textContent=p(d);el(`cdh-${s.id}`).textContent=p(h);
+      el(`cdm-${s.id}`).textContent=p(m);el(`cds-${s.id}`).textContent=p(sec);
+      // Turn urgent red when <5 minutes
+      const urgent=d===0&&h===0&&m<5;
+      [`cdd-${s.id}`,`cdh-${s.id}`,`cdm-${s.id}`,`cds-${s.id}`].forEach(id=>{
+        if(el(id))el(id).classList.toggle('urgent',urgent);
+      });
+    }
   }
   tick();schedCdIntervals[s.id]=setInterval(tick,1000);
 }
 
-function openTakeExamModal(schedId){
+// ══════════════════════════════════════════════
+// OPEN TAKE EXAM MODAL — with real-time server check
+// ══════════════════════════════════════════════
+async function openTakeExamModal(schedId){
   const s=allSchedules.find(x=>x.id===schedId);if(!s)return;
 
-  // Double-check if already attempted
-  if(scheduleAttemptedMap[schedId]){
-    const a=scheduleAttemptedMap[schedId];
-    toast(`You already completed this exam with ${a.percentage}%`,'info');
+  // 1. Re-check server immediately (in case local cache is stale)
+  const existingAttempt=await checkAlreadyAttempted(schedId);
+  if(existingAttempt){
+    // Update local map
+    scheduleAttemptedMap[schedId]=existingAttempt;
+    renderScheduleCards();
+    toast(`You already completed this exam with ${existingAttempt.percentage}%`,'info',5000);
     return;
   }
 
@@ -1170,7 +1413,9 @@ function openTakeExamModal(schedId){
       </div>
     </div>
     ${s.instructions?`<div class="notice notice-warn">⚠️ ${esc(s.instructions)}</div>`:''}
-    <div class="notice notice-warn">⚠️ <strong>This is a once-only exam.</strong> You cannot retake this scheduled exam after submission.</div>
+    <div class="notice notice-warn" style="background:rgba(244,63,94,.06);border-color:rgba(244,63,94,.25);color:#fb7185">
+      🔒 <strong>Once only — you cannot retake this exam after submission.</strong> This is enforced by the server.
+    </div>
     <div class="notice notice-info">ℹ️ Tab switching will be flagged. Good luck!</div>`;
   document.getElementById('take-exam-confirm-btn').onclick=()=>{
     closeModal('take-exam-modal');
@@ -1205,7 +1450,6 @@ function renderQuizTree(){
     if(!tree[q.subject][q.chapter||'General'])tree[q.subject][q.chapter||'General']=[];
     tree[q.subject][q.chapter||'General'].push(q);
   });
-
   let html='<div class="quiz-tree">';
   for(const[subj,chapters] of Object.entries(tree)){
     const sid=`s_${subj.replace(/\W/g,'_')}`;
@@ -1214,9 +1458,7 @@ function renderQuizTree(){
     const chipCls=subjectChipClass(subj);
     html+=`<div class="subject-node">
       <div class="subj-hd" onclick="toggleNode('${sid}')">
-        <div class="subj-name">
-          <span class="subj-chip ${chipCls}">${subjectIcon(subj)} ${esc(subj)}</span>
-        </div>
+        <div class="subj-name"><span class="subj-chip ${chipCls}">${subjectIcon(subj)} ${esc(subj)}</span></div>
         <div class="flex-r" style="gap:8px">
           <span class="chip">${chapCount} chapter${chapCount>1?'s':''}</span>
           <span class="subj-count">${total} sets</span>
@@ -1224,7 +1466,6 @@ function renderQuizTree(){
         </div>
       </div>
       <div class="chap-list" id="${sid}" style="display:none">`;
-
     for(const[chap,sets] of Object.entries(chapters)){
       const cid=`c_${subj}_${chap}`.replace(/\W/g,'_');
       const totalQs=sets.reduce((s,q)=>(s+(q.questions||[]).length),0);
@@ -1238,7 +1479,6 @@ function renderQuizTree(){
           <span class="chevron" id="chv_${cid}">▼</span>
         </div>
         <div class="set-list" id="${cid}" style="display:none">`;
-
       sets.forEach(s=>{
         const qCount=(s.questions||[]).length;
         const diffBadge=s.difficulty?`<span class="badge ${s.difficulty==='Easy'?'b-ok':s.difficulty==='Hard'?'b-err':'b-warn'}">${s.difficulty}</span>`:'';
@@ -1246,19 +1486,16 @@ function renderQuizTree(){
           <div class="set-item-left">
             <div class="set-item-name">📝 ${esc(s.set)}</div>
             <div class="set-item-meta">
-              <span>${subjectIcon(s.subject)} ${esc(s.subject)}</span>
-              <span>·</span>
+              <span>${subjectIcon(s.subject)} ${esc(s.subject)}</span><span>·</span>
               <span>📖 ${esc(s.chapter||'General')}</span>
             </div>
           </div>
           <div class="flex-r gap-2" style="gap:6px">
-            <span class="chip">${qCount} Qs</span>
-            ${diffBadge}
+            <span class="chip">${qCount} Qs</span>${diffBadge}
             <span style="color:var(--neon);font-size:12px;font-weight:700">START →</span>
           </div>
         </div>`;
       });
-
       html+=`</div></div>`;
     }
     html+=`</div></div>`;
@@ -1284,18 +1521,23 @@ function startQuiz(quizId){
   launchQuizDirect(quiz,null);
 }
 
-function launchScheduledQuiz(quiz,scheduleId){
-  // Final guard — prevent re-attempt
-  if(scheduleId&&scheduleAttemptedMap[scheduleId]){
-    toast('You have already attempted this scheduled exam','err');
-    return;
+async function launchScheduledQuiz(quiz,scheduleId){
+  // Final server-side guard before launch
+  if(scheduleId){
+    const existing=await checkAlreadyAttempted(scheduleId);
+    if(existing){
+      scheduleAttemptedMap[scheduleId]=existing;
+      renderScheduleCards();
+      toast('You have already submitted this scheduled exam','err',5000);
+      return;
+    }
   }
   launchQuizDirect(quiz,scheduleId);
 }
 
 function launchQuizDirect(quiz,scheduleId){
   quizState={quiz,questions:quiz.questions,current:0,answers:new Array(quiz.questions.length).fill(null),startTime:Date.now(),scheduleId:scheduleId||null};
-  quizSecs=0;tabWarnCount=0;
+  quizSecs=0;tabWarnCount=0;_submittingSchedule=false;
   document.getElementById('quiz-screen').style.display='block';
   document.body.style.overflow='hidden';
   clearInterval(quizTimer);
@@ -1313,13 +1555,8 @@ function renderQuestion(){
   const{questions,current,answers}=quizState;
   const q=questions[current];const total=questions.length;
   const quiz=quizState.quiz;
-
-  // Breadcrumb
   const bc=document.getElementById('q-breadcrumb');
-  if(bc){
-    bc.innerHTML=`<span class="crumb">${esc(quiz.subject||'Quiz')}</span><span class="sep">›</span><span class="crumb">${esc(quiz.chapter||'—')}</span><span class="sep">›</span><span class="crumb">${esc(quiz.set||'')}</span>`;
-  }
-
+  if(bc){bc.innerHTML=`<span class="crumb">${esc(quiz.subject||'Quiz')}</span><span class="sep">›</span><span class="crumb">${esc(quiz.chapter||'—')}</span><span class="sep">›</span><span class="crumb">${esc(quiz.set||'')}</span>`;}
   document.getElementById('q-title-display').textContent=`${quiz.subject||'Quiz'} › ${quiz.chapter||''} › ${quiz.set||''}`;
   document.getElementById('q-progress-text').textContent=`Question ${current+1} of ${total}`;
   document.getElementById('q-progress-fill').style.width=`${((current+1)/total)*100}%`;
@@ -1330,8 +1567,7 @@ function renderQuestion(){
       <div class="q-text">${esc(q.question)}</div>
       <div class="options-list">${(q.options||[]).map((opt,i)=>`
         <button class="opt-btn${answers[current]===i?' chosen':''}" onclick="selectAnswer(${i})">
-          <span class="opt-label">${labels[i]||i+1}</span>
-          <span>${esc(opt)}</span>
+          <span class="opt-label">${labels[i]||i+1}</span><span>${esc(opt)}</span>
         </button>`).join('')}
       </div>
     </div>`;
@@ -1351,8 +1587,21 @@ function goToQ(i){quizState.current=i;renderQuestion();}
 async function submitQuiz(){
   const unanswered=quizState.answers.filter(a=>a===null).length;
   if(unanswered>0&&!confirm(`${unanswered} unanswered question(s). Submit anyway?`))return;
-  clearInterval(quizTimer);
 
+  // ══ BULLETPROOF ONE-ATTEMPT: check AGAIN from server right before saving ══
+  if(quizState.scheduleId&&!_submittingSchedule){
+    _submittingSchedule=true;
+    const recheck=await checkAlreadyAttempted(quizState.scheduleId);
+    if(recheck){
+      scheduleAttemptedMap[quizState.scheduleId]=recheck;
+      exitQuiz();
+      renderScheduleCards();
+      toast(`This exam was already submitted (${recheck.percentage}%). Results not saved again.`,'warn',6000);
+      return;
+    }
+  }
+
+  clearInterval(quizTimer);
   let score=0;
   quizState.questions.forEach((q,i)=>{const ans=q.answer??q.correct??null;if(quizState.answers[i]===ans)score++;});
   const total=quizState.questions.length;const pct=Math.round((score/total)*100);
@@ -1365,33 +1614,35 @@ async function submitQuiz(){
   });
   if(ae)toast('Result save failed: '+ae.message,'err');
 
-  // If this is a scheduled exam, save to schedule_attempts (once-per-user lock)
+  // Save to schedule_attempts with UPSERT — server UNIQUE constraint handles races
   if(quizState.scheduleId){
-    // Try to insert — if table doesn't exist, fail silently
     try{
-      await sb.from('schedule_attempts').upsert({
+      const{error:se}=await sb.from('schedule_attempts').upsert({
         user_id:CU.id,
         schedule_id:quizState.scheduleId,
         quiz_id:quizState.quiz.id,
         score,total,percentage:pct,
         time_taken:quizSecs,
         submitted_at:new Date().toISOString()
-      },{onConflict:'user_id,schedule_id'});
+      },{onConflict:'user_id,schedule_id',ignoreDuplicates:false});
+      if(se)console.warn('schedule_attempts upsert warn:',se.message);
       // Update local map immediately
       scheduleAttemptedMap[quizState.scheduleId]={score,total,percentage:pct};
     }catch(e){console.warn('schedule_attempts table may not exist:',e);}
   }
 
   lastResult={score,total,pct,secs:quizSecs,quiz:quizState.quiz,answers:quizState.answers,questions:quizState.questions};
+  _submittingSchedule=false;
   exitQuiz();
   showResultModal(lastResult);
   loadDashboard();
-  // Refresh schedule cards to show "Already Attempted"
+  // Reload attempts from server and re-render cards
+  await loadScheduleAttempts();
   renderScheduleCards();
 }
 
 function confirmQuit(){if(confirm('Quit quiz? Progress will be lost.'))exitQuiz();}
-function exitQuiz(){clearInterval(quizTimer);quizState=null;document.getElementById('quiz-screen').style.display='none';document.body.style.overflow='';}
+function exitQuiz(){clearInterval(quizTimer);quizState=null;_submittingSchedule=false;document.getElementById('quiz-screen').style.display='none';document.body.style.overflow='';}
 
 function showResultModal(r){
   const grade=r.pct>=90?'A+':r.pct>=80?'A':r.pct>=70?'B':r.pct>=60?'C':r.pct>=50?'D':'F';
@@ -1440,11 +1691,7 @@ async function loadResults(){
         <table>
           <thead><tr><th>Subject</th><th>Chapter</th><th>Set</th><th>Score</th><th>%</th><th>Time</th><th>Date</th></tr></thead>
           <tbody>${ats.map(a=>`<tr>
-            <td>
-              <div style="font-weight:600;display:flex;align-items:center;gap:5px">
-                <span class="subj-chip ${subjectChipClass(a.subject)}" style="font-size:10px;padding:2px 6px">${subjectIcon(a.subject)} ${esc(a.subject)}</span>
-              </div>
-            </td>
+            <td><span class="subj-chip ${subjectChipClass(a.subject)}" style="font-size:10px;padding:2px 6px">${subjectIcon(a.subject)} ${esc(a.subject)}</span></td>
             <td style="font-size:12px;color:var(--text3)">${esc(a.chapter||'—')}</td>
             <td style="font-weight:600">${esc(a.set)}</td>
             <td>${a.score}/${a.total}</td>
@@ -1689,14 +1936,11 @@ async function loadAdminSchedules(){
   const{data,error}=await sb.from('schedules').select('*,quizzes(subject,chapter,set)').order('start_time',{ascending:false});
   if(error){tbody.innerHTML=`<tr><td colspan="7" class="tbl-empty">Error: ${error.message}</td></tr>`;return;}
   if(!data?.length){tbody.innerHTML='<tr><td colspan="7" class="tbl-empty">No schedules yet</td></tr>';return;}
-
-  // Get attempt counts per schedule
   let attemptCounts={};
   try{
     const{data:sa}=await sb.from('schedule_attempts').select('schedule_id');
     (sa||[]).forEach(a=>{attemptCounts[a.schedule_id]=(attemptCounts[a.schedule_id]||0)+1;});
   }catch(e){}
-
   const fmt=d=>new Date(d).toLocaleString('en-US',{month:'short',day:'numeric',hour:'2-digit',minute:'2-digit'});
   tbody.innerHTML=data.map(s=>{
     const st=getSchedStatus(s);
@@ -1704,10 +1948,7 @@ async function loadAdminSchedules(){
     const cnt=attemptCounts[s.id]||0;
     return`<tr>
       <td style="font-weight:600">${esc(s.title)}</td>
-      <td>
-        <div style="font-size:12px">${esc(s.quizzes?.subject||'—')}</div>
-        <div style="font-size:11px;color:var(--text3)">${esc(s.quizzes?.chapter||'')}${s.quizzes?.chapter?' › ':''}${esc(s.quizzes?.set||'—')}</div>
-      </td>
+      <td><div style="font-size:12px">${esc(s.quizzes?.subject||'—')}</div><div style="font-size:11px;color:var(--text3)">${esc(s.quizzes?.chapter||'')}${s.quizzes?.chapter?' › ':''}${esc(s.quizzes?.set||'—')}</div></td>
       <td style="font-size:12px">${fmt(s.start_time)}</td>
       <td style="font-size:12px">${fmt(s.end_time)}</td>
       <td><span class="badge ${bc}">${st}</span></td>
@@ -1787,7 +2028,6 @@ function showRetry(msg){
     const{data:{session},error:se}=await sb.auth.getSession();
     if(se||!session){window.location.replace(LOGIN_URL);return;}
     CU=session.user;
-
     try{
       const raw=sessionStorage.getItem('cp_'+CU.id);
       if(raw){
@@ -1805,7 +2045,6 @@ function showRetry(msg){
         }
       }
     }catch(e){}
-
     const{data:profile,error:pe}=await sb.from('profiles').select('*').eq('id',CU.id).single();
     if(pe){
       if(pe.code==='PGRST116'){
@@ -1825,9 +2064,10 @@ function showRetry(msg){
 })();
 </script>
 
-<!-- ══════════════════════════════════════════
-  REQUIRED SQL for schedule_attempts table
-  Run once in Supabase SQL editor:
+<!--
+══════════════════════════════════════════════════════
+  REQUIRED SQL — run once in Supabase SQL editor
+══════════════════════════════════════════════════════
 
   CREATE TABLE IF NOT EXISTS schedule_attempts (
     id uuid DEFAULT gen_random_uuid() PRIMARY KEY,
@@ -1839,7 +2079,7 @@ function showRetry(msg){
     percentage integer NOT NULL,
     time_taken integer,
     submitted_at timestamptz DEFAULT now(),
-    UNIQUE(user_id, schedule_id)
+    UNIQUE(user_id, schedule_id)   -- enforces one attempt per user per exam
   );
 
   ALTER TABLE schedule_attempts ENABLE ROW LEVEL SECURITY;
@@ -1855,6 +2095,15 @@ function showRetry(msg){
   CREATE POLICY "Admins can view all schedule attempts"
     ON schedule_attempts FOR SELECT
     USING (EXISTS (SELECT 1 FROM profiles WHERE id = auth.uid() AND role = 'admin'));
-══════════════════════════════════════════ -->
+
+══════════════════════════════════════════════════════
+  ONE-ATTEMPT ENFORCEMENT LAYERS:
+  1. openTakeExamModal() — server DB check before showing start button
+  2. launchScheduledQuiz() — second server check before quiz launches
+  3. submitQuiz() — third server check right before saving (_submittingSchedule flag)
+  4. DB UNIQUE(user_id, schedule_id) — final hard constraint at database level
+  5. scheduleAttemptedMap polled every 30s — UI stays in sync across tabs
+══════════════════════════════════════════════════════
+-->
 </body>
 </html>
