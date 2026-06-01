@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -7,7 +6,7 @@
 <title>CEE Medic — Sign In</title>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <link href="https://fonts.googleapis.com/css2?family=Clash+Display:wght@400;500;600;700&family=Cabinet+Grotesk:wght@400;500;600;700;800&family=Fira+Code:wght@400;500&display=swap" rel="stylesheet"/>
-<style> 
+<style>
 :root{
   --ink:#05060a;--ink2:#0b0d14;--ink3:#10121c;
   --surface:#141720;--rim:#252a3d;--rim2:#2e3450;--rim3:#3a4168;
@@ -234,27 +233,51 @@ function checkStrength(input){
   const l=levels[Math.min(score,4)];fill.style.width=l.w;fill.style.background=l.c;
 }
 
-function showAuth(){
+function showAuth(msg){
   document.getElementById('loading-screen').style.display='none';
   document.getElementById('auth-wrap').style.display='block';
+  if(msg==='pending') toast('Your account is pending admin approval.','warn',7000);
+  if(msg==='blocked') toast('Your account has been blocked. Contact admin.','err',7000);
 }
 
-// ── Session check — runs immediately ──
+// Read ?msg= from URL if redirected from index
+(()=>{
+  const p=new URLSearchParams(location.search);
+  const m=p.get('msg');
+  if(m){history.replaceState({},'',location.pathname);/* clean URL */
+    // store msg, show after auth form renders
+    window._startMsg=m;
+  }
+})();
+
+// ── Session check — instant from localStorage, no network call ──
 (async()=>{
   try{
+    // getSession reads from localStorage — zero network, instant
     const{data:{session}}=await sb.auth.getSession();
     if(session){
-      // Already logged in — check profile status
-      const{data:profile}=await sb.from('profiles').select('status').eq('id',session.user.id).single();
+      // Check sessionStorage cache first (also instant)
+      const cached=sessionStorage.getItem('cp_'+session.user.id);
+      if(cached){
+        try{
+          const cp=JSON.parse(cached);
+          if(cp?.status==='approved'){
+            window.location.replace(APP_URL);
+            return;
+          }
+        }catch(e){}
+      }
+      // No cache — one network call to get profile
+      const{data:profile}=await sb.from('profiles').select('*').eq('id',session.user.id).single();
       if(profile?.status==='approved'){
-        // Redirect straight to the app, don't show login at all
+        sessionStorage.setItem('cp_'+session.user.id, JSON.stringify(profile));
         window.location.replace(APP_URL);
         return;
       }
     }
-  }catch(e){}
-  // No valid session — show the login form
-  showAuth();
+  }catch(e){console.error('Session check error',e);}
+  // No valid/approved session — show the login form
+  showAuth(window._startMsg);
 })();
 
 // ── Auth state listener (handles Google OAuth callback + password reset) ──
@@ -292,9 +315,10 @@ async function doLogin(){
   try{
     const{data,error}=await sb.auth.signInWithPassword({email,password:pass});
     if(error)throw error;
-    const{data:profile}=await sb.from('profiles').select('status').eq('id',data.user.id).single();
+    const{data:profile}=await sb.from('profiles').select('*').eq('id',data.user.id).single();
     if(profile?.status==='blocked'){toast('Account blocked. Contact admin.','err');await sb.auth.signOut();return;}
     if(profile?.status!=='approved'){toast('Account pending admin approval.','warn');await sb.auth.signOut();return;}
+    sessionStorage.setItem('cp_'+data.user.id, JSON.stringify(profile));
     window.location.replace(APP_URL);
   }catch(e){toast(e.message,'err');}
   finally{btn.disabled=false;btn.textContent='Sign In →';}
