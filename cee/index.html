@@ -736,6 +736,39 @@ Format 5: {"options":[{"id":"A","text":"..."}],"correctOption":"D"}'></textarea>
 </div>
 
 <!-- ════════════════ MODALS ════════════════ -->
+<!-- Action Choice Modal for Already Attempted Practice Sets -->
+<div class="modal-ov" id="choice-modal">
+  <div class="modal" style="max-width: 440px;">
+    <div class="modal-hd">
+      <div class="modal-title">Quiz Already Taken 🎯</div>
+      <button class="modal-x" onclick="closeModal('choice-modal')">✕</button>
+    </div>
+    <div style="font-size: 14px; color: var(--text2); line-height: 1.6; margin-bottom: 24px;">
+      You have already attempted <strong id="choice-modal-setname" style="color: var(--neon)">—</strong>. 
+      Would you like to start a brand new practice run, or review your performance and correct answers?
+    </div>
+    <div class="flex-r" style="flex-direction: column; gap: 10px;">
+      <button class="btn btn-neon btn-full" id="choice-btn-retake">🔄 Retake Practice Quiz</button>
+      <button class="btn btn-ghost btn-full" id="choice-btn-review">📖 View Solution Keys</button>
+    </div>
+  </div>
+</div>
+
+<!-- Immersive Custom Action Confirmation Modal (No browser alerts allowed) -->
+<div class="modal-ov" id="custom-confirm-modal">
+  <div class="modal" style="max-width: 420px;">
+    <div class="modal-hd">
+      <div class="modal-title" id="confirm-modal-title">Confirm Action</div>
+      <button class="modal-x" onclick="closeModal('custom-confirm-modal')">✕</button>
+    </div>
+    <div id="confirm-modal-body" style="font-size:14px; color:var(--text2); line-height:1.6; margin-bottom:24px;"></div>
+    <div class="flex-r" style="gap:12px">
+      <button class="btn btn-ghost btn-full" id="confirm-modal-cancel">Cancel</button>
+      <button class="btn btn-danger btn-full" id="confirm-modal-confirm">Confirm</button>
+    </div>
+  </div>
+</div>
+
 <!-- Result Modal -->
 <div class="modal-ov" id="result-modal">
   <div class="modal">
@@ -834,7 +867,7 @@ let activeReview=null; // Stores active review question filters & responses
 })();
 
 // ══════════════════════════════════════════════
-// TOAST
+// TOAST & CUSTOM CONFIRMATION MODALS (IFRAME SAFE)
 // ══════════════════════════════════════════════
 function toast(msg,type='info',dur=3500){
   const icons={ok:'✓',err:'✕',info:'ℹ',warn:'⚠'};
@@ -845,9 +878,44 @@ function toast(msg,type='info',dur=3500){
   setTimeout(()=>{el.classList.add('out');setTimeout(()=>el.remove(),300)},dur);
 }
 
+function showCustomConfirm(title, message, onConfirm, confirmBtnText = 'Confirm', isDanger = true) {
+  document.getElementById('confirm-modal-title').textContent = title;
+  document.getElementById('confirm-modal-body').textContent = message;
+  
+  const confirmBtn = document.getElementById('confirm-modal-confirm');
+  confirmBtn.textContent = confirmBtnText;
+  confirmBtn.className = isDanger ? 'btn btn-danger btn-full' : 'btn btn-neon btn-full';
+  
+  document.getElementById('confirm-modal-cancel').onclick = () => {
+    closeModal('custom-confirm-modal');
+  };
+  
+  confirmBtn.onclick = () => {
+    closeModal('custom-confirm-modal');
+    onConfirm();
+  };
+  
+  document.getElementById('custom-confirm-modal').classList.add('open');
+}
+
 async function doLogout(){
-  if(quizState){if(!confirm('Active quiz in progress. Quit and logout?'))return;}
-  exitQuiz();
+  if(quizState){
+    showCustomConfirm(
+      'Active Quiz Progress', 
+      'You are currently in the middle of a quiz. Logging out will discard all current progress. Proceed?',
+      async () => {
+        exitQuiz();
+        const uid=CU?.id;
+        await sb.auth.signOut();
+        if(uid)sessionStorage.removeItem('cp_'+uid);
+        CU=null;CP=null;
+        window.location.replace('https://ceemediconepal.xyz/cee/login.html');
+      },
+      'Proceed & Sign Out',
+      true
+    );
+    return;
+  }
   const uid=CU?.id;
   await sb.auth.signOut();
   if(uid)sessionStorage.removeItem('cp_'+uid);
@@ -969,7 +1037,7 @@ async function loadDashboard(){
 }
 
 // ══════════════════════════════════════════════
-// SCHEDULES (WITH ONE-TIME ATTEMPT RESTRICTION)
+// SCHEDULES
 // ══════════════════════════════════════════════
 async function loadSchedulesData(){
   try {
@@ -1043,7 +1111,7 @@ function buildSchedCard(s,status){
   const fmtDate=d=>d.toLocaleDateString('en-US',{weekday:'short',month:'short',day:'numeric'});
   const fmtTime=d=>d.toLocaleTimeString('en-US',{hour:'2-digit',minute:'2-digit'});
   
-  // Strict check: has the user already completed/attempted this scheduled quiz?
+  // Check attempt status
   const hasAttempted = allAttempts.some(a => a.quiz_id === quiz.id);
   
   let statusBadge = '';
@@ -1113,7 +1181,6 @@ function openTakeExamModal(schedId){
   const s=allSchedules.find(x=>x.id===schedId);if(!s)return;
   const quiz=s.quizzes||{};
   
-  // Extra safeguard check
   const hasAttempted = allAttempts.some(a => a.quiz_id === quiz.id);
   if(hasAttempted) {
     toast('You have already taken this exam! Each schedule can only be completed once.','warn');
@@ -1143,7 +1210,7 @@ function openTakeExamModal(schedId){
 }
 
 // ══════════════════════════════════════════════
-// QUIZ TREE
+// QUIZ TREE (retake multiple times support)
 // ══════════════════════════════════════════════
 async function loadQuizTree(){
   try{
@@ -1170,10 +1237,10 @@ function renderQuizTree(){
       html+=`<div class="chap-node"><div class="chap-hd" onclick="toggleNode('${cid}')"><span>📖 ${esc(chap)}</span><span class="chevron" id="chv_${cid}">▼</span></div><div class="set-list" id="${cid}" style="display:none">`;
       sets.forEach(s=>{
         const attempted = allAttempts.some(a => a.quiz_id === s.id);
-        const actionLabel = attempted ? 'REVIEW' : 'START';
-        const actionCls = attempted ? 'style="color:var(--pulse);font-weight:700"' : 'style="color:var(--neon);font-weight:700"';
+        const actionLabel = attempted ? 'PRACTICE' : 'START';
+        const actionCls = 'style="color:var(--neon);font-weight:700"';
         html+=`<div class="set-item" onclick="startQuiz('${s.id}')">
-          <span>📝 ${esc(s.set)} ${attempted ? '<span class="chip" style="margin-left:6px; background:rgba(168,85,247,0.15); border-color:rgba(168,85,247,0.3); color:var(--pulse)">Completed</span>' : ''}</span>
+          <span>📝 ${esc(s.set)} ${attempted ? '<span class="chip" style="margin-left:6px; background:rgba(0, 245, 212, 0.1); border-color:rgba(0, 245, 212, 0.2); color:var(--neon)">Taken</span>' : ''}</span>
           <div class="flex-r gap-2">
             <span class="chip">${(s.questions||[]).length} Qs</span>
             ${s.difficulty?`<span class="badge ${s.difficulty==='Easy'?'b-ok':s.difficulty==='Hard'?'b-err':'b-warn'}">${s.difficulty}</span>`:''}
@@ -1200,20 +1267,50 @@ function toggleNode(id){
 // QUIZ ENGINE
 // ══════════════════════════════════════════════
 function startQuiz(quizId){
-  // Check if they already attempted and just want to view solutions directly instead of restarting
-  const attempted = allAttempts.some(a => a.quiz_id === quizId);
-  if (attempted) {
-    openReviewDirect(quizId);
-    return;
-  }
   const quiz=allQuizzes.find(q=>q.id===quizId);
   if(!quiz){toast('Quiz not found','err');return;}
   if(!quiz.questions?.length){toast('This quiz has no questions','warn');return;}
-  launchQuizDirect(quiz);
+  
+  // Strict rule: Scheduled Exams are one-time-only attempts. 
+  // Regular quizzes can be taken multiple times.
+  const isScheduled = allSchedules.some(s => s.quiz_id === quizId);
+  const attempted = allAttempts.some(a => a.quiz_id === quizId);
+  
+  if (isScheduled) {
+    if (attempted) {
+      toast('This is a scheduled exam and was already completed. Loading solutions guide.', 'info');
+      openReviewDirect(quizId);
+      return;
+    }
+    const sched = allSchedules.find(s => s.quiz_id === quizId);
+    if (sched) {
+      openTakeExamModal(sched.id);
+    }
+    return;
+  }
+  
+  // For General practice: if already attempted, provide a choice to Retake or Review
+  if (attempted) {
+    document.getElementById('choice-modal-setname').textContent = `${quiz.subject} — ${quiz.set}`;
+    
+    document.getElementById('choice-btn-retake').onclick = () => {
+      closeModal('choice-modal');
+      launchQuizDirect(quiz);
+    };
+    
+    document.getElementById('choice-btn-review').onclick = () => {
+      closeModal('choice-modal');
+      openReviewDirect(quizId);
+    };
+    
+    document.getElementById('choice-modal').classList.add('open');
+  } else {
+    launchQuizDirect(quiz);
+  }
 }
 
 function launchQuizDirect(quiz){
-  // Enforce single-attempt schedule restriction on engine launch level as well
+  // Security lock for schedules
   const isScheduled = allSchedules.some(s => s.quiz_id === quiz.id);
   if (isScheduled && allAttempts.some(a => a.quiz_id === quiz.id)) {
     toast('You have already submitted an attempt for this scheduled exam!', 'err');
@@ -1271,15 +1368,55 @@ function qPrev(){if(quizState.current>0){quizState.current--;renderQuestion();}}
 function goToQ(i){quizState.current=i;renderQuestion();}
 function saveQProgress(){try{sessionStorage.setItem('qp',JSON.stringify({qid:quizState.quiz.id,answers:quizState.answers,current:quizState.current,secs:quizSecs}));}catch(e){}}
 
-async function submitQuiz(){
+function confirmQuit(){
+  showCustomConfirm(
+    'Discard Current Progress?',
+    'Are you sure you want to exit? Your progress in this quiz session will not be saved.',
+    () => { exitQuiz(); },
+    'Exit & Discard',
+    true
+  );
+}
+
+function submitQuiz(){
   const unanswered=quizState.answers.filter(a=>a===null).length;
-  if(unanswered>0&&!confirm(`${unanswered} unanswered question(s). Submit anyway?`))return;
+  if(unanswered>0) {
+    showCustomConfirm(
+      'Unanswered Questions Detected',
+      `You have ${unanswered} unanswered question(s). Submit current responses for scoring anyway?`,
+      () => { executeQuizSubmission(); },
+      'Submit Anyway',
+      false
+    );
+  } else {
+    showCustomConfirm(
+      'Submit Responses',
+      'Are you finished with all questions? Your answers will be submitted and scored.',
+      () => { executeQuizSubmission(); },
+      'Submit & End Exam',
+      false
+    );
+  }
+}
+
+async function executeQuizSubmission() {
   clearInterval(quizTimer);
   let score=0;
   quizState.questions.forEach((q,i)=>{const ans=q.answer??q.correct??null;if(quizState.answers[i]===ans)score++;});
   const total=quizState.questions.length;const pct=Math.round((score/total)*100);
   
-  const{error}=await sb.from('attempts').insert({user_id:CU.id,quiz_id:quizState.quiz.id,subject:quizState.quiz.subject,chapter:quizState.quiz.chapter||null,set:quizState.quiz.set,score,total,percentage:pct,time_taken:quizSecs});
+  const{error}=await sb.from('attempts').insert({
+    user_id:CU.id,
+    quiz_id:quizState.quiz.id,
+    subject:quizState.quiz.subject,
+    chapter:quizState.quiz.chapter||null,
+    set:quizState.quiz.set,
+    score,
+    total,
+    percentage:pct,
+    time_taken:quizSecs
+  });
+  
   if(error) {
     toast('Result save failed: '+error.message,'err');
   } else {
@@ -1288,7 +1425,6 @@ async function submitQuiz(){
   
   lastResult={score,total,pct,secs:quizSecs,quiz:quizState.quiz,answers:quizState.answers,questions:quizState.questions};
   
-  // Cache the complete answer review details locally so they can inspect their personal incorrect choices later
   try {
     localStorage.setItem(`review_${quizState.quiz.id}`, JSON.stringify({
       answers: quizState.answers,
@@ -1299,13 +1435,13 @@ async function submitQuiz(){
       timestamp: Date.now()
     }));
   } catch(e) {
-    console.warn("Storage quota limit reached, review answers saved in memory only", e);
+    console.warn("Storage limits triggered, reviews saved in memory.", e);
   }
   
   sessionStorage.removeItem('qp');
   exitQuiz();
   
-  // Update attempts cache list
+  // Cache attempt dynamically
   allAttempts.unshift({
     user_id: CU.id,
     quiz_id: lastResult.quiz.id,
@@ -1321,10 +1457,9 @@ async function submitQuiz(){
   
   showResultModal(lastResult);
   loadDashboard();
-  loadSchedulesData(); // refresh scheduled views
+  loadSchedulesData();
 }
 
-function confirmQuit(){if(confirm('Quit quiz? Progress will be lost.'))exitQuiz();}
 function exitQuiz(){clearInterval(quizTimer);quizState=null;document.getElementById('quiz-screen').style.display='none';document.body.style.overflow='';}
 
 function showResultModal(r){
@@ -1348,7 +1483,6 @@ function showResultModal(r){
       <div class="result-stat"><div class="result-stat-val">${Math.floor(r.secs/60)}m ${r.secs%60}s</div><div class="result-stat-lbl">Time</div></div>
     </div>`;
     
-  // Wire solutions button
   document.getElementById('btn-result-review').onclick = () => {
     closeModal('result-modal');
     openReviewScreen(r.quiz, { answers: r.answers, score: r.score, total: r.total, pct: r.pct, secs: r.secs });
@@ -1357,14 +1491,12 @@ function showResultModal(r){
 }
 
 // ══════════════════════════════════════════════
-// NEW FEATURES: SOLUTIONS & REVIEW ENGINE
+// SOLUTIONS & EXPLANATIONS GUIDE
 // ══════════════════════════════════════════════
 async function openReviewDirect(quizId) {
-  // 1. Check loaded quizzes cache
   let quiz = allQuizzes.find(q => q.id === quizId);
   
   if (!quiz) {
-    // Silently try fetching from schedule quizzes
     const schedMatch = allSchedules.find(s => s.quizzes?.id === quizId);
     if (schedMatch?.quizzes) {
       quiz = { id: schedMatch.quizzes.id, ...schedMatch.quizzes };
@@ -1372,16 +1504,15 @@ async function openReviewDirect(quizId) {
   }
   
   if (!quiz) {
-    toast('Loading solutions from server...', 'info');
+    toast('Retrieving complete solutions keys from server...', 'info');
     const { data, error } = await sb.from('quizzes').select('*').eq('id', quizId).single();
     if (error || !data) {
-      toast('Failed to load solutions key: ' + (error?.message || 'Quiz not found'), 'err');
+      toast('Failed to load solutions map: ' + (error?.message || 'Not found'), 'err');
       return;
     }
     quiz = data;
   }
   
-  // 2. Retrieve personal answers cache if available
   let cachedUserReview = null;
   const rawRev = localStorage.getItem(`review_${quizId}`);
   if (rawRev) {
@@ -1389,11 +1520,10 @@ async function openReviewDirect(quizId) {
       cachedUserReview = JSON.parse(rawRev);
     } catch(e){}
   } else {
-    // If local storage doesn't exist, search the attempts metadata
     const matchAttempt = allAttempts.find(a => a.quiz_id === quizId);
     if (matchAttempt) {
       cachedUserReview = {
-        answers: [], // will gracefully display master answers key
+        answers: [], 
         score: matchAttempt.score,
         total: matchAttempt.total,
         pct: matchAttempt.percentage,
@@ -1408,9 +1538,8 @@ async function openReviewDirect(quizId) {
 function openReviewScreen(quiz, userReview) {
   activeReview = { quiz, userReview, activeFilter: 'all' };
   
-  // Render Title Info
   document.getElementById('rev-title-display').textContent = `${esc(quiz.subject)} › ${esc(quiz.set)}`;
-  document.getElementById('rev-subtitle-display').textContent = esc(quiz.chapter || 'Practice Solutions Guide');
+  document.getElementById('rev-subtitle-display').textContent = esc(quiz.chapter || 'Detailed Practice Solutions Guide');
   
   const statsBar = document.getElementById('rev-stats-bar');
   if (userReview) {
@@ -1421,10 +1550,9 @@ function openReviewScreen(quiz, userReview) {
     document.getElementById('rev-stat-score').textContent = `${userReview.score} / ${userReview.total}`;
     document.getElementById('rev-stat-time').textContent = userReview.secs ? `${Math.floor(userReview.secs/60)}m ${userReview.secs%60}s` : '—';
   } else {
-    statsBar.style.display = 'none'; // Master Key Study Guide mode
+    statsBar.style.display = 'none'; 
   }
   
-  // Reset active filter button styling
   document.querySelectorAll('#rev-filter-tabs .admin-tab').forEach(t => {
     t.classList.toggle('act', t.textContent.toLowerCase().includes('all'));
   });
@@ -1462,7 +1590,7 @@ function renderReviewQuestions() {
   });
   
   if (!filteredQs.length) {
-    qList.innerHTML = `<div class="empty-state"><div class="empty-icon">📂</div><div class="empty-title">No questions matches filter</div></div>`;
+    qList.innerHTML = `<div class="empty-state"><div class="empty-icon">📂</div><div class="empty-title">No questions matching filter rules</div></div>`;
     return;
   }
   
@@ -1479,7 +1607,7 @@ function renderReviewQuestions() {
           ${hasPersonalAns ? (isCorrect 
             ? '<span class="review-badge ok">✓ Correct</span>' 
             : '<span class="review-badge err">✕ Incorrect</span>') 
-            : '<span class="review-badge" style="background:var(--rim); color:var(--text3)">Master Key</span>'}
+            : '<span class="review-badge" style="background:var(--rim); color:var(--text3)">Solutions Guide</span>'}
         </div>
         <div class="q-text" style="margin-bottom:16px">${esc(q.question)}</div>
         
@@ -1505,11 +1633,10 @@ function renderReviewQuestions() {
           }).join('')}
         </div>
         
-        <!-- Explanation panel rendering -->
         <div class="explanation-box">
           <div class="explanation-hd">💡 Explanation & Rationales</div>
           <div class="explanation-body">
-            ${q.explanation ? esc(q.explanation) : `<span style="color:var(--text3)">The correct answer is Option ${labels[correctIdx]} based on syllabus guidelines. No further custom rationale uploaded.</span>`}
+            ${q.explanation ? esc(q.explanation) : `<span style="color:var(--text3)">The correct choice is Option ${labels[correctIdx]}. Detailed rationale was not structured by authors.</span>`}
           </div>
         </div>
       </div>
@@ -1597,7 +1724,7 @@ async function loadLeaderboard(){
 }
 
 // ══════════════════════════════════════════════
-// TAB DETECTION
+// TAB SWITCH VISIBILITY DETECTION
 // ══════════════════════════════════════════════
 let tabWarnCount=0;
 function setupTabDetection(){
@@ -1605,7 +1732,7 @@ function setupTabDetection(){
     if(!quizState||!document.hidden)return;
     tabWarnCount++;
     const b=document.getElementById('tab-warn');
-    b.textContent=`⚠️ Tab switch ${tabWarnCount}/3 detected — this is being recorded`;
+    b.textContent=`⚠️ Tab switch ${tabWarnCount}/3 detected — focus violation logged`;
     b.style.display='block';
     toast(`Tab switch warning ${tabWarnCount}/3`,'warn');
     setTimeout(()=>b.style.display='none',4000);
@@ -1613,7 +1740,7 @@ function setupTabDetection(){
 }
 
 // ══════════════════════════════════════════════
-// ADMIN
+// ADMIN CONTROL PANEL
 // ══════════════════════════════════════════════
 function switchAdminTab(tab,btn){
   document.querySelectorAll('#admin-main-tabs .admin-tab').forEach(t=>t.classList.remove('act'));
@@ -1648,10 +1775,9 @@ async function loadAdminStats(){
   }catch(e){}
 }
 
-// ─── Parse JSON (all 5 formats) ───
 function detectAndParse(raw){
   let data;
-  try{data=JSON.parse(raw);}catch(e){throw new Error('Invalid JSON: '+e.message);}
+  try{data=JSON.parse(raw);}catch(e){throw new Error('Invalid JSON structure: '+e.message);}
   function normalizeQ(q){
     let opts=q.options||[];
     if(opts.length&&typeof opts[0]==='object'&&opts[0].text)opts=opts.map(o=>o.text);
@@ -1659,22 +1785,17 @@ function detectAndParse(raw){
     if(typeof correct==='string'){const li='ABCDE'.indexOf(correct.toUpperCase());correct=li>=0?li:parseInt(correct)||0;}
     return{question:q.question||'',options:opts,answer:correct,explanation:q.explanation||''};
   }
-  // F5: single with correctOption as letter
   if(data.correctOption!==undefined&&data.options&&Array.isArray(data.options)&&data.options[0]?.id){
     const opts=data.options.map(o=>o.text);const c='ABCDE'.indexOf(data.correctOption.toUpperCase());
     return{questions:[{question:data.question,options:opts,answer:c>=0?c:0,explanation:data.explanation||''}],meta:{subject:data.subject||'',chapter:data.chapter||'',set:''}};
   }
-  // F1: array
   if(Array.isArray(data))return{questions:data.map(normalizeQ),meta:{subject:'',chapter:'',set:''}};
-  // F4: questions as object
   if(data.questions&&!Array.isArray(data.questions)&&typeof data.questions==='object')
     return{questions:Object.values(data.questions).map(normalizeQ),meta:{subject:data.subject||'',chapter:data.chapter||data.setId||'',set:data.title||data.setId||''}};
-  // F2/F3: questions array
   if(data.questions&&Array.isArray(data.questions))
     return{questions:data.questions.map(normalizeQ),meta:{subject:data.subject||'',chapter:data.chapter||'',set:data.set||data.setId||data.examTitle||''}};
-  // Single
   if(data.question&&data.options)return{questions:[normalizeQ(data)],meta:{subject:'',chapter:'',set:''}};
-  throw new Error('Unrecognized format');
+  throw new Error('Format unrecognized');
 }
 
 function parseAdminJSON(){
@@ -1688,7 +1809,7 @@ function parseAdminJSON(){
     if(meta.set&&!document.getElementById('up-set').value)document.getElementById('up-set').value=meta.set;
     const pre=document.getElementById('parse-preview-area');pre.style.display='block';
     const labels=['A','B','C','D','E'];
-    document.getElementById('parse-summary-info').innerHTML=`<div style="display:flex;gap:8px;flex-wrap:wrap"><span class="chip" style="color:var(--neon);border-color:rgba(0,245,212,.3)">✅ ${questions.length} questions</span>${meta.subject?`<span class="chip">📘 ${esc(meta.subject)}</span>`:''}${meta.chapter?`<span class="chip">📖 ${esc(meta.chapter)}</span>`:''}${meta.set?`<span class="chip">📝 ${esc(meta.set)}</span>`:''}</div>`;
+    document.getElementById('parse-summary-info').innerHTML=`<div style="display:flex;gap:8px;flex-wrap:wrap"><span class="chip" style="color:var(--neon);border-color:rgba(0,245,212,.3)">✅ ${questions.length} questions parsed</span>${meta.subject?`<span class="chip">📘 ${esc(meta.subject)}</span>`:''}${meta.chapter?`<span class="chip">📖 ${esc(meta.chapter)}</span>`:''}${meta.set?`<span class="chip">📝 ${esc(meta.set)}</span>`:''}</div>`;
     document.getElementById('parse-preview-content').innerHTML=questions.slice(0,4).map((q,i)=>`
       <div style="padding:10px;background:var(--ink2);border-radius:var(--r-sm);margin-bottom:6px;font-size:12px">
         <div style="font-weight:600;margin-bottom:6px;color:var(--text)">Q${i+1}: ${esc(q.question)}</div>
@@ -1773,11 +1894,18 @@ async function saveEditQuiz(){
   toast('Quiz updated','ok');closeModal('edit-quiz-modal');loadAdminQuizzes();loadQuizTree();
 }
 
-async function deleteQuiz(id){
-  if(!confirm('Delete this quiz set?'))return;
-  const{error}=await sb.from('quizzes').delete().eq('id',id);
-  if(error){toast('Delete failed: '+error.message,'err');return;}
-  toast('Quiz deleted','ok');loadAdminQuizzes();loadAdminStats();
+function deleteQuiz(id){
+  showCustomConfirm(
+    'Delete Quiz Set',
+    'Are you sure you want to permanently delete this quiz set? This action cannot be undone.',
+    async () => {
+      const{error}=await sb.from('quizzes').delete().eq('id',id);
+      if(error){toast('Delete failed: '+error.message,'err');return;}
+      toast('Quiz deleted','ok');loadAdminQuizzes();loadQuizTree();loadAdminStats();
+    },
+    'Permanently Delete',
+    true
+  );
 }
 
 // ─── Admin Schedule ───
@@ -1825,11 +1953,18 @@ async function createSchedule(){
   loadAdminSchedules();loadSchedulesData();loadDashboard();
 }
 
-async function deleteSched(id){
-  if(!confirm('Delete this schedule?'))return;
-  const{error}=await sb.from('schedules').delete().eq('id',id);
-  if(error){toast('Failed: '+error.message,'err');return;}
-  toast('Deleted','ok');loadAdminSchedules();loadSchedulesData();
+function deleteSched(id){
+  showCustomConfirm(
+    'Delete Schedule',
+    'Are you sure you want to delete this schedule? This will immediately lock users out of taking the test under this schedule block.',
+    async () => {
+      const{error}=await sb.from('schedules').delete().eq('id',id);
+      if(error){toast('Failed: '+error.message,'err');return;}
+      toast('Deleted','ok');loadAdminSchedules();loadSchedulesData();loadDashboard();
+    },
+    'Confirm Delete',
+    true
+  );
 }
 
 async function loadAdminUsers(){
@@ -1851,7 +1986,7 @@ async function loadAdminUsers(){
   </tr>`).join('');
 }
 
-async function setUStatus(uid,status){const{error}=await sb.from('profiles').update({status}).eq('id',uid);if(error){toast(error.message,'err');return;}toast(`User ${status}`,'ok');loadAdminUsers();loadAdminStats();}
+async function setUStatus(uid,status){const{error}=await sb.from('profiles').update({status}).eq('id',uid);if(error){toast(error.message,'err');return;}toast(`User status updated`,'ok');loadAdminUsers();loadAdminStats();}
 async function setURole(uid,role){const{error}=await sb.from('profiles').update({role}).eq('id',uid);if(error){toast(error.message,'err');return;}toast(`Role → ${role}`,'ok');loadAdminUsers();}
 
 // ══════════════════════════════════════════════
@@ -1860,7 +1995,7 @@ async function setURole(uid,role){const{error}=await sb.from('profiles').update(
 function esc(s){if(s==null)return'';return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
 
 // ══════════════════════════════════════════════
-// STARTUP — auto-detect session, load dashboard
+// SESSION DETECTOR & LAUNCHPAD
 // ══════════════════════════════════════════════
 const LOGIN_URL='https://ceemediconepal.xyz/cee/login.html';
 
