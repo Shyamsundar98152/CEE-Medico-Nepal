@@ -1,0 +1,372 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+<title>CEE Medic — Sign In</title>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<link href="https://fonts.googleapis.com/css2?family=Clash+Display:wght@400;500;600;700&family=Cabinet+Grotesk:wght@400;500;600;700;800&family=Fira+Code:wght@400;500&display=swap" rel="stylesheet"/>
+<style> 
+:root{
+  --ink:#05060a;--ink2:#0b0d14;--ink3:#10121c;
+  --surface:#141720;--rim:#252a3d;--rim2:#2e3450;--rim3:#3a4168;
+  --neon:#00f5d4;--neon2:#00c9ae;--ice:#38bdf8;--ice2:#0ea5e9;
+  --pulse:#a855f7;--warn:#f59e0b;--err:#f43f5e;--ok:#10b981;
+  --text:#e2e8f8;--text2:#8892b8;--text3:#4a5478;
+  --font:'Cabinet Grotesk',sans-serif;
+  --display:'Clash Display',sans-serif;
+  --r:14px;--r-sm:8px;--r-lg:20px;--r-xl:28px;
+  --glow:0 0 20px rgba(0,245,212,.3);
+  --sh-lg:0 12px 60px rgba(0,0,0,.8);
+  --tr:.18s cubic-bezier(.4,0,.2,1);
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth}
+body{font-family:var(--font);background:var(--ink);color:var(--text);min-height:100vh;overflow-x:hidden;display:flex;align-items:center;justify-content:center;padding:20px}
+h1,h2,h3{font-family:var(--display)}
+button,input{font-family:var(--font)}
+::-webkit-scrollbar{width:4px}
+::-webkit-scrollbar-track{background:var(--ink2)}
+::-webkit-scrollbar-thumb{background:var(--rim2);border-radius:2px}
+::selection{background:rgba(0,245,212,.2);color:var(--neon)}
+
+#bg-canvas{position:fixed;inset:0;z-index:0;pointer-events:none;opacity:.4}
+
+/* Loading overlay */
+#loading-screen{position:fixed;inset:0;background:var(--ink);z-index:999;display:flex;align-items:center;justify-content:center;flex-direction:column;gap:16px}
+.load-logo{font-family:var(--display);font-size:32px;font-weight:700;background:linear-gradient(135deg,var(--neon),var(--ice));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+.load-spin{width:28px;height:28px;border:3px solid rgba(0,245,212,.2);border-top-color:var(--neon);border-radius:50%;animation:sp .6s linear infinite}
+@keyframes sp{to{transform:rotate(360deg)}}
+
+/* Toast */
+#toast-wrap{position:fixed;top:20px;right:20px;z-index:9999;display:flex;flex-direction:column;gap:8px;pointer-events:none}
+.toast{display:flex;align-items:center;gap:10px;padding:12px 18px;border-radius:var(--r-sm);font-size:13px;font-weight:600;min-width:260px;pointer-events:all;animation:tIn .3s ease;border:1px solid;backdrop-filter:blur(12px)}
+.toast.ok{background:rgba(16,185,129,.12);border-color:rgba(16,185,129,.4);color:#34d399}
+.toast.err{background:rgba(244,63,94,.12);border-color:rgba(244,63,94,.4);color:#fb7185}
+.toast.info{background:rgba(0,245,212,.08);border-color:rgba(0,245,212,.3);color:var(--neon)}
+.toast.warn{background:rgba(245,158,11,.1);border-color:rgba(245,158,11,.35);color:#fbbf24}
+.toast.out{animation:tOut .3s ease forwards}
+@keyframes tIn{from{opacity:0;transform:translateX(40px)}to{opacity:1;transform:none}}
+@keyframes tOut{to{opacity:0;transform:translateX(40px)}}
+
+/* Auth */
+.auth-wrap{width:100%;max-width:440px;animation:authIn .6s ease;position:relative;z-index:10}
+@keyframes authIn{from{opacity:0;transform:translateY(24px)}to{opacity:1;transform:none}}
+.auth-logo-area{text-align:center;margin-bottom:32px}
+.auth-logo{font-family:var(--display);font-size:38px;font-weight:700;letter-spacing:-.5px;background:linear-gradient(135deg,var(--neon),var(--ice));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+.auth-logo-sub{font-size:13px;color:var(--text3);margin-top:4px;letter-spacing:.08em;text-transform:uppercase}
+.auth-card{background:rgba(20,23,32,.85);border:1px solid var(--rim);border-radius:var(--r-xl);padding:36px;backdrop-filter:blur(24px);box-shadow:var(--sh-lg),inset 0 1px 0 rgba(255,255,255,.04)}
+.auth-panel{display:none;animation:panelIn .25s ease}
+.auth-panel.active{display:block}
+@keyframes panelIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+.auth-tabs{display:flex;background:var(--ink2);border:1px solid var(--rim);border-radius:var(--r);padding:4px;margin-bottom:28px;gap:3px}
+.auth-tab{flex:1;padding:9px;border:none;background:transparent;color:var(--text3);font-size:14px;font-weight:600;border-radius:10px;cursor:pointer;transition:var(--tr);font-family:var(--font)}
+.auth-tab.active{background:linear-gradient(135deg,rgba(0,245,212,.2),rgba(56,189,248,.15));color:var(--neon);border:1px solid rgba(0,245,212,.3);box-shadow:0 0 12px rgba(0,245,212,.15)}
+.fg{margin-bottom:16px}
+.fl{display:block;font-size:12px;font-weight:700;color:var(--text3);margin-bottom:7px;letter-spacing:.06em;text-transform:uppercase}
+.fi{width:100%;padding:12px 14px;background:rgba(10,12,20,.8);border:1px solid var(--rim);border-radius:var(--r-sm);color:var(--text);font-size:14px;outline:none;transition:var(--tr)}
+.fi:focus{border-color:var(--neon);box-shadow:0 0 0 3px rgba(0,245,212,.1),var(--glow)}
+.fi::placeholder{color:var(--text3)}
+.fi-pw{position:relative}
+.fi-pw input{padding-right:44px}
+.pw-toggle{position:absolute;right:12px;top:50%;transform:translateY(-50%);background:none;border:none;color:var(--text3);cursor:pointer;font-size:16px;padding:4px}
+.pw-toggle:hover{color:var(--neon)}
+.btn-primary{width:100%;padding:13px;background:linear-gradient(135deg,var(--neon2),var(--ice2));border:none;border-radius:var(--r);color:var(--ink);font-size:15px;font-weight:800;cursor:pointer;transition:var(--tr);letter-spacing:.01em;font-family:var(--font);margin-top:4px}
+.btn-primary:hover{transform:translateY(-2px);box-shadow:0 8px 24px rgba(0,245,212,.4)}
+.btn-primary:disabled{opacity:.5;cursor:not-allowed;transform:none;box-shadow:none}
+.btn-google{width:100%;padding:12px;background:rgba(255,255,255,.05);border:1px solid var(--rim2);border-radius:var(--r);color:var(--text);font-size:14px;font-weight:600;cursor:pointer;transition:var(--tr);display:flex;align-items:center;justify-content:center;gap:10px;font-family:var(--font);margin-bottom:16px}
+.btn-google:hover{background:rgba(255,255,255,.09);border-color:var(--rim3)}
+.auth-divider{display:flex;align-items:center;gap:12px;margin:16px 0;color:var(--text3);font-size:12px;font-weight:600;letter-spacing:.06em}
+.auth-divider::before,.auth-divider::after{content:'';flex:1;height:1px;background:var(--rim)}
+.auth-link{background:none;border:none;color:var(--neon);font-size:13px;cursor:pointer;font-family:var(--font);font-weight:600;text-decoration:underline;text-underline-offset:3px;padding:0}
+.auth-link:hover{color:var(--neon2)}
+.auth-note{text-align:center;font-size:12px;color:var(--text3);margin-top:16px}
+.strength-bar{height:3px;border-radius:2px;margin-top:6px;background:var(--rim);overflow:hidden;transition:var(--tr)}
+.strength-fill{height:100%;border-radius:2px;transition:var(--tr)}
+.notice{display:flex;align-items:flex-start;gap:8px;padding:11px 14px;border-radius:var(--r-sm);font-size:13px;border:1px solid;margin-bottom:14px;line-height:1.5}
+.notice-info{background:rgba(0,245,212,.05);border-color:rgba(0,245,212,.2);color:var(--neon)}
+.spin{display:inline-block;width:14px;height:14px;border:2px solid rgba(0,245,212,.25);border-top-color:var(--neon);border-radius:50%;animation:sp .5s linear infinite}
+
+/* Password reset panel */
+#reset-panel{display:none;position:fixed;inset:0;background:var(--ink);z-index:100;align-items:center;justify-content:center;padding:20px}
+#reset-panel.show{display:flex}
+</style>
+</head>
+<body>
+
+<canvas id="bg-canvas"></canvas>
+<div id="toast-wrap"></div>
+
+<!-- Loading screen shown while checking session -->
+<div id="loading-screen">
+  <div class="load-logo">CEE Medic</div>
+  <div class="load-spin"></div>
+</div>
+
+<!-- Auth UI (hidden until session check passes) -->
+<div class="auth-wrap" id="auth-wrap" style="display:none">
+  <div class="auth-logo-area">
+    <div class="auth-logo">CEE Medic Nepal</div>
+    <div class="auth-logo-sub">Next-Gen MCQ Examination Platform</div>
+  </div>
+  <div class="auth-card">
+
+    <div class="auth-tabs">
+      <button class="auth-tab active" id="tab-login" onclick="switchTab('login')">Sign In</button>
+      <button class="auth-tab" id="tab-signup" onclick="switchTab('signup')">Register</button>
+      <button class="auth-tab" id="tab-forgot" onclick="switchTab('forgot')" style="display:none">Reset</button>
+    </div>
+
+    <!-- LOGIN -->
+    <div class="auth-panel active" id="panel-login">
+      <button class="btn-google" onclick="googleLogin()">
+        <svg width="18" height="18" viewBox="0 0 18 18"><path fill="#4285F4" d="M17.64 9.2c0-.637-.057-1.251-.164-1.84H9v3.481h4.844a4.14 4.14 0 0 1-1.796 2.716v2.259h2.908c1.702-1.567 2.684-3.875 2.684-6.615z"/><path fill="#34A853" d="M9 18c2.43 0 4.467-.806 5.956-2.18l-2.908-2.259c-.806.54-1.837.86-3.048.86-2.344 0-4.328-1.584-5.036-3.711H.957v2.332A8.997 8.997 0 0 0 9 18z"/><path fill="#FBBC05" d="M3.964 10.71A5.41 5.41 0 0 1 3.682 9c0-.593.102-1.17.282-1.71V4.958H.957A8.996 8.996 0 0 0 0 9c0 1.452.348 2.827.957 4.042l3.007-2.332z"/><path fill="#EA4335" d="M9 3.58c1.321 0 2.508.454 3.44 1.345l2.582-2.58C13.463.891 11.426 0 9 0A8.997 8.997 0 0 0 .957 4.958L3.964 6.29C4.672 4.163 6.656 3.58 9 3.58z"/></svg>
+        Continue with Google
+      </button>
+      <div class="auth-divider">or sign in with email</div>
+      <div class="fg"><label class="fl">Email Address</label><input class="fi" type="email" id="li-email" placeholder="you@example.com"/></div>
+      <div class="fg"><label class="fl">Password</label>
+        <div class="fi-pw"><input class="fi" type="password" id="li-pass" placeholder="Your password"/>
+        <button class="pw-toggle" onclick="togglePw('li-pass',this)" type="button">👁</button></div>
+      </div>
+      <div style="text-align:right;margin-bottom:14px"><button class="auth-link" onclick="switchTab('forgot')">Forgot password?</button></div>
+      <button class="btn-primary" id="li-btn" onclick="doLogin()">Sign In →</button>
+      <div class="auth-note">Don't have an account? <button class="auth-link" onclick="switchTab('signup')">Register here</button></div>
+    </div>
+
+    <!-- SIGNUP -->
+    <div class="auth-panel" id="panel-signup">
+      <button class="btn-google" onclick="googleLogin()">
+        <svg width="18" height="18" viewBox="0 0 18 18"><path fill="#4285F4" d="M17.64 9.2c0-.637-.057-1.251-.164-1.84H9v3.481h4.844a4.14 4.14 0 0 1-1.796 2.716v2.259h2.908c1.702-1.567 2.684-3.875 2.684-6.615z"/><path fill="#34A853" d="M9 18c2.43 0 4.467-.806 5.956-2.18l-2.908-2.259c-.806.54-1.837.86-3.048.86-2.344 0-4.328-1.584-5.036-3.711H.957v2.332A8.997 8.997 0 0 0 9 18z"/><path fill="#FBBC05" d="M3.964 10.71A5.41 5.41 0 0 1 3.682 9c0-.593.102-1.17.282-1.71V4.958H.957A8.996 8.996 0 0 0 0 9c0 1.452.348 2.827.957 4.042l3.007-2.332z"/><path fill="#EA4335" d="M9 3.58c1.321 0 2.508.454 3.44 1.345l2.582-2.58C13.463.891 11.426 0 9 0A8.997 8.997 0 0 0 .957 4.958L3.964 6.29C4.672 4.163 6.656 3.58 9 3.58z"/></svg>
+        Sign up with Google
+      </button>
+      <div class="auth-divider">or create account</div>
+      <div class="fg"><label class="fl">Full Name</label><input class="fi" type="text" id="su-name" placeholder="John Doe"/></div>
+      <div class="fg"><label class="fl">Email Address</label><input class="fi" type="email" id="su-email" placeholder="you@example.com"/></div>
+      <div class="fg"><label class="fl">Password</label>
+        <div class="fi-pw"><input class="fi" type="password" id="su-pass" placeholder="Min 8 characters" oninput="checkStrength(this)"/>
+        <button class="pw-toggle" onclick="togglePw('su-pass',this)" type="button">👁</button></div>
+        <div class="strength-bar"><div class="strength-fill" id="strength-fill"></div></div>
+        <div id="strength-label" style="font-size:11px;color:var(--text3);margin-top:3px"></div>
+      </div>
+      <div class="fg"><label class="fl">Confirm Password</label>
+        <div class="fi-pw"><input class="fi" type="password" id="su-confirm" placeholder="Repeat password"/>
+        <button class="pw-toggle" onclick="togglePw('su-confirm',this)" type="button">👁</button></div>
+      </div>
+      <button class="btn-primary" id="su-btn" onclick="doSignup()">Create Account →</button>
+      <div class="auth-note">Account needs admin approval before login.<br><button class="auth-link" onclick="switchTab('login')">Back to login</button></div>
+    </div>
+
+    <!-- FORGOT -->
+    <div class="auth-panel" id="panel-forgot">
+      <div class="notice notice-info">Enter your email and we'll send a password reset link.</div>
+      <div class="fg"><label class="fl">Email Address</label><input class="fi" type="email" id="fp-email" placeholder="you@example.com"/></div>
+      <button class="btn-primary" id="fp-btn" onclick="doForgot()">Send Reset Link →</button>
+      <div class="auth-note"><button class="auth-link" onclick="switchTab('login')">← Back to login</button></div>
+    </div>
+
+  </div>
+</div>
+
+<!-- Password Reset Panel (shown when user clicks reset link in email) -->
+<div id="reset-panel">
+  <div class="auth-wrap">
+    <div class="auth-logo-area">
+      <div class="auth-logo">CEE Medic Nepal</div>
+      <div class="auth-logo-sub">Set a new password</div>
+    </div>
+    <div class="auth-card">
+      <div class="fg"><label class="fl">New Password</label>
+        <div class="fi-pw"><input class="fi" type="password" id="rp-pass" placeholder="Min 8 characters" oninput="checkStrength(this)"/>
+        <button class="pw-toggle" onclick="togglePw('rp-pass',this)" type="button">👁</button></div>
+        <div class="strength-bar"><div class="strength-fill" id="strength-fill"></div></div>
+      </div>
+      <div class="fg"><label class="fl">Confirm New Password</label>
+        <div class="fi-pw"><input class="fi" type="password" id="rp-confirm" placeholder="Repeat password"/>
+        <button class="pw-toggle" onclick="togglePw('rp-confirm',this)" type="button">👁</button></div>
+      </div>
+      <button class="btn-primary" id="rp-btn" onclick="doResetPassword()">Set New Password →</button>
+    </div>
+  </div>
+</div>
+
+<script>
+const SUPABASE_URL='https://rpudsnrqlhataqfavcjh.supabase.co';
+const SUPABASE_ANON_KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJwdWRzbnJxbGhhdGFxZmF2Y2poIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzk5NzI0NjgsImV4cCI6MjA5NTU0ODQ2OH0.EEu5t-NPqWARChSAMpEvUPMBkz_JeeNe3bGSCQmH7Xo';
+const sb=window.supabase.createClient(SUPABASE_URL,SUPABASE_ANON_KEY);
+const APP_URL='https://ceemediconepal.xyz/cee/index.html';
+
+// ── Canvas BG ──
+(function(){
+  const c=document.getElementById('bg-canvas'),ctx=c.getContext('2d');let w,h,pts=[];
+  function resize(){w=c.width=innerWidth;h=c.height=innerHeight;pts=[];const n=Math.floor((w*h)/18000);for(let i=0;i<n;i++)pts.push({x:Math.random()*w,y:Math.random()*h,vx:(Math.random()-.5)*.3,vy:(Math.random()-.5)*.3,r:Math.random()*1.5+.5});}
+  function draw(){ctx.clearRect(0,0,w,h);pts.forEach(p=>{p.x+=p.vx;p.y+=p.vy;if(p.x<0||p.x>w)p.vx*=-1;if(p.y<0||p.y>h)p.vy*=-1;ctx.beginPath();ctx.arc(p.x,p.y,p.r,0,Math.PI*2);ctx.fillStyle='rgba(0,245,212,0.4)';ctx.fill();});for(let i=0;i<pts.length;i++)for(let j=i+1;j<pts.length;j++){const d=Math.hypot(pts[i].x-pts[j].x,pts[i].y-pts[j].y);if(d<120){ctx.beginPath();ctx.moveTo(pts[i].x,pts[i].y);ctx.lineTo(pts[j].x,pts[j].y);ctx.strokeStyle=`rgba(0,245,212,${.12*(1-d/120)})`;ctx.lineWidth=.5;ctx.stroke();}}requestAnimationFrame(draw);}
+  window.addEventListener('resize',resize);resize();draw();
+})();
+
+// ── Toast ──
+function toast(msg,type='info',dur=3500){
+  const icons={ok:'✓',err:'✕',info:'ℹ',warn:'⚠'};
+  const el=document.createElement('div');el.className=`toast ${type}`;
+  el.innerHTML=`<span style="font-size:15px">${icons[type]||'ℹ'}</span><span>${msg}</span>`;
+  document.getElementById('toast-wrap').appendChild(el);
+  setTimeout(()=>{el.classList.add('out');setTimeout(()=>el.remove(),300);},dur);
+}
+
+// ── UI helpers ──
+function switchTab(t){
+  ['login','signup','forgot'].forEach(id=>{
+    document.getElementById(`panel-${id}`)?.classList.remove('active');
+    document.getElementById(`tab-${id}`)?.classList.remove('active');
+  });
+  document.getElementById(`panel-${t}`).classList.add('active');
+  document.getElementById(`tab-${t}`).classList.add('active');
+  document.getElementById('tab-forgot').style.display=t==='forgot'?'block':'none';
+}
+function togglePw(id,btn){const i=document.getElementById(id);i.type=i.type==='password'?'text':'password';btn.textContent=i.type==='password'?'👁':'🙈';}
+function checkStrength(input){
+  const v=input.value;let score=0;
+  if(v.length>=8)score++;if(v.length>=12)score++;
+  if(/[A-Z]/.test(v))score++;if(/[0-9]/.test(v))score++;if(/[^A-Za-z0-9]/.test(v))score++;
+  const fill=document.getElementById('strength-fill');
+  const levels=[{w:'0%',c:'var(--rim)'},{w:'25%',c:'var(--err)'},{w:'50%',c:'var(--warn)'},{w:'75%',c:'var(--ice)'},{w:'100%',c:'var(--ok)'}];
+  const l=levels[Math.min(score,4)];fill.style.width=l.w;fill.style.background=l.c;
+}
+
+function showAuth(){
+  document.getElementById('loading-screen').style.display='none';
+  document.getElementById('auth-wrap').style.display='block';
+}
+
+// ── Session check — runs immediately ──
+(async()=>{
+  try{
+    const{data:{session}}=await sb.auth.getSession();
+    if(session){
+      // Already logged in — check profile status
+      const{data:profile}=await sb.from('profiles').select('status').eq('id',session.user.id).single();
+      if(profile?.status==='approved'){
+        // Redirect straight to the app, don't show login at all
+        window.location.replace(APP_URL);
+        return;
+      }
+    }
+  }catch(e){}
+  // No valid session — show the login form
+  showAuth();
+})();
+
+// ── Auth state listener (handles Google OAuth callback + password reset) ──
+sb.auth.onAuthStateChange(async(event,session)=>{
+  if(event==='PASSWORD_RECOVERY'){
+    // User clicked the reset link in their email
+    document.getElementById('loading-screen').style.display='none';
+    document.getElementById('auth-wrap').style.display='none';
+    document.getElementById('reset-panel').classList.add('show');
+    return;
+  }
+  if(event==='SIGNED_IN'&&session){
+    const{data:profile}=await sb.from('profiles').select('*').eq('id',session.user.id).single();
+    if(!profile){
+      // New Google user — create profile and sign out
+      await sb.from('profiles').upsert({id:session.user.id,email:session.user.email,full_name:session.user.user_metadata?.full_name||'',role:'student',status:'pending'});
+      toast('Account created! Awaiting admin approval.','info',6000);
+      await sb.auth.signOut();
+      showAuth();
+      return;
+    }
+    if(profile.status==='blocked'){toast('Account blocked. Contact admin.','err');await sb.auth.signOut();showAuth();return;}
+    if(profile.status!=='approved'){toast('Account pending admin approval.','warn');await sb.auth.signOut();showAuth();return;}
+    // Approved — go to app
+    window.location.replace(APP_URL);
+  }
+});
+
+// ── Login ──
+async function doLogin(){
+  const email=document.getElementById('li-email').value.trim();
+  const pass=document.getElementById('li-pass').value;
+  if(!email||!pass){toast('Fill in all fields','warn');return;}
+  const btn=document.getElementById('li-btn');btn.disabled=true;btn.innerHTML='<span class="spin"></span> Signing in…';
+  try{
+    const{data,error}=await sb.auth.signInWithPassword({email,password:pass});
+    if(error)throw error;
+    const{data:profile}=await sb.from('profiles').select('status').eq('id',data.user.id).single();
+    if(profile?.status==='blocked'){toast('Account blocked. Contact admin.','err');await sb.auth.signOut();return;}
+    if(profile?.status!=='approved'){toast('Account pending admin approval.','warn');await sb.auth.signOut();return;}
+    window.location.replace(APP_URL);
+  }catch(e){toast(e.message,'err');}
+  finally{btn.disabled=false;btn.textContent='Sign In →';}
+}
+
+// ── Signup ──
+async function doSignup(){
+  const name=document.getElementById('su-name').value.trim();
+  const email=document.getElementById('su-email').value.trim();
+  const pass=document.getElementById('su-pass').value;
+  const confirm=document.getElementById('su-confirm').value;
+  if(!name||!email||!pass){toast('Fill in all fields','warn');return;}
+  if(pass.length<8){toast('Password must be at least 8 characters','warn');return;}
+  if(pass!==confirm){toast('Passwords do not match','warn');return;}
+  const btn=document.getElementById('su-btn');btn.disabled=true;btn.innerHTML='<span class="spin"></span> Creating…';
+  try{
+    const{data,error}=await sb.auth.signUp({email,password:pass,options:{data:{full_name:name}}});
+    if(error)throw error;
+    await sb.from('profiles').upsert({id:data.user.id,email,full_name:name,role:'student',status:'pending'});
+    toast('Account created! Awaiting admin approval.','ok',6000);
+    switchTab('login');
+  }catch(e){toast(e.message,'err');}
+  finally{btn.disabled=false;btn.textContent='Create Account →';}
+}
+
+// ── Google ──
+async function googleLogin(){
+  try{
+    const{error}=await sb.auth.signInWithOAuth({provider:'google',options:{redirectTo:window.location.href}});
+    if(error)throw error;
+  }catch(e){toast(e.message,'err');}
+}
+
+// ── Forgot password ──
+async function doForgot(){
+  const email=document.getElementById('fp-email').value.trim();
+  if(!email){toast('Enter your email','warn');return;}
+  const btn=document.getElementById('fp-btn');btn.disabled=true;btn.innerHTML='<span class="spin"></span> Sending…';
+  try{
+    const{error}=await sb.auth.resetPasswordForEmail(email,{redirectTo:window.location.href});
+    if(error)throw error;
+    toast('Reset link sent! Check your inbox.','ok',6000);
+    switchTab('login');
+  }catch(e){toast(e.message,'err');}
+  finally{btn.disabled=false;btn.textContent='Send Reset Link →';}
+}
+
+// ── Password reset (after clicking email link) ──
+async function doResetPassword(){
+  const pass=document.getElementById('rp-pass').value;
+  const confirm=document.getElementById('rp-confirm').value;
+  if(!pass||pass.length<8){toast('Password must be at least 8 characters','warn');return;}
+  if(pass!==confirm){toast('Passwords do not match','warn');return;}
+  const btn=document.getElementById('rp-btn');btn.disabled=true;btn.innerHTML='<span class="spin"></span> Saving…';
+  try{
+    const{error}=await sb.auth.updateUser({password:pass});
+    if(error)throw error;
+    toast('Password updated! Signing you in…','ok');
+    setTimeout(()=>window.location.replace(APP_URL),1500);
+  }catch(e){toast(e.message,'err');}
+  finally{btn.disabled=false;btn.textContent='Set New Password →';}
+}
+
+// ── Enter key ──
+document.addEventListener('keydown',e=>{
+  if(e.key!=='Enter')return;
+  const active=document.querySelector('.auth-panel.active');
+  if(!active)return;
+  if(active.id==='panel-login')doLogin();
+  else if(active.id==='panel-signup')doSignup();
+  else if(active.id==='panel-forgot')doForgot();
+});
+</script>
+</body>
+</html>
