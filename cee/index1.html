@@ -4,13 +4,10 @@
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width,initial-scale=1.0"/>
 <title>NexusExam — Next-Gen MCQ Platform</title>
-<link rel="preconnect" href="https://rpudsnrqlhataqfavcjh.supabase.co"/>
-<link rel="dns-prefetch" href="https://rpudsnrqlhataqfavcjh.supabase.co"/>
-<link rel="preconnect" href="https://fonts.googleapis.com"/>
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <link href="https://fonts.googleapis.com/css2?family=Clash+Display:wght@400;500;600;700&family=Cabinet+Grotesk:wght@400;500;600;700;800&family=Fira+Code:wght@400;500&display=swap" rel="stylesheet"/>
 <style>
+/* ━━━━━━━━━━━━━━━━━ DESIGN TOKENS ━━━━━━━━━━━━━━━━━ */
 :root{
   --ink:#05060a;--ink2:#0b0d14;--ink3:#10121c;
   --surface:#141720;--surface2:#1a1d2a;--surface3:#1e2235;
@@ -30,6 +27,7 @@
   --r:14px;--r-sm:8px;--r-lg:20px;--r-xl:28px;
   --sw:256px;
   --glow:0 0 20px rgba(0,245,212,.3);
+  --glow-lg:0 0 40px rgba(0,245,212,.2);
   --sh:0 4px 24px rgba(0,0,0,.6);
   --sh-lg:0 12px 60px rgba(0,0,0,.8);
   --tr:.18s cubic-bezier(.4,0,.2,1);
@@ -45,8 +43,10 @@ button,input,select,textarea{font-family:var(--font)}
 ::-webkit-scrollbar-thumb:hover{background:var(--neon2)}
 ::selection{background:rgba(0,245,212,.2);color:var(--neon)}
 
+/* ─── CANVAS BG ─── */
 #bg-canvas{position:fixed;inset:0;z-index:0;pointer-events:none;opacity:.4}
 
+/* ─── TOAST ─── */
 #toast-wrap{position:fixed;top:20px;right:20px;z-index:9999;display:flex;flex-direction:column;gap:8px;pointer-events:none}
 .toast{display:flex;align-items:center;gap:10px;padding:12px 18px;border-radius:var(--r-sm);font-size:13px;font-weight:600;min-width:260px;pointer-events:all;animation:tIn .3s ease;border:1px solid;backdrop-filter:blur(12px)}
 .toast.ok{background:rgba(16,185,129,.12);border-color:rgba(16,185,129,.4);color:#34d399}
@@ -57,27 +57,48 @@ button,input,select,textarea{font-family:var(--font)}
 @keyframes tIn{from{opacity:0;transform:translateX(40px)}to{opacity:1;transform:none}}
 @keyframes tOut{to{opacity:0;transform:translateX(40px)}}
 
-@keyframes shimmer{0%{background-position:-200% 0}100%{background-position:200% 0}}
-.skel{background:linear-gradient(90deg,var(--surface) 25%,var(--surface2) 50%,var(--surface) 75%);background-size:200% 100%;animation:shimmer 1.5s infinite;border-radius:var(--r-sm)}
-.skel-card{height:120px;border-radius:var(--r);margin-bottom:14px}
-.skel-row{height:20px;margin-bottom:10px}
-.skel-row.w60{width:60%}.skel-row.w40{width:40%}.skel-row.w80{width:80%}
-.skel-stat{height:96px;border-radius:var(--r)}
+/* ━━━━━━━━━━━━━━━━━ AUTH SCREEN ━━━━━━━━━━━━━━━━━ */
+#auth-screen{position:relative;z-index:10;display:flex;align-items:center;justify-content:center;min-height:100vh;padding:20px}
+.auth-wrap{width:100%;max-width:440px;animation:authIn .6s ease}
+@keyframes authIn{from{opacity:0;transform:translateY(24px)}to{opacity:1;transform:none}}
+.auth-logo-area{text-align:center;margin-bottom:32px}
+.auth-logo{font-family:var(--display);font-size:38px;font-weight:700;letter-spacing:-.5px;background:linear-gradient(135deg,var(--neon),var(--ice));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+.auth-logo-sub{font-size:13px;color:var(--text3);margin-top:4px;letter-spacing:.08em;text-transform:uppercase}
+.auth-card{background:rgba(20,23,32,.85);border:1px solid var(--rim);border-radius:var(--r-xl);padding:36px;backdrop-filter:blur(24px);box-shadow:var(--sh-lg),inset 0 1px 0 rgba(255,255,255,.04)}
+.auth-panel{display:none;animation:panelIn .25s ease}
+.auth-panel.active{display:block}
+@keyframes panelIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+.auth-tabs{display:flex;background:var(--ink2);border:1px solid var(--rim);border-radius:var(--r);padding:4px;margin-bottom:28px;gap:3px}
+.auth-tab{flex:1;padding:9px;border:none;background:transparent;color:var(--text3);font-size:14px;font-weight:600;border-radius:10px;cursor:pointer;transition:var(--tr);font-family:var(--font)}
+.auth-tab.active{background:linear-gradient(135deg,rgba(0,245,212,.2),rgba(56,189,248,.15));color:var(--neon);border:1px solid rgba(0,245,212,.3);box-shadow:0 0 12px rgba(0,245,212,.15)}
+.fg{margin-bottom:16px}
+.fl{display:block;font-size:12px;font-weight:700;color:var(--text3);margin-bottom:7px;letter-spacing:.06em;text-transform:uppercase}
+.fi{width:100%;padding:12px 14px;background:rgba(10,12,20,.8);border:1px solid var(--rim);border-radius:var(--r-sm);color:var(--text);font-size:14px;outline:none;transition:var(--tr)}
+.fi:focus{border-color:var(--neon);box-shadow:0 0 0 3px rgba(0,245,212,.1),var(--glow)}
+.fi::placeholder{color:var(--text3)}
+.fi-pw{position:relative}
+.fi-pw input{padding-right:44px}
+.pw-toggle{position:absolute;right:12px;top:50%;transform:translateY(-50%);background:none;border:none;color:var(--text3);cursor:pointer;font-size:16px;padding:4px}
+.pw-toggle:hover{color:var(--neon)}
+.btn-primary{width:100%;padding:13px;background:linear-gradient(135deg,var(--neon2),var(--ice2));border:none;border-radius:var(--r);color:var(--ink);font-size:15px;font-weight:800;cursor:pointer;transition:var(--tr);letter-spacing:.01em;font-family:var(--font);margin-top:4px}
+.btn-primary:hover{transform:translateY(-2px);box-shadow:0 8px 24px rgba(0,245,212,.4)}
+.btn-primary:disabled{opacity:.5;cursor:not-allowed;transform:none;box-shadow:none}
+.btn-google{width:100%;padding:12px;background:rgba(255,255,255,.05);border:1px solid var(--rim2);border-radius:var(--r);color:var(--text);font-size:14px;font-weight:600;cursor:pointer;transition:var(--tr);display:flex;align-items:center;justify-content:center;gap:10px;font-family:var(--font);margin-bottom:16px}
+.btn-google:hover{background:rgba(255,255,255,.09);border-color:var(--rim3)}
+.btn-google svg{flex-shrink:0}
+.auth-divider{display:flex;align-items:center;gap:12px;margin:16px 0;color:var(--text3);font-size:12px;font-weight:600;letter-spacing:.06em}
+.auth-divider::before,.auth-divider::after{content:'';flex:1;height:1px;background:var(--rim)}
+.auth-link{background:none;border:none;color:var(--neon);font-size:13px;cursor:pointer;font-family:var(--font);font-weight:600;text-decoration:underline;text-underline-offset:3px;padding:0}
+.auth-link:hover{color:var(--neon2)}
+.auth-note{text-align:center;font-size:12px;color:var(--text3);margin-top:16px}
+.strength-bar{height:3px;border-radius:2px;margin-top:6px;background:var(--rim);overflow:hidden;transition:var(--tr)}
+.strength-fill{height:100%;border-radius:2px;transition:var(--tr)}
 
-#loading-screen{position:fixed;inset:0;background:var(--ink);z-index:999;display:flex;align-items:center;justify-content:center;flex-direction:column;gap:16px}
-.load-logo{font-family:var(--display);font-size:32px;font-weight:700;background:linear-gradient(135deg,var(--neon),var(--ice));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
-.load-bars{display:flex;gap:5px;align-items:flex-end;height:28px}
-.load-bar{width:4px;border-radius:2px;background:var(--neon);animation:loadbar 1s ease infinite}
-.load-bar:nth-child(1){animation-delay:0s;height:12px}
-.load-bar:nth-child(2){animation-delay:.15s;height:20px}
-.load-bar:nth-child(3){animation-delay:.3s;height:28px}
-.load-bar:nth-child(4){animation-delay:.45s;height:20px}
-.load-bar:nth-child(5){animation-delay:.6s;height:12px}
-@keyframes loadbar{0%,100%{opacity:.3;transform:scaleY(.6)}50%{opacity:1;transform:scaleY(1)}}
-
+/* ━━━━━━━━━━━━━━━━━ APP LAYOUT ━━━━━━━━━━━━━━━━━ */
 #app{display:none;position:relative;z-index:10;min-height:100vh}
 .layout{display:flex;min-height:100vh}
 
+/* ─── SIDEBAR ─── */
 .sidebar{width:var(--sw);background:rgba(11,13,20,.95);border-right:1px solid var(--rim);display:flex;flex-direction:column;position:fixed;top:0;left:0;height:100vh;z-index:100;backdrop-filter:blur(20px);overflow:hidden}
 .sidebar::before{content:'';position:absolute;top:0;left:0;right:0;height:1px;background:linear-gradient(90deg,transparent,var(--neon),transparent);opacity:.6}
 .sb-top{padding:20px 18px 16px;border-bottom:1px solid var(--rim)}
@@ -104,6 +125,7 @@ button,input,select,textarea{font-family:var(--font)}
 .btn-logout{width:100%;padding:9px;background:rgba(244,63,94,.1);border:1px solid rgba(244,63,94,.25);border-radius:var(--r-sm);color:#fb7185;font-size:13px;font-weight:700;cursor:pointer;transition:var(--tr);font-family:var(--font)}
 .btn-logout:hover{background:rgba(244,63,94,.2);box-shadow:0 0 12px rgba(244,63,94,.2)}
 
+/* ─── MAIN ─── */
 .main{margin-left:var(--sw);flex:1;min-height:100vh}
 .topbar{display:flex;align-items:center;justify-content:space-between;padding:16px 28px;border-bottom:1px solid var(--rim);background:rgba(11,13,20,.8);position:sticky;top:0;z-index:50;backdrop-filter:blur(20px)}
 .topbar::after{content:'';position:absolute;bottom:0;left:0;right:0;height:1px;background:linear-gradient(90deg,transparent,rgba(0,245,212,.3),transparent)}
@@ -112,6 +134,7 @@ button,input,select,textarea{font-family:var(--font)}
 .tb-clock{font-family:var(--mono);font-size:13px;color:var(--neon);letter-spacing:.06em;background:rgba(0,245,212,.06);padding:6px 12px;border-radius:var(--r-sm);border:1px solid rgba(0,245,212,.15)}
 .tb-ham{display:none;background:none;border:none;color:var(--text);font-size:20px;cursor:pointer}
 
+/* ─── PAGES ─── */
 .page{display:none;padding:28px;animation:pgIn .25s ease}
 .page.act{display:block}
 @keyframes pgIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
@@ -119,17 +142,7 @@ button,input,select,textarea{font-family:var(--font)}
 .pg-title{font-family:var(--display);font-size:26px;font-weight:700;letter-spacing:-.4px;display:flex;align-items:center;gap:10px}
 .pg-sub{font-size:14px;color:var(--text3);margin-top:5px}
 
-.today-banner{position:relative;overflow:hidden;background:linear-gradient(135deg,rgba(245,158,11,.15),rgba(255,107,53,.1));border:1px solid rgba(245,158,11,.35);border-radius:var(--r-lg);padding:18px 22px;margin-bottom:24px}
-.today-banner::before{content:'';position:absolute;inset:0;background:repeating-linear-gradient(45deg,transparent,transparent 10px,rgba(245,158,11,.03) 10px,rgba(245,158,11,.03) 20px)}
-.today-banner::after{content:'';position:absolute;top:0;left:0;right:0;height:2px;background:linear-gradient(90deg,var(--warn),var(--plasma),var(--warn));animation:banner-sweep 3s linear infinite;background-size:200% 100%}
-@keyframes banner-sweep{0%{background-position:0% 0}100%{background-position:200% 0}}
-.today-banner-inner{position:relative;z-index:1;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px}
-.today-banner-left{display:flex;align-items:center;gap:12px}
-.today-banner-icon{font-size:28px;animation:icon-bounce .8s ease infinite alternate}
-@keyframes icon-bounce{from{transform:translateY(0)}to{transform:translateY(-4px)}}
-.today-banner-title{font-family:var(--display);font-size:17px;font-weight:700;color:var(--warn)}
-.today-banner-sub{font-size:12px;color:var(--text2);margin-top:2px}
-
+/* ─── STAT CARDS ─── */
 .stat-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(175px,1fr));gap:14px;margin-bottom:24px}
 .stat{background:var(--surface);border:1px solid var(--rim);border-radius:var(--r);padding:20px;position:relative;overflow:hidden;transition:var(--tr)}
 .stat:hover{border-color:var(--rim2);transform:translateY(-2px)}
@@ -148,11 +161,13 @@ button,input,select,textarea{font-family:var(--font)}
 .stat.green .stat-val{color:var(--ok)}
 .stat-lbl{font-size:12px;color:var(--text3);margin-top:4px;font-weight:600;letter-spacing:.02em}
 
+/* ─── CARDS ─── */
 .card{background:var(--surface);border:1px solid var(--rim);border-radius:var(--r);padding:22px}
 .card-glass{background:rgba(20,23,32,.7);border:1px solid var(--rim);border-radius:var(--r);padding:22px;backdrop-filter:blur(12px)}
 .grid-2{display:grid;grid-template-columns:1fr 1fr;gap:18px}
 .grid-3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:14px}
 
+/* ─── GENERAL BTNS ─── */
 .btn{display:inline-flex;align-items:center;justify-content:center;gap:7px;padding:9px 18px;border:none;border-radius:var(--r-sm);font-size:13px;font-weight:700;cursor:pointer;transition:var(--tr);outline:none;white-space:nowrap;font-family:var(--font)}
 .btn-neon{background:linear-gradient(135deg,var(--neon2),var(--ice2));color:var(--ink)}
 .btn-neon:hover{transform:translateY(-1px);box-shadow:0 6px 20px rgba(0,245,212,.3)}
@@ -162,13 +177,12 @@ button,input,select,textarea{font-family:var(--font)}
 .btn-danger:hover{background:rgba(244,63,94,.22)}
 .btn-volt{background:rgba(127,255,0,.12);border:1px solid rgba(127,255,0,.3);color:var(--volt)}
 .btn-volt:hover{background:rgba(127,255,0,.2)}
-.btn-warn{background:rgba(245,158,11,.12);border:1px solid rgba(245,158,11,.3);color:var(--warn)}
-.btn-warn:hover{background:rgba(245,158,11,.2)}
 .btn-full{width:100%}
 .btn-sm{padding:6px 12px;font-size:12px}
 .btn-xs{padding:4px 9px;font-size:11px;border-radius:6px}
 .btn:disabled{opacity:.4;cursor:not-allowed;transform:none !important;box-shadow:none !important}
 
+/* ─── BADGE ─── */
 .badge{display:inline-flex;align-items:center;gap:3px;padding:3px 9px;border-radius:20px;font-size:11px;font-weight:700;white-space:nowrap}
 .b-ok{background:rgba(16,185,129,.14);color:#34d399}
 .b-err{background:rgba(244,63,94,.14);color:#fb7185}
@@ -179,6 +193,7 @@ button,input,select,textarea{font-family:var(--font)}
 .b-gray{background:rgba(74,85,120,.18);color:var(--text2)}
 .b-volt{background:rgba(127,255,0,.1);color:var(--volt)}
 
+/* ─── TABLE ─── */
 .tbl-wrap{overflow-x:auto;border-radius:var(--r);border:1px solid var(--rim)}
 table{width:100%;border-collapse:collapse;font-size:13px}
 thead{background:var(--ink2)}
@@ -187,6 +202,7 @@ td{padding:11px 14px;border-top:1px solid var(--rim);color:var(--text2);vertical
 tr:hover td{background:rgba(0,245,212,.02)}
 .tbl-empty{padding:36px;text-align:center;color:var(--text3)}
 
+/* ─── FORM ─── */
 .fi-dark{padding:10px 13px;background:rgba(10,12,20,.8);border:1px solid var(--rim);border-radius:var(--r-sm);color:var(--text);font-size:13px;outline:none;transition:var(--tr);width:100%;font-family:var(--font)}
 .fi-dark:focus{border-color:var(--neon);box-shadow:0 0 0 3px rgba(0,245,212,.1)}
 .fi-dark::placeholder{color:var(--text3)}
@@ -194,6 +210,7 @@ select.fi-dark{-webkit-appearance:none;background-image:url("data:image/svg+xml,
 .code-area{width:100%;background:rgba(5,6,10,.9);border:1px solid var(--rim);border-radius:var(--r-sm);color:var(--neon);padding:14px;font-family:var(--mono);font-size:12px;resize:vertical;min-height:150px;outline:none;transition:var(--tr);line-height:1.6}
 .code-area:focus{border-color:var(--neon);box-shadow:0 0 0 3px rgba(0,245,212,.08)}
 
+/* ─── QUIZ TREE ─── */
 .quiz-tree{display:flex;flex-direction:column;gap:10px}
 .subject-node{border:1px solid var(--rim);border-radius:var(--r);overflow:hidden;transition:var(--tr)}
 .subject-node:hover{border-color:var(--rim2)}
@@ -205,118 +222,53 @@ select.fi-dark{-webkit-appearance:none;background-image:url("data:image/svg+xml,
 .chap-node{border-radius:var(--r-sm);overflow:hidden}
 .chap-hd{display:flex;align-items:center;justify-content:space-between;padding:10px 14px;background:var(--ink3);cursor:pointer;font-size:13px;font-weight:600;transition:var(--tr)}
 .chap-hd:hover{background:var(--surface)}
-.chap-hd-left{display:flex;align-items:center;gap:8px}
-.chap-hd-meta{font-size:11px;color:var(--text3);margin-top:1px}
 .set-list{padding:6px;background:var(--ink);display:flex;flex-direction:column;gap:3px}
-.set-item{display:flex;align-items:center;justify-content:space-between;padding:11px 14px;border-radius:var(--r-sm);background:var(--ink2);font-size:13px;cursor:pointer;transition:var(--tr);border:1px solid transparent;position:relative;overflow:hidden}
-.set-item::before{content:'';position:absolute;left:0;top:0;bottom:0;width:3px;background:var(--neon);opacity:0;transition:var(--tr)}
+.set-item{display:flex;align-items:center;justify-content:space-between;padding:10px 14px;border-radius:var(--r-sm);background:var(--ink2);font-size:13px;cursor:pointer;transition:var(--tr);border:1px solid transparent}
 .set-item:hover{border-color:var(--neon);background:rgba(0,245,212,.05);color:var(--neon)}
-.set-item:hover::before{opacity:1}
-.set-item.attempted{border-color:rgba(16,185,129,.25);background:rgba(16,185,129,.04)}
-.set-item.attempted::before{background:var(--ok);opacity:1}
-.set-item-left{display:flex;flex-direction:column;gap:3px}
-.set-item-name{font-weight:600}
-.set-item-meta{font-size:11px;color:var(--text3);display:flex;gap:6px;flex-wrap:wrap}
 .chevron{transition:transform .2s;font-size:11px;color:var(--text3)}
 .node-open .chevron{transform:rotate(180deg)}
 
-.subj-chip{display:inline-flex;align-items:center;gap:4px;padding:3px 8px;border-radius:6px;font-size:11px;font-weight:700}
-.subj-Physics{background:rgba(56,189,248,.12);color:var(--ice)}
-.subj-Chemistry{background:rgba(16,185,129,.1);color:#34d399}
-.subj-Biology{background:rgba(168,85,247,.12);color:var(--pulse)}
-.subj-Math{background:rgba(245,158,11,.1);color:var(--warn)}
-.subj-default{background:rgba(0,245,212,.08);color:var(--neon)}
-
-.sched-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(320px,1fr));gap:20px}
-.sched-section-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:18px;padding:0 2px;}
-.sched-section-title{font-family:var(--display);font-weight:700;font-size:16px;display:flex;align-items:center;gap:10px;}
-.sched-section-line{flex:1;height:1px;margin-left:14px;background:linear-gradient(90deg,var(--rim2),transparent);}
-
-.live-ring{position:relative;display:inline-flex;align-items:center;justify-content:center;width:10px;height:10px;}
-.live-ring::before{content:'';position:absolute;inset:-4px;border-radius:50%;border:2px solid var(--ok);animation:ring-expand 1.5s ease-out infinite;}
-.live-ring-dot{width:10px;height:10px;border-radius:50%;background:var(--ok);}
-@keyframes ring-expand{0%{transform:scale(1);opacity:.8}100%{transform:scale(2.2);opacity:0}}
-
-.sched-card{background:var(--surface);border:1px solid var(--rim);border-radius:var(--r-lg);overflow:hidden;transition:transform .22s cubic-bezier(.4,0,.2,1),box-shadow .22s ease,border-color .22s ease;position:relative;animation:cardFadeIn .35s ease both;}
-@keyframes cardFadeIn{from{opacity:0;transform:translateY(16px)}to{opacity:1;transform:none}}
-.sched-card:hover{transform:translateY(-4px);box-shadow:0 20px 60px rgba(0,0,0,.7),0 0 0 1px rgba(0,245,212,.06);}
-.sched-card.already-done{opacity:.85}
-.sched-card.already-done:hover{transform:translateY(-2px)}
-
-.sched-stripe{height:4px;width:100%;position:relative;overflow:hidden}
-.sched-stripe.live{background:linear-gradient(90deg,var(--ok),var(--neon),var(--ok));background-size:200% 100%;animation:stripe-flow 2s linear infinite;}
+/* ─── SCHEDULE CARDS ─── */
+.sched-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:16px}
+.sched-card{background:var(--surface);border:1px solid var(--rim);border-radius:var(--r);overflow:hidden;transition:var(--tr);position:relative}
+.sched-card:hover{transform:translateY(-2px);box-shadow:var(--sh)}
+.sched-stripe{height:3px;width:100%}
+.sched-stripe.live{background:linear-gradient(90deg,var(--ok),var(--neon));animation:stripe-pulse 2s ease infinite}
 .sched-stripe.upcoming{background:linear-gradient(90deg,var(--ice),var(--pulse))}
-.sched-stripe.today{background:linear-gradient(90deg,var(--warn),var(--plasma),var(--warn));background-size:200% 100%;animation:stripe-flow 3s linear infinite;}
-.sched-stripe.ended{background:var(--rim2)}
-@keyframes stripe-flow{0%{background-position:0% 0}100%{background-position:200% 0}}
-
-.sched-body{padding:20px}
+.sched-stripe.today{background:linear-gradient(90deg,var(--warn),var(--plasma))}
+.sched-stripe.ended{background:var(--rim)}
+@keyframes stripe-pulse{0%,100%{opacity:1}50%{opacity:.5}}
+.sched-body{padding:18px}
 .sched-status-badges{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:12px}
-
-.live-badge{display:inline-flex;align-items:center;gap:6px;padding:4px 11px;border-radius:20px;font-size:11px;font-weight:800;background:rgba(16,185,129,.15);border:1px solid rgba(16,185,129,.4);color:#34d399;box-shadow:0 0 14px rgba(16,185,129,.15);animation:live-glow 2s ease infinite;}
-@keyframes live-glow{0%,100%{box-shadow:0 0 8px rgba(16,185,129,.2)}50%{box-shadow:0 0 20px rgba(16,185,129,.4)}}
-.live-badge-dot{width:6px;height:6px;border-radius:50%;background:var(--ok);animation:dot-blink 1s step-end infinite}
-@keyframes dot-blink{0%,100%{opacity:1}50%{opacity:0}}
-
-.sched-title{font-family:var(--display);font-size:17px;font-weight:700;margin-bottom:4px;line-height:1.3}
-.sched-sub{font-size:12px;color:var(--text3);margin-bottom:12px}
-.sched-info-row{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:14px;padding:10px 12px;background:var(--ink2);border-radius:var(--r-sm);border:1px solid var(--rim);}
-.sched-meta{display:flex;flex-direction:column;gap:7px;margin-bottom:16px}
+.sched-title{font-family:var(--display);font-size:16px;font-weight:600;margin-bottom:4px}
+.sched-sub{font-size:12px;color:var(--text3);margin-bottom:14px}
+.sched-meta{display:flex;flex-direction:column;gap:7px;margin-bottom:14px}
 .meta-row{display:flex;align-items:center;gap:8px;font-size:12px;color:var(--text2)}
 .meta-icon{width:16px;text-align:center;font-size:13px;flex-shrink:0}
+.cd-box{background:var(--ink2);border:1px solid var(--rim);border-radius:var(--r-sm);padding:12px 14px;margin-bottom:14px}
+.cd-label{font-size:10px;font-weight:800;text-transform:uppercase;letter-spacing:.08em;color:var(--text3);margin-bottom:8px}
+.cd-digits{display:flex;align-items:center;gap:6px}
+.cd-unit{text-align:center;min-width:42px}
+.cd-num{font-family:var(--display);font-size:22px;font-weight:700;line-height:1;display:block;color:var(--neon)}
+.cd-lbl{font-size:9px;color:var(--text3);text-transform:uppercase;letter-spacing:.05em;margin-top:2px}
+.cd-sep{font-family:var(--mono);font-size:18px;font-weight:700;color:var(--rim3);margin-top:-4px}
+.cd-live{display:flex;align-items:center;gap:6px;font-size:13px;font-weight:700;color:var(--ok)}
+.cd-dot-live{width:7px;height:7px;border-radius:50%;background:var(--ok);animation:dot-pulse 1s ease infinite;flex-shrink:0}
+.sched-footer{padding:12px 18px;border-top:1px solid var(--rim);display:flex;align-items:center;justify-content:space-between;background:var(--ink2)}
 
-.attempted-overlay{display:flex;align-items:center;gap:10px;padding:12px 14px;background:linear-gradient(135deg,rgba(16,185,129,.12),rgba(0,245,212,.06));border:1px solid rgba(16,185,129,.35);border-radius:var(--r-sm);margin-bottom:14px;font-size:13px;font-weight:700;color:#34d399;position:relative;overflow:hidden;animation:attemptedIn .4s cubic-bezier(.175,.885,.32,1.275);}
-@keyframes attemptedIn{from{opacity:0;transform:scale(.95)}to{opacity:1;transform:scale(1)}}
-.attempted-overlay::before{content:'';position:absolute;inset:0;background:linear-gradient(90deg,transparent,rgba(16,185,129,.08),transparent);animation:shimmer-ok 2.5s infinite;background-size:200% 100%;}
-@keyframes shimmer-ok{0%{background-position:-200% 0}100%{background-position:200% 0}}
-.attempted-overlay-icon{font-size:20px;flex-shrink:0;filter:drop-shadow(0 0 8px rgba(16,185,129,.6))}
-.attempted-score{margin-left:auto;display:flex;flex-direction:column;align-items:flex-end;gap:2px;}
-.attempted-score-big{font-family:var(--display);font-size:20px;font-weight:800;color:var(--neon)}
-.attempted-score-sub{font-size:10px;color:var(--text3);font-weight:600}
-
-.cd-box{background:var(--ink2);border:1px solid var(--rim);border-radius:var(--r-sm);padding:14px 16px;margin-bottom:16px;position:relative;overflow:hidden;}
-.cd-box::after{content:'';position:absolute;top:0;left:0;right:0;height:1px;background:linear-gradient(90deg,transparent,rgba(0,245,212,.3),transparent);}
-.cd-label{font-size:10px;font-weight:800;text-transform:uppercase;letter-spacing:.1em;color:var(--text3);margin-bottom:10px}
-.cd-digits{display:flex;align-items:center;gap:4px}
-.cd-unit{text-align:center;min-width:46px}
-.cd-num{font-family:var(--display);font-size:26px;font-weight:800;line-height:1;display:block;color:var(--neon);transition:color .3s ease;text-shadow:0 0 20px rgba(0,245,212,.3);}
-.cd-num.urgent{color:var(--err);text-shadow:0 0 20px rgba(244,63,94,.4);animation:num-pulse .8s ease infinite alternate}
-@keyframes num-pulse{from{opacity:1}to{opacity:.6}}
-.cd-lbl{font-size:9px;color:var(--text3);text-transform:uppercase;letter-spacing:.06em;margin-top:3px}
-.cd-sep{font-family:var(--mono);font-size:20px;font-weight:700;color:var(--rim3);margin-top:-8px;opacity:.6}
-.cd-live{display:flex;align-items:center;gap:8px;font-size:13px;font-weight:700;color:var(--ok)}
-.cd-dot-live{width:8px;height:8px;border-radius:50%;background:var(--ok);animation:dot-pulse 1s ease infinite;flex-shrink:0}
-.cd-progress{height:3px;background:var(--rim);border-radius:2px;margin-top:10px;overflow:hidden}
-.cd-progress-fill{height:100%;background:linear-gradient(90deg,var(--ok),var(--neon));border-radius:2px;transition:width .5s ease}
-
-.sched-footer{padding:14px 20px;border-top:1px solid var(--rim);display:flex;align-items:center;justify-content:space-between;background:rgba(5,6,10,.5);}
-.sched-footer-id{font-size:10px;color:var(--text3);font-family:var(--mono)}
-
-.once-only-notice{display:flex;align-items:center;gap:8px;padding:8px 12px;margin-bottom:12px;background:rgba(255,107,53,.06);border:1px solid rgba(255,107,53,.2);border-radius:var(--r-sm);font-size:11px;font-weight:700;color:var(--plasma);}
-.once-only-notice-icon{font-size:14px}
-
-.sched-section-wrap{animation:sectionIn .3s ease both}
-@keyframes sectionIn{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}
-#sched-live-sec{animation-delay:.05s}
-#sched-today-sec{animation-delay:.1s}
-#sched-upcoming-sec{animation-delay:.15s}
-#sched-ended-sec{animation-delay:.2s}
-
+/* ─── QUIZ ENGINE ─── */
 #quiz-screen{display:none;position:fixed;inset:0;background:var(--ink);z-index:200;overflow-y:auto;padding:24px}
 #quiz-screen::before{content:'';position:fixed;inset:0;background:radial-gradient(ellipse 80% 60% at 50% -20%,rgba(0,245,212,.06) 0%,transparent 70%);pointer-events:none}
 .quiz-wrap{max-width:760px;margin:0 auto;position:relative;z-index:1}
 .quiz-topbar{display:flex;align-items:center;justify-content:space-between;margin-bottom:20px;background:rgba(20,23,32,.9);border:1px solid var(--rim);border-radius:var(--r);padding:14px 20px;backdrop-filter:blur(12px)}
 .quiz-meta-info{font-size:12px;color:var(--text3)}
 .quiz-meta-title{font-family:var(--display);font-size:15px;font-weight:600;margin-bottom:3px;color:var(--text)}
-.quiz-meta-breadcrumb{display:flex;align-items:center;gap:5px;flex-wrap:wrap;margin-bottom:4px}
-.quiz-meta-breadcrumb span{font-size:11px;color:var(--text3)}
-.quiz-meta-breadcrumb .crumb{color:var(--text2);font-weight:600}
-.quiz-meta-breadcrumb .sep{color:var(--rim3)}
 .quiz-timer-display{font-family:var(--mono);font-size:22px;font-weight:700;color:var(--neon);display:flex;align-items:center;gap:8px;letter-spacing:.04em}
 .quiz-timer-display.danger{color:var(--err);animation:timer-danger 1s ease infinite}
-@keyframes timer-danger{0%,100%{opacity:1}50%{opacity:.7}}
-.quiz-progress-track{height:3px;background:var(--rim);border-radius:2px;margin-bottom:22px;overflow:hidden}
-.quiz-progress-fill{height:100%;background:linear-gradient(90deg,var(--neon),var(--ice));border-radius:2px;transition:width .4s ease}
+@keyframes timer-danger{0%,100%{opacity:1;text-shadow:none}50%{opacity:.7;text-shadow:0 0 12px rgba(244,63,94,.5)}}
+.quiz-progress-track{height:3px;background:var(--rim);border-radius:2px;margin-bottom:22px;overflow:hidden;position:relative}
+.quiz-progress-fill{height:100%;background:linear-gradient(90deg,var(--neon),var(--ice));border-radius:2px;transition:width .4s ease;position:relative}
+.quiz-progress-fill::after{content:'';position:absolute;right:-2px;top:-3px;width:8px;height:8px;border-radius:50%;background:var(--neon);box-shadow:var(--glow)}
 .q-card{background:rgba(20,23,32,.95);border:1px solid var(--rim);border-radius:var(--r-lg);padding:28px;margin-bottom:20px;backdrop-filter:blur(12px)}
 .q-number{font-size:11px;font-weight:800;text-transform:uppercase;letter-spacing:.1em;color:var(--text3);margin-bottom:10px;display:flex;align-items:center;gap:6px}
 .q-number::before{content:'';flex:0 0 2px;height:14px;background:var(--neon);border-radius:1px}
@@ -338,9 +290,10 @@ select.fi-dark{-webkit-appearance:none;background-image:url("data:image/svg+xml,
 .q-dot.current{border-color:var(--ice);color:var(--ice)}
 .q-dot:hover{border-color:var(--text2)}
 
+/* ─── RESULT MODAL ─── */
 .modal-ov{display:none;position:fixed;inset:0;background:rgba(0,0,0,.85);z-index:500;align-items:center;justify-content:center;padding:20px;backdrop-filter:blur(8px)}
 .modal-ov.open{display:flex}
-.modal{background:var(--surface);border:1px solid var(--rim);border-radius:var(--r-xl);padding:32px;width:100%;max-width:560px;max-height:90vh;overflow-y:auto;box-shadow:var(--sh-lg);animation:modalIn .3s cubic-bezier(.175,.885,.32,1.275)}
+.modal{background:var(--surface);border:1px solid var(--rim);border-radius:var(--r-xl);padding:32px;width:100%;max-width:560px;max-height:90vh;overflow-y:auto;box-shadow:var(--sh-lg),0 0 60px rgba(0,245,212,.06);animation:modalIn .3s cubic-bezier(.175,.885,.32,1.275)}
 @keyframes modalIn{from{opacity:0;transform:scale(.9)}to{opacity:1;transform:scale(1)}}
 .modal-hd{display:flex;align-items:center;justify-content:space-between;margin-bottom:22px}
 .modal-title{font-family:var(--display);font-size:18px;font-weight:700}
@@ -359,9 +312,11 @@ select.fi-dark{-webkit-appearance:none;background-image:url("data:image/svg+xml,
 .result-stat-val{font-family:var(--display);font-size:22px;font-weight:700}
 .result-stat-lbl{font-size:11px;color:var(--text3);margin-top:3px;font-weight:600}
 
+/* ─── RESULTS PAGE ─── */
 .history-item{display:flex;align-items:center;justify-content:space-between;padding:12px 16px;background:var(--surface2);border-radius:var(--r-sm);margin-bottom:8px;border:1px solid var(--rim);transition:var(--tr)}
 .history-item:hover{border-color:var(--rim2)}
 
+/* ─── LEADERBOARD ─── */
 .lb-item{display:grid;grid-template-columns:44px 1fr auto auto;gap:12px;align-items:center;padding:12px 16px;border-radius:var(--r-sm);margin-bottom:6px;background:var(--surface2);border:1px solid transparent;transition:var(--tr)}
 .lb-item:hover{background:var(--surface3)}
 .lb-item.rank-1{border-color:rgba(245,158,11,.3);background:rgba(245,158,11,.05)}
@@ -372,6 +327,7 @@ select.fi-dark{-webkit-appearance:none;background-image:url("data:image/svg+xml,
 .lb-detail{font-size:11px;color:var(--text3);margin-top:1px}
 .lb-score-val{font-family:var(--display);font-weight:700;font-size:14px;text-align:right}
 
+/* ─── ADMIN ─── */
 .admin-tabs{display:flex;gap:3px;background:var(--ink2);border:1px solid var(--rim);border-radius:var(--r-sm);padding:3px;flex-wrap:wrap;margin-bottom:22px}
 .admin-tab{padding:8px 16px;border:none;background:transparent;color:var(--text3);font-size:13px;font-weight:600;border-radius:6px;cursor:pointer;transition:var(--tr);font-family:var(--font)}
 .admin-tab.act{background:linear-gradient(135deg,rgba(0,245,212,.2),rgba(56,189,248,.12));color:var(--neon);border:1px solid rgba(0,245,212,.2)}
@@ -380,6 +336,7 @@ select.fi-dark{-webkit-appearance:none;background-image:url("data:image/svg+xml,
 .drop-zone{border:2px dashed var(--rim2);border-radius:var(--r);padding:32px;text-align:center;cursor:pointer;transition:var(--tr)}
 .drop-zone:hover,.drop-zone.drag{border-color:var(--neon);background:rgba(0,245,212,.04)}
 
+/* ─── MISC ─── */
 .divider{height:1px;background:var(--rim);margin:18px 0}
 .chip{display:inline-flex;align-items:center;gap:3px;padding:3px 9px;border-radius:20px;font-size:11px;background:var(--ink2);border:1px solid var(--rim);color:var(--text2)}
 .flex-r{display:flex;align-items:center;gap:10px}
@@ -398,6 +355,7 @@ select.fi-dark{-webkit-appearance:none;background-image:url("data:image/svg+xml,
 .notice-info{background:rgba(0,245,212,.05);border-color:rgba(0,245,212,.2);color:var(--neon)}
 .notice-warn{background:rgba(245,158,11,.06);border-color:rgba(245,158,11,.2);color:var(--warn)}
 
+/* ─── RESPONSIVE ─── */
 @media(max-width:900px){
   .sidebar{transform:translateX(-100%);z-index:200}
   .sidebar.open{transform:none}
@@ -418,70 +376,153 @@ select.fi-dark{-webkit-appearance:none;background-image:url("data:image/svg+xml,
 @media(max-width:480px){
   .stat-grid{grid-template-columns:1fr}
   .result-stats{grid-template-columns:1fr}
+  .auth-card{padding:24px}
   .sched-grid{grid-template-columns:1fr}
 }
 </style>
 </head>
 <body>
 
+<!-- Background Canvas -->
 <canvas id="bg-canvas"></canvas>
+
+<!-- Tab Warning -->
 <div class="tab-warn-banner" id="tab-warn">⚠️ Tab switch detected — focus violations are being logged</div>
+
+<!-- Toast Container -->
 <div id="toast-wrap"></div>
 
-<div id="loading-screen">
-  <div class="load-logo">CEE Medic Nepal</div>
-  <div class="load-bars">
-    <div class="load-bar"></div><div class="load-bar"></div><div class="load-bar"></div>
-    <div class="load-bar"></div><div class="load-bar"></div>
+<!-- ════════════════════════════════════════
+     AUTH SCREEN
+════════════════════════════════════════ -->
+<div id="auth-screen">
+  <div class="auth-wrap">
+    <div class="auth-logo-area">
+      <div class="auth-logo">NexusExam</div>
+      <div class="auth-logo-sub">Next-Gen MCQ Examination Platform</div>
+    </div>
+    <div class="auth-card">
+
+      <!-- TABS -->
+      <div class="auth-tabs">
+        <button class="auth-tab active" id="tab-login" onclick="switchAuthTab('login')">Sign In</button>
+        <button class="auth-tab" id="tab-signup" onclick="switchAuthTab('signup')">Register</button>
+        <button class="auth-tab" id="tab-forgot" onclick="switchAuthTab('forgot')" style="display:none">Reset</button>
+      </div>
+
+      <!-- LOGIN -->
+      <div class="auth-panel active" id="panel-login">
+        <button class="btn-google" onclick="googleLogin()">
+          <svg width="18" height="18" viewBox="0 0 18 18"><path fill="#4285F4" d="M17.64 9.2c0-.637-.057-1.251-.164-1.84H9v3.481h4.844a4.14 4.14 0 0 1-1.796 2.716v2.259h2.908c1.702-1.567 2.684-3.875 2.684-6.615z"/><path fill="#34A853" d="M9 18c2.43 0 4.467-.806 5.956-2.18l-2.908-2.259c-.806.54-1.837.86-3.048.86-2.344 0-4.328-1.584-5.036-3.711H.957v2.332A8.997 8.997 0 0 0 9 18z"/><path fill="#FBBC05" d="M3.964 10.71A5.41 5.41 0 0 1 3.682 9c0-.593.102-1.17.282-1.71V4.958H.957A8.996 8.996 0 0 0 0 9c0 1.452.348 2.827.957 4.042l3.007-2.332z"/><path fill="#EA4335" d="M9 3.58c1.321 0 2.508.454 3.44 1.345l2.582-2.58C13.463.891 11.426 0 9 0A8.997 8.997 0 0 0 .957 4.958L3.964 6.29C4.672 4.163 6.656 3.58 9 3.58z"/></svg>
+          Continue with Google
+        </button>
+        <div class="auth-divider">or sign in with email</div>
+        <div class="fg"><label class="fl">Email Address</label><input class="fi" type="email" id="li-email" placeholder="you@example.com"/></div>
+        <div class="fg"><label class="fl">Password</label>
+          <div class="fi-pw"><input class="fi" type="password" id="li-pass" placeholder="Your password" style="padding-right:44px"/>
+          <button class="pw-toggle" onclick="togglePw('li-pass',this)" type="button">👁</button></div>
+        </div>
+        <div style="text-align:right;margin-bottom:14px"><button class="auth-link" onclick="switchAuthTab('forgot')">Forgot password?</button></div>
+        <button class="btn-primary" id="li-btn" onclick="doLogin()">Sign In →</button>
+        <div class="auth-note">Don't have an account? <button class="auth-link" onclick="switchAuthTab('signup')">Register here</button></div>
+      </div>
+
+      <!-- SIGNUP -->
+      <div class="auth-panel" id="panel-signup">
+        <button class="btn-google" onclick="googleLogin()">
+          <svg width="18" height="18" viewBox="0 0 18 18"><path fill="#4285F4" d="M17.64 9.2c0-.637-.057-1.251-.164-1.84H9v3.481h4.844a4.14 4.14 0 0 1-1.796 2.716v2.259h2.908c1.702-1.567 2.684-3.875 2.684-6.615z"/><path fill="#34A853" d="M9 18c2.43 0 4.467-.806 5.956-2.18l-2.908-2.259c-.806.54-1.837.86-3.048.86-2.344 0-4.328-1.584-5.036-3.711H.957v2.332A8.997 8.997 0 0 0 9 18z"/><path fill="#FBBC05" d="M3.964 10.71A5.41 5.41 0 0 1 3.682 9c0-.593.102-1.17.282-1.71V4.958H.957A8.996 8.996 0 0 0 0 9c0 1.452.348 2.827.957 4.042l3.007-2.332z"/><path fill="#EA4335" d="M9 3.58c1.321 0 2.508.454 3.44 1.345l2.582-2.58C13.463.891 11.426 0 9 0A8.997 8.997 0 0 0 .957 4.958L3.964 6.29C4.672 4.163 6.656 3.58 9 3.58z"/></svg>
+          Sign up with Google
+        </button>
+        <div class="auth-divider">or create account</div>
+        <div class="fg"><label class="fl">Full Name</label><input class="fi" type="text" id="su-name" placeholder="John Doe"/></div>
+        <div class="fg"><label class="fl">Email Address</label><input class="fi" type="email" id="su-email" placeholder="you@example.com"/></div>
+        <div class="fg"><label class="fl">Password</label>
+          <div class="fi-pw"><input class="fi" type="password" id="su-pass" placeholder="Min 8 characters" oninput="checkStrength(this)" style="padding-right:44px"/>
+          <button class="pw-toggle" onclick="togglePw('su-pass',this)" type="button">👁</button></div>
+          <div class="strength-bar"><div class="strength-fill" id="strength-fill"></div></div>
+          <div id="strength-label" style="font-size:11px;color:var(--text3);margin-top:3px"></div>
+        </div>
+        <div class="fg"><label class="fl">Confirm Password</label>
+          <div class="fi-pw"><input class="fi" type="password" id="su-confirm" placeholder="Repeat password" style="padding-right:44px"/>
+          <button class="pw-toggle" onclick="togglePw('su-confirm',this)" type="button">👁</button></div>
+        </div>
+        <button class="btn-primary" id="su-btn" onclick="doSignup()">Create Account →</button>
+        <div class="auth-note">Account needs admin approval before login. <br><button class="auth-link" onclick="switchAuthTab('login')">Back to login</button></div>
+      </div>
+
+      <!-- FORGOT -->
+      <div class="auth-panel" id="panel-forgot">
+        <div class="notice notice-info">Enter your email and we'll send a password reset link.</div>
+        <div class="fg"><label class="fl">Email Address</label><input class="fi" type="email" id="fp-email" placeholder="you@example.com"/></div>
+        <button class="btn-primary" id="fp-btn" onclick="doForgot()">Send Reset Link →</button>
+        <div class="auth-note"><button class="auth-link" onclick="switchAuthTab('login')">← Back to login</button></div>
+      </div>
+
+    </div>
   </div>
-  <div style="font-size:12px;color:var(--text3);margin-top:4px;font-family:var(--mono)">Initializing platform…</div>
 </div>
 
+<!-- ════════════════════════════════════════
+     MAIN APP
+════════════════════════════════════════ -->
 <div id="app">
 <div class="layout">
   <div class="sb-overlay" id="sb-overlay" onclick="closeSb()"></div>
 
+  <!-- SIDEBAR -->
   <nav class="sidebar" id="sidebar">
-    <div class="sb-top"><div class="sb-logo">NexusExam<span class="sb-logo-dot"></span></div></div>
+    <div class="sb-top">
+      <div class="sb-logo">NexusExam<span class="sb-logo-dot"></span></div>
+    </div>
     <div class="sb-user">
       <div class="sb-av" id="sb-av">N</div>
-      <div><div class="sb-uname" id="sb-uname">—</div><div class="sb-urole" id="sb-urole">student</div></div>
+      <div>
+        <div class="sb-uname" id="sb-uname">—</div>
+        <div class="sb-urole" id="sb-urole">student</div>
+      </div>
     </div>
     <div class="sb-nav">
       <div class="sb-section">Overview</div>
       <button class="sb-item act" data-pg="dashboard" onclick="goTo('dashboard')"><span class="sb-icon">⚡</span>Dashboard</button>
+
       <div class="sb-section">Exams</div>
       <button class="sb-item" data-pg="schedule" onclick="goTo('schedule')"><span class="sb-icon">📅</span>Scheduled Exams</button>
       <button class="sb-item" data-pg="quiz" onclick="goTo('quiz')"><span class="sb-icon">🎯</span>Take Quiz</button>
       <button class="sb-item" data-pg="results" onclick="goTo('results')"><span class="sb-icon">📊</span>My Results</button>
       <button class="sb-item" data-pg="leaderboard" onclick="goTo('leaderboard')"><span class="sb-icon">🏆</span>Leaderboard</button>
+
       <div class="sb-section" id="admin-sb-section" style="display:none">Admin</div>
       <button class="sb-item hidden" id="admin-nav-btn" data-pg="admin" onclick="goTo('admin')"><span class="sb-icon">⚙️</span>Admin Panel<span class="sb-badge" id="pending-badge" style="display:none">0</span></button>
     </div>
-    <div class="sb-footer"><button class="btn-logout" onclick="doLogout()">🚪 Sign Out</button></div>
+    <div class="sb-footer">
+      <button class="btn-logout" onclick="doLogout()">🚪 Sign Out</button>
+    </div>
   </nav>
 
+  <!-- MAIN -->
   <div class="main" id="main-area">
     <div class="topbar">
       <div class="flex-r">
         <button class="tb-ham" onclick="openSb()">☰</button>
         <div class="tb-title" id="topbar-title">⚡ Dashboard</div>
       </div>
-      <div class="tb-right"><div class="tb-clock" id="tb-clock">--:--:--</div></div>
+      <div class="tb-right">
+        <div class="tb-clock" id="tb-clock">--:--:--</div>
+      </div>
     </div>
 
-    <!-- DASHBOARD -->
+    <!-- ══ PAGE: DASHBOARD ══ -->
     <div class="page act" id="pg-dashboard">
       <div class="pg-head">
         <div class="pg-title">⚡ Dashboard</div>
         <div class="pg-sub">Welcome back, <span id="dash-greeting" style="color:var(--neon)">—</span></div>
       </div>
-      <div class="stat-grid" id="dash-stats">
-        <div class="stat teal"><div class="stat-icon">📚</div><div class="skel skel-row w40" style="height:30px;margin-bottom:6px"></div><div class="stat-lbl">Subjects</div></div>
-        <div class="stat blue"><div class="stat-icon">🎯</div><div class="skel skel-row w40" style="height:30px;margin-bottom:6px"></div><div class="stat-lbl">Quizzes Available</div></div>
-        <div class="stat purple"><div class="stat-icon">✅</div><div class="skel skel-row w40" style="height:30px;margin-bottom:6px"></div><div class="stat-lbl">My Attempts</div></div>
-        <div class="stat orange"><div class="stat-icon">⭐</div><div class="skel skel-row w40" style="height:30px;margin-bottom:6px"></div><div class="stat-lbl">Avg Score %</div></div>
-        <div class="stat green"><div class="stat-icon">🏆</div><div class="skel skel-row w40" style="height:30px;margin-bottom:6px"></div><div class="stat-lbl">Best Score</div></div>
+      <div class="stat-grid">
+        <div class="stat teal"><div class="stat-icon">📚</div><div class="stat-val" id="st-subjects">0</div><div class="stat-lbl">Subjects</div></div>
+        <div class="stat blue"><div class="stat-icon">🎯</div><div class="stat-val" id="st-quizzes">0</div><div class="stat-lbl">Quizzes Available</div></div>
+        <div class="stat purple"><div class="stat-icon">✅</div><div class="stat-val" id="st-attempts">0</div><div class="stat-lbl">My Attempts</div></div>
+        <div class="stat orange"><div class="stat-icon">⭐</div><div class="stat-val" id="st-avg">—</div><div class="stat-lbl">Avg Score %</div></div>
+        <div class="stat green"><div class="stat-icon">🏆</div><div class="stat-val" id="st-best">—</div><div class="stat-lbl">Best Score</div></div>
       </div>
       <div class="grid-2">
         <div class="card">
@@ -489,42 +530,22 @@ select.fi-dark{-webkit-appearance:none;background-image:url("data:image/svg+xml,
             <div style="font-family:var(--display);font-size:15px;font-weight:600">Recent Activity</div>
             <button class="btn btn-ghost btn-sm" onclick="goTo('results')">View All →</button>
           </div>
-          <div id="recent-list">
-            <div class="skel skel-card" style="height:60px"></div>
-            <div class="skel skel-card" style="height:60px"></div>
-            <div class="skel skel-card" style="height:60px"></div>
-          </div>
+          <div id="recent-list"><div class="empty-state"><div class="empty-icon">📋</div><div class="empty-title">No attempts yet</div><div class="empty-sub">Take a quiz to see activity here</div></div></div>
         </div>
         <div class="card">
           <div style="font-family:var(--display);font-size:15px;font-weight:600;margin-bottom:16px">Live & Upcoming Exams</div>
-          <div id="dash-schedules">
-            <div class="skel skel-card" style="height:60px"></div>
-            <div class="skel skel-card" style="height:60px"></div>
-          </div>
+          <div id="dash-schedules"><div class="empty-state"><div class="empty-icon">📅</div><div class="empty-title">No scheduled exams</div></div></div>
         </div>
       </div>
     </div>
 
-    <!-- SCHEDULE -->
+    <!-- ══ PAGE: SCHEDULE ══ -->
     <div class="page" id="pg-schedule">
       <div class="pg-head">
         <div class="pg-title">📅 Scheduled Exams</div>
-        <div class="pg-sub">Live countdowns and real-time exam access · <span style="color:var(--plasma);font-weight:700">One attempt per exam</span></div>
+        <div class="pg-sub">Live countdowns and real-time exam access</div>
       </div>
-      <div id="today-banner-wrap" style="display:none">
-        <div class="today-banner">
-          <div class="today-banner-inner">
-            <div class="today-banner-left">
-              <div class="today-banner-icon">🔥</div>
-              <div>
-                <div class="today-banner-title">Exams Happening Today!</div>
-                <div class="today-banner-sub" id="today-banner-sub">Check below for today's scheduled exams</div>
-              </div>
-            </div>
-            <button class="btn btn-warn btn-sm" onclick="setSchedFilter('today',document.querySelector('#sched-filter-tabs .admin-tab:nth-child(3)'))">View Today →</button>
-          </div>
-        </div>
-      </div>
+      <!-- Filter Bar -->
       <div class="card mb-4">
         <div class="flex-r" style="flex-wrap:wrap;gap:10px">
           <div style="display:flex;background:var(--ink2);border:1px solid var(--rim);border-radius:var(--r-sm);padding:3px;gap:3px;flex-wrap:wrap" id="sched-filter-tabs">
@@ -538,54 +559,36 @@ select.fi-dark{-webkit-appearance:none;background-image:url("data:image/svg+xml,
           <input class="fi-dark" id="sched-search" placeholder="🔍 Search exams…" oninput="renderScheduleCards()" style="width:200px"/>
         </div>
       </div>
-      <div id="sched-live-sec" class="sched-section-wrap" style="margin-bottom:32px">
-        <div class="sched-section-header">
-          <div class="sched-section-title"><div class="live-ring"><div class="live-ring-dot"></div></div>Live Now<span class="chip" id="live-count" style="background:rgba(16,185,129,.12);border-color:rgba(16,185,129,.3);color:#34d399">0</span></div>
-          <div class="sched-section-line"></div>
-        </div>
+      <div id="sched-live-sec" style="margin-bottom:28px">
+        <div class="flex-b mb-4"><div style="font-family:var(--display);font-weight:600;display:flex;align-items:center;gap:8px">🟢 Live Now <span class="chip" id="live-count">0</span></div></div>
         <div class="sched-grid" id="sched-live-grid"></div>
       </div>
-      <div id="sched-today-sec" class="sched-section-wrap" style="margin-bottom:32px">
-        <div class="sched-section-header">
-          <div class="sched-section-title">⭐ Today<span class="chip" id="today-count" style="background:rgba(245,158,11,.1);border-color:rgba(245,158,11,.25);color:var(--warn)">0</span></div>
-          <div class="sched-section-line"></div>
-        </div>
+      <div id="sched-today-sec" style="margin-bottom:28px">
+        <div class="flex-b mb-4"><div style="font-family:var(--display);font-weight:600;display:flex;align-items:center;gap:8px">⭐ Today <span class="chip" id="today-count">0</span></div></div>
         <div class="sched-grid" id="sched-today-grid"></div>
       </div>
-      <div id="sched-upcoming-sec" class="sched-section-wrap" style="margin-bottom:32px">
-        <div class="sched-section-header">
-          <div class="sched-section-title">🔜 Upcoming<span class="chip" id="upcoming-count" style="background:rgba(56,189,248,.1);border-color:rgba(56,189,248,.25);color:var(--ice)">0</span></div>
-          <div class="sched-section-line"></div>
-        </div>
+      <div id="sched-upcoming-sec" style="margin-bottom:28px">
+        <div class="flex-b mb-4"><div style="font-family:var(--display);font-weight:600;display:flex;align-items:center;gap:8px">🔜 Upcoming <span class="chip" id="upcoming-count">0</span></div></div>
         <div class="sched-grid" id="sched-upcoming-grid"></div>
       </div>
-      <div id="sched-ended-sec" class="sched-section-wrap" style="margin-bottom:32px">
-        <div class="sched-section-header">
-          <div class="sched-section-title">✅ Ended<span class="chip" id="ended-count">0</span></div>
-          <div class="sched-section-line"></div>
-        </div>
+      <div id="sched-ended-sec" style="margin-bottom:28px">
+        <div class="flex-b mb-4"><div style="font-family:var(--display);font-weight:600;display:flex;align-items:center;gap:8px">✅ Ended <span class="chip" id="ended-count">0</span></div></div>
         <div class="sched-grid" id="sched-ended-grid"></div>
       </div>
     </div>
 
-    <!-- QUIZ TREE -->
+    <!-- ══ PAGE: QUIZ ══ -->
     <div class="page" id="pg-quiz">
       <div class="pg-head">
         <div class="pg-title">🎯 Take a Quiz</div>
-        <div class="pg-sub">Browse by subject and chapter — click any set to start</div>
+        <div class="pg-sub">Select from available quiz sets below</div>
       </div>
       <div class="card">
-        <div id="quiz-tree-wrap">
-          <div style="display:flex;flex-direction:column;gap:10px">
-            <div class="skel" style="height:52px;border-radius:14px"></div>
-            <div class="skel" style="height:52px;border-radius:14px"></div>
-            <div class="skel" style="height:52px;border-radius:14px"></div>
-          </div>
-        </div>
+        <div id="quiz-tree-wrap"><div class="empty-state"><div class="empty-icon">📚</div><div class="empty-title">Loading quizzes…</div></div></div>
       </div>
     </div>
 
-    <!-- RESULTS -->
+    <!-- ══ PAGE: RESULTS ══ -->
     <div class="page" id="pg-results">
       <div class="pg-head">
         <div class="pg-title">📊 My Results</div>
@@ -594,7 +597,7 @@ select.fi-dark{-webkit-appearance:none;background-image:url("data:image/svg+xml,
       <div id="results-wrap"><div class="empty-state"><div class="empty-icon">📊</div><div class="empty-title">Loading…</div></div></div>
     </div>
 
-    <!-- LEADERBOARD -->
+    <!-- ══ PAGE: LEADERBOARD ══ -->
     <div class="page" id="pg-leaderboard">
       <div class="pg-head">
         <div class="pg-title">🏆 Leaderboard</div>
@@ -609,7 +612,7 @@ select.fi-dark{-webkit-appearance:none;background-image:url("data:image/svg+xml,
       <div id="lb-wrap"><div class="empty-state"><div class="empty-icon">🏆</div><div class="empty-title">Loading…</div></div></div>
     </div>
 
-    <!-- ADMIN -->
+    <!-- ══ PAGE: ADMIN ══ -->
     <div class="page" id="pg-admin">
       <div class="pg-head">
         <div class="pg-title">⚙️ Admin Panel</div>
@@ -627,6 +630,8 @@ select.fi-dark{-webkit-appearance:none;background-image:url("data:image/svg+xml,
         <button class="admin-tab" onclick="switchAdminTab('schedule',this)">📅 Schedules</button>
         <button class="admin-tab" onclick="switchAdminTab('users',this)">👥 Users</button>
       </div>
+
+      <!-- Upload -->
       <div class="admin-panel act" id="adm-upload">
         <div class="grid-2">
           <div class="card">
@@ -636,22 +641,29 @@ select.fi-dark{-webkit-appearance:none;background-image:url("data:image/svg+xml,
               <button class="admin-tab" onclick="switchUploadSrc('file',this)">File</button>
             </div>
             <div id="up-paste-area">
-              <textarea class="code-area" id="json-paste-input" rows="12" placeholder='Paste any JSON format here…'></textarea>
+              <textarea class="code-area" id="json-paste-input" rows="12" placeholder='Paste any JSON format here…
+
+Format 1: [{...}]
+Format 2: {"subject":"...","questions":[...]}
+Format 3: {"examTitle":"...","questions":[...]}
+Format 4: {"setId":"...","questions":{"q1":{...}}}
+Format 5: {"options":[{"id":"A","text":"..."}],"correctOption":"D"}'></textarea>
             </div>
             <div id="up-file-area" style="display:none">
               <div class="drop-zone" id="drop-zone" onclick="document.getElementById('file-input-adm').click()" ondragover="dOv(event)" ondragleave="dLv(event)" ondrop="dDrop(event)">
                 <div style="font-size:36px;margin-bottom:8px">📁</div>
                 <div style="font-size:14px;font-weight:600;color:var(--text2)">Click or drag JSON file</div>
+                <div style="font-size:12px;color:var(--text3);margin-top:4px">Supports all 5 formats</div>
               </div>
               <input type="file" id="file-input-adm" accept=".json,.txt" style="display:none" onchange="loadAdmFile(event)"/>
             </div>
           </div>
           <div class="card">
             <div style="font-family:var(--display);font-size:15px;font-weight:600;margin-bottom:14px">Set Details & Upload</div>
-            <div style="margin-bottom:12px"><label style="color:var(--text3);font-size:11px;font-weight:700;display:block;margin-bottom:5px">SUBJECT</label><input class="fi-dark" id="up-subject" placeholder="e.g. Physics"/></div>
-            <div style="margin-bottom:12px"><label style="color:var(--text3);font-size:11px;font-weight:700;display:block;margin-bottom:5px">CHAPTER</label><input class="fi-dark" id="up-chapter" placeholder="e.g. Motion"/></div>
-            <div style="margin-bottom:12px"><label style="color:var(--text3);font-size:11px;font-weight:700;display:block;margin-bottom:5px">SET NAME</label><input class="fi-dark" id="up-set" placeholder="e.g. Set-1"/></div>
-            <div style="margin-bottom:16px"><label style="color:var(--text3);font-size:11px;font-weight:700;display:block;margin-bottom:5px">DIFFICULTY</label>
+            <div style="margin-bottom:12px"><label class="fl" style="color:var(--text3);font-size:11px;font-weight:700;display:block;margin-bottom:5px">SUBJECT</label><input class="fi-dark" id="up-subject" placeholder="e.g. Physics"/></div>
+            <div style="margin-bottom:12px"><label class="fl" style="color:var(--text3);font-size:11px;font-weight:700;display:block;margin-bottom:5px">CHAPTER</label><input class="fi-dark" id="up-chapter" placeholder="e.g. Motion"/></div>
+            <div style="margin-bottom:12px"><label class="fl" style="color:var(--text3);font-size:11px;font-weight:700;display:block;margin-bottom:5px">SET NAME</label><input class="fi-dark" id="up-set" placeholder="e.g. Set-1"/></div>
+            <div style="margin-bottom:16px"><label class="fl" style="color:var(--text3);font-size:11px;font-weight:700;display:block;margin-bottom:5px">DIFFICULTY</label>
               <select class="fi-dark" id="up-diff"><option value="">Any</option><option>Easy</option><option>Medium</option><option>Hard</option></select>
             </div>
             <div class="flex-r" style="flex-wrap:wrap;gap:8px">
@@ -667,56 +679,70 @@ select.fi-dark{-webkit-appearance:none;background-image:url("data:image/svg+xml,
           </div>
         </div>
       </div>
+
+      <!-- Quizzes -->
       <div class="admin-panel" id="adm-quizzes">
         <div class="flex-b mb-4">
           <div style="font-family:var(--display);font-weight:600">All Quiz Sets</div>
           <button class="btn btn-ghost btn-sm" onclick="loadAdminQuizzes()">🔄 Refresh</button>
         </div>
         <div class="tbl-wrap">
-          <table><thead><tr><th>Subject</th><th>Chapter</th><th>Set</th><th>Questions</th><th>Difficulty</th><th>Actions</th></tr></thead>
-          <tbody id="admin-quizzes-body"><tr><td colspan="6" class="tbl-empty">Loading…</td></tr></tbody></table>
+          <table>
+            <thead><tr><th>Subject</th><th>Chapter</th><th>Set</th><th>Questions</th><th>Difficulty</th><th>Actions</th></tr></thead>
+            <tbody id="admin-quizzes-body"><tr><td colspan="6" class="tbl-empty">Loading…</td></tr></tbody>
+          </table>
         </div>
       </div>
+
+      <!-- Schedules -->
       <div class="admin-panel" id="adm-schedule">
         <div class="card mb-4">
           <div style="font-family:var(--display);font-size:15px;font-weight:600;margin-bottom:16px">➕ Create Schedule</div>
           <div class="grid-2">
-            <div style="margin-bottom:12px"><label style="color:var(--text3);font-size:11px;font-weight:700;display:block;margin-bottom:5px">TITLE</label><input class="fi-dark" id="adm-sc-title" placeholder="e.g. Physics Final Exam"/></div>
-            <div style="margin-bottom:12px"><label style="color:var(--text3);font-size:11px;font-weight:700;display:block;margin-bottom:5px">QUIZ SET</label><select class="fi-dark" id="adm-sc-quiz"><option value="">-- Choose Quiz --</option></select></div>
-            <div style="margin-bottom:12px"><label style="color:var(--text3);font-size:11px;font-weight:700;display:block;margin-bottom:5px">START DATE & TIME</label><input class="fi-dark" type="datetime-local" id="adm-sc-start"/></div>
-            <div style="margin-bottom:12px"><label style="color:var(--text3);font-size:11px;font-weight:700;display:block;margin-bottom:5px">END DATE & TIME</label><input class="fi-dark" type="datetime-local" id="adm-sc-end"/></div>
-            <div style="margin-bottom:12px"><label style="color:var(--text3);font-size:11px;font-weight:700;display:block;margin-bottom:5px">DURATION (MIN)</label><input class="fi-dark" type="number" id="adm-sc-dur" placeholder="60"/></div>
-            <div style="margin-bottom:12px"><label style="color:var(--text3);font-size:11px;font-weight:700;display:block;margin-bottom:5px">INSTRUCTIONS</label><input class="fi-dark" id="adm-sc-instr" placeholder="Any special instructions"/></div>
+            <div style="margin-bottom:12px"><label class="fl" style="color:var(--text3);font-size:11px;font-weight:700;display:block;margin-bottom:5px">TITLE</label><input class="fi-dark" id="adm-sc-title" placeholder="e.g. Physics Final Exam"/></div>
+            <div style="margin-bottom:12px"><label class="fl" style="color:var(--text3);font-size:11px;font-weight:700;display:block;margin-bottom:5px">QUIZ SET</label>
+              <select class="fi-dark" id="adm-sc-quiz"><option value="">-- Choose Quiz --</option></select>
+            </div>
+            <div style="margin-bottom:12px"><label class="fl" style="color:var(--text3);font-size:11px;font-weight:700;display:block;margin-bottom:5px">START DATE & TIME</label><input class="fi-dark" type="datetime-local" id="adm-sc-start"/></div>
+            <div style="margin-bottom:12px"><label class="fl" style="color:var(--text3);font-size:11px;font-weight:700;display:block;margin-bottom:5px">END DATE & TIME</label><input class="fi-dark" type="datetime-local" id="adm-sc-end"/></div>
+            <div style="margin-bottom:12px"><label class="fl" style="color:var(--text3);font-size:11px;font-weight:700;display:block;margin-bottom:5px">DURATION (MIN)</label><input class="fi-dark" type="number" id="adm-sc-dur" placeholder="60"/></div>
+            <div style="margin-bottom:12px"><label class="fl" style="color:var(--text3);font-size:11px;font-weight:700;display:block;margin-bottom:5px">INSTRUCTIONS</label><input class="fi-dark" id="adm-sc-instr" placeholder="Any special instructions"/></div>
           </div>
           <textarea class="fi-dark" id="adm-sc-desc" rows="2" placeholder="Description (optional)…" style="resize:vertical;margin-bottom:14px"></textarea>
           <button class="btn btn-neon" onclick="createSchedule()">📅 Create Schedule</button>
         </div>
         <div class="tbl-wrap">
-          <table><thead><tr><th>Title</th><th>Quiz</th><th>Start</th><th>End</th><th>Status</th><th>Attempts</th><th>Actions</th></tr></thead>
-          <tbody id="adm-sched-body"><tr><td colspan="7" class="tbl-empty">Loading…</td></tr></tbody></table>
+          <table>
+            <thead><tr><th>Title</th><th>Quiz</th><th>Start</th><th>End</th><th>Status</th><th>Actions</th></tr></thead>
+            <tbody id="adm-sched-body"><tr><td colspan="6" class="tbl-empty">Loading…</td></tr></tbody>
+          </table>
         </div>
       </div>
+
+      <!-- Users -->
       <div class="admin-panel" id="adm-users">
         <div class="flex-b mb-4">
           <div style="font-family:var(--display);font-weight:600">User Management</div>
           <button class="btn btn-ghost btn-sm" onclick="loadAdminUsers()">🔄 Refresh</button>
         </div>
         <div class="tbl-wrap">
-          <table><thead><tr><th>Name</th><th>Email</th><th>Role</th><th>Status</th><th>Actions</th></tr></thead>
-          <tbody id="admin-users-body"><tr><td colspan="5" class="tbl-empty">Loading…</td></tr></tbody></table>
+          <table>
+            <thead><tr><th>Name</th><th>Email</th><th>Role</th><th>Status</th><th>Actions</th></tr></thead>
+            <tbody id="admin-users-body"><tr><td colspan="5" class="tbl-empty">Loading…</td></tr></tbody>
+          </table>
         </div>
       </div>
     </div>
-  </div>
-</div>
-</div>
 
-<!-- QUIZ SCREEN -->
+  </div><!-- /main-area -->
+</div><!-- /layout -->
+</div><!-- /app -->
+
+<!-- ════════════════ QUIZ SCREEN ════════════════ -->
 <div id="quiz-screen">
   <div class="quiz-wrap">
     <div class="quiz-topbar">
       <div class="quiz-meta-info">
-        <div class="quiz-meta-breadcrumb" id="q-breadcrumb"></div>
         <div class="quiz-meta-title" id="q-title-display">Quiz</div>
         <div id="q-progress-text" style="font-size:12px;color:var(--text3)">Question 1 of 10</div>
       </div>
@@ -738,10 +764,14 @@ select.fi-dark{-webkit-appearance:none;background-image:url("data:image/svg+xml,
   </div>
 </div>
 
-<!-- MODALS -->
+<!-- ════════════════ MODALS ════════════════ -->
+<!-- Result Modal -->
 <div class="modal-ov" id="result-modal">
   <div class="modal">
-    <div class="modal-hd"><div class="modal-title">Exam Complete 🎉</div><button class="modal-x" onclick="closeModal('result-modal')">✕</button></div>
+    <div class="modal-hd">
+      <div class="modal-title">Exam Complete 🎉</div>
+      <button class="modal-x" onclick="closeModal('result-modal')">✕</button>
+    </div>
     <div id="result-modal-body"></div>
     <div class="flex-r mt-4" style="gap:10px">
       <button class="btn btn-ghost btn-full" onclick="closeModal('result-modal')">🏠 Home</button>
@@ -750,21 +780,31 @@ select.fi-dark{-webkit-appearance:none;background-image:url("data:image/svg+xml,
   </div>
 </div>
 
+<!-- Edit Quiz Modal -->
 <div class="modal-ov" id="edit-quiz-modal">
   <div class="modal">
-    <div class="modal-hd"><div class="modal-title">Edit Quiz Set</div><button class="modal-x" onclick="closeModal('edit-quiz-modal')">✕</button></div>
+    <div class="modal-hd">
+      <div class="modal-title">Edit Quiz Set</div>
+      <button class="modal-x" onclick="closeModal('edit-quiz-modal')">✕</button>
+    </div>
     <input type="hidden" id="eq-id"/>
-    <div style="margin-bottom:12px"><label style="color:var(--text3);font-size:11px;font-weight:700;display:block;margin-bottom:5px">SUBJECT</label><input class="fi-dark" id="eq-subj"/></div>
-    <div style="margin-bottom:12px"><label style="color:var(--text3);font-size:11px;font-weight:700;display:block;margin-bottom:5px">CHAPTER</label><input class="fi-dark" id="eq-chap"/></div>
-    <div style="margin-bottom:12px"><label style="color:var(--text3);font-size:11px;font-weight:700;display:block;margin-bottom:5px">SET</label><input class="fi-dark" id="eq-set"/></div>
-    <div style="margin-bottom:12px"><label style="color:var(--text3);font-size:11px;font-weight:700;display:block;margin-bottom:5px">QUESTIONS JSON</label><textarea class="code-area" id="eq-questions" rows="10"></textarea></div>
+    <div style="margin-bottom:12px"><label class="fl" style="color:var(--text3);font-size:11px;font-weight:700;display:block;margin-bottom:5px">SUBJECT</label><input class="fi-dark" id="eq-subj"/></div>
+    <div style="margin-bottom:12px"><label class="fl" style="color:var(--text3);font-size:11px;font-weight:700;display:block;margin-bottom:5px">CHAPTER</label><input class="fi-dark" id="eq-chap"/></div>
+    <div style="margin-bottom:12px"><label class="fl" style="color:var(--text3);font-size:11px;font-weight:700;display:block;margin-bottom:5px">SET</label><input class="fi-dark" id="eq-set"/></div>
+    <div style="margin-bottom:12px"><label class="fl" style="color:var(--text3);font-size:11px;font-weight:700;display:block;margin-bottom:5px">QUESTIONS JSON</label>
+      <textarea class="code-area" id="eq-questions" rows="10"></textarea>
+    </div>
     <button class="btn btn-neon btn-full" onclick="saveEditQuiz()">💾 Save Changes</button>
   </div>
 </div>
 
+<!-- Confirm Take Exam Modal -->
 <div class="modal-ov" id="take-exam-modal">
   <div class="modal">
-    <div class="modal-hd"><div class="modal-title" id="take-exam-modal-title">Start Exam</div><button class="modal-x" onclick="closeModal('take-exam-modal')">✕</button></div>
+    <div class="modal-hd">
+      <div class="modal-title" id="take-exam-modal-title">Start Exam</div>
+      <button class="modal-x" onclick="closeModal('take-exam-modal')">✕</button>
+    </div>
     <div id="take-exam-modal-body"></div>
     <div class="flex-r mt-4" style="gap:10px">
       <button class="btn btn-ghost btn-full" onclick="closeModal('take-exam-modal')">Cancel</button>
@@ -786,13 +826,10 @@ const sb=window.supabase.createClient(SUPABASE_URL,SUPABASE_ANON_KEY);
 // ══════════════════════════════════════════════
 let CU=null,CP=null;
 let allQuizzes=[],allSchedules=[],allAttempts=[];
-// scheduleAttemptedMap: scheduleId -> attempt obj (built from `attempts` table WHERE schedule_id IS NOT NULL)
-let scheduleAttemptedMap={};
 let quizState=null,quizTimer=null,quizSecs=0;
 let schedFilter='all',schedCdIntervals={};
 let parsedQs=[],parsedMeta={};
 let lastResult=null;
-let _submittingSchedule=false;
 
 // ══════════════════════════════════════════════
 // CANVAS BACKGROUND
@@ -802,11 +839,23 @@ let _submittingSchedule=false;
   const ctx=c.getContext('2d');
   let w,h,pts=[];
   function resize(){w=c.width=innerWidth;h=c.height=innerHeight;initPts();}
-  function initPts(){pts=[];const n=Math.floor((w*h)/18000);for(let i=0;i<n;i++)pts.push({x:Math.random()*w,y:Math.random()*h,vx:(Math.random()-.5)*.3,vy:(Math.random()-.5)*.3,r:Math.random()*1.5+.5});}
+  function initPts(){
+    pts=[];
+    const n=Math.floor((w*h)/18000);
+    for(let i=0;i<n;i++)pts.push({x:Math.random()*w,y:Math.random()*h,vx:(Math.random()-.5)*.3,vy:(Math.random()-.5)*.3,r:Math.random()*1.5+.5});
+  }
   function draw(){
     ctx.clearRect(0,0,w,h);
-    pts.forEach(p=>{p.x+=p.vx;p.y+=p.vy;if(p.x<0||p.x>w)p.vx*=-1;if(p.y<0||p.y>h)p.vy*=-1;ctx.beginPath();ctx.arc(p.x,p.y,p.r,0,Math.PI*2);ctx.fillStyle='rgba(0,245,212,0.4)';ctx.fill();});
-    for(let i=0;i<pts.length;i++)for(let j=i+1;j<pts.length;j++){const d=Math.hypot(pts[i].x-pts[j].x,pts[i].y-pts[j].y);if(d<120){ctx.beginPath();ctx.moveTo(pts[i].x,pts[i].y);ctx.lineTo(pts[j].x,pts[j].y);ctx.strokeStyle=`rgba(0,245,212,${.12*(1-d/120)})`;ctx.lineWidth=.5;ctx.stroke();}}
+    pts.forEach(p=>{
+      p.x+=p.vx;p.y+=p.vy;
+      if(p.x<0||p.x>w)p.vx*=-1;if(p.y<0||p.y>h)p.vy*=-1;
+      ctx.beginPath();ctx.arc(p.x,p.y,p.r,0,Math.PI*2);
+      ctx.fillStyle='rgba(0,245,212,0.4)';ctx.fill();
+    });
+    for(let i=0;i<pts.length;i++)for(let j=i+1;j<pts.length;j++){
+      const d=Math.hypot(pts[i].x-pts[j].x,pts[i].y-pts[j].y);
+      if(d<120){ctx.beginPath();ctx.moveTo(pts[i].x,pts[i].y);ctx.lineTo(pts[j].x,pts[j].y);ctx.strokeStyle=`rgba(0,245,212,${.12*(1-d/120)})`;ctx.lineWidth=.5;ctx.stroke();}
+    }
     requestAnimationFrame(draw);
   }
   window.addEventListener('resize',resize);resize();draw();
@@ -824,21 +873,125 @@ function toast(msg,type='info',dur=3500){
   setTimeout(()=>{el.classList.add('out');setTimeout(()=>el.remove(),300)},dur);
 }
 
+// ══════════════════════════════════════════════
+// AUTH
+// ══════════════════════════════════════════════
+function switchAuthTab(t){
+  ['login','signup','forgot'].forEach(id=>{
+    document.getElementById(`panel-${id}`)?.classList.remove('active');
+    document.getElementById(`tab-${id}`)?.classList.remove('active');
+  });
+  document.getElementById(`panel-${t}`)?.classList.add('active');
+  document.getElementById(`tab-${t}`)?.classList.add('active');
+  if(t==='forgot'){document.getElementById('tab-forgot').style.display='block';}
+  else if(t==='login'){document.getElementById('tab-forgot').style.display='none';}
+}
+
+function togglePw(id,btn){
+  const i=document.getElementById(id);
+  i.type=i.type==='password'?'text':'password';
+  btn.textContent=i.type==='password'?'👁':'🙈';
+}
+
+function checkStrength(input){
+  const v=input.value;
+  let score=0;
+  if(v.length>=8)score++;if(v.length>=12)score++;
+  if(/[A-Z]/.test(v))score++;if(/[0-9]/.test(v))score++;if(/[^A-Za-z0-9]/.test(v))score++;
+  const fill=document.getElementById('strength-fill');
+  const label=document.getElementById('strength-label');
+  const levels=[
+    {w:'0%',c:'var(--rim)',t:''},
+    {w:'25%',c:'var(--err)',t:'Weak'},
+    {w:'50%',c:'var(--warn)',t:'Fair'},
+    {w:'75%',c:'var(--ice)',t:'Good'},
+    {w:'100%',c:'var(--ok)',t:'Strong'}
+  ];
+  const l=levels[Math.min(score,4)];
+  fill.style.width=l.w;fill.style.background=l.c;
+  label.textContent=l.t;label.style.color=l.c;
+}
+
+async function doLogin(){
+  const email=document.getElementById('li-email').value.trim();
+  const pass=document.getElementById('li-pass').value;
+  if(!email||!pass){toast('Fill in all fields','warn');return;}
+  const btn=document.getElementById('li-btn');
+  btn.disabled=true;btn.innerHTML='<span class="spin"></span> Signing in…';
+  try{
+    const{data,error}=await sb.auth.signInWithPassword({email,password:pass});
+    if(error)throw error;
+    await afterLogin(data.user);
+  }catch(e){toast(e.message,'err');}
+  finally{btn.disabled=false;btn.textContent='Sign In →';}
+}
+
+async function doSignup(){
+  const name=document.getElementById('su-name').value.trim();
+  const email=document.getElementById('su-email').value.trim();
+  const pass=document.getElementById('su-pass').value;
+  const confirm=document.getElementById('su-confirm').value;
+  if(!name||!email||!pass){toast('Fill in all fields','warn');return;}
+  if(pass.length<8){toast('Password must be at least 8 characters','warn');return;}
+  if(pass!==confirm){toast('Passwords do not match','warn');return;}
+  const btn=document.getElementById('su-btn');
+  btn.disabled=true;btn.innerHTML='<span class="spin"></span> Creating…';
+  try{
+    const{data,error}=await sb.auth.signUp({email,password:pass,options:{data:{full_name:name}}});
+    if(error)throw error;
+    const{error:pe}=await sb.from('profiles').upsert({id:data.user.id,email,full_name:name,role:'student',status:'pending'});
+    if(pe)console.warn(pe);
+    toast('Account created! Awaiting admin approval.','ok',6000);
+    switchAuthTab('login');
+  }catch(e){toast(e.message,'err');}
+  finally{btn.disabled=false;btn.textContent='Create Account →';}
+}
+
+async function doForgot(){
+  const email=document.getElementById('fp-email').value.trim();
+  if(!email){toast('Enter your email','warn');return;}
+  const btn=document.getElementById('fp-btn');
+  btn.disabled=true;btn.innerHTML='<span class="spin"></span> Sending…';
+  try{
+    const{error}=await sb.auth.resetPasswordForEmail(email,{redirectTo:window.location.href});
+    if(error)throw error;
+    toast('Reset link sent! Check your inbox.','ok',6000);
+    switchAuthTab('login');
+  }catch(e){toast(e.message,'err');}
+  finally{btn.disabled=false;btn.textContent='Send Reset Link →';}
+}
+
+async function googleLogin(){
+  try{
+    const{error}=await sb.auth.signInWithOAuth({provider:'google',options:{redirectTo:window.location.href}});
+    if(error)throw error;
+  }catch(e){toast(e.message,'err');}
+}
+
+async function afterLogin(user){
+  const{data:profile,error}=await sb.from('profiles').select('*').eq('id',user.id).single();
+  if(error||!profile){toast('Profile not found. Contact admin.','err');await sb.auth.signOut();return;}
+  if(profile.status==='blocked'){toast('Account blocked. Contact admin.','err');await sb.auth.signOut();return;}
+  if(profile.status!=='approved'){toast('Account pending approval.','warn');await sb.auth.signOut();return;}
+  CU=user;CP=profile;
+  initApp();
+}
+
 async function doLogout(){
   if(quizState){if(!confirm('Active quiz in progress. Quit and logout?'))return;}
   exitQuiz();
-  const uid=CU?.id;
   await sb.auth.signOut();
-  if(uid)sessionStorage.removeItem('cp_'+uid);
   CU=null;CP=null;
-  window.location.replace('https://ceemediconepal.xyz/cee/login.html');
+  document.getElementById('app').style.display='none';
+  document.getElementById('auth-screen').style.display='flex';
+  toast('Signed out','info');
 }
 
 // ══════════════════════════════════════════════
 // APP INIT
 // ══════════════════════════════════════════════
-function initApp(){
-  document.getElementById('loading-screen').style.display='none';
+async function initApp(){
+  document.getElementById('auth-screen').style.display='none';
   document.getElementById('app').style.display='block';
   const ini=(CP.full_name||'N').split(' ').map(w=>w[0]).join('').toUpperCase().slice(0,2);
   document.getElementById('sb-av').textContent=ini;
@@ -851,11 +1004,13 @@ function initApp(){
   }
   setupTabDetection();
   startClock();
-  Promise.all([loadQuizTree(),loadSchedulesData(),loadDashboard()]);
+  await Promise.all([loadQuizTree(),loadSchedulesData(),loadDashboard()]);
 }
 
 function startClock(){
-  setInterval(()=>{document.getElementById('tb-clock').textContent=new Date().toLocaleTimeString('en-US',{hour:'2-digit',minute:'2-digit',second:'2-digit'});},1000);
+  setInterval(()=>{
+    document.getElementById('tb-clock').textContent=new Date().toLocaleTimeString('en-US',{hour:'2-digit',minute:'2-digit',second:'2-digit'});
+  },1000);
 }
 
 // ══════════════════════════════════════════════
@@ -879,60 +1034,6 @@ function closeSb(){document.getElementById('sidebar').classList.remove('open');d
 function closeModal(id){document.getElementById(id).classList.remove('open');}
 
 // ══════════════════════════════════════════════
-// ✅ FIX 1: loadScheduleAttempts — uses `attempts` table (not schedule_attempts)
-// Reads from attempts WHERE schedule_id IS NOT NULL to build the attempted map.
-// ══════════════════════════════════════════════
-async function loadScheduleAttempts(){
-  try{
-    const{data,error}=await sb
-      .from('attempts')
-      .select('id,schedule_id,score,total,percentage')
-      .eq('user_id',CU.id)
-      .not('schedule_id','is',null);
-    if(error)throw error;
-    scheduleAttemptedMap={};
-    (data||[]).forEach(a=>{
-      // Keep the best-scored attempt if somehow multiple exist (before constraint applied)
-      if(!scheduleAttemptedMap[a.schedule_id]||a.percentage>scheduleAttemptedMap[a.schedule_id].percentage){
-        scheduleAttemptedMap[a.schedule_id]=a;
-      }
-    });
-  }catch(e){
-    console.error('loadScheduleAttempts error:',e);
-    scheduleAttemptedMap={};
-  }
-}
-
-// ══════════════════════════════════════════════
-// ✅ FIX 2: checkAlreadyAttempted — queries `attempts` table (not schedule_attempts)
-// This is the server-side guard called before showing start button and before submit.
-// ══════════════════════════════════════════════
-async function checkAlreadyAttempted(scheduleId){
-  try{
-    const{data,error}=await sb
-      .from('attempts')
-      .select('id,score,total,percentage')
-      .eq('user_id',CU.id)
-      .eq('schedule_id',scheduleId)
-      .maybeSingle(); // returns null if no row, single row if exists, error if multiple
-    if(error)throw error;
-    return data||null;
-  }catch(e){
-    // If maybeSingle throws because multiple rows exist (pre-constraint data), get the first
-    try{
-      const{data}=await sb
-        .from('attempts')
-        .select('id,score,total,percentage')
-        .eq('user_id',CU.id)
-        .eq('schedule_id',scheduleId)
-        .order('created_at',{ascending:true})
-        .limit(1);
-      return data?.[0]||null;
-    }catch(e2){return null;}
-  }
-}
-
-// ══════════════════════════════════════════════
 // DASHBOARD
 // ══════════════════════════════════════════════
 async function loadDashboard(){
@@ -943,68 +1044,37 @@ async function loadDashboard(){
     ]);
     allAttempts=ats||[];
     const subjects=[...new Set((qs||[]).map(q=>q.subject))];
-    document.getElementById('dash-stats').innerHTML=`
-      <div class="stat teal"><div class="stat-icon">📚</div><div class="stat-val">${subjects.length}</div><div class="stat-lbl">Subjects</div></div>
-      <div class="stat blue"><div class="stat-icon">🎯</div><div class="stat-val">${(qs||[]).length}</div><div class="stat-lbl">Quizzes Available</div></div>
-      <div class="stat purple"><div class="stat-icon">✅</div><div class="stat-val">${allAttempts.length}</div><div class="stat-lbl">My Attempts</div></div>
-      <div class="stat orange"><div class="stat-icon">⭐</div><div class="stat-val">${allAttempts.length?Math.round(allAttempts.reduce((s,a)=>s+a.percentage,0)/allAttempts.length)+'%':'—'}</div><div class="stat-lbl">Avg Score %</div></div>
-      <div class="stat green"><div class="stat-icon">🏆</div><div class="stat-val">${allAttempts.length?Math.max(...allAttempts.map(a=>a.percentage))+'%':'—'}</div><div class="stat-lbl">Best Score</div></div>
-    `;
+    document.getElementById('st-subjects').textContent=subjects.length;
+    document.getElementById('st-quizzes').textContent=(qs||[]).length;
+    document.getElementById('st-attempts').textContent=allAttempts.length;
+    const avg=allAttempts.length?Math.round(allAttempts.reduce((s,a)=>s+a.percentage,0)/allAttempts.length):null;
+    const best=allAttempts.length?Math.max(...allAttempts.map(a=>a.percentage)):null;
+    document.getElementById('st-avg').textContent=avg!=null?avg+'%':'—';
+    document.getElementById('st-best').textContent=best!=null?best+'%':'—';
+    // Recent activity
     const rl=document.getElementById('recent-list');
-    if(!allAttempts.length){
-      rl.innerHTML='<div class="empty-state"><div class="empty-icon">📋</div><div class="empty-title">No attempts yet</div><div class="empty-sub">Take a quiz to get started</div></div>';
-    }else{
-      rl.innerHTML=allAttempts.slice(0,5).map(a=>{
-        const col=a.percentage>=75?'var(--ok)':a.percentage>=50?'var(--warn)':'var(--err)';
-        return`<div class="history-item">
-          <div>
-            <div style="font-size:13px;font-weight:600">${esc(a.subject)}</div>
-            <div style="font-size:11px;color:var(--text3)">${esc(a.chapter||'')}${a.chapter?' › ':''}${esc(a.set)}</div>
-            <div style="font-size:11px;color:var(--text3);margin-top:2px">${new Date(a.created_at).toLocaleDateString('en-US',{month:'short',day:'numeric',hour:'2-digit',minute:'2-digit'})}</div>
-          </div>
-          <div style="text-align:right"><div style="font-family:var(--display);font-weight:700;color:${col}">${a.percentage}%</div><div style="font-size:11px;color:var(--text3)">${a.score}/${a.total}</div></div>
-        </div>`;}).join('');
-    }
+    if(!allAttempts.length){rl.innerHTML='<div class="empty-state"><div class="empty-icon">📋</div><div class="empty-title">No attempts yet</div><div class="empty-sub">Take a quiz to get started</div></div>';return;}
+    rl.innerHTML=allAttempts.slice(0,5).map(a=>{
+      const col=a.percentage>=75?'var(--ok)':a.percentage>=50?'var(--warn)':'var(--err)';
+      return`<div class="history-item">
+        <div><div style="font-size:13px;font-weight:600">${esc(a.subject)} › ${esc(a.set)}</div><div style="font-size:11px;color:var(--text3)">${new Date(a.created_at).toLocaleDateString('en-US',{month:'short',day:'numeric',hour:'2-digit',minute:'2-digit'})}</div></div>
+        <div style="text-align:right"><div style="font-family:var(--display);font-weight:700;color:${col}">${a.percentage}%</div><div style="font-size:11px;color:var(--text3)">${a.score}/${a.total}</div></div>
+      </div>`;}).join('');
+    // Dash schedules
     const live=allSchedules.filter(s=>getSchedStatus(s)==='live');
     const today=allSchedules.filter(s=>getSchedStatus(s)==='today');
     const upcoming=allSchedules.filter(s=>getSchedStatus(s)==='upcoming').slice(0,2);
     const dashScheds=[...live,...today,...upcoming].slice(0,4);
     const ds=document.getElementById('dash-schedules');
-    if(!dashScheds.length){
-      ds.innerHTML='<div class="empty-state"><div class="empty-icon">📅</div><div class="empty-title">No upcoming exams</div></div>';
-    }else{
-      ds.innerHTML=dashScheds.map(s=>{
-        const st=getSchedStatus(s);const start=new Date(s.start_time);
-        const quiz=s.quizzes||{};
-        return`<div class="history-item" style="cursor:pointer;flex-direction:column;align-items:flex-start;gap:8px" onclick="goTo('schedule')">
-          <div style="display:flex;align-items:center;justify-content:space-between;width:100%">
-            <div style="font-size:13px;font-weight:600">${esc(s.title)}</div>
-            <span class="badge ${st==='live'?'b-ok':st==='today'?'b-warn':'b-blue'}">${st}</span>
-          </div>
-          <div style="display:flex;gap:6px;flex-wrap:wrap">
-            ${quiz.subject?`<span class="chip">${subjectIcon(quiz.subject)} ${esc(quiz.subject)}</span>`:''}
-            ${quiz.chapter?`<span class="chip">📖 ${esc(quiz.chapter)}</span>`:''}
-          </div>
-          <div style="font-size:11px;color:var(--text3)">${start.toLocaleDateString('en-US',{month:'short',day:'numeric'})} · ${start.toLocaleTimeString('en-US',{hour:'2-digit',minute:'2-digit'})}</div>
-        </div>`;}).join('');
-    }
+    if(!dashScheds.length){ds.innerHTML='<div class="empty-state"><div class="empty-icon">📅</div><div class="empty-title">No upcoming exams</div></div>';return;}
+    ds.innerHTML=dashScheds.map(s=>{
+      const st=getSchedStatus(s);const start=new Date(s.start_time);
+      return`<div class="history-item" style="cursor:pointer" onclick="goTo('schedule')">
+        <div><div style="font-size:13px;font-weight:600">${esc(s.title)}</div>
+        <div style="font-size:11px;color:var(--text3)">${start.toLocaleDateString('en-US',{month:'short',day:'numeric'})} · ${start.toLocaleTimeString('en-US',{hour:'2-digit',minute:'2-digit'})}</div></div>
+        <span class="badge ${st==='live'?'b-ok':st==='today'?'b-warn':'b-blue'}">${st}</span>
+      </div>`;}).join('');
   }catch(e){console.error(e);}
-}
-
-// ══════════════════════════════════════════════
-// SUBJECT HELPERS
-// ══════════════════════════════════════════════
-function subjectIcon(subj){
-  const s=(subj||'').toLowerCase();
-  if(s.includes('physics'))return'⚛️';if(s.includes('chem'))return'🧪';
-  if(s.includes('bio'))return'🧬';if(s.includes('math'))return'📐';
-  if(s.includes('english'))return'📝';return'📘';
-}
-function subjectChipClass(subj){
-  const s=(subj||'').toLowerCase();
-  if(s.includes('physics'))return'subj-Physics';if(s.includes('chem'))return'subj-Chemistry';
-  if(s.includes('bio'))return'subj-Biology';if(s.includes('math'))return'subj-Math';
-  return'subj-default';
 }
 
 // ══════════════════════════════════════════════
@@ -1012,40 +1082,21 @@ function subjectChipClass(subj){
 // ══════════════════════════════════════════════
 async function loadSchedulesData(){
   try{
-    const{data,error}=await sb
-      .from('schedules')
-      .select('*,quizzes(id,subject,chapter,set,questions)')
-      .order('start_time');
-    // Always re-fetch attempted state fresh from DB
-    await loadScheduleAttempts();
+    const{data,error}=await sb.from('schedules').select('*,quizzes(id,subject,chapter,set,questions)').order('start_time');
     if(error)throw error;
     allSchedules=data||[];
-
+    // Populate subject filter
     const subjects=[...new Set(allSchedules.map(s=>s.quizzes?.subject).filter(Boolean))].sort();
     const sf=document.getElementById('sched-subj-filter');
     sf.innerHTML='<option value="">All Subjects</option>';
     subjects.forEach(s=>{const o=document.createElement('option');o.value=s;o.textContent=s;sf.appendChild(o);});
-
+    // Populate LB quiz filter
     const lf=document.getElementById('lb-quiz-filter');
     lf.innerHTML='<option value="">All Quizzes</option>';
     allSchedules.forEach(s=>{const o=document.createElement('option');o.value=s.id;o.textContent=`${s.quizzes?.subject||'?'} › ${s.quizzes?.set||'?'}`;lf.appendChild(o);});
-
-    const todayScheds=allSchedules.filter(s=>{const st=getSchedStatus(s);return st==='today'||st==='live';});
-    const todayBanner=document.getElementById('today-banner-wrap');
-    if(todayScheds.length>0){
-      todayBanner.style.display='block';
-      document.getElementById('today-banner-sub').textContent=`${todayScheds.length} exam${todayScheds.length>1?'s':''} scheduled for today — don't miss them!`;
-    }else{
-      todayBanner.style.display='none';
-    }
     renderScheduleCards();
   }catch(e){console.error(e);}
-
-  // Poll every 30s: re-check server for new attempt records (multi-tab safety)
-  setInterval(async()=>{
-    await loadScheduleAttempts();
-    renderScheduleCards();
-  },30000);
+  setInterval(renderScheduleCards,30000);
 }
 
 function getSchedStatus(s){
@@ -1066,7 +1117,7 @@ function renderScheduleCards(){
   const subj=document.getElementById('sched-subj-filter').value;
   const search=document.getElementById('sched-search').value.toLowerCase();
   Object.values(schedCdIntervals).forEach(clearInterval);schedCdIntervals={};
-  const filtered=allSchedules.filter(s=>{
+  let filtered=allSchedules.filter(s=>{
     const st=getSchedStatus(s);
     const mFilter=schedFilter==='all'||st===schedFilter;
     const mSubj=!subj||s.quizzes?.subject===subj;
@@ -1082,101 +1133,46 @@ function renderScheduleCards(){
     sec.style.display=(schedFilter==='all'||schedFilter===k)?'block':'none';
     if(!groups[k].length){
       const msgs={live:'No live exams right now',today:'No exams today',upcoming:'No upcoming exams',ended:'No ended exams'};
-      const emojis={live:'😴',today:'📅',upcoming:'🗓️',ended:'📦'};
-      grid.innerHTML=`<div class="empty-state"><div class="empty-icon">${emojis[k]}</div><div class="empty-title">${msgs[k]}</div></div>`;
+      grid.innerHTML=`<div class="empty-state"><div class="empty-icon">${{live:'😴',today:'📅',upcoming:'🗓️',ended:'📦'}[k]}</div><div class="empty-title">${msgs[k]}</div></div>`;
       return;
     }
-    grid.innerHTML=groups[k].map((s,i)=>buildSchedCard(s,k,i)).join('');
+    grid.innerHTML=groups[k].map(s=>buildSchedCard(s,k)).join('');
     groups[k].forEach(s=>{if(k!=='ended')startSchedCd(s,k);});
   });
 }
 
-function buildSchedCard(s,status,idx=0){
+function buildSchedCard(s,status){
   const quiz=s.quizzes||{};const qCount=(quiz.questions||[]).length;
   const start=new Date(s.start_time);const end=new Date(s.end_time);
   const fmtDate=d=>d.toLocaleDateString('en-US',{weekday:'short',month:'short',day:'numeric'});
   const fmtTime=d=>d.toLocaleTimeString('en-US',{hour:'2-digit',minute:'2-digit'});
-
-  let statusBadge;
-  if(status==='live'){statusBadge=`<span class="live-badge"><span class="live-badge-dot"></span>🟢 LIVE NOW</span>`;}
-  else if(status==='today'){statusBadge=`<span class="badge b-warn">⭐ TODAY</span>`;}
-  else if(status==='upcoming'){statusBadge=`<span class="badge b-blue">🔜 SOON</span>`;}
-  else{statusBadge=`<span class="badge b-gray">✅ ENDED</span>`;}
-
-  const attempted=scheduleAttemptedMap[s.id];
-
-  const attemptedHtml=attempted
-    ?`<div class="attempted-overlay">
-        <span class="attempted-overlay-icon">🏅</span>
-        <div>
-          <div style="font-size:13px;font-weight:800;color:#34d399">Already Submitted</div>
-          <div style="font-size:11px;color:var(--text3);font-weight:600;margin-top:2px">${attempted.score}/${attempted.total} correct</div>
-        </div>
-        <div class="attempted-score">
-          <div class="attempted-score-big">${attempted.percentage}%</div>
-          <div class="attempted-score-sub">Your Score</div>
-        </div>
-      </div>`
-    :(status==='live'?`<div class="once-only-notice"><span class="once-only-notice-icon">🔒</span>One attempt only — cannot retake after submission</div>`:'');
-
+  const statusBadge={live:'<span class="badge b-ok">🟢 LIVE</span>',today:'<span class="badge b-warn">⭐ TODAY</span>',upcoming:'<span class="badge b-blue">🔜 SOON</span>',ended:'<span class="badge b-gray">✅ ENDED</span>'}[status];
   let cdHtml='';
   if(status==='live'){
     const elapsed=Date.now()-start.getTime();const total=end.getTime()-start.getTime();
     const pct=Math.min(100,Math.max(0,Math.round((elapsed/total)*100)));
-    cdHtml=`<div class="cd-box"><div class="cd-label">In Progress</div><div class="cd-live"><div class="cd-dot-live"></div>Live · ends ${fmtTime(end)}</div><div class="cd-progress"><div class="cd-progress-fill" style="width:${pct}%"></div></div></div>`;
+    cdHtml=`<div class="cd-box"><div class="cd-label">In Progress</div><div class="cd-live"><div class="cd-dot-live"></div>Live · ends ${fmtTime(end)}</div><div style="height:4px;background:var(--rim);border-radius:2px;margin-top:8px;overflow:hidden"><div style="height:100%;width:${pct}%;background:linear-gradient(90deg,var(--ok),var(--neon));border-radius:2px"></div></div></div>`;
   }else if(status==='ended'){
     cdHtml=`<div class="cd-box"><div class="cd-label">Exam Ended</div><div style="font-size:12px;color:var(--text3)">${fmtDate(end)} · ${fmtTime(end)}</div></div>`;
   }else{
-    cdHtml=`<div class="cd-box"><div class="cd-label">${status==='today'?'Starts today in':'Countdown'}</div>
-      <div class="cd-digits">
-        <div class="cd-unit"><span class="cd-num" id="cdd-${s.id}">--</span><span class="cd-lbl">Days</span></div>
-        <span class="cd-sep">:</span>
-        <div class="cd-unit"><span class="cd-num" id="cdh-${s.id}">--</span><span class="cd-lbl">Hrs</span></div>
-        <span class="cd-sep">:</span>
-        <div class="cd-unit"><span class="cd-num" id="cdm-${s.id}">--</span><span class="cd-lbl">Min</span></div>
-        <span class="cd-sep">:</span>
-        <div class="cd-unit"><span class="cd-num" id="cds-${s.id}">--</span><span class="cd-lbl">Sec</span></div>
-      </div>
-    </div>`;
+    cdHtml=`<div class="cd-box"><div class="cd-label">${status==='today'?'Starts today in':'Countdown'}</div><div class="cd-digits"><div class="cd-unit"><span class="cd-num" id="cdd-${s.id}">--</span><span class="cd-lbl">Days</span></div><span class="cd-sep">:</span><div class="cd-unit"><span class="cd-num" id="cdh-${s.id}">--</span><span class="cd-lbl">Hrs</span></div><span class="cd-sep">:</span><div class="cd-unit"><span class="cd-num" id="cdm-${s.id}">--</span><span class="cd-lbl">Min</span></div><span class="cd-sep">:</span><div class="cd-unit"><span class="cd-num" id="cds-${s.id}">--</span><span class="cd-lbl">Sec</span></div></div></div>`;
   }
-
-  let actionBtn;
-  if(status==='live'){
-    if(attempted){actionBtn=`<button class="btn btn-ghost btn-sm" disabled style="opacity:.5;cursor:default">🏅 Submitted</button>`;}
-    else{actionBtn=`<button class="btn btn-volt btn-sm" onclick="openTakeExamModal('${s.id}')">▶ Start Now</button>`;}
-  }else if(status==='ended'){
-    actionBtn=`<button class="btn btn-ghost btn-sm" disabled>Closed</button>`;
-  }else{
-    actionBtn=`<button class="btn btn-ghost btn-sm" disabled>🔒 Locked</button>`;
-  }
-
-  const cardClass=`sched-card${attempted?' already-done':''}`;
-  const delay=`animation-delay:${idx*0.07}s`;
-  return`<div class="${cardClass}" style="${delay}">
-    <div class="sched-stripe ${status}"></div>
-    <div class="sched-body">
-      <div class="sched-status-badges">${statusBadge}${attempted?'<span class="badge b-ok">✅ Done</span>':''}</div>
-      <div class="sched-title">${esc(s.title||`${quiz.subject} — ${quiz.set}`)}</div>
-      <div class="sched-sub">${esc(quiz.chapter||'')}${quiz.set?' › '+esc(quiz.set):''}</div>
-      <div class="sched-info-row">
-        ${quiz.subject?`<span class="subj-chip ${subjectChipClass(quiz.subject)}">${subjectIcon(quiz.subject)} ${esc(quiz.subject)}</span>`:''}
-        ${quiz.chapter?`<span class="chip">📖 ${esc(quiz.chapter)}</span>`:''}
-        ${s.duration_minutes?`<span class="chip">⏱ ${s.duration_minutes}m</span>`:''}
-        <span class="chip">📝 ${qCount} Qs</span>
-      </div>
-      ${attemptedHtml}
-      <div class="sched-meta">
-        <div class="meta-row"><span class="meta-icon">📅</span>${fmtDate(start)}</div>
-        <div class="meta-row"><span class="meta-icon">🕐</span>${fmtTime(start)} → ${fmtTime(end)}</div>
-        ${s.instructions?`<div class="meta-row"><span class="meta-icon">ℹ️</span><span style="font-size:11px">${esc(s.instructions)}</span></div>`:''}
-      </div>
-      ${cdHtml}
+  const actionBtn=status==='live'
+    ?`<button class="btn btn-volt btn-sm" onclick="openTakeExamModal('${s.id}')">▶ Start</button>`
+    :status==='ended'?`<button class="btn btn-ghost btn-sm" disabled>Closed</button>`
+    :`<button class="btn btn-ghost btn-sm" disabled>🔒 Locked</button>`;
+  return`<div class="sched-card"><div class="sched-stripe ${status}"></div><div class="sched-body">
+    <div class="sched-status-badges">${statusBadge}<span class="badge b-neon">📘 ${esc(quiz.subject||'?')}</span>${s.duration_minutes?`<span class="badge b-blue">⏱ ${s.duration_minutes}m</span>`:''}</div>
+    <div class="sched-title">${esc(s.title||`${quiz.subject} — ${quiz.set}`)}</div>
+    <div class="sched-sub">${esc(quiz.chapter||'')}${quiz.set?' › '+esc(quiz.set):''}</div>
+    <div class="sched-meta">
+      <div class="meta-row"><span class="meta-icon">📅</span>${fmtDate(start)}</div>
+      <div class="meta-row"><span class="meta-icon">🕐</span>${fmtTime(start)} → ${fmtTime(end)}</div>
+      <div class="meta-row"><span class="meta-icon">📝</span>${qCount} Questions</div>
+      ${s.instructions?`<div class="meta-row"><span class="meta-icon">ℹ️</span><span style="font-size:11px">${esc(s.instructions)}</span></div>`:''}
     </div>
-    <div class="sched-footer">
-      <span class="sched-footer-id">ID:${s.id.slice(0,8)}…</span>
-      ${actionBtn}
-    </div>
-  </div>`;
+    ${cdHtml}
+  </div><div class="sched-footer"><span style="font-size:11px;color:var(--text3)">ID:${s.id.slice(0,6)}…</span>${actionBtn}</div></div>`;
 }
 
 function startSchedCd(s,status){
@@ -1188,54 +1184,76 @@ function startSchedCd(s,status){
     const m=Math.floor((diff%3600000)/60000);const sec=Math.floor((diff%60000)/1000);
     const p=n=>String(n).padStart(2,'0');
     const el=(id)=>document.getElementById(id);
-    if(el(`cdd-${s.id}`)){
-      el(`cdd-${s.id}`).textContent=p(d);el(`cdh-${s.id}`).textContent=p(h);
-      el(`cdm-${s.id}`).textContent=p(m);el(`cds-${s.id}`).textContent=p(sec);
-      const urgent=d===0&&h===0&&m<5;
-      [`cdd-${s.id}`,`cdh-${s.id}`,`cdm-${s.id}`,`cds-${s.id}`].forEach(id=>{if(el(id))el(id).classList.toggle('urgent',urgent);});
-    }
+    if(el(`cdd-${s.id}`)){el(`cdd-${s.id}`).textContent=p(d);el(`cdh-${s.id}`).textContent=p(h);el(`cdm-${s.id}`).textContent=p(m);el(`cds-${s.id}`).textContent=p(sec);}
+    // Urgency colors
+    if(d===0&&h===0&&m<10){[`cdd-${s.id}`,`cdh-${s.id}`,`cdm-${s.id}`,`cds-${s.id}`].forEach(id=>{if(el(id))el(id).style.color=m<1?'var(--err)':'var(--warn)';});}
   }
   tick();schedCdIntervals[s.id]=setInterval(tick,1000);
 }
 
-// ══════════════════════════════════════════════
-// OPEN TAKE EXAM MODAL — with live server check
-// ══════════════════════════════════════════════
-async function openTakeExamModal(schedId){
+function openTakeExamModal(schedId){
   const s=allSchedules.find(x=>x.id===schedId);if(!s)return;
-
-  // Guard 1: Server-side check — queries attempts table directly
-  const existingAttempt=await checkAlreadyAttempted(schedId);
-  if(existingAttempt){
-    scheduleAttemptedMap[schedId]=existingAttempt;
-    renderScheduleCards();
-    toast(`You already completed this exam with ${existingAttempt.percentage}%`,'info',5000);
-    return;
-  }
-
   const quiz=s.quizzes||{};
   document.getElementById('take-exam-modal-title').textContent=s.title||'Start Exam';
   document.getElementById('take-exam-modal-body').innerHTML=`
     <div style="background:var(--ink2);border-radius:var(--r-sm);padding:16px;margin-bottom:14px">
       <div style="font-size:14px;font-weight:600;margin-bottom:10px">${esc(s.title)}</div>
       <div style="display:flex;flex-direction:column;gap:7px;font-size:13px;color:var(--text2)">
-        <div>${subjectIcon(quiz.subject)} Subject: <strong>${esc(quiz.subject)}</strong></div>
+        <div>📘 Subject: <strong>${esc(quiz.subject)}</strong></div>
         <div>📖 Chapter: <strong>${esc(quiz.chapter||'—')}</strong></div>
         <div>📝 Questions: <strong>${(quiz.questions||[]).length}</strong></div>
         ${s.duration_minutes?`<div>⏱ Duration: <strong>${s.duration_minutes} minutes</strong></div>`:''}
       </div>
     </div>
     ${s.instructions?`<div class="notice notice-warn">⚠️ ${esc(s.instructions)}</div>`:''}
-    <div class="notice notice-warn" style="background:rgba(244,63,94,.06);border-color:rgba(244,63,94,.25);color:#fb7185">
-      🔒 <strong>Once only — you cannot retake this exam after submission.</strong> Enforced at the database level.
-    </div>
     <div class="notice notice-info">ℹ️ Tab switching will be flagged. Good luck!</div>`;
   document.getElementById('take-exam-confirm-btn').onclick=()=>{
     closeModal('take-exam-modal');
     const q={id:quiz.id||schedId,...quiz};
-    launchScheduledQuiz(q,s.id);
+    launchQuizDirect(q);
   };
   document.getElementById('take-exam-modal').classList.add('open');
+}
+
+// ══════════════════════════════════════════════
+// QUIZ TREE
+// ══════════════════════════════════════════════
+async function loadQuizTree(){
+  try{
+    const{data,error}=await sb.from('quizzes').select('*').order('subject').order('chapter').order('set');
+    if(error)throw error;
+    allQuizzes=data||[];
+    renderQuizTree();
+    populateLbFilters();
+  }catch(e){console.error(e);}
+}
+
+function renderQuizTree(){
+  const wrap=document.getElementById('quiz-tree-wrap');
+  if(!allQuizzes.length){wrap.innerHTML='<div class="empty-state"><div class="empty-icon">📚</div><div class="empty-title">No quizzes available</div><div class="empty-sub">Admin has not uploaded any quizzes yet</div></div>';return;}
+  const tree={};
+  allQuizzes.forEach(q=>{if(!tree[q.subject])tree[q.subject]={};if(!tree[q.subject][q.chapter||'General'])tree[q.subject][q.chapter||'General']=[];tree[q.subject][q.chapter||'General'].push(q);});
+  let html='<div class="quiz-tree">';
+  for(const[subj,chapters] of Object.entries(tree)){
+    const sid=`s_${subj.replace(/\W/g,'_')}`;const total=Object.values(chapters).flat().length;
+    html+=`<div class="subject-node"><div class="subj-hd" onclick="toggleNode('${sid}')"><div class="subj-name">📘 ${esc(subj)}</div><div class="flex-r" style="gap:8px"><span class="subj-count">${total} sets</span><span class="chevron" id="chv_${sid}">▼</span></div></div><div class="chap-list" id="${sid}" style="display:none">`;
+    for(const[chap,sets] of Object.entries(chapters)){
+      const cid=`c_${subj}_${chap}`.replace(/\W/g,'_');
+      html+=`<div class="chap-node"><div class="chap-hd" onclick="toggleNode('${cid}')"><span>📖 ${esc(chap)}</span><span class="chevron" id="chv_${cid}">▼</span></div><div class="set-list" id="${cid}" style="display:none">`;
+      sets.forEach(s=>{html+=`<div class="set-item" onclick="startQuiz('${s.id}')"><span>📝 ${esc(s.set)}</span><div class="flex-r gap-2"><span class="chip">${(s.questions||[]).length} Qs</span>${s.difficulty?`<span class="badge ${s.difficulty==='Easy'?'b-ok':s.difficulty==='Hard'?'b-err':'b-warn'}">${s.difficulty}</span>`:''}<span style="color:var(--neon);font-size:12px;font-weight:700">START →</span></div></div>`;});
+      html+=`</div></div>`;
+    }
+    html+=`</div></div>`;
+  }
+  html+='</div>';
+  wrap.innerHTML=html;
+}
+
+function toggleNode(id){
+  const el=document.getElementById(id);const chv=document.getElementById('chv_'+id);
+  const open=el.style.display!=='none';
+  el.style.display=open?'none':'block';
+  if(chv){chv.style.transform=open?'':'rotate(180deg)';}
 }
 
 // ══════════════════════════════════════════════
@@ -1245,26 +1263,12 @@ function startQuiz(quizId){
   const quiz=allQuizzes.find(q=>q.id===quizId);
   if(!quiz){toast('Quiz not found','err');return;}
   if(!quiz.questions?.length){toast('This quiz has no questions','warn');return;}
-  launchQuizDirect(quiz,null); // null scheduleId = free quiz, no one-attempt limit
+  launchQuizDirect(quiz);
 }
 
-// Guard 2: Server check before launching
-async function launchScheduledQuiz(quiz,scheduleId){
-  if(scheduleId){
-    const existing=await checkAlreadyAttempted(scheduleId);
-    if(existing){
-      scheduleAttemptedMap[scheduleId]=existing;
-      renderScheduleCards();
-      toast('You have already submitted this scheduled exam','err',5000);
-      return;
-    }
-  }
-  launchQuizDirect(quiz,scheduleId);
-}
-
-function launchQuizDirect(quiz,scheduleId){
-  quizState={quiz,questions:quiz.questions,current:0,answers:new Array(quiz.questions.length).fill(null),startTime:Date.now(),scheduleId:scheduleId||null};
-  quizSecs=0;tabWarnCount=0;_submittingSchedule=false;
+function launchQuizDirect(quiz){
+  quizState={quiz,questions:quiz.questions,current:0,answers:new Array(quiz.questions.length).fill(null),startTime:Date.now()};
+  quizSecs=0;tabWarnCount=0;
   document.getElementById('quiz-screen').style.display='block';
   document.body.style.overflow='hidden';
   clearInterval(quizTimer);
@@ -1276,14 +1280,13 @@ function launchQuizDirect(quiz,scheduleId){
     el.classList.toggle('danger',quizSecs>1800);
   },1000);
   renderQuestion();
+  saveQProgress();
 }
 
 function renderQuestion(){
   const{questions,current,answers}=quizState;
   const q=questions[current];const total=questions.length;
   const quiz=quizState.quiz;
-  const bc=document.getElementById('q-breadcrumb');
-  if(bc){bc.innerHTML=`<span class="crumb">${esc(quiz.subject||'Quiz')}</span><span class="sep">›</span><span class="crumb">${esc(quiz.chapter||'—')}</span><span class="sep">›</span><span class="crumb">${esc(quiz.set||'')}</span>`;}
   document.getElementById('q-title-display').textContent=`${quiz.subject||'Quiz'} › ${quiz.chapter||''} › ${quiz.set||''}`;
   document.getElementById('q-progress-text').textContent=`Question ${current+1} of ${total}`;
   document.getElementById('q-progress-fill').style.width=`${((current+1)/total)*100}%`;
@@ -1294,10 +1297,12 @@ function renderQuestion(){
       <div class="q-text">${esc(q.question)}</div>
       <div class="options-list">${(q.options||[]).map((opt,i)=>`
         <button class="opt-btn${answers[current]===i?' chosen':''}" onclick="selectAnswer(${i})">
-          <span class="opt-label">${labels[i]||i+1}</span><span>${esc(opt)}</span>
+          <span class="opt-label">${labels[i]||i+1}</span>
+          <span>${esc(opt)}</span>
         </button>`).join('')}
       </div>
     </div>`;
+  // Dots
   document.getElementById('q-dots').innerHTML=questions.map((_,i)=>`
     <button class="q-dot${answers[i]!==null?' answered':''}${i===current?' current':''}" onclick="goToQ(${i})">${i+1}</button>`).join('');
   document.getElementById('btn-prev').disabled=current===0;
@@ -1306,95 +1311,30 @@ function renderQuestion(){
   document.getElementById('btn-submit').classList.toggle('hidden',!last);
 }
 
-function selectAnswer(idx){quizState.answers[quizState.current]=idx;renderQuestion();}
+function selectAnswer(idx){quizState.answers[quizState.current]=idx;renderQuestion();saveQProgress();}
 function qNext(){if(quizState.current<quizState.questions.length-1){quizState.current++;renderQuestion();}}
 function qPrev(){if(quizState.current>0){quizState.current--;renderQuestion();}}
 function goToQ(i){quizState.current=i;renderQuestion();}
+function saveQProgress(){try{sessionStorage.setItem('qp',JSON.stringify({qid:quizState.quiz.id,answers:quizState.answers,current:quizState.current,secs:quizSecs}));}catch(e){}}
 
-// ══════════════════════════════════════════════
-// ✅ FIX 3: submitQuiz — saves ONLY to `attempts` with schedule_id
-// Uses upsert + onConflict:'user_id,schedule_id' as race-condition guard.
-// The DB UNIQUE constraint is the final hard lock.
-// ══════════════════════════════════════════════
 async function submitQuiz(){
   const unanswered=quizState.answers.filter(a=>a===null).length;
   if(unanswered>0&&!confirm(`${unanswered} unanswered question(s). Submit anyway?`))return;
-
-  // Guard 3: Final server check right before saving (catches multi-tab race)
-  if(quizState.scheduleId&&!_submittingSchedule){
-    _submittingSchedule=true;
-    const recheck=await checkAlreadyAttempted(quizState.scheduleId);
-    if(recheck){
-      scheduleAttemptedMap[quizState.scheduleId]=recheck;
-      exitQuiz();
-      renderScheduleCards();
-      toast(`This exam was already submitted (${recheck.percentage}%). Result not saved again.`,'warn',6000);
-      return;
-    }
-  }
-
   clearInterval(quizTimer);
   let score=0;
-  quizState.questions.forEach((q,i)=>{
-    const ans=q.answer??q.correct??null;
-    if(quizState.answers[i]===ans)score++;
-  });
-  const total=quizState.questions.length;
-  const pct=Math.round((score/total)*100);
-
-  // ── Single save: `attempts` table with schedule_id set ──
-  // For scheduled exams: upsert with conflict on (user_id, schedule_id)
-  //   → DB UNIQUE constraint rejects duplicates even if JS guards fail
-  // For free quizzes: scheduleId is null, so plain insert (no conflict possible)
-  if(quizState.scheduleId){
-    // Upsert: if somehow a row already exists (race condition), it updates instead of inserting
-    // BUT the UI will already have caught this in guard 3 above.
-    const{error:se}=await sb.from('attempts').upsert({
-      user_id:CU.id,
-      quiz_id:quizState.quiz.id,
-      schedule_id:quizState.scheduleId,
-      subject:quizState.quiz.subject,
-      chapter:quizState.quiz.chapter||null,
-      set:quizState.quiz.set,
-      score,total,percentage:pct,
-      time_taken:quizSecs
-    },{onConflict:'user_id,schedule_id',ignoreDuplicates:false});
-    if(se){
-      // If upsert fails (e.g. DB unique constraint on older record without this column),
-      // fall back to insert and show a warning if duplicate
-      if(se.code==='23505'){ // PostgreSQL unique_violation
-        _submittingSchedule=false;
-        await loadScheduleAttempts();
-        exitQuiz();renderScheduleCards();
-        toast('Duplicate submission blocked by database. Your original score is saved.','warn',6000);
-        return;
-      }
-      toast('Result save warning: '+se.message,'warn');
-    }
-    // Update local map immediately for instant UI feedback
-    scheduleAttemptedMap[quizState.scheduleId]={score,total,percentage:pct};
-  }else{
-    // Free quiz — plain insert, no schedule_id
-    const{error:ae}=await sb.from('attempts').insert({
-      user_id:CU.id,quiz_id:quizState.quiz.id,
-      subject:quizState.quiz.subject,chapter:quizState.quiz.chapter||null,
-      set:quizState.quiz.set,score,total,percentage:pct,time_taken:quizSecs
-    });
-    if(ae)toast('Result save failed: '+ae.message,'err');
-  }
-
+  quizState.questions.forEach((q,i)=>{const ans=q.answer??q.correct??null;if(quizState.answers[i]===ans)score++;});
+  const total=quizState.questions.length;const pct=Math.round((score/total)*100);
+  const{error}=await sb.from('attempts').insert({user_id:CU.id,quiz_id:quizState.quiz.id,subject:quizState.quiz.subject,chapter:quizState.quiz.chapter||null,set:quizState.quiz.set,score,total,percentage:pct,time_taken:quizSecs});
+  if(error)toast('Result save failed: '+error.message,'err');
   lastResult={score,total,pct,secs:quizSecs,quiz:quizState.quiz,answers:quizState.answers,questions:quizState.questions};
-  _submittingSchedule=false;
+  sessionStorage.removeItem('qp');
   exitQuiz();
   showResultModal(lastResult);
   loadDashboard();
-  // Re-sync attempted state from server and refresh cards
-  await loadScheduleAttempts();
-  renderScheduleCards();
 }
 
 function confirmQuit(){if(confirm('Quit quiz? Progress will be lost.'))exitQuiz();}
-function exitQuiz(){clearInterval(quizTimer);quizState=null;_submittingSchedule=false;document.getElementById('quiz-screen').style.display='none';document.body.style.overflow='';}
+function exitQuiz(){clearInterval(quizTimer);quizState=null;document.getElementById('quiz-screen').style.display='none';document.body.style.overflow='';}
 
 function showResultModal(r){
   const grade=r.pct>=90?'A+':r.pct>=80?'A':r.pct>=70?'B':r.pct>=60?'C':r.pct>=50?'D':'F';
@@ -1410,7 +1350,7 @@ function showResultModal(r){
       <div class="result-center"><div class="result-pct" style="color:${col}">${r.pct}%</div><div class="result-grade-lbl">${r.score}/${r.total}</div></div>
     </div>
     <div class="result-grade" style="color:${col}">${grade}</div>
-    <div style="text-align:center;font-size:13px;color:var(--text3);margin-bottom:4px">${esc(r.quiz.subject)} › ${esc(r.quiz.chapter||'—')} › ${esc(r.quiz.set)}</div>
+    <div style="text-align:center;font-size:13px;color:var(--text3)">${esc(r.quiz.subject)} › ${esc(r.quiz.set)}</div>
     <div class="result-stats">
       <div class="result-stat"><div class="result-stat-val" style="color:var(--ok)">${r.score}</div><div class="result-stat-lbl">Correct</div></div>
       <div class="result-stat"><div class="result-stat-val" style="color:var(--err)">${r.total-r.score}</div><div class="result-stat-lbl">Wrong</div></div>
@@ -1441,12 +1381,9 @@ async function loadResults(){
       <div style="font-family:var(--display);font-size:15px;font-weight:600;margin-bottom:16px">Attempt History</div>
       <div class="tbl-wrap">
         <table>
-          <thead><tr><th>Subject</th><th>Chapter</th><th>Set</th><th>Type</th><th>Score</th><th>%</th><th>Time</th><th>Date</th></tr></thead>
+          <thead><tr><th>Subject</th><th>Chapter</th><th>Set</th><th>Score</th><th>%</th><th>Time</th><th>Date</th></tr></thead>
           <tbody>${ats.map(a=>`<tr>
-            <td><span class="subj-chip ${subjectChipClass(a.subject)}" style="font-size:10px;padding:2px 6px">${subjectIcon(a.subject)} ${esc(a.subject)}</span></td>
-            <td style="font-size:12px;color:var(--text3)">${esc(a.chapter||'—')}</td>
-            <td style="font-weight:600">${esc(a.set)}</td>
-            <td>${a.schedule_id?'<span class="badge b-warn">Scheduled</span>':'<span class="badge b-gray">Free</span>'}</td>
+            <td style="font-weight:600">${esc(a.subject)}</td><td>${esc(a.chapter||'—')}</td><td>${esc(a.set)}</td>
             <td>${a.score}/${a.total}</td>
             <td><span class="badge ${a.percentage>=75?'b-ok':a.percentage>=50?'b-warn':'b-err'}">${a.percentage}%</span></td>
             <td style="font-family:var(--mono);font-size:12px;color:var(--text3)">${a.time_taken?`${Math.floor(a.time_taken/60)}m ${a.time_taken%60}s`:'—'}</td>
@@ -1474,16 +1411,12 @@ async function loadLeaderboard(){
     const qid=document.getElementById('lb-quiz-filter').value;
     const subj=document.getElementById('lb-subj-filter').value;
     let q=sb.from('attempts').select('*,profiles(full_name,email)').order('percentage',{ascending:false}).order('time_taken',{ascending:true});
-    if(qid)q=q.eq('schedule_id',qid);
-    if(subj)q=q.eq('subject',subj);
+    if(qid)q=q.eq('quiz_id',qid);if(subj)q=q.eq('subject',subj);
     const{data:ats,error}=await q;
     if(error)throw error;
     if(!ats?.length){wrap.innerHTML='<div class="empty-state"><div class="empty-icon">🏆</div><div class="empty-title">No data yet</div></div>';return;}
     const best={};
-    ats.forEach(a=>{
-      const k=`${a.user_id}_${a.schedule_id||a.quiz_id||a.set}`;
-      if(!best[k]||a.percentage>best[k].percentage||(a.percentage===best[k].percentage&&(a.time_taken||9999)<(best[k].time_taken||9999)))best[k]=a;
-    });
+    ats.forEach(a=>{const k=`${a.user_id}_${a.quiz_id||a.set}`;if(!best[k]||a.percentage>best[k].percentage||(a.percentage===best[k].percentage&&(a.time_taken||9999)<(best[k].time_taken||9999)))best[k]=a;});
     const ranked=Object.values(best).sort((a,b)=>b.percentage-a.percentage||(a.time_taken||9999)-(b.time_taken||9999));
     const medals=['🥇','🥈','🥉'];
     wrap.innerHTML=`<div class="card">${ranked.slice(0,50).map((a,i)=>{
@@ -1491,14 +1424,7 @@ async function loadLeaderboard(){
       const rankCls=i<3?`rank-${i+1}`:'';
       return`<div class="lb-item ${rankCls}">
         <div class="lb-rank">${medals[i]||`#${i+1}`}</div>
-        <div>
-          <div class="lb-name">${esc(name)}</div>
-          <div class="lb-detail">
-            <span class="subj-chip ${subjectChipClass(a.subject)}" style="font-size:10px;padding:2px 6px">${subjectIcon(a.subject)} ${esc(a.subject)}</span>
-            ${a.chapter?`<span style="font-size:11px;color:var(--text3)"> · ${esc(a.chapter)}</span>`:''}
-            <span style="font-size:11px;color:var(--text3)"> › ${esc(a.set)}</span>
-          </div>
-        </div>
+        <div><div class="lb-name">${esc(name)}</div><div class="lb-detail">${esc(a.subject)} › ${esc(a.set)}</div></div>
         <div><div class="lb-score-val">${a.score}/${a.total}</div><div style="font-size:11px;color:var(--text3);text-align:right">${a.time_taken?`${Math.floor(a.time_taken/60)}m ${a.time_taken%60}s`:''}</div></div>
         <span class="badge ${a.percentage>=75?'b-ok':a.percentage>=50?'b-warn':'b-err'}">${a.percentage}%</span>
       </div>`;}).join('')}</div>`;
@@ -1557,6 +1483,7 @@ async function loadAdminStats(){
   }catch(e){}
 }
 
+// ─── Parse JSON (all 5 formats) ───
 function detectAndParse(raw){
   let data;
   try{data=JSON.parse(raw);}catch(e){throw new Error('Invalid JSON: '+e.message);}
@@ -1567,15 +1494,20 @@ function detectAndParse(raw){
     if(typeof correct==='string'){const li='ABCDE'.indexOf(correct.toUpperCase());correct=li>=0?li:parseInt(correct)||0;}
     return{question:q.question||'',options:opts,answer:correct,explanation:q.explanation||''};
   }
+  // F5: single with correctOption as letter
   if(data.correctOption!==undefined&&data.options&&Array.isArray(data.options)&&data.options[0]?.id){
     const opts=data.options.map(o=>o.text);const c='ABCDE'.indexOf(data.correctOption.toUpperCase());
     return{questions:[{question:data.question,options:opts,answer:c>=0?c:0,explanation:data.explanation||''}],meta:{subject:data.subject||'',chapter:data.chapter||'',set:''}};
   }
+  // F1: array
   if(Array.isArray(data))return{questions:data.map(normalizeQ),meta:{subject:'',chapter:'',set:''}};
+  // F4: questions as object
   if(data.questions&&!Array.isArray(data.questions)&&typeof data.questions==='object')
     return{questions:Object.values(data.questions).map(normalizeQ),meta:{subject:data.subject||'',chapter:data.chapter||data.setId||'',set:data.title||data.setId||''}};
+  // F2/F3: questions array
   if(data.questions&&Array.isArray(data.questions))
     return{questions:data.questions.map(normalizeQ),meta:{subject:data.subject||'',chapter:data.chapter||'',set:data.set||data.setId||data.examTitle||''}};
+  // Single
   if(data.question&&data.options)return{questions:[normalizeQ(data)],meta:{subject:'',chapter:'',set:''}};
   throw new Error('Unrecognized format');
 }
@@ -1591,7 +1523,7 @@ function parseAdminJSON(){
     if(meta.set&&!document.getElementById('up-set').value)document.getElementById('up-set').value=meta.set;
     const pre=document.getElementById('parse-preview-area');pre.style.display='block';
     const labels=['A','B','C','D','E'];
-    document.getElementById('parse-summary-info').innerHTML=`<div style="display:flex;gap:8px;flex-wrap:wrap"><span class="chip" style="color:var(--neon);border-color:rgba(0,245,212,.3)">✅ ${questions.length} questions</span>${meta.subject?`<span class="chip">${subjectIcon(meta.subject)} ${esc(meta.subject)}</span>`:''}${meta.chapter?`<span class="chip">📖 ${esc(meta.chapter)}</span>`:''}${meta.set?`<span class="chip">📝 ${esc(meta.set)}</span>`:''}</div>`;
+    document.getElementById('parse-summary-info').innerHTML=`<div style="display:flex;gap:8px;flex-wrap:wrap"><span class="chip" style="color:var(--neon);border-color:rgba(0,245,212,.3)">✅ ${questions.length} questions</span>${meta.subject?`<span class="chip">📘 ${esc(meta.subject)}</span>`:''}${meta.chapter?`<span class="chip">📖 ${esc(meta.chapter)}</span>`:''}${meta.set?`<span class="chip">📝 ${esc(meta.set)}</span>`:''}</div>`;
     document.getElementById('parse-preview-content').innerHTML=questions.slice(0,4).map((q,i)=>`
       <div style="padding:10px;background:var(--ink2);border-radius:var(--r-sm);margin-bottom:6px;font-size:12px">
         <div style="font-weight:600;margin-bottom:6px;color:var(--text)">Q${i+1}: ${esc(q.question)}</div>
@@ -1607,7 +1539,11 @@ function dOv(e){e.preventDefault();document.getElementById('drop-zone').classLis
 function dLv(){document.getElementById('drop-zone').classList.remove('drag');}
 function dDrop(e){e.preventDefault();dLv();const f=e.dataTransfer.files[0];if(f)readUploadFile(f);}
 function loadAdmFile(e){const f=e.target.files[0];if(f)readUploadFile(f);}
-function readUploadFile(f){const r=new FileReader();r.onload=ev=>{document.getElementById('json-paste-input').value=ev.target.result;switchUploadSrc('paste',document.querySelector('#upload-src-tabs .admin-tab'));parseAdminJSON();};r.readAsText(f);}
+function readUploadFile(f){
+  const r=new FileReader();
+  r.onload=ev=>{document.getElementById('json-paste-input').value=ev.target.result;switchUploadSrc('paste',document.querySelector('#upload-src-tabs .admin-tab'));parseAdminJSON();};
+  r.readAsText(f);
+}
 
 async function uploadQuiz(){
   if(!parsedQs.length){toast('Parse JSON first','warn');return;}
@@ -1644,9 +1580,7 @@ async function loadAdminQuizzes(){
   allQuizzes=data||[];renderQuizTree();populateSchedQuizSelect();
   if(!data?.length){tbody.innerHTML='<tr><td colspan="6" class="tbl-empty">No quizzes yet</td></tr>';return;}
   tbody.innerHTML=data.map(q=>`<tr>
-    <td><span class="subj-chip ${subjectChipClass(q.subject)}">${subjectIcon(q.subject)} ${esc(q.subject)}</span></td>
-    <td style="color:var(--text2)">${esc(q.chapter||'—')}</td>
-    <td style="font-weight:600">${esc(q.set)}</td>
+    <td style="font-weight:600">${esc(q.subject)}</td><td>${esc(q.chapter||'—')}</td><td>${esc(q.set)}</td>
     <td><span class="chip">${(q.questions||[]).length} Qs</span></td>
     <td>${q.difficulty?`<span class="badge ${q.difficulty==='Easy'?'b-ok':q.difficulty==='Hard'?'b-err':'b-warn'}">${q.difficulty}</span>`:'—'}</td>
     <td><div class="flex-r gap-2">
@@ -1681,6 +1615,7 @@ async function deleteQuiz(id){
   toast('Quiz deleted','ok');loadAdminQuizzes();loadAdminStats();
 }
 
+// ─── Admin Schedule ───
 function populateSchedQuizSelect(){
   const sel=document.getElementById('adm-sc-quiz');
   sel.innerHTML='<option value="">-- Choose Quiz --</option>';
@@ -1689,28 +1624,20 @@ function populateSchedQuizSelect(){
 
 async function loadAdminSchedules(){
   const tbody=document.getElementById('adm-sched-body');
-  tbody.innerHTML='<tr><td colspan="7" class="tbl-empty">Loading…</td></tr>';
-  const{data,error}=await sb.from('schedules').select('*,quizzes(subject,chapter,set)').order('start_time',{ascending:false});
-  if(error){tbody.innerHTML=`<tr><td colspan="7" class="tbl-empty">Error: ${error.message}</td></tr>`;return;}
-  if(!data?.length){tbody.innerHTML='<tr><td colspan="7" class="tbl-empty">No schedules yet</td></tr>';return;}
-  // Count attempts per schedule from the attempts table
-  let attemptCounts={};
-  try{
-    const{data:sa}=await sb.from('attempts').select('schedule_id').not('schedule_id','is',null);
-    (sa||[]).forEach(a=>{attemptCounts[a.schedule_id]=(attemptCounts[a.schedule_id]||0)+1;});
-  }catch(e){}
+  tbody.innerHTML='<tr><td colspan="6" class="tbl-empty">Loading…</td></tr>';
+  const{data,error}=await sb.from('schedules').select('*,quizzes(subject,set)').order('start_time',{ascending:false});
+  if(error){tbody.innerHTML=`<tr><td colspan="6" class="tbl-empty">Error: ${error.message}</td></tr>`;return;}
+  if(!data?.length){tbody.innerHTML='<tr><td colspan="6" class="tbl-empty">No schedules yet</td></tr>';return;}
   const fmt=d=>new Date(d).toLocaleString('en-US',{month:'short',day:'numeric',hour:'2-digit',minute:'2-digit'});
   tbody.innerHTML=data.map(s=>{
     const st=getSchedStatus(s);
     const bc={live:'b-ok',today:'b-warn',upcoming:'b-blue',ended:'b-gray'}[st];
-    const cnt=attemptCounts[s.id]||0;
     return`<tr>
       <td style="font-weight:600">${esc(s.title)}</td>
-      <td><div style="font-size:12px">${esc(s.quizzes?.subject||'—')}</div><div style="font-size:11px;color:var(--text3)">${esc(s.quizzes?.chapter||'')}${s.quizzes?.chapter?' › ':''}${esc(s.quizzes?.set||'—')}</div></td>
+      <td style="font-size:12px;color:var(--text2)">${esc(s.quizzes?.subject||'—')} › ${esc(s.quizzes?.set||'—')}</td>
       <td style="font-size:12px">${fmt(s.start_time)}</td>
       <td style="font-size:12px">${fmt(s.end_time)}</td>
       <td><span class="badge ${bc}">${st}</span></td>
-      <td><span class="chip">${cnt} submitted</span></td>
       <td><button class="btn btn-danger btn-xs" onclick="deleteSched('${s.id}')">🗑</button></td>
     </tr>`;}).join('');
 }
@@ -1763,151 +1690,46 @@ async function setUStatus(uid,status){const{error}=await sb.from('profiles').upd
 async function setURole(uid,role){const{error}=await sb.from('profiles').update({role}).eq('id',uid);if(error){toast(error.message,'err');return;}toast(`Role → ${role}`,'ok');loadAdminUsers();}
 
 // ══════════════════════════════════════════════
-// QUIZ TREE
-// ══════════════════════════════════════════════
-async function loadQuizTree(){
-  try{
-    const{data,error}=await sb.from('quizzes').select('*').order('subject').order('chapter').order('set');
-    if(error)throw error;
-    allQuizzes=data||[];
-    renderQuizTree();
-    populateLbFilters();
-  }catch(e){console.error(e);}
-}
-
-function renderQuizTree(){
-  const wrap=document.getElementById('quiz-tree-wrap');
-  if(!allQuizzes.length){
-    wrap.innerHTML='<div class="empty-state"><div class="empty-icon">📚</div><div class="empty-title">No quizzes available</div><div class="empty-sub">Admin has not uploaded any quizzes yet</div></div>';
-    return;
-  }
-  const tree={};
-  allQuizzes.forEach(q=>{
-    if(!tree[q.subject])tree[q.subject]={};
-    if(!tree[q.subject][q.chapter||'General'])tree[q.subject][q.chapter||'General']=[];
-    tree[q.subject][q.chapter||'General'].push(q);
-  });
-  let html='<div class="quiz-tree">';
-  for(const[subj,chapters] of Object.entries(tree)){
-    const sid=`s_${subj.replace(/\W/g,'_')}`;
-    const total=Object.values(chapters).flat().length;
-    const chapCount=Object.keys(chapters).length;
-    const chipCls=subjectChipClass(subj);
-    html+=`<div class="subject-node">
-      <div class="subj-hd" onclick="toggleNode('${sid}')">
-        <div class="subj-name"><span class="subj-chip ${chipCls}">${subjectIcon(subj)} ${esc(subj)}</span></div>
-        <div class="flex-r" style="gap:8px">
-          <span class="chip">${chapCount} chapter${chapCount>1?'s':''}</span>
-          <span class="subj-count">${total} sets</span>
-          <span class="chevron" id="chv_${sid}">▼</span>
-        </div>
-      </div>
-      <div class="chap-list" id="${sid}" style="display:none">`;
-    for(const[chap,sets] of Object.entries(chapters)){
-      const cid=`c_${subj}_${chap}`.replace(/\W/g,'_');
-      const totalQs=sets.reduce((s,q)=>(s+(q.questions||[]).length),0);
-      html+=`<div class="chap-node">
-        <div class="chap-hd" onclick="toggleNode('${cid}')">
-          <div class="chap-hd-left">
-            <span>📖 ${esc(chap)}</span>
-            <span class="subj-count">${sets.length} set${sets.length>1?'s':''}</span>
-            <span style="font-size:11px;color:var(--text3)">${totalQs} total Qs</span>
-          </div>
-          <span class="chevron" id="chv_${cid}">▼</span>
-        </div>
-        <div class="set-list" id="${cid}" style="display:none">`;
-      sets.forEach(s=>{
-        const qCount=(s.questions||[]).length;
-        const diffBadge=s.difficulty?`<span class="badge ${s.difficulty==='Easy'?'b-ok':s.difficulty==='Hard'?'b-err':'b-warn'}">${s.difficulty}</span>`:'';
-        html+=`<div class="set-item" onclick="startQuiz('${s.id}')">
-          <div class="set-item-left">
-            <div class="set-item-name">📝 ${esc(s.set)}</div>
-            <div class="set-item-meta">
-              <span>${subjectIcon(s.subject)} ${esc(s.subject)}</span><span>·</span>
-              <span>📖 ${esc(s.chapter||'General')}</span>
-            </div>
-          </div>
-          <div class="flex-r gap-2" style="gap:6px">
-            <span class="chip">${qCount} Qs</span>${diffBadge}
-            <span style="color:var(--neon);font-size:12px;font-weight:700">START →</span>
-          </div>
-        </div>`;
-      });
-      html+=`</div></div>`;
-    }
-    html+=`</div></div>`;
-  }
-  html+='</div>';
-  wrap.innerHTML=html;
-}
-
-function toggleNode(id){
-  const el=document.getElementById(id);const chv=document.getElementById('chv_'+id);
-  const open=el.style.display!=='none';
-  el.style.display=open?'none':'block';
-  if(chv){chv.style.transform=open?'':'rotate(180deg)';}
-}
-
-// ══════════════════════════════════════════════
 // HELPERS
 // ══════════════════════════════════════════════
 function esc(s){if(s==null)return'';return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
 
 // ══════════════════════════════════════════════
-// STARTUP
+// STARTUP — Check existing session
 // ══════════════════════════════════════════════
-const LOGIN_URL='https://ceemediconepal.xyz/cee/login.html';
-
-function showRetry(msg){
-  document.getElementById('loading-screen').innerHTML=`
-    <div style="text-align:center;padding:24px;max-width:320px">
-      <div style="font-family:'Clash Display',sans-serif;font-size:26px;font-weight:700;background:linear-gradient(135deg,#00f5d4,#38bdf8);-webkit-background-clip:text;-webkit-text-fill-color:transparent;margin-bottom:14px">CEE Medic Nepal</div>
-      <div style="color:#fb7185;font-size:13px;margin-bottom:20px;line-height:1.5">${msg}</div>
-      <button onclick="location.reload()" style="padding:11px 30px;background:linear-gradient(135deg,#00c9ae,#0ea5e9);border:none;border-radius:10px;color:#05060a;font-size:14px;font-weight:800;cursor:pointer">↺ Try Again</button>
-    </div>`;
-}
-
 (async()=>{
-  try{
-    const{data:{session},error:se}=await sb.auth.getSession();
-    if(se||!session){window.location.replace(LOGIN_URL);return;}
-    CU=session.user;
-    try{
-      const raw=sessionStorage.getItem('cp_'+CU.id);
-      if(raw){
-        const cp=JSON.parse(raw);
-        if(cp?.status==='approved'){
-          CP=cp;initApp();
-          sb.from('profiles').select('*').eq('id',CU.id).single().then(({data})=>{
-            if(data){CP=data;sessionStorage.setItem('cp_'+CU.id,JSON.stringify(data));
-              const ini=(CP.full_name||'N').split(' ').map(w=>w[0]).join('').toUpperCase().slice(0,2);
-              const av=document.getElementById('sb-av');if(av)av.textContent=ini;
-              const un=document.getElementById('sb-uname');if(un)un.textContent=CP.full_name||CP.email;
-            }
-          });
-          return;
-        }
-      }
-    }catch(e){}
-    const{data:profile,error:pe}=await sb.from('profiles').select('*').eq('id',CU.id).single();
-    if(pe){
-      if(pe.code==='PGRST116'){
-        const meta=CU.user_metadata||{};
-        await sb.from('profiles').upsert({id:CU.id,email:CU.email,full_name:meta.full_name||meta.name||'',role:'student',status:'pending'});
-        await sb.auth.signOut();sessionStorage.removeItem('cp_'+CU.id);
-        window.location.replace(LOGIN_URL+'?msg=pending');return;
-      }
-      throw pe;
-    }
-    if(!profile){window.location.replace(LOGIN_URL);return;}
-    if(profile.status==='blocked'){await sb.auth.signOut();sessionStorage.removeItem('cp_'+CU.id);window.location.replace(LOGIN_URL+'?msg=blocked');return;}
-    if(profile.status!=='approved'){await sb.auth.signOut();sessionStorage.removeItem('cp_'+CU.id);window.location.replace(LOGIN_URL+'?msg=pending');return;}
-    CP=profile;sessionStorage.setItem('cp_'+CU.id,JSON.stringify(profile));
-    initApp();
-  }catch(e){console.error('Startup error:',e);showRetry('Connection failed. Check your internet and try again.');}
+  const{data:{session}}=await sb.auth.getSession();
+  if(session){
+    const{data:profile}=await sb.from('profiles').select('*').eq('id',session.user.id).single();
+    if(profile?.status==='approved'){CU=session.user;CP=profile;initApp();return;}
+  }
+  document.getElementById('auth-screen').style.display='flex';
 })();
+
+// Auth state listener (for Google OAuth redirect)
+sb.auth.onAuthStateChange(async(event,session)=>{
+  if(event==='SIGNED_IN'&&session&&!CU){
+    const{data:profile}=await sb.from('profiles').select('*').eq('id',session.user.id).single();
+    if(!profile){
+      await sb.from('profiles').upsert({id:session.user.id,email:session.user.email,full_name:session.user.user_metadata?.full_name||'',role:'student',status:'pending'});
+      toast('Account created! Awaiting admin approval.','info',6000);
+      await sb.auth.signOut();return;
+    }
+    if(profile.status==='approved'&&!CU){CU=session.user;CP=profile;initApp();}
+  }
+});
+
+// Enter key support
+document.addEventListener('keydown',e=>{
+  if(e.key!=='Enter')return;
+  const active=document.querySelector('.auth-panel.active');
+  if(!active)return;
+  if(active.id==='panel-login')doLogin();
+  else if(active.id==='panel-signup')doSignup();
+  else if(active.id==='panel-forgot')doForgot();
+});
 </script>
-
-
 </body>
 </html>
+
+
