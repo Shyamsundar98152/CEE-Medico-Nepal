@@ -94,6 +94,187 @@ button,input{font-family:var(--font)}
 </head>
 <body>
 
+<!-- ================= POPUP + OVERLAY + WHATSAPP MODULE ================= -->
+
+<style>
+/* ================= POPUP STYLES ================= */
+#overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(15, 23, 42, 0.4);
+  backdrop-filter: blur(6px);
+  z-index: 9997;
+  opacity: 0;
+  transition: opacity 0.3s ease;
+}
+
+#noticePopup {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%) scale(0.9);
+  background: white;
+  border-radius: 24px;
+  padding: 20px;
+  width: 90%;
+  max-width: 360px;
+  text-align: center;
+  z-index: 9998;
+  box-shadow: 0 20px 60px rgba(0,0,0,0.2);
+  opacity: 0;
+  transition: all 0.3s ease;
+}
+
+#noticePopup.show {
+  opacity: 1;
+  transform: translate(-50%, -50%) scale(1);
+}
+
+#overlay.show {
+  opacity: 1;
+}
+
+/* ================= WHATSAPP FLOAT BUTTON ================= */
+.whatsapp-float {
+  position: fixed;
+  bottom: 20px;
+  left: 20px;
+  z-index: 9990;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.whatsapp-btn {
+  width: 56px;
+  height: 56px;
+  background: #25D366;
+  color: white;
+  border-radius: 50%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  font-size: 28px;
+  box-shadow: 0 10px 25px rgba(0,0,0,0.15);
+  transition: 0.3s;
+  position: relative;
+}
+
+.whatsapp-btn:hover {
+  transform: scale(1.1) rotate(6deg);
+}
+
+/* ripple */
+.whatsapp-btn::before,
+.whatsapp-btn::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  background: rgba(37, 211, 102, 0.4);
+  animation: ripple 2.5s infinite;
+}
+
+.whatsapp-btn::after {
+  animation-delay: 1.2s;
+}
+
+@keyframes ripple {
+  0% { transform: scale(1); opacity: 0.8; }
+  100% { transform: scale(1.8); opacity: 0; }
+}
+
+/* tooltip */
+.whatsapp-tooltip {
+  background: #0f172a;
+  color: white;
+  font-size: 12px;
+  padding: 6px 10px;
+  border-radius: 8px;
+  opacity: 0;
+  transform: translateX(-10px);
+  transition: 0.3s;
+  white-space: nowrap;
+}
+
+.whatsapp-float:hover .whatsapp-tooltip {
+  opacity: 1;
+  transform: translateX(0);
+}
+</style>
+
+<!-- ================= POPUP ================= -->
+<div id="overlay"></div>
+
+<div id="noticePopup">
+  <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;">
+    <span style="font-size:12px;background:#fef3c7;padding:4px 10px;border-radius:20px;">
+      📢 Offer
+    </span>
+    <span id="countdown" style="font-size:12px;color:red;font-weight:bold;">
+      Closing in 10s
+    </span>
+  </div>
+
+  <img src="/img/2-premium.png"
+       style="width:100%;border-radius:12px;margin-bottom:10px;">
+
+  <h3 style="margin:5px 0;">Premium Upgrade</h3>
+  <p style="font-size:13px;color:#555;margin-bottom:15px;">
+    Get access for Rs. 199 only
+  </p>
+
+  <div style="display:flex;gap:10px;">
+    <a href="https://wa.me/9779812240229?text=I%20want%20premium"
+       style="flex:1;background:#25D366;color:white;padding:10px;border-radius:10px;text-decoration:none;">
+      Buy Now
+    </a>
+
+    <button onclick="closePopup()"
+            style="padding:10px 12px;border:none;border-radius:10px;background:#eee;">
+      Close
+    </button>
+  </div>
+</div>
+
+<!-- ================= WHATSAPP BUTTON ================= -->
+<div class="whatsapp-float">
+  <div class="whatsapp-btn">
+    <a href="https://wa.me/9779812240229?text=Hello"
+       style="color:white;text-decoration:none;">
+      <i class="fab fa-whatsapp"></i>
+    </a>
+  </div>
+  <div class="whatsapp-tooltip">Chat on WhatsApp</div>
+</div>
+
+<!-- ================= JS ================= -->
+<script>
+let timer = 10;
+let interval;
+
+window.onload = function () {
+  const popup = document.getElementById("noticePopup");
+  const overlay = document.getElementById("overlay");
+
+  popup.classList.add("show");
+  overlay.classList.add("show");
+
+  interval = setInterval(() => {
+    timer--;
+    document.getElementById("countdown").innerText =
+      "Closing in " + timer + "s";
+
+    if (timer <= 0) closePopup();
+  }, 1000);
+};
+
+function closePopup() {
+  document.getElementById("noticePopup").classList.remove("show");
+  document.getElementById("overlay").classList.remove("show");
+  clearInterval(interval);
+}
+</script>
 <canvas id="bg-canvas"></canvas>
 <div id="toast-wrap"></div>
 
