@@ -11,7 +11,6 @@
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <link href="https://fonts.googleapis.com/css2?family=Clash+Display:wght@400;500;600;700&family=Cabinet+Grotesk:wght@400;500;600;700;800&family=Fira+Code:wght@400;500&display=swap" rel="stylesheet"/>
 <style>
-/* ━━━━━━━━━━━━━━━━━ DESIGN TOKENS ━━━━━━━━━━━━━━━━━ */
 :root{
   --ink:#05060a;--ink2:#0b0d14;--ink3:#10121c;
   --surface:#141720;--surface2:#1a1d2a;--surface3:#1e2235;
@@ -31,7 +30,6 @@
   --r:14px;--r-sm:8px;--r-lg:20px;--r-xl:28px;
   --sw:256px;
   --glow:0 0 20px rgba(0,245,212,.3);
-  --glow-lg:0 0 40px rgba(0,245,212,.2);
   --sh:0 4px 24px rgba(0,0,0,.6);
   --sh-lg:0 12px 60px rgba(0,0,0,.8);
   --tr:.18s cubic-bezier(.4,0,.2,1);
@@ -47,10 +45,10 @@ button,input,select,textarea{font-family:var(--font)}
 ::-webkit-scrollbar-thumb:hover{background:var(--neon2)}
 ::selection{background:rgba(0,245,212,.2);color:var(--neon)}
 
-/* ─── CANVAS BG ─── */
+/* ── CANVAS BG ── */
 #bg-canvas{position:fixed;inset:0;z-index:0;pointer-events:none;opacity:.4}
 
-/* ─── TOAST ─── */
+/* ── TOAST ── */
 #toast-wrap{position:fixed;top:20px;right:20px;z-index:9999;display:flex;flex-direction:column;gap:8px;pointer-events:none}
 .toast{display:flex;align-items:center;gap:10px;padding:12px 18px;border-radius:var(--r-sm);font-size:13px;font-weight:600;min-width:260px;pointer-events:all;animation:tIn .3s ease;border:1px solid;backdrop-filter:blur(12px)}
 .toast.ok{background:rgba(16,185,129,.12);border-color:rgba(16,185,129,.4);color:#34d399}
@@ -61,16 +59,34 @@ button,input,select,textarea{font-family:var(--font)}
 @keyframes tIn{from{opacity:0;transform:translateX(40px)}to{opacity:1;transform:none}}
 @keyframes tOut{to{opacity:0;transform:translateX(40px)}}
 
-/* ── Loading screen ── */
+/* ── SKELETON LOADING ── */
+@keyframes shimmer{0%{background-position:-200% 0}100%{background-position:200% 0}}
+.skel{background:linear-gradient(90deg,var(--surface) 25%,var(--surface2) 50%,var(--surface) 75%);background-size:200% 100%;animation:shimmer 1.5s infinite;border-radius:var(--r-sm)}
+.skel-card{height:120px;border-radius:var(--r);margin-bottom:14px}
+.skel-row{height:20px;margin-bottom:10px}
+.skel-row.w60{width:60%}
+.skel-row.w40{width:40%}
+.skel-row.w80{width:80%}
+.skel-stat{height:96px;border-radius:var(--r)}
+
+/* ── LOADING SCREEN ── */
 #loading-screen{position:fixed;inset:0;background:var(--ink);z-index:999;display:flex;align-items:center;justify-content:center;flex-direction:column;gap:16px}
 .load-logo{font-family:var(--display);font-size:32px;font-weight:700;background:linear-gradient(135deg,var(--neon),var(--ice));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
 .load-spin{width:28px;height:28px;border:3px solid rgba(0,245,212,.2);border-top-color:var(--neon);border-radius:50%;animation:sp .6s linear infinite}
+.load-bars{display:flex;gap:5px;align-items:flex-end;height:28px}
+.load-bar{width:4px;border-radius:2px;background:var(--neon);animation:loadbar 1s ease infinite}
+.load-bar:nth-child(1){animation-delay:0s;height:12px}
+.load-bar:nth-child(2){animation-delay:.15s;height:20px}
+.load-bar:nth-child(3){animation-delay:.3s;height:28px}
+.load-bar:nth-child(4){animation-delay:.45s;height:20px}
+.load-bar:nth-child(5){animation-delay:.6s;height:12px}
+@keyframes loadbar{0%,100%{opacity:.3;transform:scaleY(.6)}50%{opacity:1;transform:scaleY(1)}}
 
-/* ━━━━━━━━━━━━━━━━━ APP LAYOUT ━━━━━━━━━━━━━━━━━ */
+/* ── APP LAYOUT ── */
 #app{display:none;position:relative;z-index:10;min-height:100vh}
 .layout{display:flex;min-height:100vh}
 
-/* ─── SIDEBAR ─── */
+/* ── SIDEBAR ── */
 .sidebar{width:var(--sw);background:rgba(11,13,20,.95);border-right:1px solid var(--rim);display:flex;flex-direction:column;position:fixed;top:0;left:0;height:100vh;z-index:100;backdrop-filter:blur(20px);overflow:hidden}
 .sidebar::before{content:'';position:absolute;top:0;left:0;right:0;height:1px;background:linear-gradient(90deg,transparent,var(--neon),transparent);opacity:.6}
 .sb-top{padding:20px 18px 16px;border-bottom:1px solid var(--rim)}
@@ -97,7 +113,7 @@ button,input,select,textarea{font-family:var(--font)}
 .btn-logout{width:100%;padding:9px;background:rgba(244,63,94,.1);border:1px solid rgba(244,63,94,.25);border-radius:var(--r-sm);color:#fb7185;font-size:13px;font-weight:700;cursor:pointer;transition:var(--tr);font-family:var(--font)}
 .btn-logout:hover{background:rgba(244,63,94,.2);box-shadow:0 0 12px rgba(244,63,94,.2)}
 
-/* ─── MAIN ─── */
+/* ── MAIN ── */
 .main{margin-left:var(--sw);flex:1;min-height:100vh}
 .topbar{display:flex;align-items:center;justify-content:space-between;padding:16px 28px;border-bottom:1px solid var(--rim);background:rgba(11,13,20,.8);position:sticky;top:0;z-index:50;backdrop-filter:blur(20px)}
 .topbar::after{content:'';position:absolute;bottom:0;left:0;right:0;height:1px;background:linear-gradient(90deg,transparent,rgba(0,245,212,.3),transparent)}
@@ -106,7 +122,7 @@ button,input,select,textarea{font-family:var(--font)}
 .tb-clock{font-family:var(--mono);font-size:13px;color:var(--neon);letter-spacing:.06em;background:rgba(0,245,212,.06);padding:6px 12px;border-radius:var(--r-sm);border:1px solid rgba(0,245,212,.15)}
 .tb-ham{display:none;background:none;border:none;color:var(--text);font-size:20px;cursor:pointer}
 
-/* ─── PAGES ─── */
+/* ── PAGES ── */
 .page{display:none;padding:28px;animation:pgIn .25s ease}
 .page.act{display:block}
 @keyframes pgIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
@@ -114,7 +130,19 @@ button,input,select,textarea{font-family:var(--font)}
 .pg-title{font-family:var(--display);font-size:26px;font-weight:700;letter-spacing:-.4px;display:flex;align-items:center;gap:10px}
 .pg-sub{font-size:14px;color:var(--text3);margin-top:5px}
 
-/* ─── STAT CARDS ─── */
+/* ── TODAY BANNER ── */
+.today-banner{position:relative;overflow:hidden;background:linear-gradient(135deg,rgba(245,158,11,.15),rgba(255,107,53,.1));border:1px solid rgba(245,158,11,.35);border-radius:var(--r-lg);padding:18px 22px;margin-bottom:24px}
+.today-banner::before{content:'';position:absolute;inset:0;background:repeating-linear-gradient(45deg,transparent,transparent 10px,rgba(245,158,11,.03) 10px,rgba(245,158,11,.03) 20px)}
+.today-banner::after{content:'';position:absolute;top:0;left:0;right:0;height:2px;background:linear-gradient(90deg,var(--warn),var(--plasma),var(--warn));animation:banner-sweep 3s linear infinite;background-size:200% 100%}
+@keyframes banner-sweep{0%{background-position:0% 0}100%{background-position:200% 0}}
+.today-banner-inner{position:relative;z-index:1;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px}
+.today-banner-left{display:flex;align-items:center;gap:12px}
+.today-banner-icon{font-size:28px;animation:icon-bounce .8s ease infinite alternate}
+@keyframes icon-bounce{from{transform:translateY(0)}to{transform:translateY(-4px)}}
+.today-banner-title{font-family:var(--display);font-size:17px;font-weight:700;color:var(--warn)}
+.today-banner-sub{font-size:12px;color:var(--text2);margin-top:2px}
+
+/* ── STAT CARDS ── */
 .stat-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(175px,1fr));gap:14px;margin-bottom:24px}
 .stat{background:var(--surface);border:1px solid var(--rim);border-radius:var(--r);padding:20px;position:relative;overflow:hidden;transition:var(--tr)}
 .stat:hover{border-color:var(--rim2);transform:translateY(-2px)}
@@ -133,13 +161,13 @@ button,input,select,textarea{font-family:var(--font)}
 .stat.green .stat-val{color:var(--ok)}
 .stat-lbl{font-size:12px;color:var(--text3);margin-top:4px;font-weight:600;letter-spacing:.02em}
 
-/* ─── CARDS ─── */
+/* ── CARDS ── */
 .card{background:var(--surface);border:1px solid var(--rim);border-radius:var(--r);padding:22px}
 .card-glass{background:rgba(20,23,32,.7);border:1px solid var(--rim);border-radius:var(--r);padding:22px;backdrop-filter:blur(12px)}
 .grid-2{display:grid;grid-template-columns:1fr 1fr;gap:18px}
 .grid-3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:14px}
 
-/* ─── GENERAL BTNS ─── */
+/* ── BUTTONS ── */
 .btn{display:inline-flex;align-items:center;justify-content:center;gap:7px;padding:9px 18px;border:none;border-radius:var(--r-sm);font-size:13px;font-weight:700;cursor:pointer;transition:var(--tr);outline:none;white-space:nowrap;font-family:var(--font)}
 .btn-neon{background:linear-gradient(135deg,var(--neon2),var(--ice2));color:var(--ink)}
 .btn-neon:hover{transform:translateY(-1px);box-shadow:0 6px 20px rgba(0,245,212,.3)}
@@ -149,12 +177,14 @@ button,input,select,textarea{font-family:var(--font)}
 .btn-danger:hover{background:rgba(244,63,94,.22)}
 .btn-volt{background:rgba(127,255,0,.12);border:1px solid rgba(127,255,0,.3);color:var(--volt)}
 .btn-volt:hover{background:rgba(127,255,0,.2)}
+.btn-warn{background:rgba(245,158,11,.12);border:1px solid rgba(245,158,11,.3);color:var(--warn)}
+.btn-warn:hover{background:rgba(245,158,11,.2)}
 .btn-full{width:100%}
 .btn-sm{padding:6px 12px;font-size:12px}
 .btn-xs{padding:4px 9px;font-size:11px;border-radius:6px}
 .btn:disabled{opacity:.4;cursor:not-allowed;transform:none !important;box-shadow:none !important}
 
-/* ─── BADGE ─── */
+/* ── BADGE ── */
 .badge{display:inline-flex;align-items:center;gap:3px;padding:3px 9px;border-radius:20px;font-size:11px;font-weight:700;white-space:nowrap}
 .b-ok{background:rgba(16,185,129,.14);color:#34d399}
 .b-err{background:rgba(244,63,94,.14);color:#fb7185}
@@ -165,7 +195,7 @@ button,input,select,textarea{font-family:var(--font)}
 .b-gray{background:rgba(74,85,120,.18);color:var(--text2)}
 .b-volt{background:rgba(127,255,0,.1);color:var(--volt)}
 
-/* ─── TABLE ─── */
+/* ── TABLE ── */
 .tbl-wrap{overflow-x:auto;border-radius:var(--r);border:1px solid var(--rim)}
 table{width:100%;border-collapse:collapse;font-size:13px}
 thead{background:var(--ink2)}
@@ -174,7 +204,7 @@ td{padding:11px 14px;border-top:1px solid var(--rim);color:var(--text2);vertical
 tr:hover td{background:rgba(0,245,212,.02)}
 .tbl-empty{padding:36px;text-align:center;color:var(--text3)}
 
-/* ─── FORM ─── */
+/* ── FORM ── */
 .fi-dark{padding:10px 13px;background:rgba(10,12,20,.8);border:1px solid var(--rim);border-radius:var(--r-sm);color:var(--text);font-size:13px;outline:none;transition:var(--tr);width:100%;font-family:var(--font)}
 .fi-dark:focus{border-color:var(--neon);box-shadow:0 0 0 3px rgba(0,245,212,.1)}
 .fi-dark::placeholder{color:var(--text3)}
@@ -182,7 +212,7 @@ select.fi-dark{-webkit-appearance:none;background-image:url("data:image/svg+xml,
 .code-area{width:100%;background:rgba(5,6,10,.9);border:1px solid var(--rim);border-radius:var(--r-sm);color:var(--neon);padding:14px;font-family:var(--mono);font-size:12px;resize:vertical;min-height:150px;outline:none;transition:var(--tr);line-height:1.6}
 .code-area:focus{border-color:var(--neon);box-shadow:0 0 0 3px rgba(0,245,212,.08)}
 
-/* ─── QUIZ TREE ─── */
+/* ── QUIZ TREE ── */
 .quiz-tree{display:flex;flex-direction:column;gap:10px}
 .subject-node{border:1px solid var(--rim);border-radius:var(--r);overflow:hidden;transition:var(--tr)}
 .subject-node:hover{border-color:var(--rim2)}
@@ -194,16 +224,34 @@ select.fi-dark{-webkit-appearance:none;background-image:url("data:image/svg+xml,
 .chap-node{border-radius:var(--r-sm);overflow:hidden}
 .chap-hd{display:flex;align-items:center;justify-content:space-between;padding:10px 14px;background:var(--ink3);cursor:pointer;font-size:13px;font-weight:600;transition:var(--tr)}
 .chap-hd:hover{background:var(--surface)}
+.chap-hd-left{display:flex;align-items:center;gap:8px}
+.chap-hd-meta{font-size:11px;color:var(--text3);margin-top:1px}
 .set-list{padding:6px;background:var(--ink);display:flex;flex-direction:column;gap:3px}
-.set-item{display:flex;align-items:center;justify-content:space-between;padding:10px 14px;border-radius:var(--r-sm);background:var(--ink2);font-size:13px;cursor:pointer;transition:var(--tr);border:1px solid transparent}
+.set-item{display:flex;align-items:center;justify-content:space-between;padding:11px 14px;border-radius:var(--r-sm);background:var(--ink2);font-size:13px;cursor:pointer;transition:var(--tr);border:1px solid transparent;position:relative;overflow:hidden}
+.set-item::before{content:'';position:absolute;left:0;top:0;bottom:0;width:3px;background:var(--neon);opacity:0;transition:var(--tr)}
 .set-item:hover{border-color:var(--neon);background:rgba(0,245,212,.05);color:var(--neon)}
+.set-item:hover::before{opacity:1}
+.set-item.attempted{border-color:rgba(16,185,129,.25);background:rgba(16,185,129,.04)}
+.set-item.attempted::before{background:var(--ok);opacity:1}
+.set-item-left{display:flex;flex-direction:column;gap:3px}
+.set-item-name{font-weight:600}
+.set-item-meta{font-size:11px;color:var(--text3);display:flex;gap:6px;flex-wrap:wrap}
 .chevron{transition:transform .2s;font-size:11px;color:var(--text3)}
 .node-open .chevron{transform:rotate(180deg)}
 
-/* ─── SCHEDULE CARDS ─── */
+/* ── SUBJECT COLOR CHIPS ── */
+.subj-chip{display:inline-flex;align-items:center;gap:4px;padding:3px 8px;border-radius:6px;font-size:11px;font-weight:700}
+.subj-Physics{background:rgba(56,189,248,.12);color:var(--ice)}
+.subj-Chemistry{background:rgba(16,185,129,.1);color:#34d399}
+.subj-Biology{background:rgba(168,85,247,.12);color:var(--pulse)}
+.subj-Math{background:rgba(245,158,11,.1);color:var(--warn)}
+.subj-default{background:rgba(0,245,212,.08);color:var(--neon)}
+
+/* ── SCHEDULE CARDS ── */
 .sched-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:16px}
 .sched-card{background:var(--surface);border:1px solid var(--rim);border-radius:var(--r);overflow:hidden;transition:var(--tr);position:relative}
 .sched-card:hover{transform:translateY(-2px);box-shadow:var(--sh)}
+.sched-card.already-done{opacity:.8}
 .sched-stripe{height:3px;width:100%}
 .sched-stripe.live{background:linear-gradient(90deg,var(--ok),var(--neon));animation:stripe-pulse 2s ease infinite}
 .sched-stripe.upcoming{background:linear-gradient(90deg,var(--ice),var(--pulse))}
@@ -211,10 +259,12 @@ select.fi-dark{-webkit-appearance:none;background-image:url("data:image/svg+xml,
 .sched-stripe.ended{background:var(--rim)}
 @keyframes stripe-pulse{0%,100%{opacity:1}50%{opacity:.5}}
 .sched-body{padding:18px}
-.sched-status-badges{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:12px}
-.sched-title{font-family:var(--display);font-size:16px;font-weight:600;margin-bottom:4px}
-.sched-sub{font-size:12px;color:var(--text3);margin-bottom:14px}
-.sched-meta{display:flex;flex-direction:column;gap:7px;margin-bottom:14px}
+.sched-status-badges{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:10px}
+.sched-title{font-family:var(--display);font-size:16px;font-weight:600;margin-bottom:2px}
+.sched-sub{font-size:12px;color:var(--text3);margin-bottom:10px}
+/* Subject + Chapter info row */
+.sched-info-row{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:12px;padding:9px 12px;background:var(--ink2);border-radius:var(--r-sm);border:1px solid var(--rim)}
+.sched-meta{display:flex;flex-direction:column;gap:6px;margin-bottom:14px}
 .meta-row{display:flex;align-items:center;gap:8px;font-size:12px;color:var(--text2)}
 .meta-icon{width:16px;text-align:center;font-size:13px;flex-shrink:0}
 .cd-box{background:var(--ink2);border:1px solid var(--rim);border-radius:var(--r-sm);padding:12px 14px;margin-bottom:14px}
@@ -227,20 +277,25 @@ select.fi-dark{-webkit-appearance:none;background-image:url("data:image/svg+xml,
 .cd-live{display:flex;align-items:center;gap:6px;font-size:13px;font-weight:700;color:var(--ok)}
 .cd-dot-live{width:7px;height:7px;border-radius:50%;background:var(--ok);animation:dot-pulse 1s ease infinite;flex-shrink:0}
 .sched-footer{padding:12px 18px;border-top:1px solid var(--rim);display:flex;align-items:center;justify-content:space-between;background:var(--ink2)}
+/* "Already attempted" overlay */
+.attempted-overlay{display:flex;align-items:center;gap:8px;padding:9px 12px;background:rgba(16,185,129,.08);border:1px solid rgba(16,185,129,.25);border-radius:var(--r-sm);margin-bottom:12px;font-size:12px;font-weight:700;color:#34d399}
 
-/* ─── QUIZ ENGINE ─── */
+/* ── QUIZ ENGINE ── */
 #quiz-screen{display:none;position:fixed;inset:0;background:var(--ink);z-index:200;overflow-y:auto;padding:24px}
 #quiz-screen::before{content:'';position:fixed;inset:0;background:radial-gradient(ellipse 80% 60% at 50% -20%,rgba(0,245,212,.06) 0%,transparent 70%);pointer-events:none}
 .quiz-wrap{max-width:760px;margin:0 auto;position:relative;z-index:1}
 .quiz-topbar{display:flex;align-items:center;justify-content:space-between;margin-bottom:20px;background:rgba(20,23,32,.9);border:1px solid var(--rim);border-radius:var(--r);padding:14px 20px;backdrop-filter:blur(12px)}
 .quiz-meta-info{font-size:12px;color:var(--text3)}
 .quiz-meta-title{font-family:var(--display);font-size:15px;font-weight:600;margin-bottom:3px;color:var(--text)}
+.quiz-meta-breadcrumb{display:flex;align-items:center;gap:5px;flex-wrap:wrap;margin-bottom:4px}
+.quiz-meta-breadcrumb span{font-size:11px;color:var(--text3)}
+.quiz-meta-breadcrumb .crumb{color:var(--text2);font-weight:600}
+.quiz-meta-breadcrumb .sep{color:var(--rim3)}
 .quiz-timer-display{font-family:var(--mono);font-size:22px;font-weight:700;color:var(--neon);display:flex;align-items:center;gap:8px;letter-spacing:.04em}
 .quiz-timer-display.danger{color:var(--err);animation:timer-danger 1s ease infinite}
-@keyframes timer-danger{0%,100%{opacity:1;text-shadow:none}50%{opacity:.7;text-shadow:0 0 12px rgba(244,63,94,.5)}}
-.quiz-progress-track{height:3px;background:var(--rim);border-radius:2px;margin-bottom:22px;overflow:hidden;position:relative}
-.quiz-progress-fill{height:100%;background:linear-gradient(90deg,var(--neon),var(--ice));border-radius:2px;transition:width .4s ease;position:relative}
-.quiz-progress-fill::after{content:'';position:absolute;right:-2px;top:-3px;width:8px;height:8px;border-radius:50%;background:var(--neon);box-shadow:var(--glow)}
+@keyframes timer-danger{0%,100%{opacity:1}50%{opacity:.7}}
+.quiz-progress-track{height:3px;background:var(--rim);border-radius:2px;margin-bottom:22px;overflow:hidden}
+.quiz-progress-fill{height:100%;background:linear-gradient(90deg,var(--neon),var(--ice));border-radius:2px;transition:width .4s ease}
 .q-card{background:rgba(20,23,32,.95);border:1px solid var(--rim);border-radius:var(--r-lg);padding:28px;margin-bottom:20px;backdrop-filter:blur(12px)}
 .q-number{font-size:11px;font-weight:800;text-transform:uppercase;letter-spacing:.1em;color:var(--text3);margin-bottom:10px;display:flex;align-items:center;gap:6px}
 .q-number::before{content:'';flex:0 0 2px;height:14px;background:var(--neon);border-radius:1px}
@@ -262,10 +317,10 @@ select.fi-dark{-webkit-appearance:none;background-image:url("data:image/svg+xml,
 .q-dot.current{border-color:var(--ice);color:var(--ice)}
 .q-dot:hover{border-color:var(--text2)}
 
-/* ─── RESULT MODAL ─── */
+/* ── RESULT MODAL ── */
 .modal-ov{display:none;position:fixed;inset:0;background:rgba(0,0,0,.85);z-index:500;align-items:center;justify-content:center;padding:20px;backdrop-filter:blur(8px)}
 .modal-ov.open{display:flex}
-.modal{background:var(--surface);border:1px solid var(--rim);border-radius:var(--r-xl);padding:32px;width:100%;max-width:560px;max-height:90vh;overflow-y:auto;box-shadow:var(--sh-lg),0 0 60px rgba(0,245,212,.06);animation:modalIn .3s cubic-bezier(.175,.885,.32,1.275)}
+.modal{background:var(--surface);border:1px solid var(--rim);border-radius:var(--r-xl);padding:32px;width:100%;max-width:560px;max-height:90vh;overflow-y:auto;box-shadow:var(--sh-lg);animation:modalIn .3s cubic-bezier(.175,.885,.32,1.275)}
 @keyframes modalIn{from{opacity:0;transform:scale(.9)}to{opacity:1;transform:scale(1)}}
 .modal-hd{display:flex;align-items:center;justify-content:space-between;margin-bottom:22px}
 .modal-title{font-family:var(--display);font-size:18px;font-weight:700}
@@ -284,11 +339,11 @@ select.fi-dark{-webkit-appearance:none;background-image:url("data:image/svg+xml,
 .result-stat-val{font-family:var(--display);font-size:22px;font-weight:700}
 .result-stat-lbl{font-size:11px;color:var(--text3);margin-top:3px;font-weight:600}
 
-/* ─── RESULTS PAGE ─── */
+/* ── RESULTS PAGE ── */
 .history-item{display:flex;align-items:center;justify-content:space-between;padding:12px 16px;background:var(--surface2);border-radius:var(--r-sm);margin-bottom:8px;border:1px solid var(--rim);transition:var(--tr)}
 .history-item:hover{border-color:var(--rim2)}
 
-/* ─── LEADERBOARD ─── */
+/* ── LEADERBOARD ── */
 .lb-item{display:grid;grid-template-columns:44px 1fr auto auto;gap:12px;align-items:center;padding:12px 16px;border-radius:var(--r-sm);margin-bottom:6px;background:var(--surface2);border:1px solid transparent;transition:var(--tr)}
 .lb-item:hover{background:var(--surface3)}
 .lb-item.rank-1{border-color:rgba(245,158,11,.3);background:rgba(245,158,11,.05)}
@@ -299,7 +354,7 @@ select.fi-dark{-webkit-appearance:none;background-image:url("data:image/svg+xml,
 .lb-detail{font-size:11px;color:var(--text3);margin-top:1px}
 .lb-score-val{font-family:var(--display);font-weight:700;font-size:14px;text-align:right}
 
-/* ─── ADMIN ─── */
+/* ── ADMIN ── */
 .admin-tabs{display:flex;gap:3px;background:var(--ink2);border:1px solid var(--rim);border-radius:var(--r-sm);padding:3px;flex-wrap:wrap;margin-bottom:22px}
 .admin-tab{padding:8px 16px;border:none;background:transparent;color:var(--text3);font-size:13px;font-weight:600;border-radius:6px;cursor:pointer;transition:var(--tr);font-family:var(--font)}
 .admin-tab.act{background:linear-gradient(135deg,rgba(0,245,212,.2),rgba(56,189,248,.12));color:var(--neon);border:1px solid rgba(0,245,212,.2)}
@@ -308,7 +363,7 @@ select.fi-dark{-webkit-appearance:none;background-image:url("data:image/svg+xml,
 .drop-zone{border:2px dashed var(--rim2);border-radius:var(--r);padding:32px;text-align:center;cursor:pointer;transition:var(--tr)}
 .drop-zone:hover,.drop-zone.drag{border-color:var(--neon);background:rgba(0,245,212,.04)}
 
-/* ─── MISC ─── */
+/* ── MISC ── */
 .divider{height:1px;background:var(--rim);margin:18px 0}
 .chip{display:inline-flex;align-items:center;gap:3px;padding:3px 9px;border-radius:20px;font-size:11px;background:var(--ink2);border:1px solid var(--rim);color:var(--text2)}
 .flex-r{display:flex;align-items:center;gap:10px}
@@ -327,7 +382,7 @@ select.fi-dark{-webkit-appearance:none;background-image:url("data:image/svg+xml,
 .notice-info{background:rgba(0,245,212,.05);border-color:rgba(0,245,212,.2);color:var(--neon)}
 .notice-warn{background:rgba(245,158,11,.06);border-color:rgba(245,158,11,.2);color:var(--warn)}
 
-/* ─── RESPONSIVE ─── */
+/* ── RESPONSIVE ── */
 @media(max-width:900px){
   .sidebar{transform:translateX(-100%);z-index:200}
   .sidebar.open{transform:none}
@@ -354,24 +409,23 @@ select.fi-dark{-webkit-appearance:none;background-image:url("data:image/svg+xml,
 </head>
 <body>
 
-<!-- Background Canvas -->
 <canvas id="bg-canvas"></canvas>
-
-<!-- Tab Warning -->
 <div class="tab-warn-banner" id="tab-warn">⚠️ Tab switch detected — focus violations are being logged</div>
-
-<!-- Toast Container -->
 <div id="toast-wrap"></div>
 
 <!-- Loading Screen -->
 <div id="loading-screen">
   <div class="load-logo">CEE Medic Nepal</div>
-  <div class="load-spin"></div>
+  <div class="load-bars">
+    <div class="load-bar"></div>
+    <div class="load-bar"></div>
+    <div class="load-bar"></div>
+    <div class="load-bar"></div>
+    <div class="load-bar"></div>
+  </div>
+  <div style="font-size:12px;color:var(--text3);margin-top:4px;font-family:var(--mono)">Initializing platform…</div>
 </div>
 
-<!-- ════════════════════════════════════════
-     MAIN APP
-════════════════════════════════════════ -->
 <div id="app">
 <div class="layout">
   <div class="sb-overlay" id="sb-overlay" onclick="closeSb()"></div>
@@ -391,13 +445,11 @@ select.fi-dark{-webkit-appearance:none;background-image:url("data:image/svg+xml,
     <div class="sb-nav">
       <div class="sb-section">Overview</div>
       <button class="sb-item act" data-pg="dashboard" onclick="goTo('dashboard')"><span class="sb-icon">⚡</span>Dashboard</button>
-
       <div class="sb-section">Exams</div>
       <button class="sb-item" data-pg="schedule" onclick="goTo('schedule')"><span class="sb-icon">📅</span>Scheduled Exams</button>
       <button class="sb-item" data-pg="quiz" onclick="goTo('quiz')"><span class="sb-icon">🎯</span>Take Quiz</button>
       <button class="sb-item" data-pg="results" onclick="goTo('results')"><span class="sb-icon">📊</span>My Results</button>
       <button class="sb-item" data-pg="leaderboard" onclick="goTo('leaderboard')"><span class="sb-icon">🏆</span>Leaderboard</button>
-
       <div class="sb-section" id="admin-sb-section" style="display:none">Admin</div>
       <button class="sb-item hidden" id="admin-nav-btn" data-pg="admin" onclick="goTo('admin')"><span class="sb-icon">⚙️</span>Admin Panel<span class="sb-badge" id="pending-badge" style="display:none">0</span></button>
     </div>
@@ -418,18 +470,18 @@ select.fi-dark{-webkit-appearance:none;background-image:url("data:image/svg+xml,
       </div>
     </div>
 
-    <!-- ══ PAGE: DASHBOARD ══ -->
+    <!-- PAGE: DASHBOARD -->
     <div class="page act" id="pg-dashboard">
       <div class="pg-head">
         <div class="pg-title">⚡ Dashboard</div>
         <div class="pg-sub">Welcome back, <span id="dash-greeting" style="color:var(--neon)">—</span></div>
       </div>
-      <div class="stat-grid">
-        <div class="stat teal"><div class="stat-icon">📚</div><div class="stat-val" id="st-subjects">0</div><div class="stat-lbl">Subjects</div></div>
-        <div class="stat blue"><div class="stat-icon">🎯</div><div class="stat-val" id="st-quizzes">0</div><div class="stat-lbl">Quizzes Available</div></div>
-        <div class="stat purple"><div class="stat-icon">✅</div><div class="stat-val" id="st-attempts">0</div><div class="stat-lbl">My Attempts</div></div>
-        <div class="stat orange"><div class="stat-icon">⭐</div><div class="stat-val" id="st-avg">—</div><div class="stat-lbl">Avg Score %</div></div>
-        <div class="stat green"><div class="stat-icon">🏆</div><div class="stat-val" id="st-best">—</div><div class="stat-lbl">Best Score</div></div>
+      <div class="stat-grid" id="dash-stats">
+        <div class="stat teal"><div class="stat-icon">📚</div><div class="skel skel-row w40" style="height:30px;margin-bottom:6px"></div><div class="stat-lbl">Subjects</div></div>
+        <div class="stat blue"><div class="stat-icon">🎯</div><div class="skel skel-row w40" style="height:30px;margin-bottom:6px"></div><div class="stat-lbl">Quizzes Available</div></div>
+        <div class="stat purple"><div class="stat-icon">✅</div><div class="skel skel-row w40" style="height:30px;margin-bottom:6px"></div><div class="stat-lbl">My Attempts</div></div>
+        <div class="stat orange"><div class="stat-icon">⭐</div><div class="skel skel-row w40" style="height:30px;margin-bottom:6px"></div><div class="stat-lbl">Avg Score %</div></div>
+        <div class="stat green"><div class="stat-icon">🏆</div><div class="skel skel-row w40" style="height:30px;margin-bottom:6px"></div><div class="stat-lbl">Best Score</div></div>
       </div>
       <div class="grid-2">
         <div class="card">
@@ -437,20 +489,42 @@ select.fi-dark{-webkit-appearance:none;background-image:url("data:image/svg+xml,
             <div style="font-family:var(--display);font-size:15px;font-weight:600">Recent Activity</div>
             <button class="btn btn-ghost btn-sm" onclick="goTo('results')">View All →</button>
           </div>
-          <div id="recent-list"><div class="empty-state"><div class="empty-icon">📋</div><div class="empty-title">No attempts yet</div><div class="empty-sub">Take a quiz to see activity here</div></div></div>
+          <div id="recent-list">
+            <div class="skel skel-card" style="height:60px"></div>
+            <div class="skel skel-card" style="height:60px"></div>
+            <div class="skel skel-card" style="height:60px"></div>
+          </div>
         </div>
         <div class="card">
           <div style="font-family:var(--display);font-size:15px;font-weight:600;margin-bottom:16px">Live & Upcoming Exams</div>
-          <div id="dash-schedules"><div class="empty-state"><div class="empty-icon">📅</div><div class="empty-title">No scheduled exams</div></div></div>
+          <div id="dash-schedules">
+            <div class="skel skel-card" style="height:60px"></div>
+            <div class="skel skel-card" style="height:60px"></div>
+          </div>
         </div>
       </div>
     </div>
 
-    <!-- ══ PAGE: SCHEDULE ══ -->
+    <!-- PAGE: SCHEDULE -->
     <div class="page" id="pg-schedule">
       <div class="pg-head">
         <div class="pg-title">📅 Scheduled Exams</div>
         <div class="pg-sub">Live countdowns and real-time exam access</div>
+      </div>
+      <!-- Today's Banner -->
+      <div id="today-banner-wrap" style="display:none">
+        <div class="today-banner">
+          <div class="today-banner-inner">
+            <div class="today-banner-left">
+              <div class="today-banner-icon">🔥</div>
+              <div>
+                <div class="today-banner-title">Exams Happening Today!</div>
+                <div class="today-banner-sub" id="today-banner-sub">Check below for today's scheduled exams</div>
+              </div>
+            </div>
+            <button class="btn btn-warn btn-sm" onclick="setSchedFilter('today',document.querySelector('#sched-filter-tabs .admin-tab:nth-child(3)'))">View Today →</button>
+          </div>
+        </div>
       </div>
       <!-- Filter Bar -->
       <div class="card mb-4">
@@ -484,18 +558,24 @@ select.fi-dark{-webkit-appearance:none;background-image:url("data:image/svg+xml,
       </div>
     </div>
 
-    <!-- ══ PAGE: QUIZ ══ -->
+    <!-- PAGE: QUIZ -->
     <div class="page" id="pg-quiz">
       <div class="pg-head">
         <div class="pg-title">🎯 Take a Quiz</div>
-        <div class="pg-sub">Select from available quiz sets below</div>
+        <div class="pg-sub">Browse by subject and chapter — click any set to start</div>
       </div>
       <div class="card">
-        <div id="quiz-tree-wrap"><div class="empty-state"><div class="empty-icon">📚</div><div class="empty-title">Loading quizzes…</div></div></div>
+        <div id="quiz-tree-wrap">
+          <div style="display:flex;flex-direction:column;gap:10px">
+            <div class="skel" style="height:52px;border-radius:14px"></div>
+            <div class="skel" style="height:52px;border-radius:14px"></div>
+            <div class="skel" style="height:52px;border-radius:14px"></div>
+          </div>
+        </div>
       </div>
     </div>
 
-    <!-- ══ PAGE: RESULTS ══ -->
+    <!-- PAGE: RESULTS -->
     <div class="page" id="pg-results">
       <div class="pg-head">
         <div class="pg-title">📊 My Results</div>
@@ -504,7 +584,7 @@ select.fi-dark{-webkit-appearance:none;background-image:url("data:image/svg+xml,
       <div id="results-wrap"><div class="empty-state"><div class="empty-icon">📊</div><div class="empty-title">Loading…</div></div></div>
     </div>
 
-    <!-- ══ PAGE: LEADERBOARD ══ -->
+    <!-- PAGE: LEADERBOARD -->
     <div class="page" id="pg-leaderboard">
       <div class="pg-head">
         <div class="pg-title">🏆 Leaderboard</div>
@@ -519,7 +599,7 @@ select.fi-dark{-webkit-appearance:none;background-image:url("data:image/svg+xml,
       <div id="lb-wrap"><div class="empty-state"><div class="empty-icon">🏆</div><div class="empty-title">Loading…</div></div></div>
     </div>
 
-    <!-- ══ PAGE: ADMIN ══ -->
+    <!-- PAGE: ADMIN -->
     <div class="page" id="pg-admin">
       <div class="pg-head">
         <div class="pg-title">⚙️ Admin Panel</div>
@@ -548,29 +628,22 @@ select.fi-dark{-webkit-appearance:none;background-image:url("data:image/svg+xml,
               <button class="admin-tab" onclick="switchUploadSrc('file',this)">File</button>
             </div>
             <div id="up-paste-area">
-              <textarea class="code-area" id="json-paste-input" rows="12" placeholder='Paste any JSON format here…
-
-Format 1: [{...}]
-Format 2: {"subject":"...","questions":[...]}
-Format 3: {"examTitle":"...","questions":[...]}
-Format 4: {"setId":"...","questions":{"q1":{...}}}
-Format 5: {"options":[{"id":"A","text":"..."}],"correctOption":"D"}'></textarea>
+              <textarea class="code-area" id="json-paste-input" rows="12" placeholder='Paste any JSON format here…'></textarea>
             </div>
             <div id="up-file-area" style="display:none">
               <div class="drop-zone" id="drop-zone" onclick="document.getElementById('file-input-adm').click()" ondragover="dOv(event)" ondragleave="dLv(event)" ondrop="dDrop(event)">
                 <div style="font-size:36px;margin-bottom:8px">📁</div>
                 <div style="font-size:14px;font-weight:600;color:var(--text2)">Click or drag JSON file</div>
-                <div style="font-size:12px;color:var(--text3);margin-top:4px">Supports all 5 formats</div>
               </div>
               <input type="file" id="file-input-adm" accept=".json,.txt" style="display:none" onchange="loadAdmFile(event)"/>
             </div>
           </div>
           <div class="card">
             <div style="font-family:var(--display);font-size:15px;font-weight:600;margin-bottom:14px">Set Details & Upload</div>
-            <div style="margin-bottom:12px"><label class="fl" style="color:var(--text3);font-size:11px;font-weight:700;display:block;margin-bottom:5px">SUBJECT</label><input class="fi-dark" id="up-subject" placeholder="e.g. Physics"/></div>
-            <div style="margin-bottom:12px"><label class="fl" style="color:var(--text3);font-size:11px;font-weight:700;display:block;margin-bottom:5px">CHAPTER</label><input class="fi-dark" id="up-chapter" placeholder="e.g. Motion"/></div>
-            <div style="margin-bottom:12px"><label class="fl" style="color:var(--text3);font-size:11px;font-weight:700;display:block;margin-bottom:5px">SET NAME</label><input class="fi-dark" id="up-set" placeholder="e.g. Set-1"/></div>
-            <div style="margin-bottom:16px"><label class="fl" style="color:var(--text3);font-size:11px;font-weight:700;display:block;margin-bottom:5px">DIFFICULTY</label>
+            <div style="margin-bottom:12px"><label style="color:var(--text3);font-size:11px;font-weight:700;display:block;margin-bottom:5px">SUBJECT</label><input class="fi-dark" id="up-subject" placeholder="e.g. Physics"/></div>
+            <div style="margin-bottom:12px"><label style="color:var(--text3);font-size:11px;font-weight:700;display:block;margin-bottom:5px">CHAPTER</label><input class="fi-dark" id="up-chapter" placeholder="e.g. Motion"/></div>
+            <div style="margin-bottom:12px"><label style="color:var(--text3);font-size:11px;font-weight:700;display:block;margin-bottom:5px">SET NAME</label><input class="fi-dark" id="up-set" placeholder="e.g. Set-1"/></div>
+            <div style="margin-bottom:16px"><label style="color:var(--text3);font-size:11px;font-weight:700;display:block;margin-bottom:5px">DIFFICULTY</label>
               <select class="fi-dark" id="up-diff"><option value="">Any</option><option>Easy</option><option>Medium</option><option>Hard</option></select>
             </div>
             <div class="flex-r" style="flex-wrap:wrap;gap:8px">
@@ -606,22 +679,22 @@ Format 5: {"options":[{"id":"A","text":"..."}],"correctOption":"D"}'></textarea>
         <div class="card mb-4">
           <div style="font-family:var(--display);font-size:15px;font-weight:600;margin-bottom:16px">➕ Create Schedule</div>
           <div class="grid-2">
-            <div style="margin-bottom:12px"><label class="fl" style="color:var(--text3);font-size:11px;font-weight:700;display:block;margin-bottom:5px">TITLE</label><input class="fi-dark" id="adm-sc-title" placeholder="e.g. Physics Final Exam"/></div>
-            <div style="margin-bottom:12px"><label class="fl" style="color:var(--text3);font-size:11px;font-weight:700;display:block;margin-bottom:5px">QUIZ SET</label>
+            <div style="margin-bottom:12px"><label style="color:var(--text3);font-size:11px;font-weight:700;display:block;margin-bottom:5px">TITLE</label><input class="fi-dark" id="adm-sc-title" placeholder="e.g. Physics Final Exam"/></div>
+            <div style="margin-bottom:12px"><label style="color:var(--text3);font-size:11px;font-weight:700;display:block;margin-bottom:5px">QUIZ SET</label>
               <select class="fi-dark" id="adm-sc-quiz"><option value="">-- Choose Quiz --</option></select>
             </div>
-            <div style="margin-bottom:12px"><label class="fl" style="color:var(--text3);font-size:11px;font-weight:700;display:block;margin-bottom:5px">START DATE & TIME</label><input class="fi-dark" type="datetime-local" id="adm-sc-start"/></div>
-            <div style="margin-bottom:12px"><label class="fl" style="color:var(--text3);font-size:11px;font-weight:700;display:block;margin-bottom:5px">END DATE & TIME</label><input class="fi-dark" type="datetime-local" id="adm-sc-end"/></div>
-            <div style="margin-bottom:12px"><label class="fl" style="color:var(--text3);font-size:11px;font-weight:700;display:block;margin-bottom:5px">DURATION (MIN)</label><input class="fi-dark" type="number" id="adm-sc-dur" placeholder="60"/></div>
-            <div style="margin-bottom:12px"><label class="fl" style="color:var(--text3);font-size:11px;font-weight:700;display:block;margin-bottom:5px">INSTRUCTIONS</label><input class="fi-dark" id="adm-sc-instr" placeholder="Any special instructions"/></div>
+            <div style="margin-bottom:12px"><label style="color:var(--text3);font-size:11px;font-weight:700;display:block;margin-bottom:5px">START DATE & TIME</label><input class="fi-dark" type="datetime-local" id="adm-sc-start"/></div>
+            <div style="margin-bottom:12px"><label style="color:var(--text3);font-size:11px;font-weight:700;display:block;margin-bottom:5px">END DATE & TIME</label><input class="fi-dark" type="datetime-local" id="adm-sc-end"/></div>
+            <div style="margin-bottom:12px"><label style="color:var(--text3);font-size:11px;font-weight:700;display:block;margin-bottom:5px">DURATION (MIN)</label><input class="fi-dark" type="number" id="adm-sc-dur" placeholder="60"/></div>
+            <div style="margin-bottom:12px"><label style="color:var(--text3);font-size:11px;font-weight:700;display:block;margin-bottom:5px">INSTRUCTIONS</label><input class="fi-dark" id="adm-sc-instr" placeholder="Any special instructions"/></div>
           </div>
           <textarea class="fi-dark" id="adm-sc-desc" rows="2" placeholder="Description (optional)…" style="resize:vertical;margin-bottom:14px"></textarea>
           <button class="btn btn-neon" onclick="createSchedule()">📅 Create Schedule</button>
         </div>
         <div class="tbl-wrap">
           <table>
-            <thead><tr><th>Title</th><th>Quiz</th><th>Start</th><th>End</th><th>Status</th><th>Actions</th></tr></thead>
-            <tbody id="adm-sched-body"><tr><td colspan="6" class="tbl-empty">Loading…</td></tr></tbody>
+            <thead><tr><th>Title</th><th>Quiz</th><th>Start</th><th>End</th><th>Status</th><th>Attempts</th><th>Actions</th></tr></thead>
+            <tbody id="adm-sched-body"><tr><td colspan="7" class="tbl-empty">Loading…</td></tr></tbody>
           </table>
         </div>
       </div>
@@ -641,15 +714,16 @@ Format 5: {"options":[{"id":"A","text":"..."}],"correctOption":"D"}'></textarea>
       </div>
     </div>
 
-  </div><!-- /main-area -->
-</div><!-- /layout -->
-</div><!-- /app -->
+  </div>
+</div>
+</div>
 
-<!-- ════════════════ QUIZ SCREEN ════════════════ -->
+<!-- QUIZ SCREEN -->
 <div id="quiz-screen">
   <div class="quiz-wrap">
     <div class="quiz-topbar">
       <div class="quiz-meta-info">
+        <div class="quiz-meta-breadcrumb" id="q-breadcrumb"></div>
         <div class="quiz-meta-title" id="q-title-display">Quiz</div>
         <div id="q-progress-text" style="font-size:12px;color:var(--text3)">Question 1 of 10</div>
       </div>
@@ -671,8 +745,7 @@ Format 5: {"options":[{"id":"A","text":"..."}],"correctOption":"D"}'></textarea>
   </div>
 </div>
 
-<!-- ════════════════ MODALS ════════════════ -->
-<!-- Result Modal -->
+<!-- MODALS -->
 <div class="modal-ov" id="result-modal">
   <div class="modal">
     <div class="modal-hd">
@@ -687,7 +760,6 @@ Format 5: {"options":[{"id":"A","text":"..."}],"correctOption":"D"}'></textarea>
   </div>
 </div>
 
-<!-- Edit Quiz Modal -->
 <div class="modal-ov" id="edit-quiz-modal">
   <div class="modal">
     <div class="modal-hd">
@@ -695,17 +767,16 @@ Format 5: {"options":[{"id":"A","text":"..."}],"correctOption":"D"}'></textarea>
       <button class="modal-x" onclick="closeModal('edit-quiz-modal')">✕</button>
     </div>
     <input type="hidden" id="eq-id"/>
-    <div style="margin-bottom:12px"><label class="fl" style="color:var(--text3);font-size:11px;font-weight:700;display:block;margin-bottom:5px">SUBJECT</label><input class="fi-dark" id="eq-subj"/></div>
-    <div style="margin-bottom:12px"><label class="fl" style="color:var(--text3);font-size:11px;font-weight:700;display:block;margin-bottom:5px">CHAPTER</label><input class="fi-dark" id="eq-chap"/></div>
-    <div style="margin-bottom:12px"><label class="fl" style="color:var(--text3);font-size:11px;font-weight:700;display:block;margin-bottom:5px">SET</label><input class="fi-dark" id="eq-set"/></div>
-    <div style="margin-bottom:12px"><label class="fl" style="color:var(--text3);font-size:11px;font-weight:700;display:block;margin-bottom:5px">QUESTIONS JSON</label>
+    <div style="margin-bottom:12px"><label style="color:var(--text3);font-size:11px;font-weight:700;display:block;margin-bottom:5px">SUBJECT</label><input class="fi-dark" id="eq-subj"/></div>
+    <div style="margin-bottom:12px"><label style="color:var(--text3);font-size:11px;font-weight:700;display:block;margin-bottom:5px">CHAPTER</label><input class="fi-dark" id="eq-chap"/></div>
+    <div style="margin-bottom:12px"><label style="color:var(--text3);font-size:11px;font-weight:700;display:block;margin-bottom:5px">SET</label><input class="fi-dark" id="eq-set"/></div>
+    <div style="margin-bottom:12px"><label style="color:var(--text3);font-size:11px;font-weight:700;display:block;margin-bottom:5px">QUESTIONS JSON</label>
       <textarea class="code-area" id="eq-questions" rows="10"></textarea>
     </div>
     <button class="btn btn-neon btn-full" onclick="saveEditQuiz()">💾 Save Changes</button>
   </div>
 </div>
 
-<!-- Confirm Take Exam Modal -->
 <div class="modal-ov" id="take-exam-modal">
   <div class="modal">
     <div class="modal-hd">
@@ -733,6 +804,7 @@ const sb=window.supabase.createClient(SUPABASE_URL,SUPABASE_ANON_KEY);
 // ══════════════════════════════════════════════
 let CU=null,CP=null;
 let allQuizzes=[],allSchedules=[],allAttempts=[];
+let scheduleAttemptedMap={}; // scheduleId -> attempt obj
 let quizState=null,quizTimer=null,quizSecs=0;
 let schedFilter='all',schedCdIntervals={};
 let parsedQs=[],parsedMeta={};
@@ -746,23 +818,11 @@ let lastResult=null;
   const ctx=c.getContext('2d');
   let w,h,pts=[];
   function resize(){w=c.width=innerWidth;h=c.height=innerHeight;initPts();}
-  function initPts(){
-    pts=[];
-    const n=Math.floor((w*h)/18000);
-    for(let i=0;i<n;i++)pts.push({x:Math.random()*w,y:Math.random()*h,vx:(Math.random()-.5)*.3,vy:(Math.random()-.5)*.3,r:Math.random()*1.5+.5});
-  }
+  function initPts(){pts=[];const n=Math.floor((w*h)/18000);for(let i=0;i<n;i++)pts.push({x:Math.random()*w,y:Math.random()*h,vx:(Math.random()-.5)*.3,vy:(Math.random()-.5)*.3,r:Math.random()*1.5+.5});}
   function draw(){
     ctx.clearRect(0,0,w,h);
-    pts.forEach(p=>{
-      p.x+=p.vx;p.y+=p.vy;
-      if(p.x<0||p.x>w)p.vx*=-1;if(p.y<0||p.y>h)p.vy*=-1;
-      ctx.beginPath();ctx.arc(p.x,p.y,p.r,0,Math.PI*2);
-      ctx.fillStyle='rgba(0,245,212,0.4)';ctx.fill();
-    });
-    for(let i=0;i<pts.length;i++)for(let j=i+1;j<pts.length;j++){
-      const d=Math.hypot(pts[i].x-pts[j].x,pts[i].y-pts[j].y);
-      if(d<120){ctx.beginPath();ctx.moveTo(pts[i].x,pts[i].y);ctx.lineTo(pts[j].x,pts[j].y);ctx.strokeStyle=`rgba(0,245,212,${.12*(1-d/120)})`;ctx.lineWidth=.5;ctx.stroke();}
-    }
+    pts.forEach(p=>{p.x+=p.vx;p.y+=p.vy;if(p.x<0||p.x>w)p.vx*=-1;if(p.y<0||p.y>h)p.vy*=-1;ctx.beginPath();ctx.arc(p.x,p.y,p.r,0,Math.PI*2);ctx.fillStyle='rgba(0,245,212,0.4)';ctx.fill();});
+    for(let i=0;i<pts.length;i++)for(let j=i+1;j<pts.length;j++){const d=Math.hypot(pts[i].x-pts[j].x,pts[i].y-pts[j].y);if(d<120){ctx.beginPath();ctx.moveTo(pts[i].x,pts[i].y);ctx.lineTo(pts[j].x,pts[j].y);ctx.strokeStyle=`rgba(0,245,212,${.12*(1-d/120)})`;ctx.lineWidth=.5;ctx.stroke();}}
     requestAnimationFrame(draw);
   }
   window.addEventListener('resize',resize);resize();draw();
@@ -794,7 +854,6 @@ async function doLogout(){
 // APP INIT
 // ══════════════════════════════════════════════
 function initApp(){
-  // ── Show UI shell immediately — no await ──
   document.getElementById('loading-screen').style.display='none';
   document.getElementById('app').style.display='block';
   const ini=(CP.full_name||'N').split(' ').map(w=>w[0]).join('').toUpperCase().slice(0,2);
@@ -808,14 +867,11 @@ function initApp(){
   }
   setupTabDetection();
   startClock();
-  // ── Load data in background — don't block render ──
   Promise.all([loadQuizTree(),loadSchedulesData(),loadDashboard()]);
 }
 
 function startClock(){
-  setInterval(()=>{
-    document.getElementById('tb-clock').textContent=new Date().toLocaleTimeString('en-US',{hour:'2-digit',minute:'2-digit',second:'2-digit'});
-  },1000);
+  setInterval(()=>{document.getElementById('tb-clock').textContent=new Date().toLocaleTimeString('en-US',{hour:'2-digit',minute:'2-digit',second:'2-digit'});},1000);
 }
 
 // ══════════════════════════════════════════════
@@ -839,6 +895,20 @@ function closeSb(){document.getElementById('sidebar').classList.remove('open');d
 function closeModal(id){document.getElementById(id).classList.remove('open');}
 
 // ══════════════════════════════════════════════
+// LOAD SCHEDULE ATTEMPTS (for current user)
+// ══════════════════════════════════════════════
+async function loadScheduleAttempts(){
+  try{
+    const{data}=await sb.from('schedule_attempts').select('*').eq('user_id',CU.id);
+    scheduleAttemptedMap={};
+    (data||[]).forEach(a=>{scheduleAttemptedMap[a.schedule_id]=a;});
+  }catch(e){
+    // table may not exist yet — fail silently, treat all as not attempted
+    scheduleAttemptedMap={};
+  }
+}
+
+// ══════════════════════════════════════════════
 // DASHBOARD
 // ══════════════════════════════════════════════
 async function loadDashboard(){
@@ -849,37 +919,78 @@ async function loadDashboard(){
     ]);
     allAttempts=ats||[];
     const subjects=[...new Set((qs||[]).map(q=>q.subject))];
-    document.getElementById('st-subjects').textContent=subjects.length;
-    document.getElementById('st-quizzes').textContent=(qs||[]).length;
-    document.getElementById('st-attempts').textContent=allAttempts.length;
-    const avg=allAttempts.length?Math.round(allAttempts.reduce((s,a)=>s+a.percentage,0)/allAttempts.length):null;
-    const best=allAttempts.length?Math.max(...allAttempts.map(a=>a.percentage)):null;
-    document.getElementById('st-avg').textContent=avg!=null?avg+'%':'—';
-    document.getElementById('st-best').textContent=best!=null?best+'%':'—';
-    // Recent activity
+
+    // Replace skeletons with real stat values
+    document.getElementById('dash-stats').innerHTML=`
+      <div class="stat teal"><div class="stat-icon">📚</div><div class="stat-val">${subjects.length}</div><div class="stat-lbl">Subjects</div></div>
+      <div class="stat blue"><div class="stat-icon">🎯</div><div class="stat-val">${(qs||[]).length}</div><div class="stat-lbl">Quizzes Available</div></div>
+      <div class="stat purple"><div class="stat-icon">✅</div><div class="stat-val">${allAttempts.length}</div><div class="stat-lbl">My Attempts</div></div>
+      <div class="stat orange"><div class="stat-icon">⭐</div><div class="stat-val">${allAttempts.length?Math.round(allAttempts.reduce((s,a)=>s+a.percentage,0)/allAttempts.length)+'%':'—'}</div><div class="stat-lbl">Avg Score %</div></div>
+      <div class="stat green"><div class="stat-icon">🏆</div><div class="stat-val">${allAttempts.length?Math.max(...allAttempts.map(a=>a.percentage))+'%':'—'}</div><div class="stat-lbl">Best Score</div></div>
+    `;
+
     const rl=document.getElementById('recent-list');
-    if(!allAttempts.length){rl.innerHTML='<div class="empty-state"><div class="empty-icon">📋</div><div class="empty-title">No attempts yet</div><div class="empty-sub">Take a quiz to get started</div></div>';return;}
-    rl.innerHTML=allAttempts.slice(0,5).map(a=>{
-      const col=a.percentage>=75?'var(--ok)':a.percentage>=50?'var(--warn)':'var(--err)';
-      return`<div class="history-item">
-        <div><div style="font-size:13px;font-weight:600">${esc(a.subject)} › ${esc(a.set)}</div><div style="font-size:11px;color:var(--text3)">${new Date(a.created_at).toLocaleDateString('en-US',{month:'short',day:'numeric',hour:'2-digit',minute:'2-digit'})}</div></div>
-        <div style="text-align:right"><div style="font-family:var(--display);font-weight:700;color:${col}">${a.percentage}%</div><div style="font-size:11px;color:var(--text3)">${a.score}/${a.total}</div></div>
-      </div>`;}).join('');
-    // Dash schedules
+    if(!allAttempts.length){
+      rl.innerHTML='<div class="empty-state"><div class="empty-icon">📋</div><div class="empty-title">No attempts yet</div><div class="empty-sub">Take a quiz to get started</div></div>';
+    }else{
+      rl.innerHTML=allAttempts.slice(0,5).map(a=>{
+        const col=a.percentage>=75?'var(--ok)':a.percentage>=50?'var(--warn)':'var(--err)';
+        return`<div class="history-item">
+          <div>
+            <div style="font-size:13px;font-weight:600">${esc(a.subject)}</div>
+            <div style="font-size:11px;color:var(--text3)">${esc(a.chapter||'')}${a.chapter?' › ':''}${esc(a.set)}</div>
+            <div style="font-size:11px;color:var(--text3);margin-top:2px">${new Date(a.created_at).toLocaleDateString('en-US',{month:'short',day:'numeric',hour:'2-digit',minute:'2-digit'})}</div>
+          </div>
+          <div style="text-align:right"><div style="font-family:var(--display);font-weight:700;color:${col}">${a.percentage}%</div><div style="font-size:11px;color:var(--text3)">${a.score}/${a.total}</div></div>
+        </div>`;}).join('');
+    }
+
     const live=allSchedules.filter(s=>getSchedStatus(s)==='live');
     const today=allSchedules.filter(s=>getSchedStatus(s)==='today');
     const upcoming=allSchedules.filter(s=>getSchedStatus(s)==='upcoming').slice(0,2);
     const dashScheds=[...live,...today,...upcoming].slice(0,4);
     const ds=document.getElementById('dash-schedules');
-    if(!dashScheds.length){ds.innerHTML='<div class="empty-state"><div class="empty-icon">📅</div><div class="empty-title">No upcoming exams</div></div>';return;}
-    ds.innerHTML=dashScheds.map(s=>{
-      const st=getSchedStatus(s);const start=new Date(s.start_time);
-      return`<div class="history-item" style="cursor:pointer" onclick="goTo('schedule')">
-        <div><div style="font-size:13px;font-weight:600">${esc(s.title)}</div>
-        <div style="font-size:11px;color:var(--text3)">${start.toLocaleDateString('en-US',{month:'short',day:'numeric'})} · ${start.toLocaleTimeString('en-US',{hour:'2-digit',minute:'2-digit'})}</div></div>
-        <span class="badge ${st==='live'?'b-ok':st==='today'?'b-warn':'b-blue'}">${st}</span>
-      </div>`;}).join('');
+    if(!dashScheds.length){
+      ds.innerHTML='<div class="empty-state"><div class="empty-icon">📅</div><div class="empty-title">No upcoming exams</div></div>';
+    }else{
+      ds.innerHTML=dashScheds.map(s=>{
+        const st=getSchedStatus(s);const start=new Date(s.start_time);
+        const quiz=s.quizzes||{};
+        return`<div class="history-item" style="cursor:pointer;flex-direction:column;align-items:flex-start;gap:8px" onclick="goTo('schedule')">
+          <div style="display:flex;align-items:center;justify-content:space-between;width:100%">
+            <div style="font-size:13px;font-weight:600">${esc(s.title)}</div>
+            <span class="badge ${st==='live'?'b-ok':st==='today'?'b-warn':'b-blue'}">${st}</span>
+          </div>
+          <div style="display:flex;gap:6px;flex-wrap:wrap">
+            ${quiz.subject?`<span class="chip">${subjectIcon(quiz.subject)} ${esc(quiz.subject)}</span>`:''}
+            ${quiz.chapter?`<span class="chip">📖 ${esc(quiz.chapter)}</span>`:''}
+          </div>
+          <div style="font-size:11px;color:var(--text3)">${start.toLocaleDateString('en-US',{month:'short',day:'numeric'})} · ${start.toLocaleTimeString('en-US',{hour:'2-digit',minute:'2-digit'})}</div>
+        </div>`;}).join('');
+    }
   }catch(e){console.error(e);}
+}
+
+// ══════════════════════════════════════════════
+// SUBJECT ICON HELPER
+// ══════════════════════════════════════════════
+function subjectIcon(subj){
+  const s=(subj||'').toLowerCase();
+  if(s.includes('physics'))return'⚛️';
+  if(s.includes('chem'))return'🧪';
+  if(s.includes('bio'))return'🧬';
+  if(s.includes('math'))return'📐';
+  if(s.includes('english'))return'📝';
+  return'📘';
+}
+
+function subjectChipClass(subj){
+  const s=(subj||'').toLowerCase();
+  if(s.includes('physics'))return'subj-Physics';
+  if(s.includes('chem'))return'subj-Chemistry';
+  if(s.includes('bio'))return'subj-Biology';
+  if(s.includes('math'))return'subj-Math';
+  return'subj-default';
 }
 
 // ══════════════════════════════════════════════
@@ -887,18 +998,35 @@ async function loadDashboard(){
 // ══════════════════════════════════════════════
 async function loadSchedulesData(){
   try{
-    const{data,error}=await sb.from('schedules').select('*,quizzes(id,subject,chapter,set,questions)').order('start_time');
+    const[{data,error}]=await Promise.all([
+      sb.from('schedules').select('*,quizzes(id,subject,chapter,set,questions)').order('start_time'),
+    ]);
+    await loadScheduleAttempts();
     if(error)throw error;
     allSchedules=data||[];
+
     // Populate subject filter
     const subjects=[...new Set(allSchedules.map(s=>s.quizzes?.subject).filter(Boolean))].sort();
     const sf=document.getElementById('sched-subj-filter');
     sf.innerHTML='<option value="">All Subjects</option>';
     subjects.forEach(s=>{const o=document.createElement('option');o.value=s;o.textContent=s;sf.appendChild(o);});
+
     // Populate LB quiz filter
     const lf=document.getElementById('lb-quiz-filter');
     lf.innerHTML='<option value="">All Quizzes</option>';
     allSchedules.forEach(s=>{const o=document.createElement('option');o.value=s.id;o.textContent=`${s.quizzes?.subject||'?'} › ${s.quizzes?.set||'?'}`;lf.appendChild(o);});
+
+    // Show today banner
+    const todayScheds=allSchedules.filter(s=>getSchedStatus(s)==='today'||getSchedStatus(s)==='live');
+    const todayBanner=document.getElementById('today-banner-wrap');
+    if(todayScheds.length>0){
+      todayBanner.style.display='block';
+      document.getElementById('today-banner-sub').textContent=
+        `${todayScheds.length} exam${todayScheds.length>1?'s':''} scheduled for today — don't miss them!`;
+    }else{
+      todayBanner.style.display='none';
+    }
+
     renderScheduleCards();
   }catch(e){console.error(e);}
   setInterval(renderScheduleCards,30000);
@@ -952,6 +1080,12 @@ function buildSchedCard(s,status){
   const fmtDate=d=>d.toLocaleDateString('en-US',{weekday:'short',month:'short',day:'numeric'});
   const fmtTime=d=>d.toLocaleTimeString('en-US',{hour:'2-digit',minute:'2-digit'});
   const statusBadge={live:'<span class="badge b-ok">🟢 LIVE</span>',today:'<span class="badge b-warn">⭐ TODAY</span>',upcoming:'<span class="badge b-blue">🔜 SOON</span>',ended:'<span class="badge b-gray">✅ ENDED</span>'}[status];
+
+  const attempted=scheduleAttemptedMap[s.id];
+  const attemptedHtml=attempted
+    ?`<div class="attempted-overlay">✅ Already Attempted — Score: <strong>${attempted.percentage}%</strong> (${attempted.score}/${attempted.total})</div>`
+    :'';
+
   let cdHtml='';
   if(status==='live'){
     const elapsed=Date.now()-start.getTime();const total=end.getTime()-start.getTime();
@@ -962,18 +1096,36 @@ function buildSchedCard(s,status){
   }else{
     cdHtml=`<div class="cd-box"><div class="cd-label">${status==='today'?'Starts today in':'Countdown'}</div><div class="cd-digits"><div class="cd-unit"><span class="cd-num" id="cdd-${s.id}">--</span><span class="cd-lbl">Days</span></div><span class="cd-sep">:</span><div class="cd-unit"><span class="cd-num" id="cdh-${s.id}">--</span><span class="cd-lbl">Hrs</span></div><span class="cd-sep">:</span><div class="cd-unit"><span class="cd-num" id="cdm-${s.id}">--</span><span class="cd-lbl">Min</span></div><span class="cd-sep">:</span><div class="cd-unit"><span class="cd-num" id="cds-${s.id}">--</span><span class="cd-lbl">Sec</span></div></div></div>`;
   }
-  const actionBtn=status==='live'
-    ?`<button class="btn btn-volt btn-sm" onclick="openTakeExamModal('${s.id}')">▶ Start</button>`
-    :status==='ended'?`<button class="btn btn-ghost btn-sm" disabled>Closed</button>`
-    :`<button class="btn btn-ghost btn-sm" disabled>🔒 Locked</button>`;
-  return`<div class="sched-card"><div class="sched-stripe ${status}"></div><div class="sched-body">
-    <div class="sched-status-badges">${statusBadge}<span class="badge b-neon">📘 ${esc(quiz.subject||'?')}</span>${s.duration_minutes?`<span class="badge b-blue">⏱ ${s.duration_minutes}m</span>`:''}</div>
+
+  let actionBtn;
+  if(status==='live'){
+    if(attempted){
+      actionBtn=`<button class="btn btn-ghost btn-sm" disabled>✅ Already Submitted</button>`;
+    }else{
+      actionBtn=`<button class="btn btn-volt btn-sm" onclick="openTakeExamModal('${s.id}')">▶ Start</button>`;
+    }
+  }else if(status==='ended'){
+    actionBtn=`<button class="btn btn-ghost btn-sm" disabled>Closed</button>`;
+  }else{
+    actionBtn=`<button class="btn btn-ghost btn-sm" disabled>🔒 Locked</button>`;
+  }
+
+  const cardClass=attempted?'sched-card already-done':'sched-card';
+
+  return`<div class="${cardClass}"><div class="sched-stripe ${status}"></div><div class="sched-body">
+    <div class="sched-status-badges">${statusBadge}${attempted?'<span class="badge b-ok">✅ Done</span>':''}</div>
     <div class="sched-title">${esc(s.title||`${quiz.subject} — ${quiz.set}`)}</div>
     <div class="sched-sub">${esc(quiz.chapter||'')}${quiz.set?' › '+esc(quiz.set):''}</div>
+    <div class="sched-info-row">
+      ${quiz.subject?`<span class="subj-chip ${subjectChipClass(quiz.subject)}">${subjectIcon(quiz.subject)} ${esc(quiz.subject)}</span>`:''}
+      ${quiz.chapter?`<span class="chip">📖 ${esc(quiz.chapter)}</span>`:''}
+      ${s.duration_minutes?`<span class="chip">⏱ ${s.duration_minutes}m</span>`:''}
+      <span class="chip">📝 ${qCount} Qs</span>
+    </div>
+    ${attemptedHtml}
     <div class="sched-meta">
       <div class="meta-row"><span class="meta-icon">📅</span>${fmtDate(start)}</div>
       <div class="meta-row"><span class="meta-icon">🕐</span>${fmtTime(start)} → ${fmtTime(end)}</div>
-      <div class="meta-row"><span class="meta-icon">📝</span>${qCount} Questions</div>
       ${s.instructions?`<div class="meta-row"><span class="meta-icon">ℹ️</span><span style="font-size:11px">${esc(s.instructions)}</span></div>`:''}
     </div>
     ${cdHtml}
@@ -990,7 +1142,6 @@ function startSchedCd(s,status){
     const p=n=>String(n).padStart(2,'0');
     const el=(id)=>document.getElementById(id);
     if(el(`cdd-${s.id}`)){el(`cdd-${s.id}`).textContent=p(d);el(`cdh-${s.id}`).textContent=p(h);el(`cdm-${s.id}`).textContent=p(m);el(`cds-${s.id}`).textContent=p(sec);}
-    // Urgency colors
     if(d===0&&h===0&&m<10){[`cdd-${s.id}`,`cdh-${s.id}`,`cdm-${s.id}`,`cds-${s.id}`].forEach(id=>{if(el(id))el(id).style.color=m<1?'var(--err)':'var(--warn)';});}
   }
   tick();schedCdIntervals[s.id]=setInterval(tick,1000);
@@ -998,24 +1149,33 @@ function startSchedCd(s,status){
 
 function openTakeExamModal(schedId){
   const s=allSchedules.find(x=>x.id===schedId);if(!s)return;
+
+  // Double-check if already attempted
+  if(scheduleAttemptedMap[schedId]){
+    const a=scheduleAttemptedMap[schedId];
+    toast(`You already completed this exam with ${a.percentage}%`,'info');
+    return;
+  }
+
   const quiz=s.quizzes||{};
   document.getElementById('take-exam-modal-title').textContent=s.title||'Start Exam';
   document.getElementById('take-exam-modal-body').innerHTML=`
     <div style="background:var(--ink2);border-radius:var(--r-sm);padding:16px;margin-bottom:14px">
       <div style="font-size:14px;font-weight:600;margin-bottom:10px">${esc(s.title)}</div>
       <div style="display:flex;flex-direction:column;gap:7px;font-size:13px;color:var(--text2)">
-        <div>📘 Subject: <strong>${esc(quiz.subject)}</strong></div>
+        <div>${subjectIcon(quiz.subject)} Subject: <strong>${esc(quiz.subject)}</strong></div>
         <div>📖 Chapter: <strong>${esc(quiz.chapter||'—')}</strong></div>
         <div>📝 Questions: <strong>${(quiz.questions||[]).length}</strong></div>
         ${s.duration_minutes?`<div>⏱ Duration: <strong>${s.duration_minutes} minutes</strong></div>`:''}
       </div>
     </div>
     ${s.instructions?`<div class="notice notice-warn">⚠️ ${esc(s.instructions)}</div>`:''}
+    <div class="notice notice-warn">⚠️ <strong>This is a once-only exam.</strong> You cannot retake this scheduled exam after submission.</div>
     <div class="notice notice-info">ℹ️ Tab switching will be flagged. Good luck!</div>`;
   document.getElementById('take-exam-confirm-btn').onclick=()=>{
     closeModal('take-exam-modal');
     const q={id:quiz.id||schedId,...quiz};
-    launchQuizDirect(q);
+    launchScheduledQuiz(q,s.id);
   };
   document.getElementById('take-exam-modal').classList.add('open');
 }
@@ -1025,8 +1185,6 @@ function openTakeExamModal(schedId){
 // ══════════════════════════════════════════════
 async function loadQuizTree(){
   try{
-    // Show skeleton immediately
-    document.getElementById('quiz-tree-wrap').innerHTML='<div class="empty-state"><div class="empty-icon">⏳</div><div class="empty-title">Loading quizzes…</div></div>';
     const{data,error}=await sb.from('quizzes').select('*').order('subject').order('chapter').order('set');
     if(error)throw error;
     allQuizzes=data||[];
@@ -1037,17 +1195,70 @@ async function loadQuizTree(){
 
 function renderQuizTree(){
   const wrap=document.getElementById('quiz-tree-wrap');
-  if(!allQuizzes.length){wrap.innerHTML='<div class="empty-state"><div class="empty-icon">📚</div><div class="empty-title">No quizzes available</div><div class="empty-sub">Admin has not uploaded any quizzes yet</div></div>';return;}
+  if(!allQuizzes.length){
+    wrap.innerHTML='<div class="empty-state"><div class="empty-icon">📚</div><div class="empty-title">No quizzes available</div><div class="empty-sub">Admin has not uploaded any quizzes yet</div></div>';
+    return;
+  }
   const tree={};
-  allQuizzes.forEach(q=>{if(!tree[q.subject])tree[q.subject]={};if(!tree[q.subject][q.chapter||'General'])tree[q.subject][q.chapter||'General']=[];tree[q.subject][q.chapter||'General'].push(q);});
+  allQuizzes.forEach(q=>{
+    if(!tree[q.subject])tree[q.subject]={};
+    if(!tree[q.subject][q.chapter||'General'])tree[q.subject][q.chapter||'General']=[];
+    tree[q.subject][q.chapter||'General'].push(q);
+  });
+
   let html='<div class="quiz-tree">';
   for(const[subj,chapters] of Object.entries(tree)){
-    const sid=`s_${subj.replace(/\W/g,'_')}`;const total=Object.values(chapters).flat().length;
-    html+=`<div class="subject-node"><div class="subj-hd" onclick="toggleNode('${sid}')"><div class="subj-name">📘 ${esc(subj)}</div><div class="flex-r" style="gap:8px"><span class="subj-count">${total} sets</span><span class="chevron" id="chv_${sid}">▼</span></div></div><div class="chap-list" id="${sid}" style="display:none">`;
+    const sid=`s_${subj.replace(/\W/g,'_')}`;
+    const total=Object.values(chapters).flat().length;
+    const chapCount=Object.keys(chapters).length;
+    const chipCls=subjectChipClass(subj);
+    html+=`<div class="subject-node">
+      <div class="subj-hd" onclick="toggleNode('${sid}')">
+        <div class="subj-name">
+          <span class="subj-chip ${chipCls}">${subjectIcon(subj)} ${esc(subj)}</span>
+        </div>
+        <div class="flex-r" style="gap:8px">
+          <span class="chip">${chapCount} chapter${chapCount>1?'s':''}</span>
+          <span class="subj-count">${total} sets</span>
+          <span class="chevron" id="chv_${sid}">▼</span>
+        </div>
+      </div>
+      <div class="chap-list" id="${sid}" style="display:none">`;
+
     for(const[chap,sets] of Object.entries(chapters)){
       const cid=`c_${subj}_${chap}`.replace(/\W/g,'_');
-      html+=`<div class="chap-node"><div class="chap-hd" onclick="toggleNode('${cid}')"><span>📖 ${esc(chap)}</span><span class="chevron" id="chv_${cid}">▼</span></div><div class="set-list" id="${cid}" style="display:none">`;
-      sets.forEach(s=>{html+=`<div class="set-item" onclick="startQuiz('${s.id}')"><span>📝 ${esc(s.set)}</span><div class="flex-r gap-2"><span class="chip">${(s.questions||[]).length} Qs</span>${s.difficulty?`<span class="badge ${s.difficulty==='Easy'?'b-ok':s.difficulty==='Hard'?'b-err':'b-warn'}">${s.difficulty}</span>`:''}<span style="color:var(--neon);font-size:12px;font-weight:700">START →</span></div></div>`;});
+      const totalQs=sets.reduce((s,q)=>(s+(q.questions||[]).length),0);
+      html+=`<div class="chap-node">
+        <div class="chap-hd" onclick="toggleNode('${cid}')">
+          <div class="chap-hd-left">
+            <span>📖 ${esc(chap)}</span>
+            <span class="subj-count">${sets.length} set${sets.length>1?'s':''}</span>
+            <span style="font-size:11px;color:var(--text3)">${totalQs} total Qs</span>
+          </div>
+          <span class="chevron" id="chv_${cid}">▼</span>
+        </div>
+        <div class="set-list" id="${cid}" style="display:none">`;
+
+      sets.forEach(s=>{
+        const qCount=(s.questions||[]).length;
+        const diffBadge=s.difficulty?`<span class="badge ${s.difficulty==='Easy'?'b-ok':s.difficulty==='Hard'?'b-err':'b-warn'}">${s.difficulty}</span>`:'';
+        html+=`<div class="set-item" onclick="startQuiz('${s.id}')">
+          <div class="set-item-left">
+            <div class="set-item-name">📝 ${esc(s.set)}</div>
+            <div class="set-item-meta">
+              <span>${subjectIcon(s.subject)} ${esc(s.subject)}</span>
+              <span>·</span>
+              <span>📖 ${esc(s.chapter||'General')}</span>
+            </div>
+          </div>
+          <div class="flex-r gap-2" style="gap:6px">
+            <span class="chip">${qCount} Qs</span>
+            ${diffBadge}
+            <span style="color:var(--neon);font-size:12px;font-weight:700">START →</span>
+          </div>
+        </div>`;
+      });
+
       html+=`</div></div>`;
     }
     html+=`</div></div>`;
@@ -1070,11 +1281,20 @@ function startQuiz(quizId){
   const quiz=allQuizzes.find(q=>q.id===quizId);
   if(!quiz){toast('Quiz not found','err');return;}
   if(!quiz.questions?.length){toast('This quiz has no questions','warn');return;}
-  launchQuizDirect(quiz);
+  launchQuizDirect(quiz,null);
 }
 
-function launchQuizDirect(quiz){
-  quizState={quiz,questions:quiz.questions,current:0,answers:new Array(quiz.questions.length).fill(null),startTime:Date.now()};
+function launchScheduledQuiz(quiz,scheduleId){
+  // Final guard — prevent re-attempt
+  if(scheduleId&&scheduleAttemptedMap[scheduleId]){
+    toast('You have already attempted this scheduled exam','err');
+    return;
+  }
+  launchQuizDirect(quiz,scheduleId);
+}
+
+function launchQuizDirect(quiz,scheduleId){
+  quizState={quiz,questions:quiz.questions,current:0,answers:new Array(quiz.questions.length).fill(null),startTime:Date.now(),scheduleId:scheduleId||null};
   quizSecs=0;tabWarnCount=0;
   document.getElementById('quiz-screen').style.display='block';
   document.body.style.overflow='hidden';
@@ -1087,13 +1307,19 @@ function launchQuizDirect(quiz){
     el.classList.toggle('danger',quizSecs>1800);
   },1000);
   renderQuestion();
-  saveQProgress();
 }
 
 function renderQuestion(){
   const{questions,current,answers}=quizState;
   const q=questions[current];const total=questions.length;
   const quiz=quizState.quiz;
+
+  // Breadcrumb
+  const bc=document.getElementById('q-breadcrumb');
+  if(bc){
+    bc.innerHTML=`<span class="crumb">${esc(quiz.subject||'Quiz')}</span><span class="sep">›</span><span class="crumb">${esc(quiz.chapter||'—')}</span><span class="sep">›</span><span class="crumb">${esc(quiz.set||'')}</span>`;
+  }
+
   document.getElementById('q-title-display').textContent=`${quiz.subject||'Quiz'} › ${quiz.chapter||''} › ${quiz.set||''}`;
   document.getElementById('q-progress-text').textContent=`Question ${current+1} of ${total}`;
   document.getElementById('q-progress-fill').style.width=`${((current+1)/total)*100}%`;
@@ -1109,7 +1335,6 @@ function renderQuestion(){
         </button>`).join('')}
       </div>
     </div>`;
-  // Dots
   document.getElementById('q-dots').innerHTML=questions.map((_,i)=>`
     <button class="q-dot${answers[i]!==null?' answered':''}${i===current?' current':''}" onclick="goToQ(${i})">${i+1}</button>`).join('');
   document.getElementById('btn-prev').disabled=current===0;
@@ -1118,26 +1343,51 @@ function renderQuestion(){
   document.getElementById('btn-submit').classList.toggle('hidden',!last);
 }
 
-function selectAnswer(idx){quizState.answers[quizState.current]=idx;renderQuestion();saveQProgress();}
+function selectAnswer(idx){quizState.answers[quizState.current]=idx;renderQuestion();}
 function qNext(){if(quizState.current<quizState.questions.length-1){quizState.current++;renderQuestion();}}
 function qPrev(){if(quizState.current>0){quizState.current--;renderQuestion();}}
 function goToQ(i){quizState.current=i;renderQuestion();}
-function saveQProgress(){try{sessionStorage.setItem('qp',JSON.stringify({qid:quizState.quiz.id,answers:quizState.answers,current:quizState.current,secs:quizSecs}));}catch(e){}}
 
 async function submitQuiz(){
   const unanswered=quizState.answers.filter(a=>a===null).length;
   if(unanswered>0&&!confirm(`${unanswered} unanswered question(s). Submit anyway?`))return;
   clearInterval(quizTimer);
+
   let score=0;
   quizState.questions.forEach((q,i)=>{const ans=q.answer??q.correct??null;if(quizState.answers[i]===ans)score++;});
   const total=quizState.questions.length;const pct=Math.round((score/total)*100);
-  const{error}=await sb.from('attempts').insert({user_id:CU.id,quiz_id:quizState.quiz.id,subject:quizState.quiz.subject,chapter:quizState.quiz.chapter||null,set:quizState.quiz.set,score,total,percentage:pct,time_taken:quizSecs});
-  if(error)toast('Result save failed: '+error.message,'err');
+
+  // Save to attempts table
+  const{error:ae}=await sb.from('attempts').insert({
+    user_id:CU.id,quiz_id:quizState.quiz.id,
+    subject:quizState.quiz.subject,chapter:quizState.quiz.chapter||null,
+    set:quizState.quiz.set,score,total,percentage:pct,time_taken:quizSecs
+  });
+  if(ae)toast('Result save failed: '+ae.message,'err');
+
+  // If this is a scheduled exam, save to schedule_attempts (once-per-user lock)
+  if(quizState.scheduleId){
+    // Try to insert — if table doesn't exist, fail silently
+    try{
+      await sb.from('schedule_attempts').upsert({
+        user_id:CU.id,
+        schedule_id:quizState.scheduleId,
+        quiz_id:quizState.quiz.id,
+        score,total,percentage:pct,
+        time_taken:quizSecs,
+        submitted_at:new Date().toISOString()
+      },{onConflict:'user_id,schedule_id'});
+      // Update local map immediately
+      scheduleAttemptedMap[quizState.scheduleId]={score,total,percentage:pct};
+    }catch(e){console.warn('schedule_attempts table may not exist:',e);}
+  }
+
   lastResult={score,total,pct,secs:quizSecs,quiz:quizState.quiz,answers:quizState.answers,questions:quizState.questions};
-  sessionStorage.removeItem('qp');
   exitQuiz();
   showResultModal(lastResult);
   loadDashboard();
+  // Refresh schedule cards to show "Already Attempted"
+  renderScheduleCards();
 }
 
 function confirmQuit(){if(confirm('Quit quiz? Progress will be lost.'))exitQuiz();}
@@ -1157,7 +1407,7 @@ function showResultModal(r){
       <div class="result-center"><div class="result-pct" style="color:${col}">${r.pct}%</div><div class="result-grade-lbl">${r.score}/${r.total}</div></div>
     </div>
     <div class="result-grade" style="color:${col}">${grade}</div>
-    <div style="text-align:center;font-size:13px;color:var(--text3)">${esc(r.quiz.subject)} › ${esc(r.quiz.set)}</div>
+    <div style="text-align:center;font-size:13px;color:var(--text3);margin-bottom:4px">${esc(r.quiz.subject)} › ${esc(r.quiz.chapter||'—')} › ${esc(r.quiz.set)}</div>
     <div class="result-stats">
       <div class="result-stat"><div class="result-stat-val" style="color:var(--ok)">${r.score}</div><div class="result-stat-lbl">Correct</div></div>
       <div class="result-stat"><div class="result-stat-val" style="color:var(--err)">${r.total-r.score}</div><div class="result-stat-lbl">Wrong</div></div>
@@ -1190,7 +1440,13 @@ async function loadResults(){
         <table>
           <thead><tr><th>Subject</th><th>Chapter</th><th>Set</th><th>Score</th><th>%</th><th>Time</th><th>Date</th></tr></thead>
           <tbody>${ats.map(a=>`<tr>
-            <td style="font-weight:600">${esc(a.subject)}</td><td>${esc(a.chapter||'—')}</td><td>${esc(a.set)}</td>
+            <td>
+              <div style="font-weight:600;display:flex;align-items:center;gap:5px">
+                <span class="subj-chip ${subjectChipClass(a.subject)}" style="font-size:10px;padding:2px 6px">${subjectIcon(a.subject)} ${esc(a.subject)}</span>
+              </div>
+            </td>
+            <td style="font-size:12px;color:var(--text3)">${esc(a.chapter||'—')}</td>
+            <td style="font-weight:600">${esc(a.set)}</td>
             <td>${a.score}/${a.total}</td>
             <td><span class="badge ${a.percentage>=75?'b-ok':a.percentage>=50?'b-warn':'b-err'}">${a.percentage}%</span></td>
             <td style="font-family:var(--mono);font-size:12px;color:var(--text3)">${a.time_taken?`${Math.floor(a.time_taken/60)}m ${a.time_taken%60}s`:'—'}</td>
@@ -1231,7 +1487,14 @@ async function loadLeaderboard(){
       const rankCls=i<3?`rank-${i+1}`:'';
       return`<div class="lb-item ${rankCls}">
         <div class="lb-rank">${medals[i]||`#${i+1}`}</div>
-        <div><div class="lb-name">${esc(name)}</div><div class="lb-detail">${esc(a.subject)} › ${esc(a.set)}</div></div>
+        <div>
+          <div class="lb-name">${esc(name)}</div>
+          <div class="lb-detail">
+            <span class="subj-chip ${subjectChipClass(a.subject)}" style="font-size:10px;padding:2px 6px">${subjectIcon(a.subject)} ${esc(a.subject)}</span>
+            ${a.chapter?`<span style="font-size:11px;color:var(--text3)"> · ${esc(a.chapter)}</span>`:''}
+            <span style="font-size:11px;color:var(--text3)"> › ${esc(a.set)}</span>
+          </div>
+        </div>
         <div><div class="lb-score-val">${a.score}/${a.total}</div><div style="font-size:11px;color:var(--text3);text-align:right">${a.time_taken?`${Math.floor(a.time_taken/60)}m ${a.time_taken%60}s`:''}</div></div>
         <span class="badge ${a.percentage>=75?'b-ok':a.percentage>=50?'b-warn':'b-err'}">${a.percentage}%</span>
       </div>`;}).join('')}</div>`;
@@ -1290,7 +1553,6 @@ async function loadAdminStats(){
   }catch(e){}
 }
 
-// ─── Parse JSON (all 5 formats) ───
 function detectAndParse(raw){
   let data;
   try{data=JSON.parse(raw);}catch(e){throw new Error('Invalid JSON: '+e.message);}
@@ -1301,20 +1563,15 @@ function detectAndParse(raw){
     if(typeof correct==='string'){const li='ABCDE'.indexOf(correct.toUpperCase());correct=li>=0?li:parseInt(correct)||0;}
     return{question:q.question||'',options:opts,answer:correct,explanation:q.explanation||''};
   }
-  // F5: single with correctOption as letter
   if(data.correctOption!==undefined&&data.options&&Array.isArray(data.options)&&data.options[0]?.id){
     const opts=data.options.map(o=>o.text);const c='ABCDE'.indexOf(data.correctOption.toUpperCase());
     return{questions:[{question:data.question,options:opts,answer:c>=0?c:0,explanation:data.explanation||''}],meta:{subject:data.subject||'',chapter:data.chapter||'',set:''}};
   }
-  // F1: array
   if(Array.isArray(data))return{questions:data.map(normalizeQ),meta:{subject:'',chapter:'',set:''}};
-  // F4: questions as object
   if(data.questions&&!Array.isArray(data.questions)&&typeof data.questions==='object')
     return{questions:Object.values(data.questions).map(normalizeQ),meta:{subject:data.subject||'',chapter:data.chapter||data.setId||'',set:data.title||data.setId||''}};
-  // F2/F3: questions array
   if(data.questions&&Array.isArray(data.questions))
     return{questions:data.questions.map(normalizeQ),meta:{subject:data.subject||'',chapter:data.chapter||'',set:data.set||data.setId||data.examTitle||''}};
-  // Single
   if(data.question&&data.options)return{questions:[normalizeQ(data)],meta:{subject:'',chapter:'',set:''}};
   throw new Error('Unrecognized format');
 }
@@ -1330,7 +1587,7 @@ function parseAdminJSON(){
     if(meta.set&&!document.getElementById('up-set').value)document.getElementById('up-set').value=meta.set;
     const pre=document.getElementById('parse-preview-area');pre.style.display='block';
     const labels=['A','B','C','D','E'];
-    document.getElementById('parse-summary-info').innerHTML=`<div style="display:flex;gap:8px;flex-wrap:wrap"><span class="chip" style="color:var(--neon);border-color:rgba(0,245,212,.3)">✅ ${questions.length} questions</span>${meta.subject?`<span class="chip">📘 ${esc(meta.subject)}</span>`:''}${meta.chapter?`<span class="chip">📖 ${esc(meta.chapter)}</span>`:''}${meta.set?`<span class="chip">📝 ${esc(meta.set)}</span>`:''}</div>`;
+    document.getElementById('parse-summary-info').innerHTML=`<div style="display:flex;gap:8px;flex-wrap:wrap"><span class="chip" style="color:var(--neon);border-color:rgba(0,245,212,.3)">✅ ${questions.length} questions</span>${meta.subject?`<span class="chip">${subjectIcon(meta.subject)} ${esc(meta.subject)}</span>`:''}${meta.chapter?`<span class="chip">📖 ${esc(meta.chapter)}</span>`:''}${meta.set?`<span class="chip">📝 ${esc(meta.set)}</span>`:''}</div>`;
     document.getElementById('parse-preview-content').innerHTML=questions.slice(0,4).map((q,i)=>`
       <div style="padding:10px;background:var(--ink2);border-radius:var(--r-sm);margin-bottom:6px;font-size:12px">
         <div style="font-weight:600;margin-bottom:6px;color:var(--text)">Q${i+1}: ${esc(q.question)}</div>
@@ -1346,11 +1603,7 @@ function dOv(e){e.preventDefault();document.getElementById('drop-zone').classLis
 function dLv(){document.getElementById('drop-zone').classList.remove('drag');}
 function dDrop(e){e.preventDefault();dLv();const f=e.dataTransfer.files[0];if(f)readUploadFile(f);}
 function loadAdmFile(e){const f=e.target.files[0];if(f)readUploadFile(f);}
-function readUploadFile(f){
-  const r=new FileReader();
-  r.onload=ev=>{document.getElementById('json-paste-input').value=ev.target.result;switchUploadSrc('paste',document.querySelector('#upload-src-tabs .admin-tab'));parseAdminJSON();};
-  r.readAsText(f);
-}
+function readUploadFile(f){const r=new FileReader();r.onload=ev=>{document.getElementById('json-paste-input').value=ev.target.result;switchUploadSrc('paste',document.querySelector('#upload-src-tabs .admin-tab'));parseAdminJSON();};r.readAsText(f);}
 
 async function uploadQuiz(){
   if(!parsedQs.length){toast('Parse JSON first','warn');return;}
@@ -1387,7 +1640,9 @@ async function loadAdminQuizzes(){
   allQuizzes=data||[];renderQuizTree();populateSchedQuizSelect();
   if(!data?.length){tbody.innerHTML='<tr><td colspan="6" class="tbl-empty">No quizzes yet</td></tr>';return;}
   tbody.innerHTML=data.map(q=>`<tr>
-    <td style="font-weight:600">${esc(q.subject)}</td><td>${esc(q.chapter||'—')}</td><td>${esc(q.set)}</td>
+    <td><span class="subj-chip ${subjectChipClass(q.subject)}">${subjectIcon(q.subject)} ${esc(q.subject)}</span></td>
+    <td style="color:var(--text2)">${esc(q.chapter||'—')}</td>
+    <td style="font-weight:600">${esc(q.set)}</td>
     <td><span class="chip">${(q.questions||[]).length} Qs</span></td>
     <td>${q.difficulty?`<span class="badge ${q.difficulty==='Easy'?'b-ok':q.difficulty==='Hard'?'b-err':'b-warn'}">${q.difficulty}</span>`:'—'}</td>
     <td><div class="flex-r gap-2">
@@ -1422,7 +1677,6 @@ async function deleteQuiz(id){
   toast('Quiz deleted','ok');loadAdminQuizzes();loadAdminStats();
 }
 
-// ─── Admin Schedule ───
 function populateSchedQuizSelect(){
   const sel=document.getElementById('adm-sc-quiz');
   sel.innerHTML='<option value="">-- Choose Quiz --</option>';
@@ -1431,20 +1685,33 @@ function populateSchedQuizSelect(){
 
 async function loadAdminSchedules(){
   const tbody=document.getElementById('adm-sched-body');
-  tbody.innerHTML='<tr><td colspan="6" class="tbl-empty">Loading…</td></tr>';
-  const{data,error}=await sb.from('schedules').select('*,quizzes(subject,set)').order('start_time',{ascending:false});
-  if(error){tbody.innerHTML=`<tr><td colspan="6" class="tbl-empty">Error: ${error.message}</td></tr>`;return;}
-  if(!data?.length){tbody.innerHTML='<tr><td colspan="6" class="tbl-empty">No schedules yet</td></tr>';return;}
+  tbody.innerHTML='<tr><td colspan="7" class="tbl-empty">Loading…</td></tr>';
+  const{data,error}=await sb.from('schedules').select('*,quizzes(subject,chapter,set)').order('start_time',{ascending:false});
+  if(error){tbody.innerHTML=`<tr><td colspan="7" class="tbl-empty">Error: ${error.message}</td></tr>`;return;}
+  if(!data?.length){tbody.innerHTML='<tr><td colspan="7" class="tbl-empty">No schedules yet</td></tr>';return;}
+
+  // Get attempt counts per schedule
+  let attemptCounts={};
+  try{
+    const{data:sa}=await sb.from('schedule_attempts').select('schedule_id');
+    (sa||[]).forEach(a=>{attemptCounts[a.schedule_id]=(attemptCounts[a.schedule_id]||0)+1;});
+  }catch(e){}
+
   const fmt=d=>new Date(d).toLocaleString('en-US',{month:'short',day:'numeric',hour:'2-digit',minute:'2-digit'});
   tbody.innerHTML=data.map(s=>{
     const st=getSchedStatus(s);
     const bc={live:'b-ok',today:'b-warn',upcoming:'b-blue',ended:'b-gray'}[st];
+    const cnt=attemptCounts[s.id]||0;
     return`<tr>
       <td style="font-weight:600">${esc(s.title)}</td>
-      <td style="font-size:12px;color:var(--text2)">${esc(s.quizzes?.subject||'—')} › ${esc(s.quizzes?.set||'—')}</td>
+      <td>
+        <div style="font-size:12px">${esc(s.quizzes?.subject||'—')}</div>
+        <div style="font-size:11px;color:var(--text3)">${esc(s.quizzes?.chapter||'')}${s.quizzes?.chapter?' › ':''}${esc(s.quizzes?.set||'—')}</div>
+      </td>
       <td style="font-size:12px">${fmt(s.start_time)}</td>
       <td style="font-size:12px">${fmt(s.end_time)}</td>
       <td><span class="badge ${bc}">${st}</span></td>
+      <td><span class="chip">${cnt} submitted</span></td>
       <td><button class="btn btn-danger btn-xs" onclick="deleteSched('${s.id}')">🗑</button></td>
     </tr>`;}).join('');
 }
@@ -1502,7 +1769,7 @@ async function setURole(uid,role){const{error}=await sb.from('profiles').update(
 function esc(s){if(s==null)return'';return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
 
 // ══════════════════════════════════════════════
-// STARTUP — auto-detect session, load dashboard
+// STARTUP
 // ══════════════════════════════════════════════
 const LOGIN_URL='https://ceemediconepal.xyz/cee/login.html';
 
@@ -1511,85 +1778,83 @@ function showRetry(msg){
     <div style="text-align:center;padding:24px;max-width:320px">
       <div style="font-family:'Clash Display',sans-serif;font-size:26px;font-weight:700;background:linear-gradient(135deg,#00f5d4,#38bdf8);-webkit-background-clip:text;-webkit-text-fill-color:transparent;margin-bottom:14px">CEE Medic Nepal</div>
       <div style="color:#fb7185;font-size:13px;margin-bottom:20px;line-height:1.5">${msg}</div>
-      <button onclick="location.reload()" style="padding:11px 30px;background:linear-gradient(135deg,#00c9ae,#0ea5e9);border:none;border-radius:10px;color:#05060a;font-size:14px;font-weight:800;cursor:pointer;letter-spacing:.01em">↺ Try Again</button>
+      <button onclick="location.reload()" style="padding:11px 30px;background:linear-gradient(135deg,#00c9ae,#0ea5e9);border:none;border-radius:10px;color:#05060a;font-size:14px;font-weight:800;cursor:pointer">↺ Try Again</button>
     </div>`;
 }
 
 (async()=>{
   try{
-    // ── 1. Read session from localStorage — instant, zero network ──
     const{data:{session},error:se}=await sb.auth.getSession();
     if(se||!session){window.location.replace(LOGIN_URL);return;}
     CU=session.user;
 
-    // ── 2. Check sessionStorage cache — also instant ──
     try{
       const raw=sessionStorage.getItem('cp_'+CU.id);
       if(raw){
         const cp=JSON.parse(raw);
         if(cp?.status==='approved'){
-          CP=cp;
-          initApp(); // show dashboard NOW
-          // silently refresh profile in background
-          sb.from('profiles').select('*').eq('id',CU.id).single()
-            .then(({data})=>{
-              if(data){
-                CP=data;
-                sessionStorage.setItem('cp_'+CU.id,JSON.stringify(data));
-                // update sidebar name/role if changed
-                const ini=(CP.full_name||'N').split(' ').map(w=>w[0]).join('').toUpperCase().slice(0,2);
-                const av=document.getElementById('sb-av');if(av)av.textContent=ini;
-                const un=document.getElementById('sb-uname');if(un)un.textContent=CP.full_name||CP.email;
-              }
-            });
+          CP=cp;initApp();
+          sb.from('profiles').select('*').eq('id',CU.id).single().then(({data})=>{
+            if(data){CP=data;sessionStorage.setItem('cp_'+CU.id,JSON.stringify(data));
+              const ini=(CP.full_name||'N').split(' ').map(w=>w[0]).join('').toUpperCase().slice(0,2);
+              const av=document.getElementById('sb-av');if(av)av.textContent=ini;
+              const un=document.getElementById('sb-uname');if(un)un.textContent=CP.full_name||CP.email;
+            }
+          });
           return;
         }
       }
-    }catch(e){/* corrupt cache, continue to fetch */}
+    }catch(e){}
 
-    // ── 3. No cache — fetch profile once ──
     const{data:profile,error:pe}=await sb.from('profiles').select('*').eq('id',CU.id).single();
-
     if(pe){
       if(pe.code==='PGRST116'){
-        // Profile row missing — auto-create as pending
         const meta=CU.user_metadata||{};
-        await sb.from('profiles').upsert({
-          id:CU.id,email:CU.email,
-          full_name:meta.full_name||meta.name||'',
-          role:'student',status:'pending'
-        });
-        await sb.auth.signOut();
-        sessionStorage.removeItem('cp_'+CU.id);
-        window.location.replace(LOGIN_URL+'?msg=pending');
-        return;
+        await sb.from('profiles').upsert({id:CU.id,email:CU.email,full_name:meta.full_name||meta.name||'',role:'student',status:'pending'});
+        await sb.auth.signOut();sessionStorage.removeItem('cp_'+CU.id);
+        window.location.replace(LOGIN_URL+'?msg=pending');return;
       }
       throw pe;
     }
-
     if(!profile){window.location.replace(LOGIN_URL);return;}
-
-    if(profile.status==='blocked'){
-      await sb.auth.signOut();sessionStorage.removeItem('cp_'+CU.id);
-      window.location.replace(LOGIN_URL+'?msg=blocked');return;
-    }
-    if(profile.status!=='approved'){
-      await sb.auth.signOut();sessionStorage.removeItem('cp_'+CU.id);
-      window.location.replace(LOGIN_URL+'?msg=pending');return;
-    }
-
-    // ── Approved — cache and launch ──
-    CP=profile;
-    sessionStorage.setItem('cp_'+CU.id,JSON.stringify(profile));
+    if(profile.status==='blocked'){await sb.auth.signOut();sessionStorage.removeItem('cp_'+CU.id);window.location.replace(LOGIN_URL+'?msg=blocked');return;}
+    if(profile.status!=='approved'){await sb.auth.signOut();sessionStorage.removeItem('cp_'+CU.id);window.location.replace(LOGIN_URL+'?msg=pending');return;}
+    CP=profile;sessionStorage.setItem('cp_'+CU.id,JSON.stringify(profile));
     initApp();
-
-  }catch(e){
-    console.error('Startup error:',e);
-    showRetry('Connection failed. Check your internet and try again.');
-  }
+  }catch(e){console.error('Startup error:',e);showRetry('Connection failed. Check your internet and try again.');}
 })();
-
-
 </script>
+
+<!-- ══════════════════════════════════════════
+  REQUIRED SQL for schedule_attempts table
+  Run once in Supabase SQL editor:
+
+  CREATE TABLE IF NOT EXISTS schedule_attempts (
+    id uuid DEFAULT gen_random_uuid() PRIMARY KEY,
+    user_id uuid REFERENCES auth.users(id) ON DELETE CASCADE,
+    schedule_id uuid REFERENCES schedules(id) ON DELETE CASCADE,
+    quiz_id uuid,
+    score integer NOT NULL,
+    total integer NOT NULL,
+    percentage integer NOT NULL,
+    time_taken integer,
+    submitted_at timestamptz DEFAULT now(),
+    UNIQUE(user_id, schedule_id)
+  );
+
+  ALTER TABLE schedule_attempts ENABLE ROW LEVEL SECURITY;
+
+  CREATE POLICY "Users can view own schedule attempts"
+    ON schedule_attempts FOR SELECT
+    USING (auth.uid() = user_id);
+
+  CREATE POLICY "Users can insert own schedule attempts"
+    ON schedule_attempts FOR INSERT
+    WITH CHECK (auth.uid() = user_id);
+
+  CREATE POLICY "Admins can view all schedule attempts"
+    ON schedule_attempts FOR SELECT
+    USING (EXISTS (SELECT 1 FROM profiles WHERE id = auth.uid() AND role = 'admin'));
+══════════════════════════════════════════ -->
 </body>
 </html>
