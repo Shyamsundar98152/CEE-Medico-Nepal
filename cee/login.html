@@ -3,9 +3,13 @@
 <head>
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width,initial-scale=1.0"/>
-<title>CEE Medic Nepal  — Sign In</title>
+<title>CEE Medic Nepal — Sign In</title>
+<!-- Supabase SDK -->
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<!-- Fonts -->
 <link href="https://fonts.googleapis.com/css2?family=Clash+Display:wght@400;500;600;700&family=Cabinet+Grotesk:wght@400;500;600;700;800&family=Fira+Code:wght@400;500&display=swap" rel="stylesheet"/>
+<!-- Icons -->
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"/>
 <style>
 :root{
   --ink:#05060a;--ink2:#0b0d14;--ink3:#10121c;
@@ -90,22 +94,21 @@ button,input{font-family:var(--font)}
 /* Password reset panel */
 #reset-panel{display:none;position:fixed;inset:0;background:var(--ink);z-index:100;align-items:center;justify-content:center;padding:20px}
 #reset-panel.show{display:flex}
-</style>
-</head>
-<body>
 
-<!-- ================= POPUP + OVERLAY + WHATSAPP MODULE ================= -->
-
-<style>
 /* ================= POPUP STYLES ================= */
 #overlay {
   position: fixed;
   inset: 0;
-  background: rgba(15, 23, 42, 0.4);
-  backdrop-filter: blur(6px);
+  background: rgba(5, 6, 10, 0.7);
+  backdrop-filter: blur(10px);
   z-index: 9997;
   opacity: 0;
+  pointer-events: none;
   transition: opacity 0.3s ease;
+}
+#overlay.show {
+  opacity: 1;
+  pointer-events: all;
 }
 
 #noticePopup {
@@ -113,58 +116,195 @@ button,input{font-family:var(--font)}
   top: 50%;
   left: 50%;
   transform: translate(-50%, -50%) scale(0.9);
-  background: white;
+  background: rgba(20, 23, 32, 0.95);
+  border: 1px solid var(--rim2);
   border-radius: 24px;
-  padding: 20px;
+  padding: 24px;
   width: 90%;
-  max-width: 360px;
+  max-width: 400px;
   text-align: center;
   z-index: 9998;
-  box-shadow: 0 20px 60px rgba(0,0,0,0.2);
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.8), 0 0 30px rgba(0, 245, 212, 0.15);
   opacity: 0;
-  transition: all 0.3s ease;
+  pointer-events: none;
+  transition: all 0.3s cubic-bezier(.4,0,.2,1);
 }
-
 #noticePopup.show {
   opacity: 1;
   transform: translate(-50%, -50%) scale(1);
+  pointer-events: all;
 }
 
-#overlay.show {
-  opacity: 1;
+.popup-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 16px;
+}
+.popup-badge {
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  background: rgba(0, 245, 212, 0.15);
+  color: var(--neon);
+  border: 1px solid rgba(0, 245, 212, 0.3);
+  padding: 4px 12px;
+  border-radius: 20px;
+}
+.popup-timer {
+  font-size: 11px;
+  font-weight: 700;
+  background: rgba(244, 63, 94, 0.15);
+  color: var(--err);
+  border: 1px solid rgba(244, 63, 94, 0.3);
+  padding: 4px 12px;
+  border-radius: 20px;
+}
+.popup-img {
+  width: 100%;
+  height: 160px;
+  object-fit: cover;
+  border-radius: 14px;
+  margin-bottom: 16px;
+  border: 1px solid var(--rim);
+}
+/* Premium Banner Fallback Styling */
+.premium-backup-banner {
+  width: 100%;
+  height: 160px;
+  border-radius: 14px;
+  margin-bottom: 16px;
+  border: 1px solid var(--rim);
+  background: linear-gradient(135deg, var(--ink2), var(--surface));
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  overflow: hidden;
+}
+.premium-backup-banner::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(circle at 50% 50%, rgba(0, 245, 212, 0.15), transparent 70%);
+}
+.banner-badge {
+  background: linear-gradient(135deg, var(--neon), var(--ice));
+  color: var(--ink);
+  font-weight: 800;
+  font-size: 11px;
+  padding: 3px 10px;
+  border-radius: 4px;
+  text-transform: uppercase;
+  margin-bottom: 8px;
+  z-index: 1;
+  font-family: var(--display);
+}
+.banner-title {
+  font-family: var(--display);
+  font-size: 22px;
+  font-weight: 700;
+  color: var(--text);
+  letter-spacing: -0.5px;
+  z-index: 1;
+}
+.banner-subtitle {
+  font-size: 12px;
+  color: var(--text2);
+  margin-top: 4px;
+  z-index: 1;
+}
+
+.popup-title {
+  font-family: var(--display);
+  font-size: 22px;
+  font-weight: 700;
+  margin-bottom: 6px;
+  color: var(--text);
+}
+.popup-desc {
+  font-size: 14px;
+  color: var(--text2);
+  margin-bottom: 20px;
+  line-height: 1.4;
+}
+.popup-actions {
+  display: flex;
+  gap: 10px;
+}
+.btn-buy {
+  flex: 2;
+  background: linear-gradient(135deg, #25D366, #128C7E);
+  color: white;
+  padding: 12px;
+  border-radius: var(--r);
+  font-weight: 700;
+  text-decoration: none;
+  font-size: 14px;
+  transition: var(--tr);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  border: none;
+}
+.btn-buy:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 15px rgba(37, 211, 102, 0.3);
+}
+.btn-close {
+  flex: 1;
+  padding: 12px;
+  border: 1px solid var(--rim);
+  border-radius: var(--r);
+  background: rgba(255, 255, 255, 0.05);
+  color: var(--text2);
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: var(--tr);
+}
+.btn-close:hover {
+  background: rgba(255, 255, 255, 0.08);
+  color: var(--text);
 }
 
 /* ================= WHATSAPP FLOAT BUTTON ================= */
 .whatsapp-float {
   position: fixed;
-  bottom: 20px;
-  left: 20px;
+  bottom: 24px;
+  left: 24px;
   z-index: 9990;
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: 12px;
 }
-
 .whatsapp-btn {
-  width: 56px;
-  height: 56px;
+  width: 54px;
+  height: 54px;
   background: #25D366;
-  color: white;
   border-radius: 50%;
   display: flex;
   justify-content: center;
   align-items: center;
-  font-size: 28px;
-  box-shadow: 0 10px 25px rgba(0,0,0,0.15);
-  transition: 0.3s;
+  box-shadow: 0 10px 25px rgba(37, 211, 102, 0.3);
+  transition: var(--tr);
   position: relative;
 }
-
+.whatsapp-link {
+  color: white;
+  text-decoration: none;
+  font-size: 26px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
 .whatsapp-btn:hover {
   transform: scale(1.1) rotate(6deg);
 }
-
-/* ripple */
+/* ripple animations */
 .whatsapp-btn::before,
 .whatsapp-btn::after {
   content: "";
@@ -173,108 +313,78 @@ button,input{font-family:var(--font)}
   border-radius: 50%;
   background: rgba(37, 211, 102, 0.4);
   animation: ripple 2.5s infinite;
+  pointer-events: none;
 }
-
 .whatsapp-btn::after {
   animation-delay: 1.2s;
 }
-
 @keyframes ripple {
   0% { transform: scale(1); opacity: 0.8; }
   100% { transform: scale(1.8); opacity: 0; }
 }
-
-/* tooltip */
 .whatsapp-tooltip {
-  background: #0f172a;
-  color: white;
+  background: var(--ink3);
+  color: var(--text);
   font-size: 12px;
-  padding: 6px 10px;
+  font-weight: 600;
+  padding: 8px 14px;
   border-radius: 8px;
   opacity: 0;
   transform: translateX(-10px);
-  transition: 0.3s;
+  transition: var(--tr);
   white-space: nowrap;
+  border: 1px solid var(--rim);
+  pointer-events: none;
 }
-
 .whatsapp-float:hover .whatsapp-tooltip {
   opacity: 1;
   transform: translateX(0);
 }
 </style>
+</head>
+<body>
 
-<!-- ================= POPUP ================= -->
+<!-- ================= POPUP MODULE ================= -->
 <div id="overlay"></div>
 
 <div id="noticePopup">
-  <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;">
-    <span style="font-size:12px;background:#fef3c7;padding:4px 10px;border-radius:20px;">
-      📢 Offer
-    </span>
-    <span id="countdown" style="font-size:12px;color:red;font-weight:bold;">
-      Closing in 10s
-    </span>
+  <div class="popup-header">
+    <span class="popup-badge">📢 Special Offer</span>
+    <span id="countdown" class="popup-timer">Closing in 10s</span>
   </div>
 
-  <img src="/img/2-premium.png"
-       style="width:100%;border-radius:12px;margin-bottom:10px;">
+  <!-- Fallback banner mechanism (loads if image fails or path doesn't exist) -->
+  <img id="premium-img" src="https:ceemediconepal.xyz/img/2-premium.png" class="popup-img" alt="Premium Upgrade" onerror="this.style.display='none'; document.getElementById('backup-premium-banner').style.display='flex';">
+  
+  <div id="backup-premium-banner" class="premium-backup-banner" style="display: none;">
+    <div class="banner-badge">Premium Pass</div>
+    <div class="banner-title">CEE Medic Pro</div>
+    <div class="banner-subtitle">Next-Gen Prep System</div>
+  </div>
 
-  <h3 style="margin:5px 0;">Premium Upgrade</h3>
-  <p style="font-size:13px;color:#555;margin-bottom:15px;">
-    Get access for Rs. 199 only
+  <h3 class="popup-title">Premium Upgrade</h3>
+  <p class="popup-desc">
+    Unlock unlimited test attempts, mock exams & analytics for Rs. 199 only.
   </p>
 
-  <div style="display:flex;gap:10px;">
-    <a href="https://wa.me/9779812240229?text=I%20want%20premium"
-       style="flex:1;background:#25D366;color:white;padding:10px;border-radius:10px;text-decoration:none;">
-      Buy Now
+  <div class="popup-actions">
+    <a href="https://wa.me/9779812240229?text=I%20want%20premium" class="btn-buy" target="_blank">
+      <i class="fab fa-whatsapp"></i> Buy Now
     </a>
-
-    <button onclick="closePopup()"
-            style="padding:10px 12px;border:none;border-radius:10px;background:#eee;">
-      Close
-    </button>
+    <button onclick="closePopup()" class="btn-close">Close</button>
   </div>
 </div>
 
-<!-- ================= WHATSAPP BUTTON ================= -->
+<!-- ================= WHATSAPP FLOAT BUTTON ================= -->
 <div class="whatsapp-float">
   <div class="whatsapp-btn">
-    <a href="https://wa.me/9779812240229?text=Hello"
-       style="color:white;text-decoration:none;">
+    <a href="https://wa.me/9779812240229?text=Hello" class="whatsapp-link" target="_blank" aria-label="Chat on WhatsApp">
       <i class="fab fa-whatsapp"></i>
     </a>
   </div>
   <div class="whatsapp-tooltip">Chat on WhatsApp</div>
 </div>
 
-<!-- ================= JS ================= -->
-<script>
-let timer = 10;
-let interval;
-
-window.onload = function () {
-  const popup = document.getElementById("noticePopup");
-  const overlay = document.getElementById("overlay");
-
-  popup.classList.add("show");
-  overlay.classList.add("show");
-
-  interval = setInterval(() => {
-    timer--;
-    document.getElementById("countdown").innerText =
-      "Closing in " + timer + "s";
-
-    if (timer <= 0) closePopup();
-  }, 1000);
-};
-
-function closePopup() {
-  document.getElementById("noticePopup").classList.remove("show");
-  document.getElementById("overlay").classList.remove("show");
-  clearInterval(interval);
-}
-</script>
 <canvas id="bg-canvas"></canvas>
 <div id="toast-wrap"></div>
 
@@ -422,7 +532,7 @@ function showAuth(msg){
 }
 
 // Read ?msg= from URL if redirected from index
-(()=>{
+(()=> {
   const p=new URLSearchParams(location.search);
   const m=p.get('msg');
   if(m){history.replaceState({},'',location.pathname);/* clean URL */
@@ -572,6 +682,31 @@ document.addEventListener('keydown',e=>{
   else if(active.id==='panel-signup')doSignup();
   else if(active.id==='panel-forgot')doForgot();
 });
+
+// ================= POPUP TIMER CONTROL =================
+let timer = 10;
+let interval;
+
+window.onload = function () {
+  const popup = document.getElementById("noticePopup");
+  const overlay = document.getElementById("overlay");
+
+  popup.classList.add("show");
+  overlay.classList.add("show");
+
+  interval = setInterval(() => {
+    timer--;
+    document.getElementById("countdown").innerText = "Closing in " + timer + "s";
+
+    if (timer <= 0) closePopup();
+  }, 1000);
+};
+
+function closePopup() {
+  document.getElementById("noticePopup").classList.remove("show");
+  document.getElementById("overlay").classList.remove("show");
+  clearInterval(interval);
+}
 </script>
 </body>
 </html>
