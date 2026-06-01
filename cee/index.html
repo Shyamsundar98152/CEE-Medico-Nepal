@@ -4,6 +4,10 @@
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width,initial-scale=1.0"/>
 <title>NexusExam — Next-Gen MCQ Platform</title>
+<link rel="preconnect" href="https://rpudsnrqlhataqfavcjh.supabase.co"/>
+<link rel="dns-prefetch" href="https://rpudsnrqlhataqfavcjh.supabase.co"/>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <link href="https://fonts.googleapis.com/css2?family=Clash+Display:wght@400;500;600;700&family=Cabinet+Grotesk:wght@400;500;600;700;800&family=Fira+Code:wght@400;500&display=swap" rel="stylesheet"/>
 <style>
@@ -779,7 +783,9 @@ function toast(msg,type='info',dur=3500){
 async function doLogout(){
   if(quizState){if(!confirm('Active quiz in progress. Quit and logout?'))return;}
   exitQuiz();
+  const uid=CU?.id;
   await sb.auth.signOut();
+  if(uid)sessionStorage.removeItem('cp_'+uid);
   CU=null;CP=null;
   window.location.replace('https://ceemediconepal.xyz/cee/login.html');
 }
@@ -787,7 +793,8 @@ async function doLogout(){
 // ══════════════════════════════════════════════
 // APP INIT
 // ══════════════════════════════════════════════
-async function initApp(){
+function initApp(){
+  // ── Show UI shell immediately — no await ──
   document.getElementById('loading-screen').style.display='none';
   document.getElementById('app').style.display='block';
   const ini=(CP.full_name||'N').split(' ').map(w=>w[0]).join('').toUpperCase().slice(0,2);
@@ -801,7 +808,8 @@ async function initApp(){
   }
   setupTabDetection();
   startClock();
-  await Promise.all([loadQuizTree(),loadSchedulesData(),loadDashboard()]);
+  // ── Load data in background — don't block render ──
+  Promise.all([loadQuizTree(),loadSchedulesData(),loadDashboard()]);
 }
 
 function startClock(){
@@ -1017,6 +1025,8 @@ function openTakeExamModal(schedId){
 // ══════════════════════════════════════════════
 async function loadQuizTree(){
   try{
+    // Show skeleton immediately
+    document.getElementById('quiz-tree-wrap').innerHTML='<div class="empty-state"><div class="empty-icon">⏳</div><div class="empty-title">Loading quizzes…</div></div>';
     const{data,error}=await sb.from('quizzes').select('*').order('subject').order('chapter').order('set');
     if(error)throw error;
     allQuizzes=data||[];
@@ -1492,23 +1502,41 @@ async function setURole(uid,role){const{error}=await sb.from('profiles').update(
 function esc(s){if(s==null)return'';return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
 
 // ══════════════════════════════════════════════
-// STARTUP — Check session, redirect if not logged in
+// STARTUP — Fast session check, redirect if not logged in
 // ══════════════════════════════════════════════
 (async()=>{
   try{
+    // getSession() reads from localStorage — instant, no network call
     const{data:{session}}=await sb.auth.getSession();
     if(session){
+      // We have a session — show app shell immediately with cached profile if available
+      CU=session.user;
+      // Try to get cached profile from sessionStorage first
+      const cached=sessionStorage.getItem('cp_'+session.user.id);
+      if(cached){
+        try{
+          CP=JSON.parse(cached);
+          if(CP.status==='approved'){
+            initApp();
+            // Refresh profile silently in background
+            sb.from('profiles').select('*').eq('id',CU.id).single().then(({data})=>{
+              if(data){CP=data;sessionStorage.setItem('cp_'+CU.id,JSON.stringify(data));}
+            });
+            return;
+          }
+        }catch(e){}
+      }
+      // No cache — fetch profile (one network call)
       const{data:profile}=await sb.from('profiles').select('*').eq('id',session.user.id).single();
       if(profile?.status==='approved'){
-        CU=session.user;CP=profile;
+        CP=profile;
+        sessionStorage.setItem('cp_'+CU.id,JSON.stringify(profile));
         initApp();
         return;
       }
-      // Session exists but not approved — sign out and redirect
       await sb.auth.signOut();
     }
   }catch(e){console.error(e);}
-  // No valid session — send to login
   window.location.replace('https://ceemediconepal.xyz/cee/login.html');
 })();
 
@@ -1528,5 +1556,3 @@ sb.auth.onAuthStateChange(async(event,session)=>{
 </script>
 </body>
 </html>
-
-
