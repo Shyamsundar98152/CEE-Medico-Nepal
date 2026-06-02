@@ -1,2143 +1,923 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" class="scroll-smooth">
 <head>
-  <link rel="apple-touch-icon" sizes="180x180" href="/fevicon/apple-touch-icon.png">
-  <link rel="icon" type="image/png" sizes="32x32" href="/fevicon/favicon-32x32.png">
-  <link rel="icon" type="image/png" sizes="16x16" href="/fevicon/favicon-16x16.png">
-  <link rel="manifest" href="/fevicon/site.webmanifest">
-
-  <script async src="https://www.googletagmanager.com/gtag/js?id=G-EEKWY5Y4G3"></script>
-  <script>
-      window.dataLayer = window.dataLayer || [];
-      function gtag(){dataLayer.push(arguments);}
-      gtag('js', new Date());
-      gtag('config', 'G-EEKWY5Y4G3');
-  </script>
-  <meta charset="UTF-8"/>
-  <meta name="viewport" content="width=device-width,initial-scale=1.0"/>
-  <title>NexusExam — Next-Gen MCQ Platform</title>
-  <link rel="preconnect" href="https://rpudsnrqlhataqfavcjh.supabase.co"/>
-  <link rel="dns-prefetch" href="https://rpudsnrqlhataqfavcjh.supabase.co"/>
-  <link rel="preconnect" href="https://fonts.googleapis.com"/>
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-  <link href="https://fonts.googleapis.com/css2?family=Clash+Display:wght@400;500;600;700&family=Cabinet+Grotesk:wght@400;500;600;700;800&family=Fira+Code:wght@400;500&display=swap" rel="stylesheet"/>
-  
-  <!-- Scientific LaTeX Formula Rendering Engine (KaTeX) -->
-  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/katex.min.css">
-  <script src="https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/katex.min.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/contrib/auto-render.min.js"></script>
-
-  <style>
-  /* ━━━━━━━━━━━━━━━━━ DESIGN TOKENS ━━━━━━━━━━━━━━━━━ */
-  :root{
-    --ink:#05060a;--ink2:#0b0d14;--ink3:#10121c;
-    --surface:#141720;--surface2:#1a1d2a;--surface3:#1e2235;
-    --rim:#252a3d;--rim2:#2e3450;--rim3:#3a4168;
-    --neon:#00f5d4;--neon2:#00c9ae;--neon3:rgba(0,245,212,.08);
-    --volt:#7fff00;--volt2:#5fdf00;
-    --plasma:#ff6b35;--plasma2:#ff4500;
-    --pulse:#a855f7;--pulse2:#7c3aed;
-    --ice:#38bdf8;--ice2:#0ea5e9;
-    --warn:#f59e0b;--warn2:#d97706;
-    --err:#f43f5e;--err2:#e11d48;
-    --ok:#10b981;--ok2:#059669;
-    --text:#e2e8f8;--text2:#8892b8;--text3:#4a5478;
-    --font:'Cabinet Grotesk',sans-serif;
-    --display:'Clash Display',sans-serif;
-    --mono:'Fira Code',monospace;
-    --r:14px;--r-sm:8px;--r-lg:20px;--r-xl:28px;
-    --sw:256px;
-    --glow:0 0 20px rgba(0,245,212,.3);
-    --glow-lg:0 0 40px rgba(0,245,212,.2);
-    --sh:0 4px 24px rgba(0,0,0,.6);
-    --sh-lg:0 12px 60px rgba(0,0,0,.8);
-    --tr:.18s cubic-bezier(.4,0,.2,1);
-  }
-  *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
-  html{scroll-behavior:smooth}
-  body{font-family:var(--font);background:var(--ink);color:var(--text);min-height:100vh;overflow-x:hidden}
-  h1,h2,h3,h4{font-family:var(--display)}
-  button,input,select,textarea{font-family:var(--font)}
-  ::-webkit-scrollbar{width:4px;height:4px}
-  ::-webkit-scrollbar-track{background:var(--ink2)}
-  ::-webkit-scrollbar-thumb{background:var(--rim2);border-radius:2px}
-  ::-webkit-scrollbar-thumb:hover{background:var(--neon2)}
-  ::selection{background:rgba(0,245,212,.2);color:var(--neon)}
-
-  /* ─── CANVAS BG ─── */
-  #bg-canvas{position:fixed;inset:0;z-index:0;pointer-events:none;opacity:.4}
-
-  /* ─── TOAST ─── */
-  #toast-wrap{position:fixed;top:20px;right:20px;z-index:9999;display:flex;flex-direction:column;gap:8px;pointer-events:none}
-  .toast{display:flex;align-items:center;gap:10px;padding:12px 18px;border-radius:var(--r-sm);font-size:13px;font-weight:600;min-width:260px;pointer-events:all;animation:tIn .3s ease;border:1px solid;backdrop-filter:blur(12px)}
-  .toast.ok{background:rgba(16,185,129,.12);border-color:rgba(16,185,129,.4);color:#34d399}
-  .toast.err{background:rgba(244,63,94,.12);border-color:rgba(244,63,94,.4);color:#fb7185}
-  .toast.info{background:rgba(0,245,212,.08);border-color:rgba(0,245,212,.3);color:var(--neon)}
-  .toast.warn{background:rgba(245,158,11,.1);border-color:rgba(245,158,11,.35);color:#fbbf24}
-  .toast.out{animation:tOut .3s ease forwards}
-  @keyframes tIn{from{opacity:0;transform:translateX(40px)}to{opacity:1;transform:none}}
-  @keyframes tOut{to{opacity:0;transform:translateX(40px)}}
-
-  /* ── Loading screen ── */
-  #loading-screen{position:fixed;inset:0;background:var(--ink);z-index:999;display:flex;align-items:center;justify-content:center;flex-direction:column;gap:16px}
-  .load-logo{font-family:var(--display);font-size:32px;font-weight:700;background:linear-gradient(135deg,var(--neon),var(--ice));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
-  .load-spin{width:28px;height:28px;border:3px solid rgba(0,245,212,.2);border-top-color:var(--neon);border-radius:50%;animation:sp .6s linear infinite}
-
-  /* ━━━━━━━━━━━━━━━━━ APP LAYOUT ━━━━━━━━━━━━━━━━━ */
-  #app{display:none;position:relative;z-index:10;min-height:100vh}
-  .layout{display:flex;min-height:100vh}
-
-  /* ─── SIDEBAR ─── */
-  .sidebar{width:var(--sw);background:rgba(11,13,20,.95);border-right:1px solid var(--rim);display:flex;flex-direction:column;position:fixed;top:0;left:0;height:100vh;z-index:100;backdrop-filter:blur(20px);overflow:hidden}
-  .sidebar::before{content:'';position:absolute;top:0;left:0;right:0;height:1px;background:linear-gradient(90deg,transparent,var(--neon),transparent);opacity:.6}
-  .sb-top{padding:20px 18px 16px;border-bottom:1px solid var(--rim)}
-  .sb-logo{font-family:var(--display);font-size:22px;font-weight:700;background:linear-gradient(135deg,var(--neon),var(--ice));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;letter-spacing:-.3px}
-  .sb-logo-dot{width:6px;height:6px;border-radius:50%;background:var(--neon);display:inline-block;margin-left:3px;animation:dot-pulse 2s ease infinite;vertical-align:middle}
-  @keyframes dot-pulse{0%,100%{box-shadow:0 0 0 0 rgba(0,245,212,.4)}50%{box-shadow:0 0 0 5px rgba(0,245,212,0)}}
-  .sb-user{display:flex;align-items:center;gap:10px;padding:14px 18px;border-bottom:1px solid var(--rim)}
-  .sb-av{width:36px;height:36px;border-radius:50%;background:linear-gradient(135deg,var(--neon2),var(--pulse));display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:800;flex-shrink:0;color:var(--ink);border:2px solid rgba(0,245,212,.3)}
-  .sb-uname{font-size:13px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-  .sb-urole{font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:.08em;font-weight:600;margin-top:1px}
-  .sb-nav{flex:1;padding:10px 0;overflow-y:auto}
-  .sb-section{padding:12px 18px 4px;font-size:10px;font-weight:800;color:var(--text3);text-transform:uppercase;letter-spacing:.12em}
-  .sb-item{display:flex;align-items:center;gap:11px;padding:10px 18px;color:var(--text2);font-size:13px;font-weight:600;cursor:pointer;transition:var(--tr);border:none;background:transparent;width:100%;text-align:left;position:relative;overflow:hidden}
-  .sb-item::before{content:'';position:absolute;inset:0;background:linear-gradient(90deg,rgba(0,245,212,.1),transparent);opacity:0;transition:var(--tr)}
-  .sb-item:hover{color:var(--text)}
-  .sb-item:hover::before{opacity:1}
-  .sb-item.act{color:var(--neon);font-weight:700}
-  .sb-item.act::before{opacity:1}
-  .sb-item.act::after{content:'';position:absolute;left:0;top:6px;bottom:6px;width:3px;background:var(--neon);border-radius:0 2px 2px 0;box-shadow:var(--glow)}
-  .sb-icon{font-size:16px;width:20px;text-align:center;flex-shrink:0}
-  .sb-badge{margin-left:auto;background:var(--err);color:#fff;font-size:10px;font-weight:800;padding:1px 6px;border-radius:10px;animation:badge-pulse 2s ease infinite}
-  @keyframes badge-pulse{0%,100%{box-shadow:0 0 0 0 rgba(244,63,94,.4)}50%{box-shadow:0 0 0 4px rgba(244,63,94,0)}}
-  .sb-footer{padding:14px 18px;border-top:1px solid var(--rim)}
-  .btn-logout{width:100%;padding:9px;background:rgba(244,63,94,.1);border:1px solid rgba(244,63,94,.25);border-radius:var(--r-sm);color:#fb7185;font-size:13px;font-weight:700;cursor:pointer;transition:var(--tr);font-family:var(--font)}
-  .btn-logout:hover{background:rgba(244,63,94,.2);box-shadow:0 0 12px rgba(244,63,94,.2)}
-
-  /* ─── MAIN ─── */
-  .main{margin-left:var(--sw);flex:1;min-height:100vh}
-  .topbar{display:flex;align-items:center;justify-content:space-between;padding:16px 28px;border-bottom:1px solid var(--rim);background:rgba(11,13,20,.8);position:sticky;top:0;z-index:50;backdrop-filter:blur(20px)}
-  .topbar::after{content:'';position:absolute;bottom:0;left:0;right:0;height:1px;background:linear-gradient(90deg,transparent,rgba(0,245,212,.3),transparent)}
-  .tb-title{font-family:var(--display);font-size:18px;font-weight:600;display:flex;align-items:center;gap:10px}
-  .tb-right{display:flex;align-items:center;gap:12px}
-  .tb-clock{font-family:var(--mono);font-size:13px;color:var(--neon);letter-spacing:.06em;background:rgba(0,245,212,.06);padding:6px 12px;border-radius:var(--r-sm);border:1px solid rgba(0,245,212,.15)}
-  .tb-ham{display:none;background:none;border:none;color:var(--text);font-size:20px;cursor:pointer}
-
-  /* ─── PAGES ─── */
-  .page{display:none;padding:28px;animation:pgIn .25s ease}
-  .page.act{display:block}
-  @keyframes pgIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
-  .pg-head{margin-bottom:28px}
-  .pg-title{font-family:var(--display);font-size:26px;font-weight:700;letter-spacing:-.4px;display:flex;align-items:center;gap:10px}
-  .pg-sub{font-size:14px;color:var(--text3);margin-top:5px}
-
-  /* ─── STAT CARDS ─── */
-  .stat-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(175px,1fr));gap:14px;margin-bottom:24px}
-  .stat{background:var(--surface);border:1px solid var(--rim);border-radius:var(--r);padding:20px;position:relative;overflow:hidden;transition:var(--tr)}
-  .stat:hover{border-color:var(--rim2);transform:translateY(-2px)}
-  .stat::before{content:'';position:absolute;top:0;left:0;right:0;height:2px}
-  .stat.teal::before{background:linear-gradient(90deg,var(--neon),var(--neon2))}
-  .stat.blue::before{background:linear-gradient(90deg,var(--ice),var(--ice2))}
-  .stat.purple::before{background:linear-gradient(90deg,var(--pulse),var(--pulse2))}
-  .stat.orange::before{background:linear-gradient(90deg,var(--plasma),var(--plasma2))}
-  .stat.green::before{background:linear-gradient(90deg,var(--ok),var(--ok2))}
-  .stat-icon{font-size:24px;margin-bottom:12px}
-  .stat-val{font-family:var(--display);font-size:30px;font-weight:700;letter-spacing:-.5px}
-  .stat.teal .stat-val{color:var(--neon)}
-  .stat.blue .stat-val{color:var(--ice)}
-  .stat.purple .stat-val{color:var(--pulse)}
-  .stat.orange .stat-val{color:var(--plasma)}
-  .stat.green .stat-val{color:var(--ok)}
-  .stat-lbl{font-size:12px;color:var(--text3);margin-top:4px;font-weight:600;letter-spacing:.02em}
-
-  /* ─── CARDS ─── */
-  .card{background:var(--surface);border:1px solid var(--rim);border-radius:var(--r);padding:22px}
-  .card-glass{background:rgba(20,23,32,.7);border:1px solid var(--rim);border-radius:var(--r);padding:22px;backdrop-filter:blur(12px)}
-  .grid-2{display:grid;grid-template-columns:1fr 1fr;gap:18px}
-  .grid-3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:14px}
-
-  /* ─── GENERAL BTNS ─── */
-  .btn{display:inline-flex;align-items:center;justify-content:center;gap:7px;padding:9px 18px;border:none;border-radius:var(--r-sm);font-size:13px;font-weight:700;cursor:pointer;transition:var(--tr);outline:none;white-space:nowrap;font-family:var(--font)}
-  .btn-neon{background:linear-gradient(135deg,var(--neon2),var(--ice2));color:var(--ink)}
-  .btn-neon:hover{transform:translateY(-1px);box-shadow:0 6px 20px rgba(0,245,212,.3)}
-  .btn-ghost{background:rgba(255,255,255,.04);border:1px solid var(--rim);color:var(--text2)}
-  .btn-ghost:hover{border-color:var(--rim2);color:var(--text);background:rgba(255,255,255,.07)}
-  .btn-danger{background:rgba(244,63,94,.12);border:1px solid rgba(244,63,94,.3);color:#fb7185}
-  .btn-danger:hover{background:rgba(244,63,94,.22)}
-  .btn-volt{background:rgba(127,255,0,.12);border:1px solid rgba(127,255,0,.3);color:var(--volt)}
-  .btn-volt:hover{background:rgba(127,255,0,.2)}
-  .btn-full{width:100%}
-  .btn-sm{padding:6px 12px;font-size:12px}
-  .btn-xs{padding:4px 9px;font-size:11px;border-radius:6px}
-  .btn:disabled{opacity:.4;cursor:not-allowed;transform:none !important;box-shadow:none !important}
-
-  /* ─── BADGE ─── */
-  .badge{display:inline-flex;align-items:center;gap:3px;padding:3px 9px;border-radius:20px;font-size:11px;font-weight:700;white-space:nowrap}
-  .b-ok{background:rgba(16,185,129,.14);color:#34d399}
-  .b-err{background:rgba(244,63,94,.14);color:#fb7185}
-  .b-warn{background:rgba(245,158,11,.14);color:#fbbf24}
-  .b-neon{background:rgba(0,245,212,.1);color:var(--neon)}
-  .b-blue{background:rgba(56,189,248,.12);color:var(--ice)}
-  .b-pulse{background:rgba(168,85,247,.12);color:var(--pulse)}
-  .b-gray{background:rgba(74,85,120,.18);color:var(--text2)}
-  .b-volt{background:rgba(127,255,0,.1);color:var(--volt)}
-
-  /* ─── TABLE ─── */
-  .tbl-wrap{overflow-x:auto;border-radius:var(--r);border:1px solid var(--rim)}
-  table{width:100%;border-collapse:collapse;font-size:13px}
-  thead{background:var(--ink2)}
-  th{padding:11px 14px;text-align:left;font-size:11px;font-weight:800;text-transform:uppercase;letter-spacing:.07em;color:var(--text3);white-space:nowrap}
-  td{padding:11px 14px;border-top:1px solid var(--rim);color:var(--text2);vertical-align:middle}
-  tr:hover td{background:rgba(0,245,212,.02)}
-  .tbl-empty{padding:36px;text-align:center;color:var(--text3)}
-
-  /* ─── FORM ─── */
-  .fi-dark{padding:10px 13px;background:rgba(10,12,20,.8);border:1px solid var(--rim);border-radius:var(--r-sm);color:var(--text);font-size:13px;outline:none;transition:var(--tr);width:100%;font-family:var(--font)}
-  .fi-dark:focus{border-color:var(--neon);box-shadow:0 0 0 3px rgba(0,245,212,.1)}
-  .fi-dark::placeholder{color:var(--text3)}
-  select.fi-dark{-webkit-appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='10' viewBox='0 0 10 10'%3E%3Cpath fill='%234a5478' d='M5 7L0 2h10z'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 11px center;cursor:pointer}
-  .code-area{width:100%;background:rgba(5,6,10,.9);border:1px solid var(--rim);border-radius:var(--r-sm);color:var(--neon);padding:14px;font-family:var(--mono);font-size:12px;resize:vertical;min-height:150px;outline:none;transition:var(--tr);line-height:1.6}
-  .code-area:focus{border-color:var(--neon);box-shadow:0 0 0 3px rgba(0,245,212,.08)}
-
-  /* ─── QUIZ TREE ─── */
-  .quiz-tree{display:flex;flex-direction:column;gap:10px}
-  .subject-node{border:1px solid var(--rim);border-radius:var(--r);overflow:hidden;transition:var(--tr)}
-  .subject-node:hover{border-color:var(--rim2)}
-  .subj-hd{display:flex;align-items:center;justify-content:space-between;padding:14px 18px;background:var(--surface2);cursor:pointer;user-select:none}
-  .subj-hd:hover{background:var(--surface3)}
-  .subj-name{font-weight:700;font-size:14px;display:flex;align-items:center;gap:10px}
-  .subj-count{font-size:11px;font-weight:700;color:var(--text3);background:var(--ink2);padding:2px 8px;border-radius:10px}
-  .chap-list{padding:8px;background:var(--ink2);display:flex;flex-direction:column;gap:4px}
-  .chap-node{border-radius:var(--r-sm);overflow:hidden}
-  .chap-hd{display:flex;align-items:center;justify-content:space-between;padding:10px 14px;background:var(--ink3);cursor:pointer;font-size:13px;font-weight:600;transition:var(--tr)}
-  .chap-hd:hover{background:var(--surface)}
-  .set-list{padding:6px;background:var(--ink);display:flex;flex-direction:column;gap:3px}
-  .set-item{display:flex;align-items:center;justify-content:space-between;padding:10px 14px;border-radius:var(--r-sm);background:var(--ink2);font-size:13px;cursor:pointer;transition:var(--tr);border:1px solid transparent}
-  .set-item:hover{border-color:var(--neon);background:rgba(0,245,212,.05);color:var(--neon)}
-  .chevron{transition:transform .2s;font-size:11px;color:var(--text3)}
-  .node-open .chevron{transform:rotate(180deg)}
-
-  /* ─── SCHEDULE CARDS ─── */
-  .sched-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:16px}
-  .sched-card{background:var(--surface);border:1px solid var(--rim);border-radius:var(--r);overflow:hidden;transition:var(--tr);position:relative}
-  .sched-card:hover{transform:translateY(-2px);box-shadow:var(--sh)}
-  .sched-stripe{height:3px;width:100%}
-  .sched-stripe.live{background:linear-gradient(90deg,var(--ok),var(--neon));animation:stripe-pulse 2s ease infinite}
-  .sched-stripe.upcoming{background:linear-gradient(90deg,var(--ice),var(--pulse))}
-  .sched-stripe.today{background:linear-gradient(90deg,var(--warn),var(--plasma))}
-  .sched-stripe.ended{background:var(--rim)}
-  .sched-stripe.completed{background:linear-gradient(90deg,var(--pulse),var(--neon))}
-  @keyframes stripe-pulse{0%,100%{opacity:1}50%{opacity:.5}}
-  .sched-body{padding:18px}
-  .sched-status-badges{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:12px}
-  .sched-title{font-family:var(--display);font-size:16px;font-weight:600;margin-bottom:4px}
-  .sched-sub{font-size:12px;color:var(--text3);margin-bottom:14px}
-  .sched-meta{display:flex;flex-direction:column;gap:7px;margin-bottom:14px}
-  .meta-row{display:flex;align-items:center;gap:8px;font-size:12px;color:var(--text2)}
-  .meta-icon{width:16px;text-align:center;font-size:13px;flex-shrink:0}
-  .cd-box{background:var(--ink2);border:1px solid var(--rim);border-radius:var(--r-sm);padding:12px 14px;margin-bottom:14px}
-  .cd-label{font-size:10px;font-weight:800;text-transform:uppercase;letter-spacing:.08em;color:var(--text3);margin-bottom:8px}
-  .cd-digits{display:flex;align-items:center;gap:6px}
-  .cd-unit{text-align:center;min-width:42px}
-  .cd-num{font-family:var(--display);font-size:22px;font-weight:700;line-height:1;display:block;color:var(--neon)}
-  .cd-lbl{font-size:9px;color:var(--text3);text-transform:uppercase;letter-spacing:.05em;margin-top:2px}
-  .cd-sep{font-family:var(--mono);font-size:18px;font-weight:700;color:var(--rim3);margin-top:-4px}
-  .cd-live{display:flex;align-items:center;gap:6px;font-size:13px;font-weight:700;color:var(--ok)}
-  .cd-dot-live{width:7px;height:7px;border-radius:50%;background:var(--ok);animation:dot-pulse 1s ease infinite;flex-shrink:0}
-  .sched-footer{padding:12px 18px;border-top:1px solid var(--rim);display:flex;align-items:center;justify-content:space-between;background:var(--ink2)}
-
-  /* ─── QUIZ ENGINE ─── */
-  #quiz-screen{display:none;position:fixed;inset:0;background:var(--ink);z-index:200;overflow-y:auto;padding:24px}
-  #quiz-screen::before{content:'';position:fixed;inset:0;background:radial-gradient(ellipse 80% 60% at 50% -20%,rgba(0,245,212,.06) 0%,transparent 70%);pointer-events:none}
-  .quiz-wrap{max-width:760px;margin:0 auto;position:relative;z-index:1}
-  .quiz-topbar{display:flex;align-items:center;justify-content:space-between;margin-bottom:20px;background:rgba(20,23,32,.9);border:1px solid var(--rim);border-radius:var(--r);padding:14px 20px;backdrop-filter:blur(12px)}
-  .quiz-meta-info{font-size:12px;color:var(--text3)}
-  .quiz-meta-title{font-family:var(--display);font-size:15px;font-weight:600;margin-bottom:3px;color:var(--text)}
-  .quiz-timer-display{font-family:var(--mono);font-size:22px;font-weight:700;color:var(--neon);display:flex;align-items:center;gap:8px;letter-spacing:.04em}
-  .quiz-timer-display.danger{color:var(--err);animation:timer-danger 1s ease infinite}
-  @keyframes timer-danger{0%,100%{opacity:1;text-shadow:none}50%{opacity:.7;text-shadow:0 0 12px rgba(244,63,94,.5)}}
-  .quiz-progress-track{height:3px;background:var(--rim);border-radius:2px;margin-bottom:22px;overflow:hidden;position:relative}
-  .quiz-progress-fill{height:100%;background:linear-gradient(90deg,var(--neon),var(--ice));border-radius:2px;transition:width .4s ease;position:relative}
-  .quiz-progress-fill::after{content:'';position:absolute;right:-2px;top:-3px;width:8px;height:8px;border-radius:50%;background:var(--neon);box-shadow:var(--glow)}
-  .q-card{background:rgba(20,23,32,.95);border:1px solid var(--rim);border-radius:var(--r-lg);padding:28px;margin-bottom:20px;backdrop-filter:blur(12px)}
-  .q-number{font-size:11px;font-weight:800;text-transform:uppercase;letter-spacing:.1em;color:var(--text3);margin-bottom:10px;display:flex;align-items:center;gap:6px}
-  .q-number::before{content:'';flex:0 0 2px;height:14px;background:var(--neon);border-radius:1px}
-  .q-text{font-size:17px;font-weight:500;line-height:1.65;color:var(--text);margin-bottom:24px}
-  .options-list{display:flex;flex-direction:column;gap:10px}
-  .opt-btn{display:flex;align-items:center;gap:14px;padding:14px 18px;border:2px solid var(--rim);border-radius:var(--r);background:var(--ink2);color:var(--text);font-size:14px;text-align:left;cursor:pointer;transition:var(--tr);width:100%;font-family:var(--font)}
-  .opt-btn:hover:not(:disabled){border-color:var(--neon);background:rgba(0,245,212,.06)}
-  .opt-btn.chosen{border-color:var(--neon);background:rgba(0,245,212,.1);color:var(--neon)}
-  .opt-btn.correct{border-color:var(--ok);background:rgba(16,185,129,.1);color:#34d399}
-  .opt-btn.wrong{border-color:var(--err);background:rgba(244,63,94,.08);color:#fb7185}
-  .opt-label{width:30px;height:30px;border-radius:50%;background:var(--ink3);border:2px solid var(--rim);display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:800;flex-shrink:0;transition:var(--tr);font-family:var(--mono)}
-  .opt-btn.chosen .opt-label{background:var(--neon);border-color:var(--neon);color:var(--ink)}
-  .opt-btn.correct .opt-label{background:var(--ok);border-color:var(--ok);color:#fff}
-  .opt-btn.wrong .opt-label{background:var(--err);border-color:var(--err);color:#fff}
-  .quiz-nav-bar{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap}
-  .q-dots-wrap{display:flex;flex-wrap:wrap;gap:5px;max-width:380px}
-  .q-dot{width:26px;height:26px;border-radius:50%;border:2px solid var(--rim);background:var(--ink2);cursor:pointer;transition:var(--tr);font-size:9px;font-weight:800;display:flex;align-items:center;justify-content:center;color:var(--text3);font-family:var(--mono)}
-  .q-dot.answered{background:var(--neon);border-color:var(--neon);color:var(--ink)}
-  .q-dot.current{border-color:var(--ice);color:var(--ice)}
-  .q-dot:hover{border-color:var(--text2)}
-
-  /* ─── REVIEW SCREEN ─── */
-  #review-screen{display:none;position:fixed;inset:0;background:var(--ink);z-index:400;overflow-y:auto;padding:24px}
-  #review-screen::before{content:'';position:fixed;inset:0;background:radial-gradient(ellipse 80% 60% at 50% -20%,rgba(168,85,247,.06) 0%,transparent 70%);pointer-events:none}
-  .review-stats-bar{display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:12px;margin-bottom:20px}
-  .review-stat-card{background:var(--surface2);border:1px solid var(--rim);border-radius:var(--r-sm);padding:12px;text-align:center}
-  .review-stat-lbl{font-size:11px;color:var(--text3);font-weight:600;text-transform:uppercase;margin-bottom:4px}
-  .review-stat-val{font-family:var(--display);font-size:20px;font-weight:700}
-  .review-q-card{background:rgba(20,23,32,.95);border:1px solid var(--rim);border-radius:var(--r-lg);padding:24px;margin-bottom:20px;backdrop-filter:blur(12px);transition:var(--tr)}
-  .review-q-card:hover{border-color:var(--rim2)}
-  .review-opt{display:flex;align-items:center;gap:12px;padding:12px 16px;border-radius:var(--r-sm);font-size:13px;margin-bottom:8px;background:var(--ink2);border:1px solid var(--rim)}
-  .review-opt.correct{border-color:var(--ok);background:rgba(16,185,129,.08);color:#34d399}
-  .review-opt.incorrect{border-color:var(--err);background:rgba(244,63,94,.08);color:#fb7185}
-  .review-badge{font-size:10px;font-weight:800;padding:2px 8px;border-radius:10px;text-transform:uppercase;margin-left:auto}
-  .review-badge.ok{background:rgba(16,185,129,.2);color:#34d399}
-  .review-badge.err{background:rgba(244,63,94,.2);color:#fb7185}
-  .explanation-box{margin-top:16px;padding:14px;background:var(--ink3);border-left:3px solid var(--neon);border-radius:0 var(--r-sm) var(--r-sm) 0}
-  .explanation-hd{display:flex;align-items:center;gap:6px;font-size:12px;font-weight:700;color:var(--neon);margin-bottom:6px;text-transform:uppercase;letter-spacing:.05em}
-  .explanation-body{font-size:13px;line-height:1.6;color:var(--text2)}
-
-  /* ─── RESULT MODAL ─── */
-  .modal-ov{display:none;position:fixed;inset:0;background:rgba(0,0,0,.85);z-index:500;align-items:center;justify-content:center;padding:20px;backdrop-filter:blur(8px)}
-  .modal-ov.open{display:flex}
-  .modal{background:var(--surface);border:1px solid var(--rim);border-radius:var(--r-xl);padding:32px;width:100%;max-width:560px;max-height:90vh;overflow-y:auto;box-shadow:var(--sh-lg),0 0 60px rgba(0,245,212,.06);animation:modalIn .3s cubic-bezier(.175,.885,.32,1.275)}
-  @keyframes modalIn{from{opacity:0;transform:scale(.9)}to{opacity:1;transform:scale(1)}}
-  .modal-hd{display:flex;align-items:center;justify-content:space-between;margin-bottom:22px}
-  .modal-title{font-family:var(--display);font-size:18px;font-weight:700}
-  .modal-x{background:var(--ink2);border:1px solid var(--rim);border-radius:6px;color:var(--text3);width:28px;height:28px;display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:12px;transition:var(--tr)}
-  .modal-x:hover{border-color:var(--err);color:#fb7185}
-  .result-ring-wrap{position:relative;width:140px;height:140px;margin:0 auto 24px}
-  .result-ring-svg{transform:rotate(-90deg)}
-  .result-ring-bg{fill:none;stroke:var(--rim2);stroke-width:8}
-  .result-ring-fg{fill:none;stroke-width:8;stroke-linecap:round;transition:stroke-dashoffset 1.2s cubic-bezier(.4,0,.2,1)}
-  .result-center{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center}
-  .result-pct{font-family:var(--display);font-size:28px;font-weight:800;line-height:1}
-  .result-grade-lbl{font-size:11px;color:var(--text3);font-weight:700;margin-top:2px}
-  .result-grade{font-family:var(--display);font-size:32px;font-weight:800;text-align:center;margin-bottom:8px}
-  .result-stats{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-top:20px}
-  .result-stat{background:var(--ink2);border-radius:var(--r-sm);padding:14px;text-align:center}
-  .result-stat-val{font-family:var(--display);font-size:22px;font-weight:700}
-  .result-stat-lbl{font-size:11px;color:var(--text3);margin-top:3px;font-weight:600}
-
-  /* ─── RESULTS PAGE ─── */
-  .history-item{display:flex;align-items:center;justify-content:space-between;padding:12px 16px;background:var(--surface2);border-radius:var(--r-sm);margin-bottom:8px;border:1px solid var(--rim);transition:var(--tr)}
-  .history-item:hover{border-color:var(--rim2)}
-
-  /* ─── LEADERBOARD ─── */
-  .lb-item{display:grid;grid-template-columns:44px 1fr auto auto;gap:12px;align-items:center;padding:12px 16px;border-radius:var(--r-sm);margin-bottom:6px;background:var(--surface2);border:1px solid transparent;transition:var(--tr)}
-  .lb-item:hover{background:var(--surface3)}
-  .lb-item.rank-1{border-color:rgba(245,158,11,.3);background:rgba(245,158,11,.05)}
-  .lb-item.rank-2{border-color:rgba(148,163,184,.2);background:rgba(148,163,184,.03)}
-  .lb-item.rank-3{border-color:rgba(180,82,20,.2);background:rgba(180,82,20,.04)}
-  .lb-rank{font-family:var(--display);font-weight:800;font-size:16px;text-align:center}
-  .lb-name{font-size:13px;font-weight:600}
-  .lb-detail{font-size:11px;color:var(--text3);margin-top:1px}
-  .lb-score-val{font-family:var(--display);font-weight:700;font-size:14px;text-align:right}
-
-  /* ─── ADMIN ─── */
-  .admin-tabs{display:flex;gap:3px;background:var(--ink2);border:1px solid var(--rim);border-radius:var(--r-sm);padding:3px;flex-wrap:wrap;margin-bottom:22px}
-  .admin-tab{padding:8px 16px;border:none;background:transparent;color:var(--text3);font-size:13px;font-weight:600;border-radius:6px;cursor:pointer;transition:var(--tr);font-family:var(--font)}
-  .admin-tab.act{background:linear-gradient(135deg,rgba(0,245,212,.2),rgba(56,189,248,.12));color:var(--neon);border:1px solid rgba(0,245,212,.2)}
-  .admin-panel{display:none}
-  .admin-panel.act{display:block}
-  .drop-zone{border:2px dashed var(--rim2);border-radius:var(--r);padding:32px;text-align:center;cursor:pointer;transition:var(--tr)}
-  .drop-zone:hover,.drop-zone.drag{border-color:var(--neon);background:rgba(0,245,212,.04)}
-
-  /* ─── MISC ─── */
-  .divider{height:1px;background:var(--rim);margin:18px 0}
-  .chip{display:inline-flex;align-items:center;gap:3px;padding:3px 9px;border-radius:20px;font-size:11px;background:var(--ink2);border:1px solid var(--rim);color:var(--text2)}
-  .flex-r{display:flex;align-items:center;gap:10px}
-  .flex-b{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap}
-  .mt-4{margin-top:16px}.mb-4{margin-bottom:16px}
-  .hidden{display:none!important}
-  .spin{display:inline-block;width:14px;height:14px;border:2px solid rgba(0,245,212,.25);border-top-color:var(--neon);border-radius:50%;animation:sp .5s linear infinite}
-  @keyframes sp{to{transform:rotate(360deg)}}
-  .empty-state{text-align:center;padding:48px 20px;color:var(--text3)}
-  .empty-icon{font-size:48px;margin-bottom:12px}
-  .empty-title{font-size:15px;font-weight:700;color:var(--text2);margin-bottom:5px}
-  .empty-sub{font-size:13px;line-height:1.6}
-  .tab-warn-banner{display:none;position:fixed;top:0;left:0;right:0;background:linear-gradient(90deg,var(--err),var(--plasma));color:#fff;text-align:center;padding:10px;font-size:13px;font-weight:700;z-index:9998;animation:slideDown .3s ease}
-  @keyframes slideDown{from{transform:translateY(-100%)}to{transform:translateY(0)}}
-  .notice{display:flex;align-items:flex-start;gap:8px;padding:11px 14px;border-radius:var(--r-sm);font-size:13px;border:1px solid;margin-bottom:14px;line-height:1.5}
-  .notice-info{background:rgba(0,245,212,.05);border-color:rgba(0,245,212,.2);color:var(--neon)}
-  .notice-warn{background:rgba(245,158,11,.06);border-color:rgba(245,158,11,.2);color:var(--warn)}
-
-  /* ─── RESPONSIVE ─── */
-  @media(max-width:900px){
-    .sidebar{transform:translateX(-100%);z-index:200}
-    .sidebar.open{transform:none}
-    .sb-overlay{display:block}
-    .main{margin-left:0}
-    .topbar{padding:12px 16px}
-    .tb-ham{display:flex}
-    .page{padding:16px}
-    .grid-2,.grid-3{grid-template-columns:1fr}
-    .stat-grid{grid-template-columns:1fr 1fr}
-    .quiz-topbar{flex-direction:column;gap:10px}
-    .q-dots-wrap{max-width:100%}
-    .result-stats{grid-template-columns:1fr 1fr}
-    #quiz-screen,#review-screen{padding:14px}
-  }
-  .sb-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.7);z-index:199}
-  .sb-overlay.open{display:block}
-  @media(max-width:480px){
-    .stat-grid{grid-template-columns:1fr}
-    .result-stats{grid-template-columns:1fr}
-    .sched-grid{grid-template-columns:1fr}
-  }
-  </style>
-</head>
-<body>
-
-<!-- Background Canvas -->
-<canvas id="bg-canvas"></canvas>
-
-<!-- Tab Warning -->
-<div class="tab-warn-banner" id="tab-warn">⚠️ Tab switch detected — focus violations are being logged</div>
-
-<!-- Toast Container -->
-<div id="toast-wrap"></div>
-
-<!-- Loading Screen -->
-<div id="loading-screen">
-  <div class="load-logo">CEE Medic Nepal</div>
-  <div class="load-spin"></div>
-</div>
-
-<!-- App Core Layout -->
-<div id="app">
-<div class="layout">
-  <div class="sb-overlay" id="sb-overlay" onclick="closeSb()"></div>
-
-  <!-- SIDEBAR -->
-  <nav class="sidebar" id="sidebar">
-    <div class="sb-top">
-      <div class="sb-logo">NexusExam<span class="sb-logo-dot"></span></div>
-    </div>
-    <div class="sb-user">
-      <div class="sb-av" id="sb-av">N</div>
-      <div>
-        <div class="sb-uname" id="sb-uname">—</div>
-        <div class="sb-urole" id="sb-urole">student</div>
-      </div>
-    </div>
-    <div class="sb-nav">
-      <div class="sb-section">Overview</div>
-      <button class="sb-item act" data-pg="dashboard" onclick="goTo('dashboard')"><span class="sb-icon">⚡</span>Dashboard</button>
-
-      <div class="sb-section">Exams</div>
-      <button class="sb-item" data-pg="schedule" onclick="goTo('schedule')"><span class="sb-icon">📅</span>Scheduled Exams</button>
-      <button class="sb-item" data-pg="quiz" onclick="goTo('quiz')"><span class="sb-icon">🎯</span>Take Quiz</button>
-      <button class="sb-item" data-pg="results" onclick="goTo('results')"><span class="sb-icon">📊</span>My Results</button>
-      <button class="sb-item" data-pg="leaderboard" onclick="goTo('leaderboard')"><span class="sb-icon">🏆</span>Leaderboard</button>
-
-      <div class="sb-section" id="admin-sb-section" style="display:none">Admin</div>
-      <button class="sb-item hidden" id="admin-nav-btn" data-pg="admin" onclick="goTo('admin')"><span class="sb-icon">⚙️</span>Admin Panel<span class="sb-badge" id="pending-badge" style="display:none">0</span></button>
-    </div>
-    <div class="sb-footer">
-      <button class="btn-logout" onclick="doLogout()">🚪 Sign Out</button>
-    </div>
-  </nav>
-
-  <!-- MAIN -->
-  <div class="main" id="main-area">
-    <div class="topbar">
-      <div class="flex-r">
-        <button class="tb-ham" onclick="openSb()">☰</button>
-        <div class="tb-title" id="topbar-title">⚡ Dashboard</div>
-      </div>
-      <div class="tb-right">
-        <div class="tb-clock" id="tb-clock">--:--:--</div>
-      </div>
-    </div>
-
-    <!-- ══ PAGE: DASHBOARD ══ -->
-    <div class="page act" id="pg-dashboard">
-      <div class="pg-head">
-        <div class="pg-title">⚡ Dashboard</div>
-        <div class="pg-sub">Welcome back, <span id="dash-greeting" style="color:var(--neon)">—</span></div>
-      </div>
-      <div class="stat-grid">
-        <div class="stat teal"><div class="stat-icon">📚</div><div class="stat-val" id="st-subjects">0</div><div class="stat-lbl">Subjects</div></div>
-        <div class="stat blue"><div class="stat-icon">🎯</div><div class="stat-val" id="st-quizzes">0</div><div class="stat-lbl">Quizzes Available</div></div>
-        <div class="stat purple"><div class="stat-icon">✅</div><div class="stat-val" id="st-attempts">0</div><div class="stat-lbl">My Attempts</div></div>
-        <div class="stat orange"><div class="stat-icon">⭐</div><div class="stat-val" id="st-avg">—</div><div class="stat-lbl">Avg Score %</div></div>
-        <div class="stat green"><div class="stat-icon">🏆</div><div class="stat-val" id="st-best">—</div><div class="stat-lbl">Best Score</div></div>
-      </div>
-      <div class="grid-2">
-        <div class="card">
-          <div class="flex-b mb-4">
-            <div style="font-family:var(--display);font-size:15px;font-weight:600">Recent Activity</div>
-            <button class="btn btn-ghost btn-sm" onclick="goTo('results')">View All →</button>
-          </div>
-          <div id="recent-list"><div class="empty-state"><div class="empty-icon">📋</div><div class="empty-title">No attempts yet</div><div class="empty-sub">Take a quiz to see activity here</div></div></div>
-        </div>
-        <div class="card">
-          <div style="font-family:var(--display);font-size:15px;font-weight:600;margin-bottom:16px">Live & Upcoming Exams</div>
-          <div id="dash-schedules"><div class="empty-state"><div class="empty-icon">📅</div><div class="empty-title">No scheduled exams</div></div></div>
-        </div>
-      </div>
-    </div>
-
-    <!-- ══ PAGE: SCHEDULE ══ -->
-    <div class="page" id="pg-schedule">
-      <div class="pg-head">
-        <div class="pg-title">📅 Scheduled Exams</div>
-        <div class="pg-sub">Live countdowns and real-time exam access</div>
-      </div>
-      <!-- Filter Bar -->
-      <div class="card mb-4">
-        <div class="flex-r" style="flex-wrap:wrap;gap:10px">
-          <div style="display:flex;background:var(--ink2);border:1px solid var(--rim);border-radius:var(--r-sm);padding:3px;gap:3px;flex-wrap:wrap" id="sched-filter-tabs">
-            <button class="admin-tab act" onclick="setSchedFilter('all',this)">All</button>
-            <button class="admin-tab" onclick="setSchedFilter('live',this)">🟢 Live</button>
-            <button class="admin-tab" onclick="setSchedFilter('today',this)">⭐ Today</button>
-            <button class="admin-tab" onclick="setSchedFilter('upcoming',this)">🔜 Upcoming</button>
-            <button class="admin-tab" onclick="setSchedFilter('ended',this)">✅ Ended</button>
-          </div>
-          <select class="fi-dark" id="sched-subj-filter" style="width:160px" onchange="renderScheduleCards()"><option value="">All Subjects</option></select>
-          <input class="fi-dark" id="sched-search" placeholder="🔍 Search exams…" oninput="renderScheduleCards()" style="width:200px"/>
-        </div>
-      </div>
-      <div id="sched-live-sec" style="margin-bottom:28px">
-        <div class="flex-b mb-4"><div style="font-family:var(--display);font-weight:600;display:flex;align-items:center;gap:8px">🟢 Live Now <span class="chip" id="live-count">0</span></div></div>
-        <div class="sched-grid" id="sched-live-grid"></div>
-      </div>
-      <div id="sched-today-sec" style="margin-bottom:28px">
-        <div class="flex-b mb-4"><div style="font-family:var(--display);font-weight:600;display:flex;align-items:center;gap:8px">⭐ Today <span class="chip" id="today-count">0</span></div></div>
-        <div class="sched-grid" id="sched-today-grid"></div>
-      </div>
-      <div id="sched-upcoming-sec" style="margin-bottom:28px">
-        <div class="flex-b mb-4"><div style="font-family:var(--display);font-weight:600;display:flex;align-items:center;gap:8px">🔜 Upcoming <span class="chip" id="upcoming-count">0</span></div></div>
-        <div class="sched-grid" id="sched-upcoming-grid"></div>
-      </div>
-      <div id="sched-ended-sec" style="margin-bottom:28px">
-        <div class="flex-b mb-4"><div style="font-family:var(--display);font-weight:600;display:flex;align-items:center;gap:8px">✅ Ended <span class="chip" id="ended-count">0</span></div></div>
-        <div class="sched-grid" id="sched-ended-grid"></div>
-      </div>
-    </div>
-
-    <!-- ══ PAGE: QUIZ ══ -->
-    <div class="page" id="pg-quiz">
-      <div class="pg-head">
-        <div class="pg-title">🎯 Take a Quiz</div>
-        <div class="pg-sub">Select from available quiz sets below</div>
-      </div>
-      <div class="card">
-        <div id="quiz-tree-wrap"><div class="empty-state"><div class="empty-icon">📚</div><div class="empty-title">Loading quizzes…</div></div></div>
-      </div>
-    </div>
-
-    <!-- ══ PAGE: RESULTS ══ -->
-    <div class="page" id="pg-results">
-      <div class="pg-head">
-        <div class="pg-title">📊 My Results</div>
-        <div class="pg-sub">Your complete exam history and performance analytics</div>
-      </div>
-      <div id="results-wrap"><div class="empty-state"><div class="empty-icon">📊</div><div class="empty-title">Loading…</div></div></div>
-    </div>
-
-    <!-- ══ PAGE: LEADERBOARD ══ -->
-    <div class="page" id="pg-leaderboard">
-      <div class="pg-head">
-        <div class="pg-title">🏆 Leaderboard</div>
-        <div class="pg-sub">Top performers ranked by score and speed</div>
-      </div>
-      <div class="card mb-4">
-        <div class="flex-r" style="flex-wrap:wrap;gap:10px">
-          <select class="fi-dark" id="lb-quiz-filter" style="width:220px" onchange="loadLeaderboard()"><option value="">All Quizzes</option></select>
-          <select class="fi-dark" id="lb-subj-filter" style="width:160px" onchange="loadLeaderboard()"><option value="">All Subjects</option></select>
-        </div>
-      </div>
-      <div id="lb-wrap"><div class="empty-state"><div class="empty-icon">🏆</div><div class="empty-title">Loading…</div></div></div>
-    </div>
-
-    <!-- ══ PAGE: ADMIN ══ -->
-    <div class="page" id="pg-admin">
-      <div class="pg-head">
-        <div class="pg-title">⚙️ Admin Panel</div>
-        <div class="pg-sub">Full platform control and management</div>
-      </div>
-      <div class="stat-grid">
-        <div class="stat teal"><div class="stat-icon">👥</div><div class="stat-val" id="adm-users">0</div><div class="stat-lbl">Total Users</div></div>
-        <div class="stat blue"><div class="stat-icon">📚</div><div class="stat-val" id="adm-quizzes">0</div><div class="stat-lbl">Quiz Sets</div></div>
-        <div class="stat purple"><div class="stat-icon">📝</div><div class="stat-val" id="adm-attempts">0</div><div class="stat-lbl">Attempts</div></div>
-        <div class="stat orange"><div class="stat-icon">⏳</div><div class="stat-val" id="adm-pending">0</div><div class="stat-lbl">Pending Approvals</div></div>
-      </div>
-      <div class="admin-tabs" id="admin-main-tabs">
-        <button class="admin-tab act" onclick="switchAdminTab('upload',this)">📤 Upload Quiz</button>
-        <button class="admin-tab" onclick="switchAdminTab('quizzes',this)">📚 Quiz Sets</button>
-        <button class="admin-tab" onclick="switchAdminTab('schedule',this)">📅 Schedules</button>
-        <button class="admin-tab" onclick="switchAdminTab('users',this)">👥 Users</button>
-      </div>
-
-      <!-- Upload -->
-      <div class="admin-panel act" id="adm-upload">
-        <div class="grid-2">
-          <div class="card">
-            <div style="font-family:var(--display);font-size:15px;font-weight:600;margin-bottom:16px">Upload Questions JSON</div>
-            <div class="admin-tabs" id="upload-src-tabs">
-              <button class="admin-tab act" onclick="switchUploadSrc('paste',this)">Paste</button>
-              <button class="admin-tab" onclick="switchUploadSrc('file',this)">File</button>
-            </div>
-            <div id="up-paste-area">
-              <textarea class="code-area" id="json-paste-input" rows="12" placeholder='Paste any JSON format here…'></textarea>
-            </div>
-            <div id="up-file-area" style="display:none">
-              <div class="drop-zone" id="drop-zone" onclick="document.getElementById('file-input-adm').click()" ondragover="dOv(event)" ondragleave="dLv(event)" ondrop="dDrop(event)">
-                <div style="font-size:36px;margin-bottom:8px">📁</div>
-                <div style="font-size:14px;font-weight:600;color:var(--text2)">Click or drag JSON file</div>
-                <div style="font-size:12px;color:var(--text3);margin-top:4px">Supports all standard formats</div>
-              </div>
-              <input type="file" id="file-input-adm" accept=".json,.txt" style="display:none" onchange="loadAdmFile(event)"/>
-            </div>
-          </div>
-          <div class="card">
-            <div style="font-family:var(--display);font-size:15px;font-weight:600;margin-bottom:14px">Set Details & Upload</div>
-            <div style="margin-bottom:12px"><label class="fl" style="color:var(--text3);font-size:11px;font-weight:700;display:block;margin-bottom:5px">SUBJECT</label><input class="fi-dark" id="up-subject" placeholder="e.g. Physics"/></div>
-            <div style="margin-bottom:12px"><label class="fl" style="color:var(--text3);font-size:11px;font-weight:700;display:block;margin-bottom:5px">CHAPTER</label><input class="fi-dark" id="up-chapter" placeholder="e.g. Motion"/></div>
-            <div style="margin-bottom:12px"><label class="fl" style="color:var(--text3);font-size:11px;font-weight:700;display:block;margin-bottom:5px">SET NAME</label><input class="fi-dark" id="up-set" placeholder="e.g. Set-1"/></div>
-            <div style="margin-bottom:16px"><label class="fl" style="color:var(--text3);font-size:11px;font-weight:700;display:block;margin-bottom:5px">DIFFICULTY</label>
-              <select class="fi-dark" id="up-diff"><option value="">Any</option><option>Easy</option><option>Medium</option><option>Hard</option></select>
-            </div>
-            <div class="flex-r" style="flex-wrap:wrap;gap:8px">
-              <button class="btn btn-ghost btn-sm" onclick="parseAdminJSON()">🔍 Parse</button>
-              <button class="btn btn-neon" onclick="uploadQuiz()" id="upload-quiz-btn" style="display:none">⬆ Upload</button>
-              <button class="btn btn-ghost btn-sm" onclick="clearUpload()">✕ Clear</button>
-            </div>
-            <div id="parse-preview-area" style="display:none;margin-top:16px">
-              <div class="divider"></div>
-              <div id="parse-summary-info" style="margin-bottom:10px"></div>
-              <div id="parse-preview-content" style="max-height:260px;overflow-y:auto"></div>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <!-- Quizzes -->
-      <div class="admin-panel" id="adm-quizzes">
-        <div class="flex-b mb-4">
-          <div style="font-family:var(--display);font-weight:600">All Quiz Sets</div>
-          <button class="btn btn-ghost btn-sm" onclick="loadAdminQuizzes()">🔄 Refresh</button>
-        </div>
-        <div class="tbl-wrap">
-          <table>
-            <thead><tr><th>Subject</th><th>Chapter</th><th>Set</th><th>Questions</th><th>Difficulty</th><th>Actions</th></tr></thead>
-            <tbody id="admin-quizzes-body"><tr><td colspan="6" class="tbl-empty">Loading…</td></tr></tbody>
-          </table>
-        </div>
-      </div>
-
-      <!-- Schedules -->
-      <div class="admin-panel" id="adm-schedule">
-        <div class="card mb-4">
-          <div style="font-family:var(--display);font-size:15px;font-weight:600;margin-bottom:16px">➕ Create Schedule</div>
-          <div class="grid-2">
-            <div style="margin-bottom:12px"><label class="fl" style="color:var(--text3);font-size:11px;font-weight:700;display:block;margin-bottom:5px">TITLE</label><input class="fi-dark" id="adm-sc-title" placeholder="e.g. Physics Final Exam"/></div>
-            <div style="margin-bottom:12px"><label class="fl" style="color:var(--text3);font-size:11px;font-weight:700;display:block;margin-bottom:5px">QUIZ SET</label>
-              <select class="fi-dark" id="adm-sc-quiz"><option value="">-- Choose Quiz --</option></select>
-            </div>
-            <div style="margin-bottom:12px"><label class="fl" style="color:var(--text3);font-size:11px;font-weight:700;display:block;margin-bottom:5px">START DATE & TIME</label><input class="fi-dark" type="datetime-local" id="adm-sc-start"/></div>
-            <div style="margin-bottom:12px"><label class="fl" style="color:var(--text3);font-size:11px;font-weight:700;display:block;margin-bottom:5px">END DATE & TIME</label><input class="fi-dark" type="datetime-local" id="adm-sc-end"/></div>
-            <div style="margin-bottom:12px"><label class="fl" style="color:var(--text3);font-size:11px;font-weight:700;display:block;margin-bottom:5px">DURATION (MIN)</label><input class="fi-dark" type="number" id="adm-sc-dur" placeholder="60"/></div>
-            <div style="margin-bottom:12px"><label class="fl" style="color:var(--text3);font-size:11px;font-weight:700;display:block;margin-bottom:5px">INSTRUCTIONS</label><input class="fi-dark" id="adm-sc-instr" placeholder="Any special instructions"/></div>
-          </div>
-          <textarea class="fi-dark" id="adm-sc-desc" rows="2" placeholder="Description (optional)…" style="resize:vertical;margin-bottom:14px"></textarea>
-          <button class="btn btn-neon" onclick="createSchedule()">📅 Create Schedule</button>
-        </div>
-        <div class="tbl-wrap">
-          <table>
-            <thead><tr><th>Title</th><th>Quiz</th><th>Start</th><th>End</th><th>Status</th><th>Actions</th></tr></thead>
-            <tbody id="adm-sched-body"><tr><td colspan="6" class="tbl-empty">Loading…</td></tr></tbody>
-          </table>
-        </div>
-      </div>
-
-      <!-- Users -->
-      <div class="admin-panel" id="adm-users">
-        <div class="flex-b mb-4">
-          <div style="font-family:var(--display);font-weight:600">User Management</div>
-          <button class="btn btn-ghost btn-sm" onclick="loadAdminUsers()">🔄 Refresh</button>
-        </div>
-        <div class="tbl-wrap">
-          <table>
-            <thead><tr><th>Name</th><th>Email</th><th>Role</th><th>Status</th><th>Actions</th></tr></thead>
-            <tbody id="admin-users-body"><tr><td colspan="5" class="tbl-empty">Loading…</td></tr></tbody>
-          </table>
-        </div>
-      </div>
-    </div>
-
-  </div><!-- /main-area -->
-</div><!-- /layout -->
-</div><!-- /app -->
-
-<!-- ════════════════ QUIZ SCREEN ════════════════ -->
-<div id="quiz-screen">
-  <div class="quiz-wrap">
-    <div class="quiz-topbar">
-      <div class="quiz-meta-info">
-        <div class="quiz-meta-title" id="q-title-display">Quiz</div>
-        <div id="q-progress-text" style="font-size:12px;color:var(--text3)">Question 1 of 10</div>
-      </div>
-      <div class="flex-r gap-2" style="gap:12px">
-        <div class="quiz-timer-display" id="quiz-timer">⏱ 00:00</div>
-        <button class="btn btn-danger btn-sm" onclick="confirmQuit()">✕ Quit</button>
-      </div>
-    </div>
-    <div class="quiz-progress-track"><div class="quiz-progress-fill" id="q-progress-fill" style="width:0%"></div></div>
-    <div id="question-wrap"></div>
-    <div class="quiz-nav-bar">
-      <div class="q-dots-wrap" id="q-dots"></div>
-      <div class="flex-r" style="gap:8px">
-        <button class="btn btn-ghost btn-sm" id="btn-prev" onclick="qPrev()">← Prev</button>
-        <button class="btn btn-neon btn-sm" id="btn-next" onclick="qNext()">Next →</button>
-        <button class="btn btn-volt btn-sm hidden" id="btn-submit" onclick="submitQuiz()">✓ Submit</button>
-      </div>
-    </div>
-  </div>
-</div>
-
-<!-- ════════════════ STUDY & REVIEW SCREEN ════════════════ -->
-<div id="review-screen">
-  <div class="quiz-wrap">
-    <div class="quiz-topbar">
-      <div class="quiz-meta-info">
-        <div class="quiz-meta-title" id="rev-title-display">Solution Review</div>
-        <div id="rev-subtitle-display" style="font-size:12px;color:var(--text3)">Detailed answers & explanations</div>
-      </div>
-      <button class="btn btn-danger btn-sm" onclick="closeReview()">✕ Close</button>
-    </div>
-
-    <div class="review-stats-bar" id="rev-stats-bar">
-      <div class="review-stat-card">
-        <div class="review-stat-lbl">Percentage</div>
-        <div class="review-stat-val" id="rev-stat-pct" style="color:var(--neon)">0%</div>
-      </div>
-      <div class="review-stat-card">
-        <div class="review-stat-lbl">Score</div>
-        <div class="review-stat-val" id="rev-stat-score">0 / 0</div>
-      </div>
-      <div class="review-stat-card">
-        <div class="review-stat-lbl">Time Spent</div>
-        <div class="review-stat-val" id="rev-stat-time">0m 0s</div>
-      </div>
-    </div>
-
-    <!-- Filters -->
-    <div class="card mb-4" style="padding:12px 20px">
-      <div class="flex-b">
-        <div style="font-size:13px;font-weight:700;color:var(--text2)">Filter Questions:</div>
-        <div style="display:flex;background:var(--ink2);border:1px solid var(--rim);border-radius:var(--r-sm);padding:3px;gap:3px" id="rev-filter-tabs">
-          <button class="admin-tab act" onclick="filterReviewQuestions('all', this)">All</button>
-          <button class="admin-tab" onclick="filterReviewQuestions('incorrect', this)" style="color:#fb7185">✕ Incorrect</button>
-          <button class="admin-tab" onclick="filterReviewQuestions('correct', this)" style="color:#34d399">✓ Correct</button>
-        </div>
-      </div>
-    </div>
-
-    <!-- Questions list -->
-    <div id="review-questions-list"></div>
-  </div>
-</div>
-
-<!-- ════════════════ MODALS ════════════════ -->
-<!-- Action Choice Modal for Already Attempted Practice Sets -->
-<div class="modal-ov" id="choice-modal">
-  <div class="modal" style="max-width: 440px;">
-    <div class="modal-hd">
-      <div class="modal-title">Quiz Already Taken 🎯</div>
-      <button class="modal-x" onclick="closeModal('choice-modal')">✕</button>
-    </div>
-    <div style="font-size: 14px; color: var(--text2); line-height: 1.6; margin-bottom: 24px;">
-      You have already attempted <strong id="choice-modal-setname" style="color: var(--neon)">—</strong>. 
-      Would you like to start a brand new practice run, or review your performance and correct answers?
-    </div>
-    <div class="flex-r" style="flex-direction: column; gap: 10px;">
-      <button class="btn btn-neon btn-full" id="choice-btn-retake">🔄 Retake Practice Quiz</button>
-      <button class="btn btn-ghost btn-full" id="choice-btn-review">📖 View Solution Keys</button>
-    </div>
-  </div>
-</div>
-
-<!-- Immersive Custom Action Confirmation Modal -->
-<div class="modal-ov" id="custom-confirm-modal">
-  <div class="modal" style="max-width: 420px;">
-    <div class="modal-hd">
-      <div class="modal-title" id="confirm-modal-title">Confirm Action</div>
-      <button class="modal-x" onclick="closeModal('custom-confirm-modal')">✕</button>
-    </div>
-    <div id="confirm-modal-body" style="font-size:14px; color:var(--text2); line-height:1.6; margin-bottom:24px;"></div>
-    <div class="flex-r" style="gap:12px">
-      <button class="btn btn-ghost btn-full" id="confirm-modal-cancel">Cancel</button>
-      <button class="btn btn-danger btn-full" id="confirm-modal-confirm">Confirm</button>
-    </div>
-  </div>
-</div>
-
-<!-- Result Modal -->
-<div class="modal-ov" id="result-modal">
-  <div class="modal">
-    <div class="modal-hd">
-      <div class="modal-title">Exam Complete 🎉</div>
-      <button class="modal-x" onclick="closeModal('result-modal')">✕</button>
-    </div>
-    <div id="result-modal-body"></div>
-    <div class="flex-r mt-4" style="gap:10px">
-      <button class="btn btn-ghost btn-full" onclick="closeModal('result-modal')">🏠 Home</button>
-      <button class="btn btn-neon btn-full" id="btn-result-review">📖 Review Solutions</button>
-    </div>
-  </div>
-</div>
-
-<!-- Edit Quiz Modal -->
-<div class="modal-ov" id="edit-quiz-modal">
-  <div class="modal">
-    <div class="modal-hd">
-      <div class="modal-title">Edit Quiz Set</div>
-      <button class="modal-x" onclick="closeModal('edit-quiz-modal')">✕</button>
-    </div>
-    <input type="hidden" id="eq-id"/>
-    <div style="margin-bottom:12px"><label class="fl" style="color:var(--text3);font-size:11px;font-weight:700;display:block;margin-bottom:5px">SUBJECT</label><input class="fi-dark" id="eq-subj"/></div>
-    <div style="margin-bottom:12px"><label class="fl" style="color:var(--text3);font-size:11px;font-weight:700;display:block;margin-bottom:5px">CHAPTER</label><input class="fi-dark" id="eq-chap"/></div>
-    <div style="margin-bottom:12px"><label class="fl" style="color:var(--text3);font-size:11px;font-weight:700;display:block;margin-bottom:5px">SET</label><input class="fi-dark" id="eq-set"/></div>
-    <div style="margin-bottom:12px"><label class="fl" style="color:var(--text3);font-size:11px;font-weight:700;display:block;margin-bottom:5px">QUESTIONS JSON</label>
-      <textarea class="code-area" id="eq-questions" rows="10"></textarea>
-    </div>
-    <button class="btn btn-neon btn-full" onclick="saveEditQuiz()">💾 Save Changes</button>
-  </div>
-</div>
-
-<!-- Confirm Take Exam Modal -->
-<div class="modal-ov" id="take-exam-modal">
-  <div class="modal">
-    <div class="modal-hd">
-      <div class="modal-title" id="take-exam-modal-title">Start Exam</div>
-      <button class="modal-x" onclick="closeModal('take-exam-modal')">✕</button>
-    </div>
-    <div id="take-exam-modal-body"></div>
-    <div class="flex-r mt-4" style="gap:10px">
-      <button class="btn btn-ghost btn-full" onclick="closeModal('take-exam-modal')">Cancel</button>
-      <button class="btn btn-volt btn-full" id="take-exam-confirm-btn">▶ Start Now</button>
-    </div>
-  </div>
-</div>
-
-<script>
-// ══════════════════════════════════════════════
-// SUPABASE INIT
-// ══════════════════════════════════════════════
-const SUPABASE_URL='https://rpudsnrqlhataqfavcjh.supabase.co';
-const SUPABASE_ANON_KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJwdWRzbnJxbGhhdGFxZmF2Y2poIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzk5NzI0NjgsImV4cCI6MjA5NTU0ODQ2OH0.EEu5t-NPqWARChSAMpEvUPMBkz_JeeNe3bGSCQmH7Xo';
-const sb=window.supabase.createClient(SUPABASE_URL,SUPABASE_ANON_KEY);
-
-// ══════════════════════════════════════════════
-// GLOBAL STATE
-// ══════════════════════════════════════════════
-let CU=null,CP=null;
-let allQuizzes=[],allSchedules=[],allAttempts=[];
-let quizState=null,quizTimer=null,quizSecs=0;
-let schedFilter='all',schedCdIntervals={};
-let parsedQs=[],parsedMeta={};
-let lastResult=null;
-let activeReview=null; 
-let tabWarnCount=0;
-
-// ══════════════════════════════════════════════
-// LATEX FORMULA RENDER HOOKS
-// ══════════════════════════════════════════════
-function renderMath(element) {
-  if (window.renderMathInElement) {
-    window.renderMathInElement(element, {
-      delimiters: [
-        {left: '$$', right: '$$', display: true},
-        {left: '$', right: '$', display: false}
-      ],
-      throwOnError: false
-    });
-  }
-}
-
-// ══════════════════════════════════════════════
-// CANVAS BACKGROUND
-// ══════════════════════════════════════════════
-(function(){
-  const c=document.getElementById('bg-canvas');
-  const ctx=c.getContext('2d');
-  let w,h,pts=[];
-  function resize(){w=c.width=innerWidth;h=c.height=innerHeight;initPts();}
-  function initPts(){
-    pts=[];
-    const n=Math.floor((w*h)/18000);
-    for(let i=0;i<n;i++)pts.push({x:Math.random()*w,y:Math.random()*h,vx:(Math.random()-.5)*.3,vy:(Math.random()-.5)*.3,r:Math.random()*1.5+.5});
-  }
-  function draw(){
-    ctx.clearRect(0,0,w,h);
-    pts.forEach(p=>{
-      p.x+=p.vx;p.y+=p.vy;
-      if(p.x<0||p.x>w)p.vx*=-1;if(p.y<0||p.y>h)p.vy*=-1;
-      ctx.beginPath();ctx.arc(p.x,p.y,p.r,0,Math.PI*2);
-      ctx.fillStyle='rgba(0,245,212,0.4)';ctx.fill();
-    });
-    for(let i=0;i<pts.length;i++)for(let j=i+1;j<pts.length;j++){
-      const d=Math.hypot(pts[i].x-pts[j].x,pts[i].y-pts[j].y);
-      if(d<120){ctx.beginPath();ctx.moveTo(pts[i].x,pts[i].y);ctx.lineTo(pts[j].x,pts[j].y);ctx.strokeStyle=`rgba(0,245,212,${.12*(1-d/120)})`;ctx.lineWidth=.5;ctx.stroke();}
-    }
-    requestAnimationFrame(draw);
-  }
-  window.addEventListener('resize',resize);resize();draw();
-})();
-
-// ══════════════════════════════════════════════
-// TOAST & CONFIRMS
-// ══════════════════════════════════════════════
-function toast(msg,type='info',dur=3500){
-  const icons={ok:'✓',err:'✕',info:'ℹ',warn:'⚠'};
-  const el=document.createElement('div');
-  el.className=`toast ${type}`;
-  el.innerHTML=`<span style="font-size:15px">${icons[type]||'ℹ'}</span><span>${msg}</span>`;
-  document.getElementById('toast-wrap').appendChild(el);
-  setTimeout(()=>{el.classList.add('out');setTimeout(()=>el.remove(),300)},dur);
-}
-
-function showCustomConfirm(title, message, onConfirm, confirmBtnText = 'Confirm', isDanger = true) {
-  document.getElementById('confirm-modal-title').textContent = title;
-  document.getElementById('confirm-modal-body').textContent = message;
-  
-  const confirmBtn = document.getElementById('confirm-modal-confirm');
-  confirmBtn.textContent = confirmBtnText;
-  confirmBtn.className = isDanger ? 'btn btn-danger btn-full' : 'btn btn-neon btn-full';
-  
-  document.getElementById('confirm-modal-cancel').onclick = () => {
-    closeModal('custom-confirm-modal');
-  };
-  
-  confirmBtn.onclick = () => {
-    closeModal('custom-confirm-modal');
-    onConfirm();
-  };
-  
-  document.getElementById('custom-confirm-modal').classList.add('open');
-}
-
-async function doLogout(){
-  if(quizState){
-    showCustomConfirm(
-      'Active Quiz Progress', 
-      'You are currently in the middle of a quiz. Logging out will discard all current progress. Proceed?',
-      async () => {
-        exitQuiz();
-        const uid=CU?.id;
-        await sb.auth.signOut();
-        if(uid)sessionStorage.removeItem('cp_'+uid);
-        CU=null;CP=null;
-        window.location.replace('https://ceemediconepal.xyz/cee/login.html');
-      },
-      'Proceed & Sign Out',
-      true
-    );
-    return;
-  }
-  const uid=CU?.id;
-  await sb.auth.signOut();
-  if(uid)sessionStorage.removeItem('cp_'+uid);
-  CU=null;CP=null;
-  window.location.replace('https://ceemediconepal.xyz/cee/login.html');
-}
-
-// ══════════════════════════════════════════════
-// APP INIT
-// ══════════════════════════════════════════════
-function initApp(){
-  document.getElementById('loading-screen').style.display='none';
-  document.getElementById('app').style.display='block';
-  const ini=(CP.full_name||'N').split(' ').map(w=>w[0]).join('').toUpperCase().slice(0,2);
-  document.getElementById('sb-av').textContent=ini;
-  document.getElementById('sb-uname').textContent=CP.full_name||CP.email;
-  document.getElementById('sb-urole').textContent=CP.role;
-  document.getElementById('dash-greeting').textContent=CP.full_name?.split(' ')[0]||'there';
-  if(CP.role==='admin'){
-    document.getElementById('admin-sb-section').style.display='block';
-    document.getElementById('admin-nav-btn').classList.remove('hidden');
-  }
-  setupTabDetection();
-  startClock();
-  Promise.all([loadQuizTree(),loadSchedulesData(),loadDashboard()]);
-}
-
-function startClock(){
-  setInterval(()=>{
-    document.getElementById('tb-clock').textContent=new Date().toLocaleTimeString('en-US',{hour:'2-digit',minute:'2-digit',second:'2-digit'});
-  },1000);
-}
-
-// ══════════════════════════════════════════════
-// NAVIGATION
-// ══════════════════════════════════════════════
-const pgTitles={dashboard:'⚡ Dashboard',schedule:'📅 Scheduled Exams',quiz:'🎯 Take Quiz',results:'📊 My Results',leaderboard:'🏆 Leaderboard',admin:'⚙️ Admin Panel'};
-function goTo(pg){
-  if(quizState){toast('Finish or quit the current quiz first','warn');return;}
-  closeReview();
-  document.querySelectorAll('.page').forEach(p=>p.classList.remove('act'));
-  document.querySelectorAll('.sb-item').forEach(n=>n.classList.remove('act'));
-  document.getElementById('pg-'+pg)?.classList.add('act');
-  document.querySelectorAll(`[data-pg="${pg}"]`).forEach(n=>n.classList.add('act'));
-  document.getElementById('topbar-title').textContent=pgTitles[pg]||pg;
-  closeSb();
-  if(pg==='results')loadResults();
-  if(pg==='leaderboard')loadLeaderboard();
-  if(pg==='admin'){loadAdminStats();loadAdminUsers();loadAdminQuizzes();populateSchedQuizSelect();}
-}
-function openSb(){document.getElementById('sidebar').classList.add('open');document.getElementById('sb-overlay').classList.add('open');}
-function closeSb(){document.getElementById('sidebar').classList.remove('open');document.getElementById('sb-overlay').classList.remove('open');}
-function closeModal(id){document.getElementById(id).classList.remove('open');}
-
-// ══════════════════════════════════════════════
-// DASHBOARD
-// ══════════════════════════════════════════════
-async function loadDashboard(){
-  try{
-    const[{data:qs},{data:ats}]=await Promise.all([
-      sb.from('quizzes').select('id,subject'),
-      sb.from('attempts').select('*').eq('user_id',CU.id).order('created_at',{ascending:false})
-    ]);
-    allAttempts=ats||[];
-    const subjects=[...new Set((qs||[]).map(q=>q.subject))];
-    document.getElementById('st-subjects').textContent=subjects.length;
-    document.getElementById('st-quizzes').textContent=(qs||[]).length;
-    document.getElementById('st-attempts').textContent=allAttempts.length;
-    const avg=allAttempts.length?Math.round(allAttempts.reduce((s,a)=>s+a.percentage,0)/allAttempts.length):null;
-    const best=allAttempts.length?Math.max(...allAttempts.map(a=>a.percentage)):null;
-    document.getElementById('st-avg').textContent=avg!=null?avg+'%':'—';
-    document.getElementById('st-best').textContent=best!=null?best+'%':'—';
-    
-    // Recent activity
-    const rl=document.getElementById('recent-list');
-    if(!allAttempts.length){
-      rl.innerHTML='<div class="empty-state"><div class="empty-icon">📋</div><div class="empty-title">No attempts yet</div><div class="empty-sub">Take a quiz to get started</div></div>';
-    } else {
-      rl.innerHTML=allAttempts.slice(0,5).map(a=>{
-        const col=a.percentage>=75?'var(--ok)':a.percentage>=50?'var(--warn)':'var(--err)';
-        return`<div class="history-item">
-          <div>
-            <div style="font-size:13px;font-weight:600">${esc(a.subject)} › ${esc(a.set)}</div>
-            <div style="font-size:11px;color:var(--text3)">${new Date(a.created_at).toLocaleDateString('en-US',{month:'short',day:'numeric',hour:'2-digit',minute:'2-digit'})}</div>
-          </div>
-          <div style="text-align:right; display:flex; align-items:center; gap:12px;">
-            <div style="text-align:right">
-              <div style="font-family:var(--display);font-weight:700;color:${col}">${a.percentage}%</div>
-              <div style="font-size:11px;color:var(--text3)">${a.score}/${a.total}</div>
-            </div>
-            <button class="btn btn-ghost btn-xs" onclick="openReviewDirect('${a.quiz_id}')">📖 Solutions</button>
-          </div>
-        </div>`;
-      }).join('');
-    }
-    
-    // Dash schedules
-    const live=allSchedules.filter(s=>getSchedStatus(s)==='live');
-    const today=allSchedules.filter(s=>getSchedStatus(s)==='today');
-    const upcoming=allSchedules.filter(s=>getSchedStatus(s)==='upcoming').slice(0,2);
-    const dashScheds=[...live,...today,...upcoming].slice(0,4);
-    const ds=document.getElementById('dash-schedules');
-    if(!dashScheds.length){
-      ds.innerHTML='<div class="empty-state"><div class="empty-icon">📅</div><div class="empty-title">No scheduled exams</div></div>';
-    } else {
-      ds.innerHTML=dashScheds.map(s=>{
-        const st=getSchedStatus(s);
-        const start=new Date(s.start_time);
-        const end=new Date(s.end_time);
-        
-        // Exact Match: Check if attempt fell exactly in the exam's schedule window
-        const hasAttempted = allAttempts.some(a => {
-          if (a.quiz_id !== s.quiz_id) return false;
-          const attemptTime = new Date(a.created_at).getTime();
-          return attemptTime >= start.getTime() && attemptTime <= end.getTime();
-        });
-        
-        const schedBadge = hasAttempted ? '<span class="badge b-pulse">✓ Completed</span>' : `<span class="badge ${st==='live'?'b-ok':st==='today'?'b-warn':'b-blue'}">${st}</span>`;
-        return`<div class="history-item" style="cursor:pointer" onclick="goTo('schedule')">
-          <div><div style="font-size:13px;font-weight:600">${esc(s.title)}</div>
-          <div style="font-size:11px;color:var(--text3)">${start.toLocaleDateString('en-US',{month:'short',day:'numeric'})} · ${start.toLocaleTimeString('en-US',{hour:'2-digit',minute:'2-digit'})}</div></div>
-          ${schedBadge}
-        </div>`;
-      }).join('');
-    }
-  }catch(e){console.error(e);}
-}
-
-// ══════════════════════════════════════════════
-// SCHEDULES
-// ══════════════════════════════════════════════
-async function loadSchedulesData(){
-  try {
-    const {data, error}=await sb.from('schedules').select('*,quizzes(id,subject,chapter,set,questions)').order('start_time');
-    if(error)throw error;
-    allSchedules=data||[];
-    
-    const subjects=[...new Set(allSchedules.map(s=>s.quizzes?.subject).filter(Boolean))].sort();
-    const sf=document.getElementById('sched-subj-filter');
-    sf.innerHTML='<option value="">All Subjects</option>';
-    subjects.forEach(s=>{const o=document.createElement('option');o.value=s;o.textContent=s;sf.appendChild(o);});
-    
-    const lf=document.getElementById('lb-quiz-filter');
-    lf.innerHTML='<option value="">All Quizzes</option>';
-    allSchedules.forEach(s=>{const o=document.createElement('option');o.value=s.id;o.textContent=`${s.quizzes?.subject||'?'} › ${s.quizzes?.set||'?'}`;lf.appendChild(o);});
-    renderScheduleCards();
-  }catch(e){console.error(e);}
-  setInterval(renderScheduleCards,30000);
-}
-
-function getSchedStatus(s){
-  const now=new Date();const start=new Date(s.start_time);const end=new Date(s.end_time);
-  if(now<start){return start.toDateString()===now.toDateString()?'today':'upcoming';}
-  if(now>=start&&now<=end)return 'live';
-  return 'ended';
-}
-
-function setSchedFilter(val,btn){
-  schedFilter=val;
-  document.querySelectorAll('#sched-filter-tabs .admin-tab').forEach(t=>t.classList.remove('act'));
-  btn.classList.add('act');
-  renderScheduleCards();
-}
-
-function renderScheduleCards(){
-  const subj=document.getElementById('sched-subj-filter').value;
-  const search=document.getElementById('sched-search').value.toLowerCase();
-  Object.values(schedCdIntervals).forEach(clearInterval);schedCdIntervals={};
-  
-  let filtered=allSchedules.filter(s=>{
-    const st=getSchedStatus(s);
-    const mFilter=schedFilter==='all'||st===schedFilter;
-    const mSubj=!subj||s.quizzes?.subject===subj;
-    const mSearch=!search||s.title?.toLowerCase().includes(search)||s.quizzes?.subject?.toLowerCase().includes(search);
-    return mFilter&&mSubj&&mSearch;
-  });
-  
-  const groups={live:[],today:[],upcoming:[],ended:[]};
-  filtered.forEach(s=>{const st=getSchedStatus(s);groups[st]?.push(s);});
-  
-  ['live','today','upcoming','ended'].forEach(k=>{
-    document.getElementById(`${k}-count`).textContent=groups[k].length;
-    const grid=document.getElementById(`sched-${k}-grid`);
-    const sec=document.getElementById(`sched-${k}-sec`);
-    sec.style.display=(schedFilter==='all'||schedFilter===k)?'block':'none';
-    if(!groups[k].length){
-      const msgs={live:'No live exams right now',today:'No exams today',upcoming:'No upcoming exams',ended:'No ended exams'};
-      grid.innerHTML=`<div class="empty-state"><div class="empty-icon">${{live:'😴',today:'📅',upcoming:'🗓️',ended:'📦'}[k]}</div><div class="empty-title">${msgs[k]}</div></div>`;
-      return;
-    }
-    grid.innerHTML=groups[k].map(s=>buildSchedCard(s,k)).join('');
-    groups[k].forEach(s=>{if(k!=='ended')startSchedCd(s,k);});
-  });
-  renderMath(document.getElementById('pg-schedule'));
-}
-
-function buildSchedCard(s,status){
-  const quiz=s.quizzes||{};const qCount=(quiz.questions||[]).length;
-  const start=new Date(s.start_time);const end=new Date(s.end_time);
-  const fmtDate=d=>d.toLocaleDateString('en-US',{weekday:'short',month:'short',day:'numeric'});
-  const fmtTime=d=>d.toLocaleTimeString('en-US',{hour:'2-digit',minute:'2-digit'});
-  
-  // Exact validation: Check if completed during the scheduled slot itself
-  const hasAttempted = allAttempts.some(a => {
-    if (a.quiz_id !== quiz.id) return false;
-    const attemptTime = new Date(a.created_at).getTime();
-    return attemptTime >= start.getTime() && attemptTime <= end.getTime();
-  });
-  
-  let statusBadge = '';
-  let borderStripeCls = status;
-  
-  if (hasAttempted) {
-    statusBadge = '<span class="badge b-pulse">✓ ATTEMPTED</span>';
-    borderStripeCls = 'completed';
-  } else {
-    statusBadge = {live:'<span class="badge b-ok">🟢 LIVE</span>',today:'<span class="badge b-warn">⭐ TODAY</span>',upcoming:'<span class="badge b-blue">🔜 SOON</span>',ended:'<span class="badge b-gray">✅ ENDED</span>'}[status];
-  }
-  
-  let cdHtml='';
-  if(status==='live' && !hasAttempted){
-    const elapsed=Date.now()-start.getTime();const total=end.getTime()-start.getTime();
-    const pct=Math.min(100,Math.max(0,Math.round((elapsed/total)*100)));
-    cdHtml=`<div class="cd-box"><div class="cd-label">In Progress</div><div class="cd-live"><div class="cd-dot-live"></div>Live · ends ${fmtTime(end)}</div><div style="height:4px;background:var(--rim);border-radius:2px;margin-top:8px;overflow:hidden"><div style="height:100%;width:${pct}%;background:linear-gradient(90deg,var(--ok),var(--neon));border-radius:2px"></div></div></div>`;
-  } else if (hasAttempted) {
-    cdHtml=`<div class="cd-box" style="border-color:rgba(168,85,247,0.3); background:rgba(168,85,247,0.03)"><div class="cd-label" style="color:var(--pulse)">Exam Completed</div><div style="font-size:12px;color:var(--text2)">You have completed this exam. Check solutions and detailed performance explanations.</div></div>`;
-  } else if (status==='ended'){
-    cdHtml=`<div class="cd-box"><div class="cd-label">Exam Ended</div><div style="font-size:12px;color:var(--text3)">${fmtDate(end)} · ${fmtTime(end)}</div></div>`;
-  } else {
-    cdHtml=`<div class="cd-box"><div class="cd-label">${status==='today'?'Starts today in':'Countdown'}</div><div class="cd-digits"><div class="cd-unit"><span class="cd-num" id="cdd-${s.id}">--</span><span class="cd-lbl">Days</span></div><span class="cd-sep">:</span><div class="cd-unit"><span class="cd-num" id="cdh-${s.id}">--</span><span class="cd-lbl">Hrs</span></div><span class="cd-sep">:</span><div class="cd-unit"><span class="cd-num" id="cdm-${s.id}">--</span><span class="cd-lbl">Min</span></div><span class="cd-sep">:</span><div class="cd-unit"><span class="cd-num" id="cds-${s.id}">--</span><span class="cd-lbl">Sec</span></div></div></div>`;
-  }
-  
-  let actionBtn = '';
-  if (hasAttempted) {
-    actionBtn = `<button class="btn btn-neon btn-sm" onclick="openReviewDirect('${quiz.id}')">📖 Solutions</button>`;
-  } else if (status === 'live') {
-    actionBtn = `<button class="btn btn-volt btn-sm" onclick="openTakeExamModal('${s.id}')">▶ Start</button>`;
-  } else if (status === 'ended') {
-    actionBtn = `<button class="btn btn-ghost btn-sm" disabled>Closed</button>`;
-  } else {
-    actionBtn = `<button class="btn btn-ghost btn-sm" disabled>🔒 Locked</button>`;
-  }
-  
-  return`<div class="sched-card"><div class="sched-stripe ${borderStripeCls}"></div><div class="sched-body">
-    <div class="sched-status-badges">${statusBadge}<span class="badge b-neon">📘 ${esc(quiz.subject||'?')}</span>${s.duration_minutes?`<span class="badge b-blue">⏱ ${s.duration_minutes}m</span>`:''}</div>
-    <div class="sched-title">${esc(s.title||`${quiz.subject} — ${quiz.set}`)}</div>
-    <div class="sched-sub">${esc(quiz.chapter||'')}${quiz.set?' › '+esc(quiz.set):''}</div>
-    <div class="sched-meta">
-      <div class="meta-row"><span class="meta-icon">📅</span>${fmtDate(start)}</div>
-      <div class="meta-row"><span class="meta-icon">🕐</span>${fmtTime(start)} → ${fmtTime(end)}</div>
-      <div class="meta-row"><span class="meta-icon">📝</span>${qCount} Questions</div>
-      ${s.instructions?`<div class="meta-row"><span class="meta-icon">ℹ️</span><span style="font-size:11px">${esc(s.instructions)}</span></div>`:''}
-    </div>
-    ${cdHtml}
-  </div><div class="sched-footer"><span style="font-size:11px;color:var(--text3)">ID:${s.id.slice(0,6)}…</span>${actionBtn}</div></div>`;
-}
-
-function startSchedCd(s,status){
-  const target=new Date(s.start_time);
-  function tick(){
-    const diff=target-new Date();
-    if(diff<=0){clearInterval(schedCdIntervals[s.id]);setTimeout(loadSchedulesData,500);return;}
-    const d=Math.floor(diff/86400000);const h=Math.floor((diff%86400000)/3600000);
-    const m=Math.floor((diff%3600000)/60000);const sec=Math.floor((diff%60000)/1000);
-    const p=n=>String(n).padStart(2,'0');
-    const el=(id)=>document.getElementById(id);
-    if(el(`cdd-${s.id}`)){el(`cdd-${s.id}`).textContent=p(d);el(`cdh-${s.id}`).textContent=p(h);el(`cdm-${s.id}`).textContent=p(m);el(`cds-${s.id}`).textContent=p(sec);}
-    if(d===0&&h===0&&m<10){[`cdd-${s.id}`,`cdh-${s.id}`,`cdm-${s.id}`,`cds-${s.id}`].forEach(id=>{if(el(id))el(id).style.color=m<1?'var(--err)':'var(--warn)';});}
-  }
-  tick();schedCdIntervals[s.id]=setInterval(tick,1000);
-}
-
-function openTakeExamModal(schedId){
-  const s=allSchedules.find(x=>x.id===schedId);if(!s)return;
-  const quiz=s.quizzes||{};
-  const start=new Date(s.start_time);const end=new Date(s.end_time);
-  
-  // Exact validation for locked slot
-  const hasAttempted = allAttempts.some(a => {
-    if (a.quiz_id !== quiz.id) return false;
-    const attemptTime = new Date(a.created_at).getTime();
-    return attemptTime >= start.getTime() && attemptTime <= end.getTime();
-  });
-
-  if(hasAttempted) {
-    toast('You have already taken this exam! Each schedule can only be completed once.','warn');
-    return;
-  }
-  
-  document.getElementById('take-exam-modal-title').textContent=s.title||'Start Exam';
-  document.getElementById('take-exam-modal-body').innerHTML=`
-    <div style="background:var(--ink2);border-radius:var(--r-sm);padding:16px;margin-bottom:14px">
-      <div style="font-size:14px;font-weight:600;margin-bottom:10px">${esc(s.title)}</div>
-      <div style="display:flex;flex-direction:column;gap:7px;font-size:13px;color:var(--text2)">
-        <div>📘 Subject: <strong>${esc(quiz.subject)}</strong></div>
-        <div>📖 Chapter: <strong>${esc(quiz.chapter||'—')}</strong></div>
-        <div>📝 Questions: <strong>${(quiz.questions||[]).length}</strong></div>
-        ${s.duration_minutes?`<div>⏱ Duration: <strong>${s.duration_minutes} minutes</strong></div>`:''}
-      </div>
-    </div>
-    <div class="notice notice-warn">⚠️ You can only attempt this exam ONCE. Your session will be logged.</div>
-    ${s.instructions?`<div class="notice notice-warn">⚠️ ${esc(s.instructions)}</div>`:''}
-    <div class="notice notice-info">ℹ️ Tab switching will be flagged. Good luck!</div>`;
-  document.getElementById('take-exam-confirm-btn').onclick=()=>{
-    closeModal('take-exam-modal');
-    const q={id:quiz.id||schedId,...quiz};
-    launchQuizDirect(q);
-  };
-  document.getElementById('take-exam-modal').classList.add('open');
-}
-
-// ══════════════════════════════════════════════
-// QUIZ TREE
-// ══════════════════════════════════════════════
-async function loadQuizTree(){
-  try{
-    document.getElementById('quiz-tree-wrap').innerHTML='<div class="empty-state"><div class="empty-icon">⏳</div><div class="empty-title">Loading quizzes…</div></div>';
-    const{data,error}=await sb.from('quizzes').select('*').order('subject').order('chapter').order('set');
-    if(error)throw error;
-    allQuizzes=data||[];
-    renderQuizTree();
-    populateLbFilters();
-  }catch(e){console.error(e);}
-}
-
-function renderQuizTree(){
-  const wrap=document.getElementById('quiz-tree-wrap');
-  if(!allQuizzes.length){wrap.innerHTML='<div class="empty-state"><div class="empty-icon">📚</div><div class="empty-title">No quizzes available</div><div class="empty-sub">Admin has not uploaded any quizzes yet</div></div>';return;}
-  const tree={};
-  allQuizzes.forEach(q=>{if(!tree[q.subject])tree[q.subject]={};if(!tree[q.subject][q.chapter||'General'])tree[q.subject][q.chapter||'General']=[];tree[q.subject][q.chapter||'General'].push(q);});
-  let html='<div class="quiz-tree">';
-  for(const[subj,chapters] of Object.entries(tree)){
-    const sid=`s_${subj.replace(/\W/g,'_')}`;const total=Object.values(chapters).flat().length;
-    html+=`<div class="subject-node"><div class="subj-hd" onclick="toggleNode('${sid}')"><div class="subj-name">📘 ${esc(subj)}</div><div class="flex-r" style="gap:8px"><span class="subj-count">${total} sets</span><span class="chevron" id="chv_${sid}">▼</span></div></div><div class="chap-list" id="${sid}" style="display:none">`;
-    for(const[chap,sets] of Object.entries(chapters)){
-      const cid=`c_${subj}_${chap}`.replace(/\W/g,'_');
-      html+=`<div class="chap-node"><div class="chap-hd" onclick="toggleNode('${cid}')"><span>📖 ${esc(chap)}</span><span class="chevron" id="chv_${cid}">▼</span></div><div class="set-list" id="${cid}" style="display:none">`;
-      sets.forEach(s=>{
-        const attempted = allAttempts.some(a => a.quiz_id === s.id);
-        const actionLabel = attempted ? 'PRACTICE' : 'START';
-        const actionCls = 'style="color:var(--neon);font-weight:700"';
-        html+=`<div class="set-item" onclick="startQuiz('${s.id}')">
-          <span>📝 ${esc(s.set)} ${attempted ? '<span class="chip" style="margin-left:6px; background:rgba(0, 245, 212, 0.1); border-color:rgba(0, 245, 212, 0.2); color:var(--neon)">Taken</span>' : ''}</span>
-          <div class="flex-r gap-2">
-            <span class="chip">${(s.questions||[]).length} Qs</span>
-            ${s.difficulty?`<span class="badge ${s.difficulty==='Easy'?'b-ok':s.difficulty==='Hard'?'b-err':'b-warn'}">${s.difficulty}</span>`:''}
-            <span ${actionCls}>${actionLabel} →</span>
-          </div>
-        </div>`;
-      });
-      html+=`</div></div>`;
-    }
-    html+=`</div></div>`;
-  }
-  html+='</div>';
-  wrap.innerHTML=html;
-  renderMath(wrap);
-}
-
-function toggleNode(id){
-  const el=document.getElementById(id);const chv=document.getElementById('chv_'+id);
-  const open=el.style.display!=='none';
-  el.style.display=open?'none':'block';
-  if(chv){chv.style.transform=open?'':'rotate(180deg)';}
-}
-
-// ══════════════════════════════════════════════
-// QUIZ ENGINE
-// ══════════════════════════════════════════════
-function startQuiz(quizId){
-  const quiz=allQuizzes.find(q=>q.id===quizId);
-  if(!quiz){toast('Quiz not found','err');return;}
-  if(!quiz.questions?.length){toast('This quiz has no questions','warn');return;}
-  
-  // Routing: Scheduled exams are active lockouts. Regular quizzes have infinite attempts.
-  const activeSchedule = allSchedules.find(s => s.quiz_id === quizId && getSchedStatus(s) === 'live');
-  const attempted = allAttempts.some(a => a.quiz_id === quizId);
-  
-  if (activeSchedule) {
-    const sStart = new Date(activeSchedule.start_time);
-    const sEnd = new Date(activeSchedule.end_time);
-    const completedDuringExam = allAttempts.some(a => {
-      if (a.quiz_id !== quizId) return false;
-      const t = new Date(a.created_at).getTime();
-      return t >= sStart.getTime() && t <= sEnd.getTime();
-    });
-
-    if (completedDuringExam) {
-      toast('This is an active scheduled exam and you have already completed your attempt.', 'err');
-      openReviewDirect(quizId);
-      return;
-    }
-    openTakeExamModal(activeSchedule.id);
-    return;
-  }
-  
-  // For Practice Mode: choice to retake or review solution guides
-  if (attempted) {
-    document.getElementById('choice-modal-setname').textContent = `${quiz.subject} — ${quiz.set}`;
-    
-    document.getElementById('choice-btn-retake').onclick = () => {
-      closeModal('choice-modal');
-      launchQuizDirect(quiz);
-    };
-    
-    document.getElementById('choice-btn-review').onclick = () => {
-      closeModal('choice-modal');
-      openReviewDirect(quizId);
-    };
-    
-    document.getElementById('choice-modal').classList.add('open');
-  } else {
-    launchQuizDirect(quiz);
-  }
-}
-
-function launchQuizDirect(quiz){
-  // Safety validation
-  const activeSchedule = allSchedules.find(s => s.quiz_id === quiz.id && getSchedStatus(s) === 'live');
-  if (activeSchedule) {
-    const sStart = new Date(activeSchedule.start_time);
-    const sEnd = new Date(activeSchedule.end_time);
-    const completedDuringExam = allAttempts.some(a => {
-      if (a.quiz_id !== quiz.id) return false;
-      const t = new Date(a.created_at).getTime();
-      return t >= sStart.getTime() && t <= sEnd.getTime();
-    });
-    if (completedDuringExam) {
-      toast('You have already submitted an attempt for this active scheduled exam!', 'err');
-      openReviewDirect(quiz.id);
-      return;
-    }
-  }
-
-  quizState={quiz,questions:quiz.questions,current:0,answers:new Array(quiz.questions.length).fill(null),startTime:Date.now()};
-  quizSecs=0;tabWarnCount=0;
-  document.getElementById('quiz-screen').style.display='block';
-  document.body.style.overflow='hidden';
-  clearInterval(quizTimer);
-  quizTimer=setInterval(()=>{
-    quizSecs++;
-    const m=String(Math.floor(quizSecs/60)).padStart(2,'0');const s=String(quizSecs%60).padStart(2,'0');
-    const el=document.getElementById('quiz-timer');
-    el.textContent=`⏱ ${m}:${s}`;
-    el.classList.toggle('danger',quizSecs>1800);
-  },1000);
-  renderQuestion();
-  saveQProgress();
-}
-
-function renderQuestion(){
-  const{questions,current,answers}=quizState;
-  const q=questions[current];const total=questions.length;
-  const quiz=quizState.quiz;
-  document.getElementById('q-title-display').textContent=`${quiz.subject||'Quiz'} › ${quiz.chapter||''} › ${quiz.set||''}`;
-  document.getElementById('q-progress-text').textContent=`Question ${current+1} of ${total}`;
-  document.getElementById('q-progress-fill').style.width=`${((current+1)/total)*100}%`;
-  const labels=['A','B','C','D','E'];
-  
-  const qWrap = document.getElementById('question-wrap');
-  qWrap.innerHTML=`
-    <div class="q-card">
-      <div class="q-number">Question ${current+1} of ${total}</div>
-      <div class="q-text">${esc(q.question)}</div>
-      <div class="options-list">${(q.options||[]).map((opt,i)=>`
-        <button class="opt-btn${answers[current]===i?' chosen':''}" onclick="selectAnswer(${i})">
-          <span class="opt-label">${labels[i]||i+1}</span>
-          <span>${esc(opt)}</span>
-        </button>`).join('')}
-      </div>
-    </div>`;
-  
-  // Dynamic parsing of formulas during quiz traversal
-  renderMath(qWrap);
-
-  // Dots
-  document.getElementById('q-dots').innerHTML=questions.map((_,i)=>`
-    <button class="q-dot${answers[i]!==null?' answered':''}${i===current?' current':''}" onclick="goToQ(${i})">${i+1}</button>`).join('');
-  document.getElementById('btn-prev').disabled=current===0;
-  const last=current===total-1;
-  document.getElementById('btn-next').classList.toggle('hidden',last);
-  document.getElementById('btn-submit').classList.toggle('hidden',!last);
-}
-
-function selectAnswer(idx){quizState.answers[quizState.current]=idx;renderQuestion();saveQProgress();}
-function qNext(){if(quizState.current<quizState.questions.length-1){quizState.current++;renderQuestion();}}
-function qPrev(){if(quizState.current>0){quizState.current--;renderQuestion();}}
-function goToQ(i){quizState.current=i;renderQuestion();}
-function saveQProgress(){try{sessionStorage.setItem('qp',JSON.stringify({qid:quizState.quiz.id,answers:quizState.answers,current:quizState.current,secs:quizSecs}));}catch(e){}}
-
-function confirmQuit(){
-  showCustomConfirm(
-    'Discard Current Progress?',
-    'Are you sure you want to exit? Your progress in this quiz session will not be saved.',
-    () => { exitQuiz(); },
-    'Exit & Discard',
-    true
-  );
-}
-
-function submitQuiz(){
-  const unanswered=quizState.answers.filter(a=>a===null).length;
-  if(unanswered>0) {
-    showCustomConfirm(
-      'Unanswered Questions Detected',
-      `You have ${unanswered} unanswered question(s). Submit current responses for scoring anyway?`,
-      () => { executeQuizSubmission(); },
-      'Submit Anyway',
-      false
-    );
-  } else {
-    showCustomConfirm(
-      'Submit Responses',
-      'Are you finished with all questions? Your answers will be submitted and scored.',
-      () => { executeQuizSubmission(); },
-      'Submit & End Exam',
-      false
-    );
-  }
-}
-
-async function executeQuizSubmission() {
-  clearInterval(quizTimer);
-  let score=0;
-  quizState.questions.forEach((q,i)=>{const ans=q.answer??q.correct??null;if(quizState.answers[i]===ans)score++;});
-  const total=quizState.questions.length;const pct=Math.round((score/total)*100);
-  
-  const{error}=await sb.from('attempts').insert({
-    user_id:CU.id,
-    quiz_id:quizState.quiz.id,
-    subject:quizState.quiz.subject,
-    chapter:quizState.quiz.chapter||null,
-    set:quizState.quiz.set,
-    score,
-    total,
-    percentage:pct,
-    time_taken:quizSecs
-  });
-  
-  if(error) {
-    toast('Result save failed: '+error.message,'err');
-  } else {
-    toast('Attempt recorded successfully!', 'ok');
-  }
-  
-  lastResult={score,total,pct,secs:quizSecs,quiz:quizState.quiz,answers:quizState.answers,questions:quizState.questions};
-  
-  try {
-    localStorage.setItem(`review_${quizState.quiz.id}`, JSON.stringify({
-      answers: quizState.answers,
-      score,
-      total,
-      pct,
-      secs: quizSecs,
-      timestamp: Date.now()
-    }));
-  } catch(e) {
-    console.warn("Storage limit trigger.", e);
-  }
-  
-  sessionStorage.removeItem('qp');
-  exitQuiz();
-  
-  allAttempts.unshift({
-    user_id: CU.id,
-    quiz_id: lastResult.quiz.id,
-    subject: lastResult.quiz.subject,
-    chapter: lastResult.quiz.chapter,
-    set: lastResult.quiz.set,
-    score,
-    total,
-    percentage: pct,
-    time_taken: quizSecs,
-    created_at: new Date().toISOString()
-  });
-  
-  showResultModal(lastResult);
-  loadDashboard();
-  loadSchedulesData();
-}
-
-function exitQuiz(){clearInterval(quizTimer);quizState=null;document.getElementById('quiz-screen').style.display='none';document.body.style.overflow='';}
-
-function showResultModal(r){
-  const grade=r.pct>=90?'A+':r.pct>=80?'A':r.pct>=70?'B':r.pct>=60?'C':r.pct>=50?'D':'F';
-  const col=r.pct>=75?'#34d399':r.pct>=50?'#fbbf24':'#fb7185';
-  const stroke=r.pct>=75?'#10b981':r.pct>=50?'#f59e0b':'#f43f5e';
-  const circ=2*Math.PI*54;const dash=circ*(r.pct/100);
-  document.getElementById('result-modal-body').innerHTML=`
-    <div class="result-ring-wrap">
-      <svg class="result-ring-svg" width="140" height="140" viewBox="0 0 140 140">
-        <circle class="result-ring-bg" cx="70" cy="70" r="54"/>
-        <circle class="result-ring-fg" cx="70" cy="70" r="54" stroke="${stroke}" stroke-dasharray="${circ}" stroke-dashoffset="${circ-dash}"/>
-      </svg>
-      <div class="result-center"><div class="result-pct" style="color:${col}">${r.pct}%</div><div class="result-grade-lbl">${r.score}/${r.total}</div></div>
-    </div>
-    <div class="result-grade" style="color:${col}">${grade}</div>
-    <div style="text-align:center;font-size:13px;color:var(--text3)">${esc(r.quiz.subject)} › ${esc(r.quiz.set)}</div>
-    <div class="result-stats">
-      <div class="result-stat"><div class="result-stat-val" style="color:var(--ok)">${r.score}</div><div class="result-stat-lbl">Correct</div></div>
-      <div class="result-stat"><div class="result-stat-val" style="color:var(--err)">${r.total-r.score}</div><div class="result-stat-lbl">Wrong</div></div>
-      <div class="result-stat"><div class="result-stat-val">${Math.floor(r.secs/60)}m ${r.secs%60}s</div><div class="result-stat-lbl">Time</div></div>
-    </div>`;
-    
-  document.getElementById('btn-result-review').onclick = () => {
-    closeModal('result-modal');
-    openReviewScreen(r.quiz, { answers: r.answers, score: r.score, total: r.total, pct: r.pct, secs: r.secs });
-  };
-  document.getElementById('result-modal').classList.add('open');
-}
-
-// ══════════════════════════════════════════════
-// SOLUTIONS & EXPLANATIONS GUIDE
-// ══════════════════════════════════════════════
-async function openReviewDirect(quizId) {
-  let quiz = allQuizzes.find(q => q.id === quizId);
-  
-  if (!quiz) {
-    const schedMatch = allSchedules.find(s => s.quizzes?.id === quizId);
-    if (schedMatch?.quizzes) {
-      quiz = { id: schedMatch.quizzes.id, ...schedMatch.quizzes };
-    }
-  }
-  
-  if (!quiz) {
-    toast('Retrieving complete solutions keys from server...', 'info');
-    const { data, error } = await sb.from('quizzes').select('*').eq('id', quizId).single();
-    if (error || !data) {
-      toast('Failed to load solutions map: ' + (error?.message || 'Not found'), 'err');
-      return;
-    }
-    quiz = data;
-  }
-  
-  let cachedUserReview = null;
-  const rawRev = localStorage.getItem(`review_${quizId}`);
-  if (rawRev) {
-    try {
-      cachedUserReview = JSON.parse(rawRev);
-    } catch(e){}
-  } else {
-    const matchAttempt = allAttempts.find(a => a.quiz_id === quizId);
-    if (matchAttempt) {
-      cachedUserReview = {
-        answers: [], 
-        score: matchAttempt.score,
-        total: matchAttempt.total,
-        pct: matchAttempt.percentage,
-        secs: matchAttempt.time_taken
-      };
-    }
-  }
-  
-  openReviewScreen(quiz, cachedUserReview);
-}
-
-function openReviewScreen(quiz, userReview) {
-  activeReview = { quiz, userReview, activeFilter: 'all' };
-  
-  document.getElementById('rev-title-display').textContent = `${esc(quiz.subject)} › ${esc(quiz.set)}`;
-  document.getElementById('rev-subtitle-display').textContent = esc(quiz.chapter || 'Detailed Practice Solutions Guide');
-  
-  const statsBar = document.getElementById('rev-stats-bar');
-  if (userReview) {
-    statsBar.style.display = 'grid';
-    document.getElementById('rev-stat-pct').textContent = `${userReview.pct}%`;
-    const col = userReview.pct >= 75 ? 'var(--ok)' : userReview.pct >= 50 ? 'var(--warn)' : 'var(--err)';
-    document.getElementById('rev-stat-pct').style.color = col;
-    document.getElementById('rev-stat-score').textContent = `${userReview.score} / ${userReview.total}`;
-    document.getElementById('rev-stat-time').textContent = userReview.secs ? `${Math.floor(userReview.secs/60)}m ${userReview.secs%60}s` : '—';
-  } else {
-    statsBar.style.display = 'none'; 
-  }
-  
-  document.querySelectorAll('#rev-filter-tabs .admin-tab').forEach(t => {
-    t.classList.toggle('act', t.textContent.toLowerCase().includes('all'));
-  });
-  
-  renderReviewQuestions();
-  
-  document.getElementById('review-screen').style.display = 'block';
-  document.body.style.overflow = 'hidden';
-}
-
-function filterReviewQuestions(filterMode, btn) {
-  if (!activeReview) return;
-  activeReview.activeFilter = filterMode;
-  document.querySelectorAll('#rev-filter-tabs .admin-tab').forEach(t => t.classList.remove('act'));
-  btn.classList.add('act');
-  renderReviewQuestions();
-}
-
-function renderReviewQuestions() {
-  if (!activeReview) return;
-  const { quiz, userReview, activeFilter } = activeReview;
-  const qList = document.getElementById('review-questions-list');
-  const questions = quiz.questions || [];
-  
-  let filteredQs = [];
-  
-  questions.forEach((q, index) => {
-    const isCorrect = userReview && userReview.answers && userReview.answers[index] === (q.answer ?? q.correct);
-    const mFilter = activeFilter === 'all' || 
-                    (activeFilter === 'correct' && isCorrect) || 
-                    (activeFilter === 'incorrect' && !isCorrect);
-    if (mFilter) {
-      filteredQs.push({ q, index, isCorrect });
-    }
-  });
-  
-  if (!filteredQs.length) {
-    qList.innerHTML = `<div class="empty-state"><div class="empty-icon">📂</div><div class="empty-title">No questions matching filter rules</div></div>`;
-    return;
-  }
-  
-  const labels = ['A','B','C','D','E'];
-  qList.innerHTML = filteredQs.map(({ q, index, isCorrect }) => {
-    const correctIdx = q.answer ?? q.correct ?? 0;
-    const userSelectedIdx = userReview?.answers?.[index];
-    const hasPersonalAns = userSelectedIdx !== undefined && userSelectedIdx !== null;
-    
-    return `
-      <div class="review-q-card">
-        <div class="q-number" style="display:flex; justify-content:space-between; width:100%">
-          <span>Question ${index + 1}</span>
-          ${hasPersonalAns ? (isCorrect 
-            ? '<span class="review-badge ok">✓ Correct</span>' 
-            : '<span class="review-badge err">✕ Incorrect</span>') 
-            : '<span class="review-badge" style="background:var(--rim); color:var(--text3)">Solutions Guide</span>'}
-        </div>
-        <div class="q-text" style="margin-bottom:16px">${esc(q.question)}</div>
-        
-        <div class="options-container">
-          ${(q.options || []).map((opt, i) => {
-            let optCls = '';
-            let optSymbol = `<span class="opt-label">${labels[i]||i+1}</span>`;
-            
-            if (i === correctIdx) {
-              optCls = 'correct';
-              optSymbol = `<span class="opt-label" style="background:var(--ok); border-color:var(--ok); color:#fff">✓</span>`;
-            } else if (hasPersonalAns && i === userSelectedIdx) {
-              optCls = 'incorrect';
-              optSymbol = `<span class="opt-label" style="background:var(--err); border-color:var(--err); color:#fff">✕</span>`;
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CEE Medico Nepal - MBBS MCQ Mock Test | NEET, USMLE, CEE Practice</title>
+    <link rel="canonical" href="https://ceemediconepal.xyz/index.html" />
+
+    <meta name="description" content="Prepare for CEE and MBBS entrance exams in Nepal with CEE Medico Nepal. Practice medical quizzes, MCQs, and mock tests designed for medical aspirants.">
+    <meta name="keywords" content="CEE Medico Nepal,CEE Nepal,Cee Medical Nepal xyz quiz, medical quiz nepal,cee quiz nepal CEE Nepal 2081, CEE medical entrance, CEE entrance preparation, CEE Nepal MCQs, CEE model questions, CEE mock test Nepal, MEC entrance Nepal, Medical entrance Nepal, MEC entrance model papers, Free CEE medical practice set, Biology MCQs for CEE, Chemistry entrance questions Nepal, Physics CEE questions, Zoology MCQs for CEE, Botany MCQs for CEE, NEET-style questions Nepal, NEET-level mock test Nepal, Solved CEE model questions, CEE past year questions Nepal, Online CEE preparation Nepal, CEE 2081 biology questions and answers, How to pass CEE Nepal exam, MEC entrance science model questions, Best app for CEE preparation Nepal, ceemediconepal.xyz, CeeMedico Nepal app, ceemediconepal entrance quiz, cee nepal entrance mock test, cee entrance preparation app Nepal, practice MCQ app Nepal, cee entrance solution Nepal, cee exam 2082 online test, cee 2082 model set MBBS quiz, medical quiz, CEE entrance Nepal, medical entrance preparation, CEE Nepal MCQs, NEB entrance quiz, MBBS entrance Nepal">
+
+    <!-- Open Graph -->
+    <meta property="og:title" content="CEE Medico Nepal – Practice MCQs & Mock Tests for CEE 2081/2082">
+    <meta property="og:description" content="Nepal's leading platform for CEE medical entrance preparation. Free MCQs, quizzes, and NEET-style mock tests.">
+    <meta property="og:url" content="https://ceemediconepal.xyz/">
+    <meta property="og:type" content="website">
+    <meta property="og:image" content="https://ceemediconepal.xyz/fevicon/android-chrome-512x512.png">
+
+    <link rel="apple-touch-icon" sizes="180x180" href="/fevicon/apple-touch-icon.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="/fevicon/favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="/fevicon/favicon-16x16.png">
+    <link rel="manifest" href="/fevicon/site.webmanifest">
+
+    <!-- Tailwind CSS & Fonts -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+
+    <!-- Google AdSense & Analytics -->
+    <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-3108357597736981" crossorigin="anonymous"></script>
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-EEKWY5Y4G3"></script>
+    <script>
+        window.dataLayer = window.dataLayer || [];
+        function gtag(){dataLayer.push(arguments);}
+        gtag('js', new Date());
+        gtag('config', 'G-EEKWY5Y4G3');
+    </script>
+
+    <!-- Tailwind Config -->
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Plus Jakarta Sans', 'Inter', 'sans-serif'],
+                    },
+                    colors: {
+                        medical: {
+                            50: '#f0f9ff',
+                            100: '#e0f2fe',
+                            200: '#bae6fd',
+                            500: '#0ea5e9',
+                            600: '#0284c7',
+                            700: '#0369a1',
+                            950: '#0c4a6e',
+                        },
+                        premium: {
+                            rose: '#f43f5e',
+                            darkRose: '#be123c'
+                        }
+                    }
+                }
             }
-            
-            return `
-              <div class="review-opt ${optCls}">
-                ${optSymbol}
-                <span>${esc(opt)}</span>
-              </div>
-            `;
-          }).join('')}
-        </div>
-        
-        <div class="explanation-box">
-          <div class="explanation-hd">💡 Explanation & Rationales</div>
-          <div class="explanation-body">
-            ${q.explanation ? esc(q.explanation) : `<span style="color:var(--text3)">The correct choice is Option ${labels[correctIdx]}. Detailed rationale was not structured by authors.</span>`}
-          </div>
-        </div>
-      </div>
-    `;
-  }).join('');
-
-  // Process and typeset LaTex formula tags in solutions screen
-  renderMath(qList);
-}
-
-function closeReview() {
-  activeReview = null;
-  document.getElementById('review-screen').style.display = 'none';
-  document.body.style.overflow = '';
-}
-
-// ══════════════════════════════════════════════
-// RESULTS TABLE
-// ══════════════════════════════════════════════
-async function loadResults(){
-  const wrap=document.getElementById('results-wrap');
-  wrap.innerHTML='<div class="empty-state"><div class="empty-icon">📊</div><div class="empty-title">Loading…</div></div>';
-  const{data:ats,error}=await sb.from('attempts').select('*').eq('user_id',CU.id).order('created_at',{ascending:false});
-  if(error||!ats?.length){wrap.innerHTML='<div class="empty-state"><div class="empty-icon">📋</div><div class="empty-title">No attempts yet</div><div class="empty-sub">Take a quiz to see your results here</div></div>';return;}
-  const avg=Math.round(ats.reduce((s,a)=>s+a.percentage,0)/ats.length);
-  const best=Math.max(...ats.map(a=>a.percentage));
-  wrap.innerHTML=`
-    <div class="stat-grid mb-4">
-      <div class="stat purple"><div class="stat-icon">📝</div><div class="stat-val">${ats.length}</div><div class="stat-lbl">Total Attempts</div></div>
-      <div class="stat teal"><div class="stat-icon">⭐</div><div class="stat-val">${avg}%</div><div class="stat-lbl">Average Score</div></div>
-      <div class="stat green"><div class="stat-icon">🏆</div><div class="stat-val">${best}%</div><div class="stat-lbl">Best Score</div></div>
-    </div>
-    <div class="card">
-      <div style="font-family:var(--display);font-size:15px;font-weight:600;margin-bottom:16px">Attempt History</div>
-      <div class="tbl-wrap">
-        <table>
-          <thead><tr><th>Subject</th><th>Chapter</th><th>Set</th><th>Score</th><th>%</th><th>Time</th><th>Date</th><th>Review</th></tr></thead>
-          <tbody>${ats.map(a=>`<tr>
-            <td style="font-weight:600">${esc(a.subject)}</td>
-            <td>${esc(a.chapter||'—')}</td>
-            <td>${esc(a.set)}</td>
-            <td>${a.score}/${a.total}</td>
-            <td><span class="badge ${a.percentage>=75?'b-ok':a.percentage>=50?'b-warn':'b-err'}">${a.percentage}%</span></td>
-            <td style="font-family:var(--mono);font-size:12px;color:var(--text3)">${a.time_taken?`${Math.floor(a.time_taken/60)}m ${a.time_taken%60}s`:'—'}</td>
-            <td style="font-size:12px;color:var(--text3)">${new Date(a.created_at).toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'})}</td>
-            <td><button class="btn btn-ghost btn-xs" onclick="openReviewDirect('${a.quiz_id}')">📖 Solutions</button></td>
-          </tr>`).join('')}</tbody>
-        </table>
-      </div>
-    </div>`;
-}
-
-// ══════════════════════════════════════════════
-// LEADERBOARD
-// ══════════════════════════════════════════════
-function populateLbFilters(){
-  const sf=document.getElementById('lb-subj-filter');
-  sf.innerHTML='<option value="">All Subjects</option>';
-  const subjects=[...new Set(allQuizzes.map(q=>q.subject).filter(Boolean))].sort();
-  subjects.forEach(s=>{const o=document.createElement('option');o.value=s;o.textContent=s;sf.appendChild(o);});
-}
-
-async function loadLeaderboard(){
-  const wrap=document.getElementById('lb-wrap');
-  wrap.innerHTML='<div class="empty-state"><div class="empty-icon">🏆</div><div class="empty-title">Loading…</div></div>';
-  try{
-    const qid=document.getElementById('lb-quiz-filter').value;
-    const subj=document.getElementById('lb-subj-filter').value;
-    let q=sb.from('attempts').select('*,profiles(full_name,email)').order('percentage',{ascending:false}).order('time_taken',{ascending:true});
-    if(qid)q=q.eq('quiz_id',qid);if(subj)q=q.eq('subject',subj);
-    const{data:ats,error}=await q;
-    if(error)throw error;
-    if(!ats?.length){wrap.innerHTML='<div class="empty-state"><div class="empty-icon">🏆</div><div class="empty-title">No data yet</div></div>';return;}
-    const best={};
-    ats.forEach(a=>{const k=`${a.user_id}_${a.quiz_id||a.set}`;if(!best[k]||a.percentage>best[k].percentage||(a.percentage===best[k].percentage&&(a.time_taken||9999)<(best[k].time_taken||9999)))best[k]=a;});
-    const ranked=Object.values(best).sort((a,b)=>b.percentage-a.percentage||(a.time_taken||9999)-(b.time_taken||9999));
-    const medals=['🥇','🥈','🥉'];
-    wrap.innerHTML=`<div class="card">${ranked.slice(0,50).map((a,i)=>{
-      const name=a.profiles?.full_name||a.profiles?.email||'Unknown';
-      const rankCls=i<3?`rank-${i+1}`:'';
-      return`<div class="lb-item ${rankCls}">
-        <div class="lb-rank">${medals[i]||`#${i+1}`}</div>
-        <div><div class="lb-name">${esc(name)}</div><div class="lb-detail">${esc(a.subject)} › ${esc(a.set)}</div></div>
-        <div><div class="lb-score-val">${a.score}/${a.total}</div><div style="font-size:11px;color:var(--text3);text-align:right">${a.time_taken?`${Math.floor(a.time_taken/60)}m ${a.time_taken%60}s`:''}</div></div>
-        <span class="badge ${a.percentage>=75?'b-ok':a.percentage>=50?'b-warn':'b-err'}">${a.percentage}%</span>
-      </div>`;}).join('')}</div>`;
-  }catch(e){wrap.innerHTML='<div class="empty-state"><div class="empty-icon">⚠️</div><div class="empty-title">Load failed</div></div>';}
-}
-
-// ══════════════════════════════════════════════
-// TAB SWITCH VISIBILITY DETECTION
-// ══════════════════════════════════════════════
-function setupTabDetection(){
-  document.addEventListener('visibilitychange',()=>{
-    if(!quizState||!document.hidden)return;
-    tabWarnCount++;
-    const b=document.getElementById('tab-warn');
-    b.textContent=`⚠️ Tab switch ${tabWarnCount}/3 detected — focus violation logged`;
-    b.style.display='block';
-    toast(`Tab switch warning ${tabWarnCount}/3`,'warn');
-    setTimeout(()=>b.style.display='none',4000);
-  });
-}
-
-// ══════════════════════════════════════════════
-// ADMIN CONTROL PANEL
-// ══════════════════════════════════════════════
-function switchAdminTab(tab,btn){
-  document.querySelectorAll('#admin-main-tabs .admin-tab').forEach(t=>t.classList.remove('act'));
-  document.querySelectorAll('.admin-panel').forEach(p=>p.classList.remove('act'));
-  btn.classList.add('act');
-  document.getElementById('adm-'+tab).classList.add('act');
-  if(tab==='quizzes')loadAdminQuizzes();
-  if(tab==='users')loadAdminUsers();
-  if(tab==='schedule'){loadAdminSchedules();populateSchedQuizSelect();}
-}
-
-function switchUploadSrc(src,btn){
-  document.querySelectorAll('#upload-src-tabs .admin-tab').forEach(t=>t.classList.remove('act'));
-  btn.classList.add('act');
-  document.getElementById('up-paste-area').style.display=src==='paste'?'block':'none';
-  document.getElementById('up-file-area').style.display=src==='file'?'block':'none';
-}
-
-async function loadAdminStats(){
-  try{
-    const[{count:uc},{count:qc},{count:ac},{data:pending}]=await Promise.all([
-      sb.from('profiles').select('id',{count:'exact',head:true}),
-      sb.from('quizzes').select('id',{count:'exact',head:true}),
-      sb.from('attempts').select('id',{count:'exact',head:true}),
-      sb.from('profiles').select('id').eq('status','pending')
-    ]);
-    document.getElementById('adm-users').textContent=uc||0;
-    document.getElementById('adm-quizzes').textContent=qc||0;
-    document.getElementById('adm-attempts').textContent=ac||0;
-    document.getElementById('adm-pending').textContent=(pending||[]).length;
-    if((pending||[]).length>0){document.getElementById('pending-badge').textContent=(pending||[]).length;document.getElementById('pending-badge').style.display='inline';}
-  }catch(e){}
-}
-
-function detectAndParse(raw){
-  let data;
-  try{data=JSON.parse(raw);}catch(e){throw new Error('Invalid JSON structure: '+e.message);}
-  function normalizeQ(q){
-    let opts=q.options||[];
-    if(opts.length&&typeof opts[0]==='object'&&opts[0].text)opts=opts.map(o=>o.text);
-    let correct=q.correct??q.answer??q.correctOption??0;
-    if(typeof correct==='string'){const li='ABCDE'.indexOf(correct.toUpperCase());correct=li>=0?li:parseInt(correct)||0;}
-    return{question:q.question||'',options:opts,answer:correct,explanation:q.explanation||''};
-  }
-  if(data.correctOption!==undefined&&data.options&&Array.isArray(data.options)&&data.options[0]?.id){
-    const opts=data.options.map(o=>o.text);const c='ABCDE'.indexOf(data.correctOption.toUpperCase());
-    return{questions:[{question:data.question,options:opts,answer:c>=0?c:0,explanation:data.explanation||''}],meta:{subject:data.subject||'',chapter:data.chapter||'',set:''}};
-  }
-  if(Array.isArray(data))return{questions:data.map(normalizeQ),meta:{subject:'',chapter:'',set:''}};
-  if(data.questions&&!Array.isArray(data.questions)&&typeof data.questions==='object')
-    return{questions:Object.values(data.questions).map(normalizeQ),meta:{subject:data.subject||'',chapter:data.chapter||data.setId||'',set:data.title||data.setId||''}};
-  if(data.questions&&Array.isArray(data.questions))
-    return{questions:data.questions.map(normalizeQ),meta:{subject:data.subject||'',chapter:data.chapter||'',set:data.set||data.setId||data.examTitle||''}};
-  if(data.question&&data.options)return{questions:[normalizeQ(data)],meta:{subject:'',chapter:'',set:''}};
-  throw new Error('Format unrecognized');
-}
-
-function parseAdminJSON(){
-  const raw=document.getElementById('json-paste-input').value.trim();
-  if(!raw){toast('No JSON input','warn');return;}
-  try{
-    const{questions,meta}=detectAndParse(raw);
-    parsedQs=questions;parsedMeta=meta;
-    if(meta.subject&&!document.getElementById('up-subject').value)document.getElementById('up-subject').value=meta.subject;
-    if(meta.chapter&&!document.getElementById('up-chapter').value)document.getElementById('up-chapter').value=meta.chapter;
-    if(meta.set&&!document.getElementById('up-set').value)document.getElementById('up-set').value=meta.set;
-    const pre=document.getElementById('parse-preview-area');pre.style.display='block';
-    const labels=['A','B','C','D','E'];
-    document.getElementById('parse-summary-info').innerHTML=`<div style="display:flex;gap:8px;flex-wrap:wrap"><span class="chip" style="color:var(--neon);border-color:rgba(0,245,212,.3)">%E2%9C%85 ${questions.length} questions parsed</span>${meta.subject?`<span class="chip">📘 ${esc(meta.subject)}</span>`:''}${meta.chapter?`<span class="chip">📖 ${esc(meta.chapter)}</span>`:''}${meta.set?`<span class="chip">📝 ${esc(meta.set)}</span>`:''}</div>`;
-    document.getElementById('parse-preview-content').innerHTML=questions.slice(0,4).map((q,i)=>`
-      <div style="padding:10px;background:var(--ink2);border-radius:var(--r-sm);margin-bottom:6px;font-size:12px">
-        <div style="font-weight:600;margin-bottom:6px;color:var(--text)">Q${i+1}: ${esc(q.question)}</div>
-        <div style="display:grid;grid-template-columns:1fr 1fr;gap:4px">${q.options.map((o,j)=>`<span style="color:${j===q.answer?'var(--neon)':'var(--text2)'};">${j===q.answer?'✓':''}${labels[j]}) ${esc(o)}</span>`).join('')}</div>
-        ${q.explanation?`<div style="color:var(--text3);margin-top:5px;border-left:2px solid var(--neon);padding-left:8px">💡 ${esc(q.explanation)}</div>`:''}
-      </div>`).join('')+(questions.length>4?`<div style="text-align:center;font-size:12px;color:var(--text3);padding:8px">…and ${questions.length-4} more</div>`:'');
-    document.getElementById('upload-quiz-btn').style.display='inline-flex';
-    toast(`${questions.length} questions parsed`,'ok');
-  }catch(e){toast('Parse error: '+e.message,'err');}
-}
-
-function dOv(e){e.preventDefault();document.getElementById('drop-zone').classList.add('drag');}
-function dLv(){document.getElementById('drop-zone').classList.remove('drag');}
-function dDrop(e){e.preventDefault();dLv();const f=e.dataTransfer.files[0];if(f)readUploadFile(f);}
-function loadAdmFile(e){const f=e.target.files[0];if(f)readUploadFile(f);}
-function readUploadFile(f){
-  const r=new FileReader();
-  r.onload=ev=>{document.getElementById('json-paste-input').value=ev.target.result;switchUploadSrc('paste',document.querySelector('#upload-src-tabs .admin-tab'));parseAdminJSON();};
-  r.readAsText(f);
-}
-
-async function uploadQuiz(){
-  if(!parsedQs.length){toast('Parse JSON first','warn');return;}
-  const subject=document.getElementById('up-subject').value.trim();
-  const chapter=document.getElementById('up-chapter').value.trim();
-  const set=document.getElementById('up-set').value.trim();
-  const diff=document.getElementById('up-diff').value;
-  if(!subject||!set){toast('Subject and Set Name required','warn');return;}
-  const btn=document.getElementById('upload-quiz-btn');
-  btn.disabled=true;btn.innerHTML='<span class="spin"></span> Uploading…';
-  try{
-    const{error}=await sb.from('quizzes').insert({subject,chapter:chapter||null,set,questions:parsedQs,difficulty:diff||null});
-    if(error)throw error;
-    toast(`${parsedQs.length} questions uploaded!`,'ok');
-    clearUpload();loadQuizTree();loadAdminStats();loadAdminQuizzes();populateSchedQuizSelect();
-  }catch(e){toast('Upload failed: '+e.message,'err');}
-  finally{btn.disabled=false;btn.textContent='⬆ Upload';}
-}
-
-function clearUpload(){
-  document.getElementById('json-paste-input').value='';
-  document.getElementById('parse-preview-area').style.display='none';
-  document.getElementById('upload-quiz-btn').style.display='none';
-  ['up-subject','up-chapter','up-set'].forEach(id=>document.getElementById(id).value='');
-  document.getElementById('up-diff').value='';
-  parsedQs=[];parsedMeta={};
-}
-
-async function loadAdminQuizzes(){
-  const tbody=document.getElementById('admin-quizzes-body');
-  tbody.innerHTML='<tr><td colspan="6" class="tbl-empty">Loading…</td></tr>';
-  const{data,error}=await sb.from('quizzes').select('*').order('subject').order('chapter').order('set');
-  if(error){tbody.innerHTML=`<tr><td colspan="6" class="tbl-empty">Error: ${error.message}</td></tr>`;return;}
-  allQuizzes=data||[];renderQuizTree();populateSchedQuizSelect();
-  if(!data?.length){tbody.innerHTML='<tr><td colspan="6" class="tbl-empty">No quizzes yet</td></tr>';return;}
-  tbody.innerHTML=data.map(q=>`<tr>
-    <td style="font-weight:600">${esc(q.subject)}</td><td>${esc(q.chapter||'—')}</td><td>${esc(q.set)}</td>
-    <td><span class="chip">${(q.questions||[]).length} Qs</span></td>
-    <td>${q.difficulty?`<span class="badge ${q.difficulty==='Easy'?'b-ok':q.difficulty==='Hard'?'b-err':'b-warn'}">${q.difficulty}</span>`:'—'}</td>
-    <td><div class="flex-r gap-2">
-      <button class="btn btn-ghost btn-xs" onclick="openEditQuiz('${q.id}')">✏️ Edit</button>
-      <button class="btn btn-danger btn-xs" onclick="deleteQuiz('${q.id}')">🗑</button>
-    </div></td>
-  </tr>`).join('');
-}
-
-function openEditQuiz(id){
-  const q=allQuizzes.find(x=>x.id===id);if(!q)return;
-  document.getElementById('eq-id').value=id;
-  document.getElementById('eq-subj').value=q.subject||'';
-  document.getElementById('eq-chap').value=q.chapter||'';
-  document.getElementById('eq-set').value=q.set||'';
-  document.getElementById('eq-questions').value=JSON.stringify(q.questions||[],null,2);
-  document.getElementById('edit-quiz-modal').classList.add('open');
-}
-
-async function saveEditQuiz(){
-  const id=document.getElementById('eq-id').value;let qs;
-  try{qs=JSON.parse(document.getElementById('eq-questions').value);}catch(e){toast('Invalid JSON','err');return;}
-  const{error}=await sb.from('quizzes').update({subject:document.getElementById('eq-subj').value.trim(),chapter:document.getElementById('eq-chap').value.trim()||null,set:document.getElementById('eq-set').value.trim(),questions:qs}).eq('id',id);
-  if(error){toast('Save failed: '+error.message,'err');return;}
-  toast('Quiz updated','ok');closeModal('edit-quiz-modal');loadAdminQuizzes();loadQuizTree();
-}
-
-function deleteQuiz(id){
-  showCustomConfirm(
-    'Delete Quiz Set',
-    'Are you sure you want to permanently delete this quiz set? This action cannot be undone.',
-    async () => {
-      const{error}=await sb.from('quizzes').delete().eq('id',id);
-      if(error){toast('Delete failed: '+error.message,'err');return;}
-      toast('Quiz deleted','ok');loadAdminQuizzes();loadQuizTree();loadAdminStats();
-    },
-    'Permanently Delete',
-    true
-  );
-}
-
-// ─── Admin Schedule ───
-function populateSchedQuizSelect(){
-  const sel=document.getElementById('adm-sc-quiz');
-  sel.innerHTML='<option value="">-- Choose Quiz --</option>';
-  allQuizzes.forEach(q=>{const o=document.createElement('option');o.value=q.id;o.textContent=`${q.subject} › ${q.chapter||'—'} › ${q.set}`;sel.appendChild(o);});
-}
-
-async function loadAdminSchedules(){
-  const tbody=document.getElementById('adm-sched-body');
-  tbody.innerHTML='<tr><td colspan="6" class="tbl-empty">Loading…</td></tr>';
-  const{data,error}=await sb.from('schedules').select('*,quizzes(subject,set)').order('start_time',{ascending:false});
-  if(error){tbody.innerHTML=`<tr><td colspan="6" class="tbl-empty">Error: ${error.message}</td></tr>`;return;}
-  if(!data?.length){tbody.innerHTML='<tr><td colspan="6" class="tbl-empty">No schedules yet</td></tr>';return;}
-  const fmt=d=>new Date(d).toLocaleString('en-US',{month:'short',day:'numeric',hour:'2-digit',minute:'2-digit'});
-  tbody.innerHTML=data.map(s=>{
-    const st=getSchedStatus(s);
-    const bc={live:'b-ok',today:'b-warn',upcoming:'b-blue',ended:'b-gray'}[st];
-    return`<tr>
-      <td style="font-weight:600">${esc(s.title)}</td>
-      <td style="font-size:12px;color:var(--text2)">${esc(s.quizzes?.subject||'—')} › ${esc(s.quizzes?.set||'—')}</td>
-      <td style="font-size:12px">${fmt(s.start_time)}</td>
-      <td style="font-size:12px">${fmt(s.end_time)}</td>
-      <td><span class="badge ${bc}">${st}</span></td>
-      <td><button class="btn btn-danger btn-xs" onclick="deleteSched('${s.id}')">🗑</button></td>
-    </tr>`;}).join('');
-}
-
-async function createSchedule(){
-  const title=document.getElementById('adm-sc-title').value.trim();
-  const quizId=document.getElementById('adm-sc-quiz').value;
-  const start=document.getElementById('adm-sc-start').value;
-  const end=document.getElementById('adm-sc-end').value;
-  const dur=document.getElementById('adm-sc-dur').value;
-  const instr=document.getElementById('adm-sc-instr').value.trim();
-  const desc=document.getElementById('adm-sc-desc').value.trim();
-  if(!title||!quizId||!start||!end){toast('Fill required fields','warn');return;}
-  if(new Date(end)<=new Date(start)){toast('End must be after start','err');return;}
-  const{error}=await sb.from('schedules').insert({title,quiz_id:quizId,start_time:new Date(start).toISOString(),end_time:new Date(end).toISOString(),duration_minutes:dur?parseInt(dur):null,instructions:instr||null,description:desc||null,created_by:CU.id});
-  if(error){toast('Failed: '+error.message,'err');return;}
-  toast('Schedule created!','ok');
-  ['adm-sc-title','adm-sc-start','adm-sc-end','adm-sc-dur','adm-sc-instr','adm-sc-desc'].forEach(id=>document.getElementById(id).value='');
-  document.getElementById('adm-sc-quiz').value='';
-  loadAdminSchedules();loadSchedulesData();loadDashboard();
-}
-
-function deleteSched(id){
-  showCustomConfirm(
-    'Delete Schedule',
-    'Are you sure you want to delete this schedule? This will immediately lock users out of taking the test under this schedule block.',
-    async () => {
-      const{error}=await sb.from('schedules').delete().eq('id',id);
-      if(error){toast('Failed: '+error.message,'err');return;}
-      toast('Deleted','ok');loadAdminSchedules();loadSchedulesData();loadDashboard();
-    },
-    'Confirm Delete',
-    true
-  );
-}
-
-async function loadAdminUsers(){
-  const tbody=document.getElementById('admin-users-body');
-  tbody.innerHTML='<tr><td colspan="5" class="tbl-empty">Loading…</td></tr>';
-  const{data,error}=await sb.from('profiles').select('*').order('full_name');
-  if(error){tbody.innerHTML=`<tr><td colspan="5" class="tbl-empty">Error: ${error.message}</td></tr>`;return;}
-  if(!data?.length){tbody.innerHTML='<tr><td colspan="5" class="tbl-empty">No users</td></tr>';return;}
-  tbody.innerHTML=data.map(u=>`<tr>
-    <td style="font-weight:600">${esc(u.full_name||'—')}</td>
-    <td style="color:var(--text2)">${esc(u.email)}</td>
-    <td><span class="badge ${u.role==='admin'?'b-pulse':'b-neon'}">${u.role}</span></td>
-    <td><span class="badge ${u.status==='approved'?'b-ok':u.status==='blocked'?'b-err':'b-warn'}">${u.status||'pending'}</span></td>
-    <td><div class="flex-r" style="flex-wrap:wrap;gap:4px">
-      ${u.status!=='approved'?`<button class="btn btn-volt btn-xs" onclick="setUStatus('${u.id}','approved')">✓ Approve</button>`:''}
-      ${u.status!=='blocked'?`<button class="btn btn-danger btn-xs" onclick="setUStatus('${u.id}','blocked')">✕ Block</button>`:''}
-      ${u.role!=='admin'?`<button class="btn btn-ghost btn-xs" onclick="setURole('${u.id}','admin')">↑ Admin</button>`:`<button class="btn btn-ghost btn-xs" onclick="setURole('${u.id}','student')">↓ Student</button>`}
-    </div></td>
-  </tr>`).join('');
-}
-
-async function setUStatus(uid,status){const{error}=await sb.from('profiles').update({status}).eq('id',uid);if(error){toast(error.message,'err');return;}toast(`User status updated`,'ok');loadAdminUsers();loadAdminStats();}
-async function setURole(uid,role){const{error}=await sb.from('profiles').update({role}).eq('id',uid);if(error){toast(error.message,'err');return;}toast(`Role → ${role}`,'ok');loadAdminUsers();}
-
-// ══════════════════════════════════════════════
-// HELPERS
-// ══════════════════════════════════════════════
-function esc(s){if(s==null)return'';return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
-
-// ══════════════════════════════════════════════
-// SESSION DETECTOR & LAUNCHPAD
-// ══════════════════════════════════════════════
-const LOGIN_URL='https://ceemediconepal.xyz/cee/login.html';
-
-function showRetry(msg){
-  document.getElementById('loading-screen').innerHTML=`
-    <div style="text-align:center;padding:24px;max-width:320px">
-      <div style="font-family:'Clash Display',sans-serif;font-size:26px;font-weight:700;background:linear-gradient(135deg,#00f5d4,#38bdf8);-webkit-background-clip:text;-webkit-text-fill-color:transparent;margin-bottom:14px">CEE Medic Nepal</div>
-      <div style="color:#fb7185;font-size:13px;margin-bottom:20px;line-height:1.5">${msg}</div>
-      <button onclick="location.reload()" style="padding:11px 30px;background:linear-gradient(135deg,#00c9ae,#0ea5e9);border:none;border-radius:10px;color:#05060a;font-size:14px;font-weight:800;cursor:pointer;letter-spacing:.01em">↺ Try Again</button>
-    </div>`;
-}
-
-(async()=>{
-  try{
-    const{data:{session},error:se}=await sb.auth.getSession();
-    if(se||!session){window.location.replace(LOGIN_URL);return;}
-    CU=session.user;
-
-    try{
-      const raw=sessionStorage.getItem('cp_'+CU.id);
-      if(raw){
-        const cp=JSON.parse(raw);
-        if(cp?.status==='approved'){
-          CP=cp;
-          initApp();
-          sb.from('profiles').select('*').eq('id',CU.id).single()
-            .then(({data})=>{
-              if(data){
-                CP=data;
-                sessionStorage.setItem('cp_'+CU.id,JSON.stringify(data));
-                const ini=(CP.full_name||'N').split(' ').map(w=>w[0]).join('').toUpperCase().slice(0,2);
-                const av=document.getElementById('sb-av');if(av)av.textContent=ini;
-                const un=document.getElementById('sb-uname');if(un)un.textContent=CP.full_name||CP.email;
-              }
-            });
-          return;
         }
-      }
-    }catch(e){}
+    </script>
 
-    const{data:profile,error:pe}=await sb.from('profiles').select('*').eq('id',CU.id).single();
+    <!-- Custom Animation & Scroll Reveal Styles -->
+    <style>
+        /* Fade up scroll triggers */
+        .reveal {
+            opacity: 0;
+            transform: translateY(24px);
+            transition: all 0.8s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+        .reveal.active {
+            opacity: 1;
+            transform: translateY(0);
+        }
 
-    if(pe){
-      if(pe.code==='PGRST116'){
-        const meta=CU.user_metadata||{};
-        await sb.from('profiles').upsert({
-          id:CU.id,email:CU.email,
-          full_name:meta.full_name||meta.name||'',
-          role:'student',status:'pending'
+        /* Hero Grid Animation */
+        @keyframes gridMove {
+            0% { background-position: 0 0; }
+            100% { background-position: 40px 40px; }
+        }
+        .animated-grid {
+            background-size: 40px 40px;
+            background-image: linear-gradient(to right, rgba(14, 165, 233, 0.05) 1px, transparent 1px),
+                              linear-gradient(to bottom, rgba(14, 165, 233, 0.05) 1px, transparent 1px);
+            animation: gridMove 20s linear infinite;
+        }
+
+        /* Float effects */
+        @keyframes float {
+            0%, 100% { transform: translateY(0px); }
+            50% { transform: translateY(-10px); }
+        }
+        .animate-float {
+            animation: float 5s ease-in-out infinite;
+        }
+
+        /* Glassmorphic Navbar shadow */
+        .scrolled-header {
+            background-color: rgba(255, 255, 255, 0.85) !important;
+            backdrop-filter: blur(12px);
+            box-shadow: 0 4px 30px rgba(0, 0, 0, 0.03);
+            border-bottom: 1px solid rgba(14, 165, 233, 0.1);
+        }
+
+        /* Shimmer effect for buttons */
+        .shimmer-btn {
+            position: relative;
+            overflow: hidden;
+        }
+        .shimmer-btn::after {
+            content: '';
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: linear-gradient(45deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+            transform: rotate(45deg);
+            transition: 0.5s;
+            opacity: 0;
+        }
+        .shimmer-btn:hover::after {
+            opacity: 1;
+            left: 120%;
+            transition: all 0.8s ease-in-out;
+        }
+    </style>
+</head>
+<body class="bg-[#f8fafc] text-medical-950 font-sans antialiased overflow-x-hidden">
+
+    <!-- Floating WhatsApp Button -->
+    <button id="chatFab" aria-label="Chat on WhatsApp" class="fixed bottom-6 right-6 w-14 h-14 bg-[#25D366] text-white rounded-full flex items-center justify-center text-3xl shadow-[0_8px_30px_rgb(37,211,102,0.4)] hover:shadow-[0_8px_30px_rgb(37,211,102,0.6)] hover:scale-110 active:scale-95 transition-all duration-300 z-50 cursor-pointer group">
+        <i class="fab fa-whatsapp group-hover:rotate-12 transition-transform"></i>
+        <span class="absolute right-16 bg-[#128C7E] text-white text-xs font-semibold px-3 py-1.5 rounded-lg opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap shadow-md pointer-events-none">Get Instant Support!</span>
+    </button>
+
+    <!-- Sticky Header -->
+    <header class="sticky top-0 w-full bg-white/90 backdrop-blur-md z-40 transition-all duration-300 border-b border-medical-100" id="mainHeader">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex items-center justify-between h-20">
+
+                <!-- Logo -->
+                <a href="index.html" class="flex items-center gap-3 group">
+                    <div class="relative w-11 h-11 bg-medical-500 rounded-xl flex items-center justify-center text-white font-black text-xl shadow-lg shadow-medical-500/20 group-hover:scale-105 transition-transform overflow-hidden">
+                        <!-- Simulated logo picture fallback / fallback to styled medical emblem -->
+                        <img src="Logo.png" alt="Logo" class="w-full h-full object-cover" onerror="this.style.display='none'; document.getElementById('logoFallback').style.display='flex'">
+                        <div id="logoFallback" class="hidden absolute inset-0 items-center justify-center bg-gradient-to-tr from-medical-600 to-medical-500 font-extrabold text-white text-lg">CM</div>
+                    </div>
+                    <div>
+                        <h1 class="text-lg sm:text-xl font-extrabold text-medical-950 tracking-tight group-hover:text-medical-500 transition-colors">CEE Medico <span class="text-medical-500">Nepal</span></h1>
+                        <p class="text-[10px] sm:text-[11px] font-bold text-slate-400 tracking-wider uppercase">MBBS ENTRANCE PREP</p>
+                    </div>
+                </a>
+
+                <!-- Desktop Nav Navigation Links -->
+                <nav class="hidden md:flex items-center gap-8">
+                    <a href="index.html" class="text-sm font-semibold text-slate-600 hover:text-medical-500 transition-colors relative after:absolute after:bottom-[-4px] after:left-0 after:w-0 after:h-[2px] after:bg-medical-500 hover:after:w-full after:transition-all">Home</a>
+
+                    <!-- Dropdown for CEE subjects -->
+                    <div class="relative group">
+                        <button class="flex items-center gap-1 text-sm font-semibold text-slate-600 hover:text-medical-500 transition-colors">
+                            CEE Subjects <i class="fa-solid fa-chevron-down text-[10px] group-hover:rotate-180 transition-transform duration-200"></i>
+                        </button>
+                        <div class="absolute top-full left-1/2 -translate-x-1/2 mt-2 w-48 bg-white border border-slate-100 rounded-xl shadow-xl py-2 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-300 transform scale-95 group-hover:scale-100 z-50">
+                            <a href="physics.html" class="block px-4 py-2 text-sm text-slate-700 hover:bg-medical-50 hover:text-medical-500 transition-colors font-medium">Physics</a>
+                            <a href="chemistry.html" class="block px-4 py-2 text-sm text-slate-700 hover:bg-medical-50 hover:text-medical-500 transition-colors font-medium">Chemistry</a>
+                            <a href="botany.html" class="block px-4 py-2 text-sm text-slate-700 hover:bg-medical-50 hover:text-medical-500 transition-colors font-medium">Botany</a>
+                            <a href="zoology.html" class="block px-4 py-2 text-sm text-slate-700 hover:bg-medical-50 hover:text-medical-500 transition-colors font-medium">Zoology</a>
+                            <a href="mat.html" class="block px-4 py-2 text-sm text-slate-700 hover:bg-medical-50 hover:text-medical-500 transition-colors font-medium">MAT</a>
+                        </div>
+                    </div>
+
+                    <a href="/mbbs/mbbs-mock-test.html" class="text-sm font-semibold text-slate-600 hover:text-medical-500 transition-colors">MBBS-PG Quiz</a>
+                    <a href="Blog/blog.html" class="text-sm font-semibold text-slate-600 hover:text-medical-500 transition-colors">Blog</a>
+                    <a href="contact.html" class="text-sm font-semibold text-slate-600 hover:text-medical-500 transition-colors">Contact</a>
+                    <a href="/secure/login.html" class="shimmer-btn inline-flex items-center justify-center bg-medical-500 hover:bg-medical-600 text-white text-sm font-bold px-5 py-2.5 rounded-xl shadow-md shadow-medical-500/10 hover:shadow-medical-500/20 active:scale-95 transition-all">
+                        <i class="fa-solid fa-right-to-bracket mr-2"></i> Login
+                    </a>
+                </nav>
+
+                <!-- Mobile Menu Button -->
+                <button id="mobileMenuBtn" aria-label="Toggle menu" class="md:hidden p-2 rounded-xl text-slate-600 hover:bg-slate-100 hover:text-medical-500 transition-colors focus:outline-none">
+                    <i class="fas fa-bars text-2xl" id="menuIcon"></i>
+                </button>
+
+            </div>
+        </div>
+
+        <!-- Mobile Drawer Navigation -->
+        <div id="mobileDrawer" class="hidden md:hidden fixed inset-x-0 top-20 bg-white border-b border-slate-100 shadow-xl py-6 px-4 space-y-4 max-h-[calc(100vh-5rem)] overflow-y-auto z-40">
+            <a href="index.html" class="block text-base font-bold text-slate-700 hover:text-medical-500 px-3 py-2 rounded-lg hover:bg-slate-50 transition-colors">Home</a>
+            <div class="px-3">
+                <p class="text-xs font-semibold text-slate-400 uppercase tracking-widest mb-2">CEE Subjects</p>
+                <div class="grid grid-cols-2 gap-2">
+                    <a href="physics.html" class="block bg-slate-50 hover:bg-medical-50 text-slate-700 hover:text-medical-500 p-2.5 rounded-lg font-semibold text-sm transition-colors">Physics</a>
+                    <a href="chemistry.html" class="block bg-slate-50 hover:bg-medical-50 text-slate-700 hover:text-medical-500 p-2.5 rounded-lg font-semibold text-sm transition-colors">Chemistry</a>
+                    <a href="botany.html" class="block bg-slate-50 hover:bg-medical-50 text-slate-700 hover:text-medical-500 p-2.5 rounded-lg font-semibold text-sm transition-colors">Botany</a>
+                    <a href="zoology.html" class="block bg-slate-50 hover:bg-medical-50 text-slate-700 hover:text-medical-500 p-2.5 rounded-lg font-semibold text-sm transition-colors">Zoology</a>
+                    <a href="mat.html" class="block bg-slate-50 hover:bg-medical-50 text-slate-700 hover:text-medical-500 p-2.5 rounded-lg font-semibold text-sm transition-all col-span-2 text-center">Mental Ability (MAT)</a>
+                </div>
+            </div>
+            <a href="/mbbs/mbbs-mock-test.html" class="block text-base font-bold text-slate-700 hover:text-medical-500 px-3 py-2 rounded-lg hover:bg-slate-50 transition-colors">MBBS-PG Quiz</a>
+            <a href="Blog/blog.html" class="block text-base font-bold text-slate-700 hover:text-medical-500 px-3 py-2 rounded-lg hover:bg-slate-50 transition-colors">Medical Blog</a>
+            <a href="contact.html" class="block text-base font-bold text-slate-700 hover:text-medical-500 px-3 py-2 rounded-lg hover:bg-slate-50 transition-colors">Contact</a>
+            <a href="/secure/login.html" class="block text-center bg-medical-500 hover:bg-medical-600 text-white font-bold py-3 rounded-xl shadow-lg transition-colors">
+                <i class="fa-solid fa-right-to-bracket mr-2"></i> Login to Premium
+            </a>
+        </div>
+    </header>
+
+    <!-- Hero Section -->
+    <section class="relative overflow-hidden pt-12 pb-24 lg:pt-20 lg:pb-36 bg-gradient-to-b from-medical-50 via-white to-[#f8fafc]">
+
+        <!-- Animated Background Grid -->
+        <div class="absolute inset-0 animated-grid pointer-events-none opacity-40"></div>
+
+        <!-- Blurred Color Splashes for Depth -->
+        <div class="absolute top-1/4 left-10 w-72 h-72 bg-medical-200 rounded-full mix-blend-multiply filter blur-3xl opacity-30 animate-pulse pointer-events-none"></div>
+        <div class="absolute top-1/3 right-12 w-80 h-80 bg-rose-200 rounded-full mix-blend-multiply filter blur-3xl opacity-20 pointer-events-none" style="animation-delay: 2s"></div>
+
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative">
+            <div class="text-center max-w-4xl mx-auto space-y-6">
+
+                <!-- Tagline Badge -->
+                <span class="inline-flex items-center gap-1.5 px-4 py-2 rounded-full text-xs sm:text-sm font-bold bg-medical-100 text-medical-700 ring-1 ring-medical-200/50 animate-bounce">
+                    <span class="w-2 h-2 rounded-full bg-medical-500 animate-ping"></span>
+                    Updated syllabus for 2082 / 2083
+                </span>
+
+                <!-- Dynamic Typing Headline -->
+                <h1 class="text-4xl sm:text-5xl lg:text-6xl font-black text-slate-900 leading-none tracking-tight">
+                    Comprehensive Prep Platform for <br class="hidden sm:inline" />
+                    <span id="typingText" class="text-transparent bg-clip-text bg-gradient-to-r from-medical-500 via-medical-600 to-indigo-600">MEC CEE Nepal</span>
+                    <span class="text-indigo-600 font-normal">|</span>
+                </h1>
+
+                <p class="text-base sm:text-lg lg:text-xl text-slate-500 font-medium max-w-2xl mx-auto leading-relaxed">
+                    Master the Common Entrance Examination with Nepal's most trusted medical question banks, high-yield answers, detailed biological solutions, and live-ranked mock tests.
+                </p>
+
+                <!-- Quick Stats Badge Row -->
+                <div class="pt-6 flex flex-wrap justify-center items-center gap-4 sm:gap-8 max-w-xl mx-auto text-slate-600 font-semibold text-sm">
+                    <span class="flex items-center gap-2"><i class="fa-solid fa-file-invoice text-medical-500"></i> 50,000+ MCQs</span>
+                    <span class="flex items-center gap-2"><i class="fa-solid fa-trophy text-amber-500"></i> 100+ Premium Sets</span>
+                    <span class="flex items-center gap-2"><i class="fa-solid fa-users text-indigo-500"></i> 10,00+ Aspirants</span>
+                </div>
+
+                <!-- Primary CTA Action Anchors -->
+                <div class="pt-8 flex flex-col sm:flex-row items-center justify-center gap-4">
+
+                    <a href="/secure/protected.html" class="w-full sm:w-auto bg-premium-rose hover:bg-premium-darkRose text-white font-extrabold px-8 py-4 rounded-xl shadow-lg shadow-rose-500/10 hover:shadow-rose-500/25 hover:scale-105 active:scale-95 transition-all flex items-center justify-center gap-2">
+                        <i class="fa-solid fa-crown text-lg text-amber-300"></i> Get Premium Rs 199
+                        <a href="/quiz/" class="shimmer-btn w-full sm:w-auto bg-medical-500 hover:bg-medical-600 text-white font-extrabold px-8 py-4 rounded-xl shadow-lg shadow-medical-500/20 hover:shadow-medical-500/30 hover:scale-105 active:scale-95 transition-all flex items-center justify-center gap-2">
+                        <i class="fa-solid fa-circle-play text-lg"></i> Start Weekly Mock Test
+                    </a>
+                    </a>
+                </div>
+
+            </div>
+        </div>
+    </section>
+
+    <!-- Stats Counter Bar -->
+    <section class="relative z-10 -mt-12 max-w-6xl mx-auto px-4 sm:px-6">
+        <div class="bg-white rounded-2xl border border-slate-100 shadow-[0_15px_50px_-15px_rgba(0,0,0,0.05)] p-8 sm:p-10 grid grid-cols-2 md:grid-cols-4 gap-8 divide-y-2 md:divide-y-0 md:divide-x divide-slate-100">
+
+            <div class="flex flex-col items-center justify-center text-center p-2">
+                <span class="text-3xl sm:text-4xl font-extrabold text-medical-600 counter-value" data-target="50000">0</span>
+                <span class="text-xs sm:text-sm font-bold text-slate-400 mt-2 uppercase tracking-wider">Practice MCQs</span>
+            </div>
+
+            <div class="flex flex-col items-center justify-center text-center p-2 pt-8 md:pt-2">
+                <span class="text-3xl sm:text-4xl font-extrabold text-medical-600 counter-value" data-target="40">0</span>
+                <span class="text-xs sm:text-sm font-bold text-slate-400 mt-2 uppercase tracking-wider">Mock Exam Sets</span>
+            </div>
+
+            <div class="flex flex-col items-center justify-center text-center p-2 pt-8 md:pt-2">
+                <span class="text-3xl sm:text-4xl font-extrabold text-[#8b5cf6] counter-value" data-target="99">0</span>
+                <span class="text-xs sm:text-sm font-bold text-slate-400 mt-2 uppercase tracking-wider">%Error less</span>
+            </div>
+
+            <div class="flex flex-col items-center justify-center text-center p-2 pt-8 md:pt-2">
+                <span class="text-3xl sm:text-4xl font-extrabold text-premium-rose counter-value" data-target="199">0</span>
+                <span class="text-xs sm:text-sm font-bold text-slate-400 mt-2 uppercase tracking-wider">Rs Lifetime Access</span>
+            </div>
+
+        </div>
+    </section>
+
+    <!-- Interactive Landing Page Quiz Demonstration Widget -->
+    <section class="max-w-4xl mx-auto px-4 pt-16 reveal">
+        <div class="bg-gradient-to-tr from-indigo-950 to-medical-950 rounded-2xl p-6 sm:p-8 text-white relative overflow-hidden shadow-2xl">
+            <!-- Background element -->
+            <div class="absolute -right-20 -top-20 w-80 h-80 bg-indigo-500/10 rounded-full blur-2xl pointer-events-none"></div>
+
+            <div class="relative z-10">
+                <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2 mb-6">
+                    <div>
+                        <span class="bg-indigo-500/20 text-indigo-300 text-xs font-bold uppercase tracking-widest px-3 py-1 rounded-full ring-1 ring-indigo-500/30">
+                            Instant Practice Widget
+                        </span>
+                        <h3 class="text-xl sm:text-2xl font-extrabold mt-1">Test Your Preparation</h3>
+                    </div>
+                    <p class="text-xs font-semibold text-indigo-300 bg-white/5 px-3 py-1.5 rounded-lg">Question <span id="currentQIndex">1</span> of 3</p>
+                </div>
+
+                <!-- Progress Bar -->
+                <div class="w-full h-1.5 bg-white/10 rounded-full mb-6 overflow-hidden">
+                    <div id="quizProgress" class="h-full bg-medical-500 transition-all duration-300" style="width: 33.33%"></div>
+                </div>
+
+                <!-- Interactive Question Container -->
+                <div class="space-y-6" id="quizBody">
+                    <p id="questionText" class="text-base sm:text-lg font-semibold text-slate-100">
+                        <!-- Instantly loaded by JavaScript -->
+                    </p>
+
+                    <!-- Multiple Choices Grid -->
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-3" id="optionsBox">
+                        <!-- Choices injected here -->
+                    </div>
+
+                    <!-- Instant Feedback Bar -->
+                    <div id="feedbackBox" class="hidden p-4 rounded-xl text-sm font-semibold transition-all duration-300">
+                        <!-- Correct / Incorrect answer feedback text -->
+                    </div>
+
+                    <!-- Action Row -->
+                    <div class="flex justify-between items-center pt-2">
+                        <button id="explanationToggleBtn" class="hidden text-sm font-bold text-indigo-300 hover:text-white transition-colors underline decoration-dotted">
+                            <i class="fa-solid fa-lightbulb mr-1.5"></i> Read Explanation
+                        </button>
+                        <button id="nextQBtn" class="ml-auto bg-white text-indigo-950 hover:bg-slate-100 px-5 py-2.5 rounded-xl text-sm font-extrabold transition-all duration-200 active:scale-95 flex items-center gap-1.5">
+                            Next Question <i class="fa-solid fa-arrow-right"></i>
+                        </button>
+                    </div>
+
+                    <!-- Explanatory description card -->
+                    <div id="explanationBox" class="hidden bg-white/5 border border-white/10 p-4 rounded-xl text-sm text-slate-300 transition-all">
+                        <!-- Dynamic explanation -->
+                    </div>
+                </div>
+
+                <!-- Completion Screen -->
+                <div id="quizCompletionScreen" class="hidden text-center py-8 space-y-6">
+                    <div class="w-16 h-16 bg-emerald-500/20 text-emerald-400 rounded-full flex items-center justify-center text-3xl mx-auto ring-1 ring-emerald-500/30 animate-bounce">
+                        <i class="fa-solid fa-clipboard-check"></i>
+                    </div>
+                    <div class="space-y-2">
+                        <h4 class="text-2xl font-extrabold text-white">Quiz Completed!</h4>
+                        <p class="text-slate-300 max-w-md mx-auto">You solved the demo practice. Ready to face the real Common Entrance Exam challenge?</p>
+                    </div>
+                    <div class="pt-4 flex flex-col sm:flex-row gap-3 justify-center">
+                        <button onclick="resetDemoQuiz()" class="text-sm font-bold bg-white/10 text-white px-5 py-3 rounded-xl hover:bg-white/15 transition-all">
+                            Try Again
+                        </button>
+                        <a href="/secure/protected.html" class="text-sm font-extrabold bg-medical-500 hover:bg-medical-600 text-white px-6 py-3 rounded-xl shadow-lg transition-all">
+                            Unlock 15,000+ More MCQs
+                        </a>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    </section>
+
+    <!-- Call To Action Grid -->
+    <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16 sm:py-24 space-y-16">
+
+        <section class="grid grid-cols-1 md:grid-cols-2 gap-8">
+
+            <!-- Premium Version Card -->
+            <div class="reveal bg-white rounded-2xl border border-slate-100 shadow-xl p-6 sm:p-8 hover:-translate-y-1.5 transition-all duration-300 relative overflow-hidden group">
+                <div class="absolute top-0 right-0 bg-premium-rose text-white text-[10px] font-extrabold uppercase px-4 py-1.5 rounded-bl-xl tracking-wider">
+                    <i class="fa-solid fa-fire mr-1"></i> Best Value
+                </div>
+
+                <div class="space-y-4">
+                    <div class="w-12 h-12 bg-rose-50 rounded-xl flex items-center justify-center text-premium-rose text-xl font-bold">
+                        <i class="fa-solid fa-crown"></i>
+                    </div>
+                    <h2 class="text-2xl font-black text-slate-900 group-hover:text-medical-600 transition-colors">Unlock Premium MCQ Access</h2>
+
+                    <p class="text-slate-500 text-sm leading-relaxed">
+                        For <strong class="text-slate-800">Only Rs 199</strong>, unlock till CEE access to over <strong class="text-slate-800">50,000+ High-Yield MCQs</strong> meticulously drafted for the CEE & MBBS entrance syllabi.
+                    </p>
+
+                    <ul class="space-y-2.5 text-sm text-slate-600 pt-2 font-medium">
+                        <li class="flex items-center gap-2"><i class="fa-solid fa-circle-check text-emerald-500"></i> Smart chapter-by-chapter past years collections</li>
+                        <li class="flex items-center gap-2"><i class="fa-solid fa-circle-check text-emerald-500"></i> Detailed explanations written by medical tops</li>
+                        <li class="flex items-center gap-2"><i class="fa-solid fa-circle-check text-emerald-500"></i> 40+ set-wise diagnostic model questions</li>
+                        <li class="flex items-center gap-2"><i class="fa-solid fa-circle-check text-emerald-500"></i> Seamless tracking and real-time scores</li>
+                    </ul>
+
+                    <div class="pt-4">
+                        <a href="/secure/protected.html" class="shimmer-btn inline-flex items-center gap-2 bg-premium-rose hover:bg-premium-darkRose text-white font-extrabold px-6 py-3.5 rounded-xl w-full justify-center transition-all shadow-md shadow-rose-500/10">
+                            <i class="fas fa-crown"></i> Buy Till-CEE Access Now
+                        </a>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Free IOE Entrance Card -->
+            <div class="reveal bg-white rounded-2xl border border-slate-100 shadow-xl p-6 sm:p-8 hover:-translate-y-1.5 transition-all duration-300 relative overflow-hidden group">
+                <div class="absolute top-0 right-0 bg-emerald-500 text-white text-[10px] font-extrabold uppercase px-4 py-1.5 rounded-bl-xl tracking-wider">
+                    <i class="fa-solid fa-star mr-1"></i> Free Support
+                </div>
+
+                <div class="space-y-4">
+                    <div class="w-12 h-12 bg-emerald-50 rounded-xl flex items-center justify-center text-emerald-500 text-xl font-bold">
+                        <i class="fa-solid fa-graduation-cap"></i>
+                    </div>
+                    <h2 class="text-2xl font-black text-slate-900 group-hover:text-medical-600 transition-colors">Free IOE Entrance Prep</h2>
+
+                    <p class="text-slate-500 text-sm leading-relaxed">
+                        Gain comprehensive engineering mastery. Practice specialized <strong class="text-slate-800">Physics, Chemistry, Mathematics & English</strong> with instant analytics.
+                    </p>
+
+                    <ul class="space-y-2.5 text-sm text-slate-600 pt-2 font-medium">
+                        <li class="flex items-center gap-2"><i class="fa-solid fa-circle-check text-emerald-500"></i> Detailed IOE question sets</li>
+                        <li class="flex items-center gap-2"><i class="fa-solid fa-circle-check text-emerald-500"></i> Step-by-step calculus & algebra methods</li>
+                        <li class="flex items-center gap-2"><i class="fa-solid fa-circle-check text-emerald-500"></i> Free diagnostic mock simulations</li>
+                        <li class="flex items-center gap-2"><i class="fa-solid fa-circle-check text-emerald-500"></i> Real exam timing simulation</li>
+                    </ul>
+
+                    <div class="pt-4">
+                        <a href="/ioe" class="inline-flex items-center gap-2 bg-indigo-600 hover:bg-indigo-700 text-white font-extrabold px-6 py-3.5 rounded-xl w-full justify-center transition-all shadow-md">
+                            <i class="fas fa-graduation-cap"></i> Start IOE Practice Sets
+                        </a>
+                    </div>
+                </div>
+            </div>
+
+        </section>
+
+        <!-- Weekly Live Mock Tests Banner -->
+        <section class="reveal bg-gradient-to-r from-medical-500 to-indigo-600 rounded-3xl p-8 sm:p-12 text-white shadow-xl relative overflow-hidden group">
+
+            <!-- Graphic circle -->
+            <div class="absolute -right-16 -bottom-16 w-64 h-64 bg-white/10 rounded-full blur-2xl pointer-events-none group-hover:scale-110 transition-transform"></div>
+
+            <div class="max-w-3xl space-y-4 relative z-10">
+                <span class="bg-white/20 text-white text-xs font-bold px-3 py-1 rounded-full uppercase tracking-wider">Weekly Ranking System</span>
+                <h2 class="text-3xl sm:text-4xl font-black tracking-tight leading-none">Full Length Mock Tests & Weekly Live Exams</h2>
+                <p class="text-slate-100 text-sm sm:text-base leading-relaxed opacity-95">
+                    Compete in mock-tests modeled closely after the actual Medical Education Commission (MEC) format. Know your live standing among thousands of co-aspirants all across Nepal.
+                </p>
+                <div class="flex flex-wrap gap-4 pt-4">
+                    <span class="flex items-center gap-2 text-xs font-bold bg-white/10 px-3.5 py-2 rounded-lg"><i class="fa-solid fa-hourglass-start text-amber-300"></i> Time-bound Format</span>
+                    <span class="flex items-center gap-2 text-xs font-bold bg-white/10 px-3.5 py-2 rounded-lg"><i class="fa-solid fa-chart-line text-green-300"></i> Performance Graphing</span>
+                    <span class="flex items-center gap-2 text-xs font-bold bg-white/10 px-3.5 py-2 rounded-lg"><i class="fa-solid fa-medal text-yellow-300"></i> National Rankings</span>
+                </div>
+                <div class="pt-6">
+                    <a href="/quiz/" class="inline-flex items-center gap-2 bg-white text-indigo-950 font-black px-8 py-3.5 rounded-xl hover:bg-slate-100 active:scale-95 transition-all shadow-lg text-sm">
+                        <i class="fa-solid fa-file-waveform"></i> Join Weekly Live Test
+                    </a>
+                </div>
+            </div>
+        </section>
+
+        <section class="grid grid-cols-1 md:grid-cols-2 gap-8">
+
+            <!-- Basic Science Mock -->
+            <div class="reveal bg-gradient-to-br from-[#1e293b] to-[#0f172a] rounded-2xl border border-slate-800 p-6 sm:p-8 text-white relative overflow-hidden group">
+                <div class="absolute -right-12 -bottom-12 w-48 h-48 bg-slate-800/20 rounded-full pointer-events-none"></div>
+                <div class="space-y-4">
+                    <span class="text-xs font-bold text-slate-400 uppercase tracking-widest"><i class="fa-solid fa-flask mr-1"></i> Medical PG Prep</span>
+                    <h3 class="text-2xl font-extrabold">Basic Science Mock Test</h3>
+                    <p class="text-slate-400 text-sm leading-relaxed">
+                        Specially tailored for MS/MD Post Graduate examinations featuring high-value mock questions matching 2082 test frameworks.
+                    </p>
+                    <div class="pt-4">
+                        <a href="/mbbs/mbbs-mock-test.html" class="inline-flex items-center gap-2 bg-white/10 hover:bg-white/15 text-white font-bold px-5 py-3 rounded-xl transition-all">
+                            <i class="fa-solid fa-stethoscope"></i> Practice PG Mock
+                        </a>
+                    </div>
+                </div>
+            </div>
+
+            <!-- PAHS Mock Test -->
+            <div class="reveal bg-gradient-to-br from-indigo-950 via-[#0c4a6e] to-[#0ea5e9] rounded-2xl p-6 sm:p-8 text-white relative overflow-hidden group">
+                <div class="absolute -right-12 -bottom-12 w-48 h-48 bg-white/10 rounded-full pointer-events-none"></div>
+                <div class="space-y-4">
+                    <span class="text-xs font-bold text-sky-200 uppercase tracking-widest"><i class="fa-solid fa-building-circle-check mr-1"></i> Specialized Hospital Mock</span>
+                    <h3 class="text-2xl font-extrabold">Patan Academy (PAHS) Sets</h3>
+                    <p class="text-sky-100/80 text-sm leading-relaxed">
+                        Tackle specialized community health and logical reasoning models according to PAHS MBBS standards.
+                    </p>
+                    <div class="pt-4">
+                        <a href="/basic/mbbs.html" class="inline-flex items-center gap-2 bg-white text-indigo-950 hover:bg-slate-100 font-bold px-6 py-3 rounded-xl transition-all">
+                            Start Exam Set <i class="fa-solid fa-circle-arrow-right"></i>
+                        </a>
+                    </div>
+                </div>
+            </div>
+
+        </section>
+
+        <!-- Quiz Banner Archive -->
+        <section class="reveal bg-gradient-to-r from-indigo-600 to-[#8b5cf6] rounded-2xl p-6 sm:p-8 text-white shadow-lg relative overflow-hidden flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
+            <div class="space-y-2 max-w-xl">
+                <span class="inline-block bg-white/20 text-white text-[10px] font-bold px-2.5 py-1 rounded">ARCHIVE</span>
+                <h3 class="text-2xl font-extrabold">Challenging Mock Quiz Directory</h3>
+                <p class="text-slate-200 text-sm leading-relaxed">
+                    Identify your specific physiological, algebraic or biological weaknesses. Browse complete daily past tests for revision.
+                </p>
+            </div>
+            <a href="/quiz/cee-medico-free-quiz.html" class="inline-flex items-center justify-center bg-white text-indigo-950 hover:bg-slate-100 font-extrabold px-6 py-3.5 rounded-xl text-sm transition-all shadow-md shrink-0 w-full md:w-auto">
+                Explore Archives
+            </a>
+        </section>
+
+        <!-- Cover Grid -->
+        <section class="space-y-12 pt-12">
+            <div class="text-center space-y-2">
+                <span class="text-xs font-extrabold uppercase text-medical-500 tracking-widest">Syllabus Breakdown</span>
+                <h2 class="text-3xl sm:text-4xl font-black text-slate-900">Entrance Subjects We Cover</h2>
+                <p class="text-slate-500 text-sm sm:text-base max-w-xl mx-auto">
+                    Full Medical Education Commission (MEC) and IOE alignment.
+                </p>
+            </div>
+
+            <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
+
+                <!-- Subject Cards -->
+                <a href="physics.html" class="reveal bg-white border border-slate-100 p-5 rounded-xl hover:border-medical-500 hover:shadow-lg hover:shadow-medical-500/5 hover:-translate-y-1 transition-all group flex flex-col items-center text-center">
+                    <div class="w-12 h-12 bg-medical-50 text-medical-500 rounded-lg flex items-center justify-center text-xl group-hover:bg-medical-500 group-hover:text-white transition-colors">
+                        <i class="fa-solid fa-atom"></i>
+                    </div>
+                    <h4 class="font-bold text-slate-800 mt-4 text-sm group-hover:text-medical-500 transition-colors">Physics</h4>
+                    <p class="text-xs text-slate-400 mt-1">Mechanics & Optics</p>
+                </a>
+
+                <a href="chemistry.html" class="reveal bg-white border border-slate-100 p-5 rounded-xl hover:border-medical-500 hover:shadow-lg hover:shadow-medical-500/5 hover:-translate-y-1 transition-all group flex flex-col items-center text-center">
+                    <div class="w-12 h-12 bg-indigo-50 text-indigo-500 rounded-lg flex items-center justify-center text-xl group-hover:bg-indigo-500 group-hover:text-white transition-colors">
+                        <i class="fa-solid fa-flask-vial"></i>
+                    </div>
+                    <h4 class="font-bold text-slate-800 mt-4 text-sm group-hover:text-indigo-500 transition-colors">Chemistry</h4>
+                    <p class="text-xs text-slate-400 mt-1">Physical & Organic</p>
+                </a>
+
+                <a href="botany.html" class="reveal bg-white border border-slate-100 p-5 rounded-xl hover:border-medical-500 hover:shadow-lg hover:shadow-medical-500/5 hover:-translate-y-1 transition-all group flex flex-col items-center text-center">
+                    <div class="w-12 h-12 bg-emerald-50 text-emerald-500 rounded-lg flex items-center justify-center text-xl group-hover:bg-emerald-500 group-hover:text-white transition-colors">
+                        <i class="fa-solid fa-leaf"></i>
+                    </div>
+                    <h4 class="font-bold text-slate-800 mt-4 text-sm group-hover:text-emerald-500 transition-colors">Botany</h4>
+                    <p class="text-xs text-slate-400 mt-1">Taxonomy & Genetics</p>
+                </a>
+
+                <a href="zoology.html" class="reveal bg-white border border-slate-100 p-5 rounded-xl hover:border-medical-500 hover:shadow-lg hover:shadow-medical-500/5 hover:-translate-y-1 transition-all group flex flex-col items-center text-center">
+                    <div class="w-12 h-12 bg-rose-50 text-rose-500 rounded-lg flex items-center justify-center text-xl group-hover:bg-rose-500 group-hover:text-white transition-colors">
+                        <i class="fa-solid fa-dna"></i>
+                    </div>
+                    <h4 class="font-bold text-slate-800 mt-4 text-sm group-hover:text-rose-500 transition-colors">Zoology</h4>
+                    <p class="text-xs text-slate-400 mt-1">Human Physiology</p>
+                </a>
+
+                <a href="mat.html" class="reveal bg-white border border-slate-100 p-5 rounded-xl hover:border-medical-500 hover:shadow-lg hover:shadow-medical-500/5 hover:-translate-y-1 transition-all group flex flex-col items-center text-center">
+                    <div class="w-12 h-12 bg-amber-50 text-amber-500 rounded-lg flex items-center justify-center text-xl group-hover:bg-amber-500 group-hover:text-white transition-colors">
+                        <i class="fa-solid fa-brain"></i>
+                    </div>
+                    <h4 class="font-bold text-slate-800 mt-4 text-sm group-hover:text-amber-500 transition-colors">MAT</h4>
+                    <p class="text-xs text-slate-400 mt-1">Mental Ability</p>
+                </a>
+
+                <a href="/ioe/mock-test.html" class="reveal bg-white border border-slate-100 p-5 rounded-xl hover:border-medical-500 hover:shadow-lg hover:shadow-medical-500/5 hover:-translate-y-1 transition-all group flex flex-col items-center text-center">
+                    <div class="w-12 h-12 bg-purple-50 text-purple-500 rounded-lg flex items-center justify-center text-xl group-hover:bg-purple-500 group-hover:text-white transition-colors">
+                        <i class="fa-solid fa-list-check"></i>
+                    </div>
+                    <h4 class="font-bold text-slate-800 mt-4 text-sm group-hover:text-purple-500 transition-colors">Sets</h4>
+                    <p class="text-xs text-slate-400 mt-1">IOE & Weekly Mock</p>
+                </a>
+                <a href="/cee/index.html" class="reveal bg-white border border-slate-100 p-5 rounded-xl hover:border-medical-500 hover:shadow-lg hover:shadow-medical-500/5 hover:-translate-y-1 transition-all group flex flex-col items-center text-center">
+                    <div class="w-12 h-12 bg-purple-50 text-purple-500 rounded-lg flex items-center justify-center text-xl group-hover:bg-purple-500 group-hover:text-white transition-colors">
+                        <i class="fa-solid fa-list-check"></i>
+                    </div>
+                    <h4 class="font-bold text-slate-800 mt-4 text-sm group-hover:text-purple-500 transition-colors">Past Questions</h4>
+                    <p class="text-xs text-slate-400 mt-1">PAST YEAR QUESTIONS</p>
+                </a>
+
+            </div>
+        </section>
+
+    </main>
+
+    <!-- Footer Section -->
+    <footer class="bg-slate-900 text-slate-300 pt-20 pb-10 border-t border-slate-800 relative">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="grid grid-cols-1 md:grid-cols-4 gap-12 mb-16">
+
+                <!-- Col 1: Bio -->
+                <div class="space-y-4">
+                    <div class="flex items-center gap-3">
+                        <div class="w-10 h-10 bg-gradient-to-tr from-medical-600 to-medical-500 rounded-xl flex items-center justify-center font-bold text-white text-lg">CM</div>
+                        <h3 class="text-lg font-black text-white">CEE Medico Nepal</h3>
+                    </div>
+                    <p class="text-slate-400 text-sm leading-relaxed">
+                        Nepal's leading premium online platform for medical and engineering competitive entrance diagnostics.
+                    </p>
+
+                    <!-- Social Icons -->
+                    <div class="flex items-center gap-3 pt-2">
+                        <a href="https://www.facebook.com/techgy.shyamsundar" class="w-9 h-9 bg-slate-800 hover:bg-medical-500 hover:text-white rounded-lg flex items-center justify-center text-sm transition-all"><i class="fab fa-facebook-f"></i></a>
+                        <a href="https://www.instagram.com/shyamsundar98122/" class="w-9 h-9 bg-slate-800 hover:bg-pink-500 hover:text-white rounded-lg flex items-center justify-center text-sm transition-all"><i class="fab fa-instagram"></i></a>
+                        <a href="https://www.youtube.com/@ceemediconepal" class="w-9 h-9 bg-slate-800 hover:bg-rose-500 hover:text-white rounded-lg flex items-center justify-center text-sm transition-all"><i class="fab fa-youtube"></i></a>
+                    </div>
+                </div>
+
+                <!-- Col 2: Navigation -->
+                <div class="space-y-4">
+                    <h3 class="text-sm font-extrabold text-white uppercase tracking-widest">Syllabus Practice</h3>
+                    <ul class="space-y-2.5 text-sm font-medium">
+                        <li><a href="physics.html" class="hover:text-medical-400 transition-colors">Physics Question Sets</a></li>
+                        <li><a href="chemistry.html" class="hover:text-medical-400 transition-colors">Chemistry Chapter Banks</a></li>
+                        <li><a href="botany.html" class="hover:text-medical-400 transition-colors">Botany Practice Sheets</a></li>
+                        <li><a href="zoology.html" class="hover:text-medical-400 transition-colors">Zoology Bio Prep</a></li>
+                        <li><a href="mat.html" class="hover:text-medical-400 transition-colors">MAT Mock Tests</a></li>
+                    </ul>
+                </div>
+
+                <!-- Col 3: Resources -->
+                <div class="space-y-4">
+                    <h3 class="text-sm font-extrabold text-white uppercase tracking-widest">Quick Navigation</h3>
+                    <ul class="space-y-2.5 text-sm font-medium">
+                        <li><a href="index.html" class="hover:text-medical-400 transition-colors">Home Dashboard</a></li>
+                        <li><a href="privacy.html" class="hover:text-medical-400 transition-colors">Privacy & Guidelines</a></li>
+                        <li><a href="Blog/blog.html" class="hover:text-medical-400 transition-colors">Medical Blog</a></li>
+                        <li><a href="contact.html" class="hover:text-medical-400 transition-colors">Contact Support</a></li>
+                        <li><a href="usmle.html" class="hover:text-medical-400 transition-colors">USMLE prep resources</a></li>
+                    </ul>
+                </div>
+
+                <!-- Col 4: Support info -->
+                <div class="space-y-4">
+                    <h3 class="text-sm font-extrabold text-white uppercase tracking-widest">Contact Support</h3>
+                    <ul class="space-y-3 text-sm text-slate-400">
+                        <li class="flex items-start gap-2.5">
+                            <i class="fas fa-map-marker-alt text-medical-500 mt-1"></i>
+                            <span>Kathmandu, Nepal</span>
+                        </li>
+                        <li class="flex items-start gap-2.5">
+                            <i class="fas fa-phone text-medical-500 mt-1"></i>
+                            <span class="hover:text-white transition-colors">+977 9812240229</span>
+                        </li>
+                        <li class="flex items-start gap-2.5">
+                            <i class="fas fa-envelope text-medical-500 mt-1"></i>
+                            <a href="mailto:avik96045@gmail.com" class="hover:text-white transition-colors break-all">avik96045@gmail.com</a>
+                        </li>
+                    </ul>
+                </div>
+
+            </div>
+
+            <!-- Copyright footer border -->
+            <div class="pt-8 border-t border-slate-800 text-center text-xs text-slate-500 flex flex-col sm:flex-row justify-between items-center gap-4">
+                <p>© 2026 CEE Medico Nepal. All Rights Reserved. Mastered with Medical Excellence.</p>
+                <div class="flex gap-4">
+                    <a href="privacy.html" class="hover:text-slate-300">Privacy Policy</a>
+                    <span class="text-slate-700">|</span>
+                    <a href="contact.html" class="hover:text-slate-300">Terms of Use</a>
+                </div>
+            </div>
+        </div>
+    </footer>
+
+    <!-- Scripts & Animations logic -->
+    <script>
+        // 1. Mobile Menu Drawer Navigation logic
+        const mobileMenuBtn = document.getElementById('mobileMenuBtn');
+        const mobileDrawer = document.getElementById('mobileDrawer');
+        const menuIcon = document.getElementById('menuIcon');
+
+        mobileMenuBtn.addEventListener('click', () => {
+            const isHidden = mobileDrawer.classList.toggle('hidden');
+            if (isHidden) {
+                menuIcon.className = "fas fa-bars text-2xl";
+            } else {
+                menuIcon.className = "fas fa-times text-2xl";
+            }
         });
-        await sb.auth.signOut();
-        sessionStorage.removeItem('cp_'+CU.id);
-        window.location.replace(LOGIN_URL+'?msg=pending');
-        return;
-      }
-      throw pe;
-    }
 
-    if(!profile){window.location.replace(LOGIN_URL);return;}
+        // Close drawer when clicking layout links
+        document.querySelectorAll('#mobileDrawer a').forEach(link => {
+            link.addEventListener('click', () => {
+                mobileDrawer.classList.add('hidden');
+                menuIcon.className = "fas fa-bars text-2xl";
+            });
+        });
 
-    if(profile.status==='blocked'){
-      await sb.auth.signOut();sessionStorage.removeItem('cp_'+CU.id);
-      window.location.replace(LOGIN_URL+'?msg=blocked');return;
-    }
-    if(profile.status!=='approved'){
-      await sb.auth.signOut();sessionStorage.removeItem('cp_'+CU.id);
-      window.location.replace(LOGIN_URL+'?msg=pending');return;
-    }
+        // 2. Sticky Glassmorphic Header shadow on scroll
+        const mainHeader = document.getElementById('mainHeader');
+        window.addEventListener('scroll', () => {
+            if (window.scrollY > 20) {
+                mainHeader.classList.add('scrolled-header');
+            } else {
+                mainHeader.classList.remove('scrolled-header');
+            }
+        });
 
-    CP=profile;
-    sessionStorage.setItem('cp_'+CU.id,JSON.stringify(profile));
-    initApp();
+        // 3. Typist text effect in the Hero title
+        const words = ["MEC CEE Nepal", "NEET-UG Exam", "USMLE Prep", "IOE Entrance"];
+        let wordIndex = 0;
+        let charIndex = 0;
+        let isDeleting = false;
+        const typingText = document.getElementById('typingText');
 
-  }catch(e){
-    console.error('Startup error:',e);
-    showRetry('Connection failed. Check your internet and try again.');
-  }
-})();
-</script>
+        function typeEffect() {
+            const currentWord = words[wordIndex];
+            if (isDeleting) {
+                typingText.textContent = currentWord.substring(0, charIndex - 1);
+                charIndex--;
+            } else {
+                typingText.textContent = currentWord.substring(0, charIndex + 1);
+                charIndex++;
+            }
+
+            let typeSpeed = isDeleting ? 40 : 100;
+
+            if (!isDeleting && charIndex === currentWord.length) {
+                typeSpeed = 2000; // Pause at full word
+                isDeleting = true;
+            } else if (isDeleting && charIndex === 0) {
+                isDeleting = false;
+                wordIndex = (wordIndex + 1) % words.length;
+                typeSpeed = 500; // Pause before writing new word
+            }
+
+            setTimeout(typeEffect, typeSpeed);
+        }
+        typeEffect();
+
+        // 4. Interactive practice Quiz Widget logic
+        const quizData = [
+            {
+                question: "Which of the following cellular organelle is responsible for synthesizing ribosomal RNA (rRNA)?",
+                options: ["Mitochondria", "Nucleolus", "Lysosome", "Golgi Apparatus"],
+                correct: 1,
+                explanation: "The nucleolus is a dense structure located within the nucleus, specifically responsible for the transcription and assembly of ribosomal RNA (rRNA)."
+            },
+            {
+                question: "The resolving power of an optical microscope depends on which of the following characteristics?",
+                options: ["Refractive index & wavelength", "Focal length of eyepiece", "Intensity of source light", "Tube length of microscope"],
+                correct: 0,
+                explanation: "According to Abbe's formula, the limit of resolution (and resolving power) depends directly on the wavelength of light used and the numerical aperture (refractive index of medium)."
+            },
+            {
+                question: "In standard nomenclature, which plant family shows the characteristic of Epipetalous stamens and Bicarpellary Syncarpous ovary?",
+                options: ["Cruciferae", "Solanaceae", "Leguminosae", "Liliaceae"],
+                correct: 1,
+                explanation: "Solanaceae family features persistent calyx, epipetalous stamens (fused to petals), and an oblique bicarpellary syncarpous superior ovary."
+            }
+        ];
+
+        let currentQuestion = 0;
+        let userHasAnswered = false;
+
+        const currentQIndexEl = document.getElementById('currentQIndex');
+        const quizProgressEl = document.getElementById('quizProgress');
+        const questionTextEl = document.getElementById('questionText');
+        const optionsBoxEl = document.getElementById('optionsBox');
+        const feedbackBoxEl = document.getElementById('feedbackBox');
+        const explanationToggleBtnEl = document.getElementById('explanationToggleBtn');
+        const explanationBoxEl = document.getElementById('explanationBox');
+        const nextQBtnEl = document.getElementById('nextQBtn');
+        const quizBodyEl = document.getElementById('quizBody');
+        const quizCompletionScreenEl = document.getElementById('quizCompletionScreen');
+
+        function loadQuestion() {
+            userHasAnswered = false;
+            explanationToggleBtnEl.classList.add('hidden');
+            explanationBoxEl.classList.add('hidden');
+            feedbackBoxEl.classList.add('hidden');
+            nextQBtnEl.classList.add('hidden');
+
+            const currentData = quizData[currentQuestion];
+            currentQIndexEl.textContent = currentQuestion + 1;
+            quizProgressEl.style.width = `${((currentQuestion + 1) / quizData.length) * 100}%`;
+            questionTextEl.textContent = currentData.question;
+
+            optionsBoxEl.innerHTML = "";
+            currentData.options.forEach((option, idx) => {
+                const btn = document.createElement('button');
+                btn.className = "w-full text-left bg-white/5 border border-white/10 p-3.5 rounded-xl text-sm font-semibold hover:bg-white/10 active:scale-[0.99] transition-all flex items-center justify-between group";
+                btn.innerHTML = `<span>${option}</span><span class="w-5 h-5 rounded-full border border-white/20 flex items-center justify-center text-xs group-hover:bg-indigo-500/20 group-hover:border-indigo-500 transition-colors">${String.fromCharCode(65 + idx)}</span>`;
+                btn.onclick = () => selectOption(idx, btn);
+                optionsBoxEl.appendChild(btn);
+            });
+        }
+
+        function selectOption(selectedIndex, selectedBtn) {
+            if (userHasAnswered) return;
+            userHasAnswered = true;
+
+            const currentData = quizData[currentQuestion];
+            const children = optionsBoxEl.children;
+
+            // Paint response colors
+            for (let i = 0; i < children.length; i++) {
+                children[i].disabled = true;
+                if (i === currentData.correct) {
+                    children[i].className = "w-full text-left bg-emerald-500/20 border-emerald-500 border-2 p-3.5 rounded-xl text-sm font-bold flex items-center justify-between text-emerald-300";
+                    children[i].querySelector('span:last-child').innerHTML = `<i class="fa-solid fa-circle-check"></i>`;
+                } else if (i === selectedIndex) {
+                    children[i].className = "w-full text-left bg-rose-500/20 border-rose-500 border-2 p-3.5 rounded-xl text-sm font-bold flex items-center justify-between text-rose-300";
+                    children[i].querySelector('span:last-child').innerHTML = `<i class="fa-solid fa-circle-xmark"></i>`;
+                } else {
+                    children[i].className = "w-full text-left bg-white/5 border border-white/10 p-3.5 rounded-xl text-sm font-semibold text-slate-400 opacity-50";
+                }
+            }
+
+            // Reveal feedback box and explanations
+            feedbackBoxEl.classList.remove('hidden');
+            if (selectedIndex === currentData.correct) {
+                feedbackBoxEl.className = "p-4 rounded-xl text-sm font-bold bg-emerald-500/10 text-emerald-400 ring-1 ring-emerald-500/20";
+                feedbackBoxEl.innerHTML = `<i class="fa-solid fa-check mr-1.5"></i> Correct choice! Exceptional work.`;
+            } else {
+                feedbackBoxEl.className = "p-4 rounded-xl text-sm font-bold bg-rose-500/10 text-rose-400 ring-1 ring-rose-500/20";
+                feedbackBoxEl.innerHTML = `<i class="fa-solid fa-circle-exclamation mr-1.5"></i> Incorrect option. Review carefully!`;
+            }
+
+            explanationBoxEl.innerHTML = `<strong class="text-white block mb-1">Explanation:</strong> ${currentData.explanation}`;
+            explanationToggleBtnEl.classList.remove('hidden');
+            nextQBtnEl.classList.remove('hidden');
+
+            if (currentQuestion === quizData.length - 1) {
+                nextQBtnEl.innerHTML = `Complete Quiz <i class="fa-solid fa-flag-checkered ml-1"></i>`;
+            } else {
+                nextQBtnEl.innerHTML = `Next Question <i class="fa-solid fa-arrow-right"></i>`;
+            }
+        }
+
+        // Toggle explanations
+        explanationToggleBtnEl.onclick = () => {
+            explanationBoxEl.classList.toggle('hidden');
+        };
+
+        // Go to next question
+        nextQBtnEl.onclick = () => {
+            if (currentQuestion < quizData.length - 1) {
+                currentQuestion++;
+                loadQuestion();
+            } else {
+                quizBodyEl.classList.add('hidden');
+                quizCompletionScreenEl.classList.remove('hidden');
+            }
+        };
+
+        // Reset quiz
+        function resetDemoQuiz() {
+            currentQuestion = 0;
+            quizBodyEl.classList.remove('hidden');
+            quizCompletionScreenEl.classList.add('hidden');
+            loadQuestion();
+        }
+
+        // Init Quiz on page load
+        resetDemoQuiz();
+
+        // 5. Scroll-driven Animations system (Fade Up & Scale triggers)
+        const revealCallback = (entries, observer) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    entry.target.classList.add('active');
+                    observer.unobserve(entry.target); // Unobserve once animated
+                }
+            });
+        };
+
+        const revealObserver = new IntersectionObserver(revealCallback, {
+            root: null,
+            threshold: 0.15,
+            rootMargin: '0px'
+        });
+
+        document.querySelectorAll('.reveal').forEach(el => {
+            revealObserver.observe(el);
+        });
+
+        // 6. Stats Counter animations
+        const countCallback = (entries, observer) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    const counter = entry.target;
+                    const targetVal = parseInt(counter.getAttribute('data-target'));
+                    let currentVal = 0;
+                    const duration = 1500; // ms
+                    const stepTime = Math.max(Math.floor(duration / targetVal), 15);
+
+                    const interval = setInterval(() => {
+                        currentVal += Math.ceil(targetVal / 50);
+                        if (currentVal >= targetVal) {
+                            counter.textContent = targetVal.toLocaleString() + (targetVal === 15000 || targetVal === 40 ? '+' : (targetVal === 98 ? '%' : ''));
+                            clearInterval(interval);
+                        } else {
+                            counter.textContent = currentVal.toLocaleString();
+                        }
+                    }, stepTime);
+
+                    observer.unobserve(counter);
+                }
+            });
+        };
+
+        const counterObserver = new IntersectionObserver(countCallback, {
+            root: null,
+            threshold: 0.1
+        });
+
+        document.querySelectorAll('.counter-value').forEach(el => {
+            counterObserver.observe(el);
+        });
+
+        // 7. Floating WhatsApp button action integration
+        document.getElementById('chatFab').addEventListener('click', () => {
+            window.open('https://wa.me/9779812240229', '_blank');
+        });
+    </script>
 </body>
 </html>
