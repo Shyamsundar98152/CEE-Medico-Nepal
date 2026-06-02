@@ -3,108 +3,514 @@
 <head>
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width,initial-scale=1.0"/>
-<title>CEE Medic Nepal — Sign In</title>
+<title>CEE Medic Nepal — Premium Student Portal</title>
+
 <!-- Supabase SDK -->
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <!-- Fonts -->
 <link href="https://fonts.googleapis.com/css2?family=Clash+Display:wght@400;500;600;700&family=Cabinet+Grotesk:wght@400;500;600;700;800&family=Fira+Code:wght@400;500&display=swap" rel="stylesheet"/>
 <!-- Icons -->
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"/>
+
 <style>
-:root{
-  --ink:#05060a;--ink2:#0b0d14;--ink3:#10121c;
-  --surface:#141720;--rim:#252a3d;--rim2:#2e3450;--rim3:#3a4168;
-  --neon:#00f5d4;--neon2:#00c9ae;--ice:#38bdf8;--ice2:#0ea5e9;
-  --pulse:#a855f7;--warn:#f59e0b;--err:#f43f5e;--ok:#10b981;
-  --text:#e2e8f8;--text2:#8892b8;--text3:#4a5478;
-  --font:'Cabinet Grotesk',sans-serif;
-  --display:'Clash Display',sans-serif;
-  --r:14px;--r-sm:8px;--r-lg:20px;--r-xl:28px;
-  --glow:0 0 20px rgba(0,245,212,.3);
-  --sh-lg:0 12px 60px rgba(0,0,0,.8);
-  --tr:.18s cubic-bezier(.4,0,.2,1);
+:root {
+  --ink: #040508;
+  --ink2: #080a10;
+  --ink3: #0e111a;
+  --surface: rgba(16, 20, 32, 0.65);
+  --surface-solid: #101420;
+  --rim: rgba(255, 255, 255, 0.06);
+  --rim-glow: rgba(0, 245, 212, 0.2);
+  --rim2: rgba(255, 255, 255, 0.12);
+  --neon: #00f5d4;
+  --neon-dim: rgba(0, 245, 212, 0.15);
+  --neon-glow: 0 0 20px rgba(0, 245, 212, 0.35);
+  --ice: #38bdf8;
+  --ice2: #0ea5e9;
+  --pulse: #a855f7;
+  --warn: #f59e0b;
+  --err: #f43f5e;
+  --ok: #10b981;
+  --text: #f1f5f9;
+  --text2: #94a3b8;
+  --text3: #475569;
+  --font: 'Cabinet Grotesk', sans-serif;
+  --display: 'Clash Display', sans-serif;
+  --r: 16px;
+  --r-sm: 10px;
+  --r-lg: 24px;
+  --sh-lg: 0 24px 60px rgba(0,0,0,0.85), inset 0 1px 0 rgba(255,255,255,0.05);
+  --tr: cubic-bezier(0.16, 1, 0.3, 1) 0.35s;
 }
-*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
-html{scroll-behavior:smooth}
-body{font-family:var(--font);background:var(--ink);color:var(--text);min-height:100vh;overflow-x:hidden;display:flex;align-items:center;justify-content:center;padding:20px}
-h1,h2,h3{font-family:var(--display)}
-button,input{font-family:var(--font)}
-::-webkit-scrollbar{width:4px}
-::-webkit-scrollbar-track{background:var(--ink2)}
-::-webkit-scrollbar-thumb{background:var(--rim2);border-radius:2px}
-::selection{background:rgba(0,245,212,.2);color:var(--neon)}
 
-#bg-canvas{position:fixed;inset:0;z-index:0;pointer-events:none;opacity:.4}
+*, *::before, *::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+html {
+  scroll-behavior: smooth;
+  height: 100%;
+}
+body {
+  font-family: var(--font);
+  background: var(--ink);
+  color: var(--text);
+  min-height: 100%;
+  overflow-x: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+  position: relative;
+}
+::-webkit-scrollbar {
+  width: 6px;
+}
+::-webkit-scrollbar-track {
+  background: var(--ink2);
+}
+::-webkit-scrollbar-thumb {
+  background: var(--text3);
+  border-radius: 4px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: var(--neon);
+}
+::selection {
+  background: rgba(0, 245, 212, 0.25);
+  color: var(--neon);
+}
 
-/* Loading overlay */
-#loading-screen{position:fixed;inset:0;background:var(--ink);z-index:999;display:flex;align-items:center;justify-content:center;flex-direction:column;gap:16px}
-.load-logo{font-family:var(--display);font-size:32px;font-weight:700;background:linear-gradient(135deg,var(--neon),var(--ice));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
-.load-spin{width:28px;height:28px;border:3px solid rgba(0,245,212,.2);border-top-color:var(--neon);border-radius:50%;animation:sp .6s linear infinite}
-@keyframes sp{to{transform:rotate(360deg)}}
+#bg-canvas {
+  position: fixed;
+  inset: 0;
+  z-index: 1;
+  pointer-events: none;
+  opacity: 0.75;
+}
 
-/* Toast */
-#toast-wrap{position:fixed;top:20px;right:20px;z-index:9999;display:flex;flex-direction:column;gap:8px;pointer-events:none}
-.toast{display:flex;align-items:center;gap:10px;padding:12px 18px;border-radius:var(--r-sm);font-size:13px;font-weight:600;min-width:260px;pointer-events:all;animation:tIn .3s ease;border:1px solid;backdrop-filter:blur(12px)}
-.toast.ok{background:rgba(16,185,129,.12);border-color:rgba(16,185,129,.4);color:#34d399}
-.toast.err{background:rgba(244,63,94,.12);border-color:rgba(244,63,94,.4);color:#fb7185}
-.toast.info{background:rgba(0,245,212,.08);border-color:rgba(0,245,212,.3);color:var(--neon)}
-.toast.warn{background:rgba(245,158,11,.1);border-color:rgba(245,158,11,.35);color:#fbbf24}
-.toast.out{animation:tOut .3s ease forwards}
-@keyframes tIn{from{opacity:0;transform:translateX(40px)}to{opacity:1;transform:none}}
-@keyframes tOut{to{opacity:0;transform:translateX(40px)}}
+#loading-screen {
+  position: fixed;
+  inset: 0;
+  background: var(--ink);
+  z-index: 9999;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-direction: column;
+  gap: 20px;
+  opacity: 1;
+  transition: opacity 0.5s cubic-bezier(0.16, 1, 0.3, 1), visibility 0.5s;
+}
+#loading-screen.hidden {
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
+}
+.load-brand {
+  text-align: center;
+  animation: pulseBrand 2s infinite ease-in-out;
+}
+@keyframes pulseBrand {
+  0%, 100% { transform: scale(0.98); opacity: 0.8; }
+  50% { transform: scale(1.02); opacity: 1; }
+}
+.load-logo {
+  font-family: var(--display);
+  font-size: 38px;
+  font-weight: 700;
+  letter-spacing: -0.5px;
+  background: linear-gradient(135deg, var(--neon), var(--ice));
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+.load-logo-sub {
+  font-size: 11px;
+  color: var(--text2);
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  margin-top: 6px;
+}
+.load-spin-container {
+  position: relative;
+  width: 44px;
+  height: 44px;
+}
+.load-spin {
+  width: 100%;
+  height: 100%;
+  border: 2px solid rgba(0, 245, 212, 0.05);
+  border-top: 2px solid var(--neon);
+  border-right: 2px solid var(--ice);
+  border-radius: 50%;
+  animation: sp 0.8s cubic-bezier(0.4, 0, 0.2, 1) infinite;
+}
+@keyframes sp {
+  to { transform: rotate(360deg); }
+}
 
-/* Auth */
-.auth-wrap{width:100%;max-width:440px;animation:authIn .6s ease;position:relative;z-index:10}
-@keyframes authIn{from{opacity:0;transform:translateY(24px)}to{opacity:1;transform:none}}
-.auth-logo-area{text-align:center;margin-bottom:32px}
-.auth-logo{font-family:var(--display);font-size:38px;font-weight:700;letter-spacing:-.5px;background:linear-gradient(135deg,var(--neon),var(--ice));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
-.auth-logo-sub{font-size:13px;color:var(--text3);margin-top:4px;letter-spacing:.08em;text-transform:uppercase}
-.auth-card{background:rgba(20,23,32,.85);border:1px solid var(--rim);border-radius:var(--r-xl);padding:36px;backdrop-filter:blur(24px);box-shadow:var(--sh-lg),inset 0 1px 0 rgba(255,255,255,.04)}
-.auth-panel{display:none;animation:panelIn .25s ease}
-.auth-panel.active{display:block}
-@keyframes panelIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
-.auth-tabs{display:flex;background:var(--ink2);border:1px solid var(--rim);border-radius:var(--r);padding:4px;margin-bottom:28px;gap:3px}
-.auth-tab{flex:1;padding:9px;border:none;background:transparent;color:var(--text3);font-size:14px;font-weight:600;border-radius:10px;cursor:pointer;transition:var(--tr);font-family:var(--font)}
-.auth-tab.active{background:linear-gradient(135deg,rgba(0,245,212,.2),rgba(56,189,248,.15));color:var(--neon);border:1px solid rgba(0,245,212,.3);box-shadow:0 0 12px rgba(0,245,212,.15)}
-.fg{margin-bottom:16px}
-.fl{display:block;font-size:12px;font-weight:700;color:var(--text3);margin-bottom:7px;letter-spacing:.06em;text-transform:uppercase}
-.fi{width:100%;padding:12px 14px;background:rgba(10,12,20,.8);border:1px solid var(--rim);border-radius:var(--r-sm);color:var(--text);font-size:14px;outline:none;transition:var(--tr)}
-.fi:focus{border-color:var(--neon);box-shadow:0 0 0 3px rgba(0,245,212,.1),var(--glow)}
-.fi::placeholder{color:var(--text3)}
-.fi-pw{position:relative}
-.fi-pw input{padding-right:44px}
-.pw-toggle{position:absolute;right:12px;top:50%;transform:translateY(-50%);background:none;border:none;color:var(--text3);cursor:pointer;font-size:16px;padding:4px}
-.pw-toggle:hover{color:var(--neon)}
-.btn-primary{width:100%;padding:13px;background:linear-gradient(135deg,var(--neon2),var(--ice2));border:none;border-radius:var(--r);color:var(--ink);font-size:15px;font-weight:800;cursor:pointer;transition:var(--tr);letter-spacing:.01em;font-family:var(--font);margin-top:4px}
-.btn-primary:hover{transform:translateY(-2px);box-shadow:0 8px 24px rgba(0,245,212,.4)}
-.btn-primary:disabled{opacity:.5;cursor:not-allowed;transform:none;box-shadow:none}
-.btn-google{width:100%;padding:12px;background:rgba(255,255,255,.05);border:1px solid var(--rim2);border-radius:var(--r);color:var(--text);font-size:14px;font-weight:600;cursor:pointer;transition:var(--tr);display:flex;align-items:center;justify-content:center;gap:10px;font-family:var(--font);margin-bottom:16px}
-.btn-google:hover{background:rgba(255,255,255,.09);border-color:var(--rim3)}
-.auth-divider{display:flex;align-items:center;gap:12px;margin:16px 0;color:var(--text3);font-size:12px;font-weight:600;letter-spacing:.06em}
-.auth-divider::before,.auth-divider::after{content:'';flex:1;height:1px;background:var(--rim)}
-.auth-link{background:none;border:none;color:var(--neon);font-size:13px;cursor:pointer;font-family:var(--font);font-weight:600;text-decoration:underline;text-underline-offset:3px;padding:0}
-.auth-link:hover{color:var(--neon2)}
-.auth-note{text-align:center;font-size:12px;color:var(--text3);margin-top:16px}
-.strength-bar{height:3px;border-radius:2px;margin-top:6px;background:var(--rim);overflow:hidden;transition:var(--tr)}
-.strength-fill{height:100%;border-radius:2px;transition:var(--tr)}
-.notice{display:flex;align-items:flex-start;gap:8px;padding:11px 14px;border-radius:var(--r-sm);font-size:13px;border:1px solid;margin-bottom:14px;line-height:1.5}
-.notice-info{background:rgba(0,245,212,.05);border-color:rgba(0,245,212,.2);color:var(--neon)}
-.spin{display:inline-block;width:14px;height:14px;border:2px solid rgba(0,245,212,.25);border-top-color:var(--neon);border-radius:50%;animation:sp .5s linear infinite}
+#toast-wrap {
+  position: fixed;
+  top: 24px;
+  right: 24px;
+  z-index: 10000;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  pointer-events: none;
+  max-width: 380px;
+  width: calc(100% - 48px);
+}
+.toast {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 16px;
+  border-radius: var(--r-sm);
+  font-size: 14px;
+  font-weight: 500;
+  pointer-events: all;
+  animation: tIn 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  border: 1px solid;
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+  transform-origin: top right;
+}
+.toast.ok {
+  background: rgba(16, 185, 129, 0.12);
+  border-color: rgba(16, 185, 129, 0.3);
+  color: #34d399;
+}
+.toast.err {
+  background: rgba(244, 63, 94, 0.12);
+  border-color: rgba(244, 63, 94, 0.3);
+  color: #fb7185;
+}
+.toast.info {
+  background: rgba(56, 189, 248, 0.12);
+  border-color: rgba(56, 189, 248, 0.3);
+  color: #38bdf8;
+}
+.toast.warn {
+  background: rgba(245, 158, 11, 0.12);
+  border-color: rgba(245, 158, 11, 0.3);
+  color: #fbbf24;
+}
+.toast.out {
+  animation: tOut 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+@keyframes tIn {
+  from { opacity: 0; transform: translateY(-12px) scale(0.95); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
+}
+@keyframes tOut {
+  to { opacity: 0; transform: translateX(40px) scale(0.9); }
+}
 
-/* Password reset panel */
-#reset-panel{display:none;position:fixed;inset:0;background:var(--ink);z-index:100;align-items:center;justify-content:center;padding:20px}
-#reset-panel.show{display:flex}
+.auth-wrap {
+  width: 100%;
+  max-width: 460px;
+  position: relative;
+  z-index: 10;
+  animation: authIn 0.8s cubic-bezier(0.16, 1, 0.3, 1);
+}
+@keyframes authIn {
+  from { opacity: 0; transform: translateY(30px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+.auth-logo-area {
+  text-align: center;
+  margin-bottom: 32px;
+}
+.auth-logo {
+  font-family: var(--display);
+  font-size: 42px;
+  font-weight: 700;
+  letter-spacing: -1px;
+  background: linear-gradient(135deg, var(--neon), var(--ice));
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  text-shadow: 0 4px 20px rgba(0, 245, 212, 0.15);
+}
+.auth-logo-sub {
+  font-size: 11px;
+  color: var(--text2);
+  margin-top: 6px;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  font-weight: 700;
+}
+.auth-card {
+  background: var(--surface);
+  border: 1px solid var(--rim);
+  border-radius: var(--r-lg);
+  padding: 40px;
+  backdrop-filter: blur(28px);
+  -webkit-backdrop-filter: blur(28px);
+  box-shadow: var(--sh-lg);
+  transition: transform 0.4s ease, border-color 0.4s ease;
+}
+.auth-panel {
+  display: none;
+}
+.auth-panel.active {
+  display: block;
+  animation: panelIn 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+@keyframes panelIn {
+  from { opacity: 0; transform: translateY(12px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+.auth-tabs {
+  display: flex;
+  background: rgba(4, 5, 8, 0.5);
+  border: 1px solid var(--rim);
+  border-radius: var(--r);
+  padding: 4px;
+  margin-bottom: 32px;
+  gap: 4px;
+}
+.auth-tab {
+  flex: 1;
+  padding: 12px;
+  border: none;
+  background: transparent;
+  color: var(--text2);
+  font-size: 14px;
+  font-weight: 700;
+  border-radius: 12px;
+  cursor: pointer;
+  transition: var(--tr);
+}
+.auth-tab:hover {
+  color: var(--text);
+  background: rgba(255,255,255,0.03);
+}
+.auth-tab.active {
+  background: linear-gradient(135deg, rgba(0, 245, 212, 0.15), rgba(56, 189, 248, 0.1));
+  color: var(--neon);
+  border: 1px solid var(--rim-glow);
+  box-shadow: 0 4px 15px rgba(0, 245, 212, 0.1);
+}
 
-/* ================= POPUP STYLES ================= */
+.fg {
+  margin-bottom: 20px;
+  position: relative;
+}
+.fl {
+  display: block;
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--text2);
+  margin-bottom: 8px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+.fi-container {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+.fi-icon {
+  position: absolute;
+  left: 14px;
+  color: var(--text3);
+  font-size: 15px;
+  transition: var(--tr);
+}
+.fi {
+  width: 100%;
+  padding: 14px 14px 14px 44px;
+  background: rgba(4, 5, 8, 0.6);
+  border: 1px solid var(--rim);
+  border-radius: var(--r-sm);
+  color: var(--text);
+  font-size: 14px;
+  font-weight: 500;
+  outline: none;
+  transition: var(--tr);
+}
+.fi:focus {
+  border-color: var(--neon);
+  background: rgba(4, 5, 8, 0.85);
+  box-shadow: 0 0 0 4px rgba(0, 245, 212, 0.08), var(--neon-glow);
+}
+.fi:focus + .fi-icon {
+  color: var(--neon);
+}
+.fi::placeholder {
+  color: var(--text3);
+}
+.fi-pw {
+  position: relative;
+}
+.fi-pw .fi {
+  padding-right: 48px;
+}
+.pw-toggle {
+  position: absolute;
+  right: 14px;
+  background: none;
+  border: none;
+  color: var(--text3);
+  cursor: pointer;
+  font-size: 16px;
+  padding: 6px;
+  transition: var(--tr);
+}
+.pw-toggle:hover {
+  color: var(--neon);
+}
+
+.btn-primary {
+  width: 100%;
+  padding: 15px;
+  background: linear-gradient(135deg, var(--neon), var(--ice));
+  border: none;
+  border-radius: var(--r-sm);
+  color: var(--ink);
+  font-size: 15px;
+  font-weight: 800;
+  cursor: pointer;
+  transition: var(--tr);
+  letter-spacing: 0.02em;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  margin-top: 8px;
+}
+.btn-primary:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 25px rgba(0, 245, 212, 0.35);
+}
+.btn-primary:active {
+  transform: translateY(0);
+}
+.btn-primary:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  transform: none;
+  box-shadow: none;
+}
+.btn-google {
+  width: 100%;
+  padding: 14px;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid var(--rim2);
+  border-radius: var(--r-sm);
+  color: var(--text);
+  font-size: 14px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: var(--tr);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+}
+.btn-google:hover {
+  background: rgba(255, 255, 255, 0.07);
+  border-color: var(--text3);
+}
+.btn-google svg {
+  transition: transform 0.3s ease;
+}
+.btn-google:hover svg {
+  transform: scale(1.1);
+}
+.auth-divider {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  margin: 24px 0;
+  color: var(--text3);
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+.auth-divider::before, .auth-divider::after {
+  content: '';
+  flex: 1;
+  height: 1px;
+  background: var(--rim);
+}
+.auth-link {
+  background: none;
+  border: none;
+  color: var(--ice);
+  font-size: 13px;
+  cursor: pointer;
+  font-weight: 700;
+  text-decoration: none;
+  padding: 2px 4px;
+  transition: var(--tr);
+}
+.auth-link:hover {
+  color: var(--neon);
+  text-shadow: 0 0 8px rgba(0,245,212,0.3);
+}
+.auth-note {
+  text-align: center;
+  font-size: 12px;
+  color: var(--text2);
+  margin-top: 24px;
+  line-height: 1.5;
+}
+.strength-bar {
+  height: 4px;
+  border-radius: 2px;
+  margin-top: 8px;
+  background: rgba(255,255,255,0.05);
+  overflow: hidden;
+}
+.strength-fill {
+  height: 100%;
+  width: 0%;
+  border-radius: 2px;
+  transition: width 0.4s cubic-bezier(0.16, 1, 0.3, 1), background-color 0.4s ease;
+}
+.notice {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 14px 16px;
+  border-radius: var(--r-sm);
+  font-size: 13px;
+  border: 1px solid;
+  margin-bottom: 20px;
+  line-height: 1.5;
+}
+.notice-info {
+  background: rgba(56, 189, 248, 0.08);
+  border-color: rgba(56, 189, 248, 0.2);
+  color: var(--ice);
+}
+.spin {
+  display: inline-block;
+  width: 16px;
+  height: 16px;
+  border: 2px solid rgba(0,0,0,0.1);
+  border-top-color: var(--ink);
+  border-radius: 50%;
+  animation: sp 0.6s linear infinite;
+}
+
 #overlay {
   position: fixed;
   inset: 0;
-  background: rgba(5, 6, 10, 0.7);
-  backdrop-filter: blur(10px);
-  z-index: 9997;
+  background: rgba(4, 5, 8, 0.7);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  z-index: 9990;
   opacity: 0;
   pointer-events: none;
-  transition: opacity 0.3s ease;
+  transition: opacity 0.5s cubic-bezier(0.16, 1, 0.3, 1);
 }
 #overlay.show {
   opacity: 1;
@@ -116,18 +522,18 @@ button,input{font-family:var(--font)}
   top: 50%;
   left: 50%;
   transform: translate(-50%, -50%) scale(0.9);
-  background: rgba(20, 23, 32, 0.95);
+  background: rgba(16, 20, 32, 0.95);
   border: 1px solid var(--rim2);
-  border-radius: 24px;
-  padding: 24px;
-  width: 90%;
-  max-width: 400px;
+  border-radius: var(--r-lg);
+  padding: 32px;
+  width: calc(100% - 32px);
+  max-width: 420px;
   text-align: center;
-  z-index: 9998;
-  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.8), 0 0 30px rgba(0, 245, 212, 0.15);
+  z-index: 9995;
+  box-shadow: 0 30px 70px rgba(0, 0, 0, 0.9), 0 0 50px rgba(0, 245, 212, 0.15);
   opacity: 0;
   pointer-events: none;
-  transition: all 0.3s cubic-bezier(.4,0,.2,1);
+  transition: all 0.5s cubic-bezier(0.16, 1, 0.3, 1);
 }
 #noticePopup.show {
   opacity: 1;
@@ -139,44 +545,44 @@ button,input{font-family:var(--font)}
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 16px;
+  margin-bottom: 20px;
 }
 .popup-badge {
   font-size: 11px;
-  font-weight: 700;
-  letter-spacing: 0.05em;
+  font-weight: 800;
+  letter-spacing: 0.08em;
   text-transform: uppercase;
-  background: rgba(0, 245, 212, 0.15);
+  background: rgba(0, 245, 212, 0.12);
   color: var(--neon);
-  border: 1px solid rgba(0, 245, 212, 0.3);
-  padding: 4px 12px;
+  border: 1px solid rgba(0, 245, 212, 0.25);
+  padding: 5px 14px;
   border-radius: 20px;
 }
 .popup-timer {
   font-size: 11px;
-  font-weight: 700;
-  background: rgba(244, 63, 94, 0.15);
+  font-weight: 800;
+  background: rgba(244, 63, 94, 0.12);
   color: var(--err);
-  border: 1px solid rgba(244, 63, 94, 0.3);
-  padding: 4px 12px;
+  border: 1px solid rgba(244, 63, 94, 0.25);
+  padding: 5px 14px;
   border-radius: 20px;
+  transition: var(--tr);
 }
 .popup-img {
   width: 100%;
-  height: 160px;
+  height: 180px;
   object-fit: cover;
-  border-radius: 14px;
-  margin-bottom: 16px;
+  border-radius: var(--r);
+  margin-bottom: 20px;
   border: 1px solid var(--rim);
 }
-/* Premium Banner Fallback Styling */
 .premium-backup-banner {
   width: 100%;
-  height: 160px;
-  border-radius: 14px;
-  margin-bottom: 16px;
+  height: 180px;
+  border-radius: var(--r);
+  margin-bottom: 20px;
   border: 1px solid var(--rim);
-  background: linear-gradient(135deg, var(--ink2), var(--surface));
+  background: linear-gradient(135deg, var(--ink2), var(--surface-solid));
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -188,14 +594,14 @@ button,input{font-family:var(--font)}
   content: '';
   position: absolute;
   inset: 0;
-  background: radial-gradient(circle at 50% 50%, rgba(0, 245, 212, 0.15), transparent 70%);
+  background: radial-gradient(circle at 50% 50%, rgba(0, 245, 212, 0.12), transparent 70%);
 }
 .banner-badge {
   background: linear-gradient(135deg, var(--neon), var(--ice));
   color: var(--ink);
   font-weight: 800;
   font-size: 11px;
-  padding: 3px 10px;
+  padding: 4px 12px;
   border-radius: 4px;
   text-transform: uppercase;
   margin-bottom: 8px;
@@ -204,7 +610,7 @@ button,input{font-family:var(--font)}
 }
 .banner-title {
   font-family: var(--display);
-  font-size: 22px;
+  font-size: 24px;
   font-weight: 700;
   color: var(--text);
   letter-spacing: -0.5px;
@@ -216,31 +622,30 @@ button,input{font-family:var(--font)}
   margin-top: 4px;
   z-index: 1;
 }
-
 .popup-title {
   font-family: var(--display);
-  font-size: 22px;
+  font-size: 24px;
   font-weight: 700;
-  margin-bottom: 6px;
+  margin-bottom: 10px;
   color: var(--text);
 }
 .popup-desc {
   font-size: 14px;
   color: var(--text2);
-  margin-bottom: 20px;
-  line-height: 1.4;
+  margin-bottom: 24px;
+  line-height: 1.5;
 }
 .popup-actions {
   display: flex;
-  gap: 10px;
+  gap: 12px;
 }
 .btn-buy {
   flex: 2;
   background: linear-gradient(135deg, #25D366, #128C7E);
   color: white;
-  padding: 12px;
-  border-radius: var(--r);
-  font-weight: 700;
+  padding: 14px;
+  border-radius: var(--r-sm);
+  font-weight: 800;
   text-decoration: none;
   font-size: 14px;
   transition: var(--tr);
@@ -252,17 +657,17 @@ button,input{font-family:var(--font)}
 }
 .btn-buy:hover {
   transform: translateY(-2px);
-  box-shadow: 0 6px 15px rgba(37, 211, 102, 0.3);
+  box-shadow: 0 10px 20px rgba(37, 211, 102, 0.35);
 }
 .btn-close {
   flex: 1;
-  padding: 12px;
-  border: 1px solid var(--rim);
-  border-radius: var(--r);
-  background: rgba(255, 255, 255, 0.05);
+  padding: 14px;
+  border: 1px solid var(--rim2);
+  border-radius: var(--r-sm);
+  background: rgba(255, 255, 255, 0.03);
   color: var(--text2);
   font-size: 14px;
-  font-weight: 600;
+  font-weight: 700;
   cursor: pointer;
   transition: var(--tr);
 }
@@ -271,15 +676,14 @@ button,input{font-family:var(--font)}
   color: var(--text);
 }
 
-/* ================= WHATSAPP FLOAT BUTTON ================= */
 .whatsapp-float {
   position: fixed;
   bottom: 24px;
   left: 24px;
-  z-index: 9990;
+  z-index: 9980;
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: 14px;
 }
 .whatsapp-btn {
   width: 54px;
@@ -289,7 +693,7 @@ button,input{font-family:var(--font)}
   display: flex;
   justify-content: center;
   align-items: center;
-  box-shadow: 0 10px 25px rgba(37, 211, 102, 0.3);
+  box-shadow: 0 10px 25px rgba(37, 211, 102, 0.35);
   transition: var(--tr);
   position: relative;
 }
@@ -300,19 +704,19 @@ button,input{font-family:var(--font)}
   display: flex;
   justify-content: center;
   align-items: center;
+  width: 100%;
+  height: 100%;
 }
 .whatsapp-btn:hover {
-  transform: scale(1.1) rotate(6deg);
+  transform: scale(1.1) rotate(8deg);
 }
-/* ripple animations */
-.whatsapp-btn::before,
-.whatsapp-btn::after {
+.whatsapp-btn::before, .whatsapp-btn::after {
   content: "";
   position: absolute;
   inset: 0;
   border-radius: 50%;
-  background: rgba(37, 211, 102, 0.4);
-  animation: ripple 2.5s infinite;
+  background: rgba(37, 211, 102, 0.3);
+  animation: ripple 2.4s infinite;
   pointer-events: none;
 }
 .whatsapp-btn::after {
@@ -323,38 +727,243 @@ button,input{font-family:var(--font)}
   100% { transform: scale(1.8); opacity: 0; }
 }
 .whatsapp-tooltip {
-  background: var(--ink3);
+  background: var(--surface-solid);
   color: var(--text);
-  font-size: 12px;
-  font-weight: 600;
-  padding: 8px 14px;
-  border-radius: 8px;
+  font-size: 13px;
+  font-weight: 700;
+  padding: 10px 16px;
+  border-radius: 10px;
   opacity: 0;
-  transform: translateX(-10px);
+  transform: translateX(-12px);
   transition: var(--tr);
   white-space: nowrap;
   border: 1px solid var(--rim);
   pointer-events: none;
+  box-shadow: 0 10px 30px rgba(0,0,0,0.5);
 }
 .whatsapp-float:hover .whatsapp-tooltip {
   opacity: 1;
   transform: translateX(0);
 }
+
+/* Interactive Shake Animation for Errors */
+@keyframes shake {
+  0%, 100% { transform: translateX(0); }
+  20%, 60% { transform: translateX(-6px); }
+  40%, 80% { transform: translateX(6px); }
+}
+.shake {
+  animation: shake 0.4s ease;
+}
 </style>
 </head>
 <body>
 
-<!-- ================= POPUP MODULE ================= -->
+<!-- Dynamic Background -->
+<canvas id="bg-canvas"></canvas>
+
+<!-- Custom Loading Screen -->
+<div id="loading-screen">
+  <div class="load-brand">
+    <div class="load-logo">CEE Medic</div>
+    <div class="load-logo-sub">Student Portal</div>
+  </div>
+  <div class="load-spin-container">
+    <div class="load-spin"></div>
+  </div>
+</div>
+
+<!-- Overlay wrapper for modals -->
 <div id="overlay"></div>
 
+<!-- Toast Engine Wrapper -->
+<div id="toast-wrap"></div>
+
+<!-- Primary Auth Container -->
+<div class="auth-wrap" id="auth-wrap" style="display:none">
+  <div class="auth-logo-area">
+    <div class="auth-logo">CEE Medic Nepal</div>
+    <div class="auth-logo-sub">Next-Gen MCQ Prep Platform</div>
+  </div>
+  
+  <div class="auth-card" id="auth-card-wrapper">
+    <!-- Tab Selector -->
+    <div class="auth-tabs">
+      <button class="auth-tab active" id="tab-login" onclick="switchTab('login')">Sign In</button>
+      <button class="auth-tab" id="tab-signup" onclick="switchTab('signup')">Register</button>
+      <button class="auth-tab" id="tab-forgot" onclick="switchTab('forgot')" style="display:none">Reset</button>
+    </div>
+
+    <!-- Sign In Panel -->
+    <div class="auth-panel active" id="panel-login">
+      <button class="btn-google" onclick="googleLogin()">
+        <svg width="18" height="18" viewBox="0 0 18 18">
+          <path fill="#4285F4" d="M17.64 9.2c0-.637-.057-1.251-.164-1.84H9v3.481h4.844a4.14 4.14 0 0 1-1.796 2.716v2.259h2.908c1.702-1.567 2.684-3.875 2.684-6.615z"/>
+          <path fill="#34A853" d="M9 18c2.43 0 4.467-.806 5.956-2.18l-2.908-2.259c-.806.54-1.837.86-3.048.86-2.344 0-4.328-1.584-5.036-3.711H.957v2.332A8.997 8.997 0 0 0 9 18z"/>
+          <path fill="#FBBC05" d="M3.964 10.71A5.41 5.41 0 0 1 3.682 9c0-.593.102-1.17.282-1.71V4.958H.957A8.996 8.996 0 0 0 0 9c0 1.452.348 2.827.957 4.042l3.007-2.332z"/>
+          <path fill="#EA4335" d="M9 3.58c1.321 0 2.508.454 3.44 1.345l2.582-2.58C13.463.891 11.426 0 9 0A8.997 8.997 0 0 0 .957 4.958L3.964 6.29C4.672 4.163 6.656 3.58 9 3.58z"/>
+        </svg>
+        Continue with Google
+      </button>
+      <div class="auth-divider">or sign in with email</div>
+      
+      <div class="fg">
+        <label class="fl">Email Address</label>
+        <div class="fi-container">
+          <input class="fi" type="email" id="li-email" placeholder="you@example.com" autocomplete="email"/>
+          <i class="fas fa-envelope fi-icon"></i>
+        </div>
+      </div>
+      
+      <div class="fg">
+        <label class="fl">Password</label>
+        <div class="fi-container fi-pw">
+          <input class="fi" type="password" id="li-pass" placeholder="Your password" autocomplete="current-password"/>
+          <i class="fas fa-lock fi-icon"></i>
+          <button class="pw-toggle" onclick="togglePw('li-pass', this)" type="button"><i class="fas fa-eye"></i></button>
+        </div>
+      </div>
+      
+      <div style="text-align:right;margin-bottom:20px">
+        <button class="auth-link" onclick="switchTab('forgot')">Forgot password?</button>
+      </div>
+      
+      <button class="btn-primary" id="li-btn" onclick="doLogin()">
+        <span>Sign In</span> <i class="fas fa-arrow-right"></i>
+      </button>
+      
+      <div class="auth-note">
+        Don't have an account? <button class="auth-link" onclick="switchTab('signup')">Register here</button>
+      </div>
+    </div>
+
+    <!-- Registration Panel -->
+    <div class="auth-panel" id="panel-signup">
+      <button class="btn-google" onclick="googleLogin()">
+        <svg width="18" height="18" viewBox="0 0 18 18">
+          <path fill="#4285F4" d="M17.64 9.2c0-.637-.057-1.251-.164-1.84H9v3.481h4.844a4.14 4.14 0 0 1-1.796 2.716v2.259h2.908c1.702-1.567 2.684-3.875 2.684-6.615z"/>
+          <path fill="#34A853" d="M9 18c2.43 0 4.467-.806 5.956-2.18l-2.908-2.259c-.806.54-1.837.86-3.048.86-2.344 0-4.328-1.584-5.036-3.711H.957v2.332A8.997 8.997 0 0 0 9 18z"/>
+          <path fill="#FBBC05" d="M3.964 10.71A5.41 5.41 0 0 1 3.682 9c0-.593.102-1.17.282-1.71V4.958H.957A8.996 8.996 0 0 0 0 9c0 1.452.348 2.827.957 4.042l3.007-2.332z"/>
+          <path fill="#EA4335" d="M9 3.58c1.321 0 2.508.454 3.44 1.345l2.582-2.58C13.463.891 11.426 0 9 0A8.997 8.997 0 0 0 .957 4.958L3.964 6.29C4.672 4.163 6.656 3.58 9 3.58z"/>
+        </svg>
+        Sign up with Google
+      </button>
+      <div class="auth-divider">or create account</div>
+      
+      <div class="fg">
+        <label class="fl">Full Name</label>
+        <div class="fi-container">
+          <input class="fi" type="text" id="su-name" placeholder="John Doe" autocomplete="name"/>
+          <i class="fas fa-user fi-icon"></i>
+        </div>
+      </div>
+      
+      <div class="fg">
+        <label class="fl">Email Address</label>
+        <div class="fi-container">
+          <input class="fi" type="email" id="su-email" placeholder="you@example.com" autocomplete="email"/>
+          <i class="fas fa-envelope fi-icon"></i>
+        </div>
+      </div>
+      
+      <div class="fg">
+        <label class="fl">Password</label>
+        <div class="fi-container fi-pw">
+          <input class="fi" type="password" id="su-pass" placeholder="Min 8 characters" oninput="checkStrength(this)" autocomplete="new-password"/>
+          <i class="fas fa-lock fi-icon"></i>
+          <button class="pw-toggle" onclick="togglePw('su-pass', this)" type="button"><i class="fas fa-eye"></i></button>
+        </div>
+        <div class="strength-bar"><div class="strength-fill" id="strength-fill"></div></div>
+        <div id="strength-label" style="font-size:11px;color:var(--text3);margin-top:5px;font-weight:700">Password Security State</div>
+      </div>
+      
+      <div class="fg">
+        <label class="fl">Confirm Password</label>
+        <div class="fi-container fi-pw">
+          <input class="fi" type="password" id="su-confirm" placeholder="Repeat password" autocomplete="new-password"/>
+          <i class="fas fa-shield-halved fi-icon"></i>
+          <button class="pw-toggle" onclick="togglePw('su-confirm', this)" type="button"><i class="fas fa-eye"></i></button>
+        </div>
+      </div>
+      
+      <button class="btn-primary" id="su-btn" onclick="doSignup()">
+        <span>Create Account</span> <i class="fas fa-user-plus"></i>
+      </button>
+      
+      <div class="auth-note">
+        Account needs manual admin verification before access.<br>
+        <button class="auth-link" onclick="switchTab('login')">Back to login</button>
+      </div>
+    </div>
+
+    <!-- Forgot Password Panel -->
+    <div class="auth-panel" id="panel-forgot">
+      <div class="notice notice-info">
+        <i style="margin-top:2px" class="fas fa-info-circle"></i>
+        <span>Enter your registered email address below, and we will dispatch a dynamic secure reset handshake link.</span>
+      </div>
+      
+      <div class="fg">
+        <label class="fl">Email Address</label>
+        <div class="fi-container">
+          <input class="fi" type="email" id="fp-email" placeholder="you@example.com" autocomplete="email"/>
+          <i class="fas fa-envelope fi-icon"></i>
+        </div>
+      </div>
+      
+      <button class="btn-primary" id="fp-btn" onclick="doForgot()">
+        <span>Send Reset Link</span> <i class="fas fa-paper-plane"></i>
+      </button>
+      
+      <div class="auth-note">
+        <button class="auth-link" onclick="switchTab('login')"><i class="fas fa-arrow-left"></i> Back to login</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Reset Password State (After returning from Mail) -->
+<div id="reset-panel" style="display: none; position: fixed; inset: 0; background: var(--ink); z-index: 995; align-items: center; justify-content: center; padding: 24px;">
+  <div class="auth-wrap">
+    <div class="auth-logo-area">
+      <div class="auth-logo">CEE Medic Nepal</div>
+      <div class="auth-logo-sub">Set secure new password</div>
+    </div>
+    <div class="auth-card">
+      <div class="fg">
+        <label class="fl">New Password</label>
+        <div class="fi-container fi-pw">
+          <input class="fi" type="password" id="rp-pass" placeholder="Min 8 characters" oninput="checkStrength(this)" autocomplete="new-password"/>
+          <i class="fas fa-lock fi-icon"></i>
+          <button class="pw-toggle" onclick="togglePw('rp-pass', this)" type="button"><i class="fas fa-eye"></i></button>
+        </div>
+        <div class="strength-bar"><div class="strength-fill" id="reset-strength-fill"></div></div>
+      </div>
+      
+      <div class="fg">
+        <label class="fl">Confirm New Password</label>
+        <div class="fi-container fi-pw">
+          <input class="fi" type="password" id="rp-confirm" placeholder="Repeat password" autocomplete="new-password"/>
+          <i class="fas fa-shield-halved fi-icon"></i>
+          <button class="pw-toggle" onclick="togglePw('rp-confirm', this)" type="button"><i class="fas fa-eye"></i></button>
+        </div>
+      </div>
+      
+      <button class="btn-primary" id="rp-btn" onclick="doResetPassword()">
+        <span>Set New Password</span> <i class="fas fa-key"></i>
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- Interactive Premium Marketing Modal -->
 <div id="noticePopup">
   <div class="popup-header">
-    <span class="popup-badge">📢 Special Offer</span>
+    <span class="popup-badge">📢 VIP Access Offer</span>
     <span id="countdown" class="popup-timer">Closing in 10s</span>
   </div>
 
-  <!-- Fallback banner mechanism (loads if image fails or path doesn't exist) -->
-  <img id="premium-img" src="https://ceemediconepal.xyz/img/2-premium.png" class="popup-img" alt="Premium Upgrade" onerror="this.style.display='none'; document.getElementById('backup-premium-banner').style.display='flex';">
+  <img id="premium-img" src="https://images.unsplash.com/photo-1576091160550-112173f7f869?w=400&h=200&fit=crop" class="popup-img" alt="Premium Upgrade" onerror="this.style.display='none'; document.getElementById('backup-premium-banner').style.display='flex';">
   
   <div id="backup-premium-banner" class="premium-backup-banner" style="display: none;">
     <div class="banner-badge">Premium Pass</div>
@@ -364,376 +973,630 @@ button,input{font-family:var(--font)}
 
   <h3 class="popup-title">Premium Upgrade</h3>
   <p class="popup-desc">
-    If you have already Premium Rs.199 Then Contact your Admin. Unlock unlimited test attempts, mock exams & analytics for Rs. 199 only.
+    If you purchased Premium (Rs. 199), contact your Admin to activate your account. Unlock unlimited test attempts, mock exams & real-time analytics!
   </p>
 
   <div class="popup-actions">
-    <a href="https://wa.me/9779812240229?text=I%20want%20premium" class="btn-buy" target="_blank">
-      <i class="fab fa-whatsapp"></i> Buy Now
+    <a href="https://wa.me/9779812240229?text=I%20want%20premium%20medical%20access" class="btn-buy" target="_blank" onclick="playSound('click')">
+      <i class="fab fa-whatsapp"></i> Buy Pass (Rs. 199)
     </a>
-    <button onclick="closePopup()" class="btn-close">Close</button>
+    <button onclick="closePopup()" class="btn-close">Dismiss</button>
   </div>
 </div>
 
-<!-- ================= WHATSAPP FLOAT BUTTON ================= -->
+<!-- Sticky Floating WhatsApp Handler -->
 <div class="whatsapp-float">
   <div class="whatsapp-btn">
-    <a href="https://wa.me/9779812240229?text=Hello" class="whatsapp-link" target="_blank" aria-label="Chat on WhatsApp">
+    <a href="https://wa.me/9779812240229?text=Hello%20CEE%20Medic%20Support" class="whatsapp-link" target="_blank" aria-label="Support chat" onclick="playSound('click')">
       <i class="fab fa-whatsapp"></i>
     </a>
   </div>
-  <div class="whatsapp-tooltip">Chat on WhatsApp</div>
-</div>
-
-<canvas id="bg-canvas"></canvas>
-<div id="toast-wrap"></div>
-
-<!-- Loading screen shown while checking session -->
-<div id="loading-screen">
-  <div class="load-logo">CEE Medic Nepal</div>
-  <div class="load-spin"></div>
-</div>
-
-<!-- Auth UI (hidden until session check passes) -->
-<div class="auth-wrap" id="auth-wrap" style="display:none">
-  <div class="auth-logo-area">
-    <div class="auth-logo">CEE Medic Nepal</div>
-    <div class="auth-logo-sub">Next-Gen MCQ Examination Platform</div>
-  </div>
-  <div class="auth-card">
-
-    <div class="auth-tabs">
-      <button class="auth-tab active" id="tab-login" onclick="switchTab('login')">Sign In</button>
-      <button class="auth-tab" id="tab-signup" onclick="switchTab('signup')">Register</button>
-      <button class="auth-tab" id="tab-forgot" onclick="switchTab('forgot')" style="display:none">Reset</button>
-    </div>
-
-    <!-- LOGIN -->
-    <div class="auth-panel active" id="panel-login">
-      <button class="btn-google" onclick="googleLogin()">
-        <svg width="18" height="18" viewBox="0 0 18 18"><path fill="#4285F4" d="M17.64 9.2c0-.637-.057-1.251-.164-1.84H9v3.481h4.844a4.14 4.14 0 0 1-1.796 2.716v2.259h2.908c1.702-1.567 2.684-3.875 2.684-6.615z"/><path fill="#34A853" d="M9 18c2.43 0 4.467-.806 5.956-2.18l-2.908-2.259c-.806.54-1.837.86-3.048.86-2.344 0-4.328-1.584-5.036-3.711H.957v2.332A8.997 8.997 0 0 0 9 18z"/><path fill="#FBBC05" d="M3.964 10.71A5.41 5.41 0 0 1 3.682 9c0-.593.102-1.17.282-1.71V4.958H.957A8.996 8.996 0 0 0 0 9c0 1.452.348 2.827.957 4.042l3.007-2.332z"/><path fill="#EA4335" d="M9 3.58c1.321 0 2.508.454 3.44 1.345l2.582-2.58C13.463.891 11.426 0 9 0A8.997 8.997 0 0 0 .957 4.958L3.964 6.29C4.672 4.163 6.656 3.58 9 3.58z"/></svg>
-        Continue with Google
-      </button>
-      <div class="auth-divider">or sign in with email</div>
-      <div class="fg"><label class="fl">Email Address</label><input class="fi" type="email" id="li-email" placeholder="you@example.com"/></div>
-      <div class="fg"><label class="fl">Password</label>
-        <div class="fi-pw"><input class="fi" type="password" id="li-pass" placeholder="Your password"/>
-        <button class="pw-toggle" onclick="togglePw('li-pass',this)" type="button">👁</button></div>
-      </div>
-      <div style="text-align:right;margin-bottom:14px"><button class="auth-link" onclick="switchTab('forgot')">Forgot password?</button></div>
-      <button class="btn-primary" id="li-btn" onclick="doLogin()">Sign In →</button>
-      <div class="auth-note">Don't have an account? <button class="auth-link" onclick="switchTab('signup')">Register here</button></div>
-    </div>
-
-    <!-- SIGNUP -->
-    <div class="auth-panel" id="panel-signup">
-      <button class="btn-google" onclick="googleLogin()">
-        <svg width="18" height="18" viewBox="0 0 18 18"><path fill="#4285F4" d="M17.64 9.2c0-.637-.057-1.251-.164-1.84H9v3.481h4.844a4.14 4.14 0 0 1-1.796 2.716v2.259h2.908c1.702-1.567 2.684-3.875 2.684-6.615z"/><path fill="#34A853" d="M9 18c2.43 0 4.467-.806 5.956-2.18l-2.908-2.259c-.806.54-1.837.86-3.048.86-2.344 0-4.328-1.584-5.036-3.711H.957v2.332A8.997 8.997 0 0 0 9 18z"/><path fill="#FBBC05" d="M3.964 10.71A5.41 5.41 0 0 1 3.682 9c0-.593.102-1.17.282-1.71V4.958H.957A8.996 8.996 0 0 0 0 9c0 1.452.348 2.827.957 4.042l3.007-2.332z"/><path fill="#EA4335" d="M9 3.58c1.321 0 2.508.454 3.44 1.345l2.582-2.58C13.463.891 11.426 0 9 0A8.997 8.997 0 0 0 .957 4.958L3.964 6.29C4.672 4.163 6.656 3.58 9 3.58z"/></svg>
-        Sign up with Google
-      </button>
-      <div class="auth-divider">or create account</div>
-      <div class="fg"><label class="fl">Full Name</label><input class="fi" type="text" id="su-name" placeholder="John Doe"/></div>
-      <div class="fg"><label class="fl">Email Address</label><input class="fi" type="email" id="su-email" placeholder="you@example.com"/></div>
-      <div class="fg"><label class="fl">Password</label>
-        <div class="fi-pw"><input class="fi" type="password" id="su-pass" placeholder="Min 8 characters" oninput="checkStrength(this)"/>
-        <button class="pw-toggle" onclick="togglePw('su-pass',this)" type="button">👁</button></div>
-        <div class="strength-bar"><div class="strength-fill" id="strength-fill"></div></div>
-        <div id="strength-label" style="font-size:11px;color:var(--text3);margin-top:3px"></div>
-      </div>
-      <div class="fg"><label class="fl">Confirm Password</label>
-        <div class="fi-pw"><input class="fi" type="password" id="su-confirm" placeholder="Repeat password"/>
-        <button class="pw-toggle" onclick="togglePw('su-confirm',this)" type="button">👁</button></div>
-      </div>
-      <button class="btn-primary" id="su-btn" onclick="doSignup()">Create Account →</button>
-      <div class="auth-note">Account needs admin approval before login.<br><button class="auth-link" onclick="switchTab('login')">Back to login</button></div>
-    </div>
-
-    <!-- FORGOT -->
-    <div class="auth-panel" id="panel-forgot">
-      <div class="notice notice-info">Enter your email and we'll send a password reset link.</div>
-      <div class="fg"><label class="fl">Email Address</label><input class="fi" type="email" id="fp-email" placeholder="you@example.com"/></div>
-      <button class="btn-primary" id="fp-btn" onclick="doForgot()">Send Reset Link →</button>
-      <div class="auth-note"><button class="auth-link" onclick="switchTab('login')">← Back to login</button></div>
-    </div>
-
-  </div>
-</div>
-
-<!-- Password Reset Panel (shown when user clicks reset link in email) -->
-<div id="reset-panel">
-  <div class="auth-wrap">
-    <div class="auth-logo-area">
-      <div class="auth-logo">CEE Medic Nepal</div>
-      <div class="auth-logo-sub">Set a new password</div>
-    </div>
-    <div class="auth-card">
-      <div class="fg"><label class="fl">New Password</label>
-        <div class="fi-pw"><input class="fi" type="password" id="rp-pass" placeholder="Min 8 characters" oninput="checkStrength(this)"/>
-        <button class="pw-toggle" onclick="togglePw('rp-pass',this)" type="button">👁</button></div>
-        <div class="strength-bar"><div class="strength-fill" id="strength-fill"></div></div>
-      </div>
-      <div class="fg"><label class="fl">Confirm New Password</label>
-        <div class="fi-pw"><input class="fi" type="password" id="rp-confirm" placeholder="Repeat password"/>
-        <button class="pw-toggle" onclick="togglePw('rp-confirm',this)" type="button">👁</button></div>
-      </div>
-      <button class="btn-primary" id="rp-btn" onclick="doResetPassword()">Set New Password →</button>
-    </div>
-  </div>
+  <div class="whatsapp-tooltip">Chat with Support</div>
 </div>
 
 <script>
-const SUPABASE_URL='https://rpudsnrqlhataqfavcjh.supabase.co';
-const SUPABASE_ANON_KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJwdWRzbnJxbGhhdGFxZmF2Y2poIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzk5NzI0NjgsImV4cCI6MjA5NTU0ODQ2OH0.EEu5t-NPqWARChSAMpEvUPMBkz_JeeNe3bGSCQmH7Xo';
-const sb=window.supabase.createClient(SUPABASE_URL,SUPABASE_ANON_KEY);
-const APP_URL='https://ceemediconepal.xyz/cee/index.html';
+// On-the-fly sci-fi synth sound effects engine
+let audioCtx = null;
+function initAudio() {
+  if (!audioCtx) {
+    audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+  }
+}
+function playSound(type) {
+  try {
+    initAudio();
+    if (!audioCtx) return;
+    
+    // Resume context if suspended
+    if (audioCtx.state === 'suspended') {
+      audioCtx.resume();
+    }
+    
+    const osc = audioCtx.createOscillator();
+    const gain = audioCtx.createGain();
+    osc.connect(gain);
+    gain.connect(audioCtx.destination);
+    
+    if (type === 'click') {
+      osc.type = 'sine';
+      osc.frequency.setValueAtTime(800, audioCtx.currentTime);
+      osc.frequency.exponentialRampToValueAtTime(1500, audioCtx.currentTime + 0.08);
+      gain.gain.setValueAtTime(0.08, audioCtx.currentTime);
+      gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.08);
+      osc.start();
+      osc.stop(audioCtx.currentTime + 0.08);
+    } else if (type === 'success') {
+      osc.type = 'triangle';
+      // Arpeggio
+      const now = audioCtx.currentTime;
+      osc.frequency.setValueAtTime(523.25, now); // C5
+      osc.frequency.setValueAtTime(659.25, now + 0.08); // E5
+      osc.frequency.setValueAtTime(783.99, now + 0.16); // G5
+      osc.frequency.setValueAtTime(1046.50, now + 0.24); // C6
+      gain.gain.setValueAtTime(0.12, now);
+      gain.gain.exponentialRampToValueAtTime(0.001, now + 0.4);
+      osc.start();
+      osc.stop(now + 0.4);
+    } else if (type === 'error') {
+      osc.type = 'sawtooth';
+      osc.frequency.setValueAtTime(180, audioCtx.currentTime);
+      osc.frequency.linearRampToValueAtTime(100, audioCtx.currentTime + 0.25);
+      gain.gain.setValueAtTime(0.15, audioCtx.currentTime);
+      gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.25);
+      osc.start();
+      osc.stop(audioCtx.currentTime + 0.25);
+    }
+  } catch (e) {
+    console.warn('Audio synthesis muted due to browser policy or context failure.');
+  }
+}
 
-// ── Canvas BG ──
+// Advanced Node-Interaction Canvas Background
 (function(){
-  const c=document.getElementById('bg-canvas'),ctx=c.getContext('2d');let w,h,pts=[];
-  function resize(){w=c.width=innerWidth;h=c.height=innerHeight;pts=[];const n=Math.floor((w*h)/18000);for(let i=0;i<n;i++)pts.push({x:Math.random()*w,y:Math.random()*h,vx:(Math.random()-.5)*.3,vy:(Math.random()-.5)*.3,r:Math.random()*1.5+.5});}
-  function draw(){ctx.clearRect(0,0,w,h);pts.forEach(p=>{p.x+=p.vx;p.y+=p.vy;if(p.x<0||p.x>w)p.vx*=-1;if(p.y<0||p.y>h)p.vy*=-1;ctx.beginPath();ctx.arc(p.x,p.y,p.r,0,Math.PI*2);ctx.fillStyle='rgba(0,245,212,0.4)';ctx.fill();});for(let i=0;i<pts.length;i++)for(let j=i+1;j<pts.length;j++){const d=Math.hypot(pts[i].x-pts[j].x,pts[i].y-pts[j].y);if(d<120){ctx.beginPath();ctx.moveTo(pts[i].x,pts[i].y);ctx.lineTo(pts[j].x,pts[j].y);ctx.strokeStyle=`rgba(0,245,212,${.12*(1-d/120)})`;ctx.lineWidth=.5;ctx.stroke();}}requestAnimationFrame(draw);}
-  window.addEventListener('resize',resize);resize();draw();
+  const canvas = document.getElementById('bg-canvas');
+  const ctx = canvas.getContext('2d');
+  let w, h, points = [];
+  let mouse = { x: null, y: null, targetX: null, targetY: null, radius: 140 };
+
+  function resize() {
+    w = canvas.width = window.innerWidth;
+    h = canvas.height = window.innerHeight;
+    points = [];
+    const density = Math.floor((w * h) / 16000);
+    for (let i = 0; i < Math.min(density, 120); i++) {
+      points.push({
+        x: Math.random() * w,
+        y: Math.random() * h,
+        vx: (Math.random() - 0.5) * 0.4,
+        vy: (Math.random() - 0.5) * 0.4,
+        r: Math.random() * 2 + 1,
+        color: i % 5 === 0 ? 'rgba(56, 189, 248, 0.45)' : 'rgba(0, 245, 212, 0.4)'
+      });
+    }
+  }
+
+  window.addEventListener('mousemove', (e) => {
+    mouse.targetX = e.clientX;
+    mouse.targetY = e.clientY;
+  });
+
+  window.addEventListener('mouseout', () => {
+    mouse.targetX = null;
+    mouse.targetY = null;
+  });
+
+  function draw() {
+    ctx.clearRect(0, 0, w, h);
+    
+    // Smooth damp cursor movement
+    if (mouse.targetX !== null) {
+      if (mouse.x === null) {
+        mouse.x = mouse.targetX;
+        mouse.y = mouse.targetY;
+      } else {
+        mouse.x += (mouse.targetX - mouse.x) * 0.1;
+        mouse.y += (mouse.targetY - mouse.y) * 0.1;
+      }
+    } else {
+      mouse.x = null;
+      mouse.y = null;
+    }
+
+    points.forEach(p => {
+      p.x += p.vx;
+      p.y += p.vy;
+
+      // Bounce limits
+      if (p.x < 0 || p.x > w) p.vx *= -1;
+      if (p.y < 0 || p.y > h) p.vy *= -1;
+
+      // Interaction with cursor (repulsion logic)
+      if (mouse.x !== null) {
+        const dx = p.x - mouse.x;
+        const dy = p.y - mouse.y;
+        const dist = Math.hypot(dx, dy);
+        if (dist < mouse.radius) {
+          const force = (mouse.radius - dist) / mouse.radius;
+          p.x += (dx / dist) * force * 1.8;
+          p.y += (dy / dist) * force * 1.8;
+        }
+      }
+
+      ctx.beginPath();
+      ctx.arc(p.x, p.y, p.r, 0, Math.PI * 2);
+      ctx.fillStyle = p.color;
+      ctx.fill();
+    });
+
+    // Draw relational network lines
+    for (let i = 0; i < points.length; i++) {
+      for (let j = i + 1; j < points.length; j++) {
+        const d = Math.hypot(points[i].x - points[j].x, points[i].y - points[j].y);
+        if (d < 110) {
+          ctx.beginPath();
+          ctx.moveTo(points[i].x, points[i].y);
+          ctx.lineTo(points[j].x, points[j].y);
+          ctx.strokeStyle = `rgba(0, 245, 212, ${0.15 * (1 - d / 110)})`;
+          ctx.lineWidth = 0.6;
+          ctx.stroke();
+        }
+      }
+    }
+    
+    // Draw cursor connection web
+    if (mouse.x !== null) {
+      points.forEach(p => {
+        const d = Math.hypot(p.x - mouse.x, p.y - mouse.y);
+        if (d < mouse.radius) {
+          ctx.beginPath();
+          ctx.moveTo(p.x, p.y);
+          ctx.lineTo(mouse.x, mouse.y);
+          ctx.strokeStyle = `rgba(56, 189, 248, ${0.18 * (1 - d / mouse.radius)})`;
+          ctx.lineWidth = 0.8;
+          ctx.stroke();
+        }
+      });
+    }
+
+    requestAnimationFrame(draw);
+  }
+
+  window.addEventListener('resize', resize);
+  resize();
+  draw();
 })();
 
-// ── Toast ──
-function toast(msg,type='info',dur=3500){
-  const icons={ok:'✓',err:'✕',info:'ℹ',warn:'⚠'};
-  const el=document.createElement('div');el.className=`toast ${type}`;
-  el.innerHTML=`<span style="font-size:15px">${icons[type]||'ℹ'}</span><span>${msg}</span>`;
-  document.getElementById('toast-wrap').appendChild(el);
-  setTimeout(()=>{el.classList.add('out');setTimeout(()=>el.remove(),300);},dur);
+// Advanced Toast Module
+function toast(msg, type = 'info', dur = 4000) {
+  const icons = {
+    ok: '<i class="fas fa-check-circle"></i>',
+    err: '<i class="fas fa-exclamation-circle"></i>',
+    info: '<i class="fas fa-info-circle"></i>',
+    warn: '<i class="fas fa-triangle-exclamation"></i>'
+  };
+  
+  if (type === 'err') playSound('error');
+  else if (type === 'ok') playSound('success');
+  else playSound('click');
+
+  const container = document.getElementById('toast-wrap');
+  const el = document.createElement('div');
+  el.className = `toast ${type}`;
+  el.innerHTML = `${icons[type] || icons.info}<span>${msg}</span>`;
+  container.appendChild(el);
+
+  // Trigger sound effect response
+  setTimeout(() => {
+    el.classList.add('out');
+    setTimeout(() => el.remove(), 400);
+  }, dur);
 }
 
-// ── UI helpers ──
-function switchTab(t){
-  ['login','signup','forgot'].forEach(id=>{
-    document.getElementById(`panel-${id}`)?.classList.remove('active');
-    document.getElementById(`tab-${id}`)?.classList.remove('active');
+// Shake form element container on validation failure
+function shakeElement(id) {
+  const target = document.getElementById(id);
+  target.classList.remove('shake');
+  void target.offsetWidth; // Force CSS reflow
+  target.classList.add('shake');
+  playSound('error');
+}
+
+// Tab Menu Engine
+function switchTab(tabId) {
+  playSound('click');
+  ['login', 'signup', 'forgot'].forEach(id => {
+    const panel = document.getElementById(`panel-${id}`);
+    const tabBtn = document.getElementById(`tab-${id}`);
+    if (panel) panel.classList.remove('active');
+    if (tabBtn) tabBtn.classList.remove('active');
   });
-  document.getElementById(`panel-${t}`).classList.add('active');
-  document.getElementById(`tab-${t}`).classList.add('active');
-  document.getElementById('tab-forgot').style.display=t==='forgot'?'block':'none';
-}
-function togglePw(id,btn){const i=document.getElementById(id);i.type=i.type==='password'?'text':'password';btn.textContent=i.type==='password'?'👁':'🙈';}
-function checkStrength(input){
-  const v=input.value;let score=0;
-  if(v.length>=8)score++;if(v.length>=12)score++;
-  if(/[A-Z]/.test(v))score++;if(/[0-9]/.test(v))score++;if(/[^A-Za-z0-9]/.test(v))score++;
-  const fill=document.getElementById('strength-fill');
-  const levels=[{w:'0%',c:'var(--rim)'},{w:'25%',c:'var(--err)'},{w:'50%',c:'var(--warn)'},{w:'75%',c:'var(--ice)'},{w:'100%',c:'var(--ok)'}];
-  const l=levels[Math.min(score,4)];fill.style.width=l.w;fill.style.background=l.c;
+
+  const activePanel = document.getElementById(`panel-${tabId}`);
+  const activeTab = document.getElementById(`tab-${tabId}`);
+  if (activePanel) activePanel.classList.add('active');
+  if (activeTab) activeTab.classList.add('active');
+
+  const forgotTab = document.getElementById('tab-forgot');
+  if (forgotTab) {
+    forgotTab.style.display = (tabId === 'forgot') ? 'block' : 'none';
+  }
 }
 
-function showAuth(msg){
-  document.getElementById('loading-screen').style.display='none';
-  document.getElementById('auth-wrap').style.display='block';
-  if(msg==='pending') toast('Your account is pending admin approval.','warn',7000);
-  if(msg==='blocked') toast('Your account has been blocked. Contact admin.','err',7000);
+// Password Field Visibility Switcher
+function togglePw(fieldId, btnEl) {
+  playSound('click');
+  const input = document.getElementById(fieldId);
+  const icon = btnEl.querySelector('i');
+  if (input.type === 'password') {
+    input.type = 'text';
+    icon.className = 'fas fa-eye-slash';
+    btnEl.style.color = 'var(--neon)';
+  } else {
+    input.type = 'password';
+    icon.className = 'fas fa-eye';
+    btnEl.style.color = 'var(--text3)';
+  }
 }
 
-// Read ?msg= from URL if redirected from index
-(()=> {
-  const p=new URLSearchParams(location.search);
-  const m=p.get('msg');
-  if(m){history.replaceState({},'',location.pathname);/* clean URL */
-    // store msg, show after auth form renders
-    window._startMsg=m;
+// Live Validation Indicator & Strength Gauge
+function checkStrength(inputEl) {
+  const pass = inputEl.value;
+  let score = 0;
+  
+  if (pass.length >= 8) score++;
+  if (pass.length >= 12) score++;
+  if (/[A-Z]/.test(pass)) score++;
+  if (/[0-9]/.test(pass)) score++;
+  if (/[^A-Za-z0-9]/.test(pass)) score++;
+
+  const bar = document.getElementById('strength-fill');
+  const resetBar = document.getElementById('reset-strength-fill');
+  const label = document.getElementById('strength-label');
+
+  const states = [
+    { width: '0%', color: 'transparent', label: 'Security State: Weak', textColor: 'var(--text3)' },
+    { width: '25%', color: 'var(--err)', label: 'Security State: Minimal Risk', textColor: 'var(--err)' },
+    { width: '50%', color: 'var(--warn)', label: 'Security State: Fair Security', textColor: 'var(--warn)' },
+    { width: '75%', color: 'var(--ice)', label: 'Security State: Good Shield', textColor: 'var(--ice)' },
+    { width: '100%', color: 'var(--ok)', label: 'Security State: Ultra Fortified', textColor: 'var(--ok)' }
+  ];
+
+  const current = states[Math.min(score, 4)];
+  
+  if (bar) {
+    bar.style.width = current.width;
+    bar.style.backgroundColor = current.color;
+  }
+  if (resetBar) {
+    resetBar.style.width = current.width;
+    resetBar.style.backgroundColor = current.color;
+  }
+  if (label) {
+    label.innerText = current.label;
+    label.style.color = current.textColor;
+  }
+}
+
+// Form Switch Display Initialization
+function showAuth(msg) {
+  document.getElementById('loading-screen').classList.add('hidden');
+  document.getElementById('auth-wrap').style.display = 'block';
+  if (msg === 'pending') {
+    toast('Your account registration is currently pending admin validation.', 'warn', 7000);
+  } else if (msg === 'blocked') {
+    toast('Access blocked. Contact administrator support panel.', 'err', 7000);
+  }
+}
+
+// DB & Access Keys Setup
+const SUPABASE_URL = 'https://rpudsnrqlhataqfavcjh.supabase.co';
+const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJwdWRzbnJxbGhhdGFxZmF2Y2poIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzk5NzI0NjgsImV4cCI6Mj95NTU0ODQ2OH0.EEu5t-NPqWARChSAMpEvUPMBkz_JeeNe3bGSCQmH7Xo';
+const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+const APP_URL = 'https://ceemediconepal.xyz/cee/index.html';
+
+// Sign In Logic
+async function doLogin() {
+  const email = document.getElementById('li-email').value.trim();
+  const pass = document.getElementById('li-pass').value;
+  
+  if (!email || !pass) {
+    toast('Please fill out all credentials.', 'warn');
+    shakeElement('auth-card-wrapper');
+    return;
+  }
+  
+  const btn = document.getElementById('li-btn');
+  btn.disabled = true;
+  btn.innerHTML = '<span class="spin"></span> Processing secure entry...';
+
+  try {
+    const { data, error } = await sb.auth.signInWithPassword({ email, password: pass });
+    if (error) throw error;
+    
+    // Fetch profile validation state
+    const { data: profile, error: profError } = await sb.from('profiles').select('*').eq('id', data.user.id).single();
+    if (profError) throw profError;
+
+    if (profile?.status === 'blocked') {
+      toast('Your profile access has been revoked. Contact admin support.', 'err');
+      await sb.auth.signOut();
+      shakeElement('auth-card-wrapper');
+      return;
+    }
+    if (profile?.status !== 'approved') {
+      toast('Verification pending. Please wait for an administrator approval.', 'warn', 7000);
+      await sb.auth.signOut();
+      return;
+    }
+
+    sessionStorage.setItem('cp_' + data.user.id, JSON.stringify(profile));
+    toast('Authentication success! Gateway established.', 'ok');
+    setTimeout(() => window.location.replace(APP_URL), 800);
+
+  } catch (e) {
+    toast(e.message, 'err');
+    shakeElement('auth-card-wrapper');
+  } finally {
+    btn.disabled = false;
+    btn.innerHTML = '<span>Sign In</span> <i class="fas fa-arrow-right"></i>';
+  }
+}
+
+// Sign Up Handler
+async function doSignup() {
+  const name = document.getElementById('su-name').value.trim();
+  const email = document.getElementById('su-email').value.trim();
+  const pass = document.getElementById('su-pass').value;
+  const confirm = document.getElementById('su-confirm').value;
+
+  if (!name || !email || !pass) {
+    toast('All registration fields are required.', 'warn');
+    shakeElement('auth-card-wrapper');
+    return;
+  }
+  if (pass.length < 8) {
+    toast('Minimum password length is 8 units.', 'warn');
+    return;
+  }
+  if (pass !== confirm) {
+    toast('Target validation mismatch. Passwords do not match.', 'warn');
+    return;
+  }
+
+  const btn = document.getElementById('su-btn');
+  btn.disabled = true;
+  btn.innerHTML = '<span class="spin"></span> Submitting payload...';
+
+  try {
+    const { data, error } = await sb.auth.signUp({
+      email,
+      password: pass,
+      options: { data: { full_name: name } }
+    });
+    if (error) throw error;
+
+    // Direct insertion into relational DB
+    const { error: dbError } = await sb.from('profiles').upsert({
+      id: data.user.id,
+      email,
+      full_name: name,
+      role: 'student',
+      status: 'pending'
+    });
+    if (dbError) throw dbError;
+
+    toast('Account registered! Handshake pending admin validation.', 'ok', 6000);
+    switchTab('login');
+  } catch (e) {
+    toast(e.message, 'err');
+    shakeElement('auth-card-wrapper');
+  } finally {
+    btn.disabled = false;
+    btn.innerHTML = '<span>Create Account</span> <i class="fas fa-user-plus"></i>';
+  }
+}
+
+// OAuth Handlers
+async function googleLogin() {
+  playSound('click');
+  try {
+    const { error } = await sb.auth.signInWithOAuth({
+      provider: 'google',
+      options: { redirectTo: 'https://ceemediconepal.xyz/cee/login.html' }
+    });
+    if (error) throw error;
+  } catch (e) {
+    toast(e.message, 'err');
+  }
+}
+
+// Password Recovery Logic
+async function doForgot() {
+  const email = document.getElementById('fp-email').value.trim();
+  if (!email) {
+    toast('An email target identity is required.', 'warn');
+    return;
+  }
+  const btn = document.getElementById('fp-btn');
+  btn.disabled = true;
+  btn.innerHTML = '<span class="spin"></span> Sending Link...';
+
+  try {
+    const { error } = await sb.auth.resetPasswordForEmail(email, {
+      redirectTo: 'https://ceemediconepal.xyz/cee/reset-password.html'
+    });
+    if (error) throw error;
+    toast('A reset link was transmitted successfully. Validate inbox.', 'ok', 6000);
+    switchTab('login');
+  } catch (e) {
+    toast(e.message, 'err');
+  } finally {
+    btn.disabled = false;
+    btn.innerHTML = '<span>Send Reset Link</span> <i class="fas fa-paper-plane"></i>';
+  }
+}
+
+// Mail Reset Token Update Action
+async function doResetPassword() {
+  const pass = document.getElementById('rp-pass').value;
+  const confirm = document.getElementById('rp-confirm').value;
+
+  if (!pass || pass.length < 8) {
+    toast('Please enter a secure password containing 8+ characters.', 'warn');
+    return;
+  }
+  if (pass !== confirm) {
+    toast('Passwords do not match.', 'warn');
+    return;
+  }
+
+  const btn = document.getElementById('rp-btn');
+  btn.disabled = true;
+  btn.innerHTML = '<span class="spin"></span> Modifying security key...';
+
+  try {
+    const { error } = await sb.auth.updateUser({ password: pass });
+    if (error) throw error;
+    toast('Security target restored. Launching workspace...', 'ok');
+    setTimeout(() => window.location.replace(APP_URL), 1500);
+  } catch (e) {
+    toast(e.message, 'err');
+  } finally {
+    btn.disabled = false;
+    btn.innerHTML = '<span>Set New Password</span> <i class="fas fa-key"></i>';
+  }
+}
+
+// URL Query Parameter Interceptor
+(() => {
+  const params = new URLSearchParams(window.location.search);
+  const msg = params.get('msg');
+  if (msg) {
+    history.replaceState({}, '', window.location.pathname);
+    window._startMsg = msg;
   }
 })();
 
-// ── Session check — instant from localStorage, no network call ──
-(async()=>{
-  try{
-    // getSession reads from localStorage — zero network, instant
-    const{data:{session}}=await sb.auth.getSession();
-    if(session){
-      // Check sessionStorage cache first (also instant)
-      const cached=sessionStorage.getItem('cp_'+session.user.id);
-      if(cached){
-        try{
-          const cp=JSON.parse(cached);
-          if(cp?.status==='approved'){
+// Automatic Native Cache Check Loop
+(async () => {
+  try {
+    const { data: { session } } = await sb.auth.getSession();
+    if (session) {
+      const cached = sessionStorage.getItem('cp_' + session.user.id);
+      if (cached) {
+        try {
+          const cp = JSON.parse(cached);
+          if (cp?.status === 'approved') {
             window.location.replace(APP_URL);
             return;
           }
-        }catch(e){}
+        } catch (e) {}
       }
-      // No cache — one network call to get profile
-      const{data:profile}=await sb.from('profiles').select('*').eq('id',session.user.id).single();
-      if(profile?.status==='approved'){
-        sessionStorage.setItem('cp_'+session.user.id, JSON.stringify(profile));
+      
+      const { data: profile } = await sb.from('profiles').select('*').eq('id', session.user.id).single();
+      if (profile?.status === 'approved') {
+        sessionStorage.setItem('cp_' + session.user.id, JSON.stringify(profile));
         window.location.replace(APP_URL);
         return;
       }
     }
-  }catch(e){console.error('Session check error',e);}
-  // No valid/approved session — show the login form
+  } catch (e) {
+    console.error('Session handshakes missed', e);
+  }
   showAuth(window._startMsg);
 })();
 
-// ── Auth state listener (handles Google OAuth callback + password reset) ──
-sb.auth.onAuthStateChange(async(event,session)=>{
-  if(event==='PASSWORD_RECOVERY'){
-    // User clicked the reset link in their email
-    document.getElementById('loading-screen').style.display='none';
-    document.getElementById('auth-wrap').style.display='none';
-    document.getElementById('reset-panel').classList.add('show');
+// Real-time Authentication State Observer
+sb.auth.onAuthStateChange(async (event, session) => {
+  if (event === 'PASSWORD_RECOVERY') {
+    document.getElementById('loading-screen').classList.add('hidden');
+    document.getElementById('auth-wrap').style.display = 'none';
+    document.getElementById('reset-panel').style.display = 'flex';
     return;
   }
-  if(event==='SIGNED_IN'&&session){
-    const{data:profile}=await sb.from('profiles').select('*').eq('id',session.user.id).single();
-    if(!profile){
-      // New Google user — create profile and sign out
-      await sb.from('profiles').upsert({id:session.user.id,email:session.user.email,full_name:session.user.user_metadata?.full_name||'',role:'student',status:'pending'});
-      toast('Account created! Awaiting admin approval.','info',6000);
+  if (event === 'SIGNED_IN' && session) {
+    const { data: profile } = await sb.from('profiles').select('*').eq('id', session.user.id).single();
+    if (!profile) {
+      // Create lazy profile schema
+      await sb.from('profiles').upsert({
+        id: session.user.id,
+        email: session.user.email,
+        full_name: session.user.user_metadata?.full_name || '',
+        role: 'student',
+        status: 'pending'
+      });
+      toast('Account initialized. Awaiting admin approval clearance.', 'info', 6000);
       await sb.auth.signOut();
       showAuth();
       return;
     }
-    if(profile.status==='blocked'){toast('Account blocked. Contact admin.','err');await sb.auth.signOut();showAuth();return;}
-    if(profile.status!=='approved'){toast('Account pending admin approval.','warn');await sb.auth.signOut();showAuth();return;}
-    // Approved — go to app
+    
+    if (profile.status === 'blocked') {
+      toast('Your profile access has been revoked.', 'err');
+      await sb.auth.signOut();
+      showAuth();
+      return;
+    }
+    if (profile.status !== 'approved') {
+      toast('Registration requires admin verification approval.', 'warn');
+      await sb.auth.signOut();
+      showAuth();
+      return;
+    }
     window.location.replace(APP_URL);
   }
 });
 
-// ── Login ──
-async function doLogin(){
-  const email=document.getElementById('li-email').value.trim();
-  const pass=document.getElementById('li-pass').value;
-  if(!email||!pass){toast('Fill in all fields','warn');return;}
-  const btn=document.getElementById('li-btn');btn.disabled=true;btn.innerHTML='<span class="spin"></span> Signing in…';
-  try{
-    const{data,error}=await sb.auth.signInWithPassword({email,password:pass});
-    if(error)throw error;
-    const{data:profile}=await sb.from('profiles').select('*').eq('id',data.user.id).single();
-    if(profile?.status==='blocked'){toast('Account blocked. Contact admin.','err');await sb.auth.signOut();return;}
-    if(profile?.status!=='approved'){toast('Account pending admin approval.','warn');await sb.auth.signOut();return;}
-    sessionStorage.setItem('cp_'+data.user.id, JSON.stringify(profile));
-    window.location.replace(APP_URL);
-  }catch(e){toast(e.message,'err');}
-  finally{btn.disabled=false;btn.textContent='Sign In →';}
-}
-
-// ── Signup ──
-async function doSignup(){
-  const name=document.getElementById('su-name').value.trim();
-  const email=document.getElementById('su-email').value.trim();
-  const pass=document.getElementById('su-pass').value;
-  const confirm=document.getElementById('su-confirm').value;
-  if(!name||!email||!pass){toast('Fill in all fields','warn');return;}
-  if(pass.length<8){toast('Password must be at least 8 characters','warn');return;}
-  if(pass!==confirm){toast('Passwords do not match','warn');return;}
-  const btn=document.getElementById('su-btn');btn.disabled=true;btn.innerHTML='<span class="spin"></span> Creating…';
-  try{
-    const{data,error}=await sb.auth.signUp({email,password:pass,options:{data:{full_name:name}}});
-    if(error)throw error;
-    await sb.from('profiles').upsert({id:data.user.id,email,full_name:name,role:'student',status:'pending'});
-    toast('Account created! Awaiting admin approval.','ok',6000);
-    switchTab('login');
-  }catch(e){toast(e.message,'err');}
-  finally{btn.disabled=false;btn.textContent='Create Account →';}
-}
-
-async function googleLogin(){
-  try{
-    const { error } = await sb.auth.signInWithOAuth({
-      provider: 'google',
-      options: {
-        redirectTo: 'https://ceemediconepal.xyz/cee/login.html'
-      }
-    });
-
-    if(error) throw error;
-
-  } catch(e){
-    toast(e.message,'err');
-  }
-}
-
-// ── Forgot password ──
-async function doForgot(){
-  const email=document.getElementById('fp-email').value.trim();
-  if(!email){toast('Enter your email','warn');return;}
-  const btn=document.getElementById('fp-btn');btn.disabled=true;btn.innerHTML='<span class="spin"></span> Sending…';
-  try{
-    const{error}=await sb.auth.resetPasswordForEmail(email,{redirectTo:'https://ceemediconepal.xyz/cee/reset-password.html'});
-    if(error)throw error;
-    toast('Reset link sent! Check your inbox.','ok',6000);
-    switchTab('login');
-  }catch(e){toast(e.message,'err');}
-  finally{btn.disabled=false;btn.textContent='Send Reset Link →';}
-}
-
-// ── Password reset (after clicking email link) ──
-async function doResetPassword(){
-  const pass=document.getElementById('rp-pass').value;
-  const confirm=document.getElementById('rp-confirm').value;
-  if(!pass||pass.length<8){toast('Password must be at least 8 characters','warn');return;}
-  if(pass!==confirm){toast('Passwords do not match','warn');return;}
-  const btn=document.getElementById('rp-btn');btn.disabled=true;btn.innerHTML='<span class="spin"></span> Saving…';
-  try{
-    const{error}=await sb.auth.updateUser({password:pass});
-    if(error)throw error;
-    toast('Password updated! Signing you in…','ok');
-    setTimeout(()=>window.location.replace(APP_URL),1500);
-  }catch(e){toast(e.message,'err');}
-  finally{btn.disabled=false;btn.textContent='Set New Password →';}
-}
-
-// ── Enter key ──
-document.addEventListener('keydown',e=>{
-  if(e.key!=='Enter')return;
-  const active=document.querySelector('.auth-panel.active');
-  if(!active)return;
-  if(active.id==='panel-login')doLogin();
-  else if(active.id==='panel-signup')doSignup();
-  else if(active.id==='panel-forgot')doForgot();
+// Event Binding for Enter Actions
+document.addEventListener('keydown', e => {
+  if (e.key !== 'Enter') return;
+  const active = document.querySelector('.auth-panel.active');
+  if (!active) return;
+  if (active.id === 'panel-login') doLogin();
+  else if (active.id === 'panel-signup') doSignup();
+  else if (active.id === 'panel-forgot') doForgot();
 });
 
-// ================= POPUP TIMER CONTROL =================
+// Marketing Promotional Modal Control Loop
 let timer = 10;
 let interval;
 
 window.onload = function () {
-  const popup = document.getElementById("noticePopup");
-  const overlay = document.getElementById("overlay");
-
-  popup.classList.add("show");
-  overlay.classList.add("show");
-
-  interval = setInterval(() => {
-    timer--;
-    document.getElementById("countdown").innerText = "Closing in " + timer + "s";
-
-    if (timer <= 0) closePopup();
+  setTimeout(() => {
+    // Check if the login form page is displayed (user not yet redirecting)
+    if (document.getElementById('auth-wrap').style.display === 'block') {
+      initializePopup();
+    }
   }, 1000);
 };
 
+function initializePopup() {
+  const popup = document.getElementById("noticePopup");
+  const overlay = document.getElementById("overlay");
+  
+  popup.classList.add("show");
+  overlay.classList.add("show");
+  playSound('success');
+
+  interval = setInterval(() => {
+    timer--;
+    const countdownEl = document.getElementById("countdown");
+    if (countdownEl) {
+      countdownEl.innerText = "Closing in " + timer + "s";
+    }
+
+    if (timer <= 0) {
+      closePopup();
+    }
+  }, 1000);
+}
+
 function closePopup() {
+  playSound('click');
   document.getElementById("noticePopup").classList.remove("show");
   document.getElementById("overlay").classList.remove("show");
   clearInterval(interval);
 }
-  // ── Session check — instant from localStorage, no network call ──
-(async()=>{
-  try{
-    // 1. Get session directly from Supabase
-    const { data: { session } } = await sb.auth.getSession();
-    
-    // 2. Immediate Redirect if session exists
-    if(session){
-      // We know they are logged in, send them to the app
-      window.location.replace(APP_URL);
-      return;
-    }
-  } catch(e) {
-    console.error('Session check error', e);
-  }
-  
-  // 3. No valid session — show the login form
-  showAuth(window._startMsg);
-})();
 </script>
 </body>
 </html>
