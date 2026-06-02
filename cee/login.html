@@ -715,6 +715,25 @@ function closePopup() {
   document.getElementById("overlay").classList.remove("show");
   clearInterval(interval);
 }
+  // ── Session check — instant from localStorage, no network call ──
+(async()=>{
+  try{
+    // 1. Get session directly from Supabase
+    const { data: { session } } = await sb.auth.getSession();
+    
+    // 2. Immediate Redirect if session exists
+    if(session){
+      // We know they are logged in, send them to the app
+      window.location.replace(APP_URL);
+      return;
+    }
+  } catch(e) {
+    console.error('Session check error', e);
+  }
+  
+  // 3. No valid session — show the login form
+  showAuth(window._startMsg);
+})();
 </script>
 </body>
 </html>
