@@ -1051,8 +1051,9 @@ async function loadDashboard(){
         const start=new Date(s.start_time);
         const end=new Date(s.end_time);
         
-        // Exact Match: Check if attempt fell exactly in the exam's schedule window
+        // Match attempt based on schedule_id or timeline matching
         const hasAttempted = allAttempts.some(a => {
+          if (a.schedule_id === s.id) return true;
           if (a.quiz_id !== s.quiz_id) return false;
           const attemptTime = new Date(a.created_at).getTime();
           return attemptTime >= start.getTime() && attemptTime <= end.getTime();
@@ -1143,8 +1144,9 @@ function buildSchedCard(s,status){
   const fmtDate=d=>d.toLocaleDateString('en-US',{weekday:'short',month:'short',day:'numeric'});
   const fmtTime=d=>d.toLocaleTimeString('en-US',{hour:'2-digit',minute:'2-digit'});
   
-  // Exact validation: Check if completed during the scheduled slot itself
+  // Strict matching check for scheduled attempts matching either schedule_id or timeline window
   const hasAttempted = allAttempts.some(a => {
+    if (a.schedule_id === s.id) return true;
     if (a.quiz_id !== quiz.id) return false;
     const attemptTime = new Date(a.created_at).getTime();
     return attemptTime >= start.getTime() && attemptTime <= end.getTime();
@@ -1218,8 +1220,9 @@ function openTakeExamModal(schedId){
   const quiz=s.quizzes||{};
   const start=new Date(s.start_time);const end=new Date(s.end_time);
   
-  // Exact validation for locked slot
+  // Exact validation: strict tracking via schedule_id or timeline matching
   const hasAttempted = allAttempts.some(a => {
+    if (a.schedule_id === s.id) return true;
     if (a.quiz_id !== quiz.id) return false;
     const attemptTime = new Date(a.created_at).getTime();
     return attemptTime >= start.getTime() && attemptTime <= end.getTime();
@@ -1246,8 +1249,9 @@ function openTakeExamModal(schedId){
     <div class="notice notice-info">ℹ️ Tab switching will be flagged. Good luck!</div>`;
   document.getElementById('take-exam-confirm-btn').onclick=()=>{
     closeModal('take-exam-modal');
+    // Forward the active schedule ID safely into the launch context
     const q={id:quiz.id||schedId,...quiz};
-    launchQuizDirect(q);
+    launchQuizDirect(q, s.id);
   };
   document.getElementById('take-exam-modal').classList.add('open');
 }
@@ -1279,7 +1283,8 @@ function renderQuizTree(){
       const cid=`c_${subj}_${chap}`.replace(/\W/g,'_');
       html+=`<div class="chap-node"><div class="chap-hd" onclick="toggleNode('${cid}')"><span>📖 ${esc(chap)}</span><span class="chevron" id="chv_${cid}">▼</span></div><div class="set-list" id="${cid}" style="display:none">`;
       sets.forEach(s=>{
-        const attempted = allAttempts.some(a => a.quiz_id === s.id);
+        // Check for completed practice-specific attempts
+        const attempted = allAttempts.some(a => a.quiz_id === s.id && !a.schedule_id);
         const actionLabel = attempted ? 'PRACTICE' : 'START';
         const actionCls = 'style="color:var(--neon);font-weight:700"';
         html+=`<div class="set-item" onclick="startQuiz('${s.id}')">
@@ -1315,14 +1320,14 @@ function startQuiz(quizId){
   if(!quiz){toast('Quiz not found','err');return;}
   if(!quiz.questions?.length){toast('This quiz has no questions','warn');return;}
   
-  // Routing: Scheduled exams are active lockouts. Regular quizzes have infinite attempts.
+  // Enforce rigid lockout logic ONLY for live scheduled exams
   const activeSchedule = allSchedules.find(s => s.quiz_id === quizId && getSchedStatus(s) === 'live');
-  const attempted = allAttempts.some(a => a.quiz_id === quizId);
   
   if (activeSchedule) {
     const sStart = new Date(activeSchedule.start_time);
     const sEnd = new Date(activeSchedule.end_time);
     const completedDuringExam = allAttempts.some(a => {
+      if (a.schedule_id === activeSchedule.id) return true;
       if (a.quiz_id !== quizId) return false;
       const t = new Date(a.created_at).getTime();
       return t >= sStart.getTime() && t <= sEnd.getTime();
@@ -1337,7 +1342,8 @@ function startQuiz(quizId){
     return;
   }
   
-  // For Practice Mode: choice to retake or review solution guides
+  // Practice Quizzes permit unlimited repetitions! Provide immediate retake options
+  const attempted = allAttempts.some(a => a.quiz_id === quizId && !a.schedule_id);
   if (attempted) {
     document.getElementById('choice-modal-setname').textContent = `${quiz.subject} — ${quiz.set}`;
     
@@ -1357,25 +1363,29 @@ function startQuiz(quizId){
   }
 }
 
-function launchQuizDirect(quiz){
-  // Safety validation
-  const activeSchedule = allSchedules.find(s => s.quiz_id === quiz.id && getSchedStatus(s) === 'live');
-  if (activeSchedule) {
-    const sStart = new Date(activeSchedule.start_time);
-    const sEnd = new Date(activeSchedule.end_time);
-    const completedDuringExam = allAttempts.some(a => {
-      if (a.quiz_id !== quiz.id) return false;
-      const t = new Date(a.created_at).getTime();
-      return t >= sStart.getTime() && t <= sEnd.getTime();
-    });
-    if (completedDuringExam) {
-      toast('You have already submitted an attempt for this active scheduled exam!', 'err');
-      openReviewDirect(quiz.id);
-      return;
+function launchQuizDirect(quiz, scheduleId = null){
+  // Secondary safety check for locked schedules
+  if (scheduleId) {
+    const s = allSchedules.find(x => x.id === scheduleId);
+    if (s) {
+      const sStart = new Date(s.start_time);
+      const sEnd = new Date(s.end_time);
+      const completedDuringExam = allAttempts.some(a => {
+        if (a.schedule_id === scheduleId) return true;
+        if (a.quiz_id !== quiz.id) return false;
+        const t = new Date(a.created_at).getTime();
+        return t >= sStart.getTime() && t <= sEnd.getTime();
+      });
+      if (completedDuringExam) {
+        toast('You have already submitted an attempt for this active scheduled exam!', 'err');
+        openReviewDirect(quiz.id);
+        return;
+      }
     }
   }
 
-  quizState={quiz,questions:quiz.questions,current:0,answers:new Array(quiz.questions.length).fill(null),startTime:Date.now()};
+  // Preserve scheduleId in quizState to differentiate official exams from practice mode
+  quizState={quiz,questions:quiz.questions,current:0,answers:new Array(quiz.questions.length).fill(null),startTime:Date.now(),scheduleId};
   quizSecs=0;tabWarnCount=0;
   document.getElementById('quiz-screen').style.display='block';
   document.body.style.overflow='hidden';
@@ -1433,7 +1443,7 @@ function saveQProgress(){try{sessionStorage.setItem('qp',JSON.stringify({qid:qui
 
 function confirmQuit(){
   showCustomConfirm(
-    'Discard Current Progress?',
+    'Discard Progress?',
     'Are you sure you want to exit? Your progress in this quiz session will not be saved.',
     () => { exitQuiz(); },
     'Exit & Discard',
@@ -1442,6 +1452,13 @@ function confirmQuit(){
 }
 
 function submitQuiz(){
+  // FAST SUBMIT: If standard practice mode, skip confirmations and submit instantly!
+  if (!quizState.scheduleId) {
+    executeQuizSubmission();
+    return;
+  }
+
+  // Official scheduled exams retain strict safety confirmations
   const unanswered=quizState.answers.filter(a=>a===null).length;
   if(unanswered>0) {
     showCustomConfirm(
@@ -1467,25 +1484,38 @@ async function executeQuizSubmission() {
   let score=0;
   quizState.questions.forEach((q,i)=>{const ans=q.answer??q.correct??null;if(quizState.answers[i]===ans)score++;});
   const total=quizState.questions.length;const pct=Math.round((score/total)*100);
+  const isScheduled = !!quizState.scheduleId;
   
-  const{error}=await sb.from('attempts').insert({
-    user_id:CU.id,
-    quiz_id:quizState.quiz.id,
-    subject:quizState.quiz.subject,
-    chapter:quizState.quiz.chapter||null,
-    set:quizState.quiz.set,
+  // Format database attempt metrics
+  const attemptData = {
+    user_id: CU.id,
+    quiz_id: quizState.quiz.id,
+    subject: quizState.quiz.subject,
+    chapter: quizState.quiz.chapter||null,
+    set: quizState.quiz.set,
     score,
     total,
-    percentage:pct,
-    time_taken:quizSecs
-  });
-  
-  if(error) {
-    toast('Result save failed: '+error.message,'err');
-  } else {
-    toast('Attempt recorded successfully!', 'ok');
-  }
-  
+    percentage: pct,
+    time_taken: quizSecs,
+    schedule_id: quizState.scheduleId || null
+  };
+
+  // Background non-blocking execution saver
+  const saveAttemptToDB = async () => {
+    const{error}=await sb.from('attempts').insert(attemptData);
+    if(error) {
+      console.error('Database Sync Failed:', error.message);
+      if (isScheduled) {
+        toast('Database sync failed: ' + error.message, 'err');
+      }
+    } else {
+      if (isScheduled) {
+        toast('Official attempt successfully saved!', 'ok');
+      }
+    }
+  };
+
+  // Initialize solutions mapping instantly
   lastResult={score,total,pct,secs:quizSecs,quiz:quizState.quiz,answers:quizState.answers,questions:quizState.questions};
   
   try {
@@ -1498,28 +1528,31 @@ async function executeQuizSubmission() {
       timestamp: Date.now()
     }));
   } catch(e) {
-    console.warn("Storage limit trigger.", e);
+    console.warn("Storage exception", e);
   }
   
   sessionStorage.removeItem('qp');
   exitQuiz();
   
+  // Prepend metric data directly to avoid blocking evaluation latency
   allAttempts.unshift({
-    user_id: CU.id,
-    quiz_id: lastResult.quiz.id,
-    subject: lastResult.quiz.subject,
-    chapter: lastResult.quiz.chapter,
-    set: lastResult.quiz.set,
-    score,
-    total,
-    percentage: pct,
-    time_taken: quizSecs,
+    ...attemptData,
     created_at: new Date().toISOString()
   });
   
+  // INSTANT RESPONSE: Fire modals, rebuild lists instantly!
   showResultModal(lastResult);
   loadDashboard();
   loadSchedulesData();
+
+  if (isScheduled) {
+    toast('Syncing secure exam results...', 'info');
+    await saveAttemptToDB();
+  } else {
+    // Run DB queries seamlessly in the background!
+    saveAttemptToDB();
+    toast('Practice evaluation complete!', 'ok');
+  }
 }
 
 function exitQuiz(){clearInterval(quizTimer);quizState=null;document.getElementById('quiz-screen').style.display='none';document.body.style.overflow='';}
@@ -1582,7 +1615,8 @@ async function openReviewDirect(quizId) {
       cachedUserReview = JSON.parse(rawRev);
     } catch(e){}
   } else {
-    const matchAttempt = allAttempts.find(a => a.quiz_id === quizId);
+    // Exact review validation matches practice-specific attempts first, then scheduled attempts
+    const matchAttempt = allAttempts.find(a => a.quiz_id === quizId && !a.schedule_id) || allAttempts.find(a => a.quiz_id === quizId);
     if (matchAttempt) {
       cachedUserReview = {
         answers: [], 
@@ -1705,7 +1739,7 @@ function renderReviewQuestions() {
     `;
   }).join('');
 
-  // Process and typeset LaTex formula tags in solutions screen
+  // Process and typeset LaTeX formula tags in solutions screen
   renderMath(qList);
 }
 
