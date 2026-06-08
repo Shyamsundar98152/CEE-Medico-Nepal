@@ -33,7 +33,7 @@ main { max-width:1200px; margin:0 auto; padding:2rem 1.5rem; }
 .spinner { width:40px; height:40px; border:3px solid rgba(14,165,233,0.1); border-radius:50%; border-top-color:var(--accent); animation:spin 0.8s linear infinite; }
 @keyframes spin { to{transform:rotate(360deg)} }
 .load-error { color:var(--red); font-size:0.85rem; text-align:center; max-width:400px; padding:0 1rem; }
-.retry-btn { background:var(--accent); color:white; border:none; padding:0.6rem 1.5rem; border-radius:8px; font-family:inherit; font-weight:600; cursor:pointer; font-size:0.85rem; }
+.retry-btn { background:var(--accent); color:white; border:none; padding:0.6rem 1.5rem; border-radius:8px; font-family:inherit; font-weight:600; cursor:pointer; font-size:0.85rem; margin: 0.5rem; }
 
 .reg-panel { max-width:420px; margin:3rem auto; background:var(--card); border:1px solid var(--border); border-radius:20px; padding:2.5rem; text-align:center; }
 .reg-panel h1 { font-size:1.5rem; font-weight:700; margin-bottom:0.5rem; }
@@ -49,6 +49,10 @@ main { max-width:1200px; margin:0 auto; padding:2rem 1.5rem; }
 
 .section-title { font-size:1.75rem; font-weight:800; margin-bottom:0.5rem; }
 .section-subtitle { color:var(--muted); font-size:0.95rem; margin-bottom:1.5rem; }
+
+/* Custom Banner for Demo Mode */
+.banner-info { background: rgba(14, 165, 233, 0.1); border: 1px dashed var(--accent); border-radius: 12px; padding: 1rem; margin-bottom: 1.5rem; font-size: 0.85rem; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 0.8rem; }
+.banner-info-text strong { color: var(--accent); }
 
 .schedule-grid { display:grid; gap:1rem; }
 .exam-card { background:var(--card); border:1px solid var(--border); border-radius:14px; padding:1.25rem; display:grid; grid-template-columns:1fr auto auto; gap:1rem; align-items:center; transition:0.2s; }
@@ -168,6 +172,18 @@ main { max-width:1200px; margin:0 auto; padding:2rem 1.5rem; }
 .empty-state { text-align:center; padding:4rem 2rem; color:var(--muted); }
 .empty-state-icon { font-size:3rem; margin-bottom:1rem; }
 
+/* Dynamic local upload panel */
+.upload-card { background: var(--surface); border: 1px dashed var(--border); border-radius: 14px; padding: 1.5rem; margin-top: 3rem; text-align: left; }
+.upload-card h3 { font-size: 0.95rem; font-weight: 700; margin-bottom: 0.5rem; display: flex; align-items: center; gap: 0.5rem; }
+.upload-card p { font-size: 0.8rem; color: var(--muted); margin-bottom: 1rem; }
+.uploader-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
+@media (max-width: 600px) { .uploader-grid { grid-template-columns: 1fr; } }
+.file-dropzone { border: 1px solid var(--border); background: rgba(0,0,0,0.2); border-radius: 8px; padding: 1rem; text-align: center; cursor: pointer; transition: 0.2s; display: flex; flex-direction: column; align-items: center; gap: 0.5rem; }
+.file-dropzone:hover { border-color: var(--accent); background: rgba(14,165,233,0.03); }
+.file-dropzone span { font-size: 0.75rem; color: var(--muted); }
+.file-dropzone input { display: none; }
+.file-loaded { border-color: var(--green) !important; color: var(--green); }
+
 footer { background:#0b0c13; border-top:1px solid var(--border); padding:2rem 1.5rem; margin-top:3rem; text-align:center; color:var(--muted); font-size:0.8rem; }
 </style>
 <base target="_blank">
@@ -180,7 +196,10 @@ footer { background:#0b0c13; border-top:1px solid var(--border); padding:2rem 1.
   <p style="color:var(--muted); font-size:0.8rem;" id="load-status">Fetching schedules and quizzes...</p>
   <div id="load-error-box" style="display:none; margin-top:1rem; text-align:center;">
     <p class="load-error" id="load-error-text">Failed to load data</p>
-    <button class="retry-btn" onclick="location.reload()">Retry</button>
+    <div style="display:flex; justify-content:center; gap:0.5rem; margin-top:1rem;">
+      <button class="retry-btn" onclick="location.reload()">Retry Fetch</button>
+      <button class="retry-btn" style="background:var(--border); color:var(--text);" onclick="runDemoMode()">Use Demo Mock Data</button>
+    </div>
   </div>
 </div>
 
@@ -216,12 +235,21 @@ footer { background:#0b0c13; border-top:1px solid var(--border); padding:2rem 1.
         <input type="email" id="reg-email" placeholder="your@email.com" maxlength="100">
       </div>
       <button class="btn btn-primary" onclick="registerUser()" id="reg-btn">Continue to Exam Hall</button>
-      <p style="color:var(--muted); font-size:0.8rem; margin-top:1rem;">No password required. Works completely offline.</p>
+      <p style="color:var(--muted); font-size:0.8rem; margin-top:1rem;">No password required. Dynamic online & offline modes.</p>
     </div>
   </div>
 
   <!-- SCHEDULE -->
   <div id="view-schedule" class="view-container">
+    <div class="banner-info" id="demo-banner" style="display:none;">
+      <div class="banner-info-text">
+        💡 <strong>Demo Mode Activated:</strong> Running with highly detailed medical entrance test data.
+      </div>
+      <div style="font-size:0.8rem; color:var(--muted)">
+        CSV files not found locally, loaded high-fidelity mock assets.
+      </div>
+    </div>
+
     <h1 class="section-title">📅 Live Exam Schedule</h1>
     <p class="section-subtitle">Auto-detecting live exams. Click "Enter Exam" when a test is active.</p>
     <div style="display:flex; gap:0.5rem; margin-bottom:1.5rem; flex-wrap:wrap;">
@@ -231,6 +259,26 @@ footer { background:#0b0c13; border-top:1px solid var(--border); padding:2rem 1.
       <button class="nav-btn nav-btn-secondary" onclick="filterSchedule('ended')" id="filter-ended">Ended</button>
     </div>
     <div class="schedule-grid" id="schedule-grid"></div>
+
+    <!-- LOCAL CSV UPLOAD SYSTEM -->
+    <div class="upload-card">
+      <h3>📁 Test Custom Datasets</h3>
+      <p>Directly load local CSV files without setting up a web server. Changes take effect instantly.</p>
+      <div class="uploader-grid">
+        <div class="file-dropzone" id="schedules-zone" onclick="document.getElementById('schedules-file').click()">
+          <div style="font-size:1.5rem;">📅</div>
+          <strong id="s-label">Load Schedules CSV</strong>
+          <span id="s-status">Upload schedules_rows.csv</span>
+          <input type="file" id="schedules-file" accept=".csv" onchange="handleCSVUpload(this, 'schedules')">
+        </div>
+        <div class="file-dropzone" id="quizzes-zone" onclick="document.getElementById('quizzes-file').click()">
+          <div style="font-size:1.5rem;">📝</div>
+          <strong id="q-label">Load Quizzes CSV</strong>
+          <span id="q-status">Upload quizzes_rows.csv</span>
+          <input type="file" id="quizzes-file" accept=".csv" onchange="handleCSVUpload(this, 'quizzes')">
+        </div>
+      </div>
+    </div>
   </div>
 
   <!-- EXAM -->
@@ -364,7 +412,7 @@ footer { background:#0b0c13; border-top:1px solid var(--border); padding:2rem 1.
 
 <footer>
   <p>© 2026 CEE Medico Nepal — Live Scheduled Exam Portal</p>
-  <p style="margin-top:0.25rem">100% Offline — Detailed Analysis After Every Exam</p>
+  <p style="margin-top:0.25rem">100% Offline Capable — Comprehensive Statistical Analytics</p>
 </footer>
 
 <script>
@@ -387,24 +435,29 @@ let examStartTime = null;
 let scheduleFilter = 'all';
 let solutionFilter = 'all';
 
+let loadedRawSchedules = null;
+let loadedRawQuizzes = null;
+
 // ==================== CSV PARSER ====================
+// Fixed broken line-break character parser logic
 function parseCSV(text) {
   const lines = [];
   let row = [''];
   let inQuotes = false;
   for (let i = 0; i < text.length; i++) {
-    const c = text[i], next = text[i+1];
+    const c = text[i];
+    const next = text[i+1];
     if (c === '"') {
-      if (inQuotes && next === '"') { row[row.length-1] += '"'; i++; }
-      else { inQuotes = !inQuotes; }
+      if (inQuotes && next === '"') { 
+        row[row.length-1] += '"'; 
+        i++; 
+      } else { 
+        inQuotes = !inQuotes; 
+      }
     } else if (c === ',' && !inQuotes) {
       row.push('');
-    } else if ((c === '
-' || c === '
-') && !inQuotes) {
-      if (c === '
-' && next === '
-') i++;
+    } else if ((c === '\r' || c === '\n') && !inQuotes) {
+      if (c === '\r' && next === '\n') i++;
       lines.push(row);
       row = [''];
     } else {
@@ -469,85 +522,95 @@ async function loadAllData() {
     if (!scheduleRes.ok) throw new Error('Failed to fetch schedules_rows.csv (HTTP ' + scheduleRes.status + ')');
     if (!quizzesRes.ok) throw new Error('Failed to fetch quizzes_rows.csv (HTTP ' + quizzesRes.status + ')');
 
-    status.textContent = 'Parsing quizzes...';
+    status.textContent = 'Parsing live structures...';
 
     const qText = await quizzesRes.text();
-    const qRows = csvToObjects(parseCSV(qText));
-
-    quizzesMap = {};
-    qRows.forEach(q => {
-      const quizId = q.id;
-      if (!quizId) return;
-
-      let questions = parseJSON(q.questions);
-      if (!questions.length && q.question_ids) {
-        questions = parseJSON(q.question_ids);
-      }
-
-      quizzesMap[quizId] = {
-        id: quizId,
-        subject: (q.subject || 'General').trim(),
-        chapter: (q.chapter || 'Untitled').trim(),
-        set: q.set || '1',
-        questions: questions,
-        difficulty: q.difficulty || 'Medium',
-        duration: parseInt(q.duration_minutes) || 15,
-        totalQ: parseInt(q.total_questions) || questions.length
-      };
-    });
-
-    console.log('Loaded', Object.keys(quizzesMap).length, 'quizzes');
-
-    status.textContent = 'Parsing schedules...';
-
     const sText = await scheduleRes.text();
-    const sRows = csvToObjects(parseCSV(sText));
 
-    const now = new Date();
-    schedules = sRows.map(r => {
-      const start = new Date(r.start_time);
-      const end = new Date(r.end_time);
-      let status = 'upcoming';
-      if (now >= start && now <= end) status = 'live';
-      else if (now > end) status = 'ended';
-
-      const quiz = quizzesMap[r.quiz_id];
-
-      return {
-        id: r.id,
-        title: r.title,
-        quizId: r.quiz_id,
-        startTime: start,
-        endTime: end,
-        duration: parseInt(r.duration_minutes) || (quiz ? quiz.duration : 60),
-        status: status,
-        instructions: r.instructions || 'No special instructions',
-        description: r.description || 'CEE Medico Nepal',
-        quiz: quiz
-      };
-    }).sort((a, b) => a.startTime - b.startTime);
-
-    console.log('Loaded', schedules.length, 'schedules');
-
-    document.getElementById('loading-overlay').style.opacity = '0';
-    setTimeout(() => document.getElementById('loading-overlay').style.display = 'none', 300);
-
-    if (currentUser) {
-      showView('schedule');
-      renderSchedule();
-    } else {
-      showView('register');
-    }
-
-    setInterval(updateScheduleStatus, 30000);
+    processAndInitialize(sText, qText, false);
 
   } catch (err) {
+    console.warn("Fetch failed, initiating robust fallbacks:", err);
     status.textContent = '';
-    document.getElementById('load-error-text').textContent = err.message;
+    document.getElementById('load-error-text').textContent = "Unable to fetch CSV files from server. You can run Demo Mock Mode or upload your files manually.";
     document.getElementById('load-error-box').style.display = 'block';
     document.querySelector('.spinner').style.display = 'none';
-    console.error('Load error:', err);
   }
+}
+
+function processAndInitialize(sText, qText, isDemo = false) {
+  const status = document.getElementById('load-status');
+  if (status) status.textContent = 'Processing quiz questions...';
+
+  // Quizzes Parsing
+  const qRows = csvToObjects(parseCSV(qText));
+  quizzesMap = {};
+  qRows.forEach(q => {
+    const quizId = q.id;
+    if (!quizId) return;
+
+    let questions = parseJSON(q.questions);
+    if (!questions.length && q.question_ids) {
+      questions = parseJSON(q.question_ids);
+    }
+
+    quizzesMap[quizId] = {
+      id: quizId,
+      subject: (q.subject || 'General').trim(),
+      chapter: (q.chapter || 'Untitled').trim(),
+      set: q.set || '1',
+      questions: questions,
+      difficulty: q.difficulty || 'Medium',
+      duration: parseInt(q.duration_minutes) || 15,
+      totalQ: parseInt(q.total_questions) || questions.length
+    };
+  });
+
+  // Schedules Parsing
+  const sRows = csvToObjects(parseCSV(sText));
+  const now = new Date();
+  schedules = sRows.map(r => {
+    const start = new Date(r.start_time);
+    const end = new Date(r.end_time);
+    let status = 'upcoming';
+    if (now >= start && now <= end) status = 'live';
+    else if (now > end) status = 'ended';
+
+    const quiz = quizzesMap[r.quiz_id];
+
+    return {
+      id: r.id,
+      title: r.title,
+      quizId: r.quiz_id,
+      startTime: start,
+      endTime: end,
+      duration: parseInt(r.duration_minutes) || (quiz ? quiz.duration : 60),
+      status: status,
+      instructions: r.instructions || 'No special instructions',
+      description: r.description || 'CEE Medico Nepal',
+      quiz: quiz
+    };
+  }).sort((a, b) => a.startTime - b.startTime);
+
+  // Transition away loading spinner
+  const overlay = document.getElementById('loading-overlay');
+  overlay.style.opacity = '0';
+  setTimeout(() => overlay.style.display = 'none', 300);
+
+  if (isDemo) {
+    document.getElementById('demo-banner').style.display = 'flex';
+  } else {
+    document.getElementById('demo-banner').style.display = 'none';
+  }
+
+  if (currentUser) {
+    showView('schedule');
+    renderSchedule();
+  } else {
+    showView('register');
+  }
+
+  setInterval(updateScheduleStatus, 30000);
 }
 
 function updateScheduleStatus() {
@@ -563,7 +626,124 @@ function updateScheduleStatus() {
   if (changed) renderSchedule();
 }
 
-// ==================== USER ====================
+// ==================== MANUAL FILE UPLOADER ====================
+function handleCSVUpload(input, type) {
+  const file = input.files[0];
+  if (!file) return;
+
+  const reader = new FileReader();
+  reader.onload = function(e) {
+    const text = e.target.result;
+    if (type === 'schedules') {
+      loadedRawSchedules = text;
+      document.getElementById('s-label').textContent = file.name;
+      document.getElementById('s-status').textContent = "Upload Complete ✓";
+      document.getElementById('schedules-zone').classList.add('file-loaded');
+    } else {
+      loadedRawQuizzes = text;
+      document.getElementById('q-label').textContent = file.name;
+      document.getElementById('q-status').textContent = "Upload Complete ✓";
+      document.getElementById('quizzes-zone').classList.add('file-loaded');
+    }
+
+    if (loadedRawSchedules && loadedRawQuizzes) {
+      document.getElementById('loading-overlay').style.display = 'flex';
+      document.getElementById('loading-overlay').style.opacity = '1';
+      document.getElementById('load-status').textContent = 'Assembling local modules...';
+      setTimeout(() => {
+        try {
+          processAndInitialize(loadedRawSchedules, loadedRawQuizzes, false);
+        } catch(e) {
+          alert("Error parsing CSV format. Please ensure correct headers & try again.");
+          console.error(e);
+          location.reload();
+        }
+      }, 500);
+    }
+  };
+  reader.readAsText(file);
+}
+
+// ==================== MOCK DEMO FALLBACK DATABASE ====================
+function runDemoMode() {
+  document.getElementById('load-status').textContent = "Injecting mock entrance profiles...";
+  
+  const now = new Date();
+  
+  // Format dates for mock schedule matching CSV parser expectations
+  const formatMockDate = (date) => {
+    return date.toISOString();
+  };
+
+  const oneHourAgo = new Date(now.getTime() - 1000 * 60 * 15); // Started 15 mins ago
+  const fortyFiveMinsLater = new Date(now.getTime() + 1000 * 60 * 45); // Ends in 45 mins
+  const twoHoursLater = new Date(now.getTime() + 1000 * 60 * 120);
+  const threeHoursLater = new Date(now.getTime() + 1000 * 60 * 180);
+  const yesterdayStart = new Date(now.getTime() - 1000 * 60 * 60 * 25);
+  const yesterdayEnd = new Date(now.getTime() - 1000 * 60 * 60 * 24);
+
+  // High-fidelity Medical Mock Questions matching CEE syllabus
+  const mockQuiz1 = [
+    {
+      question: "Which of the following organic structures acts as a non-reducing carbohydrate?",
+      options: ["Lactose", "Maltose", "Sucrose", "Cellobiose"],
+      answer: 2,
+      explanation: "Sucrose is a non-reducing sugar because its glycosidic linkage is formed between the reducing/anomeric carbons of glucose (C1) and fructose (C2). Since no free aldehyde or ketone groups are available to reduce Benedict's or Fehling's reagents, it tests negative."
+    },
+    {
+      question: "During cellular aerobic respiration, what is the exact site of the electron transport chain (ETC) in human mitochondria?",
+      options: ["Outer mitochondrial membrane", "Mitochondrial matrix", "Inner mitochondrial membrane", "Intermembrane space"],
+      answer: 2,
+      explanation: "The electron transport chain is located in the inner mitochondrial membrane (cristae). This membrane provides maximum surface area for protein complex assemblies (Complex I-IV) and ATP synthase to generate a proton gradient."
+    },
+    {
+      question: "Which cell organelle is primarily responsible for the post-translational modification and glycosylation of synthesized proteins?",
+      options: ["Lysosome", "Rough Endoplasmic Reticulum", "Golgi Apparatus", "Peroxisome"],
+      answer: 2,
+      explanation: "The Golgi Apparatus is the central processing, packaging, and sorting hub. It modifies proteins arriving from the Rough ER by adding carbohydrate chains (glycosylation), sulfation, or phosphorylation before routing them to their final cellular targets."
+    },
+    {
+      question: "Identify the element with the highest electron affinity among the halogen family.",
+      options: ["Fluorine", "Chlorine", "Bromine", "Iodine"],
+      answer: 1,
+      explanation: "Chlorine has a higher electron affinity than Fluorine. Although Fluorine is more electronegative, its small atomic size creates significant electron-electron repulsion in its compact 2p subshell, making it less energetically favorable to add an incoming electron compared to Chlorine's spacious 3p subshell."
+    },
+    {
+      question: "In meiosis, synapsis of homologous chromosomes occurs precisely during which stage of Prophase I?",
+      options: ["Leptotene", "Zygotene", "Pachytene", "Diplotene"],
+      answer: 1,
+      explanation: "Synapsis (the physical pairing of homologous chromosomes) occurs during the Zygotene stage of Prophase I, mediated by the assembly of the synaptonemal complex. Crossing over follows in Pachytene."
+    }
+  ];
+
+  const mockQuiz2 = [
+    {
+      question: "The oxygen dissociation curve of adult hemoglobin (HbA) exhibits which specific geometrical shape under physiological conditions?",
+      options: ["Linear", "Sigmoid", "Hyperbolic", "Parabolic"],
+      answer: 1,
+      explanation: "The oxygen dissociation curve of HbA is sigmoidal (S-shaped) due to 'cooperative binding'. When one molecule of oxygen binds to one of the four subunits, it induces a conformational shift (T-state to R-state) that increases the oxygen affinity of the remaining subunits."
+    },
+    {
+      question: "Which anatomical division of the nephron acts as the primary site of glucose reabsorption via active transport?",
+      options: ["Proximal Convoluted Tubule (PCT)", "Loop of Henle", "Distal Convoluted Tubule (DCT)", "Collecting Duct"],
+      answer: 0,
+      explanation: "Nearly 100% of filtered glucose and amino acids are reabsorbed in the Proximal Convoluted Tubule (PCT) using Sodium-Glucose Cotransporters (SGLT-2 and SGLT-1) on the apical membrane, powered by the basolateral Na+/K+ ATPase pump."
+    }
+  ];
+
+  const sText = `id,title,quiz_id,start_time,end_time,duration_minutes,instructions,description
+schedule_1,🔴 CEE Mock Entrance: Integrated Biology & Chemistry,quiz_1,${formatMockDate(oneHourAgo)},${formatMockDate(fortyFiveMinsLater)},60,Solve all 5 high-yield CEE mock questions.,CEE Medico Nepal Premium Mock Exam
+schedule_2,🎓 Upcoming Biology Diagnostic Prep Test,quiz_2,${formatMockDate(twoHoursLater)},${formatMockDate(threeHoursLater)},30,Answer carefully. Negative marking of 0.25 is excluded in this demo.,Medical Entrance Practice Arena
+schedule_3,🔒 Ended Mock Challenge - Physiology & Histology,quiz_2,${formatMockDate(yesterdayStart)},${formatMockDate(yesterdayEnd)},60,Review previous analytical paper solutions.,CEE Medico Archive`;
+
+  const qText = `id,subject,chapter,set,questions,difficulty,duration_minutes,total_questions
+quiz_1,Biology & Chemistry,Syllabus General,1,"${JSON.stringify(mockQuiz1).replace(/"/g, '""')}",Hard,60,5
+quiz_2,Physiology & Histology,Syllabus General,2,"${JSON.stringify(mockQuiz2).replace(/"/g, '""')}",Medium,30,2`;
+
+  processAndInitialize(sText, qText, true);
+}
+
+// ==================== USER REGISTRATION ====================
 function registerUser() {
   const name = document.getElementById('reg-name').value.trim();
   const email = document.getElementById('reg-email').value.trim();
@@ -759,7 +939,7 @@ function submitExam() {
 
   questions.forEach((q, i) => {
     const ans = answers[i];
-    const correctAns = q.answer !== undefined ? q.answer : (q.correct !== undefined ? q.correct : 0);
+    const correctAns = q.answer !== undefined ? parseInt(q.answer) : (q.correct !== undefined ? parseInt(q.correct) : 0);
     if (ans === undefined) skipped++;
     else if (ans === correctAns) correct++;
     else wrong++;
@@ -848,7 +1028,7 @@ function renderSolutions() {
   let html = '';
   questions.forEach((q, i) => {
     const userAns = answers[i];
-    const correctAns = q.answer !== undefined ? q.answer : (q.correct !== undefined ? q.correct : 0);
+    const correctAns = q.answer !== undefined ? parseInt(q.answer) : (q.correct !== undefined ? parseInt(q.correct) : 0);
     const isCorrect = userAns === correctAns;
     const isSkipped = userAns === undefined;
     const status = isCorrect ? 'correct' : isSkipped ? 'skipped' : 'wrong';
@@ -908,7 +1088,7 @@ function viewResults(scheduleId) {
   const questions = activeSchedule.quiz ? activeSchedule.quiz.questions : [];
 
   container.innerHTML = questions.map((q, i) => {
-    const correctAns = q.answer !== undefined ? q.answer : (q.correct !== undefined ? q.correct : 0);
+    const correctAns = q.answer !== undefined ? parseInt(q.answer) : (q.correct !== undefined ? parseInt(q.correct) : 0);
     const options = q.options || q.choices || q.answers || [];
     const opts = options.map((opt, j) => {
       let cls = 'sol-option neutral', icon = '○';
