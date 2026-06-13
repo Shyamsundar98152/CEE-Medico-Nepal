@@ -1,8 +1,7 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-   <!-- Open Graph -->
-    <meta property="og:title" content="CEE Medico Nepal – Practice MCQs & Mock Tests for CEE 2081/2082">
+   <meta property="og:title" content="CEE Medico Nepal – Practice MCQs & Mock Tests for CEE 2081/2082">
     <meta property="og:description" content="Nepal's leading platform for CEE medical entrance preparation. Free MCQs, quizzes, and NEET-style mock tests.">
     <meta property="og:url" content="https://ceemediconepal.xyz/">
     <meta property="og:type" content="website">
@@ -307,7 +306,6 @@ footer a{color:#fff;font-weight:700;}
 </head>
 <body>
 
-<!-- Back-button blocker during quiz -->
 <div id="quiz-back-blocker">
   <div class="blocker-modal">
     <div class="icon">⚠️</div>
@@ -349,19 +347,16 @@ footer a{color:#fff;font-weight:700;}
 
 <div class="main-content">
 
-  <!-- Exam Selector -->
   <div class="exam-selector-card hidden" id="exam-selector-card">
     <h3><i class="fas fa-calendar-check"></i> Available Exams</h3>
     <div class="exam-tab-list" id="exam-tab-list"></div>
   </div>
 
-  <!-- Status Banner -->
   <div id="status-banner" class="status-banner closed">
     <i class="fas fa-lock"></i>
     <span id="status-text">Checking exam status...</span>
   </div>
 
-  <!-- Login Card -->
   <div class="card" id="login-card">
     <div class="section-title"><i class="fas fa-user-circle" style="color:var(--blue)"></i> Enter Your Details</div>
     <div id="login-error" class="alert alert-error hidden"></div>
@@ -391,7 +386,6 @@ footer a{color:#fff;font-weight:700;}
     </div>
   </div>
 
-  <!-- Quiz Area -->
   <div id="quiz-area">
     <div class="quiz-header">
       <div>
@@ -418,10 +412,8 @@ footer a{color:#fff;font-weight:700;}
     </div>
   </div>
 
-  <!-- Results Area -->
   <div id="result-area">
 
-    <!-- Score + action bar (hidden when printing) -->
     <div class="card no-print" style="background:linear-gradient(135deg,#0062ff,#3b82f6);color:#fff;border:none;">
       <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:16px;">
         <div>
@@ -446,7 +438,6 @@ footer a{color:#fff;font-weight:700;}
     </div>
 
     <div class="card" id="review-card">
-      <!-- Print-only header: shown only when printing -->
       <div class="print-answerkey-header" id="print-answerkey-header">
         <h1>CEE Weekly Exam — Answer Key &amp; Explanations</h1>
         <p id="print-meta-text"></p>
@@ -454,7 +445,6 @@ footer a{color:#fff;font-weight:700;}
 
       <div class="section-title no-print"><i class="fas fa-magnifying-glass" style="color:var(--blue)"></i> All Questions &amp; Answers</div>
 
-      <!-- Filter tabs (screen only) -->
       <div class="filter-tabs no-print" id="review-filter-tabs">
         <button class="filter-tab active" onclick="filterReview('all',this)"><i class="fas fa-list"></i> All <span id="count-all"></span></button>
         <button class="filter-tab correct-tab" onclick="filterReview('correct',this)"><i class="fas fa-check"></i> Correct <span id="count-correct"></span></button>
@@ -478,7 +468,6 @@ footer a{color:#fff;font-weight:700;}
   <p>&copy; 2025 <a href="https://ceemediconepal.xyz">CeemedicoNepal</a>. All rights reserved. | Weekly CEE Exam System</p>
 </footer>
 
-<!-- Firebase -->
 <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-database-compat.js"></script>
 <script>
@@ -686,10 +675,22 @@ async function checkPreviousAttempts() {
       const data = snap.val();
       selectedExam = exam;
       examKey = key;
+      
+      // FIX: Restore the specific questions mapped to this user's answers so they show in review!
+      if (data.questions) {
+        questions = data.questions;
+      } else if (exam.questionSetId) {
+        // Fallback for older database entries
+        const qSnap = await db.ref(`question_sets/${exam.questionSetId}/questions`).once('value');
+        if (qSnap.exists()) {
+          const allQs = qSnap.val();
+          questions = (Array.isArray(allQs) ? allQs : Object.values(allQs)).filter(q => q && q.question);
+        }
+      }
+
       document.getElementById('login-card').style.display = 'none';
       document.getElementById('status-banner').style.display = 'none';
       document.getElementById('exam-selector-card').classList.add('hidden');
-      // Show nav results link
       document.getElementById('nav-result-link').classList.remove('hidden');
       showResults(data, data.answers || {}, true);
       return;
@@ -854,6 +855,7 @@ async function submitExam(auto) {
     percentage: parseFloat(pct),
     total: questions.length,
     answers: userAnswers,
+    questions: questions, // FIX: Save the specific shuffled question set to perfectly recreate the review
     timestamp: Date.now()
   };
 
@@ -997,8 +999,13 @@ function showLoginError(msg) {
   btn.innerHTML = '<i class="fas fa-play"></i> Start Exam';
 }
 
-function printResults() {
+// FIX: Renamed from `printResults` to `printAnswerKey` to match exactly what your HTML button calls
+function printAnswerKey() {
   // Before printing, show all questions (reset filter)
+  document.querySelectorAll('.filter-tab').forEach(t => t.classList.remove('active'));
+  const allTab = document.querySelector('.filter-tab[onclick*="all"]');
+  if (allTab) allTab.classList.add('active');
+  
   document.querySelectorAll('.review-q').forEach(q => q.style.display = '');
   window.print();
 }
