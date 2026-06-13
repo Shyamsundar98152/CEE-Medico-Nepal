@@ -1,2670 +1,1544 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>CEE Medico Nepal — Live Scheduled Exams</title>
-  <link href="https://fonts.googleapis.com/css2?family=Sora:wght@300;400;500;600;700;800&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
-  
-  <!-- Firebase Compatibility SDKs -->
-  <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-database-compat.js"></script>
-
-  <style>
-    :root {
-      --bg: #07080e;
-      --surface: #0e111d;
-      --card: #151a30;
-      --card-alt: #1d2442;
-      --border: #252d53;
-      --border-focus: #3b82f6;
-      --accent: #0ea5e9;
-      --accent-hover: #0284c7;
-      --green: #10b981;
-      --green-bg: rgba(16, 185, 129, 0.1);
-      --red: #ef4444;
-      --red-bg: rgba(239, 68, 68, 0.1);
-      --yellow: #f59e0b;
-      --yellow-bg: rgba(245, 158, 11, 0.15);
-      --purple: #8b5cf6;
-      --purple-bg: rgba(139, 92, 246, 0.15);
-      --text: #f3f4f6;
-      --text-muted: #94a3b8;
-      --shadow-glow: 0 0 15px rgba(14, 165, 233, 0.2);
-      --font-main: 'Sora', sans-serif;
-      --font-mono: 'Space Mono', monospace;
-    }
-
-    * {
-      margin: 0;
-      padding: 0;
-      box-sizing: border-box;
-    }
-
-    body {
-      background-color: var(--bg);
-      color: var(--text);
-      font-family: var(--font-main);
-      min-height: 100vh;
-      display: flex;
-      flex-direction: column;
-      overflow-x: hidden;
-      line-height: 1.5;
-    }
-
-    /* Scrollbars */
-    ::-webkit-scrollbar {
-      width: 8px;
-      height: 8px;
-    }
-    ::-webkit-scrollbar-track {
-      background: var(--bg);
-    }
-    ::-webkit-scrollbar-thumb {
-      background: var(--border);
-      border-radius: 4px;
-    }
-    ::-webkit-scrollbar-thumb:hover {
-      background: var(--accent);
-    }
-
-    /* Common Utility Styles */
-    .container {
-      width: 100%;
-      max-width: 1200px;
-      margin: 0 auto;
-      padding: 0 1.5rem;
-    }
-
-    .btn {
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      padding: 0.75rem 1.5rem;
-      border-radius: 8px;
-      font-weight: 600;
-      cursor: pointer;
-      transition: all 0.2s ease;
-      font-family: var(--font-main);
-      font-size: 0.9rem;
-      border: none;
-      gap: 0.5rem;
-    }
-
-    .btn-primary {
-      background-color: var(--accent);
-      color: #fff;
-    }
-    .btn-primary:hover:not(:disabled) {
-      background-color: var(--accent-hover);
-      box-shadow: var(--shadow-glow);
-    }
-
-    .btn-secondary {
-      background-color: transparent;
-      border: 1.5px solid var(--border);
-      color: var(--text);
-    }
-    .btn-secondary:hover:not(:disabled) {
-      background-color: var(--border);
-    }
-
-    .btn-success {
-      background-color: var(--green);
-      color: #fff;
-    }
-    .btn-success:hover:not(:disabled) {
-      background-color: #059669;
-    }
-
-    .btn-danger {
-      background-color: var(--red);
-      color: #fff;
-    }
-    .btn-danger:hover:not(:disabled) {
-      background-color: #dc2626;
-    }
-
-    .btn:disabled {
-      opacity: 0.5;
-      cursor: not-allowed;
-    }
-
-    /* Header Navbar */
-    header {
-      background-color: var(--surface);
-      border-bottom: 1.5px solid var(--border);
-      padding: 1rem 0;
-      position: sticky;
-      top: 0;
-      z-index: 50;
-    }
-
-    .header-content {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-    }
-
-    .logo-container {
-      display: flex;
-      align-items: center;
-      gap: 0.75rem;
-    }
-
-    .logo-badge {
-      background: linear-gradient(135deg, var(--accent) 0%, var(--purple) 100%);
-      color: #fff;
-      font-weight: 800;
-      padding: 0.4rem 0.8rem;
-      border-radius: 6px;
-      font-size: 0.9rem;
-      letter-spacing: 0.05em;
-    }
-
-    .logo-text {
-      font-weight: 700;
-      font-size: 1.1rem;
-      color: var(--text);
-    }
-
-    .user-profile-badge {
-      display: flex;
-      align-items: center;
-      gap: 0.75rem;
-      background-color: var(--card);
-      padding: 0.5rem 1rem;
-      border-radius: 30px;
-      border: 1px solid var(--border);
-    }
-
-    .user-avatar {
-      width: 28px;
-      height: 28px;
-      border-radius: 50%;
-      background: var(--purple);
-      color: white;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-weight: 700;
-      font-size: 0.8rem;
-    }
-
-    /* Views Framework */
-    .view-container {
-      display: none;
-      flex: 1;
-      padding: 2.5rem 0;
-    }
-
-    .view-container.active {
-      display: block;
-      animation: fadeIn 0.35s ease-out;
-    }
-
-    @keyframes fadeIn {
-      from { opacity: 0; transform: translateY(8px); }
-      to { opacity: 1; transform: translateY(0); }
-    }
-
-    /* Authentication Screen */
-    .auth-grid {
-      display: grid;
-      grid-template-columns: 1.1fr 0.9fr;
-      gap: 3rem;
-      align-items: center;
-      margin-top: 2rem;
-    }
-
-    .auth-banner {
-      background: linear-gradient(145deg, var(--surface) 0%, var(--bg) 100%);
-      padding: 3rem;
-      border-radius: 16px;
-      border: 1px solid var(--border);
-      position: relative;
-      overflow: hidden;
-    }
-
-    .auth-banner::before {
-      content: '';
-      position: absolute;
-      width: 250px;
-      height: 250px;
-      background: var(--accent);
-      filter: blur(140px);
-      top: -100px;
-      right: -100px;
-      opacity: 0.15;
-    }
-
-    .auth-banner h1 {
-      font-size: 2.2rem;
-      font-weight: 800;
-      line-height: 1.3;
-      margin-bottom: 1.5rem;
-      background: linear-gradient(to right, #ffffff, var(--accent));
-      -webkit-background-clip: text;
-      -webkit-text-fill-color: transparent;
-    }
-
-    .auth-banner p {
-      color: var(--text-muted);
-      margin-bottom: 2rem;
-      font-size: 1.05rem;
-    }
-
-    .features-list {
-      display: flex;
-      flex-direction: column;
-      gap: 1.25rem;
-    }
-
-    .feature-item {
-      display: flex;
-      align-items: flex-start;
-      gap: 1rem;
-    }
-
-    .feature-icon {
-      background-color: rgba(14, 165, 233, 0.15);
-      color: var(--accent);
-      border-radius: 50%;
-      width: 28px;
-      height: 28px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 0.9rem;
-      flex-shrink: 0;
-    }
-
-    .auth-card {
-      background-color: var(--surface);
-      border: 1px solid var(--border);
-      border-radius: 16px;
-      padding: 2.5rem;
-      box-shadow: 0 20px 40px rgba(0,0,0,0.4);
-    }
-
-    .form-group {
-      margin-bottom: 1.5rem;
-    }
-
-    .form-label {
-      display: block;
-      margin-bottom: 0.5rem;
-      font-weight: 500;
-      font-size: 0.9rem;
-      color: var(--text);
-    }
-
-    .form-input {
-      width: 100%;
-      padding: 0.8rem 1rem;
-      background-color: var(--card);
-      border: 1.5px solid var(--border);
-      border-radius: 8px;
-      color: #fff;
-      font-family: var(--font-main);
-      font-size: 0.95rem;
-      transition: all 0.2s ease;
-    }
-
-    .form-input:focus {
-      outline: none;
-      border-color: var(--border-focus);
-      box-shadow: var(--shadow-glow);
-    }
-
-    /* Admin & CSV Dashboard Panel */
-    .admin-upload-section {
-      background-color: var(--surface);
-      border: 1px solid var(--border);
-      border-radius: 12px;
-      padding: 1.5rem;
-      margin-bottom: 2rem;
-    }
-
-    .admin-grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-      gap: 1.5rem;
-      margin-top: 1rem;
-    }
-
-    .csv-card {
-      background-color: var(--card);
-      border: 1.5px dashed var(--border);
-      border-radius: 8px;
-      padding: 1.25rem;
-      text-align: center;
-      transition: border-color 0.2s ease;
-      position: relative;
-    }
-
-    .csv-card:hover {
-      border-color: var(--accent);
-    }
-
-    .csv-input {
-      position: absolute;
-      top: 0; left: 0; width: 100%; height: 100%;
-      opacity: 0;
-      cursor: pointer;
-    }
-
-    .csv-title {
-      font-weight: 600;
-      font-size: 0.95rem;
-      margin-bottom: 0.25rem;
-    }
-
-    .csv-subtitle {
-      font-size: 0.8rem;
-      color: var(--text-muted);
-    }
-
-    /* Scheduled Board List */
-    .board-header {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      margin-bottom: 1.5rem;
-    }
-
-    .board-title-group h2 {
-      font-size: 1.6rem;
-      font-weight: 700;
-    }
-
-    .board-title-group p {
-      color: var(--text-muted);
-      font-size: 0.9rem;
-    }
-
-    .schedule-grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
-      gap: 1.5rem;
-    }
-
-    .exam-card {
-      background-color: var(--surface);
-      border: 1px solid var(--border);
-      border-radius: 12px;
-      padding: 1.5rem;
-      display: flex;
-      flex-direction: column;
-      position: relative;
-      overflow: hidden;
-      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-    }
-
-    .exam-card::before {
-      content: '';
-      position: absolute;
-      top: 0;
-      left: 0;
-      width: 4px;
-      height: 100%;
-      background: var(--border);
-    }
-
-    .exam-card.status-live {
-      box-shadow: 0 4px 20px rgba(16, 185, 129, 0.1);
-    }
-    .exam-card.status-live::before {
-      background: var(--green);
-    }
-
-    .exam-card.status-upcoming::before {
-      background: var(--yellow);
-    }
-
-    .exam-card.status-ended::before {
-      background: var(--text-muted);
-    }
-
-    .exam-status-badge {
-      display: inline-flex;
-      align-items: center;
-      font-size: 0.75rem;
-      font-weight: 700;
-      padding: 0.25rem 0.6rem;
-      border-radius: 4px;
-      text-transform: uppercase;
-      letter-spacing: 0.05em;
-      margin-bottom: 1rem;
-      align-self: flex-start;
-      gap: 0.3rem;
-    }
-
-    .badge-live {
-      background-color: var(--green-bg);
-      color: var(--green);
-    }
-
-    .badge-upcoming {
-      background-color: var(--yellow-bg);
-      color: var(--yellow);
-    }
-
-    .badge-ended {
-      background-color: rgba(243, 244, 246, 0.05);
-      color: var(--text-muted);
-    }
-
-    .live-dot {
-      width: 6px;
-      height: 6px;
-      background-color: var(--green);
-      border-radius: 50%;
-      display: inline-block;
-      animation: pulse 1.5s infinite alternate;
-    }
-
-    @keyframes pulse {
-      from { transform: scale(0.8); opacity: 0.5; }
-      to { transform: scale(1.4); opacity: 1; }
-    }
-
-    .exam-title {
-      font-size: 1.25rem;
-      font-weight: 700;
-      margin-bottom: 0.75rem;
-      line-height: 1.4;
-    }
-
-    .exam-meta-item {
-      display: flex;
-      align-items: center;
-      gap: 0.5rem;
-      font-size: 0.85rem;
-      color: var(--text-muted);
-      margin-bottom: 0.5rem;
-    }
-
-    .exam-meta-item strong {
-      color: var(--text);
-    }
-
-    .exam-action-wrapper {
-      margin-top: 1.5rem;
-      display: flex;
-      flex-direction: column;
-      gap: 0.75rem;
-    }
-
-    /* Modal Warning (Multiple Attempts Safeguard) */
-    .modal-overlay {
-      position: fixed;
-      top: 0; left: 0; width: 100vw; height: 100vh;
-      background: rgba(4, 5, 10, 0.85);
-      backdrop-filter: blur(8px);
-      z-index: 1000;
-      display: none;
-      align-items: center;
-      justify-content: center;
-      padding: 1.5rem;
-    }
-
-    .modal-content {
-      background: var(--surface);
-      border: 2px solid var(--border);
-      border-radius: 16px;
-      width: 100%;
-      max-width: 500px;
-      padding: 2rem;
-      box-shadow: 0 30px 60px rgba(0,0,0,0.6);
-      text-align: center;
-    }
-
-    .modal-icon-container {
-      width: 64px;
-      height: 64px;
-      border-radius: 50%;
-      background-color: var(--red-bg);
-      color: var(--red);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 2rem;
-      margin: 0 auto 1.5rem;
-    }
-
-    .modal-title {
-      font-size: 1.4rem;
-      font-weight: 700;
-      margin-bottom: 1rem;
-    }
-
-    .modal-desc {
-      color: var(--text-muted);
-      font-size: 0.95rem;
-      margin-bottom: 1.5rem;
-      line-height: 1.6;
-    }
-
-    /* Exam Engine Space */
-    .engine-layout {
-      display: grid;
-      grid-template-columns: 1fr 340px;
-      gap: 1.5rem;
-      margin-top: 1rem;
-    }
-
-    @media (max-width: 992px) {
-      .engine-layout {
-        grid-template-columns: 1fr;
-      }
-    }
-
-    .engine-main {
-      background-color: var(--surface);
-      border: 1px solid var(--border);
-      border-radius: 12px;
-      padding: 2rem;
-      display: flex;
-      flex-direction: column;
-    }
-
-    .engine-header {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      padding-bottom: 1rem;
-      border-bottom: 1px solid var(--border);
-      margin-bottom: 1.5rem;
-    }
-
-    .engine-q-id {
-      font-family: var(--font-mono);
-      font-weight: 700;
-      background-color: var(--card);
-      padding: 0.3rem 0.75rem;
-      border-radius: 6px;
-      border: 1px solid var(--border);
-      color: var(--accent);
-    }
-
-    .engine-subject {
-      font-size: 0.8rem;
-      text-transform: uppercase;
-      font-weight: 700;
-      color: var(--purple);
-      letter-spacing: 0.05em;
-    }
-
-    .q-text-box {
-      font-size: 1.15rem;
-      font-weight: 600;
-      line-height: 1.6;
-      margin-bottom: 2rem;
-    }
-
-    .options-grid {
-      display: flex;
-      flex-direction: column;
-      gap: 1rem;
-      margin-bottom: 2.5rem;
-    }
-
-    .option-row {
-      display: flex;
-      align-items: center;
-      background-color: var(--card);
-      border: 1.5px solid var(--border);
-      border-radius: 8px;
-      padding: 1rem;
-      cursor: pointer;
-      transition: all 0.2s ease;
-      gap: 1rem;
-    }
-
-    .option-row:hover {
-      border-color: var(--border-focus);
-      background-color: var(--card-alt);
-    }
-
-    .option-row.selected {
-      border-color: var(--accent);
-      background-color: rgba(14, 165, 233, 0.1);
-    }
-
-    .option-letter {
-      width: 30px;
-      height: 30px;
-      border-radius: 6px;
-      background-color: var(--border);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-family: var(--font-mono);
-      font-weight: 700;
-      font-size: 0.9rem;
-      transition: all 0.2s ease;
-    }
-
-    .option-row.selected .option-letter {
-      background-color: var(--accent);
-      color: #fff;
-    }
-
-    .option-text {
-      font-size: 0.95rem;
-      font-weight: 500;
-    }
-
-    .engine-controls {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      margin-top: auto;
-      border-top: 1px solid var(--border);
-      padding-top: 1.5rem;
-      gap: 1rem;
-    }
-
-    .btn-group-nav {
-      display: flex;
-      gap: 0.75rem;
-    }
-
-    /* Engine Sidebar Timer & Navigator */
-    .engine-sidebar {
-      display: flex;
-      flex-direction: column;
-      gap: 1.5rem;
-    }
-
-    .sidebar-widget {
-      background-color: var(--surface);
-      border: 1px solid var(--border);
-      border-radius: 12px;
-      padding: 1.5rem;
-    }
-
-    .timer-glow {
-      text-align: center;
-      padding: 1.5rem 1rem;
-      border-radius: 8px;
-      background-color: var(--card);
-      border: 2px solid var(--border);
-      transition: all 0.5s ease;
-    }
-
-    .timer-val {
-      font-family: var(--font-mono);
-      font-size: 2.2rem;
-      font-weight: 700;
-      letter-spacing: 0.05em;
-    }
-
-    /* Severe Red Warning glowing less than 5 mins */
-    .timer-critical {
-      background-color: var(--red-bg);
-      border-color: var(--red);
-      color: var(--red);
-      animation: heartbeat-glow 1s infinite alternate;
-    }
-
-    @keyframes heartbeat-glow {
-      from { box-shadow: 0 0 5px rgba(239, 68, 68, 0.2); }
-      to { box-shadow: 0 0 20px rgba(239, 68, 68, 0.6); }
-    }
-
-    .navigator-grid {
-      display: grid;
-      grid-template-columns: repeat(5, 1fr);
-      gap: 0.5rem;
-      max-height: 250px;
-      overflow-y: auto;
-      padding-right: 0.25rem;
-      margin-top: 1rem;
-    }
-
-    .nav-btn {
-      aspect-ratio: 1;
-      border-radius: 6px;
-      background-color: var(--card);
-      border: 1px solid var(--border);
-      color: var(--text-muted);
-      font-family: var(--font-mono);
-      font-weight: 700;
-      font-size: 0.85rem;
-      cursor: pointer;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      transition: all 0.2s ease;
-    }
-
-    .nav-btn:hover {
-      border-color: var(--border-focus);
-    }
-
-    .nav-btn.answered {
-      background-color: var(--green-bg);
-      border-color: var(--green);
-      color: var(--green);
-    }
-
-    .nav-btn.flagged {
-      background-color: var(--yellow-bg);
-      border-color: var(--yellow);
-      color: var(--yellow);
-    }
-
-    .nav-btn.active-q {
-      outline: 2px solid var(--accent);
-      outline-offset: 1px;
-    }
-
-    .sidebar-widget-title {
-      font-size: 0.95rem;
-      font-weight: 700;
-      margin-bottom: 0.75rem;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-    }
-
-    .navigator-legend {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 0.75rem;
-      margin-top: 1rem;
-      font-size: 0.75rem;
-      color: var(--text-muted);
-    }
-
-    .legend-item {
-      display: flex;
-      align-items: center;
-      gap: 0.3rem;
-    }
-
-    .legend-dot {
-      width: 10px;
-      height: 10px;
-      border-radius: 3px;
-    }
-
-    /* Analytics and Results Page */
-    .results-grid {
-      display: grid;
-      grid-template-columns: 340px 1fr;
-      gap: 2rem;
-      margin-top: 1rem;
-    }
-
-    @media (max-width: 992px) {
-      .results-grid {
-        grid-template-columns: 1fr;
-      }
-    }
-
-    .results-left {
-      display: flex;
-      flex-direction: column;
-      gap: 1.5rem;
-    }
-
-    .analytics-card {
-      background-color: var(--surface);
-      border: 1px solid var(--border);
-      border-radius: 12px;
-      padding: 2rem;
-      text-align: center;
-    }
-
-    .chart-container {
-      position: relative;
-      width: 180px;
-      height: 180px;
-      margin: 1.5rem auto;
-    }
-
-    .chart-svg {
-      transform: rotate(-90deg);
-      width: 100%;
-      height: 100%;
-    }
-
-    .chart-track {
-      fill: none;
-      stroke: var(--card);
-      stroke-width: 14px;
-    }
-
-    .chart-progress {
-      fill: none;
-      stroke: var(--accent);
-      stroke-width: 14px;
-      stroke-linecap: round;
-      transition: stroke-dasharray 0.8s ease-out;
-    }
-
-    .chart-text {
-      position: absolute;
-      top: 50%; left: 50%;
-      transform: translate(-50%, -50%);
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-    }
-
-    .chart-percent {
-      font-size: 2rem;
-      font-weight: 800;
-      line-height: 1;
-    }
-
-    .chart-label {
-      font-size: 0.75rem;
-      color: var(--text-muted);
-      margin-top: 0.25rem;
-    }
-
-    .metric-grid {
-      display: grid;
-      grid-template-columns: repeat(2, 1fr);
-      gap: 1rem;
-      margin-top: 1.5rem;
-    }
-
-    .metric-item {
-      background-color: var(--card);
-      border: 1px solid var(--border);
-      border-radius: 8px;
-      padding: 0.75rem;
-      text-align: center;
-    }
-
-    .metric-val {
-      font-family: var(--font-mono);
-      font-size: 1.25rem;
-      font-weight: 700;
-    }
-
-    .metric-title {
-      font-size: 0.75rem;
-      color: var(--text-muted);
-    }
-
-    /* Subject Breakdown Performance Bars */
-    .subject-performance-section {
-      background-color: var(--surface);
-      border: 1px solid var(--border);
-      border-radius: 12px;
-      padding: 1.5rem;
-    }
-
-    .subject-row {
-      margin-bottom: 1.25rem;
-    }
-
-    .subject-info {
-      display: flex;
-      justify-content: space-between;
-      font-size: 0.85rem;
-      margin-bottom: 0.4rem;
-    }
-
-    .subject-bar-container {
-      height: 8px;
-      background-color: var(--card);
-      border-radius: 4px;
-      overflow: hidden;
-    }
-
-    .subject-bar-fill {
-      height: 100%;
-      background: linear-gradient(to right, var(--accent), var(--purple));
-      border-radius: 4px;
-      width: 0%;
-      transition: width 0.8s ease-out;
-    }
-
-    /* Question Breakdown Tabs and Cards */
-    .results-right {
-      display: flex;
-      flex-direction: column;
-      gap: 1.5rem;
-    }
-
-    .filter-tabs {
-      display: flex;
-      background-color: var(--surface);
-      border: 1px solid var(--border);
-      border-radius: 8px;
-      padding: 0.3rem;
-      gap: 0.25rem;
-    }
-
-    .tab-btn {
-      flex: 1;
-      padding: 0.6rem;
-      border: none;
-      background: none;
-      color: var(--text-muted);
-      font-family: var(--font-main);
-      font-weight: 600;
-      font-size: 0.85rem;
-      border-radius: 6px;
-      cursor: pointer;
-      transition: all 0.2s ease;
-    }
-
-    .tab-btn:hover {
-      color: var(--text);
-    }
-
-    .tab-btn.active {
-      background-color: var(--card);
-      color: #fff;
-    }
-
-    .breakdown-list {
-      display: flex;
-      flex-direction: column;
-      gap: 1.25rem;
-    }
-
-    .breakdown-card {
-      background-color: var(--surface);
-      border: 1px solid var(--border);
-      border-radius: 12px;
-      padding: 1.5rem;
-    }
-
-    .breakdown-header {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      margin-bottom: 1rem;
-      border-bottom: 1.5px solid var(--border);
-      padding-bottom: 0.75rem;
-    }
-
-    .breakdown-tag {
-      font-family: var(--font-mono);
-      font-size: 0.8rem;
-      font-weight: 700;
-    }
-
-    .breakdown-status {
-      font-size: 0.8rem;
-      font-weight: 700;
-      padding: 0.25rem 0.6rem;
-      border-radius: 4px;
-      text-transform: uppercase;
-    }
-
-    .status-correct {
-      background-color: var(--green-bg);
-      color: var(--green);
-    }
-
-    .status-wrong {
-      background-color: var(--red-bg);
-      color: var(--red);
-    }
-
-    .status-skipped {
-      background-color: var(--yellow-bg);
-      color: var(--yellow);
-    }
-
-    .breakdown-q-text {
-      font-size: 1rem;
-      font-weight: 600;
-      margin-bottom: 1rem;
-    }
-
-    .breakdown-options-list {
-      display: flex;
-      flex-direction: column;
-      gap: 0.5rem;
-      margin-bottom: 1rem;
-    }
-
-    .breakdown-option {
-      padding: 0.6rem 1rem;
-      border-radius: 6px;
-      background-color: var(--card);
-      font-size: 0.9rem;
-      border: 1px solid var(--border);
-    }
-
-    .breakdown-option.correct-option {
-      background-color: var(--green-bg);
-      border-color: var(--green);
-    }
-
-    .breakdown-option.user-selected-wrong {
-      background-color: var(--red-bg);
-      border-color: var(--red);
-    }
-
-    .breakdown-explanation {
-      background-color: var(--card-alt);
-      border-radius: 6px;
-      padding: 0.85rem 1rem;
-      font-size: 0.85rem;
-      line-height: 1.5;
-    }
-
-    .breakdown-explanation strong {
-      color: var(--accent);
-    }
-
-    /* Toast Notification system */
-    #toast {
-      position: fixed;
-      bottom: 2rem;
-      right: 2rem;
-      background-color: var(--card);
-      border: 1.5px solid var(--accent);
-      color: #fff;
-      padding: 1rem 1.5rem;
-      border-radius: 8px;
-      box-shadow: 0 10px 30px rgba(0,0,0,0.5);
-      z-index: 10000;
-      transform: translateY(150%);
-      transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-      display: flex;
-      align-items: center;
-      gap: 0.75rem;
-    }
-
-    #toast.show {
-      transform: translateY(0);
-    }
-
-    /* Leaderboard Card widget */
-    .leaderboard-section {
-      background-color: var(--surface);
-      border: 1px solid var(--border);
-      border-radius: 12px;
-      padding: 1.5rem;
-    }
-
-    .leader-table {
-      width: 100%;
-      border-collapse: collapse;
-      margin-top: 1rem;
-    }
-
-    .leader-table th, .leader-table td {
-      padding: 0.75rem;
-      text-align: left;
-      font-size: 0.85rem;
-      border-bottom: 1px solid var(--border);
-    }
-
-    .leader-table th {
-      color: var(--text-muted);
-      font-weight: 600;
-    }
-
-    .rank-cell {
-      font-family: var(--font-mono);
-      font-weight: 700;
-    }
-  </style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CEE Medico Nepal — Live Scheduled Exams</title>
+<link href="https://fonts.googleapis.com/css2?family=Sora:wght@300;400;600;700;800&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg: #07080d; --surface: #0e0f17; --card: #141622;
+  --border: #1e2238; --accent: #0ea5e9; --accent-hover: #0284c7;
+  --accent2: #10b981; --green: #10b981; --green-bg: rgba(16,185,129,0.1);
+  --red: #ef4444; --red-bg: rgba(239,68,68,0.1);
+  --text: #f3f4f6; --muted: #8c90a6; --yellow: #f59e0b;
+  --yellow-bg: rgba(245,158,11,0.1); --purple: #a78bfa;
+}
+* { margin:0; padding:0; box-sizing:border-box; }
+body { background: var(--bg); color: var(--text); font-family: 'Sora', sans-serif; min-height: 100vh; }
+body::before { content:''; position:fixed; top:-20%; left:-10%; width:60vw; height:60vw; background:radial-gradient(circle,rgba(14,165,233,0.06) 0%,transparent 70%); z-index:-1; pointer-events:none; }
+
+header { border-bottom:1px solid var(--border); backdrop-filter:blur(12px); position:sticky; top:0; z-index:100; background:rgba(14,15,23,0.9); }
+.nav-container { max-width:1200px; margin:0 auto; padding:0.8rem 1.5rem; display:flex; justify-content:space-between; align-items:center; }
+.logo { font-size:1.2rem; font-weight:800; letter-spacing:-0.5px; background:linear-gradient(135deg,#fff 40%,var(--accent) 100%); -webkit-background-clip:text; -webkit-text-fill-color:transparent; display:flex; align-items:center; gap:0.5rem; text-decoration:none; }
+.logo svg { fill:none; stroke:var(--accent); stroke-width:2.5; stroke-linecap:round; stroke-linejoin:round; }
+
+main { max-width:1200px; margin:0 auto; padding:2rem 1.5rem; }
+
+.view-container { display:none; animation:fadeIn 0.3s ease forwards; }
+.view-container.active { display:block; }
+@keyframes fadeIn { from{opacity:0;transform:translateY(8px)} to{opacity:1;transform:translateY(0)} }
+
+#loading-overlay { position:fixed; inset:0; background:var(--bg); z-index:9999; display:flex; flex-direction:column; justify-content:center; align-items:center; gap:1rem; transition:opacity 0.3s; }
+.spinner { width:40px; height:40px; border:3px solid rgba(14,165,233,0.1); border-radius:50%; border-top-color:var(--accent); animation:spin 0.8s linear infinite; }
+@keyframes spin { to{transform:rotate(360deg)} }
+.load-error { color:var(--red); font-size:0.85rem; text-align:center; max-width:400px; padding:0 1rem; }
+.retry-btn { background:var(--accent); color:white; border:none; padding:0.6rem 1.5rem; border-radius:8px; font-family:inherit; font-weight:600; cursor:pointer; font-size:0.85rem; margin: 0.5rem; }
+
+.reg-panel { max-width:420px; margin:3rem auto; background:var(--card); border:1px solid var(--border); border-radius:20px; padding:2.5rem; text-align:center; }
+.reg-panel h1 { font-size:1.5rem; font-weight:700; margin-bottom:0.5rem; }
+.reg-panel p { color:var(--muted); font-size:0.9rem; margin-bottom:1.5rem; }
+.input-group { margin-bottom:1rem; text-align:left; }
+.input-group label { display:block; font-size:0.8rem; font-weight:600; color:var(--muted); margin-bottom:0.4rem; text-transform:uppercase; letter-spacing:0.5px; }
+.input-group input { width:100%; background:rgba(0,0,0,0.2); border:1px solid var(--border); border-radius:10px; padding:0.9rem 1rem; color:var(--text); font-family:inherit; font-size:0.95rem; outline:none; transition:0.2s; }
+.input-group input:focus { border-color:var(--accent); box-shadow:0 0 0 3px rgba(14,165,233,0.15); }
+.btn { width:100%; padding:0.9rem; border-radius:10px; border:none; font-family:inherit; font-weight:700; font-size:0.95rem; cursor:pointer; transition:0.2s; }
+.btn-primary { background:var(--accent); color:white; }
+.btn-primary:hover { background:var(--accent-hover); }
+.btn:disabled { opacity:0.5; cursor:not-allowed; }
+
+.section-title { font-size:1.75rem; font-weight:800; margin-bottom:0.5rem; }
+.section-subtitle { color:var(--muted); font-size:0.95rem; margin-bottom:1.5rem; }
+
+/* Custom Banner for Demo Mode */
+.banner-info { background: rgba(14, 165, 233, 0.1); border: 1px dashed var(--accent); border-radius: 12px; padding: 1rem; margin-bottom: 1.5rem; font-size: 0.85rem; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 0.8rem; }
+.banner-info-text strong { color: var(--accent); }
+
+.schedule-grid { display:grid; gap:1rem; }
+.exam-card { background:var(--card); border:1px solid var(--border); border-radius:14px; padding:1.25rem; display:grid; grid-template-columns:1fr auto auto; gap:1rem; align-items:center; transition:0.2s; }
+.exam-card:hover { border-color:rgba(14,165,233,0.3); }
+.exam-info h3 { font-size:1rem; font-weight:700; margin-bottom:0.3rem; }
+.exam-meta { display:flex; gap:1rem; color:var(--muted); font-size:0.8rem; flex-wrap:wrap; }
+.exam-status { padding:0.4rem 1rem; border-radius:20px; font-size:0.75rem; font-weight:700; text-transform:uppercase; }
+.status-upcoming { background:rgba(245,158,11,0.1); color:var(--yellow); border:1px solid rgba(245,158,11,0.2); }
+.status-live { background:var(--red-bg); color:var(--red); border:1px solid rgba(239,68,68,0.2); animation:pulse 1.5s infinite; }
+.status-ended { background:rgba(255,255,255,0.03); color:var(--muted); border:1px solid var(--border); }
+@keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.6} }
+.exam-btn { padding:0.6rem 1.25rem; border-radius:8px; border:none; font-family:inherit; font-weight:700; font-size:0.85rem; cursor:pointer; transition:0.2s; white-space:nowrap; }
+.btn-enter { background:var(--accent); color:white; }
+.btn-enter:hover { background:var(--accent-hover); }
+.btn-waiting { background:rgba(255,255,255,0.03); color:var(--muted); border:1px solid var(--border); cursor:default; }
+.btn-ended { background:var(--green-bg); color:var(--green); border:1px solid rgba(16,185,129,0.2); }
+
+.exam-wrapper { display:grid; grid-template-columns:1fr 280px; gap:1.5rem; }
+@media(max-width:900px){ .exam-wrapper{grid-template-columns:1fr} }
+.exam-main { background:var(--card); border:1px solid var(--border); border-radius:16px; padding:1.75rem; }
+.exam-header { display:flex; justify-content:space-between; align-items:center; margin-bottom:1.5rem; padding-bottom:1rem; border-bottom:1px solid var(--border); }
+.exam-title h2 { font-size:1.1rem; font-weight:700; }
+.exam-title p { color:var(--muted); font-size:0.8rem; margin-top:0.25rem; }
+.exam-timer { background:rgba(14,165,233,0.1); color:var(--accent); border:1px solid rgba(14,165,233,0.2); padding:0.5rem 1rem; border-radius:10px; font-family:'Space Mono',monospace; font-weight:700; font-size:1rem; }
+.exam-timer.critical { background:var(--red-bg); color:var(--red); border-color:rgba(239,68,68,0.3); animation:pulse 1s infinite alternate; }
+.question-number { font-size:0.75rem; font-weight:700; text-transform:uppercase; color:var(--accent); letter-spacing:1px; font-family:'Space Mono',monospace; margin-bottom:0.5rem; }
+.question-text { font-size:1.15rem; font-weight:600; line-height:1.5; margin-bottom:1.25rem; }
+.options-list { display:flex; flex-direction:column; gap:0.75rem; }
+.option-btn { background:rgba(255,255,255,0.02); border:1px solid var(--border); border-radius:10px; padding:1rem 1.25rem; display:flex; align-items:center; gap:0.75rem; cursor:pointer; transition:0.2s; color:var(--text); font-family:inherit; font-size:0.95rem; text-align:left; width:100%; }
+.option-btn:hover { background:rgba(255,255,255,0.05); border-color:var(--muted); }
+.option-btn.selected { background:rgba(14,165,233,0.08); border-color:var(--accent); }
+.option-letter { width:28px; height:28px; border:2px solid var(--border); border-radius:50%; display:grid; place-items:center; font-size:0.8rem; font-weight:700; color:var(--muted); flex-shrink:0; transition:0.2s; }
+.option-btn.selected .option-letter { border-color:var(--accent); background:var(--accent); color:white; }
+.exam-nav { display:flex; justify-content:space-between; align-items:center; margin-top:1.5rem; padding-top:1rem; border-top:1px solid var(--border); }
+.nav-btn { padding:0.6rem 1.25rem; border-radius:8px; font-weight:600; font-family:inherit; cursor:pointer; transition:0.2s; border:none; font-size:0.85rem; }
+.nav-btn:disabled { opacity:0.4; cursor:not-allowed; }
+.nav-btn-secondary { background:transparent; border:1px solid var(--border); color:var(--text); }
+.nav-btn-primary { background:var(--accent); color:white; }
+.nav-btn-primary:hover { background:var(--accent-hover); }
+.nav-btn-accent { background:var(--red); color:white; }
+
+.exam-sidebar { background:var(--surface); border:1px solid var(--border); border-radius:16px; padding:1.25rem; height:fit-content; }
+.sidebar-title { font-size:0.9rem; font-weight:700; margin-bottom:1rem; }
+.q-nav-grid { display:grid; grid-template-columns:repeat(5,1fr); gap:0.4rem; margin-bottom:1rem; }
+.q-nav-btn { aspect-ratio:1; border-radius:6px; border:1px solid var(--border); background:rgba(255,255,255,0.02); color:var(--muted); font-family:'Space Mono',monospace; font-weight:700; font-size:0.8rem; cursor:pointer; transition:0.15s; }
+.q-nav-btn:hover { border-color:var(--muted); }
+.q-nav-btn.current { border-color:var(--accent); color:var(--accent); box-shadow:0 0 0 2px rgba(14,165,233,0.2); }
+.q-nav-btn.answered { background:rgba(14,165,233,0.15); border-color:var(--accent); color:white; }
+.q-nav-btn.review { background:rgba(245,158,11,0.15); border-color:var(--yellow); color:var(--yellow); }
+.legend-row { display:flex; align-items:center; gap:0.5rem; font-size:0.75rem; color:var(--muted); margin-bottom:0.4rem; }
+.legend-dot { width:10px; height:10px; border-radius:3px; }
+.submit-exam-btn { width:100%; margin-top:1rem; padding:0.75rem; background:var(--accent2); color:white; border:none; border-radius:10px; font-family:inherit; font-weight:700; cursor:pointer; font-size:0.9rem; transition:0.2s; }
+.submit-exam-btn:hover { background:#059669; box-shadow:0 4px 15px rgba(16,185,129,0.3); }
+
+/* === RESULTS & ANALYSIS === */
+.result-panel { max-width:900px; margin:0 auto; }
+.result-header { text-align:center; margin-bottom:2rem; }
+.result-score-big { font-size:3.5rem; font-weight:800; font-family:'Space Mono',monospace; color:var(--accent); }
+.result-grade { font-size:1rem; font-weight:700; margin-top:0.5rem; padding:0.4rem 1.2rem; border-radius:20px; display:inline-block; }
+.grade-excellent { background:var(--green-bg); color:var(--green); }
+.grade-good { background:rgba(245,158,11,0.1); color:var(--yellow); }
+.grade-needs-work { background:var(--red-bg); color:var(--red); }
+
+.result-stats { display:grid; grid-template-columns:repeat(3,1fr); gap:1rem; margin-bottom:2rem; }
+.stat-box { background:var(--card); border:1px solid var(--border); border-radius:12px; padding:1.25rem; text-align:center; }
+.stat-box-num { font-size:1.75rem; font-weight:700; font-family:'Space Mono',monospace; }
+.stat-box-label { font-size:0.8rem; color:var(--muted); margin-top:0.25rem; }
+
+/* Analysis Section */
+.analysis-grid { display:grid; grid-template-columns:1fr 1fr; gap:1.5rem; margin-bottom:2rem; }
+@media(max-width:768px){ .analysis-grid{grid-template-columns:1fr} }
+.analysis-card { background:var(--card); border:1px solid var(--border); border-radius:14px; padding:1.5rem; }
+.analysis-card h3 { font-size:1rem; font-weight:700; margin-bottom:1rem; border-left:3px solid var(--accent); padding-left:0.75rem; }
+
+.accuracy-ring { position:relative; width:120px; height:120px; margin:0 auto 1rem; }
+.accuracy-ring svg { transform:rotate(-90deg); }
+.ring-bg { fill:none; stroke:rgba(255,255,255,0.05); stroke-width:10; }
+.ring-bar { fill:none; stroke:var(--accent); stroke-width:10; stroke-linecap:round; transition:stroke-dashoffset 1s ease; }
+.ring-text { position:absolute; top:50%; left:50%; transform:translate(-50%,-50%); font-size:1.5rem; font-weight:800; font-family:'Space Mono',monospace; }
+
+.subject-bar { margin-bottom:1rem; }
+.subj-label { display:flex; justify-content:space-between; font-size:0.85rem; font-weight:600; margin-bottom:0.3rem; }
+.subj-track { width:100%; height:8px; background:rgba(255,255,255,0.05); border-radius:4px; overflow:hidden; }
+.subj-fill { height:100%; border-radius:4px; transition:width 1s ease; }
+
+.insight-box { background:rgba(14,165,233,0.05); border:1px solid rgba(14,165,233,0.15); border-radius:10px; padding:1rem; font-size:0.85rem; line-height:1.6; }
+.insight-box strong { color:var(--accent); }
+
+/* Question breakdown tabs */
+.breakdown-tabs { display:flex; gap:0.5rem; margin-bottom:1rem; flex-wrap:wrap; }
+.bd-tab { padding:0.5rem 1rem; border-radius:8px; border:none; background:transparent; color:var(--muted); font-family:inherit; font-weight:600; font-size:0.85rem; cursor:pointer; transition:0.2s; border:1px solid var(--border); }
+.bd-tab.active { background:var(--accent); color:white; border-color:var(--accent); }
+.bd-tab:hover:not(.active) { background:rgba(255,255,255,0.03); }
+
+.solutions-list { display:flex; flex-direction:column; gap:1rem; }
+.solution-card { background:var(--card); border:1px solid var(--border); border-radius:12px; padding:1.25rem; border-left:3px solid var(--border); }
+.solution-card.correct { border-left-color:var(--green); }
+.solution-card.wrong { border-left-color:var(--red); }
+.solution-card.skipped { border-left-color:var(--muted); }
+.solution-header { display:flex; justify-content:space-between; align-items:center; margin-bottom:0.75rem; }
+.solution-q-num { font-size:0.75rem; font-weight:700; color:var(--accent); font-family:'Space Mono',monospace; }
+.solution-badge { font-size:0.75rem; padding:0.2rem 0.6rem; border-radius:20px; font-weight:700; }
+.badge-correct { background:var(--green-bg); color:var(--green); }
+.badge-wrong { background:var(--red-bg); color:var(--red); }
+.badge-skipped { background:rgba(255,255,255,0.05); color:var(--muted); }
+.solution-question { font-weight:600; margin-bottom:0.75rem; font-size:0.95rem; }
+.solution-options { display:flex; flex-direction:column; gap:0.4rem; margin-bottom:0.75rem; }
+.sol-option { padding:0.5rem 0.75rem; border-radius:6px; font-size:0.85rem; display:flex; align-items:center; gap:0.5rem; }
+.sol-option.correct { background:var(--green-bg); color:var(--green); }
+.sol-option.wrong { background:var(--red-bg); color:var(--red); }
+.sol-option.neutral { background:rgba(255,255,255,0.02); color:var(--muted); }
+.sol-option-icon { font-size:0.9rem; width:20px; text-align:center; }
+.solution-explanation { background:rgba(14,165,233,0.05); border:1px solid rgba(14,165,233,0.15); border-radius:8px; padding:0.75rem 1rem; font-size:0.85rem; color:var(--text); line-height:1.5; }
+.solution-explanation strong { color:var(--accent); }
+
+.result-actions { display:flex; gap:1rem; justify-content:center; margin-top:2rem; padding-top:1.5rem; border-top:1px solid var(--border); }
+.empty-state { text-align:center; padding:4rem 2rem; color:var(--muted); }
+.empty-state-icon { font-size:3rem; margin-bottom:1rem; }
+
+/* Dynamic local upload panel */
+.upload-card { background: var(--surface); border: 1px dashed var(--border); border-radius: 14px; padding: 1.5rem; margin-top: 3rem; text-align: left; }
+.upload-card h3 { font-size: 0.95rem; font-weight: 700; margin-bottom: 0.5rem; display: flex; align-items: center; gap: 0.5rem; }
+.upload-card p { font-size: 0.8rem; color: var(--muted); margin-bottom: 1rem; }
+.uploader-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
+@media (max-width: 600px) { .uploader-grid { grid-template-columns: 1fr; } }
+.file-dropzone { border: 1px solid var(--border); background: rgba(0,0,0,0.2); border-radius: 8px; padding: 1rem; text-align: center; cursor: pointer; transition: 0.2s; display: flex; flex-direction: column; align-items: center; gap: 0.5rem; }
+.file-dropzone:hover { border-color: var(--accent); background: rgba(14,165,233,0.03); }
+.file-dropzone span { font-size: 0.75rem; color: var(--muted); }
+.file-dropzone input { display: none; }
+.file-loaded { border-color: var(--green) !important; color: var(--green); }
+
+footer { background:#0b0c13; border-top:1px solid var(--border); padding:2rem 1.5rem; margin-top:3rem; text-align:center; color:var(--muted); font-size:0.8rem; }
+
+/* Leaderboard */
+.lb-row { display:flex; align-items:center; gap:1rem; padding:0.75rem; border-radius:10px; background:rgba(255,255,255,0.02); border:1px solid var(--border); transition:0.2s; }
+.lb-row.me { background:rgba(14,165,233,0.08); border-color:rgba(14,165,233,0.3); }
+.lb-rank { width:32px; height:32px; border-radius:50%; display:grid; place-items:center; font-weight:800; font-size:0.85rem; font-family:'Space Mono',monospace; flex-shrink:0; background:var(--surface); color:var(--muted); }
+.lb-rank.gold { background:rgba(245,158,11,0.15); color:var(--yellow); border:1px solid rgba(245,158,11,0.3); }
+.lb-rank.silver { background:rgba(200,200,200,0.1); color:#ccc; }
+.lb-rank.bronze { background:rgba(180,120,60,0.15); color:#cd7f32; }
+.lb-info { flex:1; min-width:0; }
+.lb-name { font-weight:700; font-size:0.9rem; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.lb-sub { font-size:0.75rem; color:var(--muted); }
+.lb-score { font-family:'Space Mono',monospace; font-weight:700; font-size:1rem; color:var(--accent); }
+.lb-time { font-size:0.75rem; color:var(--muted); }
+
+/* Score sparkline */
+.spark-bar { display:inline-block; background:var(--accent); border-radius:2px 2px 0 0; transition:height 0.5s ease; }
+@media(max-width:600px){ #analytics-stats{grid-template-columns:repeat(2,1fr)!important;} }
+</style>
+<base target="_blank">
+<script type="module">
+// ==================== FIREBASE INIT ====================
+import { initializeApp } from "https://www.gstatic.com/firebasejs/11.9.1/firebase-app.js";
+import {
+  getDatabase, ref, set, get, update, onValue, query, orderByChild, limitToLast
+} from "https://www.gstatic.com/firebasejs/11.9.1/firebase-database.js";
+
+const firebaseConfig = {
+  apiKey: "AIzaSyAng6y7NH9RZshoxEqaplOM9LiSMVrsmtI",
+  authDomain: "cee-medico-nepal-regular.firebaseapp.com",
+  databaseURL: "https://cee-medico-nepal-regular-default-rtdb.asia-southeast1.firebasedatabase.app",
+  projectId: "cee-medico-nepal-regular",
+  storageBucket: "cee-medico-nepal-regular.firebasestorage.app",
+  messagingSenderId: "568305810313",
+  appId: "1:568305810313:web:ea50af6a7a1278d8f0bf58"
+};
+const _fbApp = initializeApp(firebaseConfig);
+const _db = getDatabase(_fbApp);
+
+// Expose to global scope so the non-module script can use them
+window._db = _db;
+window._fbRef = ref;
+window._fbSet = set;
+window._fbGet = get;
+window._fbUpdate = update;
+window._fbOnValue = onValue;
+window._fbQuery = query;
+window._fbOrderByChild = orderByChild;
+window._fbLimitToLast = limitToLast;
+window._fbReady = true;
+window.dispatchEvent(new Event('firebase-ready'));
+</script>
 </head>
 <body>
 
-  <!-- Premium Header -->
-  <header>
-    <div class="container header-content">
-      <div class="logo-container">
-        <span class="logo-badge">CEE</span>
-        <span class="logo-text">MEDICO NEPAL</span>
-      </div>
-      <div id="header-user-area">
-        <!-- Dynamic User Badge via LocalStorage/Firebase -->
-      </div>
-    </div>
-  </header>
-
-  <!-- Notification Toast -->
-  <div id="toast">
-    <span id="toast-icon">ℹ️</span>
-    <span id="toast-msg">Notification Message</span>
-  </div>
-
-  <!-- Custom Warning Overlay Modal -->
-  <div class="modal-overlay" id="attempt-warning-modal">
-    <div class="modal-content">
-      <div class="modal-icon-container">⚠️</div>
-      <h3 class="modal-title">Attempt Blocked</h3>
-      <p class="modal-desc" id="modal-warning-text">
-        You have already attempted this exam. In Nepalese CEE Live exams, each registered candidate is strictly restricted to ONE attempt.
-      </p>
-      <button class="btn btn-danger" onclick="closeModal()">Back to Schedules</button>
+<div id="loading-overlay">
+  <div class="spinner"></div>
+  <p style="font-weight:600;">Loading Live Exam Data...</p>
+  <p style="color:var(--muted); font-size:0.8rem;" id="load-status">Fetching schedules and quizzes...</p>
+  <div id="load-error-box" style="display:none; margin-top:1rem; text-align:center;">
+    <p class="load-error" id="load-error-text">Failed to load data</p>
+    <div style="display:flex; justify-content:center; gap:0.5rem; margin-top:1rem;">
+      <button class="retry-btn" onclick="location.reload()">Retry Fetch</button>
+      <button class="retry-btn" style="background:var(--border); color:var(--text);" onclick="runDemoMode()">Use Demo Mock Data</button>
     </div>
   </div>
+</div>
 
-  <main class="container">
+<header>
+  <div class="nav-container">
+    <a href="#" class="logo" onclick="backToSchedule()">
+      <svg width="24" height="24" viewBox="0 0 24 24">
+        <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/>
+        <path stroke-width="2.2" d="M12 5.5v6M9 8.5h6"/>
+      </svg>
+      CEE Medico <span style="color:var(--accent);">Nepal</span>
+    </a>
+    <div id="user-badge" style="display:none; align-items:center; gap:0.75rem; font-size:0.85rem; color:var(--muted);">
+      <span id="user-name-display"></span>
+      <button onclick="logout()" style="background:transparent; border:1px solid var(--border); color:var(--muted); padding:0.4rem 0.8rem; border-radius:6px; font-family:inherit; font-size:0.8rem; cursor:pointer;">Logout</button>
+    </div>
+  </div>
+</header>
 
-    <!-- VIEW 1: Registration / Login -->
-    <section id="view-auth" class="view-container">
-      <div class="auth-grid">
-        <div class="auth-banner">
-          <h1>Nepal's Premier CEE Practice Arena</h1>
-          <p>Prepare for the IOM, KU, and BPKIHS Common Entrance Examinations with precise timing and simulated real-time pressure.</p>
-          
-          <div class="features-list">
-            <div class="feature-item">
-              <span class="feature-icon">⏱️</span>
-              <div>
-                <strong>Live Synchronous Scheduled Exams</strong>
-                <p style="color: var(--text-muted); font-size: 0.85rem; margin-top: 0.25rem;">Compete globally on timed schedules. Strictly restricted to one-time exam attempts.</p>
-              </div>
-            </div>
-            <div class="feature-item">
-              <span class="feature-icon">📊</span>
-              <div>
-                <strong>In-depth Subject Analytics</strong>
-                <p style="color: var(--text-muted); font-size: 0.85rem; margin-top: 0.25rem;">Receive live statistical performance metrics categorised into Physics, Chemistry, Botany, Zoology, and MAT.</p>
-              </div>
-            </div>
-            <div class="feature-item">
-              <span class="feature-icon">🏆</span>
-              <div>
-                <strong>Instant Leaderboard Standings</strong>
-                <p style="color: var(--text-muted); font-size: 0.85rem; margin-top: 0.25rem;">Compare your speed and score against peers across Nepal in real time.</p>
-              </div>
-            </div>
-          </div>
+<main>
+  <!-- REGISTRATION -->
+  <div id="view-register" class="view-container active">
+    <div class="reg-panel">
+      <div style="font-size:3rem; margin-bottom:0.5rem;">🎓</div>
+      <h1>Enter Live Exam Hall</h1>
+      <p>Register your name and email to join scheduled CEE MEC exams. Full analysis after submission.</p>
+      <div class="input-group">
+        <label>Full Name</label>
+        <input type="text" id="reg-name" placeholder="Enter your full name" maxlength="50">
+      </div>
+      <div class="input-group">
+        <label>Email Address</label>
+        <input type="email" id="reg-email" placeholder="your@email.com" maxlength="100">
+      </div>
+      <button class="btn btn-primary" onclick="registerUser()" id="reg-btn">Continue to Exam Hall</button>
+      <p style="color:var(--muted); font-size:0.8rem; margin-top:1rem;">No password required. Dynamic online & offline modes.</p>
+    </div>
+  </div>
+
+  <!-- SCHEDULE -->
+  <div id="view-schedule" class="view-container">
+    <div class="banner-info" id="demo-banner" style="display:none;">
+      <div class="banner-info-text">
+        💡 <strong>Demo Mode Activated:</strong> Running with highly detailed medical entrance test data.
+      </div>
+      <div style="font-size:0.8rem; color:var(--muted)">
+        CSV files not found locally, loaded high-fidelity mock assets.
+      </div>
+    </div>
+
+    <h1 class="section-title">📅 Live Exam Schedule</h1>
+    <p class="section-subtitle">Auto-detecting live exams. Click "Enter Exam" when a test is active.</p>
+    <div style="display:flex; gap:0.5rem; margin-bottom:1.5rem; flex-wrap:wrap;">
+      <button class="nav-btn nav-btn-secondary" onclick="filterSchedule('all')" id="filter-all">All</button>
+      <button class="nav-btn nav-btn-secondary" onclick="filterSchedule('upcoming')" id="filter-upcoming">Upcoming</button>
+      <button class="nav-btn nav-btn-secondary" onclick="filterSchedule('live')" id="filter-live">🔴 Live Now</button>
+      <button class="nav-btn nav-btn-secondary" onclick="filterSchedule('ended')" id="filter-ended">Ended</button>
+      <button class="nav-btn nav-btn-secondary" onclick="showView('analytics')" id="filter-analytics" style="margin-left:auto;">📊 My Analytics</button>
+    </div>
+    <div class="schedule-grid" id="schedule-grid"></div>
+
+    <!-- LOCAL CSV UPLOAD SYSTEM -->
+    <div class="upload-card">
+      <h3>📁 Test Custom Datasets</h3>
+      <p>Directly load local CSV files without setting up a web server. Changes take effect instantly.</p>
+      <div class="uploader-grid">
+        <div class="file-dropzone" id="schedules-zone" onclick="document.getElementById('schedules-file').click()">
+          <div style="font-size:1.5rem;">📅</div>
+          <strong id="s-label">Load Schedules CSV</strong>
+          <span id="s-status">Upload schedules_rows.csv</span>
+          <input type="file" id="schedules-file" accept=".csv" onchange="handleCSVUpload(this, 'schedules')">
         </div>
-
-        <div class="auth-card">
-          <h2 style="font-size: 1.5rem; font-weight: 700; margin-bottom: 0.5rem;">Create Account</h2>
-          <p style="color: var(--text-muted); font-size: 0.85rem; margin-bottom: 1.5rem;">Enter details to proceed to the scheduled exam boards.</p>
-          
-          <form id="auth-form" onsubmit="handleRegistration(event)">
-            <div class="form-group">
-              <label class="form-label">Full Name (According to Citizenship/CEE Card)</label>
-              <input type="text" id="reg-name" class="form-input" placeholder="e.g. Ayush Adhikari" required>
-            </div>
-            <div class="form-group">
-              <label class="form-label">Email Address</label>
-              <input type="email" id="reg-email" class="form-input" placeholder="ayush@domain.com" required>
-            </div>
-            <button type="submit" class="btn btn-primary" style="width: 100%; margin-top: 1rem;">
-              Register & Login 🚀
-            </button>
-          </form>
+        <div class="file-dropzone" id="quizzes-zone" onclick="document.getElementById('quizzes-file').click()">
+          <div style="font-size:1.5rem;">📝</div>
+          <strong id="q-label">Load Quizzes CSV</strong>
+          <span id="q-status">Upload quizzes_rows.csv</span>
+          <input type="file" id="quizzes-file" accept=".csv" onchange="handleCSVUpload(this, 'quizzes')">
         </div>
       </div>
-    </section>
+    </div>
+  </div>
 
-    <!-- VIEW 2: Scheduled Board & Admin Uploads -->
-    <section id="view-schedule-board" class="view-container">
-      
-      <!-- Admin & CSV Config Section -->
-      <div class="admin-upload-section">
-        <h3 style="font-size: 1.1rem; font-weight: 700; margin-bottom: 0.5rem; display: flex; align-items: center; gap: 0.5rem;">
-          ⚙️ Live Exam Schedule Administration & CSV Import
-        </h3>
-        <p style="color: var(--text-muted); font-size: 0.8rem; margin-bottom: 1.2rem;">
-          Deploy scheduled live entrance challenges or populate standard Nepalese CEE mock exams automatically.
-        </p>
-
-        <div class="admin-grid">
-          <div class="csv-card">
-            <span style="font-size: 1.5rem;">📅</span>
-            <div class="csv-title">Upload Schedules CSV</div>
-            <div class="csv-subtitle">id, title, start_time, end_time, duration, quiz_id</div>
-            <input type="file" id="csv-schedules-input" class="csv-input" accept=".csv" onchange="handleCSVUpload(this, 'schedules')">
+  <!-- EXAM -->
+  <div id="view-exam" class="view-container">
+    <div class="exam-wrapper">
+      <div class="exam-main">
+        <div class="exam-header">
+          <div class="exam-title">
+            <h2 id="exam-title">Exam Title</h2>
+            <p id="exam-subtitle">Subject • Live Exam</p>
           </div>
-          <div class="csv-card">
-            <span style="font-size: 1.5rem;">❓</span>
-            <div class="csv-title">Upload Quizzes CSV</div>
-            <div class="csv-subtitle">quiz_id, question_id, subject, question, option_a... correct_option</div>
-            <input type="file" id="csv-quizzes-input" class="csv-input" accept=".csv" onchange="handleCSVUpload(this, 'quizzes')">
-          </div>
-          <div style="display:flex; flex-direction:column; justify-content:center; gap:0.5rem;">
-            <button class="btn btn-secondary" onclick="loadDemoMode()">
-              🧪 Load Mock CEE Questions (Demo Mode)
-            </button>
-            <button class="btn btn-danger" onclick="clearLocalCustomData()">
-              🧹 Reset Customs to Default
-            </button>
-          </div>
+          <div class="exam-timer" id="exam-timer">00:00</div>
         </div>
-      </div>
-
-      <!-- Schedule Board Content -->
-      <div class="board-header">
-        <div class="board-title-group">
-          <h2>Active Exam Schedules</h2>
-          <p id="current-nepali-time">Nepal Standard Time Dashboard</p>
-        </div>
-        <div style="display:flex; gap: 0.50rem;">
-          <button class="btn btn-secondary" onclick="refreshScheduleList()">🔄 Refresh Board</button>
-          <button class="btn btn-danger" onclick="handleLogout()">Logout</button>
-        </div>
-      </div>
-
-      <div class="schedule-grid" id="schedules-container">
-        <!-- Rendered Schedule cards will appear here dynamically -->
-      </div>
-    </section>
-
-    <!-- VIEW 3: Live Exam Engine -->
-    <section id="view-exam-engine" class="view-container">
-      <div class="engine-layout">
-        <!-- Left Side: Main Engine Question Area -->
-        <div class="engine-main">
-          <div class="engine-header">
-            <div style="display:flex; flex-direction:column; gap:0.25rem;">
-              <div id="engine-current-subject" class="engine-subject">ZOOLOGY / BIOLOGY</div>
-              <div id="engine-question-id" class="engine-q-id">Q 1 of 100</div>
-            </div>
-            <div>
-              <button class="btn btn-secondary" style="padding: 0.4rem 0.8rem; font-size: 0.8rem;" onclick="flagActiveQuestion()">
-                🏁 Flag for Review
-              </button>
-            </div>
-          </div>
-
-          <div class="q-text-box" id="engine-question-text">
-            No question text loaded yet.
-          </div>
-
-          <div class="options-grid" id="engine-options-container">
-            <!-- Option Rows -->
-          </div>
-
-          <div class="engine-controls">
-            <button class="btn btn-secondary" id="engine-btn-prev" onclick="navigateQuestion(-1)">
-              ◀️ Previous Question
-            </button>
-            <div class="btn-group-nav">
-              <button class="btn btn-secondary" onclick="clearActiveSelection()">Clear Choice</button>
-              <button class="btn btn-success" onclick="confirmSubmitExam()">Submit Exam 📤</button>
-            </div>
-            <button class="btn btn-primary" id="engine-btn-next" onclick="navigateQuestion(1)">
-              Next Question ▶️
-            </button>
-          </div>
-        </div>
-
-        <!-- Right Side: Sidebar Navigation/Timer -->
-        <div class="engine-sidebar">
-          <div class="sidebar-widget">
-            <div class="sidebar-widget-title">⏱️ Remaining Countdown</div>
-            <div class="timer-glow" id="engine-timer-glow-container">
-              <div class="timer-val" id="engine-timer-val">00:00:00</div>
-            </div>
-          </div>
-
-          <div class="sidebar-widget">
-            <div class="sidebar-widget-title">
-              <span>🗂️ Question Navigator</span>
-              <span style="font-size: 0.75rem; color: var(--text-muted);" id="navigator-ratio">0/0</span>
-            </div>
-            
-            <div class="navigator-grid" id="engine-navigator-grid">
-              <!-- Grid Circles -->
-            </div>
-
-            <div class="navigator-legend">
-              <div class="legend-item">
-                <span class="legend-dot" style="background-color: var(--green);"></span>
-                <span>Answered</span>
-              </div>
-              <div class="legend-item">
-                <span class="legend-dot" style="background-color: var(--yellow);"></span>
-                <span>Flagged</span>
-              </div>
-              <div class="legend-item">
-                <span class="legend-dot" style="background-color: var(--card);"></span>
-                <span>Unattempted</span>
-              </div>
-            </div>
+        <div class="question-number" id="q-number">Question 1 of 10</div>
+        <div class="question-text" id="q-text">Question text here?</div>
+        <div class="options-list" id="options-list"></div>
+        <div class="exam-nav">
+          <button class="nav-btn nav-btn-secondary" onclick="prevQ()" id="btn-prev">← Previous</button>
+          <div style="display:flex; gap:0.5rem;">
+            <button class="nav-btn nav-btn-secondary" onclick="toggleFlag()" id="btn-flag">🚩 Review</button>
+            <button class="nav-btn nav-btn-primary" onclick="nextQ()" id="btn-next">Next →</button>
           </div>
         </div>
       </div>
-    </section>
-
-    <!-- VIEW 4: Premium Comprehensive Analytics & Breakdown -->
-    <section id="view-exam-results" class="view-container">
-      <div class="board-header">
-        <div class="board-title-group">
-          <h2 id="result-title-main">Entrance Exam Dashboard Performance Report</h2>
-          <p id="result-subtitle">Completed on platform with Realtime Nepalese verification analytics</p>
+      <div class="exam-sidebar">
+        <div class="sidebar-title">Question Navigator</div>
+        <div class="q-nav-grid" id="q-nav-grid"></div>
+        <div class="legend-row">
+          <div class="legend-dot" style="background:rgba(14,165,233,0.15);border:1px solid var(--accent)"></div>
+          <span>Answered</span>
         </div>
-        <button class="btn btn-primary" onclick="navigateToSchedules()">Back to Schedule Board</button>
+        <div class="legend-row">
+          <div class="legend-dot" style="background:rgba(245,158,11,0.15);border:1px solid var(--yellow)"></div>
+          <span>For Review</span>
+        </div>
+        <div class="legend-row">
+          <div class="legend-dot" style="border:1px solid var(--border)"></div>
+          <span>Unanswered</span>
+        </div>
+        <button class="submit-exam-btn" onclick="submitExam()">Submit Exam</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- RESULTS + DETAILED ANALYSIS -->
+  <div id="view-results" class="view-container">
+    <div class="result-panel">
+      <div class="result-header">
+        <div style="font-size:3rem; margin-bottom:0.5rem;">📊</div>
+        <h1 style="font-size:1.75rem; font-weight:800; margin-bottom:0.25rem">Exam Analysis</h1>
+        <p style="color:var(--muted); font-size:0.9rem" id="result-title">Exam Name</p>
+        <div class="result-score-big" id="result-percent">0%</div>
+        <div id="result-grade" class="result-grade grade-good">Good</div>
+        <div style="color:var(--muted); font-size:0.9rem; margin-top:0.5rem;" id="result-score">0 / 0 correct • Time: 0m 0s</div>
       </div>
 
-      <div class="results-grid">
-        <!-- Dashboard Left: Quick stats rings -->
-        <div class="results-left">
-          <div class="analytics-card">
-            <h3 style="font-size: 1rem; font-weight: 700; margin-bottom: 0.5rem;">Calculated Accuracy</h3>
-            
-            <div class="chart-container">
-              <svg class="chart-svg" viewBox="0 0 100 100">
-                <circle class="chart-track" cx="50" cy="50" r="40" />
-                <circle class="chart-progress" id="accuracy-progress" cx="50" cy="50" r="40" stroke-dasharray="251.2" stroke-dashoffset="251.2" />
-              </svg>
-              <div class="chart-text">
-                <span class="chart-percent" id="accuracy-percent-text">0%</span>
-                <span class="chart-label">ACCURACY</span>
-              </div>
-            </div>
+      <!-- Score Stats -->
+      <div class="result-stats">
+        <div class="stat-box">
+          <div class="stat-box-num" style="color:var(--green)" id="stat-correct">0</div>
+          <div class="stat-box-label">Correct</div>
+        </div>
+        <div class="stat-box">
+          <div class="stat-box-num" style="color:var(--red)" id="stat-wrong">0</div>
+          <div class="stat-box-label">Wrong</div>
+        </div>
+        <div class="stat-box">
+          <div class="stat-box-num" style="color:var(--muted)" id="stat-skipped">0</div>
+          <div class="stat-box-label">Skipped</div>
+        </div>
+      </div>
 
-            <p style="font-size: 0.9rem; color: var(--text-muted); line-height: 1.4;" id="performance-insight">
-              Performance Insight analysis. Complete more exams to fine tune your scoring index.
-            </p>
-
-            <div class="metric-grid">
-              <div class="metric-item">
-                <div class="metric-val" id="metric-correct" style="color: var(--green);">0</div>
-                <div class="metric-title">Correct</div>
-              </div>
-              <div class="metric-item">
-                <div class="metric-val" id="metric-wrong" style="color: var(--red);">0</div>
-                <div class="metric-title">Incorrect</div>
-              </div>
-              <div class="metric-item">
-                <div class="metric-val" id="metric-skipped" style="color: var(--yellow);">0</div>
-                <div class="metric-title">Skipped</div>
-              </div>
-              <div class="metric-item">
-                <div class="metric-val" id="metric-time">0s</div>
-                <div class="metric-title">Time Taken</div>
-              </div>
-            </div>
-            
-            <div class="metric-grid" style="margin-top:1rem; grid-template-columns: 1fr;">
-              <div class="metric-item" style="border-color: var(--purple);">
-                <div class="metric-val" id="metric-average-time">0s</div>
-                <div class="metric-title">⚡ Average Time per Question</div>
-              </div>
-            </div>
+      <!-- Detailed Analysis Grid -->
+      <div class="analysis-grid">
+        <!-- Accuracy Ring -->
+        <div class="analysis-card">
+          <h3>📈 Overall Accuracy</h3>
+          <div class="accuracy-ring">
+            <svg width="120" height="120">
+              <circle class="ring-bg" cx="60" cy="60" r="50"></circle>
+              <circle class="ring-bar" id="accuracy-ring-bar" cx="60" cy="60" r="50" 
+                stroke-dasharray="314" stroke-dashoffset="314"></circle>
+            </svg>
+            <div class="ring-text" id="accuracy-ring-text">0%</div>
           </div>
-
-          <div class="subject-performance-section">
-            <h3 style="font-size: 0.95rem; font-weight: 700; margin-bottom: 1rem;">Subject Performance Tracking</h3>
-            <div id="subject-performance-list">
-              <!-- Render dynamic bars -->
-            </div>
+          <div style="text-align:center; color:var(--muted); font-size:0.85rem;">
+            <span id="accuracy-detail">0 correct out of 0</span>
           </div>
         </div>
 
-        <!-- Dashboard Right: Question breakdown lists & Dynamic Live Leaderboard comparison -->
-        <div class="results-right">
-          <!-- Real-Time Comparison Live Leaderboard Widget -->
-          <div class="leaderboard-section">
-            <h3 style="font-size: 1rem; font-weight: 700; margin-bottom: 0.5rem; display: flex; align-items: center; gap: 0.5rem;">
-              🏆 Live Real-Time Leaderboard for Scheduled Challenge
-            </h3>
-            <p style="color: var(--text-muted); font-size: 0.8rem; margin-bottom: 1rem;">
-              Compare your score dynamically with medical candidates across Nepal. Matches correct answers.
-            </p>
-            <div style="overflow-x: auto;">
-              <table class="leader-table">
-                <thead>
-                  <tr>
-                    <th>Rank</th>
-                    <th>Candidate</th>
-                    <th>Correct answers</th>
-                    <th>Percentage</th>
-                    <th>Duration used</th>
-                  </tr>
-                </thead>
-                <tbody id="leaderboard-body-container">
-                  <tr>
-                    <td colspan="5" style="text-align: center; color: var(--text-muted);">No entries recorded yet. Be the first to secure a spot!</td>
-                  </tr>
-                </tbody>
-              </table>
-            </div>
+        <!-- Performance Insight -->
+        <div class="analysis-card">
+          <h3>🎯 Performance Insight</h3>
+          <div class="insight-box" id="insight-text">
+            Complete the exam to see your personalized performance analysis.
           </div>
-
-          <!-- Breakdown tabs & list -->
-          <div>
-            <h3 style="font-size: 1rem; font-weight: 700; margin-bottom: 0.5rem;">Performance Breakdown Viewer</h3>
-            <p style="color: var(--text-muted); font-size: 0.8rem; margin-bottom: 1rem;">Select tags to analyze your knowledge gaps.</p>
-            
-            <div class="filter-tabs">
-              <button class="tab-btn active" onclick="setBreakdownFilter('all', this)">All</button>
-              <button class="tab-btn" onclick="setBreakdownFilter('correct', this)" style="color: var(--green);">Correct</button>
-              <button class="tab-btn" onclick="setBreakdownFilter('wrong', this)" style="color: var(--red);">Wrong</button>
-              <button class="tab-btn" onclick="setBreakdownFilter('skipped', this)" style="color: var(--yellow);">Skipped</button>
+          <div style="margin-top:1rem; padding-top:1rem; border-top:1px solid var(--border);">
+            <div style="display:flex; justify-content:space-between; font-size:0.85rem; margin-bottom:0.5rem;">
+              <span style="color:var(--muted)">Time Taken</span>
+              <span style="font-weight:700;" id="analysis-time">0m 0s</span>
             </div>
-          </div>
-
-          <div class="breakdown-list" id="breakdown-cards-container">
-            <!-- Breakdown Cards -->
+            <div style="display:flex; justify-content:space-between; font-size:0.85rem; margin-bottom:0.5rem;">
+              <span style="color:var(--muted)">Avg Time/Q</span>
+              <span style="font-weight:700;" id="analysis-avg-time">0s</span>
+            </div>
+            <div style="display:flex; justify-content:space-between; font-size:0.85rem;">
+              <span style="color:var(--muted)">Attempt Rate</span>
+              <span style="font-weight:700;" id="analysis-attempt-rate">0%</span>
+            </div>
           </div>
         </div>
       </div>
-    </section>
 
-  </main>
+      <!-- Question Breakdown Tabs -->
+      <h2 style="font-size:1.1rem; font-weight:700; margin:0 0 1rem; border-left:3px solid var(--accent); padding-left:0.75rem">Question Breakdown</h2>
+      <div class="breakdown-tabs">
+        <button class="bd-tab active" onclick="filterSolutions('all')" id="tab-all">All Questions</button>
+        <button class="bd-tab" onclick="filterSolutions('correct')" id="tab-correct">✓ Correct</button>
+        <button class="bd-tab" onclick="filterSolutions('wrong')" id="tab-wrong">✗ Wrong</button>
+        <button class="bd-tab" onclick="filterSolutions('skipped')" id="tab-skipped">— Skipped</button>
+      </div>
+      <div class="solutions-list" id="solutions-list"></div>
 
-  <!-- ==============================================
-       FIREBASE CONFIG & BUSINESS LOGIC IMPLEMENTATION
-       ============================================== -->
-  <script>
-    // Exact Firebase Realtime Database Configuration provided
-    const firebaseConfig = {
-      apiKey: "AIzaSyAng6y7NH9RZshoxEqaplOM9LiSMVrsmtI",
-      authDomain: "cee-medico-nepal-regular.firebaseapp.com",
-      databaseURL: "https://cee-medico-nepal-regular-default-rtdb.asia-southeast1.firebasedatabase.app",
-      projectId: "cee-medico-nepal-regular",
-      storageBucket: "cee-medico-nepal-regular.firebasestorage.app",
-      messagingSenderId: "568305810313",
-      appId: "1:568305810313:web:ea50af6a7a1278d8f0bf58"
-    };
+      <div class="result-actions">
+        <button class="nav-btn nav-btn-primary" onclick="backToSchedule()">Back to Schedule</button>
+        <button class="nav-btn nav-btn-secondary" onclick="retakeExam()">🔄 Retake Exam</button>
+      </div>
+    </div>
+  </div>
+  <!-- ANALYTICS VIEW -->
+  <div id="view-analytics" class="view-container">
+    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1.5rem; flex-wrap:wrap; gap:1rem;">
+      <div>
+        <h1 class="section-title">📊 My Performance Analytics</h1>
+        <p class="section-subtitle">Track your daily progress and compare with peers</p>
+      </div>
+      <button class="nav-btn nav-btn-secondary" onclick="showView('schedule')">← Back to Schedule</button>
+    </div>
 
-    // Global variables
-    let app, db;
-    let currentUser = null;
-    let activeSchedules = [];
-    let activeQuizzes = {};
-    let scheduleRefreshTimer = null;
+    <!-- Overall Stats Strip -->
+    <div id="analytics-stats" style="display:grid; grid-template-columns:repeat(4,1fr); gap:1rem; margin-bottom:2rem;">
+      <div class="stat-box"><div class="stat-box-num" id="as-total" style="color:var(--accent)">—</div><div class="stat-box-label">Exams Taken</div></div>
+      <div class="stat-box"><div class="stat-box-num" id="as-avg" style="color:var(--green)">—</div><div class="stat-box-label">Avg Score</div></div>
+      <div class="stat-box"><div class="stat-box-num" id="as-best" style="color:var(--yellow)">—</div><div class="stat-box-label">Best Score</div></div>
+      <div class="stat-box"><div class="stat-box-num" id="as-streak" style="color:var(--purple)">—</div><div class="stat-box-label">Day Streak 🔥</div></div>
+    </div>
 
-    // Active exam states
-    let currentExamSchedule = null;
-    let currentExamQuestions = [];
-    let currentAnswers = {}; // question_id -> selected_option
-    let currentFlags = {}; // question_id -> boolean
-    let activeQuestionIndex = 0;
-    let examDurationSeconds = 0;
-    let examTimerInterval = null;
-    let examTimeElapsed = 0;
+    <div style="display:grid; grid-template-columns:1fr 1fr; gap:1.5rem; margin-bottom:2rem;">
+      <!-- Score History Chart -->
+      <div class="analysis-card" style="grid-column:1/-1;">
+        <h3>📈 Score History (Last 14 Days)</h3>
+        <div id="score-history-chart" style="height:180px; position:relative; overflow:hidden;">
+          <div style="display:flex; align-items:center; justify-content:center; height:100%; color:var(--muted); font-size:0.85rem;">Loading history...</div>
+        </div>
+      </div>
 
-    // Filter status for analysis Breakdown cards
-    let currentBreakdownFilter = 'all';
+      <!-- Subject Breakdown -->
+      <div class="analysis-card">
+        <h3>🧬 Subject Performance</h3>
+        <div id="subject-performance">
+          <div style="color:var(--muted); font-size:0.85rem;">Loading...</div>
+        </div>
+      </div>
 
-    // Fallback Mock Medical Entrance (CEE) schedules & quizzes data
-    const mockSchedules = [
-      {
-        id: "live-challenge-1",
-        title: "IOM Standard - Live CEE Physics & Chemistry Challenge",
-        start_time: new Date(Date.now() - 5 * 60 * 1000).toISOString(), // Started 5 mins ago (LIVE)
-        end_time: new Date(Date.now() + 115 * 60 * 1000).toISOString(), // Ends in 115 mins
-        duration: "120", // 120 Minutes
-        quiz_id: "quiz_cee_mock_1"
-      },
-      {
-        id: "live-challenge-2",
-        title: "Botany & Zoology Essential Scheduled Unit Exam",
-        start_time: new Date(Date.now() + 30 * 60 * 1000).toISOString(), // Starts in 30 mins (UPCOMING)
-        end_time: new Date(Date.now() + 90 * 60 * 1000).toISOString(),
-        duration: "60",
-        quiz_id: "quiz_cee_mock_2"
-      },
-      {
-        id: "live-challenge-3",
-        title: "National CEE Simulation - High-Yield Medical Diagnostic (Ended)",
-        start_time: new Date(Date.now() - 150 * 60 * 1000).toISOString(), // Started 2.5 hours ago
-        end_time: new Date(Date.now() - 30 * 60 * 1000).toISOString(), // Ended 30 mins ago (ENDED)
-        duration: "120",
-        quiz_id: "quiz_cee_mock_1"
+      <!-- Recent Attempts -->
+      <div class="analysis-card">
+        <h3>📋 Recent Attempts</h3>
+        <div id="recent-attempts" style="display:flex; flex-direction:column; gap:0.75rem;">
+          <div style="color:var(--muted); font-size:0.85rem;">Loading...</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Leaderboard -->
+    <div class="analysis-card" style="margin-bottom:2rem;">
+      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1rem;">
+        <h3 style="margin:0; border:none; padding:0;">🏆 Leaderboard</h3>
+        <select id="lb-exam-select" onchange="loadLeaderboard(this.value)" style="background:var(--surface); border:1px solid var(--border); color:var(--text); padding:0.4rem 0.75rem; border-radius:8px; font-family:inherit; font-size:0.8rem; cursor:pointer;">
+          <option value="">Select an exam…</option>
+        </select>
+      </div>
+      <div id="leaderboard-list">
+        <div style="color:var(--muted); font-size:0.85rem; text-align:center; padding:2rem;">Select an exam to view rankings.</div>
+      </div>
+    </div>
+  </div>
+</main>
+
+<footer>
+  <p>© 2026 CEE Medico Nepal — Live Scheduled Exam Portal</p>
+  <p style="margin-top:0.25rem">100% Offline Capable — Comprehensive Statistical Analytics</p>
+</footer>
+
+<script>
+// ==================== CONFIG ====================
+const SCHEDULE_CSV_URL = 'schedules_rows.csv';
+const QUIZZES_CSV_URL = 'quizzes_rows.csv';
+
+// ==================== STATE ====================
+let schedules = [];
+let quizzesMap = {};
+let currentUser = null;
+let activeSchedule = null;
+let activeQuiz = null;
+let currentQIndex = 0;
+let answers = {};
+let flags = {};
+let timerInterval = null;
+let secondsLeft = 0;
+let examStartTime = null;
+let scheduleFilter = 'all';
+let solutionFilter = 'all';
+
+let loadedRawSchedules = null;
+let loadedRawQuizzes = null;
+
+// ==================== CSV PARSER ====================
+// Fixed broken line-break character parser logic
+function parseCSV(text) {
+  const lines = [];
+  let row = [''];
+  let inQuotes = false;
+  for (let i = 0; i < text.length; i++) {
+    const c = text[i];
+    const next = text[i+1];
+    if (c === '"') {
+      if (inQuotes && next === '"') { 
+        row[row.length-1] += '"'; 
+        i++; 
+      } else { 
+        inQuotes = !inQuotes; 
       }
-    ];
+    } else if (c === ',' && !inQuotes) {
+      row.push('');
+    } else if ((c === '\r' || c === '\n') && !inQuotes) {
+      if (c === '\r' && next === '\n') i++;
+      lines.push(row);
+      row = [''];
+    } else {
+      row[row.length-1] += c;
+    }
+  }
+  if (row.length > 1 || row[0] !== '') lines.push(row);
+  return lines;
+}
 
-    const mockQuizzes = {
-      "quiz_cee_mock_1": [
-        {
-          quiz_id: "quiz_cee_mock_1",
-          question_id: "q_phy_1",
-          subject: "PHYSICS",
-          question: "An astronomical telescope has objective and eyepiece of focal lengths 100 cm and 5 cm. If the telescope is focused on normal adjustment, its magnifying power is:",
-          option_a: "20",
-          option_b: "500",
-          option_c: "95",
-          option_d: "105",
-          correct_option: "a",
-          explanation: "For normal adjustment, magnifying power (m) of astronomical telescope = fo/fe = 100 / 5 = 20."
-        },
-        {
-          quiz_id: "quiz_cee_mock_1",
-          question_id: "q_phy_2",
-          subject: "PHYSICS",
-          question: "The temperature at which root mean square (RMS) speed of helium molecules is equal to the RMS speed of oxygen molecules at 27°C is:",
-          option_a: "37.5 K",
-          option_b: "42.5 K",
-          option_c: "50 K",
-          option_d: "75 K",
-          correct_option: "a",
-          explanation: "RMS speed v = √(3RT/M). For Helium and Oxygen to have same RMS speed, T1/M1 = T2/M2. Hence, T_He / 4 = 300 / 32 => T_He = 1200 / 32 = 37.5 K."
-        },
-        {
-          quiz_id: "quiz_cee_mock_1",
-          question_id: "q_chem_1",
-          subject: "CHEMISTRY",
-          question: "The chemical substance added to remove the impurities (gangue) during smelting process is termed as:",
-          option_a: "Slag",
-          option_b: "Flux",
-          option_c: "Catalyst",
-          option_d: "Gangue",
-          correct_option: "b",
-          explanation: "Flux is a substance added to combine chemically with the infusible gangue to form a fusible material called slag."
-        },
-        {
-          quiz_id: "quiz_cee_mock_1",
-          question_id: "q_chem_2",
-          subject: "CHEMISTRY",
-          question: "Which of the following organic compounds will display silver mirror test with Tollens' Reagent?",
-          option_a: "Acetaldehyde",
-          option_b: "Acetone",
-          option_c: "Benzophenone",
-          option_d: "Ethyl Alcohol",
-          correct_option: "a",
-          explanation: "Aldehydes like Acetaldehyde are easily oxidized and reduce Tollens' Reagent to form a silver mirror. Ketones (like Acetone, Benzophenone) do not react."
-        },
-        {
-          quiz_id: "quiz_cee_mock_1",
-          question_id: "q_bot_1",
-          subject: "BOTANY",
-          question: "The primary organelle responsible for aerobic cellular respiration and ATP generation in plant cells is:",
-          option_a: "Chloroplast",
-          option_b: "Ribosome",
-          option_c: "Mitochondria",
-          option_d: "Golgi Complex",
-          correct_option: "c",
-          explanation: "Mitochondria are universally called the powerhouses of the cell and are the site of aerobic respiration."
-        },
-        {
-          quiz_id: "quiz_cee_mock_1",
-          question_id: "q_zoo_1",
-          subject: "ZOOLOGY",
-          question: "The oxygen dissociation curve of normal human hemoglobin during physiological activity is typically characterized as:",
-          option_a: "Linear",
-          option_b: "Sigmoid",
-          option_c: "Hyperbolic",
-          option_d: "Parabolic",
-          correct_option: "b",
-          explanation: "The hemoglobin oxygen binding profile is sigmoid due to the cooperative binding mechanism of the four subunits."
-        },
-        {
-          quiz_id: "quiz_cee_mock_1",
-          question_id: "q_mat_1",
-          subject: "MAT (MENTAL AGILITY TEST)",
-          question: "In a class of medical aspirants, Rohan ranks 15th from the top and 36th from the bottom. What is the total number of candidates in the room?",
-          option_a: "51",
-          option_b: "50",
-          option_c: "52",
-          option_d: "49",
-          correct_option: "b",
-          explanation: "Total candidates = (Rank from top + Rank from bottom) - 1 => (15 + 36) - 1 = 50."
-        }
-      ],
-      "quiz_cee_mock_2": [
-        {
-          quiz_id: "quiz_cee_mock_2",
-          question_id: "q_zoo_2_1",
-          subject: "ZOOLOGY",
-          question: "In mammalian heart mechanics, which structure serves as the primary pacemaker of the systemic biological pulse?",
-          option_a: "Purkinje Fibres",
-          option_b: "Sinoatrial (SA) Node",
-          option_c: "Atrioventricular (AV) Node",
-          option_d: "Bundle of His",
-          correct_option: "b",
-          explanation: "The SA Node intrinsically initiates electrical cardiac depolarization waves and establishes baseline rhythm."
-        },
-        {
-          quiz_id: "quiz_cee_mock_2",
-          question_id: "q_bot_2_1",
-          subject: "BOTANY",
-          question: "The condition where pollen grains are shed prior to the receptivity of the gynoecium stigma in a flower is called:",
-          option_a: "Protandry",
-          option_b: "Protogyny",
-          option_c: "Herkogamy",
-          option_d: "Cleistogamy",
-          correct_option: "a",
-          explanation: "Protandry is a strategy promoting outcrossing wherein male components develop and release pollen earlier than female maturity."
-        }
-      ]
+function csvToObjects(lines) {
+  if (lines.length < 2) return [];
+  const headers = lines[0].map(h => h.trim());
+  const objs = [];
+  for (let i = 1; i < lines.length; i++) {
+    const row = lines[i];
+    if (row.length < headers.length) continue;
+    const obj = {};
+    headers.forEach((h, j) => obj[h] = row[j]);
+    objs.push(obj);
+  }
+  return objs;
+}
+
+function parseJSON(str) {
+  if (!str) return [];
+  let s = str.trim();
+  if (s.startsWith('"') && s.endsWith('"')) s = s.slice(1, -1);
+  s = s.replace(/""/g, '"');
+  try { return JSON.parse(s); }
+  catch { 
+    try { return JSON.parse(JSON.parse(str)); }
+    catch {
+      if (s.startsWith('[') && s.endsWith(']'))
+        return s.slice(1,-1).split(',').map(x => x.replace(/"/g,'').trim());
+      return [];
+    }
+  }
+}
+
+// ==================== INIT ====================
+document.addEventListener('DOMContentLoaded', () => {
+  const saved = localStorage.getItem('cee_user');
+  if (saved) {
+    currentUser = JSON.parse(saved);
+    showUserBadge();
+  }
+  loadAllData();
+});
+
+// ==================== DATA LOADING ====================
+async function loadAllData() {
+  const status = document.getElementById('load-status');
+
+  try {
+    status.textContent = 'Fetching schedules and quizzes...';
+    const [scheduleRes, quizzesRes] = await Promise.all([
+      fetch(SCHEDULE_CSV_URL, { cache: 'no-store' }),
+      fetch(QUIZZES_CSV_URL, { cache: 'no-store' })
+    ]);
+
+    if (!scheduleRes.ok) throw new Error('Failed to fetch schedules_rows.csv (HTTP ' + scheduleRes.status + ')');
+    if (!quizzesRes.ok) throw new Error('Failed to fetch quizzes_rows.csv (HTTP ' + quizzesRes.status + ')');
+
+    status.textContent = 'Parsing live structures...';
+
+    const qText = await quizzesRes.text();
+    const sText = await scheduleRes.text();
+
+    processAndInitialize(sText, qText, false);
+
+  } catch (err) {
+    console.warn("Fetch failed, initiating robust fallbacks:", err);
+    status.textContent = '';
+    document.getElementById('load-error-text').textContent = "Unable to fetch CSV files from server. You can run Demo Mock Mode or upload your files manually.";
+    document.getElementById('load-error-box').style.display = 'block';
+    document.querySelector('.spinner').style.display = 'none';
+  }
+}
+
+function processAndInitialize(sText, qText, isDemo = false) {
+  const status = document.getElementById('load-status');
+  if (status) status.textContent = 'Processing quiz questions...';
+
+  // Quizzes Parsing
+  const qRows = csvToObjects(parseCSV(qText));
+  quizzesMap = {};
+  qRows.forEach(q => {
+    const quizId = q.id;
+    if (!quizId) return;
+
+    let questions = parseJSON(q.questions);
+    if (!questions.length && q.question_ids) {
+      questions = parseJSON(q.question_ids);
+    }
+
+    quizzesMap[quizId] = {
+      id: quizId,
+      subject: (q.subject || 'General').trim(),
+      chapter: (q.chapter || 'Untitled').trim(),
+      set: q.set || '1',
+      questions: questions,
+      difficulty: q.difficulty || 'Medium',
+      duration: parseInt(q.duration_minutes) || 15,
+      totalQ: parseInt(q.total_questions) || questions.length
     };
+  });
 
-    // ==============================================
-    // INITIALIZATION & USER CONFIGURATION
-    // ==============================================
-    window.addEventListener("DOMContentLoaded", () => {
-      initFirebase();
-      checkAuthStatus();
-      loadStoredCustomData();
-      startNepaliTimer();
+  // Schedules Parsing
+  const sRows = csvToObjects(parseCSV(sText));
+  const now = new Date();
+  schedules = sRows.map(r => {
+    const start = new Date(r.start_time);
+    const end = new Date(r.end_time);
+    let status = 'upcoming';
+    if (now >= start && now <= end) status = 'live';
+    else if (now > end) status = 'ended';
+
+    const quiz = quizzesMap[r.quiz_id];
+
+    return {
+      id: r.id,
+      title: r.title,
+      quizId: r.quiz_id,
+      startTime: start,
+      endTime: end,
+      duration: parseInt(r.duration_minutes) || (quiz ? quiz.duration : 60),
+      status: status,
+      instructions: r.instructions || 'No special instructions',
+      description: r.description || 'CEE Medico Nepal',
+      quiz: quiz
+    };
+  }).sort((a, b) => a.startTime - b.startTime);
+
+  // Transition away loading spinner
+  const overlay = document.getElementById('loading-overlay');
+  overlay.style.opacity = '0';
+  setTimeout(() => overlay.style.display = 'none', 300);
+
+  if (isDemo) {
+    document.getElementById('demo-banner').style.display = 'flex';
+  } else {
+    document.getElementById('demo-banner').style.display = 'none';
+  }
+
+  if (currentUser) {
+    showView('schedule');
+    renderSchedule();
+  } else {
+    showView('register');
+  }
+
+  setInterval(updateScheduleStatus, 30000);
+}
+
+function updateScheduleStatus() {
+  const now = new Date();
+  let changed = false;
+  schedules.forEach(s => {
+    const oldStatus = s.status;
+    if (now >= s.startTime && now <= s.endTime) s.status = 'live';
+    else if (now > s.endTime) s.status = 'ended';
+    else s.status = 'upcoming';
+    if (oldStatus !== s.status) changed = true;
+  });
+  if (changed) renderSchedule();
+}
+
+// ==================== MANUAL FILE UPLOADER ====================
+function handleCSVUpload(input, type) {
+  const file = input.files[0];
+  if (!file) return;
+
+  const reader = new FileReader();
+  reader.onload = function(e) {
+    const text = e.target.result;
+    if (type === 'schedules') {
+      loadedRawSchedules = text;
+      document.getElementById('s-label').textContent = file.name;
+      document.getElementById('s-status').textContent = "Upload Complete ✓";
+      document.getElementById('schedules-zone').classList.add('file-loaded');
+    } else {
+      loadedRawQuizzes = text;
+      document.getElementById('q-label').textContent = file.name;
+      document.getElementById('q-status').textContent = "Upload Complete ✓";
+      document.getElementById('quizzes-zone').classList.add('file-loaded');
+    }
+
+    if (loadedRawSchedules && loadedRawQuizzes) {
+      document.getElementById('loading-overlay').style.display = 'flex';
+      document.getElementById('loading-overlay').style.opacity = '1';
+      document.getElementById('load-status').textContent = 'Assembling local modules...';
+      setTimeout(() => {
+        try {
+          processAndInitialize(loadedRawSchedules, loadedRawQuizzes, false);
+        } catch(e) {
+          alert("Error parsing CSV format. Please ensure correct headers & try again.");
+          console.error(e);
+          location.reload();
+        }
+      }, 500);
+    }
+  };
+  reader.readAsText(file);
+}
+
+// ==================== MOCK DEMO FALLBACK DATABASE ====================
+function runDemoMode() {
+  document.getElementById('load-status').textContent = "Injecting mock entrance profiles...";
+  
+  const now = new Date();
+  
+  // Format dates for mock schedule matching CSV parser expectations
+  const formatMockDate = (date) => {
+    return date.toISOString();
+  };
+
+  const oneHourAgo = new Date(now.getTime() - 1000 * 60 * 15); // Started 15 mins ago
+  const fortyFiveMinsLater = new Date(now.getTime() + 1000 * 60 * 45); // Ends in 45 mins
+  const twoHoursLater = new Date(now.getTime() + 1000 * 60 * 120);
+  const threeHoursLater = new Date(now.getTime() + 1000 * 60 * 180);
+  const yesterdayStart = new Date(now.getTime() - 1000 * 60 * 60 * 25);
+  const yesterdayEnd = new Date(now.getTime() - 1000 * 60 * 60 * 24);
+
+  // High-fidelity Medical Mock Questions matching CEE syllabus
+  const mockQuiz1 = [
+    {
+      question: "Which of the following organic structures acts as a non-reducing carbohydrate?",
+      options: ["Lactose", "Maltose", "Sucrose", "Cellobiose"],
+      answer: 2,
+      explanation: "Sucrose is a non-reducing sugar because its glycosidic linkage is formed between the reducing/anomeric carbons of glucose (C1) and fructose (C2). Since no free aldehyde or ketone groups are available to reduce Benedict's or Fehling's reagents, it tests negative."
+    },
+    {
+      question: "During cellular aerobic respiration, what is the exact site of the electron transport chain (ETC) in human mitochondria?",
+      options: ["Outer mitochondrial membrane", "Mitochondrial matrix", "Inner mitochondrial membrane", "Intermembrane space"],
+      answer: 2,
+      explanation: "The electron transport chain is located in the inner mitochondrial membrane (cristae). This membrane provides maximum surface area for protein complex assemblies (Complex I-IV) and ATP synthase to generate a proton gradient."
+    },
+    {
+      question: "Which cell organelle is primarily responsible for the post-translational modification and glycosylation of synthesized proteins?",
+      options: ["Lysosome", "Rough Endoplasmic Reticulum", "Golgi Apparatus", "Peroxisome"],
+      answer: 2,
+      explanation: "The Golgi Apparatus is the central processing, packaging, and sorting hub. It modifies proteins arriving from the Rough ER by adding carbohydrate chains (glycosylation), sulfation, or phosphorylation before routing them to their final cellular targets."
+    },
+    {
+      question: "Identify the element with the highest electron affinity among the halogen family.",
+      options: ["Fluorine", "Chlorine", "Bromine", "Iodine"],
+      answer: 1,
+      explanation: "Chlorine has a higher electron affinity than Fluorine. Although Fluorine is more electronegative, its small atomic size creates significant electron-electron repulsion in its compact 2p subshell, making it less energetically favorable to add an incoming electron compared to Chlorine's spacious 3p subshell."
+    },
+    {
+      question: "In meiosis, synapsis of homologous chromosomes occurs precisely during which stage of Prophase I?",
+      options: ["Leptotene", "Zygotene", "Pachytene", "Diplotene"],
+      answer: 1,
+      explanation: "Synapsis (the physical pairing of homologous chromosomes) occurs during the Zygotene stage of Prophase I, mediated by the assembly of the synaptonemal complex. Crossing over follows in Pachytene."
+    }
+  ];
+
+  const mockQuiz2 = [
+    {
+      question: "The oxygen dissociation curve of adult hemoglobin (HbA) exhibits which specific geometrical shape under physiological conditions?",
+      options: ["Linear", "Sigmoid", "Hyperbolic", "Parabolic"],
+      answer: 1,
+      explanation: "The oxygen dissociation curve of HbA is sigmoidal (S-shaped) due to 'cooperative binding'. When one molecule of oxygen binds to one of the four subunits, it induces a conformational shift (T-state to R-state) that increases the oxygen affinity of the remaining subunits."
+    },
+    {
+      question: "Which anatomical division of the nephron acts as the primary site of glucose reabsorption via active transport?",
+      options: ["Proximal Convoluted Tubule (PCT)", "Loop of Henle", "Distal Convoluted Tubule (DCT)", "Collecting Duct"],
+      answer: 0,
+      explanation: "Nearly 100% of filtered glucose and amino acids are reabsorbed in the Proximal Convoluted Tubule (PCT) using Sodium-Glucose Cotransporters (SGLT-2 and SGLT-1) on the apical membrane, powered by the basolateral Na+/K+ ATPase pump."
+    }
+  ];
+
+  const sText = `id,title,quiz_id,start_time,end_time,duration_minutes,instructions,description
+schedule_1,🔴 CEE Mock Entrance: Integrated Biology & Chemistry,quiz_1,${formatMockDate(oneHourAgo)},${formatMockDate(fortyFiveMinsLater)},60,Solve all 5 high-yield CEE mock questions.,CEE Medico Nepal Premium Mock Exam
+schedule_2,🎓 Upcoming Biology Diagnostic Prep Test,quiz_2,${formatMockDate(twoHoursLater)},${formatMockDate(threeHoursLater)},30,Answer carefully. Negative marking of 0.25 is excluded in this demo.,Medical Entrance Practice Arena
+schedule_3,🔒 Ended Mock Challenge - Physiology & Histology,quiz_2,${formatMockDate(yesterdayStart)},${formatMockDate(yesterdayEnd)},60,Review previous analytical paper solutions.,CEE Medico Archive`;
+
+  const qText = `id,subject,chapter,set,questions,difficulty,duration_minutes,total_questions
+quiz_1,Biology & Chemistry,Syllabus General,1,"${JSON.stringify(mockQuiz1).replace(/"/g, '""')}",Hard,60,5
+quiz_2,Physiology & Histology,Syllabus General,2,"${JSON.stringify(mockQuiz2).replace(/"/g, '""')}",Medium,30,2`;
+
+  processAndInitialize(sText, qText, true);
+}
+
+// ==================== USER REGISTRATION ====================
+async function registerUser() {
+  const name = document.getElementById('reg-name').value.trim();
+  const email = document.getElementById('reg-email').value.trim();
+
+  if (!name || !email) { alert('Please enter both name and email'); return; }
+  if (!email.includes('@')) { alert('Please enter a valid email'); return; }
+
+  const btn = document.getElementById('reg-btn');
+  btn.disabled = true;
+  btn.textContent = 'Registering...';
+
+  currentUser = { name, email, id: email.replace(/[.#$\[\]]/g, '_') };
+  localStorage.setItem('cee_user', JSON.stringify(currentUser));
+
+  // Save to Firebase
+  try {
+    await window._fbSet(
+      window._fbRef(window._db, 'users/' + currentUser.id),
+      { name, email, registeredAt: Date.now() }
+    );
+  } catch(e) { console.warn('Firebase user save failed (offline?):', e); }
+
+  btn.disabled = false;
+  btn.textContent = 'Continue to Exam Hall';
+
+  showUserBadge();
+  showView('schedule');
+  renderSchedule();
+}
+
+function showUserBadge() {
+  document.getElementById('user-name-display').textContent = currentUser.name;
+  document.getElementById('user-badge').style.display = 'flex';
+}
+
+function logout() {
+  localStorage.removeItem('cee_user');
+  currentUser = null;
+  location.reload();
+}
+
+// ==================== SCHEDULE VIEW ====================
+function filterSchedule(type) {
+  scheduleFilter = type;
+  document.querySelectorAll('[id^="filter-"]').forEach(b => b.style.background = 'transparent');
+  document.getElementById('filter-' + type).style.background = 'rgba(14,165,233,0.15)';
+  renderSchedule();
+}
+
+function renderSchedule() {
+  const grid = document.getElementById('schedule-grid');
+  let filtered = schedules;
+  if (scheduleFilter !== 'all') filtered = schedules.filter(s => s.status === scheduleFilter);
+
+  if (filtered.length === 0) {
+    grid.innerHTML = '<div class="empty-state"><div class="empty-state-icon">📭</div><h3>No exams found</h3><p>Check back later for new scheduled exams.</p></div>';
+    return;
+  }
+
+  const now = new Date();
+
+  grid.innerHTML = filtered.map(s => {
+    const isLive = s.status === 'live';
+    const isEnded = s.status === 'ended';
+    const isUpcoming = s.status === 'upcoming';
+
+    const qCount = s.quiz ? s.quiz.questions.length : '?';
+
+    let btn = '';
+    if (isLive) {
+      btn = `<button class="exam-btn btn-enter" onclick="enterExam('${s.id}')">Enter Exam →</button>`;
+    } else if (isUpcoming) {
+      const diff = s.startTime - now;
+      const days = Math.floor(diff / 86400000);
+      const hours = Math.floor((diff % 86400000) / 3600000);
+      const mins = Math.floor((diff % 3600000) / 60000);
+      let timeStr = '';
+      if (days > 0) timeStr = `${days}d ${hours}h`;
+      else if (hours > 0) timeStr = `${hours}h ${mins}m`;
+      else timeStr = `${mins}m`;
+      btn = `<button class="exam-btn btn-waiting">Starts in ${timeStr}</button>`;
+    } else {
+      btn = `<button class="exam-btn btn-ended" onclick="viewResults('${s.id}')">View Results</button>`;
+    }
+
+    const statusClass = `status-${s.status}`;
+    const statusText = isLive ? '🔴 LIVE NOW' : isEnded ? 'ENDED' : 'UPCOMING';
+
+    return `
+      <div class="exam-card">
+        <div class="exam-info">
+          <h3>${s.title}</h3>
+          <div class="exam-meta">
+            <span>📅 ${s.startTime.toLocaleDateString()}</span>
+            <span>⏰ ${s.startTime.toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'})} - ${s.endTime.toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'})}</span>
+            <span>⏱ ${s.duration} min</span>
+            <span>📝 ${qCount} Qs</span>
+          </div>
+        </div>
+        <span class="exam-status ${statusClass}">${statusText}</span>
+        ${btn}
+      </div>
+    `;
+  }).join('');
+}
+
+// ==================== EXAM SESSION ====================
+async function enterExam(scheduleId) {
+  if (!currentUser) { alert('Please register first'); showView('register'); return; }
+
+  activeSchedule = schedules.find(s => s.id === scheduleId);
+  if (!activeSchedule) return;
+
+  const now = new Date();
+  if (now < activeSchedule.startTime || now > activeSchedule.endTime) {
+    alert('This exam is not currently active');
+    updateScheduleStatus();
+    return;
+  }
+
+  // Check Firebase for existing attempt (prevent re-attempt same schedule)
+  try {
+    const existingAttempt = await window._fbGet(
+      window._fbRef(window._db, `attempts/${scheduleId}/${currentUser.id}`)
+    );
+    if (existingAttempt.exists()) {
+      const data = existingAttempt.val();
+      const attemptDate = data.date || '';
+      const today = new Date().toISOString().split('T')[0];
+      if (attemptDate === today) {
+        const score = data.score || 0;
+        const confirm = window.confirm(
+          `You already attempted this exam today and scored ${score}%.\n\nYou can attempt again tomorrow when a new exam is scheduled.\n\nPress OK to view your previous results.`
+        );
+        if (confirm) {
+          // Show previous results
+          showPreviousResult(data);
+        }
+        return;
+      }
+    }
+  } catch(e) { console.warn('Firebase attempt check failed:', e); }
+
+  activeQuiz = activeSchedule.quiz;
+  if (!activeQuiz || !activeQuiz.questions || activeQuiz.questions.length === 0) {
+    alert('Quiz data not found or has no questions. Check quizzes_rows.csv format.');
+    console.error('Quiz data:', activeQuiz);
+    return;
+  }
+
+  currentQIndex = 0;
+  answers = {};
+  flags = {};
+  secondsLeft = activeSchedule.duration * 60;
+  examStartTime = Date.now();
+
+  document.getElementById('exam-title').textContent = activeSchedule.title;
+  document.getElementById('exam-subtitle').textContent = `${activeQuiz.subject || 'CEE'} • ${activeSchedule.duration} Minutes • Live Exam`;
+
+  showView('exam');
+  startTimer();
+  renderQuestion();
+
+  const windowCheck = setInterval(() => {
+    if (!activeSchedule) { clearInterval(windowCheck); return; }
+    if (new Date() > activeSchedule.endTime) {
+      clearInterval(windowCheck);
+      submitExam();
+    }
+  }, 10000);
+}
+
+function showPreviousResult(data) {
+  // Reconstruct a minimal result display from saved Firebase data
+  document.getElementById('result-title').textContent = data.examTitle || 'Previous Attempt';
+  document.getElementById('result-percent').textContent = (data.score || 0) + '%';
+  document.getElementById('result-percent').style.color = (data.score||0) >= 70 ? 'var(--green)' : (data.score||0) >= 40 ? 'var(--yellow)' : 'var(--red)';
+  document.getElementById('result-score').textContent = `${data.correct || 0} correct • ${data.wrong || 0} wrong • Time: ${formatTime(data.timeTaken || 0)}`;
+  document.getElementById('stat-correct').textContent = data.correct || 0;
+  document.getElementById('stat-wrong').textContent = data.wrong || 0;
+  document.getElementById('stat-skipped').textContent = data.skipped || 0;
+
+  const gradeEl = document.getElementById('result-grade');
+  const pct = data.score || 0;
+  if (pct >= 80) { gradeEl.textContent = '🏆 Excellent'; gradeEl.className = 'result-grade grade-excellent'; }
+  else if (pct >= 60) { gradeEl.textContent = '👍 Good'; gradeEl.className = 'result-grade grade-good'; }
+  else { gradeEl.textContent = '⚠️ Review Required'; gradeEl.className = 'result-grade grade-needs-work'; }
+
+  document.getElementById('insight-text').innerHTML = `<strong>📅 Submitted:</strong> ${new Date(data.submittedAt||Date.now()).toLocaleString()}<br><br>This is your saved result from today's attempt. Come back tomorrow for the next scheduled exam!`;
+  document.getElementById('solutions-list').innerHTML = '<div class="empty-state" style="padding:2rem;"><p>Detailed solutions are only shown immediately after submission.</p></div>';
+  document.querySelector('.analysis-grid').style.display = 'none';
+  document.querySelector('.breakdown-tabs').style.display = 'none';
+  showView('results');
+}
+
+function startTimer() {
+  if (timerInterval) clearInterval(timerInterval);
+  const el = document.getElementById('exam-timer');
+
+  function tick() {
+    const m = Math.floor(secondsLeft / 60);
+    const s = secondsLeft % 60;
+    el.textContent = `${m.toString().padStart(2,'0')}:${s.toString().padStart(2,'0')}`;
+    el.classList.toggle('critical', secondsLeft <= 300);
+
+    if (secondsLeft <= 0) { clearInterval(timerInterval); submitExam(); }
+    secondsLeft--;
+  }
+  tick();
+  timerInterval = setInterval(tick, 1000);
+}
+
+function renderQuestion() {
+  const q = activeQuiz.questions[currentQIndex];
+  document.getElementById('q-number').textContent = `Question ${currentQIndex + 1} of ${activeQuiz.questions.length}`;
+  document.getElementById('q-text').textContent = q.question || q.text || q.q || 'Question text missing';
+
+  const options = q.options || q.choices || q.answers || [];
+  document.getElementById('options-list').innerHTML = options.map((opt, i) => `
+    <button class="option-btn ${answers[currentQIndex] === i ? 'selected' : ''}" onclick="selectAnswer(${i})">
+      <span class="option-letter">${String.fromCharCode(65 + i)}</span>
+      <span>${opt}</span>
+    </button>
+  `).join('');
+
+  const grid = document.getElementById('q-nav-grid');
+  grid.innerHTML = activeQuiz.questions.map((_, i) => {
+    let cls = 'q-nav-btn';
+    if (i === currentQIndex) cls += ' current';
+    else if (answers[i] !== undefined) cls += ' answered';
+    else if (flags[i]) cls += ' review';
+    return `<button class="${cls}" onclick="jumpTo(${i})">${i + 1}</button>`;
+  }).join('');
+
+  document.getElementById('btn-prev').disabled = currentQIndex === 0;
+  const isLast = currentQIndex === activeQuiz.questions.length - 1;
+  document.getElementById('btn-next').textContent = isLast ? 'Finish →' : 'Next →';
+  document.getElementById('btn-flag').textContent = flags[currentQIndex] ? '⭐ Reviewing' : '🚩 Review';
+}
+
+function selectAnswer(idx) { answers[currentQIndex] = idx; renderQuestion(); }
+function toggleFlag() { flags[currentQIndex] = !flags[currentQIndex]; renderQuestion(); }
+function jumpTo(idx) { currentQIndex = idx; renderQuestion(); }
+function prevQ() { if (currentQIndex > 0) { currentQIndex--; renderQuestion(); } }
+function nextQ() { if (currentQIndex < activeQuiz.questions.length - 1) { currentQIndex++; renderQuestion(); } else { submitExam(); } }
+
+// ==================== SUBMIT & ANALYSIS ====================
+async function submitExam() {
+  if (timerInterval) clearInterval(timerInterval);
+
+  const questions = activeQuiz.questions;
+  const total = questions.length;
+  let correct = 0, wrong = 0, skipped = 0;
+
+  questions.forEach((q, i) => {
+    const ans = answers[i];
+    const correctAns = q.answer !== undefined ? parseInt(q.answer) : (q.correct !== undefined ? parseInt(q.correct) : 0);
+    if (ans === undefined) skipped++;
+    else if (ans === correctAns) correct++;
+    else wrong++;
+  });
+
+  const pct = total > 0 ? Math.round((correct / total) * 100) : 0;
+  const timeTaken = Math.floor((Date.now() - examStartTime) / 1000);
+
+  // Save to Firebase
+  await saveResult(pct, correct, wrong, skipped, timeTaken);
+
+  showResults(correct, wrong, skipped, pct, timeTaken);
+}
+
+async function saveResult(score, correct, wrong, skipped, timeTaken) {
+  if (!currentUser || !activeSchedule || !window._db) return;
+  const today = new Date().toISOString().split('T')[0];
+  const payload = {
+    userId: currentUser.id,
+    name: currentUser.name,
+    email: currentUser.email,
+    examId: activeSchedule.id,
+    examTitle: activeSchedule.title,
+    score, correct, wrong, skipped,
+    subject: activeQuiz.subject || 'General',
+    submittedAt: Date.now(),
+    date: today,
+    timeTaken
+  };
+  try {
+    await window._fbSet(
+      window._fbRef(window._db, `attempts/${activeSchedule.id}/${currentUser.id}`),
+      payload
+    );
+    await window._fbSet(
+      window._fbRef(window._db, `dailyAnalytics/${today}/${currentUser.id}`),
+      { score, subject: activeQuiz.subject || 'General', submittedAt: Date.now(), examTitle: activeSchedule.title, correct, wrong, skipped, timeTaken }
+    );
+    // Leaderboard entry
+    await window._fbSet(
+      window._fbRef(window._db, `leaderboard/${activeSchedule.id}/${currentUser.id}`),
+      { name: currentUser.name, score, timeTaken, submittedAt: Date.now() }
+    );
+    console.log('✅ Result saved to Firebase');
+  } catch(e) {
+    console.warn('Firebase save failed (offline mode):', e);
+  }
+}
+
+function showResults(correct, wrong, skipped, pct, timeTaken) {
+  document.getElementById('result-title').textContent = activeSchedule.title;
+  document.getElementById('result-percent').textContent = pct + '%';
+  document.getElementById('result-percent').style.color = pct >= 70 ? 'var(--green)' : pct >= 40 ? 'var(--yellow)' : 'var(--red)';
+  document.getElementById('result-score').textContent = `${correct} / ${activeQuiz.questions.length} correct • Time: ${formatTime(timeTaken)}`;
+  document.getElementById('stat-correct').textContent = correct;
+  document.getElementById('stat-wrong').textContent = wrong;
+  document.getElementById('stat-skipped').textContent = skipped;
+
+  // Grade
+  const gradeEl = document.getElementById('result-grade');
+  if (pct >= 80) { gradeEl.textContent = '🏆 Excellent'; gradeEl.className = 'result-grade grade-excellent'; }
+  else if (pct >= 60) { gradeEl.textContent = '👍 Good'; gradeEl.className = 'result-grade grade-good'; }
+  else if (pct >= 40) { gradeEl.textContent = '📚 Needs Work'; gradeEl.className = 'result-grade grade-good'; }
+  else { gradeEl.textContent = '⚠️ Review Required'; gradeEl.className = 'result-grade grade-needs-work'; }
+
+  // Accuracy Ring
+  const circumference = 2 * Math.PI * 50; // ~314
+  const offset = circumference - (pct / 100) * circumference;
+  const ringBar = document.getElementById('accuracy-ring-bar');
+  ringBar.style.strokeDasharray = circumference;
+  ringBar.style.strokeDashoffset = offset;
+  ringBar.style.stroke = pct >= 70 ? 'var(--green)' : pct >= 40 ? 'var(--yellow)' : 'var(--red)';
+  document.getElementById('accuracy-ring-text').textContent = pct + '%';
+  document.getElementById('accuracy-ring-text').style.color = pct >= 70 ? 'var(--green)' : pct >= 40 ? 'var(--yellow)' : 'var(--red)';
+  document.getElementById('accuracy-detail').textContent = `${correct} correct out of ${activeQuiz.questions.length}`;
+
+  // Performance Insight
+  const attempted = correct + wrong;
+  const attemptRate = activeQuiz.questions.length > 0 ? Math.round((attempted / activeQuiz.questions.length) * 100) : 0;
+  const avgTime = attempted > 0 ? Math.round(timeTaken / attempted) : 0;
+
+  document.getElementById('analysis-time').textContent = formatTime(timeTaken);
+  document.getElementById('analysis-avg-time').textContent = avgTime + 's';
+  document.getElementById('analysis-attempt-rate').textContent = attemptRate + '%';
+
+  let insight = '';
+  if (pct >= 80) {
+    insight = `<strong>🏆 Outstanding!</strong> You scored ${pct}% which is excellent. You have a strong grasp of ${activeQuiz.subject || 'this subject'}. Focus on maintaining this level across all topics.`;
+  } else if (pct >= 60) {
+    insight = `<strong>👍 Good effort!</strong> You scored ${pct}%. Review the ${wrong} wrong answers below to understand your weak areas. Target 80%+ in your next attempt.`;
+  } else if (pct >= 40) {
+    insight = `<strong>📚 Keep practicing.</strong> You scored ${pct}%. You attempted ${attemptRate}% of questions. Review all explanations carefully and revisit the theory before retaking.`;
+  } else {
+    insight = `<strong>⚠️ Core revision needed.</strong> You scored ${pct}%. We strongly recommend studying the chapter notes first, then retaking this exam. Focus on understanding concepts, not just memorizing.`;
+  }
+  if (skipped > 0) {
+    insight += `<br><br>📝 <strong>Note:</strong> You skipped ${skipped} question(s). Try to attempt all questions even if unsure — there's no negative marking.`;
+  }
+  document.getElementById('insight-text').innerHTML = insight;
+
+  // Render all solutions with filter
+  solutionFilter = 'all';
+  updateSolutionTabs();
+  renderSolutions();
+
+  showView('results');
+}
+
+function filterSolutions(type) {
+  solutionFilter = type;
+  updateSolutionTabs();
+  renderSolutions();
+}
+
+function updateSolutionTabs() {
+  document.querySelectorAll('.bd-tab').forEach(t => t.classList.remove('active'));
+  document.getElementById('tab-' + solutionFilter).classList.add('active');
+}
+
+function renderSolutions() {
+  const container = document.getElementById('solutions-list');
+  const questions = activeQuiz.questions;
+
+  let html = '';
+  questions.forEach((q, i) => {
+    const userAns = answers[i];
+    const correctAns = q.answer !== undefined ? parseInt(q.answer) : (q.correct !== undefined ? parseInt(q.correct) : 0);
+    const isCorrect = userAns === correctAns;
+    const isSkipped = userAns === undefined;
+    const status = isCorrect ? 'correct' : isSkipped ? 'skipped' : 'wrong';
+
+    // Filter
+    if (solutionFilter !== 'all' && solutionFilter !== status) return;
+
+    const badge = isCorrect ? 'badge-correct' : isSkipped ? 'badge-skipped' : 'badge-wrong';
+    const badgeText = isCorrect ? '✓ Correct' : isSkipped ? '— Skipped' : '✗ Wrong';
+
+    const options = q.options || q.choices || q.answers || [];
+    const opts = options.map((opt, j) => {
+      let cls = 'sol-option neutral', icon = '○';
+      if (j === correctAns) { cls = 'sol-option correct'; icon = '✓'; }
+      else if (j === userAns && !isCorrect) { cls = 'sol-option wrong'; icon = '✗'; }
+      return `<div class="${cls}"><span class="sol-option-icon">${icon}</span><strong>${String.fromCharCode(65+j)}.</strong> ${opt}</div>`;
+    }).join('');
+
+    html += `
+      <div class="solution-card ${status}">
+        <div class="solution-header">
+          <span class="solution-q-num">Q${i + 1}</span>
+          <span class="solution-badge ${badge}">${badgeText}</span>
+        </div>
+        <div class="solution-question">${q.question || q.text || q.q || 'Question'}</div>
+        <div class="solution-options">${opts}</div>
+        <div class="solution-explanation"><strong>💡 Explanation:</strong> ${q.explanation || q.solution || 'No explanation provided.'}</div>
+      </div>
+    `;
+  });
+
+  container.innerHTML = html || '<div class="empty-state" style="padding:2rem;"><p>No questions match this filter.</p></div>';
+}
+
+function retakeExam() {
+  // Retake not allowed — Firebase blocks same-day re-attempt
+  alert('You cannot retake this exam. Each scheduled exam can only be attempted once per day.\n\nCome back tomorrow for the next scheduled exam!');
+}
+
+// ==================== ANALYTICS VIEW ====================
+async function openAnalytics() {
+  if (!currentUser || !window._db) { showView('analytics'); return; }
+  showView('analytics');
+
+  try {
+    // Load all attempt data for this user by scanning attempts
+    const attemptsSnap = await window._fbGet(window._fbRef(window._db, 'attempts'));
+    const allAttempts = [];
+
+    if (attemptsSnap.exists()) {
+      attemptsSnap.forEach(examSnap => {
+        const examId = examSnap.key;
+        examSnap.forEach(userSnap => {
+          if (userSnap.key === currentUser.id) {
+            allAttempts.push({ examId, ...userSnap.val() });
+          }
+        });
+      });
+    }
+
+    allAttempts.sort((a, b) => (a.submittedAt || 0) - (b.submittedAt || 0));
+
+    // Summary stats
+    const total = allAttempts.length;
+    const avg = total > 0 ? Math.round(allAttempts.reduce((s, a) => s + (a.score || 0), 0) / total) : 0;
+    const best = total > 0 ? Math.max(...allAttempts.map(a => a.score || 0)) : 0;
+
+    // Streak calculation
+    const dateSeen = new Set(allAttempts.map(a => a.date).filter(Boolean));
+    let streak = 0;
+    const todayD = new Date();
+    for (let i = 0; i < 365; i++) {
+      const d = new Date(todayD.getTime() - i * 86400000).toISOString().split('T')[0];
+      if (dateSeen.has(d)) streak++;
+      else break;
+    }
+
+    document.getElementById('as-total').textContent = total;
+    document.getElementById('as-avg').textContent = avg + '%';
+    document.getElementById('as-best').textContent = best + '%';
+    document.getElementById('as-streak').textContent = streak;
+
+    // Score history sparkline (last 14 days)
+    renderScoreHistory(allAttempts);
+
+    // Subject performance
+    renderSubjectPerformance(allAttempts);
+
+    // Recent attempts list
+    renderRecentAttempts(allAttempts);
+
+    // Populate leaderboard exam picker
+    const lbSel = document.getElementById('lb-exam-select');
+    lbSel.innerHTML = '<option value="">Select an exam…</option>';
+    schedules.forEach(s => {
+      lbSel.innerHTML += `<option value="${s.id}">${s.title.substring(0, 45)}…</option>`;
+    });
+    // Also add any exams from attempts not in schedule
+    const uniqueExams = [...new Set(allAttempts.map(a => a.examId))];
+    uniqueExams.forEach(eid => {
+      if (!schedules.find(s => s.id === eid)) {
+        const a = allAttempts.find(a => a.examId === eid);
+        lbSel.innerHTML += `<option value="${eid}">${(a.examTitle || eid).substring(0, 45)}</option>`;
+      }
     });
 
-    function initFirebase() {
-      try {
-        // Initialize Firebase with exact config
-        app = firebase.initializeApp(firebaseConfig);
-        db = firebase.database(app);
-        showToast("Connected to Firebase Realtime Database.", "🔗");
-      } catch (err) {
-        console.error("Firebase startup failed:", err);
-        showToast("Error initializing Firebase database. Platform running locally.", "⚠️");
-      }
+  } catch(e) {
+    console.warn('Analytics load error:', e);
+    document.getElementById('as-total').textContent = '?';
+  }
+}
+
+function renderScoreHistory(attempts) {
+  const container = document.getElementById('score-history-chart');
+  if (!attempts.length) {
+    container.innerHTML = '<div style="display:flex;align-items:center;justify-content:center;height:100%;color:var(--muted);font-size:0.85rem;">No exam history yet. Take your first exam!</div>';
+    return;
+  }
+
+  // Build last 14 days map
+  const dayMap = {};
+  const today = new Date();
+  for (let i = 13; i >= 0; i--) {
+    const d = new Date(today.getTime() - i * 86400000).toISOString().split('T')[0];
+    dayMap[d] = null;
+  }
+  attempts.forEach(a => { if (a.date && dayMap.hasOwnProperty(a.date)) dayMap[a.date] = a.score || 0; });
+
+  const days = Object.keys(dayMap);
+  const values = Object.values(dayMap);
+  const maxVal = Math.max(...values.filter(v => v !== null), 1);
+
+  const barW = Math.floor(100 / days.length);
+  container.innerHTML = `
+    <div style="display:flex; align-items:flex-end; height:140px; gap:2px; padding:0 4px;">
+      ${days.map((d, i) => {
+        const v = values[i];
+        const h = v !== null ? Math.max(8, Math.round((v / 100) * 120)) : 4;
+        const color = v === null ? 'rgba(255,255,255,0.05)' : v >= 70 ? 'var(--green)' : v >= 40 ? 'var(--yellow)' : 'var(--red)';
+        const label = d.slice(5); // MM-DD
+        return `
+          <div style="flex:1; display:flex; flex-direction:column; align-items:center; gap:4px;">
+            ${v !== null ? `<span style="font-size:0.6rem; color:var(--muted); font-family:'Space Mono',monospace;">${v}%</span>` : '<span style="font-size:0.6rem;"></span>'}
+            <div style="width:100%; height:${h}px; background:${color}; border-radius:2px 2px 0 0; transition:height 0.5s ease;" title="${d}: ${v !== null ? v+'%' : 'No exam'}"></div>
+            <span style="font-size:0.55rem; color:var(--muted); writing-mode:vertical-lr; transform:rotate(180deg);">${label}</span>
+          </div>`;
+      }).join('')}
+    </div>`;
+}
+
+function renderSubjectPerformance(attempts) {
+  const container = document.getElementById('subject-performance');
+  if (!attempts.length) { container.innerHTML = '<div style="color:var(--muted); font-size:0.85rem;">No data yet.</div>'; return; }
+
+  const subjectMap = {};
+  attempts.forEach(a => {
+    const s = a.subject || 'General';
+    if (!subjectMap[s]) subjectMap[s] = { total: 0, count: 0 };
+    subjectMap[s].total += a.score || 0;
+    subjectMap[s].count++;
+  });
+
+  const colors = ['var(--accent)', 'var(--green)', 'var(--yellow)', 'var(--purple)', 'var(--red)'];
+  container.innerHTML = Object.entries(subjectMap).map(([subj, d], i) => {
+    const avg = Math.round(d.total / d.count);
+    const color = colors[i % colors.length];
+    return `
+      <div class="subject-bar">
+        <div class="subj-label"><span>${subj}</span><span style="color:${color}">${avg}% avg (${d.count} exam${d.count>1?'s':''})</span></div>
+        <div class="subj-track"><div class="subj-fill" style="width:${avg}%; background:${color};"></div></div>
+      </div>`;
+  }).join('');
+}
+
+function renderRecentAttempts(attempts) {
+  const container = document.getElementById('recent-attempts');
+  if (!attempts.length) { container.innerHTML = '<div style="color:var(--muted); font-size:0.85rem;">No attempts yet.</div>'; return; }
+
+  const recent = [...attempts].reverse().slice(0, 6);
+  container.innerHTML = recent.map(a => {
+    const pct = a.score || 0;
+    const color = pct >= 70 ? 'var(--green)' : pct >= 40 ? 'var(--yellow)' : 'var(--red)';
+    return `
+      <div style="display:flex; justify-content:space-between; align-items:center; padding:0.6rem 0.75rem; background:rgba(255,255,255,0.02); border-radius:8px; border:1px solid var(--border);">
+        <div>
+          <div style="font-size:0.85rem; font-weight:600; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; max-width:200px;">${a.examTitle || a.examId}</div>
+          <div style="font-size:0.75rem; color:var(--muted);">${a.date || ''} • ${a.subject || 'General'}</div>
+        </div>
+        <div style="font-family:'Space Mono',monospace; font-weight:800; color:${color}; font-size:1rem;">${pct}%</div>
+      </div>`;
+  }).join('');
+}
+
+async function loadLeaderboard(scheduleId) {
+  const container = document.getElementById('leaderboard-list');
+  if (!scheduleId || !window._db) return;
+  container.innerHTML = '<div style="color:var(--muted); font-size:0.85rem; text-align:center; padding:1rem;">Loading...</div>';
+
+  try {
+    const snap = await window._fbGet(window._fbRef(window._db, `leaderboard/${scheduleId}`));
+    if (!snap.exists()) {
+      container.innerHTML = '<div style="color:var(--muted); font-size:0.85rem; text-align:center; padding:2rem;">No submissions yet for this exam.</div>';
+      return;
     }
 
-    function checkAuthStatus() {
-      const storedUser = localStorage.getItem("cee_user");
-      if (storedUser) {
-        try {
-          currentUser = JSON.parse(storedUser);
-          renderHeaderUserArea();
-          navigateToSchedules();
-        } catch (e) {
-          localStorage.removeItem("cee_user");
-          showView("auth");
-        }
-      } else {
-        showView("auth");
-      }
-    }
+    const entries = [];
+    snap.forEach(child => entries.push({ uid: child.key, ...child.val() }));
+    entries.sort((a, b) => (b.score - a.score) || (a.timeTaken - b.timeTaken)); // Sort by score desc, time asc
 
-    function renderHeaderUserArea() {
-      const container = document.getElementById("header-user-area");
-      if (currentUser) {
-        const initial = currentUser.name ? currentUser.name.charAt(0).toUpperCase() : "U";
-        container.innerHTML = `
-          <div class="user-profile-badge">
-            <div class="user-avatar">${initial}</div>
-            <div style="display:flex; flex-direction:column;">
-              <span style="font-size:0.8rem; font-weight:700;">${currentUser.name}</span>
-              <span style="font-size:0.65rem; color:var(--text-muted);">${currentUser.email}</span>
-            </div>
+    container.innerHTML = entries.slice(0, 20).map((e, i) => {
+      const rankClass = i === 0 ? 'gold' : i === 1 ? 'silver' : i === 2 ? 'bronze' : '';
+      const medal = i === 0 ? '🥇' : i === 1 ? '🥈' : i === 2 ? '🥉' : (i + 1);
+      const isMe = currentUser && e.uid === currentUser.id;
+      return `
+        <div class="lb-row ${isMe ? 'me' : ''}">
+          <div class="lb-rank ${rankClass}">${medal}</div>
+          <div class="lb-info">
+            <div class="lb-name">${e.name || 'Anonymous'}${isMe ? ' <span style="color:var(--accent);font-size:0.7rem;">(You)</span>' : ''}</div>
+            <div class="lb-sub">Time: ${formatTime(e.timeTaken || 0)}</div>
           </div>
-        `;
-      } else {
-        container.innerHTML = "";
-      }
-    }
-
-    function showView(viewId) {
-      document.querySelectorAll(".view-container").forEach(el => el.classList.remove("active"));
-      const targetView = document.getElementById(`view-${viewId}`);
-      if (targetView) targetView.classList.add("active");
-    }
-
-    function showToast(message, icon = "ℹ️") {
-      const toast = document.getElementById("toast");
-      document.getElementById("toast-icon").textContent = icon;
-      document.getElementById("toast-msg").textContent = message;
-      toast.classList.add("show");
-      setTimeout(() => {
-        toast.classList.remove("show");
-      }, 3500);
-    }
-
-    // Modal Control
-    function showModal(warningText) {
-      document.getElementById("modal-warning-text").textContent = warningText;
-      document.getElementById("attempt-warning-modal").style.display = "flex";
-    }
-
-    function closeModal() {
-      document.getElementById("attempt-warning-modal").style.display = "none";
-      navigateToSchedules();
-    }
-
-    // Nepal standard clock timer
-    function startNepaliTimer() {
-      setInterval(() => {
-        const timeStr = new Date().toLocaleTimeString("en-US", { timeZone: "Asia/Kathmandu" });
-        const dateStr = new Date().toLocaleDateString("en-US", { timeZone: "Asia/Kathmandu" });
-        const clockEl = document.getElementById("current-nepali-time");
-        if (clockEl) {
-          clockEl.innerHTML = `🇳🇵 Standard Nepal Time: <strong>${timeStr}</strong> | ${dateStr}`;
-        }
-      }, 1000);
-    }
-
-    // ==============================================
-    // REGISTRATION FLOW (CONFLICT SAFE)
-    // ==============================================
-    async function handleRegistration(e) {
-      e.preventDefault();
-      const name = document.getElementById("reg-name").value.trim();
-      const email = document.getElementById("reg-email").value.trim().toLowerCase();
-
-      if (!name || !email) {
-        showToast("Please provide valid information", "⚠️");
-        return;
-      }
-
-      // Generate stable, conflict-safe user ID based on email prefix
-      const safeId = email.replace(/[^a-zA-Z0-9]/g, "_");
-
-      try {
-        // Prevent duplicate registration conflicts by scanning database record
-        if (db) {
-          const userSnapshot = await db.ref(`users/${safeId}`).once("value");
-          if (userSnapshot.exists()) {
-            const existingUser = userSnapshot.val();
-            // Automatically log in matching credentials
-            if (existingUser.email === email) {
-              currentUser = { userId: safeId, name: existingUser.name, email: existingUser.email };
-              localStorage.setItem("cee_user", JSON.stringify(currentUser));
-              renderHeaderUserArea();
-              showToast(`Welcome back, ${existingUser.name}!`, "👋");
-              navigateToSchedules();
-              return;
-            } else {
-              showToast("Registration Conflict: Email mismatch ID.", "❌");
-              return;
-            }
-          }
-
-          // Register new user node in Firebase
-          const userData = {
-            userId: safeId,
-            name: name,
-            email: email,
-            registeredAt: new Date().toISOString()
-          };
-
-          await db.ref(`users/${safeId}`).set(userData);
-        }
-
-        // Store session configuration locally
-        currentUser = { userId: safeId, name: name, email: email };
-        localStorage.setItem("cee_user", JSON.stringify(currentUser));
-        renderHeaderUserArea();
-        showToast("Registered Successfully!", "✅");
-        navigateToSchedules();
-
-      } catch (err) {
-        console.error("Registration write transaction failed:", err);
-        // Offline demo mode bypass registration
-        currentUser = { userId: safeId, name: name, email: email };
-        localStorage.setItem("cee_user", JSON.stringify(currentUser));
-        renderHeaderUserArea();
-        showToast("Network issues. Registered in offline mode.", "🔌");
-        navigateToSchedules();
-      }
-    }
-
-    function handleLogout() {
-      localStorage.removeItem("cee_user");
-      currentUser = null;
-      renderHeaderUserArea();
-      showToast("Logged out successfully.", "🚪");
-      showView("auth");
-    }
-
-    // ==============================================
-    // CSV PARSER IMPLEMENTATION
-    // ==============================================
-    function parseCSVLine(line) {
-      const result = [];
-      let currentField = '';
-      let insideQuotes = false;
-      
-      for (let i = 0; i < line.length; i++) {
-        const char = line[i];
-        
-        if (char === '"') {
-          insideQuotes = !insideQuotes;
-        } else if (char === ',' && !insideQuotes) {
-          result.push(currentField.trim());
-          currentField = '';
-        } else {
-          currentField += char;
-        }
-      }
-      result.push(currentField.trim());
-      return result;
-    }
-
-    function safeCSVParser(text) {
-      const lines = text.split(/\r?\n/).filter(line => line.trim().length > 0);
-      if (lines.length < 2) return [];
-
-      const headers = parseCSVLine(lines[0]).map(h => h.toLowerCase().trim());
-      const rows = [];
-
-      for (let i = 1; i < lines.length; i++) {
-        const values = parseCSVLine(lines[i]);
-        const row = {};
-        headers.forEach((header, index) => {
-          row[header] = values[index] || '';
-        });
-        rows.push(row);
-      }
-      return rows;
-    }
-
-    function handleCSVUpload(inputElement, type) {
-      const file = inputElement.files[0];
-      if (!file) return;
-
-      const reader = new FileReader();
-      reader.onload = function(e) {
-        try {
-          const content = e.target.result;
-          const parsed = safeCSVParser(content);
-          
-          if (parsed.length === 0) {
-            showToast("Invalid CSV format or empty rows.", "❌");
-            return;
-          }
-
-          if (type === 'schedules') {
-            // Verify structure requirements
-            const testRow = parsed[0];
-            if (!testRow.id || !testRow.title || !testRow.start_time || !testRow.end_time || !testRow.duration) {
-              showToast("Schedules CSV missing mandatory headers.", "❌");
-              return;
-            }
-            localStorage.setItem("cee_custom_schedules", JSON.stringify(parsed));
-            showToast(`Loaded ${parsed.length} schedules.`, "📅");
-          } else if (type === 'quizzes') {
-            const testRow = parsed[0];
-            if (!testRow.quiz_id || !testRow.question_id || !testRow.subject || !testRow.question || !testRow.correct_option) {
-              showToast("Quizzes CSV missing mandatory headers.", "❌");
-              return;
-            }
-
-            // Group into dictionary quiz_id -> list of questions
-            const quizDict = {};
-            parsed.forEach(q => {
-              if (!quizDict[q.quiz_id]) {
-                quizDict[q.quiz_id] = [];
-              }
-              // Map options uniformly
-              quizDict[q.quiz_id].push({
-                quiz_id: q.quiz_id,
-                question_id: q.question_id,
-                subject: q.subject,
-                question: q.question,
-                option_a: q.option_a || q.a,
-                option_b: q.option_b || q.b,
-                option_c: q.option_c || q.c,
-                option_d: q.option_d || q.d,
-                correct_option: q.correct_option.toLowerCase().trim(),
-                explanation: q.explanation || q.solution || "No explanation provided by administration."
-              });
-            });
-
-            localStorage.setItem("cee_custom_quizzes", JSON.stringify(quizDict));
-            showToast(`Loaded ${parsed.length} quiz questions grouped by ID.`, "❓");
-          }
-
-          loadStoredCustomData();
-          refreshScheduleList();
-        } catch (err) {
-          console.error(err);
-          showToast("Error processing CSV file content.", "❌");
-        }
-      };
-      reader.readAsText(file);
-    }
-
-    function loadStoredCustomData() {
-      const customSched = localStorage.getItem("cee_custom_schedules");
-      const customQuiz = localStorage.getItem("cee_custom_quizzes");
-
-      if (customSched) {
-        activeSchedules = JSON.parse(customSched);
-      } else {
-        activeSchedules = [...mockSchedules];
-      }
-
-      if (customQuiz) {
-        activeQuizzes = JSON.parse(customQuiz);
-      } else {
-        activeQuizzes = {...mockQuizzes};
-      }
-    }
-
-    function loadDemoMode() {
-      localStorage.removeItem("cee_custom_schedules");
-      localStorage.removeItem("cee_custom_quizzes");
-      activeSchedules = [...mockSchedules];
-      activeQuizzes = {...mockQuizzes};
-      showToast("Demo datasets populated automatically.", "🧪");
-      refreshScheduleList();
-    }
-
-    function clearLocalCustomData() {
-      localStorage.removeItem("cee_custom_schedules");
-      localStorage.removeItem("cee_custom_quizzes");
-      loadStoredCustomData();
-      showToast("Custom structures cleared.", "🧹");
-      refreshScheduleList();
-    }
-
-    // ==============================================
-    // SCHEDULE TIMINGS BOARD RENDER
-    // ==============================================
-    function navigateToSchedules() {
-      showView("schedule-board");
-      refreshScheduleList();
-      
-      // Keep real-time counts updating dynamically on board
-      if (scheduleRefreshTimer) clearInterval(scheduleRefreshTimer);
-      scheduleRefreshTimer = setInterval(updateLiveCountdowns, 1000);
-    }
-
-    function refreshScheduleList() {
-      const container = document.getElementById("schedules-container");
-      container.innerHTML = "";
-
-      if (activeSchedules.length === 0) {
-        container.innerHTML = `
-          <div style="grid-column: 1/-1; text-align: center; padding: 3rem; color: var(--text-muted);">
-            No active schedules uploaded. Upload CSV metadata or click Demo Mode above.
-          </div>
-        `;
-        return;
-      }
-
-      activeSchedules.forEach(sched => {
-        const card = document.createElement("div");
-        card.className = "exam-card";
-        card.id = `sched-card-${sched.id}`;
-
-        const statusData = getScheduleStatus(sched);
-
-        card.classList.add(`status-${statusData.status}`);
-
-        card.innerHTML = `
-          <div class="exam-status-badge badge-${statusData.status}" id="badge-${sched.id}">
-            ${statusData.status === 'live' ? '<span class="live-dot"></span>' : ''} ${statusData.status}
-          </div>
-          <h3 class="exam-title">${sched.title}</h3>
-          
-          <div class="exam-meta-item">
-            <span>⏱️ Duration:</span>
-            <strong>${sched.duration} Minutes</strong>
-          </div>
-          <div class="exam-meta-item">
-            <span>🗓️ Starts:</span>
-            <strong style="font-size:0.8rem;">${new Date(sched.start_time).toLocaleString("en-US", { timeZone: "Asia/Kathmandu" })}</strong>
-          </div>
-          <div class="exam-meta-item">
-            <span>🗓️ Ends:</span>
-            <strong style="font-size:0.8rem;">${new Date(sched.end_time).toLocaleString("en-US", { timeZone: "Asia/Kathmandu" })}</strong>
-          </div>
-          
-          <div class="exam-meta-item" style="margin-top: 0.5rem; background: var(--card); padding: 0.5rem; border-radius: 6px;">
-            <span>ℹ️ Questions count:</span>
-            <strong>${activeQuizzes[sched.quiz_id] ? activeQuizzes[sched.quiz_id].length : 0} MCQs</strong>
-          </div>
-
-          <div class="exam-action-wrapper">
-            <span id="countdown-${sched.id}" style="font-family: var(--font-mono); font-size: 0.8rem; text-align: center; color: var(--text-muted);">
-              ${statusData.countdownText}
-            </span>
-            <button class="btn btn-primary" id="btn-enter-${sched.id}" onclick="attemptEntranceExam('${sched.id}')" ${statusData.status !== 'live' ? 'disabled' : ''}>
-              Enter Examination Portal 📝
-            </button>
-          </div>
-        `;
-
-        container.appendChild(card);
-      });
-    }
-
-    function getScheduleStatus(sched) {
-      const now = new Date();
-      const start = new Date(sched.start_time);
-      const end = new Date(sched.end_time);
-
-      if (now < start) {
-        const diffMs = start - now;
-        return {
-          status: "upcoming",
-          countdownText: `Starts in: ${formatMsToDuration(diffMs)}`,
-          canEnter: false
-        };
-      } else if (now >= start && now <= end) {
-        const diffMs = end - now;
-        return {
-          status: "live",
-          countdownText: `Closes in: ${formatMsToDuration(diffMs)}`,
-          canEnter: true
-        };
-      } else {
-        return {
-          status: "ended",
-          countdownText: "Live Window Closed",
-          canEnter: false
-        };
-      }
-    }
-
-    function updateLiveCountdowns() {
-      activeSchedules.forEach(sched => {
-        const statusData = getScheduleStatus(sched);
-        
-        // Update timer text
-        const textEl = document.getElementById(`countdown-${sched.id}`);
-        if (textEl) textEl.textContent = statusData.countdownText;
-
-        // Update badge
-        const badgeEl = document.getElementById(`badge-${sched.id}`);
-        if (badgeEl) {
-          badgeEl.className = `exam-status-badge badge-${statusData.status}`;
-          badgeEl.innerHTML = `${statusData.status === 'live' ? '<span class="live-dot"></span>' : ''} ${statusData.status}`;
-        }
-
-        // Update card class
-        const cardEl = document.getElementById(`sched-card-${sched.id}`);
-        if (cardEl) {
-          cardEl.className = `exam-card status-${statusData.status}`;
-        }
-
-        // Update enter button
-        const btnEl = document.getElementById(`btn-enter-${sched.id}`);
-        if (btnEl) {
-          if (statusData.status === 'live') {
-            btnEl.removeAttribute("disabled");
-          } else {
-            btnEl.setAttribute("disabled", "true");
-          }
-        }
-      });
-    }
-
-    function formatMsToDuration(ms) {
-      const sec = Math.floor(ms / 1000);
-      const hrs = Math.floor(sec / 3600);
-      const mins = Math.floor((sec % 3600) / 60);
-      const secs = sec % 60;
-
-      const pad = (n) => String(n).padStart(2, "0");
-      return `${pad(hrs)}h ${pad(mins)}m ${pad(secs)}s`;
-    }
-
-    // ==============================================
-    // CORE ATTEMPT RESTRICTION GUARD
-    // ==============================================
-    async function attemptEntranceExam(scheduleId) {
-      if (!currentUser) {
-        showToast("Please log in to participate in schedules.", "🔒");
-        showView("auth");
-        return;
-      }
-
-      const schedule = activeSchedules.find(s => s.id === scheduleId);
-      if (!schedule) {
-        showToast("Schedule not found.", "❌");
-        return;
-      }
-
-      const questions = activeQuizzes[schedule.quiz_id];
-      if (!questions || questions.length === 0) {
-        showToast("Selected schedule has no matching question modules loaded.", "❌");
-        return;
-      }
-
-      showToast("Verifying live attempt validity...", "🔒");
-
-      // CORE FIREBASE GUARD ATTEMPT RESTRICTION
-      if (db) {
-        try {
-          const attemptSnapshot = await db.ref(`attempts/${scheduleId}/${currentUser.userId}`).once("value");
-          if (attemptSnapshot.exists()) {
-            showModal("ATTEMPT RESTRICTED: You already attempted this scheduled live examination. Nepal CEE board restrictions apply.");
-            return;
-          }
-        } catch (err) {
-          console.error("Firebase attempt validation failure, using localStorage backup: ", err);
-          const offlineBypass = localStorage.getItem(`attempt_${scheduleId}_${currentUser.userId}`);
-          if (offlineBypass) {
-            showModal("ATTEMPT RESTRICTED (Offline Guard): You already attempted this scheduled live examination.");
-            return;
-          }
-        }
-      } else {
-        const offlineBypass = localStorage.getItem(`attempt_${scheduleId}_${currentUser.userId}`);
-        if (offlineBypass) {
-          showModal("ATTEMPT RESTRICTED (Local Guard): You already attempted this scheduled live examination.");
-          return;
-        }
-      }
-
-      // Start Exam Engine Setup
-      currentExamSchedule = schedule;
-      currentExamQuestions = questions;
-      currentAnswers = {};
-      currentFlags = {};
-      activeQuestionIndex = 0;
-      examTimeElapsed = 0;
-      examDurationSeconds = parseInt(schedule.duration) * 60;
-
-      showView("exam-engine");
-      buildExamEngine();
-      startExamTimer();
-    }
-
-    // ==============================================
-    // EXAM ENGINE CONTROLS
-    // ==============================================
-    function buildExamEngine() {
-      // Build Navigator Matrix
-      const grid = document.getElementById("engine-navigator-grid");
-      grid.innerHTML = "";
-
-      currentExamQuestions.forEach((q, i) => {
-        const btn = document.createElement("button");
-        btn.className = "nav-btn";
-        btn.id = `nav-btn-${i}`;
-        btn.textContent = i + 1;
-        btn.onclick = () => jumpToQuestion(i);
-        grid.appendChild(btn);
-      });
-
-      updateQuestionView();
-    }
-
-    function updateQuestionView() {
-      const q = currentExamQuestions[activeQuestionIndex];
-      if (!q) return;
-
-      // Update Header Details
-      document.getElementById("engine-current-subject").textContent = q.subject || "GENERAL MEDICAL FIELD";
-      document.getElementById("engine-question-id").textContent = `Q ${activeQuestionIndex + 1} of ${currentExamQuestions.length}`;
-
-      // Set Text
-      document.getElementById("engine-question-text").textContent = q.question;
-
-      // Render Multiple Choice Options Safely
-      const optionsContainer = document.getElementById("engine-options-container");
-      optionsContainer.innerHTML = "";
-
-      const options = [
-        { key: "a", value: q.option_a || q.a },
-        { key: "b", value: q.option_b || q.b },
-        { key: "c", value: q.option_c || q.c },
-        { key: "d", value: q.option_d || q.d }
-      ];
-
-      options.forEach(opt => {
-        const row = document.createElement("div");
-        row.className = "option-row";
-        if (currentAnswers[q.question_id] === opt.key) {
-          row.classList.add("selected");
-        }
-
-        row.onclick = () => selectOption(q.question_id, opt.key);
-
-        row.innerHTML = `
-          <div class="option-letter">${opt.key.toUpperCase()}</div>
-          <div class="option-text">${opt.value}</div>
-        `;
-        optionsContainer.appendChild(row);
-      });
-
-      // Update Controls disabled states
-      document.getElementById("engine-btn-prev").disabled = (activeQuestionIndex === 0);
-      document.getElementById("engine-btn-next").disabled = (activeQuestionIndex === currentExamQuestions.length - 1);
-
-      // Highlight active navigator circular grid element
-      document.querySelectorAll(".nav-btn").forEach((btn, idx) => {
-        btn.classList.remove("active-q");
-        if (idx === activeQuestionIndex) {
-          btn.classList.add("active-q");
-        }
-      });
-
-      // Update navigator counters ratio
-      const answeredCount = Object.keys(currentAnswers).length;
-      document.getElementById("navigator-ratio").textContent = `${answeredCount}/${currentExamQuestions.length}`;
-    }
-
-    function jumpToQuestion(index) {
-      if (index >= 0 && index < currentExamQuestions.length) {
-        activeQuestionIndex = index;
-        updateQuestionView();
-      }
-    }
-
-    function navigateQuestion(direction) {
-      const target = activeQuestionIndex + direction;
-      if (target >= 0 && target < currentExamQuestions.length) {
-        activeQuestionIndex = target;
-        updateQuestionView();
-      }
-    }
-
-    function selectOption(qId, key) {
-      currentAnswers[qId] = key;
-      
-      // Update view and grid button status
-      const navBtn = document.getElementById(`nav-btn-${activeQuestionIndex}`);
-      if (navBtn) {
-        navBtn.classList.remove("flagged");
-        navBtn.classList.add("answered");
-      }
-      
-      updateQuestionView();
-    }
-
-    function clearActiveSelection() {
-      const q = currentExamQuestions[activeQuestionIndex];
-      if (!q) return;
-
-      delete currentAnswers[q.question_id];
-
-      const navBtn = document.getElementById(`nav-btn-${activeQuestionIndex}`);
-      if (navBtn) {
-        navBtn.classList.remove("answered");
-        if (currentFlags[q.question_id]) {
-          navBtn.classList.add("flagged");
-        }
-      }
-
-      updateQuestionView();
-    }
-
-    function flagActiveQuestion() {
-      const q = currentExamQuestions[activeQuestionIndex];
-      if (!q) return;
-
-      currentFlags[q.question_id] = !currentFlags[q.question_id];
-      const navBtn = document.getElementById(`nav-btn-${activeQuestionIndex}`);
-
-      if (navBtn) {
-        if (currentFlags[q.question_id]) {
-          navBtn.classList.add("flagged");
-          showToast(`Question ${activeQuestionIndex + 1} marked for review.`, "🏁");
-        } else {
-          navBtn.classList.remove("flagged");
-        }
-      }
-    }
-
-    // ==============================================
-    // COUNTDOWN & DYNAMIC GLOW ALERTS
-    // ==============================================
-    function startExamTimer() {
-      if (examTimerInterval) clearInterval(examTimerInterval);
-      examTimeElapsed = 0;
-
-      updateTimerUI();
-
-      examTimerInterval = setInterval(() => {
-        examDurationSeconds--;
-        examTimeElapsed++;
-
-        updateTimerUI();
-
-        if (examDurationSeconds <= 0) {
-          clearInterval(examTimerInterval);
-          showToast("Duration Limit Elapsed. Auto-submitting examination sheet...", "⏳");
-          submitExamPerformanceSheet(true);
-        }
-      }, 1000);
-    }
-
-    function updateTimerUI() {
-      const hours = Math.floor(examDurationSeconds / 3600);
-      const minutes = Math.floor((examDurationSeconds % 3600) / 60);
-      const seconds = examDurationSeconds % 60;
-
-      const pad = (n) => String(n).padStart(2, "0");
-      document.getElementById("engine-timer-val").textContent = `${pad(hours)}:${pad(minutes)}:${pad(seconds)}`;
-
-      // Glow warning indicator for extreme pressure (<5 minutes remaining)
-      const glowContainer = document.getElementById("engine-timer-glow-container");
-      if (examDurationSeconds < 300) {
-        glowContainer.classList.add("timer-critical");
-      } else {
-        glowContainer.classList.remove("timer-critical");
-      }
-    }
-
-    // ==============================================
-    // SHEETS COMPILATION AND CALCULATOR ENGINE
-    // ==============================================
-    function confirmSubmitExam() {
-      const total = currentExamQuestions.length;
-      const answered = Object.keys(currentAnswers).length;
-      const unanswered = total - answered;
-
-      const confirmation = confirm(`Are you sure you want to finish and submit?\n\nAnswered: ${answered}\nUnanswered: ${unanswered}\n\nThis submission is final. Re-attempts are strictly restricted!`);
-      if (confirmation) {
-        submitExamPerformanceSheet(false);
-      }
-    }
-
-    async function submitExamPerformanceSheet(wasAutoSubmit = false) {
-      if (examTimerInterval) clearInterval(examTimerInterval);
-
-      showToast("Calculating scores & compiling analytics...", "📊");
-
-      // Metrics calculation
-      let scoreCorrect = 0;
-      let scoreWrong = 0;
-      let scoreSkipped = 0;
-
-      const subjectStats = {};
-
-      currentExamQuestions.forEach(q => {
-        const sub = q.subject || "GENERAL";
-        if (!subjectStats[sub]) {
-          subjectStats[sub] = { total: 0, correct: 0 };
-        }
-        subjectStats[sub].total++;
-
-        const selected = currentAnswers[q.question_id];
-        if (!selected) {
-          scoreSkipped++;
-        } else if (selected === q.correct_option) {
-          scoreCorrect++;
-          subjectStats[sub].correct++;
-        } else {
-          scoreWrong++;
-        }
-      });
-
-      const totalQs = currentExamQuestions.length;
-      const percentageScore = ((scoreCorrect / totalQs) * 100).toFixed(1);
-      const avgTimePerQuestion = (examTimeElapsed / totalQs).toFixed(1);
-      
-      const nowString = new Date().toISOString();
-      const dateKeyString = nowString.substring(0, 10); // YYYY-MM-DD
-
-      // Data package payload
-      const attemptPayload = {
-        candidateName: currentUser.name,
-        candidateEmail: currentUser.email,
-        scheduleId: currentExamSchedule.id,
-        examTitle: currentExamSchedule.title,
-        correctAnswers: scoreCorrect,
-        wrongAnswers: scoreWrong,
-        skippedAnswers: scoreSkipped,
-        percentage: parseFloat(percentageScore),
-        timeTakenSeconds: examTimeElapsed,
-        submittedAt: nowString
-      };
-
-      // BACKUP OFFLINE GUARD
-      localStorage.setItem(`attempt_${currentExamSchedule.id}_${currentUser.userId}`, "true");
-
-      // WRITE TRANSACTION IN FIREBASE WITH MANDATORY STRUCTURES (A, B, C, D)
-      if (db) {
-        try {
-          const updates = {};
-          
-          // A. User Data Backup update
-          updates[`users/${currentUser.userId}/lastActiveExam`] = currentExamSchedule.id;
-          updates[`users/${currentUser.userId}/lastExamTime`] = nowString;
-
-          // B. Attempts block restriction
-          updates[`attempts/${currentExamSchedule.id}/${currentUser.userId}`] = attemptPayload;
-
-          // C. Daily Analytics metrics mapping
-          updates[`dailyAnalytics/${dateKeyString}/${currentUser.userId}/${currentExamSchedule.id}`] = {
-            percentage: parseFloat(percentageScore),
-            timeTakenSeconds: examTimeElapsed,
-            completedAt: nowString
-          };
-
-          // D. Leaderboard node allocation
-          updates[`leaderboard/${currentExamSchedule.id}/${currentUser.userId}`] = {
-            candidateName: currentUser.name,
-            correct: scoreCorrect,
-            total: totalQs,
-            percentage: parseFloat(percentageScore),
-            timeTakenSeconds: examTimeElapsed,
-            submittedAt: nowString
-          };
-
-          await db.ref().update(updates);
-          showToast("Calculated metrics synced with Central Live Database.", "🏆");
-
-        } catch (err) {
-          console.error("Firebase records updating failed:", err);
-          showToast("Network lag. Submission saved locally to candidate browser storage.", "💾");
-        }
-      }
-
-      // Display results view passing calculated payload datasets
-      displayAnalysisReport(attemptPayload, subjectStats);
-    }
-
-    // ==============================================
-    // ANALYTICS & BREAKDOWN DISPLAY
-    // ==============================================
-    function displayAnalysisReport(payload, subjectStats) {
-      showView("exam-results");
-
-      // Set Title Info
-      document.getElementById("result-title-main").textContent = payload.examTitle;
-      document.getElementById("result-subtitle").textContent = `Submission processed successfully on ${new Date(payload.submittedAt).toLocaleString()}`;
-
-      // Dynamic Accuracy Circular Progression Ring Chart via CSS Dash offset manipulations
-      const ringOffset = 251.2 - (251.2 * payload.percentage) / 100;
-      document.getElementById("accuracy-progress").style.strokeDashoffset = ringOffset;
-      document.getElementById("accuracy-percent-text").textContent = `${payload.percentage}%`;
-
-      // Subject Specific Bars
-      const subjectContainer = document.getElementById("subject-performance-list");
-      subjectContainer.innerHTML = "";
-
-      for (const [sub, stat] of Object.entries(subjectStats)) {
-        const subPct = ((stat.correct / stat.total) * 100).toFixed(0);
-        
-        const row = document.createElement("div");
-        row.className = "subject-row";
-        row.innerHTML = `
-          <div class="subject-info">
-            <span>${sub}</span>
-            <strong>${stat.correct}/${stat.total} (${subPct}%)</strong>
-          </div>
-          <div class="subject-bar-container">
-            <div class="subject-bar-fill" style="width: ${subPct}%;"></div>
-          </div>
-        `;
-        subjectContainer.appendChild(row);
-      }
-
-      // Populate basic statistics parameters
-      document.getElementById("metric-correct").textContent = payload.correctAnswers;
-      document.getElementById("metric-wrong").textContent = payload.wrongAnswers;
-      document.getElementById("metric-skipped").textContent = payload.skippedAnswers;
-      
-      const min = Math.floor(payload.timeTakenSeconds / 60);
-      const sec = payload.timeTakenSeconds % 60;
-      document.getElementById("metric-time").textContent = `${min}m ${sec}s`;
-
-      const avgTime = (payload.timeTakenSeconds / currentExamQuestions.length).toFixed(1);
-      document.getElementById("metric-average-time").textContent = `${avgTime} Seconds`;
-
-      // Contextual Performance Insight Generation Text
-      let insightText = "";
-      if (payload.percentage >= 80) {
-        insightText = "🎖️ Outstanding Performance! Your knowledge is exceptionally solid. Keep this precision level to secure a top-rank merit seat.";
-      } else if (payload.percentage >= 60) {
-        insightText = "👍 Competitive Score. Your performance matches highly probable qualification criteria, focus on analyzing wrong answers below.";
-      } else if (payload.percentage >= 40) {
-        insightText = "⚠️ Standard Merit Range. Revision in weak subjects like Chemistry/Physics could rapidly bolster performance margins.";
-      } else {
-        insightText = "📉 Action Required: Core fundamental revision recommended. Please parse explanations card list for active correction.";
-      }
-      document.getElementById("performance-insight").textContent = insightText;
-
-      // Render Solutions Breakdown Module
-      renderBreakdownList();
-
-      // Retrieve and Render Live Leaderboard comparative values
-      loadRealtimeLeaderboard(payload.scheduleId);
-    }
-
-    function renderBreakdownList() {
-      const container = document.getElementById("breakdown-cards-container");
-      container.innerHTML = "";
-
-      currentExamQuestions.forEach((q, index) => {
-        const selected = currentAnswers[q.question_id];
-        const isCorrect = selected === q.correct_option;
-
-        // Check view selection filter
-        if (currentBreakdownFilter === 'correct' && !isCorrect) return;
-        if (currentBreakdownFilter === 'wrong' && (isCorrect || !selected)) return;
-        if (currentBreakdownFilter === 'skipped' && selected) return;
-
-        let statusClass = "status-skipped";
-        let statusLabel = "Skipped";
-
-        if (selected) {
-          if (isCorrect) {
-            statusClass = "status-correct";
-            statusLabel = "Correct Answer";
-          } else {
-            statusClass = "status-wrong";
-            statusLabel = "Wrong Selection";
-          }
-        }
-
-        const card = document.createElement("div");
-        card.className = "breakdown-card";
-
-        const options = [
-          { key: "a", val: q.option_a },
-          { key: "b", val: q.option_b },
-          { key: "c", val: q.option_c },
-          { key: "d", val: q.option_d }
-        ];
-
-        let optionsHTML = "";
-        options.forEach(opt => {
-          let classes = "breakdown-option";
-          if (opt.key === q.correct_option) {
-            classes += " correct-option";
-          } else if (selected === opt.key && !isCorrect) {
-            classes += " user-selected-wrong";
-          }
-          optionsHTML += `
-            <div class="${classes}">
-              <strong>${opt.key.toUpperCase()}:</strong> ${opt.val}
-            </div>
-          `;
-        });
-
-        card.innerHTML = `
-          <div class="breakdown-header">
-            <span class="breakdown-tag" style="color:var(--accent);">Q${index + 1} • ${q.subject || "GENERAL"}</span>
-            <span class="breakdown-status ${statusClass}">${statusLabel}</span>
-          </div>
-          <div class="breakdown-q-text">${q.question}</div>
-          <div class="breakdown-options-list">
-            ${optionsHTML}
-          </div>
-          <div class="breakdown-explanation">
-            <strong>💡 Performance Explanation:</strong> ${q.explanation}
-          </div>
-        `;
-
-        container.appendChild(card);
-      });
-
-      if (container.children.length === 0) {
-        container.innerHTML = `
-          <div style="text-align: center; padding: 2rem; color: var(--text-muted);">
-            No questions in this filter criteria view.
-          </div>
-        `;
-      }
-    }
-
-    function setBreakdownFilter(filterMode, element) {
-      currentBreakdownFilter = filterMode;
-      
-      document.querySelectorAll(".tab-btn").forEach(btn => btn.classList.remove("active"));
-      element.classList.add("active");
-
-      renderBreakdownList();
-    }
-
-    // ==============================================
-    // REAL-TIME COMPARATIVE LEADERBOARDS
-    // ==============================================
-    async function loadRealtimeLeaderboard(scheduleId) {
-      const container = document.getElementById("leaderboard-body-container");
-      container.innerHTML = `
-        <tr>
-          <td colspan="5" style="text-align: center; color: var(--text-muted);">Loading real-time comparative positions...</td>
-        </tr>
-      `;
-
-      if (!db) {
-        container.innerHTML = `
-          <tr>
-            <td colspan="5" style="text-align: center; color: var(--text-muted);">
-              Local Mode. Real-time Leaderboard statistics requires Firebase initialization state.
-            </td>
-          </tr>
-        `;
-        return;
-      }
-
-      try {
-        const snap = await db.ref(`leaderboard/${scheduleId}`).once("value");
-        if (!snap.exists()) {
-          container.innerHTML = `
-            <tr>
-              <td colspan="5" style="text-align: center; color: var(--text-muted);">Be the first candidate to populate the scheduled leaderboard ranks!</td>
-            </tr>
-          `;
-          return;
-        }
-
-        const data = snap.val();
-        const candidateList = [];
-
-        for (const userId in data) {
-          candidateList.push(data[userId]);
-        }
-
-        // Rule 2 compliant sorting: sort logically on-device via JS memory arrays
-        candidateList.sort((a, b) => {
-          if (b.correct !== a.correct) {
-            return b.correct - a.correct; // Higher correct score first
-          }
-          return a.timeTakenSeconds - b.timeTakenSeconds; // Faster submission breaks ties
-        });
-
-        container.innerHTML = "";
-        candidateList.forEach((cand, idx) => {
-          const row = document.createElement("tr");
-          
-          let rankString = `${idx + 1}`;
-          if (idx === 0) rankString = "🥇 1";
-          if (idx === 1) rankString = "🥈 2";
-          if (idx === 2) rankString = "🥉 3";
-
-          const min = Math.floor(cand.timeTakenSeconds / 60);
-          const sec = cand.timeTakenSeconds % 60;
-
-          row.innerHTML = `
-            <td class="rank-cell">${rankString}</td>
-            <td style="font-weight:600;">${cand.candidateName}</td>
-            <td>${cand.correct} / ${cand.total}</td>
-            <td style="color:var(--accent); font-weight:700;">${cand.percentage}%</td>
-            <td>${min}m ${sec}s</td>
-          `;
-
-          container.appendChild(row);
-        });
-
-      } catch (err) {
-        console.error("Error loading live leaderboard:", err);
-        container.innerHTML = `
-          <tr>
-            <td colspan="5" style="text-align: center; color: var(--red);">Unable to compile leaderboard dynamically. Sync failure.</td>
-          </tr>
-        `;
-      }
-    }
-  </script>
+          <div class="lb-score">${e.score || 0}%</div>
+        </div>`;
+    }).join('');
+  } catch(err) {
+    container.innerHTML = '<div style="color:var(--red); font-size:0.85rem; text-align:center; padding:2rem;">Failed to load leaderboard.</div>';
+    console.error(err);
+  }
+}
+
+function viewResults(scheduleId) {
+  activeSchedule = schedules.find(s => s.id === scheduleId);
+  if (!activeSchedule) return;
+
+  document.getElementById('result-title').textContent = activeSchedule.title + ' (Completed)';
+  document.getElementById('result-percent').textContent = '-';
+  document.getElementById('result-grade').style.display = 'none';
+  document.getElementById('result-score').textContent = 'Exam has ended. Solutions are shown below.';
+  document.getElementById('stat-correct').textContent = '-';
+  document.getElementById('stat-wrong').textContent = '-';
+  document.getElementById('stat-skipped').textContent = '-';
+
+  // Hide analysis for ended exams not taken
+  document.querySelector('.analysis-grid').style.display = 'none';
+  document.querySelector('.breakdown-tabs').style.display = 'none';
+
+  // Show all correct answers
+  const container = document.getElementById('solutions-list');
+  const questions = activeSchedule.quiz ? activeSchedule.quiz.questions : [];
+
+  container.innerHTML = questions.map((q, i) => {
+    const correctAns = q.answer !== undefined ? parseInt(q.answer) : (q.correct !== undefined ? parseInt(q.correct) : 0);
+    const options = q.options || q.choices || q.answers || [];
+    const opts = options.map((opt, j) => {
+      let cls = 'sol-option neutral', icon = '○';
+      if (j === correctAns) { cls = 'sol-option correct'; icon = '✓'; }
+      return `<div class="${cls}"><span class="sol-option-icon">${icon}</span><strong>${String.fromCharCode(65+j)}.</strong> ${opt}</div>`;
+    }).join('');
+
+    return `
+      <div class="solution-card correct">
+        <div class="solution-header">
+          <span class="solution-q-num">Q${i + 1}</span>
+          <span class="solution-badge badge-correct">✓ Correct Answer</span>
+        </div>
+        <div class="solution-question">${q.question || q.text || q.q || 'Question'}</div>
+        <div class="solution-options">${opts}</div>
+        <div class="solution-explanation"><strong>💡 Explanation:</strong> ${q.explanation || q.solution || 'No explanation provided.'}</div>
+      </div>
+    `;
+  }).join('') || '<div class="empty-state" style="padding:2rem;"><p>No questions available.</p></div>';
+
+  showView('results');
+}
+
+// ==================== UTILS ====================
+function formatTime(seconds) {
+  const m = Math.floor(seconds / 60);
+  const s = seconds % 60;
+  return `${m}m ${s}s`;
+}
+
+function showView(viewId) {
+  document.querySelectorAll('.view-container').forEach(v => v.classList.remove('active'));
+  document.getElementById('view-' + viewId).classList.add('active');
+}
+
+function backToSchedule() {
+  if (timerInterval) clearInterval(timerInterval);
+  activeSchedule = null;
+  activeQuiz = null;
+  // Reset analysis visibility
+  document.querySelector('.analysis-grid').style.display = 'grid';
+  document.querySelector('.breakdown-tabs').style.display = 'flex';
+  document.getElementById('result-grade').style.display = 'inline-block';
+  showView('schedule');
+  updateScheduleStatus();
+}
+
+// Override showView to hook analytics loading
+const _originalShowView = showView;
+window.showView = function(viewId) {
+  _originalShowView(viewId);
+  if (viewId === 'analytics') openAnalytics();
+};
+</script>
 </body>
 </html>
