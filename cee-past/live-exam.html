@@ -900,6 +900,46 @@ function filterSchedule(type) {
   renderSchedule();
 }
 
+let scheduleCountdownInterval = null;
+
+function formatCountdown(diffMs) {
+  if (diffMs <= 0) return '00:00:00';
+  const totalSec = Math.floor(diffMs / 1000);
+  const days  = Math.floor(totalSec / 86400);
+  const hours = Math.floor((totalSec % 86400) / 3600);
+  const mins  = Math.floor((totalSec % 3600) / 60);
+  const secs  = totalSec % 60;
+  if (days > 0) return `${days}d ${String(hours).padStart(2,'0')}h ${String(mins).padStart(2,'0')}m`;
+  return `${String(hours).padStart(2,'0')}:${String(mins).padStart(2,'0')}:${String(secs).padStart(2,'0')}`;
+}
+
+function tickScheduleCountdowns() {
+  const now = new Date();
+  schedules.forEach(s => {
+    if (s.status !== 'upcoming') return;
+    const el = document.getElementById('cd-' + s.id);
+    if (!el) return;
+    const diff = s.startTime - now;
+    if (diff <= 0) {
+      // Transition this card live without full re-render
+      clearInterval(scheduleCountdownInterval);
+      scheduleCountdownInterval = null;
+      updateScheduleStatus();
+    } else {
+      el.textContent = formatCountdown(diff);
+      // Pulse red when under 5 minutes
+      el.style.color = diff < 300000 ? 'var(--red)' : 'var(--yellow)';
+    }
+  });
+}
+
+function startScheduleCountdown() {
+  if (scheduleCountdownInterval) clearInterval(scheduleCountdownInterval);
+  const hasUpcoming = schedules.some(s => s.status === 'upcoming');
+  if (!hasUpcoming) return;
+  scheduleCountdownInterval = setInterval(tickScheduleCountdowns, 1000);
+}
+
 function renderSchedule() {
   const grid = document.getElementById('schedule-grid');
   let filtered = schedules;
@@ -916,7 +956,6 @@ function renderSchedule() {
     const isLive = s.status === 'live';
     const isEnded = s.status === 'ended';
     const isUpcoming = s.status === 'upcoming';
-
     const qCount = s.quiz ? s.quiz.questions.length : '?';
 
     let btn = '';
@@ -924,14 +963,15 @@ function renderSchedule() {
       btn = `<button class="exam-btn btn-enter" onclick="enterExam('${s.id}')">Enter Exam →</button>`;
     } else if (isUpcoming) {
       const diff = s.startTime - now;
-      const days = Math.floor(diff / 86400000);
-      const hours = Math.floor((diff % 86400000) / 3600000);
-      const mins = Math.floor((diff % 3600000) / 60000);
-      let timeStr = '';
-      if (days > 0) timeStr = `${days}d ${hours}h`;
-      else if (hours > 0) timeStr = `${hours}h ${mins}m`;
-      else timeStr = `${mins}m`;
-      btn = `<button class="exam-btn btn-waiting">Starts in ${timeStr}</button>`;
+      const initial = formatCountdown(diff);
+      const urgentColor = diff < 300000 ? 'var(--red)' : 'var(--yellow)';
+      btn = `
+        <div style="text-align:center;">
+          <div style="font-size:0.7rem; color:var(--muted); font-weight:600; text-transform:uppercase; letter-spacing:0.5px; margin-bottom:0.3rem;">Starts in</div>
+          <div class="exam-btn btn-waiting" style="font-family:'Space Mono',monospace; font-size:0.95rem; font-weight:800; color:${urgentColor}; letter-spacing:1px; padding:0.5rem 1rem; min-width:120px; display:inline-block;">
+            <span id="cd-${s.id}">${initial}</span>
+          </div>
+        </div>`;
     } else {
       btn = `<button class="exam-btn btn-ended" onclick="viewResults('${s.id}')">View Results</button>`;
     }
@@ -945,7 +985,7 @@ function renderSchedule() {
           <h3>${s.title}</h3>
           <div class="exam-meta">
             <span>📅 ${s.startTime.toLocaleDateString()}</span>
-            <span>⏰ ${s.startTime.toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'})} - ${s.endTime.toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'})}</span>
+            <span>⏰ ${s.startTime.toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'})} – ${s.endTime.toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'})}</span>
             <span>⏱ ${s.duration} min</span>
             <span>📝 ${qCount} Qs</span>
           </div>
@@ -955,6 +995,9 @@ function renderSchedule() {
       </div>
     `;
   }).join('');
+
+  // Kick off live countdown ticks
+  startScheduleCountdown();
 }
 
 // ==================== EXAM SESSION ====================
@@ -1531,6 +1574,7 @@ function backToSchedule() {
   document.getElementById('result-grade').style.display = 'inline-block';
   showView('schedule');
   updateScheduleStatus();
+  startScheduleCountdown();
 }
 
 // Override showView to hook analytics loading
