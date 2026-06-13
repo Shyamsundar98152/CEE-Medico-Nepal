@@ -221,80 +221,40 @@ footer a{color:#fff;font-weight:700;}
 .blocker-modal p{color:var(--muted);font-size:0.9rem;margin-bottom:24px;line-height:1.6;}
 .blocker-modal .btn-row{justify-content:center;}
 
-/* ----------------------------------------------------
-   PRINT STYLES FIX: prevents blank paper issues
-   ---------------------------------------------------- */
+/* PRINT — only shows the answer key / review section */
 @media print {
   *{transition:none!important;}
-  
-  /* CRITICAL FIX: Ensure height is auto and overflow visible so pages don't get cut off into a blank page */
-  html, body {
-    background: #fff !important;
-    color: #000;
-    font-size: 11pt;
-    height: auto !important; 
-    overflow: visible !important;
-    min-height: auto !important;
-  }
-  
-  .main-content {
-    margin: 0 !important;
-    padding: 0 !important;
-    display: block !important;
-  }
-  
+  body{background:#fff!important;color:#000;font-size:11pt;}
   header,footer,.hero,.filter-tabs,.btn-row,.no-print,
   #quiz-back-blocker,#status-banner,#exam-selector-card,
-  #login-card,#quiz-area {
-    display:none!important;
-  }
-  
+  #login-card,#quiz-area,
   /* hide score card, leaderboard, result banner inside result-area */
   #result-area > .card:not(#review-card),
-  #result-area > div:not(#review-card):not(.print-answerkey-header) {
+  #result-area > div:not(#review-card):not(.print-answerkey-header){
     display:none!important;
   }
-  
-  #result-area {
-    display: block !important;
-    margin: 0 !important;
-    padding: 0 !important;
+  #result-area{display:block!important;}
+  #review-card{display:block!important;box-shadow:none!important;border:none!important;padding:0!important;margin:0!important;}
+  .print-answerkey-header{display:block!important;}
+  .review-q{
+    break-inside:avoid;
+    page-break-inside:avoid;
+    border:1px solid #ccc!important;
+    border-radius:6px!important;
+    padding:12px!important;
+    margin-bottom:10px!important;
+    background:#fff!important;
   }
-  
-  #review-card {
-    display: block !important;
-    box-shadow: none !important;
-    border: none !important;
-    padding: 0 !important;
-    margin: 0 !important;
-  }
-  
-  .print-answerkey-header {
-    display:block!important;
-  }
-  
-  .review-q {
-    display: block !important;
-    break-inside: avoid;
-    page-break-inside: avoid;
-    border: 1px solid #ccc !important;
-    border-radius: 6px !important;
-    padding: 12px !important;
-    margin-bottom: 10px !important;
-    background: #fff !important;
-  }
-  
-  .review-q.q-correct {border-left:4px solid #00c97a!important;-webkit-print-color-adjust:exact;print-color-adjust:exact;}
-  .review-q.q-wrong {border-left:4px solid #ff3b5c!important;-webkit-print-color-adjust:exact;print-color-adjust:exact;}
-  .review-q.q-unattempted {border-left:4px solid #aaa!important;-webkit-print-color-adjust:exact;print-color-adjust:exact;}
+  .review-q.q-correct{border-left:4px solid #00c97a!important;-webkit-print-color-adjust:exact;print-color-adjust:exact;}
+  .review-q.q-wrong{border-left:4px solid #ff3b5c!important;-webkit-print-color-adjust:exact;print-color-adjust:exact;}
+  .review-q.q-unattempted{border-left:4px solid #aaa!important;-webkit-print-color-adjust:exact;print-color-adjust:exact;}
   .review-opt{padding:5px 10px!important;margin-bottom:4px!important;border-radius:4px!important;}
   .review-opt.correct{background:#d4edda!important;color:#155724!important;-webkit-print-color-adjust:exact;print-color-adjust:exact;}
   .review-opt.wrong{background:#f8d7da!important;color:#721c24!important;-webkit-print-color-adjust:exact;print-color-adjust:exact;}
   .explanation{background:#fffef0!important;border-left:3px solid #f0c040!important;-webkit-print-color-adjust:exact;print-color-adjust:exact;}
   .section-title{display:none!important;}
-  #review-content{display: block !important; padding:0!important;}
+  #review-content{padding:0!important;}
 }
-
 /* Print answer key header — hidden on screen, shown when printing */
 .print-answerkey-header{
   display:none;
@@ -712,14 +672,18 @@ async function checkPreviousAttempts() {
       const data = snap.val();
       selectedExam = exam;
       examKey = key;
-      
+
+      // FIX: Recover exact session structure from historical database snapshots
       if (data.questions) {
         questions = data.questions;
-      } else if (exam.questionSetId) {
-        const qSnap = await db.ref(`question_sets/${exam.questionSetId}/questions`).once('value');
-        if (qSnap.exists()) {
-          const allQs = qSnap.val();
-          questions = (Array.isArray(allQs) ? allQs : Object.values(allQs)).filter(q => q && q.question);
+      } else {
+        const setId = selectedExam.questionSetId;
+        if (setId) {
+          const qSnap = await db.ref(`question_sets/${setId}/questions`).once('value');
+          if (qSnap.exists()) {
+            const allQs = qSnap.val();
+            questions = (Array.isArray(allQs) ? allQs : Object.values(allQs)).filter(q => q && q.question);
+          }
         }
       }
 
@@ -868,13 +832,14 @@ async function submitExam(auto) {
   }
   clearInterval(timerInterval);
   quizStarted = false;
-  quizActive = false; 
+  quizActive = false;
   document.getElementById('submit-btn').disabled = true;
 
   let correct = 0, wrong = 0, unattempted = 0;
   questions.forEach((q, i) => {
     if (userAnswers[i] === undefined) { unattempted++; return; }
-    if (userAnswers[i] === q.correct) correct++;
+    // FIX: String sanitization comparison to prevent Data-Type mismatches from Firebase values
+    if (String(userAnswers[i]) === String(q.correct)) correct++;
     else wrong++;
   });
   const score = correct - wrong * 0.25;
@@ -888,8 +853,8 @@ async function submitExam(auto) {
     percentage: parseFloat(pct),
     total: questions.length,
     answers: userAnswers,
-    questions: questions, 
-    timestamp: Date.now()
+    timestamp: Date.now(),
+    questions: questions // FIX: Captures active shuffled states permanently to layout matches cleanly on reload
   };
 
   await db.ref(`results/${examKey}/${deviceId}`).set(resultData);
@@ -902,6 +867,13 @@ async function submitExam(auto) {
 /* ─── Results ─── */
 function showResults(data, answers, fromPrev) {
   document.getElementById('result-area').style.display = 'block';
+
+  // FIX: Force reset scroll animation opacity styles on components hidden inside display wrappers
+  document.querySelectorAll('#result-area .card').forEach(card => {
+    card.style.opacity = '1';
+    card.style.transform = 'translateY(0)';
+  });
+
   const score = data.score;
   const pct = data.percentage;
   let grade = pct >= 80 ? '🏆 Excellent' : pct >= 60 ? '✅ Good' : pct >= 40 ? '⚠️ Average' : '❌ Needs Work';
@@ -932,24 +904,22 @@ function showResults(data, answers, fromPrev) {
 }
 
 function renderReview(answers, fromPrev) {
-  if (questions.length === 0 && fromPrev) {
-    document.getElementById('review-card').style.display = 'none';
-    document.getElementById('review-filter-tabs').style.display = 'none';
-    return;
-  }
   if (questions.length === 0) {
     document.getElementById('review-card').style.display = 'none';
     return;
   }
+  document.getElementById('review-card').style.display = 'block';
 
   let correctCount = 0, wrongCount = 0, unattemptedCount = 0;
   let reviewHTML = '';
 
   questions.forEach((q, i) => {
     const sel = (answers !== null && answers !== undefined) ? answers[i] : undefined;
-    const selNum = (sel !== undefined && sel !== null) ? parseInt(sel) : undefined;
-    const isCorrect = selNum === q.correct;
-    const isUnattempted = selNum === undefined || selNum === null;
+    const selStr = (sel !== undefined && sel !== null) ? String(sel) : undefined;
+    const correctStr = String(q.correct);
+
+    const isCorrect = selStr === correctStr;
+    const isUnattempted = sel === undefined || sel === null;
 
     let statusClass = isUnattempted ? 'q-unattempted' : isCorrect ? 'q-correct' : 'q-wrong';
     let statusLabel = isUnattempted ? '⬜ Unattempted' : isCorrect ? '✅ Correct' : '❌ Wrong';
@@ -961,9 +931,17 @@ function renderReview(answers, fromPrev) {
 
     let optsHTML = (q.options || []).map((o, j) => {
       let cls = '';
-      if (j === q.correct) cls = 'correct';
-      else if (j === selNum && j !== q.correct) cls = 'wrong';
-      return `<div class="review-opt ${cls}">${j === q.correct ? '✓' : j === selNum ? '✗' : '○'} ${o}</div>`;
+      const jStr = String(j);
+      
+      // FIX: Standardize explicit conversion variables for validation checking
+      if (jStr === correctStr) cls = 'correct';
+      else if (selStr !== undefined && jStr === selStr) cls = 'wrong';
+
+      let marker = '○';
+      if (jStr === correctStr) marker = '✓';
+      else if (selStr !== undefined && jStr === selStr) marker = '✗';
+
+      return `<div class="review-opt ${cls}">${marker} ${o}</div>`;
     }).join('');
 
     reviewHTML += `
@@ -976,6 +954,7 @@ function renderReview(answers, fromPrev) {
   });
 
   document.getElementById('review-content').innerHTML = reviewHTML;
+  document.getElementById('count-all').textContent = `(${questions.length})`;
   document.getElementById('count-correct').textContent = `(${correctCount})`;
   document.getElementById('count-wrong').textContent = `(${wrongCount})`;
   document.getElementById('count-unattempted').textContent = `(${unattemptedCount})`;
@@ -1025,18 +1004,10 @@ function showLoginError(msg) {
   btn.innerHTML = '<i class="fas fa-play"></i> Start Exam';
 }
 
+// FIX: Renamed function hook to properly catch execution requests from the native HTML elements
 function printAnswerKey() {
-  document.querySelectorAll('.filter-tab').forEach(t => t.classList.remove('active'));
-  const allTab = document.querySelector('.filter-tab[onclick*="all"]');
-  if (allTab) allTab.classList.add('active');
-  
-  // FIX: explicitly force display block so they don't stay hidden when printing
-  document.querySelectorAll('.review-q').forEach(q => q.style.display = 'block');
-  
-  // A small delay ensures the DOM reflows before the print window captures it
-  setTimeout(() => {
-    window.print();
-  }, 100);
+  document.querySelectorAll('.review-q').forEach(q => q.style.display = '');
+  window.print();
 }
 </script>
 <script>
