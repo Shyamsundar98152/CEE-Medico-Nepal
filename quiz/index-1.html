@@ -222,25 +222,53 @@ footer a{color:#fff;font-weight:700;}
 .blocker-modal p{color:var(--muted);font-size:0.9rem;margin-bottom:24px;line-height:1.6;}
 .blocker-modal .btn-row{justify-content:center;}
 
-/* PRINT */
+/* PRINT — only shows the answer key / review section */
 @media print {
-  body{background:#fff!important;color:#000;}
-  header,footer,.hero,.filter-tabs,.btn-row,.no-print,#quiz-back-blocker{display:none!important;}
-  .card{box-shadow:none!important;border:1px solid #ddd!important;break-inside:avoid;margin-bottom:16px!important;}
-  .review-q{break-inside:avoid;}
-  .print-header{display:block!important;}
-  .leaderboard-table tr.me td{background:#fffbea!important;-webkit-print-color-adjust:exact;print-color-adjust:exact;}
-  .review-opt.correct{background:#d4edda!important;-webkit-print-color-adjust:exact;print-color-adjust:exact;}
-  .review-opt.wrong{background:#f8d7da!important;-webkit-print-color-adjust:exact;print-color-adjust:exact;}
-  .explanation{background:#fffbea!important;-webkit-print-color-adjust:exact;print-color-adjust:exact;}
+  *{transition:none!important;}
+  body{background:#fff!important;color:#000;font-size:11pt;}
+  header,footer,.hero,.filter-tabs,.btn-row,.no-print,
+  #quiz-back-blocker,#status-banner,#exam-selector-card,
+  #login-card,#quiz-area,
+  /* hide score card, leaderboard, result banner inside result-area */
+  #result-area > .card:not(#review-card),
+  #result-area > div:not(#review-card):not(.print-answerkey-header){
+    display:none!important;
+  }
   #result-area{display:block!important;}
-  #quiz-area,#login-card,#status-banner,#exam-selector-card{display:none!important;}
-  .stat-box.correct{background:#e8fff4!important;-webkit-print-color-adjust:exact;print-color-adjust:exact;}
-  .stat-box.wrong{background:#fff0f3!important;-webkit-print-color-adjust:exact;print-color-adjust:exact;}
+  #review-card{display:block!important;box-shadow:none!important;border:none!important;padding:0!important;margin:0!important;}
+  .print-answerkey-header{display:block!important;}
+  .review-q{
+    break-inside:avoid;
+    page-break-inside:avoid;
+    border:1px solid #ccc!important;
+    border-radius:6px!important;
+    padding:12px!important;
+    margin-bottom:10px!important;
+    background:#fff!important;
+  }
+  .review-q.q-correct{border-left:4px solid #00c97a!important;-webkit-print-color-adjust:exact;print-color-adjust:exact;}
+  .review-q.q-wrong{border-left:4px solid #ff3b5c!important;-webkit-print-color-adjust:exact;print-color-adjust:exact;}
+  .review-q.q-unattempted{border-left:4px solid #aaa!important;-webkit-print-color-adjust:exact;print-color-adjust:exact;}
+  .review-opt{padding:5px 10px!important;margin-bottom:4px!important;border-radius:4px!important;}
+  .review-opt.correct{background:#d4edda!important;color:#155724!important;-webkit-print-color-adjust:exact;print-color-adjust:exact;}
+  .review-opt.wrong{background:#f8d7da!important;color:#721c24!important;-webkit-print-color-adjust:exact;print-color-adjust:exact;}
+  .explanation{background:#fffef0!important;border-left:3px solid #f0c040!important;-webkit-print-color-adjust:exact;print-color-adjust:exact;}
+  .section-title{display:none!important;}
+  #review-content{padding:0!important;}
 }
-.print-header{display:none;text-align:center;margin-bottom:24px;padding-bottom:16px;border-bottom:2px solid #dde5f0;}
-.print-header h1{font-size:1.4rem;font-weight:800;}
-.print-header p{color:#6b7c93;font-size:0.85rem;}
+/* Print answer key header — hidden on screen, shown when printing */
+.print-answerkey-header{
+  display:none;
+  text-align:center;
+  margin-bottom:20px;
+  padding-bottom:14px;
+  border-bottom:2px solid #dde5f0;
+}
+.print-answerkey-header h1{font-size:1.3rem;font-weight:800;margin-bottom:4px;}
+.print-answerkey-header p{color:#6b7c93;font-size:0.82rem;}
+/* Screen-only print meta (inside result banner) */
+.print-header{display:none;}
+
 
 /* RESPONSIVE */
 @media(max-width:768px){
@@ -392,12 +420,8 @@ footer a{color:#fff;font-weight:700;}
 
   <!-- Results Area -->
   <div id="result-area">
-    <!-- Print header (only visible when printing) -->
-    <div class="print-header">
-      <h1>CEE Weekly Exam — Results & Answer Key</h1>
-      <p id="print-meta-text"></p>
-    </div>
 
+    <!-- Score + action bar (hidden when printing) -->
     <div class="card no-print" style="background:linear-gradient(135deg,#0062ff,#3b82f6);color:#fff;border:none;">
       <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:16px;">
         <div>
@@ -406,33 +430,44 @@ footer a{color:#fff;font-weight:700;}
           <div style="font-size:0.85rem;opacity:0.8;margin-top:4px;" id="result-subline"></div>
         </div>
         <div class="btn-row no-print" style="margin-top:0;">
-          <button class="btn btn-print btn-sm" onclick="printResults()"><i class="fas fa-print"></i> Print / Save PDF</button>
+          <button class="btn btn-print btn-sm" onclick="printAnswerKey()"><i class="fas fa-print"></i> Print Answer Key</button>
         </div>
       </div>
     </div>
 
-    <div class="card">
+    <div class="card no-print">
       <div class="section-title"><i class="fas fa-star" style="color:#ffd700"></i> Your Results</div>
       <div id="result-content"></div>
     </div>
 
-    <div class="card">
+    <div class="card no-print">
       <div class="section-title"><i class="fas fa-trophy" style="color:var(--accent)"></i> Leaderboard</div>
       <div id="leaderboard-content"><p class="text-muted">Loading rankings...</p></div>
     </div>
 
     <div class="card" id="review-card">
-      <div class="section-title"><i class="fas fa-magnifying-glass" style="color:var(--blue)"></i> Detailed Review</div>
-      <!-- Filter tabs -->
+      <!-- Print-only header: shown only when printing -->
+      <div class="print-answerkey-header" id="print-answerkey-header">
+        <h1>CEE Weekly Exam — Answer Key &amp; Explanations</h1>
+        <p id="print-meta-text"></p>
+      </div>
+
+      <div class="section-title no-print"><i class="fas fa-magnifying-glass" style="color:var(--blue)"></i> All Questions &amp; Answers</div>
+
+      <!-- Filter tabs (screen only) -->
       <div class="filter-tabs no-print" id="review-filter-tabs">
-        <button class="filter-tab active" onclick="filterReview('all',this)"><i class="fas fa-list"></i> All Questions</button>
+        <button class="filter-tab active" onclick="filterReview('all',this)"><i class="fas fa-list"></i> All <span id="count-all"></span></button>
         <button class="filter-tab correct-tab" onclick="filterReview('correct',this)"><i class="fas fa-check"></i> Correct <span id="count-correct"></span></button>
         <button class="filter-tab wrong-tab" onclick="filterReview('wrong',this)"><i class="fas fa-times"></i> Wrong <span id="count-wrong"></span></button>
         <button class="filter-tab unattempted-tab" onclick="filterReview('unattempted',this)"><i class="fas fa-minus"></i> Unattempted <span id="count-unattempted"></span></button>
       </div>
+
       <div id="review-content"></div>
-      <div class="btn-row no-print" style="margin-top:20px;justify-content:center;">
-        <button class="btn btn-print btn-sm" onclick="printResults()"><i class="fas fa-print"></i> Print Answer Key / PDF</button>
+
+      <div class="btn-row no-print" style="margin-top:24px;justify-content:center;">
+        <button class="btn btn-print btn-sm" onclick="printAnswerKey()">
+          <i class="fas fa-print"></i> Print Questions &amp; Answers / Save PDF
+        </button>
       </div>
     </div>
   </div>
