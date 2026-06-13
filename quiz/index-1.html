@@ -221,40 +221,80 @@ footer a{color:#fff;font-weight:700;}
 .blocker-modal p{color:var(--muted);font-size:0.9rem;margin-bottom:24px;line-height:1.6;}
 .blocker-modal .btn-row{justify-content:center;}
 
-/* PRINT — only shows the answer key / review section */
+/* ----------------------------------------------------
+   PRINT STYLES FIX: prevents blank paper issues
+   ---------------------------------------------------- */
 @media print {
   *{transition:none!important;}
-  body{background:#fff!important;color:#000;font-size:11pt;}
+  
+  /* CRITICAL FIX: Ensure height is auto and overflow visible so pages don't get cut off into a blank page */
+  html, body {
+    background: #fff !important;
+    color: #000;
+    font-size: 11pt;
+    height: auto !important; 
+    overflow: visible !important;
+    min-height: auto !important;
+  }
+  
+  .main-content {
+    margin: 0 !important;
+    padding: 0 !important;
+    display: block !important;
+  }
+  
   header,footer,.hero,.filter-tabs,.btn-row,.no-print,
   #quiz-back-blocker,#status-banner,#exam-selector-card,
-  #login-card,#quiz-area,
-  /* hide score card, leaderboard, result banner inside result-area */
-  #result-area > .card:not(#review-card),
-  #result-area > div:not(#review-card):not(.print-answerkey-header){
+  #login-card,#quiz-area {
     display:none!important;
   }
-  #result-area{display:block!important;}
-  #review-card{display:block!important;box-shadow:none!important;border:none!important;padding:0!important;margin:0!important;}
-  .print-answerkey-header{display:block!important;}
-  .review-q{
-    break-inside:avoid;
-    page-break-inside:avoid;
-    border:1px solid #ccc!important;
-    border-radius:6px!important;
-    padding:12px!important;
-    margin-bottom:10px!important;
-    background:#fff!important;
+  
+  /* hide score card, leaderboard, result banner inside result-area */
+  #result-area > .card:not(#review-card),
+  #result-area > div:not(#review-card):not(.print-answerkey-header) {
+    display:none!important;
   }
-  .review-q.q-correct{border-left:4px solid #00c97a!important;-webkit-print-color-adjust:exact;print-color-adjust:exact;}
-  .review-q.q-wrong{border-left:4px solid #ff3b5c!important;-webkit-print-color-adjust:exact;print-color-adjust:exact;}
-  .review-q.q-unattempted{border-left:4px solid #aaa!important;-webkit-print-color-adjust:exact;print-color-adjust:exact;}
+  
+  #result-area {
+    display: block !important;
+    margin: 0 !important;
+    padding: 0 !important;
+  }
+  
+  #review-card {
+    display: block !important;
+    box-shadow: none !important;
+    border: none !important;
+    padding: 0 !important;
+    margin: 0 !important;
+  }
+  
+  .print-answerkey-header {
+    display:block!important;
+  }
+  
+  .review-q {
+    display: block !important;
+    break-inside: avoid;
+    page-break-inside: avoid;
+    border: 1px solid #ccc !important;
+    border-radius: 6px !important;
+    padding: 12px !important;
+    margin-bottom: 10px !important;
+    background: #fff !important;
+  }
+  
+  .review-q.q-correct {border-left:4px solid #00c97a!important;-webkit-print-color-adjust:exact;print-color-adjust:exact;}
+  .review-q.q-wrong {border-left:4px solid #ff3b5c!important;-webkit-print-color-adjust:exact;print-color-adjust:exact;}
+  .review-q.q-unattempted {border-left:4px solid #aaa!important;-webkit-print-color-adjust:exact;print-color-adjust:exact;}
   .review-opt{padding:5px 10px!important;margin-bottom:4px!important;border-radius:4px!important;}
   .review-opt.correct{background:#d4edda!important;color:#155724!important;-webkit-print-color-adjust:exact;print-color-adjust:exact;}
   .review-opt.wrong{background:#f8d7da!important;color:#721c24!important;-webkit-print-color-adjust:exact;print-color-adjust:exact;}
   .explanation{background:#fffef0!important;border-left:3px solid #f0c040!important;-webkit-print-color-adjust:exact;print-color-adjust:exact;}
   .section-title{display:none!important;}
-  #review-content{padding:0!important;}
+  #review-content{display: block !important; padding:0!important;}
 }
+
 /* Print answer key header — hidden on screen, shown when printing */
 .print-answerkey-header{
   display:none;
@@ -505,13 +545,11 @@ function pushQuizState() {
 
 window.addEventListener('popstate', function(e) {
   if (quizActive) {
-    // Push state again so they can't just keep going back
     history.pushState({ quizActive: true }, '', window.location.href);
     showBlocker();
   }
 });
 
-// Also intercept beforeunload (page refresh / tab close)
 window.addEventListener('beforeunload', function(e) {
   if (quizActive) {
     e.preventDefault();
@@ -534,7 +572,6 @@ function forceExit() {
   quizActive = false;
   clearInterval(timerInterval);
   document.getElementById('quiz-back-blocker').classList.remove('show');
-  // Go back to home
   window.location.href = 'https://ceemediconepal.xyz';
 }
 
@@ -676,11 +713,9 @@ async function checkPreviousAttempts() {
       selectedExam = exam;
       examKey = key;
       
-      // FIX: Restore the specific questions mapped to this user's answers so they show in review!
       if (data.questions) {
         questions = data.questions;
       } else if (exam.questionSetId) {
-        // Fallback for older database entries
         const qSnap = await db.ref(`question_sets/${exam.questionSetId}/questions`).once('value');
         if (qSnap.exists()) {
           const allQs = qSnap.val();
@@ -754,9 +789,7 @@ async function startExam() {
     quizStarted = true;
     quizActive = true;
 
-    // Push state so back button is intercepted
     pushQuizState();
-
     startTimer();
     window.scrollTo({ top: 0, behavior: 'smooth' });
 
@@ -835,7 +868,7 @@ async function submitExam(auto) {
   }
   clearInterval(timerInterval);
   quizStarted = false;
-  quizActive = false;  // Allow navigation again
+  quizActive = false; 
   document.getElementById('submit-btn').disabled = true;
 
   let correct = 0, wrong = 0, unattempted = 0;
@@ -855,7 +888,7 @@ async function submitExam(auto) {
     percentage: parseFloat(pct),
     total: questions.length,
     answers: userAnswers,
-    questions: questions, // FIX: Save the specific shuffled question set to perfectly recreate the review
+    questions: questions, 
     timestamp: Date.now()
   };
 
@@ -873,11 +906,9 @@ function showResults(data, answers, fromPrev) {
   const pct = data.percentage;
   let grade = pct >= 80 ? '🏆 Excellent' : pct >= 60 ? '✅ Good' : pct >= 40 ? '⚠️ Average' : '❌ Needs Work';
 
-  // Update banner headline
   document.getElementById('result-headline').textContent = `${grade} — ${data.name}`;
   document.getElementById('result-subline').textContent = `Score: ${score.toFixed(2)} / ${data.total} • ${pct}% • ${data.examTitle||''}`;
 
-  // Print meta
   document.getElementById('print-meta-text').textContent =
     `Student: ${data.name} | Email: ${data.email||''} | Score: ${score.toFixed(2)}/${data.total} (${pct}%) | ${data.examTitle||''} | ${new Date(data.timestamp||Date.now()).toLocaleString()}`;
 
@@ -897,14 +928,11 @@ function showResults(data, answers, fromPrev) {
     </div>`;
 
   loadLeaderboard(data.score);
-
-  // Always render review — even from prev attempt (answers stored in Firebase)
   renderReview(answers, fromPrev);
 }
 
 function renderReview(answers, fromPrev) {
   if (questions.length === 0 && fromPrev) {
-    // Can't show detailed review from previous attempt if questions not loaded
     document.getElementById('review-card').style.display = 'none';
     document.getElementById('review-filter-tabs').style.display = 'none';
     return;
@@ -954,11 +982,9 @@ function renderReview(answers, fromPrev) {
 }
 
 function filterReview(type, btn) {
-  // Update active tab
   document.querySelectorAll('.filter-tab').forEach(t => t.classList.remove('active'));
   btn.classList.add('active');
 
-  // Show/hide questions
   document.querySelectorAll('.review-q').forEach(q => {
     if (type === 'all' || q.dataset.filter === type) {
       q.style.display = '';
@@ -999,15 +1025,18 @@ function showLoginError(msg) {
   btn.innerHTML = '<i class="fas fa-play"></i> Start Exam';
 }
 
-// FIX: Renamed from `printResults` to `printAnswerKey` to match exactly what your HTML button calls
 function printAnswerKey() {
-  // Before printing, show all questions (reset filter)
   document.querySelectorAll('.filter-tab').forEach(t => t.classList.remove('active'));
   const allTab = document.querySelector('.filter-tab[onclick*="all"]');
   if (allTab) allTab.classList.add('active');
   
-  document.querySelectorAll('.review-q').forEach(q => q.style.display = '');
-  window.print();
+  // FIX: explicitly force display block so they don't stay hidden when printing
+  document.querySelectorAll('.review-q').forEach(q => q.style.display = 'block');
+  
+  // A small delay ensures the DOM reflows before the print window captures it
+  setTimeout(() => {
+    window.print();
+  }, 100);
 }
 </script>
 <script>
