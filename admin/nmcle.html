@@ -1,0 +1,1150 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Admin Panel | NMCLE Nepal MCQ Manager</title>
+  <meta name="robots" content="noindex, nofollow">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+  <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;500;600;700;800&family=Lora:wght@600;700&display=swap" rel="stylesheet">
+
+  <style>
+  :root {
+    --primary:      #1a6fa8;
+    --primary-dk:   #145a8a;
+    --primary-lt:   rgba(26,111,168,.1);
+    --secondary:    #1b2d45;
+    --success:      #2ecc71;
+    --success-lt:   rgba(46,204,113,.12);
+    --danger:       #e74c3c;
+    --danger-lt:    rgba(231,76,60,.12);
+    --warning:      #f39c12;
+    --warning-lt:   rgba(243,156,18,.12);
+    --purple:       #9b59b6;
+    --purple-lt:    rgba(155,89,182,.12);
+    --white:        #ffffff;
+    --bg:           #f0f4f8;
+    --text:         #2d3748;
+    --text-md:      #4a5568;
+    --text-muted:   #718096;
+    --border:       #e2e8f0;
+    --shadow:       0 4px 12px rgba(0,0,0,.1);
+    --shadow-lg:    0 12px 32px rgba(0,0,0,.14);
+    --radius-sm:    6px;
+    --radius:       10px;
+    --radius-lg:    14px;
+    --radius-full:  9999px;
+    --transition:   all .22s ease;
+    --font-body:    'Nunito', sans-serif;
+    --font-display: 'Lora', serif;
+  }
+  *, *::before, *::after { margin:0; padding:0; box-sizing:border-box; }
+  html { scroll-behavior: smooth; }
+  body { font-family: var(--font-body); background: var(--bg); color: var(--text); min-height: 100vh; display: flex; flex-direction: column; }
+
+  /* ── Header ── */
+  header { background: var(--secondary); padding: 14px 0; box-shadow: var(--shadow); position: sticky; top:0; z-index: 100; }
+  header .container { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+  .logo h1 { font-family: var(--font-display); font-size: 1.1rem; color: #fff; font-weight: 700; }
+  .logo h1 span { color: #74c0fc; }
+  .admin-badge { display: inline-flex; align-items: center; gap: 6px; background: rgba(231,76,60,.3); color: #ff9999; padding: 5px 14px; border-radius: var(--radius-full); font-size: .78rem; font-weight: 700; text-transform: uppercase; letter-spacing: .5px; }
+  .container { width: 90%; max-width: 1200px; margin: 0 auto; padding: 0 16px; }
+  main { flex: 1; padding: 32px 0 80px; }
+
+  /* ── Buttons ── */
+  .btn { display: inline-flex; align-items: center; gap: 7px; padding: 10px 20px; border: none; border-radius: var(--radius-sm); font-family: var(--font-body); font-weight: 700; font-size: .88rem; cursor: pointer; transition: var(--transition); }
+  .btn-primary { background: var(--primary); color: var(--white); }
+  .btn-primary:hover { background: var(--primary-dk); transform: translateY(-1px); }
+  .btn-success { background: var(--success); color: var(--white); }
+  .btn-success:hover { background: #27ae60; transform: translateY(-1px); }
+  .btn-danger { background: var(--danger); color: var(--white); }
+  .btn-danger:hover { background: #c0392b; transform: translateY(-1px); }
+  .btn-light { background: #ecf0f1; color: var(--text-md); }
+  .btn-light:hover { background: #dde2e8; }
+  .btn-warning { background: var(--warning); color: var(--white); }
+  .btn-warning:hover { background: #e67e22; }
+  .btn-purple { background: var(--purple); color: var(--white); }
+  .btn-purple:hover { background: #8e44ad; }
+  .btn-sm { padding: 7px 14px; font-size: .82rem; }
+  .btn-xs { padding: 5px 10px; font-size: .78rem; }
+  .btn:disabled { opacity: .5; cursor: not-allowed; transform: none !important; }
+  .btn-full { width: 100%; justify-content: center; }
+
+  /* ── Login ── */
+  #login-wall { max-width: 400px; margin: 40px auto; background: var(--white); border-radius: var(--radius-lg); box-shadow: var(--shadow-lg); padding: 36px 32px; text-align: center; }
+  #login-wall .lock-icon { font-size: 2.5rem; color: var(--primary); margin-bottom: 14px; }
+  #login-wall h2 { font-family: var(--font-display); color: var(--secondary); margin-bottom: 6px; }
+  #login-wall p { color: var(--text-muted); font-size: .88rem; margin-bottom: 22px; }
+
+  .form-group { margin-bottom: 16px; text-align: left; }
+  .form-group label { display: block; font-size: .78rem; font-weight: 800; color: var(--text-md); margin-bottom: 5px; text-transform: uppercase; letter-spacing: .4px; }
+  .form-group input, .form-group select, .form-group textarea {
+    width: 100%; padding: 10px 14px; border: 2px solid var(--border);
+    border-radius: var(--radius-sm); font-family: var(--font-body); font-size: .93rem;
+    color: var(--text); background: #fafbfc; transition: var(--transition); outline: none;
+  }
+  .form-group input:focus, .form-group select:focus, .form-group textarea:focus { border-color: var(--primary); background: var(--white); }
+  .form-group textarea { resize: vertical; min-height: 80px; }
+
+  /* ── Nav Tabs ── */
+  .nav-tabs { display: flex; gap: 4px; margin-bottom: 28px; background: var(--white); padding: 6px; border-radius: var(--radius); box-shadow: var(--shadow); border: 1px solid var(--border); }
+  .nav-tab { flex: 1; padding: 10px 8px; border: none; border-radius: var(--radius-sm); font-family: var(--font-body); font-size: .84rem; font-weight: 700; cursor: pointer; background: transparent; color: var(--text-muted); transition: var(--transition); display: flex; align-items: center; justify-content: center; gap: 6px; }
+  .nav-tab.active { background: var(--secondary); color: #fff; box-shadow: 0 2px 8px rgba(27,45,69,.3); }
+  .nav-tab:hover:not(.active) { background: var(--bg); color: var(--text); }
+  .nav-panel { display: none; }
+  .nav-panel.active { display: block; }
+
+  /* ── Cards ── */
+  .card { background: var(--white); border-radius: var(--radius-lg); box-shadow: var(--shadow); padding: 24px; }
+  .card-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 20px; padding-bottom: 14px; border-bottom: 2px solid var(--bg); gap: 10px; flex-wrap: wrap; }
+  .card-title { font-family: var(--font-display); color: var(--secondary); font-size: 1.05rem; font-weight: 700; display: flex; align-items: center; gap: 8px; }
+  .card-title i { color: var(--primary); }
+
+  /* ── Stats ── */
+  .stats-bar { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; margin-bottom: 28px; }
+  .stat-chip { background: var(--white); border-radius: var(--radius); box-shadow: var(--shadow); padding: 18px; display: flex; align-items: center; gap: 14px; border-left: 4px solid transparent; }
+  .stat-chip.blue { border-color: var(--primary); }
+  .stat-chip.green { border-color: var(--success); }
+  .stat-chip.yellow { border-color: var(--warning); }
+  .stat-chip.purple { border-color: var(--purple); }
+  .stat-chip-icon { width: 44px; height: 44px; border-radius: var(--radius-sm); display: flex; align-items: center; justify-content: center; font-size: 1.15rem; flex-shrink: 0; }
+  .stat-chip.blue .stat-chip-icon { background: var(--primary-lt); color: var(--primary); }
+  .stat-chip.green .stat-chip-icon { background: var(--success-lt); color: var(--success); }
+  .stat-chip.yellow .stat-chip-icon { background: var(--warning-lt); color: var(--warning); }
+  .stat-chip.purple .stat-chip-icon { background: var(--purple-lt); color: var(--purple); }
+  .stat-chip-val { font-family: var(--font-display); font-size: 1.55rem; font-weight: 700; color: var(--secondary); display: block; line-height: 1; }
+  .stat-chip-lbl { font-size: .72rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: .4px; margin-top: 3px; display: block; }
+
+  /* ── Sets list ── */
+  .sets-grid { display: flex; flex-direction: column; gap: 12px; }
+  .set-row { background: var(--white); border: 1px solid var(--border); border-radius: var(--radius); padding: 16px 20px; display: flex; align-items: center; gap: 14px; transition: var(--transition); cursor: pointer; }
+  .set-row:hover { border-color: var(--primary); box-shadow: 0 0 0 3px var(--primary-lt); }
+  .set-row-icon { width: 42px; height: 42px; border-radius: var(--radius-sm); display: flex; align-items: center; justify-content: center; font-size: 1.1rem; flex-shrink: 0; background: var(--primary-lt); color: var(--primary); }
+  .set-row-body { flex: 1; min-width: 0; }
+  .set-row-name { font-weight: 700; color: var(--text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-size: .95rem; }
+  .set-row-meta { font-size: .78rem; color: var(--text-muted); margin-top: 2px; }
+  .set-row-actions { display: flex; gap: 6px; flex-shrink: 0; }
+
+  .badge { display: inline-block; padding: 3px 10px; border-radius: var(--radius-full); font-size: .7rem; font-weight: 800; text-transform: uppercase; letter-spacing: .3px; }
+  .badge-blue { background: var(--primary-lt); color: var(--primary-dk); }
+  .badge-green { background: var(--success-lt); color: #1a7a40; }
+  .badge-yellow { background: var(--warning-lt); color: #7a5a00; }
+  .badge-purple { background: var(--purple-lt); color: #5a2a7a; }
+
+  .btn-icon { width: 34px; height: 34px; border: none; border-radius: var(--radius-sm); display: flex; align-items: center; justify-content: center; font-size: .82rem; cursor: pointer; transition: var(--transition); }
+  .btn-icon-danger { background: var(--danger-lt); color: var(--danger); }
+  .btn-icon-danger:hover { background: var(--danger); color: #fff; }
+  .btn-icon-primary { background: var(--primary-lt); color: var(--primary); }
+  .btn-icon-primary:hover { background: var(--primary); color: #fff; }
+  .btn-icon-warning { background: var(--warning-lt); color: var(--warning); }
+  .btn-icon-warning:hover { background: var(--warning); color: #fff; }
+  .btn-icon-success { background: var(--success-lt); color: var(--success); }
+  .btn-icon-success:hover { background: var(--success); color: #fff; }
+
+  /* ── Question Editor ── */
+  .q-editor-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 16px; flex-wrap: wrap; gap: 10px; }
+  .q-list { display: flex; flex-direction: column; gap: 10px; }
+  .q-card { background: #fafbfc; border: 1px solid var(--border); border-radius: var(--radius); overflow: hidden; transition: var(--transition); }
+  .q-card:hover { border-color: var(--primary); }
+  .q-card-head { padding: 14px 16px; display: flex; align-items: center; gap: 12px; cursor: pointer; user-select: none; }
+  .q-card-head:hover { background: #f0f7ff; }
+  .q-num-badge { width: 28px; height: 28px; border-radius: 50%; background: var(--secondary); color: #fff; font-size: .78rem; font-weight: 800; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+  .q-text-preview { flex: 1; font-size: .88rem; color: var(--text-md); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .q-card-actions { display: flex; gap: 5px; flex-shrink: 0; }
+  .q-card-body { display: none; padding: 0 16px 16px; border-top: 1px solid var(--border); }
+  .q-card-body.open { display: block; }
+  .q-card-body .form-group { margin-top: 14px; }
+  .options-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 8px; }
+  .option-row { display: flex; align-items: center; gap: 8px; }
+  .option-radio { accent-color: var(--success); width: 16px; height: 16px; cursor: pointer; flex-shrink: 0; }
+  .option-label-txt { font-size: .72rem; font-weight: 800; color: var(--text-muted); text-transform: uppercase; flex-shrink: 0; width: 20px; }
+  .option-input { flex: 1; padding: 8px 12px; border: 2px solid var(--border); border-radius: var(--radius-sm); font-size: .88rem; font-family: var(--font-body); transition: var(--transition); outline: none; background: var(--white); }
+  .option-input:focus { border-color: var(--primary); }
+  .option-input.correct-option { border-color: var(--success); background: var(--success-lt); }
+
+  /* ── Upload ── */
+  .drop-zone { border: 2px dashed var(--border); border-radius: var(--radius); padding: 28px; text-align: center; cursor: pointer; transition: var(--transition); margin-bottom: 16px; background: #fafbfc; }
+  .drop-zone:hover, .drop-zone.dragover { border-color: var(--primary); background: var(--primary-lt); }
+  .drop-zone i { font-size: 2rem; color: var(--text-muted); margin-bottom: 10px; display: block; }
+  .drop-zone p { color: var(--text-muted); font-size: .88rem; }
+  .drop-zone strong { color: var(--primary); }
+  .drop-zone input[type=file] { display: none; }
+  .tab-row { display: flex; gap: 4px; margin-bottom: 20px; background: #f0f4f8; padding: 4px; border-radius: var(--radius-sm); }
+  .tab-btn { flex: 1; padding: 8px 12px; border: none; border-radius: 5px; font-family: var(--font-body); font-size: .83rem; font-weight: 700; cursor: pointer; background: transparent; color: var(--text-muted); transition: var(--transition); }
+  .tab-btn.active { background: var(--white); color: var(--primary); box-shadow: 0 1px 4px rgba(0,0,0,.1); }
+  .upload-tab-content { display: none; }
+  .upload-tab-content.active { display: block; }
+  .upload-status { padding: 12px 16px; border-radius: var(--radius-sm); font-size: .88rem; font-weight: 600; margin-top: 12px; display: none; }
+  .upload-status.show { display: block; }
+  .upload-status.success { background: var(--success-lt); color: #1a7a40; }
+  .upload-status.error { background: var(--danger-lt); color: #a91f1f; }
+  .upload-status.info { background: var(--primary-lt); color: var(--primary-dk); }
+  .preview-box { background: #f8f9fa; border: 1px solid var(--border); border-radius: var(--radius-sm); padding: 14px; font-size: .78rem; font-family: 'Courier New', monospace; color: var(--text-md); max-height: 160px; overflow-y: auto; margin-top: 10px; display: none; }
+  .preview-box.show { display: block; }
+
+  /* ── Modal ── */
+  .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,.55); z-index: 500; display: flex; align-items: center; justify-content: center; padding: 20px; opacity: 0; pointer-events: none; transition: opacity .25s; }
+  .modal-overlay.open { opacity: 1; pointer-events: all; }
+  .modal { background: var(--white); border-radius: var(--radius-lg); box-shadow: var(--shadow-lg); width: 100%; max-width: 560px; max-height: 90vh; overflow-y: auto; transform: translateY(24px); transition: transform .25s; }
+  .modal-overlay.open .modal { transform: translateY(0); }
+  .modal-header { padding: 20px 24px 16px; border-bottom: 1px solid var(--border); display: flex; align-items: center; justify-content: space-between; position: sticky; top: 0; background: var(--white); z-index: 1; }
+  .modal-title { font-family: var(--font-display); color: var(--secondary); font-size: 1.05rem; }
+  .modal-body { padding: 20px 24px; }
+  .modal-footer { padding: 16px 24px 20px; border-top: 1px solid var(--border); display: flex; justify-content: flex-end; gap: 10px; }
+  .btn-close-modal { background: none; border: none; font-size: 1.2rem; cursor: pointer; color: var(--text-muted); padding: 4px; line-height: 1; }
+  .btn-close-modal:hover { color: var(--danger); }
+
+  /* ── Dropdown ── */
+  .dropdown-wrap { position: relative; display: inline-block; }
+  .dropdown-menu { position: absolute; right: 0; top: calc(100% + 6px); background: var(--white); border: 1px solid var(--border); border-radius: var(--radius); box-shadow: var(--shadow-lg); min-width: 180px; z-index: 200; display: none; overflow: hidden; }
+  .dropdown-menu.open { display: block; }
+  .dropdown-item { padding: 10px 16px; font-size: .88rem; cursor: pointer; display: flex; align-items: center; gap: 8px; color: var(--text-md); transition: var(--transition); }
+  .dropdown-item:hover { background: var(--bg); color: var(--primary); }
+  .dropdown-divider { border-top: 1px solid var(--border); }
+
+  /* ── Format guide ── */
+  .format-guide { background: #1a2a3a; color: #a8d8ff; border-radius: var(--radius); padding: 16px; font-family: 'Courier New', monospace; font-size: .78rem; line-height: 1.7; overflow-x: auto; }
+  .format-guide .k { color: #7ec8e3; }
+  .format-guide .v { color: #a8e6c8; }
+  .format-guide .s { color: #f9c784; }
+  .format-guide .n { color: #c9a0ff; }
+
+  /* ── Toast ── */
+  .toast { position: fixed; bottom: 22px; right: 22px; padding: 12px 20px; border-radius: var(--radius); font-size: .88rem; font-weight: 600; color: var(--white); box-shadow: var(--shadow-lg); z-index: 9999; transform: translateY(60px); opacity: 0; transition: all .35s cubic-bezier(.34,1.56,.64,1); max-width: 320px; }
+  .toast.show { transform: translateY(0); opacity: 1; }
+  .toast-success { background: var(--success); }
+  .toast-error   { background: var(--danger); }
+  .toast-info    { background: var(--secondary); }
+  .toast-warning { background: var(--warning); }
+
+  #btn-admin-logout { background: rgba(255,255,255,.1); color: rgba(255,255,255,.85); border: 1px solid rgba(255,255,255,.2); padding: 7px 14px; border-radius: var(--radius-sm); font-size: .83rem; font-weight: 700; cursor: pointer; transition: var(--transition); display: none; }
+  #btn-admin-logout:hover { background: var(--danger); border-color: var(--danger); color: #fff; }
+
+  .add-q-card { border: 2px dashed var(--border); border-radius: var(--radius); padding: 18px; background: #fafbfc; }
+  .spinner { display: inline-block; width: 18px; height: 18px; border: 3px solid var(--border); border-top-color: var(--primary); border-radius: 50%; animation: spin .7s linear infinite; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  .empty-state { text-align: center; padding: 50px 20px; color: var(--text-muted); }
+  .empty-state i { font-size: 2.5rem; margin-bottom: 14px; display: block; opacity: .3; }
+  .empty-state p { font-size: .9rem; }
+  .unsaved-dot { width: 8px; height: 8px; background: var(--warning); border-radius: 50%; display: inline-block; margin-left: 6px; }
+  .filter-row { display: flex; gap: 10px; margin-bottom: 18px; flex-wrap: wrap; }
+  .filter-row input, .filter-row select { padding: 9px 14px; border: 2px solid var(--border); border-radius: var(--radius-sm); font-family: var(--font-body); font-size: .88rem; outline: none; transition: var(--transition); background: var(--white); }
+  .filter-row input:focus, .filter-row select:focus { border-color: var(--primary); }
+  .filter-row input { flex: 1; min-width: 180px; }
+
+  @media (max-width: 900px) { .stats-bar { grid-template-columns: repeat(2, 1fr); } }
+  @media (max-width: 640px) {
+    .stats-bar { grid-template-columns: repeat(2, 1fr); gap: 10px; }
+    .options-grid { grid-template-columns: 1fr; }
+    .nav-tab span { display: none; }
+  }
+  </style>
+</head>
+<body>
+
+<header>
+  <div class="container">
+    <div class="logo"><h1>🏥 NMCLE<span>Nepal</span> — Admin</h1></div>
+    <div style="display:flex;align-items:center;gap:10px;">
+      <span class="admin-badge"><i class="fas fa-user-shield"></i> Admin</span>
+      <button id="btn-admin-logout"><i class="fas fa-sign-out-alt"></i> Logout</button>
+    </div>
+  </div>
+</header>
+
+<main>
+<div class="container">
+
+  <!-- LOGIN WALL -->
+  <div id="login-wall">
+    <div class="lock-icon"><i class="fas fa-lock"></i></div>
+    <h2>Admin Access</h2>
+    <p>Enter the admin password to manage NMCLE question sets.</p>
+    <div class="form-group">
+      <label>Password</label>
+      <input type="password" id="admin-pass" placeholder="Enter admin password…" autocomplete="current-password">
+    </div>
+    <button class="btn btn-primary btn-full" id="btn-login"><i class="fas fa-unlock"></i> Login</button>
+    <div id="login-error" class="upload-status error" style="margin-top:10px;"></div>
+  </div>
+
+  <!-- ADMIN PANEL -->
+  <div id="admin-panel" style="display:none;">
+
+    <!-- Stats -->
+    <div class="stats-bar">
+      <div class="stat-chip blue">
+        <div class="stat-chip-icon"><i class="fas fa-layer-group"></i></div>
+        <div><span class="stat-chip-val" id="stat-total">—</span><span class="stat-chip-lbl">Total Sets</span></div>
+      </div>
+      <div class="stat-chip green">
+        <div class="stat-chip-icon"><i class="fas fa-question-circle"></i></div>
+        <div><span class="stat-chip-val" id="stat-questions">—</span><span class="stat-chip-lbl">Questions</span></div>
+      </div>
+      <div class="stat-chip yellow">
+        <div class="stat-chip-icon"><i class="fas fa-book-medical"></i></div>
+        <div><span class="stat-chip-val" id="stat-subjects">—</span><span class="stat-chip-lbl">Subjects</span></div>
+      </div>
+      <div class="stat-chip purple">
+        <div class="stat-chip-icon"><i class="fas fa-database"></i></div>
+        <div><span class="stat-chip-val" id="stat-db">Live</span><span class="stat-chip-lbl">Firebase</span></div>
+      </div>
+    </div>
+
+    <!-- Nav Tabs -->
+    <div class="nav-tabs">
+      <button class="nav-tab active" data-panel="panel-sets"><i class="fas fa-list"></i> <span>All Sets</span></button>
+      <button class="nav-tab" data-panel="panel-editor"><i class="fas fa-edit"></i> <span>Question Editor</span></button>
+      <button class="nav-tab" data-panel="panel-upload"><i class="fas fa-upload"></i> <span>Upload New</span></button>
+      <button class="nav-tab" data-panel="panel-guide"><i class="fas fa-code"></i> <span>Format Guide</span></button>
+    </div>
+
+    <!-- PANEL: ALL SETS -->
+    <div class="nav-panel active" id="panel-sets">
+      <div class="card">
+        <div class="card-header">
+          <div class="card-title"><i class="fas fa-layer-group"></i> Question Sets</div>
+          <div style="display:flex;gap:8px;flex-wrap:wrap;">
+            <button class="btn btn-light btn-sm" id="btn-refresh"><i class="fas fa-sync"></i> Refresh</button>
+            <div class="dropdown-wrap">
+              <button class="btn btn-primary btn-sm" id="btn-export-all"><i class="fas fa-download"></i> Export All</button>
+              <div class="dropdown-menu" id="export-all-menu">
+                <div class="dropdown-item" id="export-all-json"><i class="fas fa-file-code"></i> All Sets as JSON</div>
+                <div class="dropdown-divider"></div>
+                <div class="dropdown-item" id="export-all-csv"><i class="fas fa-file-csv"></i> All Questions as CSV</div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="filter-row">
+          <input type="text" id="sets-search" placeholder="🔍 Search sets by name…">
+          <select id="sets-subject-filter"><option value="">All Subjects</option></select>
+        </div>
+        <div id="sets-loading" style="text-align:center;padding:40px;color:var(--text-muted);">
+          <div class="spinner" style="width:28px;height:28px;margin:0 auto 12px;"></div>
+          <p>Loading from Firebase…</p>
+        </div>
+        <div id="sets-grid" class="sets-grid" style="display:none;"></div>
+        <div id="sets-empty" class="empty-state" style="display:none;">
+          <i class="fas fa-inbox"></i>
+          <p>No question sets uploaded yet. Use <strong>Upload New</strong> to add your first NMCLE set.</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- PANEL: QUESTION EDITOR -->
+    <div class="nav-panel" id="panel-editor">
+      <div class="card">
+        <div class="card-header">
+          <div class="card-title"><i class="fas fa-edit"></i> Question Editor</div>
+          <span id="editor-set-label" style="font-size:.82rem;color:var(--text-muted);">← Select a set from All Sets tab</span>
+        </div>
+        <div id="editor-empty" class="empty-state">
+          <i class="fas fa-mouse-pointer"></i>
+          <p>Go to <strong>All Sets</strong> and click the <i class="fas fa-pencil-alt" style="color:var(--primary)"></i> edit icon on any set to begin editing.</p>
+        </div>
+        <div id="editor-content" style="display:none;">
+          <div style="background:var(--bg);border-radius:var(--radius);padding:16px;margin-bottom:20px;">
+            <p style="font-size:.78rem;font-weight:800;color:var(--text-muted);text-transform:uppercase;letter-spacing:.4px;margin-bottom:12px;">Set Metadata</p>
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+              <div class="form-group" style="margin:0;">
+                <label>Set Name</label>
+                <input type="text" id="edit-set-name">
+              </div>
+              <div class="form-group" style="margin:0;">
+                <label>Subject</label>
+                <select id="edit-set-subject">
+                  <option value="">— Select —</option>
+                  <optgroup label="Basic Medical Sciences">
+                    <option value="Anatomy">Anatomy</option>
+                    <option value="Physiology">Physiology</option>
+                    <option value="Biochemistry">Biochemistry</option>
+                    <option value="Pathology">Pathology</option>
+                    <option value="Pharmacology">Pharmacology</option>
+                    <option value="Microbiology">Microbiology</option>
+                    <option value="Forensic Medicine">Forensic Medicine</option>
+                    <option value="Community Medicine">Community Medicine</option>
+                  </optgroup>
+                  <optgroup label="Major Clinical Subjects">
+                    <option value="Internal Medicine">Internal Medicine</option>
+                    <option value="General Surgery">General Surgery</option>
+                    <option value="Obs & Gynaecology">Obs &amp; Gynaecology</option>
+                    <option value="Paediatrics">Paediatrics</option>
+                  </optgroup>
+                  <optgroup label="Allied Clinical Subjects">
+                    <option value="Orthopaedics">Orthopaedics</option>
+                    <option value="Ophthalmology">Ophthalmology</option>
+                    <option value="ENT">ENT</option>
+                    <option value="Psychiatry">Psychiatry</option>
+                    <option value="Dermatology">Dermatology</option>
+                    <option value="Radiology">Radiology</option>
+                    <option value="Anaesthesia">Anaesthesia</option>
+                    <option value="Emergency Medicine">Emergency Medicine</option>
+                    <option value="Dentistry">Dentistry</option>
+                  </optgroup>
+                  <option value="Mixed">Mixed</option>
+                </select>
+              </div>
+            </div>
+            <button class="btn btn-primary btn-sm" id="btn-save-meta" style="margin-top:12px;">
+              <i class="fas fa-save"></i> Save Set Info
+            </button>
+          </div>
+          <div class="q-editor-header">
+            <div style="display:flex;align-items:center;gap:8px;">
+              <span id="q-count-label" style="font-weight:700;color:var(--secondary);"></span>
+              <span id="unsaved-indicator" style="display:none;"><span class="unsaved-dot"></span><span style="font-size:.78rem;color:var(--warning);font-weight:700;">Unsaved changes</span></span>
+            </div>
+            <div style="display:flex;gap:8px;flex-wrap:wrap;">
+              <input type="text" id="q-search" placeholder="🔍 Filter questions…" style="padding:7px 12px;border:2px solid var(--border);border-radius:var(--radius-sm);font-size:.85rem;outline:none;width:190px;">
+              <button class="btn btn-success btn-sm" id="btn-add-question"><i class="fas fa-plus"></i> Add Question</button>
+              <button class="btn btn-primary btn-sm" id="btn-save-all-qs"><i class="fas fa-cloud-upload-alt"></i> Save All to Firebase</button>
+              <div class="dropdown-wrap">
+                <button class="btn btn-light btn-sm" id="btn-export-set"><i class="fas fa-download"></i></button>
+                <div class="dropdown-menu" id="export-set-menu">
+                  <div class="dropdown-item" id="export-set-json"><i class="fas fa-file-code"></i> Export as JSON</div>
+                  <div class="dropdown-item" id="export-set-csv"><i class="fas fa-file-csv"></i> Export as CSV</div>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div id="q-list" class="q-list"></div>
+          <div id="add-q-form" class="add-q-card" style="margin-top:16px;display:none;">
+            <p style="font-weight:800;color:var(--secondary);font-size:.92rem;margin-bottom:14px;"><i class="fas fa-plus-circle" style="color:var(--success)"></i> New Question</p>
+            <div class="form-group">
+              <label>Question Text <span style="color:var(--danger)">*</span></label>
+              <textarea id="new-q-text" rows="3" placeholder="Enter the NMCLE question…"></textarea>
+            </div>
+            <p style="font-size:.78rem;font-weight:800;color:var(--text-muted);text-transform:uppercase;letter-spacing:.4px;margin-bottom:8px;">Options — click radio to mark correct</p>
+            <div class="options-grid" id="new-q-options">
+              <div class="option-row"><input type="radio" name="new-correct" value="0" class="option-radio"> <span class="option-label-txt">A</span><input type="text" class="option-input" placeholder="Option A" id="new-opt-0"></div>
+              <div class="option-row"><input type="radio" name="new-correct" value="1" class="option-radio"> <span class="option-label-txt">B</span><input type="text" class="option-input" placeholder="Option B" id="new-opt-1"></div>
+              <div class="option-row"><input type="radio" name="new-correct" value="2" class="option-radio"> <span class="option-label-txt">C</span><input type="text" class="option-input" placeholder="Option C" id="new-opt-2"></div>
+              <div class="option-row"><input type="radio" name="new-correct" value="3" class="option-radio"> <span class="option-label-txt">D</span><input type="text" class="option-input" placeholder="Option D" id="new-opt-3"></div>
+            </div>
+            <div class="form-group" style="margin-top:14px;">
+              <label>Explanation (optional)</label>
+              <textarea id="new-q-explanation" rows="2" placeholder="Why is this the correct answer?"></textarea>
+            </div>
+            <div style="display:flex;gap:8px;margin-top:10px;">
+              <button class="btn btn-success btn-sm" id="btn-confirm-add-q"><i class="fas fa-check"></i> Add Question</button>
+              <button class="btn btn-light btn-sm" id="btn-cancel-add-q">Cancel</button>
+            </div>
+          </div>
+          <div id="editor-save-status" class="upload-status" style="margin-top:14px;"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- PANEL: UPLOAD -->
+    <div class="nav-panel" id="panel-upload">
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:24px;">
+        <div class="card">
+          <div class="card-header">
+            <div class="card-title"><i class="fas fa-cloud-upload-alt"></i> Upload Question Set</div>
+          </div>
+          <div class="tab-row">
+            <button class="tab-btn active" data-utab="utab-file">📁 JSON File</button>
+            <button class="tab-btn" data-utab="utab-paste">📋 Paste JSON</button>
+          </div>
+          <div class="upload-tab-content active" id="utab-file">
+            <div class="drop-zone" id="drop-zone">
+              <input type="file" id="json-file-input" accept=".json">
+              <i class="fas fa-cloud-upload-alt"></i>
+              <p><strong>Click to browse</strong> or drag &amp; drop</p>
+              <p style="font-size:.75rem;margin-top:4px;">Supports array or {name,subject,questions:[]} format</p>
+            </div>
+          </div>
+          <div class="upload-tab-content" id="utab-paste">
+            <div class="form-group">
+              <label>Paste JSON Content</label>
+              <textarea id="json-paste" rows="7" placeholder='[{"question":"...","options":["A","B","C","D"],"correct":0}]' style="font-family:monospace;font-size:.8rem;"></textarea>
+            </div>
+          </div>
+          <div class="form-group">
+            <label>Set Name <span style="color:var(--danger)">*</span></label>
+            <input type="text" id="set-name-input" placeholder="e.g. Anatomy Set 1 — Upper Limb">
+          </div>
+          <div class="form-group">
+            <label>Subject</label>
+            <select id="set-subject-input">
+              <option value="">— Select —</option>
+              <optgroup label="Basic Medical Sciences">
+                <option value="Anatomy">Anatomy</option>
+                <option value="Physiology">Physiology</option>
+                <option value="Biochemistry">Biochemistry</option>
+                <option value="Pathology">Pathology</option>
+                <option value="Pharmacology">Pharmacology</option>
+                <option value="Microbiology">Microbiology</option>
+                <option value="Forensic Medicine">Forensic Medicine</option>
+                <option value="Community Medicine">Community Medicine</option>
+              </optgroup>
+              <optgroup label="Major Clinical Subjects">
+                <option value="Internal Medicine">Internal Medicine</option>
+                <option value="General Surgery">General Surgery</option>
+                <option value="Obs & Gynaecology">Obs &amp; Gynaecology</option>
+                <option value="Paediatrics">Paediatrics</option>
+              </optgroup>
+              <optgroup label="Allied Clinical Subjects">
+                <option value="Orthopaedics">Orthopaedics</option>
+                <option value="Ophthalmology">Ophthalmology</option>
+                <option value="ENT">ENT</option>
+                <option value="Psychiatry">Psychiatry</option>
+                <option value="Dermatology">Dermatology</option>
+                <option value="Radiology">Radiology</option>
+                <option value="Anaesthesia">Anaesthesia</option>
+                <option value="Emergency Medicine">Emergency Medicine</option>
+                <option value="Dentistry">Dentistry</option>
+              </optgroup>
+              <option value="Mixed">Mixed</option>
+            </select>
+          </div>
+          <div id="json-preview" class="preview-box"></div>
+          <div id="upload-status" class="upload-status"></div>
+          <div style="display:flex;gap:10px;margin-top:16px;">
+            <button class="btn btn-light btn-sm" id="btn-preview-json"><i class="fas fa-eye"></i> Preview</button>
+            <button class="btn btn-success" id="btn-upload" style="flex:1;"><i class="fas fa-cloud-upload-alt"></i> Upload to Firebase</button>
+          </div>
+        </div>
+        <div>
+          <div class="card" style="margin-bottom:24px;">
+            <div class="card-header"><div class="card-title"><i class="fas fa-code"></i> JSON Format</div></div>
+            <p style="font-size:.82rem;color:var(--text-muted);margin-bottom:10px;">Format A — Plain array:</p>
+            <pre class="format-guide">[
+  {
+    <span class="k">"question"</span>: <span class="s">"Which nerve supplies...?"</span>,
+    <span class="k">"options"</span>: [<span class="s">"A"</span>,<span class="s">"B"</span>,<span class="s">"C"</span>,<span class="s">"D"</span>],
+    <span class="k">"correct"</span>: <span class="n">2</span>,
+    <span class="k">"explanation"</span>: <span class="s">"Because..."</span>
+  }
+]</pre>
+            <p style="font-size:.82rem;color:var(--text-muted);margin:12px 0 6px;">Format B — With metadata:</p>
+            <pre class="format-guide">{
+  <span class="k">"name"</span>: <span class="s">"Anatomy Set 1"</span>,
+  <span class="k">"subject"</span>: <span class="s">"Anatomy"</span>,
+  <span class="k">"questions"</span>: [<span class="v">/* array above */</span>]
+}</pre>
+          </div>
+          <div class="card">
+            <div class="card-header"><div class="card-title"><i class="fas fa-shield-alt"></i> Firebase Rules</div></div>
+            <pre class="format-guide">{
+  <span class="k">"rules"</span>: {
+    <span class="k">"mcq_sets"</span>: {
+      <span class="k">".read"</span>: <span class="s">true</span>,
+      <span class="k">".write"</span>: <span class="s">true</span>
+    }
+  }
+}</pre>
+            <p style="font-size:.78rem;color:var(--text-muted);margin-top:10px;"><i class="fas fa-info-circle" style="color:var(--warning)"></i> Set <code>.write: false</code> in production for security.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- PANEL: GUIDE -->
+    <div class="nav-panel" id="panel-guide">
+      <div class="card">
+        <div class="card-header"><div class="card-title"><i class="fas fa-book-open"></i> Full Format Guide &amp; Tips</div></div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:24px;">
+          <div>
+            <h3 style="font-family:var(--font-display);color:var(--secondary);font-size:.95rem;margin-bottom:10px;">Question Fields</h3>
+            <table style="width:100%;border-collapse:collapse;font-size:.84rem;">
+              <thead><tr style="background:var(--bg);"><th style="padding:8px 12px;text-align:left;border-bottom:2px solid var(--border);">Field</th><th style="padding:8px 12px;text-align:left;border-bottom:2px solid var(--border);">Type</th><th style="padding:8px 12px;text-align:left;border-bottom:2px solid var(--border);">Required</th></tr></thead>
+              <tbody>
+                <tr><td style="padding:8px 12px;border-bottom:1px solid var(--border);"><code>question</code></td><td style="padding:8px 12px;border-bottom:1px solid var(--border);">string</td><td style="padding:8px 12px;border-bottom:1px solid var(--border);color:var(--danger);font-weight:700;">Yes</td></tr>
+                <tr><td style="padding:8px 12px;border-bottom:1px solid var(--border);"><code>options</code></td><td style="padding:8px 12px;border-bottom:1px solid var(--border);">string[]</td><td style="padding:8px 12px;border-bottom:1px solid var(--border);color:var(--danger);font-weight:700;">Yes (≥2)</td></tr>
+                <tr><td style="padding:8px 12px;border-bottom:1px solid var(--border);"><code>correct</code></td><td style="padding:8px 12px;border-bottom:1px solid var(--border);">number</td><td style="padding:8px 12px;border-bottom:1px solid var(--border);color:var(--danger);font-weight:700;">Yes (0-based)</td></tr>
+                <tr><td style="padding:8px 12px;"><code>explanation</code></td><td style="padding:8px 12px;">string</td><td style="padding:8px 12px;color:var(--success);font-weight:700;">Optional</td></tr>
+              </tbody>
+            </table>
+            <h3 style="font-family:var(--font-display);color:var(--secondary);font-size:.95rem;margin:20px 0 10px;">NMCLE Subjects</h3>
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:4px;font-size:.82rem;color:var(--text-md);">
+              <div>🦴 Anatomy</div><div>❤️ Physiology</div>
+              <div>🧪 Biochemistry</div><div>🔬 Pathology</div>
+              <div>💊 Pharmacology</div><div>🦠 Microbiology</div>
+              <div>⚖️ Forensic Medicine</div><div>🏘️ Community Medicine</div>
+              <div>🩺 Internal Medicine</div><div>🔪 General Surgery</div>
+              <div>🤰 Obs &amp; Gynaecology</div><div>👶 Paediatrics</div>
+              <div>🦿 Orthopaedics</div><div>👁️ Ophthalmology</div>
+              <div>👂 ENT</div><div>🧠 Psychiatry</div>
+              <div>🩹 Dermatology</div><div>🩻 Radiology</div>
+              <div>💉 Anaesthesia</div><div>🚑 Emergency Medicine</div>
+              <div>🦷 Dentistry</div><div>📚 Mixed</div>
+            </div>
+          </div>
+          <div>
+            <h3 style="font-family:var(--font-display);color:var(--secondary);font-size:.95rem;margin-bottom:10px;">Admin Controls Reference</h3>
+            <ul style="font-size:.85rem;color:var(--text-md);line-height:2;list-style:none;padding:0;">
+              <li><i class="fas fa-pencil-alt" style="color:var(--primary);width:20px;"></i> Open set in Question Editor</li>
+              <li><i class="fas fa-tag" style="color:var(--warning);width:20px;"></i> Rename / change subject</li>
+              <li><i class="fas fa-download" style="color:var(--success);width:20px;"></i> Export set as JSON</li>
+              <li><i class="fas fa-trash" style="color:var(--danger);width:20px;"></i> Permanently delete set</li>
+              <li><i class="fas fa-plus-circle" style="color:var(--success);width:20px;"></i> Add question inside editor</li>
+              <li><i class="fas fa-cloud-upload-alt" style="color:var(--primary);width:20px;"></i> Push all edits to Firebase</li>
+              <li><i class="fas fa-times" style="color:var(--danger);width:20px;"></i> Delete a question</li>
+              <li><i class="fas fa-arrow-up" style="color:var(--primary);width:20px;"></i> / <i class="fas fa-arrow-down" style="color:var(--primary);"></i> Reorder questions</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div><!-- /admin-panel -->
+</div>
+</main>
+
+<!-- RENAME MODAL -->
+<div class="modal-overlay" id="modal-rename">
+  <div class="modal">
+    <div class="modal-header">
+      <span class="modal-title">Rename Set</span>
+      <button class="btn-close-modal" onclick="closeModal('modal-rename')"><i class="fas fa-times"></i></button>
+    </div>
+    <div class="modal-body">
+      <div class="form-group">
+        <label>Set Name</label>
+        <input type="text" id="rename-name-input">
+      </div>
+      <div class="form-group">
+        <label>Subject</label>
+        <select id="rename-subject-input">
+          <option value="">— Select —</option>
+          <optgroup label="Basic Medical Sciences">
+            <option value="Anatomy">Anatomy</option>
+            <option value="Physiology">Physiology</option>
+            <option value="Biochemistry">Biochemistry</option>
+            <option value="Pathology">Pathology</option>
+            <option value="Pharmacology">Pharmacology</option>
+            <option value="Microbiology">Microbiology</option>
+            <option value="Forensic Medicine">Forensic Medicine</option>
+            <option value="Community Medicine">Community Medicine</option>
+          </optgroup>
+          <optgroup label="Major Clinical Subjects">
+            <option value="Internal Medicine">Internal Medicine</option>
+            <option value="General Surgery">General Surgery</option>
+            <option value="Obs & Gynaecology">Obs &amp; Gynaecology</option>
+            <option value="Paediatrics">Paediatrics</option>
+          </optgroup>
+          <optgroup label="Allied Clinical Subjects">
+            <option value="Orthopaedics">Orthopaedics</option>
+            <option value="Ophthalmology">Ophthalmology</option>
+            <option value="ENT">ENT</option>
+            <option value="Psychiatry">Psychiatry</option>
+            <option value="Dermatology">Dermatology</option>
+            <option value="Radiology">Radiology</option>
+            <option value="Anaesthesia">Anaesthesia</option>
+            <option value="Emergency Medicine">Emergency Medicine</option>
+            <option value="Dentistry">Dentistry</option>
+          </optgroup>
+          <option value="Mixed">Mixed</option>
+        </select>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-light btn-sm" onclick="closeModal('modal-rename')">Cancel</button>
+      <button class="btn btn-primary btn-sm" id="btn-confirm-rename"><i class="fas fa-save"></i> Save</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast" role="alert"></div>
+
+<!-- Firebase -->
+<script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-database-compat.js"></script>
+
+<script>
+/* ── Firebase ── */
+const firebaseConfig = {
+  apiKey: "AIzaSyD7oo7cXU3KxNimQ8BK8T8GtKeQOSpU_Sc",
+  authDomain: "nmcle-94a3d.firebaseapp.com",
+  databaseURL: "https://nmcle-94a3d-default-rtdb.asia-southeast1.firebasedatabase.app",
+  projectId: "nmcle-94a3d",
+  storageBucket: "nmcle-94a3d.firebasestorage.app",
+  messagingSenderId: "1024414109225",
+  appId: "1:1024414109225:web:7505bbb4a3a9551303d638"
+};
+firebase.initializeApp(firebaseConfig);
+const db = firebase.database();
+
+/* ── Admin password — change this ── */
+const ADMIN_PASSWORD = 'nmcleadmin2026';
+
+/* ── Helpers ── */
+const $ = id => document.getElementById(id);
+let toastTimer;
+function toast(msg, type='info') {
+  const el = $('toast');
+  el.textContent = msg;
+  el.className = `toast toast-${type} show`;
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => el.classList.remove('show'), 3500);
+}
+function slugify(s) { return s.toLowerCase().trim().replace(/[^a-z0-9]+/g,'_').replace(/^_+|_+$/g,''); }
+function setEditorStatus(msg, type) {
+  const el = $('editor-save-status');
+  el.textContent = msg; el.className = `upload-status ${type} show`;
+  if (type === 'success') setTimeout(() => el.className='upload-status', 3000);
+}
+function openModal(id) { $(id).classList.add('open'); }
+function closeModal(id) { $(id).classList.remove('open'); }
+
+/* ── Login ── */
+let isLoggedIn = sessionStorage.getItem('nmcle_admin') === '1';
+if (isLoggedIn) showPanel();
+
+$('btn-login').addEventListener('click', () => {
+  const pw = $('admin-pass').value;
+  if (pw === ADMIN_PASSWORD) {
+    sessionStorage.setItem('nmcle_admin','1');
+    showPanel();
+  } else {
+    $('login-error').textContent = 'Incorrect password.';
+    $('login-error').className = 'upload-status error show';
+    $('admin-pass').value = '';
+    $('admin-pass').focus();
+  }
+});
+$('admin-pass').addEventListener('keydown', e => { if (e.key==='Enter') $('btn-login').click(); });
+$('btn-admin-logout').addEventListener('click', () => { sessionStorage.removeItem('nmcle_admin'); location.reload(); });
+
+function showPanel() {
+  $('login-wall').style.display = 'none';
+  $('admin-panel').style.display = 'block';
+  $('btn-admin-logout').style.display = 'inline-flex';
+  loadSets();
+}
+
+/* ── Nav Tabs ── */
+document.querySelectorAll('.nav-tab').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('.nav-tab').forEach(b=>b.classList.remove('active'));
+    document.querySelectorAll('.nav-panel').forEach(p=>p.classList.remove('active'));
+    btn.classList.add('active');
+    $(btn.dataset.panel).classList.add('active');
+  });
+});
+
+/* ── State ── */
+let allSets = {};
+let currentKey = null;
+let editQuestions = [];
+let unsaved = false;
+
+/* ── Load Sets ── */
+function loadSets() {
+  $('sets-loading').style.display = 'block';
+  $('sets-grid').style.display = 'none';
+  $('sets-empty').style.display = 'none';
+
+  db.ref('mcq_sets').once('value').then(snap => {
+    $('sets-loading').style.display = 'none';
+    allSets = snap.val() || {};
+    const entries = Object.entries(allSets);
+    if (!entries.length) { $('sets-empty').style.display = 'block'; updateStats(); return; }
+
+    const subjects = [...new Set(entries.map(([,v])=>v.subject).filter(Boolean))];
+    const sf = $('sets-subject-filter');
+    sf.innerHTML = '<option value="">All Subjects</option>';
+    subjects.forEach(s => { const o=document.createElement('option'); o.value=s; o.textContent=s; sf.appendChild(o); });
+
+    renderSetsGrid(entries);
+    updateStats();
+  }).catch(err => {
+    $('sets-loading').style.display = 'none';
+    toast('Load failed: '+err.message,'error');
+  });
+}
+
+function getQs(val) {
+  if (!val.questions) return [];
+  return Array.isArray(val.questions) ? val.questions : Object.values(val.questions);
+}
+
+const SUBJ_ICONS = {
+  Anatomy:'🦴',Physiology:'❤️',Biochemistry:'🧪',Pathology:'🔬',
+  Pharmacology:'💊',Microbiology:'🦠','Forensic Medicine':'⚖️',
+  'Community Medicine':'🏘️','Internal Medicine':'🩺','General Surgery':'🔪',
+  'Obs & Gynaecology':'🤰',Paediatrics:'👶',Orthopaedics:'🦿',
+  Ophthalmology:'👁️',ENT:'👂',Psychiatry:'🧠',Dermatology:'🩹',
+  Radiology:'🩻',Anaesthesia:'💉','Emergency Medicine':'🚑',
+  Dentistry:'🦷',Mixed:'📚'
+};
+
+function renderSetsGrid(entries) {
+  const grid = $('sets-grid');
+  grid.innerHTML = '';
+  const search = $('sets-search').value.toLowerCase();
+  const subFilter = $('sets-subject-filter').value;
+  const filtered = entries.filter(([,v]) => {
+    const nameOk = !search || (v.name||'').toLowerCase().includes(search);
+    const subOk  = !subFilter || v.subject === subFilter;
+    return nameOk && subOk;
+  });
+
+  if (!filtered.length) {
+    grid.innerHTML = '<div class="empty-state"><i class="fas fa-search"></i><p>No sets match your filter.</p></div>';
+    grid.style.display = 'block'; return;
+  }
+
+  filtered.forEach(([key,val]) => {
+    const qs = getQs(val);
+    const div = document.createElement('div');
+    div.className = 'set-row';
+    div.innerHTML = `
+      <div class="set-row-icon">${SUBJ_ICONS[val.subject]||'📄'}</div>
+      <div class="set-row-body">
+        <div class="set-row-name">${val.name||key}</div>
+        <div class="set-row-meta">
+          ${val.subject?`<span class="badge badge-blue">${val.subject}</span> `:''}
+          <span class="badge badge-green">${qs.length} questions</span>
+          ${val.uploadedAt?` · ${new Date(val.uploadedAt).toLocaleDateString()}` : ''}
+        </div>
+      </div>
+      <div class="set-row-actions">
+        <button class="btn-icon btn-icon-primary" title="Edit questions" onclick="openEditor('${key}');event.stopPropagation()"><i class="fas fa-pencil-alt"></i></button>
+        <button class="btn-icon btn-icon-warning" title="Rename / change subject" onclick="openRenameModal('${key}');event.stopPropagation()"><i class="fas fa-tag"></i></button>
+        <button class="btn-icon btn-icon-success" title="Export JSON" onclick="exportSet('${key}','json');event.stopPropagation()"><i class="fas fa-download"></i></button>
+        <button class="btn-icon btn-icon-danger" title="Delete set" onclick="deleteSet('${key}','${(val.name||key).replace(/'/g,"\\'").replace(/"/g,'\\"')}');event.stopPropagation()"><i class="fas fa-trash"></i></button>
+      </div>
+    `;
+    div.addEventListener('click', () => openEditor(key));
+    grid.appendChild(div);
+  });
+  grid.style.display = 'flex';
+}
+
+function updateStats() {
+  const entries = Object.entries(allSets);
+  const totalQ = entries.reduce((s,[,v])=>s+getQs(v).length,0);
+  const subjects = new Set(entries.map(([,v])=>v.subject).filter(Boolean));
+  $('stat-total').textContent = entries.length;
+  $('stat-questions').textContent = totalQ;
+  $('stat-subjects').textContent = subjects.size;
+}
+
+$('sets-search').addEventListener('input', () => renderSetsGrid(Object.entries(allSets)));
+$('sets-subject-filter').addEventListener('change', () => renderSetsGrid(Object.entries(allSets)));
+$('btn-refresh').addEventListener('click', loadSets);
+
+/* ── Delete ── */
+function deleteSet(key, name) {
+  if (!confirm(`Delete "${name}"? This cannot be undone.`)) return;
+  db.ref('mcq_sets/'+key).remove().then(() => {
+    toast(`Deleted "${name}"`, 'success');
+    delete allSets[key];
+    if (currentKey===key) { currentKey=null; $('editor-content').style.display='none'; $('editor-empty').style.display='block'; }
+    renderSetsGrid(Object.entries(allSets));
+    updateStats();
+  }).catch(err => toast('Delete failed: '+err.message,'error'));
+}
+
+/* ── Rename Modal ── */
+let renameKey = null;
+function openRenameModal(key) {
+  renameKey = key;
+  const val = allSets[key];
+  $('rename-name-input').value = val.name || '';
+  $('rename-subject-input').value = val.subject || '';
+  openModal('modal-rename');
+}
+$('btn-confirm-rename').addEventListener('click', async () => {
+  const name = $('rename-name-input').value.trim();
+  const subject = $('rename-subject-input').value;
+  if (!name) { toast('Name is required','error'); return; }
+  try {
+    await db.ref('mcq_sets/'+renameKey).update({ name, subject });
+    allSets[renameKey].name = name;
+    allSets[renameKey].subject = subject;
+    toast('Set updated','success');
+    closeModal('modal-rename');
+    renderSetsGrid(Object.entries(allSets));
+    updateStats();
+    if (currentKey===renameKey) {
+      $('editor-set-label').textContent = name;
+      $('edit-set-name').value = name;
+      $('edit-set-subject').value = subject;
+    }
+  } catch(err) { toast('Update failed: '+err.message,'error'); }
+});
+
+/* ── Question Editor ── */
+function openEditor(key) {
+  currentKey = key;
+  const val = allSets[key];
+  editQuestions = JSON.parse(JSON.stringify(getQs(val)));
+  unsaved = false;
+  $('unsaved-indicator').style.display = 'none';
+  $('editor-set-label').textContent = val.name || key;
+  $('edit-set-name').value = val.name || '';
+  $('edit-set-subject').value = val.subject || '';
+  $('editor-empty').style.display = 'none';
+  $('editor-content').style.display = 'block';
+  document.querySelectorAll('.nav-tab').forEach(b=>b.classList.remove('active'));
+  document.querySelectorAll('.nav-panel').forEach(p=>p.classList.remove('active'));
+  document.querySelector('[data-panel="panel-editor"]').classList.add('active');
+  $('panel-editor').classList.add('active');
+  renderQList();
+}
+
+function renderQList() {
+  const search = ($('q-search').value||'').toLowerCase();
+  const list = $('q-list');
+  list.innerHTML = '';
+  const opts = ['A','B','C','D','E'];
+  const filtered = search
+    ? editQuestions.map((q,i)=>({q,i})).filter(({q})=>q.question.toLowerCase().includes(search))
+    : editQuestions.map((q,i)=>({q,i}));
+  $('q-count-label').textContent = `${filtered.length} / ${editQuestions.length} questions`;
+
+  if (!filtered.length) {
+    list.innerHTML = '<div class="empty-state" style="padding:30px;"><i class="fas fa-search"></i><p>No questions match.</p></div>';
+    return;
+  }
+
+  filtered.forEach(({q,i}) => {
+    const card = document.createElement('div');
+    card.className = 'q-card'; card.id = `qcard-${i}`;
+    const optionsHtml = q.options.map((o,oi) => `
+      <div class="option-row">
+        <input type="radio" name="correct-${i}" value="${oi}" class="option-radio" ${q.correct===oi?'checked':''}>
+        <span class="option-label-txt">${opts[oi]||oi}</span>
+        <input type="text" class="option-input ${q.correct===oi?'correct-option':''}" value="${escHtml(o)}" data-qi="${i}" data-oi="${oi}" onchange="updateOption(${i},${oi},this.value)">
+      </div>
+    `).join('');
+    card.innerHTML = `
+      <div class="q-card-head" onclick="toggleQCard(${i})">
+        <div class="q-num-badge">${i+1}</div>
+        <div class="q-text-preview">${escHtml(q.question)}</div>
+        <div class="q-card-actions" onclick="event.stopPropagation()">
+          <button class="btn-icon btn-icon-primary" title="Move up" onclick="moveQ(${i},-1)" ${i===0?'disabled':''}><i class="fas fa-arrow-up"></i></button>
+          <button class="btn-icon btn-icon-primary" title="Move down" onclick="moveQ(${i},1)" ${i===editQuestions.length-1?'disabled':''}><i class="fas fa-arrow-down"></i></button>
+          <button class="btn-icon btn-icon-danger" title="Delete" onclick="deleteQ(${i})"><i class="fas fa-times"></i></button>
+        </div>
+      </div>
+      <div class="q-card-body" id="qbody-${i}">
+        <div class="form-group">
+          <label>Question Text</label>
+          <textarea rows="3" onchange="updateQText(${i},this.value)" style="font-family:var(--font-body);font-size:.9rem;">${escHtml(q.question)}</textarea>
+        </div>
+        <p style="font-size:.72rem;font-weight:800;color:var(--text-muted);text-transform:uppercase;letter-spacing:.4px;margin-top:4px;margin-bottom:6px;">Options — click radio to mark correct</p>
+        <div class="options-grid">${optionsHtml}</div>
+        <div style="display:flex;gap:8px;margin-top:10px;align-items:center;flex-wrap:wrap;">
+          <button class="btn-icon btn-icon-success" title="Add option" onclick="addOption(${i})"><i class="fas fa-plus"></i></button>
+          ${q.options.length>2?`<button class="btn-icon btn-icon-danger" title="Remove last option" onclick="removeOption(${i})"><i class="fas fa-minus"></i></button>`:''}
+        </div>
+        <div class="form-group" style="margin-top:10px;">
+          <label>Explanation (optional)</label>
+          <textarea rows="2" onchange="updateExplanation(${i},this.value)" style="font-family:var(--font-body);font-size:.88rem;">${escHtml(q.explanation||'')}</textarea>
+        </div>
+        <button class="btn btn-success btn-xs" style="margin-top:10px;" onclick="saveOneQ(${i})"><i class="fas fa-check"></i> Save this question</button>
+      </div>
+    `;
+    card.querySelectorAll(`input[name="correct-${i}"]`).forEach(r => {
+      r.addEventListener('change', () => {
+        editQuestions[i].correct = parseInt(r.value);
+        card.querySelectorAll('.option-input').forEach((inp,oi) => { inp.classList.toggle('correct-option', oi===editQuestions[i].correct); });
+        markUnsaved();
+      });
+    });
+    list.appendChild(card);
+  });
+}
+
+function escHtml(s) {
+  if (!s) return '';
+  return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+function toggleQCard(i) { const b=$(`qbody-${i}`); if(b) b.classList.toggle('open'); }
+function markUnsaved() { unsaved=true; $('unsaved-indicator').style.display='inline-flex'; }
+function updateQText(i,val){ editQuestions[i].question=val; const p=document.querySelector(`#qcard-${i} .q-text-preview`); if(p) p.textContent=val; markUnsaved(); }
+function updateOption(i,oi,val){ editQuestions[i].options[oi]=val; markUnsaved(); }
+function updateExplanation(i,val){ editQuestions[i].explanation=val; markUnsaved(); }
+function addOption(i){ editQuestions[i].options.push(''); markUnsaved(); renderQList(); toggleQCard(i); }
+function removeOption(i){ const q=editQuestions[i]; if(q.options.length<=2){toast('Minimum 2 options','error');return;} if(q.correct>=q.options.length-1) q.correct=q.options.length-2; q.options.pop(); markUnsaved(); renderQList(); toggleQCard(i); }
+function deleteQ(i){ if(!confirm(`Delete question ${i+1}?`)) return; editQuestions.splice(i,1); markUnsaved(); renderQList(); toast('Question removed — save to Firebase to persist','warning'); }
+function moveQ(i,dir){ const j=i+dir; if(j<0||j>=editQuestions.length) return; [editQuestions[i],editQuestions[j]]=[editQuestions[j],editQuestions[i]]; markUnsaved(); renderQList(); }
+$('q-search').addEventListener('input', renderQList);
+
+$('btn-save-all-qs').addEventListener('click', async () => {
+  if (!currentKey) return;
+  $('btn-save-all-qs').disabled=true; setEditorStatus('Saving to Firebase…','info');
+  try {
+    await db.ref('mcq_sets/'+currentKey+'/questions').set(editQuestions);
+    allSets[currentKey].questions=editQuestions; unsaved=false;
+    $('unsaved-indicator').style.display='none';
+    setEditorStatus(`✅ Saved ${editQuestions.length} questions!`,'success');
+    toast('All questions saved!','success'); updateStats();
+  } catch(err){ setEditorStatus('Error: '+err.message,'error'); toast('Save failed: '+err.message,'error'); }
+  $('btn-save-all-qs').disabled=false;
+});
+
+async function saveOneQ(i) {
+  if (!currentKey) return;
+  try {
+    await db.ref('mcq_sets/'+currentKey+'/questions/'+i).set(editQuestions[i]);
+    allSets[currentKey].questions=editQuestions;
+    toast(`Question ${i+1} saved ✓`,'success');
+  } catch(err){ toast('Save failed: '+err.message,'error'); }
+}
+
+$('btn-save-meta').addEventListener('click', async () => {
+  if (!currentKey) return;
+  const name=$('edit-set-name').value.trim(), subject=$('edit-set-subject').value;
+  if (!name){toast('Name required','error');return;}
+  try {
+    await db.ref('mcq_sets/'+currentKey).update({name,subject});
+    allSets[currentKey].name=name; allSets[currentKey].subject=subject;
+    $('editor-set-label').textContent=name; toast('Set info saved','success');
+    renderSetsGrid(Object.entries(allSets));
+  } catch(err){ toast('Error: '+err.message,'error'); }
+});
+
+$('btn-add-question').addEventListener('click', ()=>{ $('add-q-form').style.display='block'; $('new-q-text').focus(); });
+$('btn-cancel-add-q').addEventListener('click', ()=>{ $('add-q-form').style.display='none'; resetAddForm(); });
+$('btn-confirm-add-q').addEventListener('click', ()=>{
+  const text=$('new-q-text').value.trim();
+  if(!text){toast('Question text required','error');return;}
+  const opts=[$('new-opt-0').value.trim(),$('new-opt-1').value.trim(),$('new-opt-2').value.trim(),$('new-opt-3').value.trim()].filter(Boolean);
+  if(opts.length<2){toast('At least 2 options required','error');return;}
+  const correctRadio=document.querySelector('input[name="new-correct"]:checked');
+  const correct=correctRadio?parseInt(correctRadio.value):0;
+  if(correct>=opts.length){toast('Please select a valid correct option','error');return;}
+  editQuestions.push({question:text,options:opts,correct,explanation:$('new-q-explanation').value.trim()});
+  markUnsaved(); $('add-q-form').style.display='none'; resetAddForm(); renderQList();
+  toast('Question added — save to Firebase to persist','info');
+  setTimeout(()=>{const last=document.querySelector('.q-card:last-child');if(last)last.scrollIntoView({behavior:'smooth',block:'nearest'});},100);
+});
+function resetAddForm(){
+  $('new-q-text').value=''; $('new-q-explanation').value='';
+  ['new-opt-0','new-opt-1','new-opt-2','new-opt-3'].forEach(id=>$(id).value='');
+  const r=document.querySelector('input[name="new-correct"]:checked'); if(r) r.checked=false;
+}
+
+/* ── Export ── */
+function exportSet(key, format) {
+  const val=allSets[key], qs=getQs(val), safeName=(val.name||key).replace(/[^a-z0-9]/gi,'_');
+  if(format==='json'){
+    const blob=new Blob([JSON.stringify({name:val.name,subject:val.subject,questions:qs},null,2)],{type:'application/json'});
+    dlBlob(blob,safeName+'.json');
+  } else if(format==='csv'){
+    const rows=[['#','Question','Option A','Option B','Option C','Option D','Correct','Explanation']];
+    qs.forEach((q,i)=>{ rows.push([i+1,q.question,...(q.options.concat(['','','','']).slice(0,4)),q.options[q.correct]||'',q.explanation||'']); });
+    const csv=rows.map(r=>r.map(c=>`"${String(c).replace(/"/g,'""')}"`).join(',')).join('\n');
+    dlBlob(new Blob([csv],{type:'text/csv'}),safeName+'.csv');
+  }
+}
+function dlBlob(blob,name){ const a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download=name; a.click(); URL.revokeObjectURL(a.href); }
+
+$('btn-export-set').addEventListener('click',()=>$('export-set-menu').classList.toggle('open'));
+$('export-set-json').addEventListener('click',()=>{ if(currentKey){exportSet(currentKey,'json');$('export-set-menu').classList.remove('open');} });
+$('export-set-csv').addEventListener('click',()=>{ if(currentKey){exportSet(currentKey,'csv');$('export-set-menu').classList.remove('open');} });
+$('btn-export-all').addEventListener('click',()=>$('export-all-menu').classList.toggle('open'));
+$('export-all-json').addEventListener('click',()=>{ dlBlob(new Blob([JSON.stringify(allSets,null,2)],{type:'application/json'}),'nmcle_all_sets.json'); $('export-all-menu').classList.remove('open'); });
+$('export-all-csv').addEventListener('click',()=>{
+  const rows=[['Set','Subject','#','Question','Option A','Option B','Option C','Option D','Correct','Explanation']];
+  Object.values(allSets).forEach(val=>{ getQs(val).forEach((q,i)=>{ rows.push([val.name||'',val.subject||'',i+1,q.question,...(q.options.concat(['','','','']).slice(0,4)),q.options[q.correct]||'',q.explanation||'']); }); });
+  const csv=rows.map(r=>r.map(c=>`"${String(c).replace(/"/g,'""')}"`).join(',')).join('\n');
+  dlBlob(new Blob([csv],{type:'text/csv'}),'nmcle_all_questions.csv');
+  $('export-all-menu').classList.remove('open');
+});
+
+document.addEventListener('click',e=>{ if(!e.target.closest('.dropdown-wrap')) document.querySelectorAll('.dropdown-menu').forEach(m=>m.classList.remove('open')); });
+
+/* ── Upload ── */
+let selectedFile=null;
+const dropZone=$('drop-zone');
+document.querySelectorAll('.tab-btn').forEach(btn=>{
+  btn.addEventListener('click',()=>{
+    document.querySelectorAll('.tab-btn').forEach(b=>b.classList.remove('active'));
+    document.querySelectorAll('.upload-tab-content').forEach(c=>c.classList.remove('active'));
+    btn.classList.add('active'); $(btn.dataset.utab).classList.add('active');
+  });
+});
+dropZone.addEventListener('click',()=>$('json-file-input').click());
+dropZone.addEventListener('dragover',e=>{e.preventDefault();dropZone.classList.add('dragover');});
+dropZone.addEventListener('dragleave',()=>dropZone.classList.remove('dragover'));
+dropZone.addEventListener('drop',e=>{e.preventDefault();dropZone.classList.remove('dragover');if(e.dataTransfer.files[0]) handleFile(e.dataTransfer.files[0]);});
+$('json-file-input').addEventListener('change',()=>{ if($('json-file-input').files[0]) handleFile($('json-file-input').files[0]); });
+
+function handleFile(file){
+  if(!file.name.endsWith('.json')){toast('Please select a .json file','error');return;}
+  selectedFile=file;
+  dropZone.querySelector('p').innerHTML=`<strong>${file.name}</strong> (${(file.size/1024).toFixed(1)} KB) ready`;
+  dropZone.querySelector('i').className='fas fa-check-circle';
+  dropZone.style.borderColor='var(--success)';
+}
+
+function getJsonContent(){
+  return new Promise((res,rej)=>{
+    const active=document.querySelector('.tab-btn.active').dataset.utab;
+    if(active==='utab-file'){
+      if(!selectedFile){rej(new Error('No file selected'));return;}
+      const r=new FileReader(); r.onload=e=>res(e.target.result); r.onerror=()=>rej(new Error('Read failed')); r.readAsText(selectedFile);
+    } else {
+      const text=$('json-paste').value.trim();
+      if(!text){rej(new Error('No JSON pasted'));return;}
+      res(text);
+    }
+  });
+}
+
+function parseAndValidate(text){
+  let parsed;
+  try{parsed=JSON.parse(text);}catch(e){throw new Error('Invalid JSON: '+e.message);}
+  let questions,meta={};
+  if(Array.isArray(parsed)) questions=parsed;
+  else if(parsed&&Array.isArray(parsed.questions)){questions=parsed.questions;meta={name:parsed.name,subject:parsed.subject};}
+  else if(parsed&&typeof parsed==='object'){const vals=Object.values(parsed);if(vals.every(v=>v.question))questions=vals;else throw new Error('Unrecognized JSON format');}
+  else throw new Error('Unrecognized JSON format');
+  if(!questions.length) throw new Error('No questions found');
+  questions.forEach((q,i)=>{
+    if(!q.question) throw new Error(`Q${i+1} missing "question"`);
+    if(!Array.isArray(q.options)||q.options.length<2) throw new Error(`Q${i+1}: options must be array with ≥2 items`);
+    if(typeof q.correct!=='number'||q.correct<0||q.correct>=q.options.length) throw new Error(`Q${i+1}: invalid "correct" index`);
+  });
+  return{questions,meta};
+}
+
+function setUploadStatus(msg,type){const el=$('upload-status');el.textContent=msg;el.className=`upload-status ${type} show`;}
+
+$('btn-preview-json').addEventListener('click', async()=>{
+  try{
+    const text=await getJsonContent();
+    const{questions,meta}=parseAndValidate(text);
+    const box=$('json-preview');
+    box.textContent=`✅ ${questions.length} questions\nName: ${meta.name||'(not set)'}\nSubject: ${meta.subject||'(not set)'}\n\nQ1: ${questions[0].question}\nOptions: ${questions[0].options.join(' | ')}\nCorrect: ${questions[0].options[questions[0].correct]}`;
+    box.className='preview-box show'; setUploadStatus(`Preview OK — ${questions.length} questions, no errors.`,'success');
+  }catch(err){$('json-preview').className='preview-box'; setUploadStatus('Error: '+err.message,'error');}
+});
+
+$('btn-upload').addEventListener('click', async()=>{
+  const name=$('set-name-input').value.trim();
+  if(!name){setUploadStatus('Set name required','error');$('set-name-input').focus();return;}
+  $('btn-upload').disabled=true; setUploadStatus('Uploading…','info');
+  try{
+    const text=await getJsonContent();
+    const{questions,meta}=parseAndValidate(text);
+    const key=slugify(name)+'_'+Date.now();
+    const payload={name,subject:$('set-subject-input').value||meta.subject||'',uploadedAt:new Date().toISOString(),questions};
+    await db.ref('mcq_sets/'+key).set(payload);
+    allSets[key]=payload;
+    setUploadStatus(`✅ Uploaded "${name}" — ${questions.length} questions saved!`,'success');
+    toast('Set uploaded!','success');
+    selectedFile=null; $('json-file-input').value=''; $('json-paste').value='';
+    $('set-name-input').value=''; $('set-subject-input').value='';
+    $('json-preview').className='preview-box';
+    dropZone.querySelector('p').innerHTML='<strong>Click to browse</strong> or drag &amp; drop';
+    dropZone.querySelector('i').className='fas fa-cloud-upload-alt';
+    dropZone.style.borderColor='';
+    renderSetsGrid(Object.entries(allSets)); updateStats();
+  }catch(err){setUploadStatus('Error: '+err.message,'error'); toast('Upload failed: '+err.message,'error');}
+  $('btn-upload').disabled=false;
+});
+
+document.querySelectorAll('.modal-overlay').forEach(overlay=>{
+  overlay.addEventListener('click',e=>{if(e.target===overlay) overlay.classList.remove('open');});
+});
+</script>
+</body>
+</html>
