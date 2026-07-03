@@ -519,7 +519,7 @@ a{color:inherit;}
       <div id="jitsi-container">
         <div class="video-placeholder" id="video-placeholder">
           <div style="font-size:34px;">🎥</div>
-          <div style="font-size:14px; opacity:.85;">Live 24/7 — anyone with the room link can join, anytime, no time limit.</div>
+          <div style="font-size:14px; opacity:.85;">Join the live video room — no time limit, open 24/7 to anyone with the link</div>
           <button class="btn btn-primary" id="join-video-btn" type="button">Join video room</button>
         </div>
       </div>
@@ -1035,23 +1035,52 @@ $("#native-share-btn").addEventListener("click", async () => {
 /* ============================================================
    JITSI MEET INTEGRATION
    ============================================================ */
+// ------------------------------------------------------------------
+// JaaS (Jitsi as a Service) config — FREE for unlimited minutes on
+// up to 25 people in the room. meet.jit.si's own embed is capped at
+// 5 minutes by design (since 2023), so embedding requires JaaS instead.
+// Sign up free at https://jaas.8x8.vc, copy your App ID, paste below.
+// ------------------------------------------------------------------
+const JAAS_APP_ID = "vpaas-magic-cookie-8c6cfecf5a844dff94085edfc79566c7";
+const JAAS_DOMAIN = "8x8.vc";
+
 $("#join-video-btn").addEventListener("click", startJitsi);
 function startJitsi() {
-  // NOTE: meet.jit.si caps EMBEDDED (iframe) calls at 5 minutes on its free tier.
-  // Opening the room as its own full Jitsi page (not embedded) removes that cap —
-  // the call can run for as long as people are in it, 24/7, and anyone with the
-  // link can join at any time. Still 100% free, no account or server needed.
-  const params = new URLSearchParams({
-    "userInfo.displayName": currentUser.name,
-    "userInfo.email": currentUser.email
-  });
-  const url = `https://meet.jit.si/${encodeURIComponent(ROOM_NAME)}#${params.toString()}`;
-  const win = window.open(url, "_blank", "noopener,noreferrer");
-  if (!win) {
-    showToast("Please allow pop-ups to join the video room.", "warn");
+  if (jitsiApi) return;
+
+  if (!JAAS_APP_ID || JAAS_APP_ID === "PASTE_YOUR_JAAS_APP_ID_HERE") {
+    showToast("Video isn't set up yet — add your free JaaS App ID in the code.", "error");
     return;
   }
-  showToast("Video room opened in a new tab — it stays live, join anytime.");
+
+  const container = $("#jitsi-container");
+  container.innerHTML = "";
+  const script = document.createElement("script");
+  script.src = "https://8x8.vc/external_api.js";
+  script.onload = () => {
+    jitsiApi = new window.JitsiMeetExternalAPI(JAAS_DOMAIN, {
+      roomName: `${JAAS_APP_ID}/${ROOM_NAME}`,
+      parentNode: container,
+      width: "100%",
+      height: "100%",
+      userInfo: { displayName: currentUser.name, email: currentUser.email },
+      configOverwrite: {
+        prejoinPageEnabled: false,
+        disableDeepLinking: true
+      },
+      interfaceConfigOverwrite: {
+        TOOLBAR_BUTTONS: [
+          "microphone", "camera", "closedcaptions", "desktop", "fullscreen",
+          "fodeviceselection", "hangup", "profile", "chat", "recording",
+          "raisehand", "videoquality", "filmstrip", "tileview",
+          "participants-pane", "select-background"
+        ]
+      }
+    });
+    showToast("Joined the video room — no time limit, stays live 24/7.");
+  };
+  script.onerror = () => showToast("Couldn't load the video room. Check your connection.", "error");
+  document.body.appendChild(script);
 }
 
 /* ============================================================
