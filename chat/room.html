@@ -1,0 +1,1188 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+<title>CEE Medico Nepal — Study Room</title>
+<meta name="description" content="Study together with CEE aspirants from across Nepal. Live chat, video room, and focus tools." />
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Crect width='24' height='24' rx='6' fill='%231D7A6E'/%3E%3Cpath d='M4 12h3l1.5-4 3 8L13 9l1.5 3H20' stroke='white' stroke-width='1.6' fill='none' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E" />
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@500;600&display=swap" rel="stylesheet">
+
+<style>
+/* ============================================================
+   CEE MEDICO NEPAL — STUDY ROOM
+   Design tokens
+   ============================================================ */
+:root{
+  --font-display:'Space Grotesk', system-ui, sans-serif;
+  --font-body:'Inter', system-ui, sans-serif;
+  --font-mono:'IBM Plex Mono', ui-monospace, monospace;
+
+  --primary:#1D7A6E;
+  --primary-dark:#14574E;
+  --primary-light:#5FB5A7;
+  --accent:#E8533E;
+  --accent-soft:#F7CFC7;
+
+  --bg:#F5F8F7;
+  --bg-elevated:#FFFFFF;
+  --ink:#0F2027;
+  --ink-soft:#4C6169;
+  --line:rgba(15,32,39,0.10);
+  --glass:rgba(255,255,255,0.62);
+  --glass-border:rgba(255,255,255,0.45);
+  --shadow:0 10px 30px rgba(15,32,39,0.08);
+  --radius:16px;
+  --radius-sm:10px;
+
+  --success:#1D7A6E;
+  --danger:#D64545;
+  --warn:#C98A1F;
+}
+
+[data-theme="dark"]{
+  --bg:#0B1620;
+  --bg-elevated:#101F2C;
+  --ink:#EAF2F1;
+  --ink-soft:#93ACB2;
+  --line:rgba(234,242,241,0.10);
+  --glass:rgba(16,31,44,0.60);
+  --glass-border:rgba(255,255,255,0.08);
+  --shadow:0 10px 30px rgba(0,0,0,0.45);
+  --primary-light:#3E9D8E;
+  --accent-soft:#3A241F;
+}
+
+*{box-sizing:border-box; margin:0; padding:0;}
+html,body{height:100%;}
+body{
+  font-family:var(--font-body);
+  background:
+    radial-gradient(1200px 600px at 90% -10%, color-mix(in srgb, var(--primary) 12%, transparent), transparent),
+    radial-gradient(900px 500px at -10% 110%, color-mix(in srgb, var(--accent) 8%, transparent), transparent),
+    var(--bg);
+  color:var(--ink);
+  min-height:100%;
+  overflow-x:hidden;
+  transition:background-color .3s ease, color .3s ease;
+}
+button{font-family:inherit;}
+input, button{outline:none;}
+:focus-visible{outline:2px solid var(--primary); outline-offset:2px; border-radius:4px;}
+a{color:inherit;}
+::selection{background:var(--accent-soft);}
+
+.hidden{display:none !important;}
+
+/* ---------- Signature: ECG pulse line (used as loader / status / divider) ---------- */
+.ecg-line{display:block; width:100%; height:28px;}
+.ecg-line path{
+  fill:none;
+  stroke:var(--primary);
+  stroke-width:2;
+  stroke-linecap:round;
+  stroke-linejoin:round;
+  stroke-dasharray:340;
+  stroke-dashoffset:340;
+  animation:ecg-draw 2.4s ease-in-out infinite;
+}
+@keyframes ecg-draw{
+  0%{stroke-dashoffset:340;}
+  55%{stroke-dashoffset:0;}
+  100%{stroke-dashoffset:-340;}
+}
+.ecg-dot{fill:var(--accent); animation:ecg-pulse 1.6s ease-in-out infinite;}
+@keyframes ecg-pulse{0%,100%{opacity:.35; r:3;} 50%{opacity:1; r:4.5;}}
+
+/* ============ Loading screen ============ */
+#loading-screen{
+  position:fixed; inset:0; z-index:999;
+  display:flex; flex-direction:column; align-items:center; justify-content:center; gap:18px;
+  background:var(--bg);
+}
+#loading-screen .brand-mark{
+  font-family:var(--font-display); font-weight:700; font-size:20px; letter-spacing:.02em;
+  display:flex; align-items:center; gap:10px;
+}
+#loading-screen .brand-mark .rx{
+  width:34px; height:34px; border-radius:9px; background:var(--primary);
+  color:#fff; display:flex; align-items:center; justify-content:center; font-size:15px;
+}
+#loading-screen .ecg-line{width:220px;}
+#loading-screen small{color:var(--ink-soft); font-size:12.5px; letter-spacing:.03em;}
+
+/* ============ Toasts ============ */
+#toast-container{
+  position:fixed; top:16px; right:16px; z-index:900;
+  display:flex; flex-direction:column; gap:10px; max-width:min(360px, calc(100vw - 32px));
+}
+.toast{
+  background:var(--glass); backdrop-filter:blur(16px); -webkit-backdrop-filter:blur(16px);
+  border:1px solid var(--glass-border); box-shadow:var(--shadow);
+  border-radius:var(--radius-sm); padding:12px 14px; font-size:13.5px;
+  display:flex; align-items:center; gap:10px;
+  animation:toast-in .25s ease-out;
+  border-left:3px solid var(--primary);
+}
+.toast.error{border-left-color:var(--danger);}
+.toast.warn{border-left-color:var(--warn);}
+@keyframes toast-in{from{opacity:0; transform:translateY(-8px);} to{opacity:1; transform:translateY(0);}}
+.toast .dot{width:6px; height:6px; border-radius:50%; background:var(--primary); flex:none;}
+.toast.error .dot{background:var(--danger);}
+.toast.warn .dot{background:var(--warn);}
+
+/* ============ Join Screen ============ */
+#join-screen{
+  min-height:100vh; display:flex; align-items:center; justify-content:center; padding:24px;
+}
+.join-card{
+  width:100%; max-width:420px;
+  background:var(--glass); backdrop-filter:blur(20px); -webkit-backdrop-filter:blur(20px);
+  border:1px solid var(--glass-border); box-shadow:var(--shadow);
+  border-radius:var(--radius); padding:36px 30px 30px;
+}
+.join-card .badge-row{display:flex; align-items:center; justify-content:space-between; margin-bottom:22px;}
+.join-card .rx{
+  width:38px; height:38px; border-radius:10px; background:var(--primary); color:#fff;
+  display:flex; align-items:center; justify-content:center; font-family:var(--font-display); font-weight:700;
+}
+.join-card h1{
+  font-family:var(--font-display); font-size:26px; font-weight:700; line-height:1.15; margin-bottom:8px; letter-spacing:-.01em;
+}
+.join-card p.subtitle{color:var(--ink-soft); font-size:14.5px; margin-bottom:24px;}
+.field{margin-bottom:16px;}
+.field label{display:block; font-size:12.5px; font-weight:600; color:var(--ink-soft); text-transform:uppercase; letter-spacing:.06em; margin-bottom:6px;}
+.field input{
+  width:100%; padding:12px 14px; font-size:15px; border-radius:var(--radius-sm);
+  border:1px solid var(--line); background:var(--bg-elevated); color:var(--ink);
+  transition:border-color .15s ease, box-shadow .15s ease;
+}
+.field input:focus{border-color:var(--primary); box-shadow:0 0 0 3px color-mix(in srgb, var(--primary) 18%, transparent);}
+.field .error-msg{color:var(--danger); font-size:12px; margin-top:5px; display:none;}
+.field.invalid input{border-color:var(--danger);}
+.field.invalid .error-msg{display:block;}
+.btn{
+  border:none; cursor:pointer; font-weight:600; border-radius:var(--radius-sm);
+  transition:transform .12s ease, box-shadow .12s ease, background .15s ease;
+  display:inline-flex; align-items:center; justify-content:center; gap:8px;
+}
+.btn:active{transform:scale(.98);}
+.btn-primary{
+  background:var(--primary); color:#fff; padding:13px 18px; font-size:15px; width:100%;
+  box-shadow:0 6px 18px color-mix(in srgb, var(--primary) 35%, transparent);
+}
+.btn-primary:hover{background:var(--primary-dark);}
+.btn-primary:disabled{opacity:.6; cursor:not-allowed;}
+.join-card .ecg-line{margin-top:22px; opacity:.8;}
+.join-foot{margin-top:14px; font-size:12px; color:var(--ink-soft); text-align:center;}
+
+/* ============ App shell ============ */
+#app{min-height:100vh; display:flex; flex-direction:column;}
+
+.topbar{
+  display:flex; align-items:center; justify-content:space-between; gap:12px;
+  padding:12px 20px; border-bottom:1px solid var(--line);
+  background:var(--glass); backdrop-filter:blur(16px); -webkit-backdrop-filter:blur(16px);
+  position:sticky; top:0; z-index:60;
+}
+.topbar .brand{display:flex; align-items:center; gap:10px; font-family:var(--font-display); font-weight:700; font-size:16px;}
+.topbar .brand .rx{width:30px; height:30px; border-radius:8px; background:var(--primary); color:#fff; display:flex; align-items:center; justify-content:center; font-size:13px;}
+.topbar .brand .status-dot{width:8px; height:8px; border-radius:50%; background:var(--success);}
+.topbar .brand .status-dot.offline{background:var(--danger);}
+.topbar-actions{display:flex; align-items:center; gap:8px;}
+.icon-btn{
+  width:36px; height:36px; border-radius:10px; border:1px solid var(--line); background:var(--bg-elevated);
+  cursor:pointer; display:flex; align-items:center; justify-content:center; color:var(--ink); font-size:16px;
+}
+.icon-btn:hover{border-color:var(--primary);}
+.profile-wrap{position:relative;}
+.profile-btn{
+  display:flex; align-items:center; gap:8px; background:var(--bg-elevated); border:1px solid var(--line);
+  border-radius:999px; padding:5px 12px 5px 5px; cursor:pointer; font-size:13px; font-weight:600;
+}
+.avatar{
+  width:26px; height:26px; border-radius:50%; background:var(--primary); color:#fff;
+  display:flex; align-items:center; justify-content:center; font-size:12px; font-weight:700; font-family:var(--font-display); flex:none;
+}
+.avatar.lg{width:38px; height:38px; font-size:15px;}
+.admin-badge{
+  font-size:9.5px; font-weight:700; letter-spacing:.06em; background:var(--accent); color:#fff;
+  padding:2px 6px; border-radius:5px; text-transform:uppercase;
+}
+.dropdown{
+  position:absolute; right:0; top:calc(100% + 8px); min-width:200px; z-index:70;
+  background:var(--bg-elevated); border:1px solid var(--line); border-radius:var(--radius-sm); box-shadow:var(--shadow);
+  padding:8px; display:none;
+}
+.dropdown.open{display:block;}
+.dropdown .dd-item{
+  display:flex; align-items:center; gap:8px; padding:9px 10px; border-radius:8px; cursor:pointer; font-size:13.5px;
+}
+.dropdown .dd-item:hover{background:var(--bg);}
+.dropdown .dd-item.danger{color:var(--danger);}
+.dropdown hr{border:none; border-top:1px solid var(--line); margin:6px 0;}
+
+.layout{flex:1; display:grid; grid-template-columns:260px 1fr 380px; gap:0; min-height:0;}
+
+/* ---------- Sidebar ---------- */
+.sidebar{
+  border-right:1px solid var(--line); padding:18px 14px; overflow-y:auto;
+  display:flex; flex-direction:column; gap:18px;
+}
+.panel-title{font-size:11.5px; font-weight:700; text-transform:uppercase; letter-spacing:.07em; color:var(--ink-soft); display:flex; align-items:center; justify-content:space-between;}
+.panel-title .count-pill{
+  background:var(--accent-soft); color:var(--accent); font-family:var(--font-mono); font-weight:600;
+  padding:1px 8px; border-radius:999px; font-size:11px;
+}
+.user-list{display:flex; flex-direction:column; gap:8px; margin-top:10px;}
+.user-row{
+  display:flex; align-items:center; gap:10px; padding:8px; border-radius:var(--radius-sm);
+  transition:background .15s ease;
+}
+.user-row:hover{background:var(--bg-elevated);}
+.user-row .meta{min-width:0; flex:1;}
+.user-row .name{font-size:13.5px; font-weight:600; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; display:flex; align-items:center; gap:6px;}
+.user-row .time{font-size:11px; color:var(--ink-soft); font-family:var(--font-mono);}
+.presence-dot{width:8px; height:8px; border-radius:50%; background:var(--success); flex:none; box-shadow:0 0 0 3px color-mix(in srgb, var(--success) 20%, transparent);}
+
+.tools-card{
+  background:var(--bg-elevated); border:1px solid var(--line); border-radius:var(--radius-sm); padding:14px;
+}
+.tools-card + .tools-card{margin-top:0;}
+.timer-display{
+  font-family:var(--font-mono); font-size:30px; font-weight:600; text-align:center; margin:10px 0; letter-spacing:.02em;
+}
+.timer-mode-label{text-align:center; font-size:11px; color:var(--ink-soft); text-transform:uppercase; letter-spacing:.06em;}
+.timer-controls{display:flex; gap:8px; margin-top:10px;}
+.btn-sm{
+  flex:1; padding:9px 8px; font-size:12.5px; border-radius:8px; border:1px solid var(--line);
+  background:var(--bg-elevated); cursor:pointer; font-weight:600; color:var(--ink);
+}
+.btn-sm.primary{background:var(--primary); color:#fff; border-color:var(--primary);}
+.btn-sm:hover{border-color:var(--primary);}
+.date-widget{display:flex; align-items:center; justify-content:space-between; font-size:13px;}
+.date-widget .day-num{font-family:var(--font-display); font-size:22px; font-weight:700;}
+
+/* ---------- Chat area ---------- */
+.chat-area{display:flex; flex-direction:column; min-height:0; border-right:1px solid var(--line);}
+.chat-header{
+  padding:14px 20px; border-bottom:1px solid var(--line); display:flex; align-items:center; justify-content:space-between;
+}
+.chat-header h2{font-family:var(--font-display); font-size:15px; font-weight:600;}
+.chat-header .sub{font-size:12px; color:var(--ink-soft);}
+.messages{flex:1; overflow-y:auto; padding:18px 20px; display:flex; flex-direction:column; gap:4px;}
+.msg-row{display:flex; gap:10px; max-width:78%; margin-bottom:12px;}
+.msg-row.own{align-self:flex-end; flex-direction:row-reverse;}
+.msg-bubble{background:var(--bg-elevated); border:1px solid var(--line); border-radius:14px 14px 14px 4px; padding:9px 13px;}
+.msg-row.own .msg-bubble{background:var(--primary); color:#fff; border-color:var(--primary); border-radius:14px 14px 4px 14px;}
+.msg-sender{font-size:11.5px; font-weight:700; color:var(--primary); margin-bottom:2px;}
+.msg-row.own .msg-sender{display:none;}
+.msg-text{font-size:14px; line-height:1.45; word-break:break-word; white-space:pre-wrap;}
+.msg-time{font-size:10px; color:var(--ink-soft); margin-top:3px;}
+.msg-row.own .msg-time{color:rgba(255,255,255,.75);}
+.msg-actions{display:none; align-self:flex-start; gap:4px;}
+.msg-row:hover .msg-actions{display:flex;}
+.msg-actions button{background:none; border:none; cursor:pointer; color:var(--ink-soft); font-size:12px;}
+.msg-actions button:hover{color:var(--danger);}
+.system-msg{align-self:center; font-size:12px; color:var(--ink-soft); background:var(--bg-elevated); padding:5px 12px; border-radius:999px; margin:6px 0; border:1px solid var(--line);}
+
+.composer{padding:14px 20px; border-top:1px solid var(--line); display:flex; align-items:flex-end; gap:10px;}
+.composer .input-wrap{flex:1; position:relative;}
+.composer textarea{
+  width:100%; resize:none; max-height:110px; padding:11px 44px 11px 14px; border-radius:var(--radius-sm);
+  border:1px solid var(--line); background:var(--bg-elevated); color:var(--ink); font-family:inherit; font-size:14px; line-height:1.4;
+}
+.composer textarea:focus{border-color:var(--primary); box-shadow:0 0 0 3px color-mix(in srgb, var(--primary) 18%, transparent);}
+.char-count{position:absolute; right:12px; bottom:10px; font-size:10.5px; color:var(--ink-soft); font-family:var(--font-mono);}
+.char-count.limit{color:var(--danger);}
+.emoji-btn{background:none; border:none; font-size:19px; cursor:pointer; padding:0 4px;}
+.send-btn{width:42px; height:42px; border-radius:12px; background:var(--primary); color:#fff; border:none; cursor:pointer; flex:none; font-size:16px;}
+.send-btn:disabled{opacity:.5; cursor:not-allowed;}
+.emoji-picker{
+  position:absolute; bottom:52px; right:0; background:var(--bg-elevated); border:1px solid var(--line);
+  border-radius:var(--radius-sm); box-shadow:var(--shadow); padding:8px; display:none; grid-template-columns:repeat(6,1fr); gap:4px; width:220px;
+}
+.emoji-picker.open{display:grid;}
+.emoji-picker button{background:none; border:none; font-size:19px; cursor:pointer; padding:4px; border-radius:6px;}
+.emoji-picker button:hover{background:var(--bg);}
+
+/* ---------- Video area ---------- */
+.video-area{display:flex; flex-direction:column; min-height:0;}
+.video-header{padding:14px 20px; border-bottom:1px solid var(--line); display:flex; align-items:center; justify-content:space-between;}
+.video-header h2{font-family:var(--font-display); font-size:15px; font-weight:600;}
+.video-header .sub{font-size:12px; color:var(--ink-soft);}
+#jitsi-container{flex:1; min-height:0; background:#0B1620; position:relative;}
+#jitsi-container iframe{width:100%; height:100%; border:0;}
+.video-placeholder{
+  position:absolute; inset:0; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:12px; color:#fff;
+}
+.video-placeholder .btn-primary{width:auto; padding:12px 24px;}
+.share-row{display:flex; gap:8px; padding:12px 20px; border-top:1px solid var(--line);}
+
+/* ---------- Mobile nav ---------- */
+.mobile-nav{
+  display:none; position:sticky; bottom:0; z-index:60; background:var(--glass); backdrop-filter:blur(16px);
+  border-top:1px solid var(--line); padding:6px 8px calc(6px + env(safe-area-inset-bottom));
+  align-items:center; justify-content:space-around;
+}
+.mobile-nav button{
+  background:none; border:none; display:flex; flex-direction:column; align-items:center; gap:3px;
+  font-size:10.5px; color:var(--ink-soft); padding:6px 10px; border-radius:10px; cursor:pointer; font-weight:600;
+}
+.mobile-nav button.active{color:var(--primary); background:color-mix(in srgb, var(--primary) 10%, transparent);}
+.mobile-nav button .ic{font-size:18px;}
+.mobile-nav .badge-dot{position:relative;}
+.mobile-nav .badge-dot::after{content:''; position:absolute; top:-2px; right:2px; width:7px; height:7px; border-radius:50%; background:var(--accent); display:none;}
+.mobile-nav .badge-dot.unread::after{display:block;}
+
+/* ============ Responsive ============ */
+@media (max-width: 1080px){
+  .layout{grid-template-columns:220px 1fr 320px;}
+}
+
+@media (max-width: 860px){
+  .layout{
+    grid-template-columns:1fr; grid-template-rows:1fr;
+    position:relative; overflow:hidden;
+  }
+  .sidebar, .chat-area, .video-area{
+    display:none; border:none;
+    position:absolute; inset:0; padding-bottom:0;
+  }
+  .sidebar.mobile-active, .chat-area.mobile-active, .video-area.mobile-active{
+    display:flex;
+  }
+  .sidebar.mobile-active{display:flex;}
+  .mobile-nav{display:flex;}
+  .join-card{padding:28px 22px 24px;}
+  .messages{padding:14px;}
+  .msg-row{max-width:88%;}
+}
+
+@media (max-width: 520px){
+  .topbar{padding:10px 14px;}
+  .topbar .brand span.brand-text{display:none;}
+  .join-card h1{font-size:22px;}
+  .composer{padding:10px 12px;}
+  .emoji-picker{width:190px; right:-10px;}
+}
+
+/* Respect reduced motion */
+@media (prefers-reduced-motion: reduce){
+  .ecg-line path, .ecg-dot{animation:none;}
+}
+
+/* Scrollbars */
+::-webkit-scrollbar{width:8px; height:8px;}
+::-webkit-scrollbar-thumb{background:var(--line); border-radius:8px;}
+</style>
+</head>
+<body>
+
+<!-- ============ Loading Screen ============ -->
+<div id="loading-screen">
+  <div class="brand-mark"><span class="rx">℞</span>CEE Medico Nepal</div>
+  <svg class="ecg-line" viewBox="0 0 220 28" xmlns="http://www.w3.org/2000/svg">
+    <path d="M0 14 L50 14 L62 4 L72 24 L84 14 L100 14 L108 8 L116 20 L124 14 L220 14" />
+  </svg>
+  <small>Connecting to the study room…</small>
+</div>
+
+<!-- ============ Toasts ============ -->
+<div id="toast-container"></div>
+
+<!-- ============ Join Screen ============ -->
+<div id="join-screen" class="hidden">
+  <div class="join-card">
+    <div class="badge-row">
+      <div class="rx">℞</div>
+      <button class="icon-btn" id="theme-toggle-join" title="Toggle theme" type="button">🌙</button>
+    </div>
+    <h1>CEE Medico Nepal<br/>Study Room</h1>
+    <p class="subtitle">Study together with aspirants from across Nepal</p>
+
+    <form id="join-form" novalidate>
+      <div class="field" id="name-field">
+        <label for="name-input">Full name</label>
+        <input id="name-input" type="text" placeholder="e.g. Sujata Koirala" autocomplete="name" maxlength="60" />
+        <div class="error-msg">Please enter your full name.</div>
+      </div>
+      <div class="field" id="email-field">
+        <label for="email-input">Email address</label>
+        <input id="email-input" type="email" placeholder="you@example.com" autocomplete="email" maxlength="100" />
+        <div class="error-msg">Please enter a valid email address.</div>
+      </div>
+      <button class="btn btn-primary" type="submit" id="join-btn">Join Study Room</button>
+    </form>
+
+    <svg class="ecg-line" viewBox="0 0 220 28" xmlns="http://www.w3.org/2000/svg">
+      <path d="M0 14 L50 14 L62 4 L72 24 L84 14 L100 14 L108 8 L116 20 L124 14 L220 14" />
+    </svg>
+    <p class="join-foot">By joining, your name and email are stored so other aspirants can see who's studying.</p>
+  </div>
+</div>
+
+<!-- ============ Main App ============ -->
+<div id="app" class="hidden">
+
+  <header class="topbar">
+    <div class="brand">
+      <span class="rx">℞</span>
+      <span class="brand-text">CEE Medico Nepal</span>
+      <span class="status-dot" id="connection-dot" title="Connection status"></span>
+    </div>
+    <div class="topbar-actions">
+      <button class="icon-btn" id="theme-toggle" title="Toggle theme" type="button">🌙</button>
+      <button class="icon-btn" id="share-btn" title="Share room" type="button">🔗</button>
+      <div class="profile-wrap">
+        <button class="profile-btn" id="profile-btn" type="button">
+          <span class="avatar" id="my-avatar">A</span>
+          <span id="my-name-label">You</span>
+        </button>
+        <div class="dropdown" id="profile-dropdown">
+          <div class="dd-item" id="dd-copy-link">📋 Copy room link</div>
+          <div class="dd-item" id="dd-clear-chat" style="display:none;">🧹 Clear chat (admin)</div>
+          <hr/>
+          <div class="dd-item danger" id="dd-logout">🚪 Leave study room</div>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <div class="layout">
+
+    <!-- Sidebar -->
+    <aside class="sidebar mobile-active" id="sidebar-panel">
+      <div>
+        <div class="panel-title">Online now <span class="count-pill" id="online-count">0</span></div>
+        <div class="user-list" id="user-list"></div>
+      </div>
+
+      <div class="tools-card">
+        <div class="panel-title">Pomodoro timer</div>
+        <div class="timer-mode-label" id="pomo-mode">Focus session</div>
+        <div class="timer-display" id="pomo-display">25:00</div>
+        <div class="timer-controls">
+          <button class="btn-sm primary" id="pomo-start">Start</button>
+          <button class="btn-sm" id="pomo-reset">Reset</button>
+        </div>
+      </div>
+
+      <div class="tools-card">
+        <div class="panel-title">Stopwatch</div>
+        <div class="timer-display" id="sw-display">00:00.0</div>
+        <div class="timer-controls">
+          <button class="btn-sm primary" id="sw-start">Start</button>
+          <button class="btn-sm" id="sw-reset">Reset</button>
+        </div>
+      </div>
+
+      <div class="tools-card">
+        <div class="panel-title">Today</div>
+        <div class="date-widget">
+          <span id="today-str">—</span>
+          <span class="day-num" id="today-num">—</span>
+        </div>
+      </div>
+    </aside>
+
+    <!-- Chat -->
+    <main class="chat-area" id="chat-panel">
+      <div class="chat-header">
+        <div>
+          <h2>Group chat</h2>
+          <div class="sub">Real-time discussion for the whole room</div>
+        </div>
+      </div>
+      <div class="messages" id="messages"></div>
+      <div class="composer">
+        <button class="emoji-btn" id="emoji-toggle" type="button">🙂</button>
+        <div class="input-wrap">
+          <textarea id="msg-input" rows="1" maxlength="500" placeholder="Type a message… (Enter to send)"></textarea>
+          <span class="char-count" id="char-count">0/500</span>
+          <div class="emoji-picker" id="emoji-picker"></div>
+        </div>
+        <button class="send-btn" id="send-btn" type="button" title="Send">➤</button>
+      </div>
+    </main>
+
+    <!-- Video -->
+    <section class="video-area" id="video-panel">
+      <div class="video-header">
+        <div>
+          <h2>Video room</h2>
+          <div class="sub">CEE_MEDICO_STUDY_ROOM</div>
+        </div>
+      </div>
+      <div id="jitsi-container">
+        <div class="video-placeholder" id="video-placeholder">
+          <div style="font-size:34px;">🎥</div>
+          <div style="font-size:14px; opacity:.85;">Join the live video room to see and hear other aspirants</div>
+          <button class="btn btn-primary" id="join-video-btn" type="button">Join video room</button>
+        </div>
+      </div>
+      <div class="share-row">
+        <button class="btn-sm" id="copy-room-btn" style="flex:1;">📋 Copy room link</button>
+        <button class="btn-sm" id="native-share-btn" style="flex:1;">🔗 Share room</button>
+      </div>
+    </section>
+
+  </div>
+
+  <!-- Mobile bottom nav -->
+  <nav class="mobile-nav">
+    <button data-target="sidebar-panel" class="active" type="button"><span class="ic">👥</span>People</button>
+    <button data-target="chat-panel" class="badge-dot" id="nav-chat" type="button"><span class="ic">💬</span>Chat</button>
+    <button data-target="video-panel" type="button"><span class="ic">🎥</span>Video</button>
+  </nav>
+</div>
+
+<script type="module">
+/* ============================================================
+   FIREBASE CONFIGURATION
+   Replace with your Firebase project credentials.
+   Get these from: Firebase Console → Project settings → General
+   ============================================================ */
+const firebaseConfig = {
+  apiKey: "YOUR_API_KEY",
+  authDomain: "YOUR_DOMAIN",
+  projectId: "YOUR_PROJECT_ID",
+  storageBucket: "YOUR_BUCKET",
+  messagingSenderId: "YOUR_SENDER_ID",
+  appId: "YOUR_APP_ID"
+};
+
+// Admin emails — these accounts get moderation powers in chat
+const ADMIN_EMAILS = ["admin@ceemediconepal.xyz"];
+
+/* ============================================================
+   FIREBASE SDK (v10, ESM via CDN)
+   ============================================================ */
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+import {
+  getAuth, signInAnonymously, onAuthStateChanged
+} from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+import {
+  getFirestore, collection, addDoc, doc, setDoc, updateDoc, deleteDoc,
+  onSnapshot, query, orderBy, limit, serverTimestamp, Timestamp
+} from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+
+const app = initializeApp(firebaseConfig);
+const auth = getAuth(app);
+const db = getFirestore(app);
+
+/* ============================================================
+   STATE
+   ============================================================ */
+let currentUser = null;   // { uid, name, email }
+let isAdmin = false;
+let unsubUsers = null;
+let unsubMessages = null;
+let jitsiApi = null;
+
+const ROOM_NAME = "CEE_MEDICO_STUDY_ROOM";
+const EMOJIS = ["😀","😄","😅","😂","🙂","😉","😍","🤔","👍","🙏","🔥","🎯","📚","🧠","💊","🩺","⏰","✅","❤️","🎉"];
+
+/* ============================================================
+   UTILITIES
+   ============================================================ */
+const $ = (sel) => document.querySelector(sel);
+const $$ = (sel) => document.querySelectorAll(sel);
+
+function showToast(message, type = "info") {
+  const el = document.createElement("div");
+  el.className = `toast ${type === "error" ? "error" : type === "warn" ? "warn" : ""}`;
+  el.innerHTML = `<span class="dot"></span><span>${escapeHtml(message)}</span>`;
+  $("#toast-container").appendChild(el);
+  setTimeout(() => el.remove(), 4200);
+}
+
+function escapeHtml(str) {
+  const div = document.createElement("div");
+  div.textContent = str ?? "";
+  return div.innerHTML;
+}
+
+function initials(name) {
+  return (name || "?").trim().charAt(0).toUpperCase() || "?";
+}
+
+function isValidEmail(email) {
+  return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+}
+
+function relativeTime(date) {
+  if (!date) return "";
+  const diffMs = Date.now() - date.getTime();
+  const s = Math.floor(diffMs / 1000);
+  if (s < 10) return "just now";
+  if (s < 60) return `${s}s ago`;
+  const m = Math.floor(s / 60);
+  if (m < 60) return `${m}m ago`;
+  const h = Math.floor(m / 60);
+  if (h < 24) return `${h}h ago`;
+  const d = Math.floor(h / 24);
+  return `${d}d ago`;
+}
+
+function tsToDate(ts) {
+  if (!ts) return null;
+  if (ts instanceof Timestamp) return ts.toDate();
+  if (ts.seconds) return new Date(ts.seconds * 1000);
+  return null;
+}
+
+/* ============================================================
+   THEME TOGGLE
+   ============================================================ */
+function applyTheme(theme) {
+  document.documentElement.setAttribute("data-theme", theme);
+  localStorage.setItem("cee-theme", theme);
+  const icon = theme === "dark" ? "☀️" : "🌙";
+  $("#theme-toggle") && ($("#theme-toggle").textContent = icon);
+  $("#theme-toggle-join") && ($("#theme-toggle-join").textContent = icon);
+}
+function toggleTheme() {
+  const cur = document.documentElement.getAttribute("data-theme");
+  applyTheme(cur === "dark" ? "light" : "dark");
+}
+(function initTheme() {
+  const saved = localStorage.getItem("cee-theme");
+  const prefersDark = window.matchMedia && window.matchMedia("(prefers-color-scheme: dark)").matches;
+  applyTheme(saved || (prefersDark ? "dark" : "light"));
+})();
+$("#theme-toggle")?.addEventListener("click", toggleTheme);
+$("#theme-toggle-join")?.addEventListener("click", toggleTheme);
+
+/* ============================================================
+   BOOT SEQUENCE
+   ============================================================ */
+window.addEventListener("load", () => {
+  setTimeout(() => {
+    $("#loading-screen").classList.add("hidden");
+    // Restore session if we have one saved locally
+    const saved = localStorage.getItem("cee-user");
+    if (saved) {
+      try {
+        const parsed = JSON.parse(saved);
+        beginSession(parsed.name, parsed.email);
+        return;
+      } catch (e) { /* fall through to join screen */ }
+    }
+    $("#join-screen").classList.remove("hidden");
+  }, 900);
+});
+
+/* ============================================================
+   JOIN FORM
+   ============================================================ */
+$("#join-form").addEventListener("submit", (e) => {
+  e.preventDefault();
+  const nameInput = $("#name-input");
+  const emailInput = $("#email-input");
+  const nameField = $("#name-field");
+  const emailField = $("#email-field");
+
+  const name = nameInput.value.trim();
+  const email = emailInput.value.trim();
+
+  let valid = true;
+  if (!name) { nameField.classList.add("invalid"); valid = false; } else nameField.classList.remove("invalid");
+  if (!isValidEmail(email)) { emailField.classList.add("invalid"); valid = false; } else emailField.classList.remove("invalid");
+  if (!valid) return;
+
+  $("#join-btn").disabled = true;
+  $("#join-btn").textContent = "Joining…";
+  localStorage.setItem("cee-user", JSON.stringify({ name, email }));
+  beginSession(name, email);
+});
+
+/* ============================================================
+   SESSION START — anonymous auth + Firestore user doc
+   ============================================================ */
+async function beginSession(name, email) {
+  try {
+    const cred = await signInAnonymously(auth);
+    const uid = cred.user.uid;
+    currentUser = { uid, name, email };
+    isAdmin = ADMIN_EMAILS.includes(email.toLowerCase());
+
+    await setDoc(doc(db, "users", uid), {
+      name,
+      email,
+      online: true,
+      joinedAt: serverTimestamp(),
+      lastSeen: serverTimestamp()
+    }, { merge: true });
+
+    onDisconnectCleanup(uid);
+    enterApp();
+  } catch (err) {
+    console.error(err);
+    showToast("Could not connect. Check your network and try again.", "error");
+    $("#join-btn").disabled = false;
+    $("#join-btn").textContent = "Join Study Room";
+  }
+}
+
+// Best-effort presence cleanup (Firestore has no native onDisconnect like RTDB,
+// so we handle tab close / visibility change manually).
+function onDisconnectCleanup(uid) {
+  const markOffline = () => {
+    // navigator.sendBeacon-style fire-and-forget update on unload
+    updateDoc(doc(db, "users", uid), { online: false, lastSeen: serverTimestamp() }).catch(() => {});
+  };
+  window.addEventListener("beforeunload", markOffline);
+  document.addEventListener("visibilitychange", () => {
+    if (document.visibilityState === "hidden") {
+      updateDoc(doc(db, "users", uid), { lastSeen: serverTimestamp() }).catch(() => {});
+    } else {
+      updateDoc(doc(db, "users", uid), { online: true, lastSeen: serverTimestamp() }).catch(() => {});
+    }
+  });
+}
+
+/* ============================================================
+   ENTER APP
+   ============================================================ */
+function enterApp() {
+  $("#join-screen").classList.add("hidden");
+  $("#app").classList.remove("hidden");
+
+  $("#my-avatar").textContent = initials(currentUser.name);
+  $("#my-name-label").textContent = currentUser.name.split(" ")[0];
+  if (isAdmin) {
+    $("#my-name-label").insertAdjacentHTML("afterend", '<span class="admin-badge">Admin</span>');
+    $("#dd-clear-chat").style.display = "flex";
+  }
+
+  buildEmojiPicker();
+  listenUsers();
+  listenMessages();
+  setInterval(refreshRelativeTimes, 30000);
+  setInterval(() => {
+    if (currentUser) updateDoc(doc(db, "users", currentUser.uid), { lastSeen: serverTimestamp() }).catch(() => {});
+  }, 60000);
+  initDateWidget();
+  initPomodoro();
+  initStopwatch();
+  showToast(`Welcome, ${currentUser.name.split(" ")[0]}! You're online.`);
+  $("#connection-dot").classList.remove("offline");
+}
+
+/* ============================================================
+   PRESENCE — online users list
+   ============================================================ */
+function listenUsers() {
+  const q = collection(db, "users");
+  let firstLoad = true;
+  const knownUids = new Set();
+
+  unsubUsers = onSnapshot(q, (snap) => {
+    const users = [];
+    snap.forEach((d) => users.push({ id: d.id, ...d.data() }));
+    const online = users.filter((u) => u.online);
+
+    if (!firstLoad) {
+      const currentUids = new Set(online.map((u) => u.id));
+      online.forEach((u) => {
+        if (!knownUids.has(u.id) && u.id !== currentUser?.uid) {
+          showToast(`${u.name} joined the room`);
+        }
+      });
+      knownUids.forEach((uid) => {
+        if (!currentUids.has(uid) && uid !== currentUser?.uid) {
+          const wasUser = users.find((u) => u.id === uid);
+          showToast(`${wasUser ? wasUser.name : "A user"} left the room`, "warn");
+        }
+      });
+    }
+    knownUids.clear();
+    online.forEach((u) => knownUids.add(u.id));
+    firstLoad = false;
+
+    renderUsers(online);
+  }, (err) => {
+    console.error(err);
+    $("#connection-dot").classList.add("offline");
+    showToast("Lost connection to the study room.", "error");
+  });
+}
+
+function renderUsers(users) {
+  $("#online-count").textContent = users.length;
+  const list = $("#user-list");
+  list.innerHTML = "";
+  users
+    .sort((a, b) => (tsToDate(a.joinedAt)?.getTime() || 0) - (tsToDate(b.joinedAt)?.getTime() || 0))
+    .forEach((u) => {
+      const row = document.createElement("div");
+      row.className = "user-row";
+      const joined = tsToDate(u.joinedAt);
+      row.innerHTML = `
+        <span class="avatar" style="position:relative;">${escapeHtml(initials(u.name))}</span>
+        <div class="meta">
+          <div class="name">${escapeHtml(u.name)} ${ADMIN_EMAILS.includes((u.email||"").toLowerCase()) ? '<span class="admin-badge">Admin</span>' : ""}</div>
+          <div class="time" data-joined="${joined ? joined.getTime() : ""}">${joined ? "Joined " + relativeTime(joined) : "Joining…"}</div>
+        </div>
+        <span class="presence-dot" title="Online"></span>
+      `;
+      list.appendChild(row);
+    });
+}
+
+function refreshRelativeTimes() {
+  $$(".time[data-joined]").forEach((el) => {
+    const t = Number(el.getAttribute("data-joined"));
+    if (t) el.textContent = "Joined " + relativeTime(new Date(t));
+  });
+}
+
+/* ============================================================
+   CHAT — real-time messages
+   ============================================================ */
+function listenMessages() {
+  const q = query(collection(db, "messages"), orderBy("timestamp", "asc"), limit(200));
+  let firstLoad = true;
+  unsubMessages = onSnapshot(q, (snap) => {
+    const box = $("#messages");
+    box.innerHTML = "";
+    snap.forEach((d) => renderMessage({ id: d.id, ...d.data() }));
+    box.scrollTop = box.scrollHeight;
+
+    if (!firstLoad) {
+      const last = snap.docs[snap.docs.length - 1]?.data();
+      if (last && last.email !== currentUser.email) {
+        showToast(`${last.sender}: ${last.text.slice(0, 40)}${last.text.length > 40 ? "…" : ""}`);
+        if (!document.querySelector('.mobile-nav button[data-target="chat-panel"]').classList.contains("active")) {
+          $("#nav-chat").classList.add("unread");
+        }
+      }
+    }
+    firstLoad = false;
+  }, (err) => {
+    console.error(err);
+    showToast("Couldn't load chat messages.", "error");
+  });
+}
+
+function renderMessage(msg) {
+  const box = $("#messages");
+  const own = msg.email === currentUser.email;
+  const time = tsToDate(msg.timestamp);
+
+  const row = document.createElement("div");
+  row.className = `msg-row ${own ? "own" : ""}`;
+  row.innerHTML = `
+    <span class="avatar" style="align-self:flex-end;">${escapeHtml(initials(msg.sender))}</span>
+    <div>
+      <div class="msg-bubble">
+        <div class="msg-sender">${escapeHtml(msg.sender)}</div>
+        <div class="msg-text"></div>
+        <div class="msg-time">${time ? time.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }) : "sending…"}</div>
+      </div>
+    </div>
+    ${(own || isAdmin) ? `<div class="msg-actions"><button data-del="${msg.id}" title="Delete">🗑</button></div>` : ""}
+  `;
+  row.querySelector(".msg-text").textContent = msg.text; // textContent = safe from injection
+  box.appendChild(row);
+
+  const delBtn = row.querySelector("[data-del]");
+  if (delBtn) delBtn.addEventListener("click", () => deleteMessage(msg.id));
+}
+
+async function deleteMessage(id) {
+  try {
+    await deleteDoc(doc(db, "messages", id));
+  } catch (err) {
+    console.error(err);
+    showToast("Couldn't delete that message.", "error");
+  }
+}
+
+async function sendMessage() {
+  const input = $("#msg-input");
+  const text = input.value.trim();
+  if (!text) return;
+  if (text.length > 500) {
+    showToast("Message is too long (max 500 characters).", "error");
+    return;
+  }
+  input.value = "";
+  updateCharCount();
+  autoGrow(input);
+  try {
+    await addDoc(collection(db, "messages"), {
+      sender: currentUser.name,
+      email: currentUser.email,
+      text,
+      timestamp: serverTimestamp()
+    });
+  } catch (err) {
+    console.error(err);
+    showToast("Message failed to send. Try again.", "error");
+  }
+}
+
+$("#send-btn").addEventListener("click", sendMessage);
+$("#msg-input").addEventListener("keydown", (e) => {
+  if (e.key === "Enter" && !e.shiftKey) {
+    e.preventDefault();
+    sendMessage();
+  }
+});
+function updateCharCount() {
+  const len = $("#msg-input").value.length;
+  const el = $("#char-count");
+  el.textContent = `${len}/500`;
+  el.classList.toggle("limit", len > 480);
+}
+function autoGrow(el) {
+  el.style.height = "auto";
+  el.style.height = Math.min(el.scrollHeight, 110) + "px";
+}
+$("#msg-input").addEventListener("input", (e) => { updateCharCount(); autoGrow(e.target); });
+
+/* Emoji picker */
+function buildEmojiPicker() {
+  const picker = $("#emoji-picker");
+  picker.innerHTML = "";
+  EMOJIS.forEach((em) => {
+    const b = document.createElement("button");
+    b.type = "button";
+    b.textContent = em;
+    b.addEventListener("click", () => {
+      const input = $("#msg-input");
+      input.value += em;
+      input.focus();
+      updateCharCount();
+    });
+    picker.appendChild(b);
+  });
+}
+$("#emoji-toggle").addEventListener("click", () => $("#emoji-picker").classList.toggle("open"));
+document.addEventListener("click", (e) => {
+  if (!e.target.closest("#emoji-toggle") && !e.target.closest("#emoji-picker")) {
+    $("#emoji-picker").classList.remove("open");
+  }
+  if (!e.target.closest("#profile-btn") && !e.target.closest("#profile-dropdown")) {
+    $("#profile-dropdown").classList.remove("open");
+  }
+});
+
+/* ============================================================
+   ADMIN — clear chat
+   ============================================================ */
+$("#dd-clear-chat").addEventListener("click", async () => {
+  if (!isAdmin) return;
+  if (!confirm("Clear the entire chat for everyone? This cannot be undone.")) return;
+  try {
+    const box = $("#messages");
+    const ids = [...box.querySelectorAll("[data-del]")].map((b) => b.getAttribute("data-del"));
+    await Promise.all(ids.map((id) => deleteDoc(doc(db, "messages", id))));
+    showToast("Chat cleared.");
+  } catch (err) {
+    console.error(err);
+    showToast("Couldn't clear the chat.", "error");
+  }
+});
+
+/* ============================================================
+   PROFILE DROPDOWN + LOGOUT
+   ============================================================ */
+$("#profile-btn").addEventListener("click", () => $("#profile-dropdown").classList.toggle("open"));
+$("#dd-logout").addEventListener("click", logout);
+async function logout() {
+  try {
+    if (currentUser) {
+      await updateDoc(doc(db, "users", currentUser.uid), { online: false, lastSeen: serverTimestamp() });
+    }
+    if (jitsiApi) jitsiApi.dispose();
+    localStorage.removeItem("cee-user");
+    location.reload();
+  } catch (err) {
+    console.error(err);
+    location.reload();
+  }
+}
+
+/* ============================================================
+   SHARE / COPY ROOM LINK
+   ============================================================ */
+function roomLink() { return window.location.href.split("#")[0]; }
+async function copyRoomLink() {
+  try {
+    await navigator.clipboard.writeText(roomLink());
+    showToast("Room link copied to clipboard.");
+  } catch {
+    showToast("Couldn't copy link automatically — copy it from the address bar.", "warn");
+  }
+}
+$("#dd-copy-link").addEventListener("click", copyRoomLink);
+$("#copy-room-btn").addEventListener("click", copyRoomLink);
+$("#share-btn").addEventListener("click", copyRoomLink);
+$("#native-share-btn").addEventListener("click", async () => {
+  if (navigator.share) {
+    try { await navigator.share({ title: "CEE Medico Nepal Study Room", url: roomLink() }); }
+    catch { /* user cancelled */ }
+  } else {
+    copyRoomLink();
+  }
+});
+
+/* ============================================================
+   JITSI MEET INTEGRATION
+   ============================================================ */
+$("#join-video-btn").addEventListener("click", startJitsi);
+function startJitsi() {
+  if (jitsiApi) return;
+  const container = $("#jitsi-container");
+  container.innerHTML = "";
+  const script = document.createElement("script");
+  script.src = "https://meet.jit.si/external_api.js";
+  script.onload = () => {
+    jitsiApi = new window.JitsiMeetExternalAPI("meet.jit.si", {
+      roomName: ROOM_NAME,
+      parentNode: container,
+      width: "100%",
+      height: "100%",
+      userInfo: { displayName: currentUser.name, email: currentUser.email },
+      configOverwrite: {
+        prejoinPageEnabled: false,
+        disableDeepLinking: true
+      },
+      interfaceConfigOverwrite: {
+        TOOLBAR_BUTTONS: [
+          "microphone", "camera", "closedcaptions", "desktop", "fullscreen",
+          "fodeviceselection", "hangup", "profile", "chat", "recording",
+          "raisehand", "videoquality", "filmstrip", "tileview",
+          "participants-pane", "select-background"
+        ]
+      }
+    });
+    showToast("Joined the video room.");
+  };
+  script.onerror = () => showToast("Couldn't load the video room. Check your connection.", "error");
+  document.body.appendChild(script);
+}
+
+/* ============================================================
+   STUDY TOOLS — Pomodoro timer
+   ============================================================ */
+let pomoInterval = null;
+let pomoSeconds = 25 * 60;
+let pomoIsFocus = true;
+function formatMMSS(total) {
+  const m = Math.floor(total / 60).toString().padStart(2, "0");
+  const s = Math.floor(total % 60).toString().padStart(2, "0");
+  return `${m}:${s}`;
+}
+function initPomodoro() {
+  $("#pomo-display").textContent = formatMMSS(pomoSeconds);
+  $("#pomo-start").addEventListener("click", () => {
+    if (pomoInterval) {
+      clearInterval(pomoInterval);
+      pomoInterval = null;
+      $("#pomo-start").textContent = "Start";
+      return;
+    }
+    $("#pomo-start").textContent = "Pause";
+    pomoInterval = setInterval(() => {
+      pomoSeconds--;
+      if (pomoSeconds <= 0) {
+        pomoIsFocus = !pomoIsFocus;
+        pomoSeconds = pomoIsFocus ? 25 * 60 : 5 * 60;
+        $("#pomo-mode").textContent = pomoIsFocus ? "Focus session" : "Short break";
+        showToast(pomoIsFocus ? "Break's over — back to focus!" : "Nice work — take a 5 minute break.");
+      }
+      $("#pomo-display").textContent = formatMMSS(pomoSeconds);
+    }, 1000);
+  });
+  $("#pomo-reset").addEventListener("click", () => {
+    clearInterval(pomoInterval);
+    pomoInterval = null;
+    pomoIsFocus = true;
+    pomoSeconds = 25 * 60;
+    $("#pomo-mode").textContent = "Focus session";
+    $("#pomo-display").textContent = formatMMSS(pomoSeconds);
+    $("#pomo-start").textContent = "Start";
+  });
+}
+
+/* ---------- Stopwatch ---------- */
+let swInterval = null;
+let swMs = 0;
+function formatStopwatch(ms) {
+  const m = Math.floor(ms / 60000).toString().padStart(2, "0");
+  const s = Math.floor((ms % 60000) / 1000).toString().padStart(2, "0");
+  const d = Math.floor((ms % 1000) / 100);
+  return `${m}:${s}.${d}`;
+}
+function initStopwatch() {
+  $("#sw-start").addEventListener("click", () => {
+    if (swInterval) {
+      clearInterval(swInterval);
+      swInterval = null;
+      $("#sw-start").textContent = "Start";
+      return;
+    }
+    $("#sw-start").textContent = "Pause";
+    const startedAt = Date.now() - swMs;
+    swInterval = setInterval(() => {
+      swMs = Date.now() - startedAt;
+      $("#sw-display").textContent = formatStopwatch(swMs);
+    }, 100);
+  });
+  $("#sw-reset").addEventListener("click", () => {
+    clearInterval(swInterval);
+    swInterval = null;
+    swMs = 0;
+    $("#sw-display").textContent = formatStopwatch(swMs);
+    $("#sw-start").textContent = "Start";
+  });
+}
+
+/* ---------- Date widget ---------- */
+function initDateWidget() {
+  const now = new Date();
+  $("#today-str").textContent = now.toLocaleDateString(undefined, { weekday: "long", month: "long", year: "numeric" });
+  $("#today-num").textContent = now.getDate();
+}
+
+/* ============================================================
+   MOBILE NAV — switch between People / Chat / Video panels
+   ============================================================ */
+$$(".mobile-nav button").forEach((btn) => {
+  btn.addEventListener("click", () => {
+    $$(".mobile-nav button").forEach((b) => b.classList.remove("active"));
+    btn.classList.add("active");
+    if (btn.id === "nav-chat") btn.classList.remove("unread");
+
+    ["sidebar-panel", "chat-panel", "video-panel"].forEach((id) => {
+      $("#" + id).classList.remove("mobile-active");
+    });
+    $("#" + btn.getAttribute("data-target")).classList.add("mobile-active");
+  });
+});
+
+/* ============================================================
+   AUTH STATE WATCHER (handles token expiry / reconnects)
+   ============================================================ */
+onAuthStateChanged(auth, (user) => {
+  if (!user && currentUser) {
+    $("#connection-dot").classList.add("offline");
+  }
+});
+
+/* ============================================================
+   CLEANUP
+   ============================================================ */
+window.addEventListener("beforeunload", () => {
+  if (unsubUsers) unsubUsers();
+  if (unsubMessages) unsubMessages();
+});
+</script>
+</body>
+</html>
