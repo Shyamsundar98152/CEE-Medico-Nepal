@@ -1,68 +1,136 @@
 <!DOCTYPE html>
 <html>
 <head>
+<base target="_top">
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>CEE Notes Library — Upload</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,wght@0,500;0,600;0,700;1,500&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
-<script src="https://accounts.google.com/gsi/client" async defer></script>
 <style>
   :root{
-    --navy-deep:#141F35; --navy-mid:#1E3155; --navy-line:#334671;
-    --paper:#F6F2E7; --ink:#1B2230; --amber:#E8A93A; --amber-dim:#C98F26;
-    --slate:#8B96B3; --good:#5FA777; --bad:#D0664A;
+    --navy-deep:#141F35;
+    --navy-mid:#1E3155;
+    --navy-line:#334671;
+    --paper:#F6F2E7;
+    --paper-dim:#EAE4D3;
+    --ink:#1B2230;
+    --amber:#E8A93A;
+    --amber-dim:#C98F26;
+    --slate:#8B96B3;
+    --good:#5FA777;
+    --bad:#D0664A;
   }
   *{box-sizing:border-box;}
   html,body{margin:0;padding:0;}
   body{
     background:var(--navy-deep);
-    background-image:radial-gradient(circle at 15% 8%, rgba(232,169,58,0.06), transparent 40%),
+    background-image:
+      radial-gradient(circle at 15% 8%, rgba(232,169,58,0.06), transparent 40%),
       radial-gradient(circle at 85% 90%, rgba(95,167,119,0.05), transparent 40%);
-    font-family:'IBM Plex Sans', sans-serif; color:var(--paper); min-height:100vh;
+    font-family:'IBM Plex Sans', sans-serif;
+    color:var(--paper);
+    min-height:100vh;
   }
   .wrap{max-width:760px;margin:0 auto;padding:40px 20px 70px;}
-  .kicker{font-family:'IBM Plex Mono', monospace;font-size:12px;letter-spacing:.14em;text-transform:uppercase;color:var(--amber);margin-bottom:10px;}
-  h1{font-family:'Newsreader', serif;font-weight:600;font-size:clamp(28px,5vw,40px);line-height:1.1;margin:0 0 10px;}
+
+  header{margin-bottom:28px;}
+  .kicker{
+    font-family:'IBM Plex Mono', monospace;
+    font-size:12px;
+    letter-spacing:.14em;
+    text-transform:uppercase;
+    color:var(--amber);
+    margin-bottom:10px;
+  }
+  h1{
+    font-family:'Newsreader', serif;
+    font-weight:600;
+    font-size:clamp(28px,5vw,40px);
+    line-height:1.1;
+    margin:0 0 10px;
+    color:var(--paper);
+  }
   .sub{color:var(--slate);font-size:14.5px;line-height:1.6;max-width:56ch;}
 
-  .connect-card{
-    background:var(--navy-mid);border:1px solid var(--navy-line);border-radius:10px;
-    padding:22px 24px;margin-top:26px;display:flex;align-items:center;justify-content:space-between;gap:16px;flex-wrap:wrap;
+  /* Folder-tab breadcrumb, signature element */
+  .tabs{
+    display:flex;
+    align-items:flex-end;
+    margin:32px 0 0;
+    font-family:'IBM Plex Mono', monospace;
+    font-size:12px;
   }
-  .connect-card p{margin:0;font-size:13.5px;color:var(--slate);}
-  #signinBtn, .g_id_signin{cursor:pointer;}
-  .connect-btn{
-    background:var(--amber);color:var(--navy-deep);border:none;padding:11px 20px;
-    border-radius:7px;font-weight:600;font-size:13.5px;cursor:pointer;font-family:inherit;
+  .tab{
+    padding:8px 16px 7px;
+    background:var(--navy-mid);
+    color:var(--slate);
+    border:1px solid var(--navy-line);
+    border-bottom:none;
+    border-radius:6px 6px 0 0;
+    position:relative;
+    top:1px;
   }
-  .connect-btn:hover{background:var(--amber-dim);}
-  .who{display:flex;align-items:center;gap:8px;font-size:13px;color:var(--paper);}
-  .who img{width:26px;height:26px;border-radius:50%;}
-
-  .tabs{display:flex;align-items:flex-end;margin:32px 0 0;font-family:'IBM Plex Mono', monospace;font-size:12px;}
-  .tab{padding:8px 16px 7px;background:var(--navy-mid);color:var(--slate);border:1px solid var(--navy-line);border-bottom:none;border-radius:6px 6px 0 0;position:relative;top:1px;}
-  .tab.active{background:var(--paper);color:var(--ink);font-weight:500;}
+  .tab.active{
+    background:var(--paper);
+    color:var(--ink);
+    font-weight:500;
+  }
   .tab-arrow{color:var(--navy-line);padding:0 4px 6px;align-self:flex-end;}
 
-  .card{background:var(--paper);color:var(--ink);border-radius:0 10px 10px 10px;padding:28px;border:1px solid var(--navy-line);position:relative;}
-  .card.locked::after{
-    content:'Connect Google Drive above to unlock uploads';
-    position:absolute;inset:0;background:rgba(246,242,231,0.9);
-    display:flex;align-items:center;justify-content:center;text-align:center;
-    font-family:'IBM Plex Mono', monospace;font-size:13px;color:#6B7590;border-radius:0 10px 10px 10px;padding:20px;
+  .card{
+    background:var(--paper);
+    color:var(--ink);
+    border-radius:0 10px 10px 10px;
+    padding:28px;
+    border:1px solid var(--navy-line);
   }
 
   .field{margin-bottom:20px;}
-  .field label{display:block;font-family:'IBM Plex Mono', monospace;font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:#6B7590;margin-bottom:7px;}
-  select, input[type=text]{width:100%;padding:11px 12px;border:1px solid #CFC7B0;border-radius:7px;background:#fff;font-family:'IBM Plex Sans', sans-serif;font-size:14.5px;color:var(--ink);}
-  select:focus, input[type=text]:focus{outline:2px solid var(--amber);outline-offset:1px;border-color:var(--amber);}
+  .field label{
+    display:block;
+    font-family:'IBM Plex Mono', monospace;
+    font-size:11px;
+    letter-spacing:.08em;
+    text-transform:uppercase;
+    color:#6B7590;
+    margin-bottom:7px;
+  }
+  select, input[type=text]{
+    width:100%;
+    padding:11px 12px;
+    border:1px solid #CFC7B0;
+    border-radius:7px;
+    background:#fff;
+    font-family:'IBM Plex Sans', sans-serif;
+    font-size:14.5px;
+    color:var(--ink);
+  }
+  select:focus, input[type=text]:focus{
+    outline:2px solid var(--amber);
+    outline-offset:1px;
+    border-color:var(--amber);
+  }
   .row{display:flex;gap:14px;}
   .row > *{flex:1;min-width:0;}
   .hint{font-size:12px;color:#8A8368;margin-top:6px;}
-  .toggle-custom{background:none;border:none;font-family:'IBM Plex Mono', monospace;font-size:11.5px;color:var(--amber-dim);cursor:pointer;padding:0;margin-top:6px;text-decoration:underline;text-underline-offset:2px;}
+  .toggle-custom{
+    background:none;border:none;
+    font-family:'IBM Plex Mono', monospace;
+    font-size:11.5px;color:var(--amber-dim);
+    cursor:pointer;padding:0;margin-top:6px;
+    text-decoration:underline;text-underline-offset:2px;
+  }
 
-  .drop{border:2px dashed #CFC7B0;border-radius:10px;padding:34px 20px;text-align:center;cursor:pointer;transition:border-color .15s, background .15s;}
+  /* Drop zone */
+  .drop{
+    border:2px dashed #CFC7B0;
+    border-radius:10px;
+    padding:34px 20px;
+    text-align:center;
+    cursor:pointer;
+    transition:border-color .15s, background .15s;
+    position:relative;
+  }
   .drop.drag{border-color:var(--amber);background:#FBF3E1;}
   .drop-icon{font-size:26px;margin-bottom:8px;display:block;}
   .drop-title{font-weight:500;font-size:14.5px;}
@@ -70,27 +138,67 @@
   input[type=file]{display:none;}
 
   .filelist{margin-top:16px;display:flex;flex-direction:column;gap:8px;}
-  .file-item{display:flex;align-items:center;gap:10px;background:#fff;border:1px solid #E4DEC9;border-radius:7px;padding:9px 12px;font-size:13px;}
-  .file-ext{font-family:'IBM Plex Mono', monospace;font-size:10px;font-weight:500;background:var(--navy-mid);color:var(--paper);padding:2px 6px;border-radius:4px;letter-spacing:.03em;}
+  .file-item{
+    display:flex;align-items:center;gap:10px;
+    background:#fff;border:1px solid #E4DEC9;border-radius:7px;
+    padding:9px 12px;font-size:13px;
+  }
+  .file-ext{
+    font-family:'IBM Plex Mono', monospace;
+    font-size:10px;font-weight:500;
+    background:var(--navy-mid);color:var(--paper);
+    padding:2px 6px;border-radius:4px;letter-spacing:.03em;
+  }
   .file-name{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
   .file-size{color:#9C9578;font-size:11.5px;flex-shrink:0;}
-  .file-remove{background:none;border:none;color:#B5AC8E;cursor:pointer;font-size:15px;line-height:1;padding:2px 4px;flex-shrink:0;}
+  .file-remove{
+    background:none;border:none;color:#B5AC8E;cursor:pointer;
+    font-size:15px;line-height:1;padding:2px 4px;flex-shrink:0;
+  }
   .file-remove:hover{color:var(--bad);}
   .file-status{font-size:14px;flex-shrink:0;width:16px;text-align:center;}
 
-  button.submit{margin-top:22px;width:100%;background:var(--navy-deep);color:var(--paper);border:none;padding:14px;border-radius:8px;font-family:'IBM Plex Sans', sans-serif;font-weight:600;font-size:14.5px;cursor:pointer;transition:background .15s;}
+  button.submit{
+    margin-top:22px;
+    width:100%;
+    background:var(--navy-deep);
+    color:var(--paper);
+    border:none;
+    padding:14px;
+    border-radius:8px;
+    font-family:'IBM Plex Sans', sans-serif;
+    font-weight:600;
+    font-size:14.5px;
+    cursor:pointer;
+    transition:background .15s;
+  }
   button.submit:hover:not(:disabled){background:#0E1729;}
   button.submit:disabled{background:#B5AC8E;cursor:not-allowed;}
 
-  .status-box{margin-top:16px;font-size:13px;padding:12px 14px;border-radius:7px;display:none;line-height:1.6;}
+  .status-box{
+    margin-top:16px;
+    font-size:13px;
+    padding:12px 14px;
+    border-radius:7px;
+    display:none;
+    line-height:1.6;
+  }
   .status-box.show{display:block;}
   .status-box.ok{background:#E9F3EC;color:#2F6B48;border:1px solid #BFDECA;}
   .status-box.err{background:#FBEAE4;color:#A6432A;border:1px solid #F0C7B7;}
   .status-box a{color:inherit;font-weight:600;}
 
-  footer{margin-top:26px;font-family:'IBM Plex Mono', monospace;font-size:11.5px;color:var(--slate);text-align:center;}
-  .setup-note{margin-top:10px;font-size:11.5px;color:var(--slate);}
-  .setup-note code{background:var(--navy-deep);padding:1px 5px;border-radius:4px;}
+  footer{
+    margin-top:26px;
+    font-family:'IBM Plex Mono', monospace;
+    font-size:11.5px;
+    color:var(--slate);
+    text-align:center;
+  }
+
+  @media (prefers-reduced-motion: reduce){
+    *{transition:none !important;}
+  }
 </style>
 </head>
 <body>
@@ -98,20 +206,8 @@
   <header>
     <div class="kicker">CeeMedicoNepal · Notes Library</div>
     <h1>Add a file to the shelf</h1>
-    <p class="sub">Sign in with Google, pick the subject and chapter, and drop in your files. Folders are created automatically if they don't exist yet.</p>
+    <p class="sub">Drop in question sets, notes, or scanned pages. Pick the subject and chapter first — the folder gets created automatically if it doesn't exist yet.</p>
   </header>
-
-  <div class="connect-card">
-    <div id="preAuth">
-      <p>Connect your Google Drive to enable uploads.</p>
-      <div class="setup-note">Uploads go into the shared library folder — your Google account just needs to grant this page permission once.</div>
-    </div>
-    <div id="postAuth" class="who" style="display:none;">
-      <img id="whoAvatar" src="" alt="">
-      <span id="whoName"></span>
-    </div>
-    <button class="connect-btn" id="signinBtn">Connect Google Drive</button>
-  </div>
 
   <div class="tabs">
     <div class="tab" id="tabSubject">subject</div>
@@ -119,17 +215,21 @@
     <div class="tab active" id="tabChapter">chapter</div>
   </div>
 
-  <div class="card locked" id="uploadCard">
+  <div class="card">
     <div class="row">
       <div class="field">
         <label for="subjectSelect">Subject</label>
-        <select id="subjectSelect"><option value="">Connect Drive first</option></select>
+        <select id="subjectSelect">
+          <option value="">Loading…</option>
+        </select>
         <button type="button" class="toggle-custom" id="newSubjectToggle">+ new subject folder</button>
         <input type="text" id="subjectCustom" placeholder="e.g. Physics" style="display:none;margin-top:8px;">
       </div>
       <div class="field">
         <label for="chapterSelect">Chapter</label>
-        <select id="chapterSelect" disabled><option value="">Select subject first</option></select>
+        <select id="chapterSelect" disabled>
+          <option value="">Select subject first</option>
+        </select>
         <button type="button" class="toggle-custom" id="newChapterToggle">+ new chapter folder</button>
         <input type="text" id="chapterCustom" placeholder="e.g. Heat &amp; Thermodynamics" style="display:none;margin-top:8px;">
       </div>
@@ -141,13 +241,13 @@
       <div class="drop" id="dropZone">
         <span class="drop-icon">📎</span>
         <div class="drop-title">Click to choose files, or drag them here</div>
-        <div class="drop-sub">PDF, Word (.docx), images (.jpg/.png), PowerPoint — up to ~50 MB each</div>
+        <div class="drop-sub">PDF, Word (.docx), images (.jpg/.png), PowerPoint — up to ~25 MB each</div>
         <input type="file" id="fileInput" multiple accept=".pdf,.doc,.docx,.jpg,.jpeg,.png,.webp,.ppt,.pptx,.txt">
       </div>
       <div class="filelist" id="fileList"></div>
     </div>
 
-    <button class="submit" id="submitBtn" disabled>Connect Drive to upload</button>
+    <button class="submit" id="submitBtn" disabled>Select files to upload</button>
     <div class="status-box" id="statusBox"></div>
   </div>
 
@@ -155,18 +255,9 @@
 </div>
 
 <script>
-  /* ====== CONFIGURE THESE TWO VALUES ====== */
-  var CLIENT_ID = 'YOUR_OAUTH_CLIENT_ID.apps.googleusercontent.com';
-  var ROOT_FOLDER_ID = '17OKeKZ4nRCOlrj6_7u_wVrEJDu2o8Rzn';
-  /* ========================================= */
-
-  var SCOPES = 'https://www.googleapis.com/auth/drive';
-  var accessToken = null;
-  var tokenClient = null;
-  var MAX_SIZE = 50 * 1024 * 1024;
-  var queued = [];
+  var MAX_SIZE = 25 * 1024 * 1024; // 25MB, safe margin under Apps Script limits
+  var queued = []; // {file, id, status}
   var idCounter = 0;
-  var DEFAULT_SUBJECTS = ['Physics','Chemistry','Botany','Zoology','Medical','IOE','Demo','CEE'];
 
   var subjectSelect = document.getElementById('subjectSelect');
   var chapterSelect = document.getElementById('chapterSelect');
@@ -180,8 +271,18 @@
   var fileList = document.getElementById('fileList');
   var submitBtn = document.getElementById('submitBtn');
   var statusBox = document.getElementById('statusBox');
-  var uploadCard = document.getElementById('uploadCard');
-  var signinBtn = document.getElementById('signinBtn');
+
+  var DEFAULT_SUBJECTS = ['Physics','Chemistry','Botany','Zoology','Medical','IOE','Demo','CEE'];
+
+  function populateSubjects(list){
+    var names = list && list.length ? list : DEFAULT_SUBJECTS;
+    subjectSelect.innerHTML = '<option value="">— choose —</option>' +
+      names.map(function(n){ return '<option value="'+esc(n)+'">'+esc(n)+'</option>'; }).join('');
+  }
+
+  google.script.run.withSuccessHandler(populateSubjects).withFailureHandler(function(){
+    populateSubjects(DEFAULT_SUBJECTS);
+  }).listSubjects();
 
   function esc(s){
     return String(s).replace(/[&<>"']/g, function(c){
@@ -189,93 +290,22 @@
     });
   }
 
-  window.onload = function(){
-    if (!window.google || !google.accounts) {
-      showStatus('err', 'Google sign-in script failed to load. Check your internet connection and reload.');
-      return;
-    }
-    tokenClient = google.accounts.oauth2.initTokenClient({
-      client_id: CLIENT_ID,
-      scope: SCOPES,
-      callback: function(resp){
-        if (resp.error){
-          showStatus('err', 'Sign-in failed: ' + resp.error);
-          return;
-        }
-        accessToken = resp.access_token;
-        onSignedIn();
-      }
-    });
-  };
-
-  signinBtn.addEventListener('click', function(){
-    if (CLIENT_ID.indexOf('YOUR_OAUTH_CLIENT_ID') === 0){
-      showStatus('err', 'This page needs a Google OAuth Client ID pasted into the CLIENT_ID variable before it will work. See setup notes.');
-      return;
-    }
-    tokenClient.requestAccessToken({ prompt: accessToken ? '' : 'consent' });
-  });
-
-  function driveFetch(url, opts){
-    opts = opts || {};
-    opts.headers = Object.assign({ Authorization: 'Bearer ' + accessToken }, opts.headers || {});
-    return fetch(url, opts).then(function(r){
-      if (!r.ok) return r.json().then(function(e){ throw new Error(e.error && e.error.message ? e.error.message : r.statusText); });
-      return r.json();
-    });
-  }
-
-  function onSignedIn(){
-    document.getElementById('preAuth').style.display = 'none';
-    document.getElementById('postAuth').style.display = 'flex';
-    signinBtn.textContent = 'Reconnect';
-    uploadCard.classList.remove('locked');
-    updateSubmitState();
-
-    // fetch profile for the little avatar/name chip
-    fetch('https://www.googleapis.com/oauth2/v3/userinfo', { headers: { Authorization: 'Bearer ' + accessToken } })
-      .then(function(r){ return r.json(); })
-      .then(function(p){
-        document.getElementById('whoAvatar').src = p.picture || '';
-        document.getElementById('whoName').textContent = p.name || p.email || 'Connected';
-      }).catch(function(){});
-
-    loadSubjects();
-  }
-
-  function loadSubjects(){
-    var q = "'" + ROOT_FOLDER_ID + "' in parents and mimeType='application/vnd.google-apps.folder' and trashed=false";
-    driveFetch('https://www.googleapis.com/drive/v3/files?q=' + encodeURIComponent(q) + '&fields=files(id,name)&pageSize=200')
-      .then(function(res){
-        var files = (res.files || []).sort(function(a,b){ return a.name.localeCompare(b.name); });
-        subjectSelect.innerHTML = '<option value="">— choose —</option>' +
-          files.map(function(f){ return '<option value="'+esc(f.name)+'" data-id="'+f.id+'">'+esc(f.name)+'</option>'; }).join('');
-        if (!files.length){
-          DEFAULT_SUBJECTS.forEach(function(){}); // keep list empty, user can type a new one
-        }
-      })
-      .catch(function(err){ showStatus('err', 'Could not load subjects: ' + err.message); });
-  }
-
   subjectSelect.addEventListener('change', function(){
+    var subj = subjectSelect.value;
     updateHintAndTabs();
-    var opt = subjectSelect.selectedOptions[0];
-    var subjId = opt ? opt.getAttribute('data-id') : null;
-    if (!subjId){
+    if (!subj){
       chapterSelect.innerHTML = '<option value="">Select subject first</option>';
       chapterSelect.disabled = true;
       return;
     }
     chapterSelect.disabled = false;
     chapterSelect.innerHTML = '<option value="">Loading…</option>';
-    var q = "'" + subjId + "' in parents and mimeType='application/vnd.google-apps.folder' and trashed=false";
-    driveFetch('https://www.googleapis.com/drive/v3/files?q=' + encodeURIComponent(q) + '&fields=files(id,name)&pageSize=200')
-      .then(function(res){
-        var files = (res.files || []).sort(function(a,b){ return a.name.localeCompare(b.name); });
-        chapterSelect.innerHTML = '<option value="">— none / top level —</option>' +
-          files.map(function(f){ return '<option value="'+esc(f.name)+'">'+esc(f.name)+'</option>'; }).join('');
-      })
-      .catch(function(){ chapterSelect.innerHTML = '<option value="">— none / top level —</option>'; });
+    google.script.run.withSuccessHandler(function(list){
+      chapterSelect.innerHTML = '<option value="">— none / top level —</option>' +
+        list.map(function(n){ return '<option value="'+esc(n)+'">'+esc(n)+'</option>'; }).join('');
+    }).withFailureHandler(function(){
+      chapterSelect.innerHTML = '<option value="">— none / top level —</option>';
+    }).listChapters(subj);
   });
 
   document.getElementById('newSubjectToggle').addEventListener('click', function(){
@@ -297,8 +327,12 @@
   subjectCustom.addEventListener('input', updateHintAndTabs);
   chapterCustom.addEventListener('input', updateHintAndTabs);
 
-  function currentSubject(){ return (subjectCustom.style.display !== 'none' ? subjectCustom.value : subjectSelect.value).trim(); }
-  function currentChapter(){ return (chapterCustom.style.display !== 'none' ? chapterCustom.value : chapterSelect.value).trim(); }
+  function currentSubject(){
+    return (subjectCustom.style.display !== 'none' ? subjectCustom.value : subjectSelect.value).trim();
+  }
+  function currentChapter(){
+    return (chapterCustom.style.display !== 'none' ? chapterCustom.value : chapterSelect.value).trim();
+  }
 
   function updateHintAndTabs(){
     var s = currentSubject(), c = currentChapter();
@@ -311,15 +345,26 @@
     else pathHint.textContent = 'Files upload to the root library folder unless you choose a subject.';
   }
 
+  // Drop zone wiring
   dropZone.addEventListener('click', function(){ fileInput.click(); });
   dropZone.addEventListener('dragover', function(e){ e.preventDefault(); dropZone.classList.add('drag'); });
   dropZone.addEventListener('dragleave', function(){ dropZone.classList.remove('drag'); });
-  dropZone.addEventListener('drop', function(e){ e.preventDefault(); dropZone.classList.remove('drag'); addFiles(e.dataTransfer.files); });
-  fileInput.addEventListener('change', function(){ addFiles(fileInput.files); fileInput.value = ''; });
+  dropZone.addEventListener('drop', function(e){
+    e.preventDefault();
+    dropZone.classList.remove('drag');
+    addFiles(e.dataTransfer.files);
+  });
+  fileInput.addEventListener('change', function(){
+    addFiles(fileInput.files);
+    fileInput.value = '';
+  });
 
   function addFiles(fileArr){
     Array.prototype.forEach.call(fileArr, function(f){
-      if (f.size > MAX_SIZE){ showStatus('err', f.name + ' is over 50 MB — split it or compress before uploading.'); return; }
+      if (f.size > MAX_SIZE){
+        showStatus('err', f.name + ' is over 25 MB — split it or compress before uploading.');
+        return;
+      }
       queued.push({ file:f, id: ++idCounter, status:'ready' });
     });
     renderFileList();
@@ -336,22 +381,26 @@
         '<span class="file-name">'+esc(q.file.name)+'</span>' +
         '<span class="file-size">'+sizeStr+'</span>' +
         '<span class="file-status">'+statusIcon+'</span>' +
-        '<button type="button" class="file-remove" data-remove="'+q.id+'">&times;</button></div>';
+        '<button type="button" class="file-remove" data-remove="'+q.id+'">&times;</button>' +
+        '</div>';
     }).join('');
+
     Array.prototype.forEach.call(fileList.querySelectorAll('[data-remove]'), function(btn){
       btn.addEventListener('click', function(){
         var id = Number(btn.getAttribute('data-remove'));
         queued = queued.filter(function(q){ return q.id !== id; });
-        renderFileList(); updateSubmitState();
+        renderFileList();
+        updateSubmitState();
       });
     });
     updateSubmitState();
   }
 
   function updateSubmitState(){
-    if (!accessToken){ submitBtn.disabled = true; submitBtn.textContent = 'Connect Drive to upload'; return; }
     submitBtn.disabled = queued.length === 0;
-    submitBtn.textContent = queued.length === 0 ? 'Select files to upload' : 'Upload ' + queued.length + (queued.length === 1 ? ' file' : ' files');
+    submitBtn.textContent = queued.length === 0
+      ? 'Select files to upload'
+      : 'Upload ' + queued.length + (queued.length === 1 ? ' file' : ' files');
   }
 
   function showStatus(kind, html){
@@ -359,44 +408,21 @@
     statusBox.innerHTML = html;
   }
 
-  function getOrCreateFolder(name, parentId){
-    var q = "'" + parentId + "' in parents and mimeType='application/vnd.google-apps.folder' and trashed=false and name='" + name.replace(/'/g, "\\'") + "'";
-    return driveFetch('https://www.googleapis.com/drive/v3/files?q=' + encodeURIComponent(q) + '&fields=files(id,name)')
-      .then(function(res){
-        if (res.files && res.files.length) return res.files[0];
-        return driveFetch('https://www.googleapis.com/drive/v3/files', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ name: name, mimeType: 'application/vnd.google-apps.folder', parents: [parentId] })
-        });
-      });
-  }
-
-  function uploadOneFile(file, parentId){
-    var metadata = { name: file.name, parents: [parentId] };
-    var boundary = '-------cee' + Math.random().toString(16).slice(2);
-    return file.arrayBuffer().then(function(buf){
-      var pre = '--' + boundary + '\r\nContent-Type: application/json; charset=UTF-8\r\n\r\n' + JSON.stringify(metadata) +
-        '\r\n--' + boundary + '\r\nContent-Type: ' + (file.type || 'application/octet-stream') + '\r\n\r\n';
-      var post = '\r\n--' + boundary + '--';
-      var body = new Blob([pre, buf, post]);
-      return driveFetch('https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart&fields=id,name,webViewLink', {
-        method: 'POST',
-        headers: { 'Content-Type': 'multipart/related; boundary=' + boundary },
-        body: body
-      });
-    }).then(function(created){
-      return driveFetch('https://www.googleapis.com/drive/v3/files/' + created.id + '/permissions', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ role: 'reader', type: 'anyone' })
-      }).catch(function(){}).then(function(){ return created; });
+  function fileToBase64(file){
+    return new Promise(function(resolve, reject){
+      var reader = new FileReader();
+      reader.onload = function(){ resolve(reader.result.split(',')[1]); };
+      reader.onerror = reject;
+      reader.readAsDataURL(file);
     });
   }
 
-  submitBtn.addEventListener('click', function(){
+  document.getElementById('submitBtn').addEventListener('click', function(){
     var subject = currentSubject();
-    if (!subject){ showStatus('err', 'Choose or type a subject folder first.'); return; }
+    if (!subject){
+      showStatus('err', 'Choose or type a subject folder first.');
+      return;
+    }
     var chapter = currentChapter();
     submitBtn.disabled = true;
     submitBtn.textContent = 'Uploading…';
@@ -406,40 +432,58 @@
     toUpload.forEach(function(q){ q.status = 'uploading'; });
     renderFileList();
 
-    getOrCreateFolder(subject, ROOT_FOLDER_ID)
-      .then(function(subjectFolder){
-        return chapter ? getOrCreateFolder(chapter, subjectFolder.id) : Promise.resolve(subjectFolder);
-      })
-      .then(function(targetFolder){
-        return Promise.all(toUpload.map(function(q){
-          return uploadOneFile(q.file, targetFolder.id).then(function(){ q.status = 'done'; }).catch(function(err){ q.status = 'error'; q.error = err.message; });
-        })).then(function(){ return targetFolder; });
-      })
-      .then(function(targetFolder){
-        renderFileList();
-        var failed = toUpload.filter(function(q){ return q.status === 'error'; });
-        if (failed.length){
-          showStatus('err', failed.length + ' file(s) failed: ' + failed.map(function(q){ return esc(q.file.name); }).join(', '));
-        } else {
-          showStatus('ok', 'Uploaded to <b>'+esc(targetFolder.name)+'</b>. <a href="https://drive.google.com/drive/folders/'+targetFolder.id+'" target="_blank">Open folder ↗</a>');
-        }
-        queued = queued.filter(function(q){ return q.status !== 'done'; });
-        setTimeout(function(){ renderFileList(); }, 1200);
-        if (!chapterSelect.disabled) subjectSelect.dispatchEvent(new Event('change'));
-        submitBtn.disabled = false;
-        updateSubmitState();
+    Promise.all(toUpload.map(function(q){ return fileToBase64(q.file); }))
+      .then(function(base64List){
+        var payload = {
+          subject: subject,
+          chapter: chapter,
+          files: toUpload.map(function(q, i){
+            return { name: q.file.name, mimeType: q.file.type || 'application/octet-stream', base64: base64List[i] };
+          })
+        };
+        google.script.run
+          .withSuccessHandler(function(res){ handleResult(res, toUpload); })
+          .withFailureHandler(function(err){
+            toUpload.forEach(function(q){ q.status = 'error'; });
+            renderFileList();
+            showStatus('err', 'Upload failed: ' + (err && err.message ? err.message : err));
+            submitBtn.disabled = false;
+            updateSubmitState();
+          })
+          .uploadFiles(payload);
       })
       .catch(function(err){
-        showStatus('err', 'Upload failed: ' + err.message);
-        toUpload.forEach(function(q){ q.status = 'error'; });
-        renderFileList();
+        showStatus('err', 'Could not read one of the files: ' + err.message);
         submitBtn.disabled = false;
         updateSubmitState();
       });
   });
 
+  function handleResult(res, toUpload){
+    if (res && res.success){
+      toUpload.forEach(function(q){ q.status = 'done'; });
+      renderFileList();
+      showStatus('ok', 'Uploaded to <b>'+esc(res.folderName)+'</b>. <a href="'+res.folderUrl+'" target="_blank">Open folder ↗</a>');
+      queued = queued.filter(function(q){ return q.status !== 'done'; });
+      setTimeout(function(){ renderFileList(); }, 1200);
+      // refresh chapter list in case a new one was created
+      if (subject_wasCustom()) {
+        google.script.run.withSuccessHandler(populateSubjects).listSubjects();
+      }
+    } else {
+      toUpload.forEach(function(q){ q.status = 'error'; });
+      renderFileList();
+      showStatus('err', 'Upload failed: ' + (res && res.error ? res.error : 'unknown error'));
+    }
+    submitBtn.disabled = false;
+    updateSubmitState();
+  }
+
+  function subject_wasCustom(){
+    return subjectCustom.style.display !== 'none';
+  }
+
   updateHintAndTabs();
-  updateSubmitState();
 </script>
 </body>
 </html>
