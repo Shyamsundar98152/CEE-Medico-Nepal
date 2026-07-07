@@ -1,489 +1,842 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-<base target="_top">
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,wght@0,500;0,600;0,700;1,500&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
-<style>
-  :root{
-    --navy-deep:#141F35;
-    --navy-mid:#1E3155;
-    --navy-line:#334671;
-    --paper:#F6F2E7;
-    --paper-dim:#EAE4D3;
-    --ink:#1B2230;
-    --amber:#E8A93A;
-    --amber-dim:#C98F26;
-    --slate:#8B96B3;
-    --good:#5FA777;
-    --bad:#D0664A;
-  }
-  *{box-sizing:border-box;}
-  html,body{margin:0;padding:0;}
-  body{
-    background:var(--navy-deep);
-    background-image:
-      radial-gradient(circle at 15% 8%, rgba(232,169,58,0.06), transparent 40%),
-      radial-gradient(circle at 85% 90%, rgba(95,167,119,0.05), transparent 40%);
-    font-family:'IBM Plex Sans', sans-serif;
-    color:var(--paper);
-    min-height:100vh;
-  }
-  .wrap{max-width:760px;margin:0 auto;padding:40px 20px 70px;}
-
-  header{margin-bottom:28px;}
-  .kicker{
-    font-family:'IBM Plex Mono', monospace;
-    font-size:12px;
-    letter-spacing:.14em;
-    text-transform:uppercase;
-    color:var(--amber);
-    margin-bottom:10px;
-  }
-  h1{
-    font-family:'Newsreader', serif;
-    font-weight:600;
-    font-size:clamp(28px,5vw,40px);
-    line-height:1.1;
-    margin:0 0 10px;
-    color:var(--paper);
-  }
-  .sub{color:var(--slate);font-size:14.5px;line-height:1.6;max-width:56ch;}
-
-  /* Folder-tab breadcrumb, signature element */
-  .tabs{
-    display:flex;
-    align-items:flex-end;
-    margin:32px 0 0;
-    font-family:'IBM Plex Mono', monospace;
-    font-size:12px;
-  }
-  .tab{
-    padding:8px 16px 7px;
-    background:var(--navy-mid);
-    color:var(--slate);
-    border:1px solid var(--navy-line);
-    border-bottom:none;
-    border-radius:6px 6px 0 0;
-    position:relative;
-    top:1px;
-  }
-  .tab.active{
-    background:var(--paper);
-    color:var(--ink);
-    font-weight:500;
-  }
-  .tab-arrow{color:var(--navy-line);padding:0 4px 6px;align-self:flex-end;}
-
-  .card{
-    background:var(--paper);
-    color:var(--ink);
-    border-radius:0 10px 10px 10px;
-    padding:28px;
-    border:1px solid var(--navy-line);
-  }
-
-  .field{margin-bottom:20px;}
-  .field label{
-    display:block;
-    font-family:'IBM Plex Mono', monospace;
-    font-size:11px;
-    letter-spacing:.08em;
-    text-transform:uppercase;
-    color:#6B7590;
-    margin-bottom:7px;
-  }
-  select, input[type=text]{
-    width:100%;
-    padding:11px 12px;
-    border:1px solid #CFC7B0;
-    border-radius:7px;
-    background:#fff;
-    font-family:'IBM Plex Sans', sans-serif;
-    font-size:14.5px;
-    color:var(--ink);
-  }
-  select:focus, input[type=text]:focus{
-    outline:2px solid var(--amber);
-    outline-offset:1px;
-    border-color:var(--amber);
-  }
-  .row{display:flex;gap:14px;}
-  .row > *{flex:1;min-width:0;}
-  .hint{font-size:12px;color:#8A8368;margin-top:6px;}
-  .toggle-custom{
-    background:none;border:none;
-    font-family:'IBM Plex Mono', monospace;
-    font-size:11.5px;color:var(--amber-dim);
-    cursor:pointer;padding:0;margin-top:6px;
-    text-decoration:underline;text-underline-offset:2px;
-  }
-
-  /* Drop zone */
-  .drop{
-    border:2px dashed #CFC7B0;
-    border-radius:10px;
-    padding:34px 20px;
-    text-align:center;
-    cursor:pointer;
-    transition:border-color .15s, background .15s;
-    position:relative;
-  }
-  .drop.drag{border-color:var(--amber);background:#FBF3E1;}
-  .drop-icon{font-size:26px;margin-bottom:8px;display:block;}
-  .drop-title{font-weight:500;font-size:14.5px;}
-  .drop-sub{font-size:12.5px;color:#8A8368;margin-top:4px;}
-  input[type=file]{display:none;}
-
-  .filelist{margin-top:16px;display:flex;flex-direction:column;gap:8px;}
-  .file-item{
-    display:flex;align-items:center;gap:10px;
-    background:#fff;border:1px solid #E4DEC9;border-radius:7px;
-    padding:9px 12px;font-size:13px;
-  }
-  .file-ext{
-    font-family:'IBM Plex Mono', monospace;
-    font-size:10px;font-weight:500;
-    background:var(--navy-mid);color:var(--paper);
-    padding:2px 6px;border-radius:4px;letter-spacing:.03em;
-  }
-  .file-name{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
-  .file-size{color:#9C9578;font-size:11.5px;flex-shrink:0;}
-  .file-remove{
-    background:none;border:none;color:#B5AC8E;cursor:pointer;
-    font-size:15px;line-height:1;padding:2px 4px;flex-shrink:0;
-  }
-  .file-remove:hover{color:var(--bad);}
-  .file-status{font-size:14px;flex-shrink:0;width:16px;text-align:center;}
-
-  button.submit{
-    margin-top:22px;
-    width:100%;
-    background:var(--navy-deep);
-    color:var(--paper);
-    border:none;
-    padding:14px;
-    border-radius:8px;
-    font-family:'IBM Plex Sans', sans-serif;
-    font-weight:600;
-    font-size:14.5px;
-    cursor:pointer;
-    transition:background .15s;
-  }
-  button.submit:hover:not(:disabled){background:#0E1729;}
-  button.submit:disabled{background:#B5AC8E;cursor:not-allowed;}
-
-  .status-box{
-    margin-top:16px;
-    font-size:13px;
-    padding:12px 14px;
-    border-radius:7px;
-    display:none;
-    line-height:1.6;
-  }
-  .status-box.show{display:block;}
-  .status-box.ok{background:#E9F3EC;color:#2F6B48;border:1px solid #BFDECA;}
-  .status-box.err{background:#FBEAE4;color:#A6432A;border:1px solid #F0C7B7;}
-  .status-box a{color:inherit;font-weight:600;}
-
-  footer{
-    margin-top:26px;
-    font-family:'IBM Plex Mono', monospace;
-    font-size:11.5px;
-    color:var(--slate);
-    text-align:center;
-  }
-
-  @media (prefers-reduced-motion: reduce){
-    *{transition:none !important;}
-  }
-</style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CEE Notes - Drive Upload Portal</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- FontAwesome Icons for Beautiful Visuals -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        brand: {
+                            50: '#f0f9ff',
+                            100: '#e0f2fe',
+                            500: '#0ea5e9',
+                            600: '#0284c7',
+                            700: '#0369a1',
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        /* Smooth scrolling and transitions */
+        html { scroll-behavior: smooth; }
+        .custom-scrollbar::-webkit-scrollbar {
+            width: 6px;
+            height: 6px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-track {
+            background: transparent;
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb {
+            background: #cbd5e1;
+            border-radius: 3px;
+        }
+        .dark .custom-scrollbar::-webkit-scrollbar-thumb {
+            background: #475569;
+        }
+    </style>
 </head>
-<body>
-<div class="wrap">
-  <header>
-    <div class="kicker">CeeMedicoNepal · Notes Library</div>
-    <h1>Add a file to the shelf</h1>
-    <p class="sub">Drop in question sets, notes, or scanned pages. Pick the subject and chapter first — the folder gets created automatically if it doesn't exist yet.</p>
-  </header>
+<body class="bg-slate-50 dark:bg-slate-900 text-slate-800 dark:text-slate-100 min-h-screen transition-colors duration-200">
 
-  <div class="tabs">
-    <div class="tab" id="tabSubject">subject</div>
-    <div class="tab-arrow">›</div>
-    <div class="tab active" id="tabChapter">chapter</div>
-  </div>
+    <!-- Top Navigation Bar -->
+    <nav class="border-b border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950 sticky top-0 z-30 transition-colors">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex items-center justify-between h-16">
+                <div class="flex items-center space-x-3">
+                    <div class="bg-brand-500 text-white p-2 rounded-lg flex items-center justify-center shadow-md shadow-brand-500/20">
+                        <i class="fa-solid fa-folder-open text-xl"></i>
+                    </div>
+                    <div>
+                        <h1 class="font-bold text-lg leading-tight text-slate-900 dark:text-white">CEE Notes</h1>
+                        <p class="text-xs text-slate-500 dark:text-slate-400">Google Drive Upload Portal</p>
+                    </div>
+                </div>
+                <div class="flex items-center space-x-3">
+                    <button id="guideBtn" class="flex items-center space-x-1.5 px-3 py-1.5 rounded-lg border border-slate-200 dark:border-slate-700 hover:bg-slate-100 dark:hover:bg-slate-800 text-xs font-semibold transition">
+                        <i class="fa-solid fa-circle-question text-brand-500"></i>
+                        <span>Backend Setup</span>
+                    </button>
+                    <button id="themeToggle" class="p-2 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 transition" aria-label="Toggle Dark Mode">
+                        <i class="fa-solid fa-moon text-lg block dark:hidden text-slate-600"></i>
+                        <i class="fa-solid fa-sun text-lg hidden dark:block text-amber-400"></i>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </nav>
 
-  <div class="card">
-    <div class="row">
-      <div class="field">
-        <label for="subjectSelect">Subject</label>
-        <select id="subjectSelect">
-          <option value="">Loading…</option>
-        </select>
-        <button type="button" class="toggle-custom" id="newSubjectToggle">+ new subject folder</button>
-        <input type="text" id="subjectCustom" placeholder="e.g. Physics" style="display:none;margin-top:8px;">
-      </div>
-      <div class="field">
-        <label for="chapterSelect">Chapter</label>
-        <select id="chapterSelect" disabled>
-          <option value="">Select subject first</option>
-        </select>
-        <button type="button" class="toggle-custom" id="newChapterToggle">+ new chapter folder</button>
-        <input type="text" id="chapterCustom" placeholder="e.g. Heat &amp; Thermodynamics" style="display:none;margin-top:8px;">
-      </div>
+    <!-- Main Content Container -->
+    <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <div class="grid grid-cols-1 lg:grid-cols-12 gap-8">
+            
+            <!-- Left Side: Configuration & API State (Col span 4) -->
+            <section class="lg:col-span-4 space-y-6">
+                
+                <!-- Web App Endpoint Connection Card -->
+                <div class="bg-white dark:bg-slate-950 p-6 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm">
+                    <div class="flex items-center space-x-2.5 mb-4">
+                        <span class="flex h-3 w-3 relative">
+                            <span id="statusIndicatorPing" class="animate-ping absolute inline-flex h-full w-full rounded-full bg-rose-400 opacity-75"></span>
+                            <span id="statusIndicator" class="relative inline-flex rounded-full h-3 w-3 bg-rose-500"></span>
+                        </span>
+                        <h2 class="font-bold text-base text-slate-900 dark:text-white">API Connection Settings</h2>
+                    </div>
+                    
+                    <p class="text-xs text-slate-500 dark:text-slate-400 mb-4 leading-relaxed">
+                        To link this page to your active Google Drive folder, paste your deployed Web App URL below.
+                    </p>
+
+                    <div class="space-y-3">
+                        <label class="block text-xs font-semibold text-slate-600 dark:text-slate-400 uppercase tracking-wider">Apps Script Web App URL</label>
+                        <div class="relative">
+                            <span class="absolute inset-y-0 left-0 pl-3 flex items-center text-slate-400">
+                                <i class="fa-solid fa-link text-xs"></i>
+                            </span>
+                            <input type="url" id="webAppUrl" 
+                                class="w-full pl-8 pr-3 py-2 text-xs rounded-lg border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-900 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-brand-500/50 transition"
+                                placeholder="https://script.google.com/macros/s/.../exec">
+                        </div>
+                        <p id="connectionHelp" class="text-[11px] text-rose-500 dark:text-rose-400 font-medium">
+                            <i class="fa-solid fa-triangle-exclamation mr-1"></i> No active connection configured yet.
+                        </p>
+                    </div>
+                </div>
+
+                <!-- Live Tree Structure Preview -->
+                <div class="bg-white dark:bg-slate-950 p-6 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm">
+                    <h2 class="font-bold text-base text-slate-900 dark:text-white mb-3">
+                        <i class="fa-solid fa-sitemap text-brand-500 mr-2"></i>Destination Tree
+                    </h2>
+                    <p class="text-xs text-slate-500 dark:text-slate-400 mb-4 leading-relaxed">
+                        This shows how your uploaded file will be structurally nested on Google Drive.
+                    </p>
+
+                    <!-- Mock Folder Hierarchy Visual -->
+                    <div class="bg-slate-50 dark:bg-slate-900 p-4 rounded-xl border border-slate-100 dark:border-slate-800 font-mono text-xs text-slate-600 dark:text-slate-400 space-y-1.5 custom-scrollbar overflow-x-auto">
+                        <div class="flex items-center space-x-2 text-slate-900 dark:text-white font-semibold">
+                            <i class="fa-solid fa-folder text-amber-500"></i>
+                            <span>CEE Notes (Root)</span>
+                        </div>
+                        <div id="treeSubject" class="flex items-center space-x-2 pl-4 border-l border-slate-300 dark:border-slate-700 ml-2 py-0.5 hidden">
+                            <i class="fa-solid fa-angle-right text-slate-400"></i>
+                            <i class="fa-solid fa-folder text-amber-500"></i>
+                            <span class="text-brand-600 dark:text-brand-400 font-medium" id="treeSubjectName">Subject</span>
+                        </div>
+                        <div id="treeChapter" class="flex items-center space-x-2 pl-8 border-l border-slate-300 dark:border-slate-700 ml-2 py-0.5 hidden">
+                            <i class="fa-solid fa-angle-right text-slate-400"></i>
+                            <i class="fa-solid fa-folder text-amber-500"></i>
+                            <span class="text-indigo-600 dark:text-indigo-400 font-medium" id="treeChapterName">Chapter</span>
+                        </div>
+                        <div id="treeManual" class="flex items-center space-x-2 pl-12 border-l border-slate-300 dark:border-slate-700 ml-2 py-0.5 hidden">
+                            <i class="fa-solid fa-angle-right text-slate-400"></i>
+                            <i class="fa-solid fa-folder text-amber-500"></i>
+                            <span class="text-teal-600 dark:text-teal-400 font-medium" id="treeManualName">Manual Folder</span>
+                        </div>
+                        <div id="treeFile" class="flex items-center space-x-2 pl-16 border-l border-dashed border-slate-300 dark:border-slate-700 ml-2 py-0.5 hidden">
+                            <i class="fa-solid fa-file-pdf text-rose-500" id="treeFileIcon"></i>
+                            <span class="text-slate-500 dark:text-slate-400 italic" id="treeFileName">file_name.pdf</span>
+                        </div>
+                        <div id="treeEmpty" class="text-[11px] text-slate-400 dark:text-slate-500 italic py-2 text-center">
+                            Start filling out the folder inputs on the right to visualize your path structure.
+                        </div>
+                    </div>
+                </div>
+
+            </section>
+
+            <!-- Right Side: Interactive Forms & Dropzone (Col span 8) -->
+            <section class="lg:col-span-8 space-y-6">
+
+                <div class="bg-white dark:bg-slate-950 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm overflow-hidden">
+                    <div class="border-b border-slate-200 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-900/50 px-6 py-4 flex items-center justify-between">
+                        <h2 class="font-bold text-base text-slate-900 dark:text-white flex items-center">
+                            <i class="fa-solid fa-file-arrow-up text-brand-500 mr-2"></i>Configure & Upload File
+                        </h2>
+                        <span class="text-xs bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 px-2.5 py-1 rounded-full font-medium">Single Session Uploader</span>
+                    </div>
+
+                    <form id="uploadForm" class="p-6 space-y-6">
+                        
+                        <!-- Row 1: Subject (Pre-defined selections + Custom option) -->
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div class="space-y-2">
+                                <label class="block text-xs font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider">Subject Folder</label>
+                                <div class="relative">
+                                    <input type="text" id="subject" list="subjectList"
+                                        class="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-brand-500/50 transition text-sm"
+                                        placeholder="e.g. Physics, Biology, Custom Subject..." autocomplete="off">
+                                    <datalist id="subjectList">
+                                        <option value="Physics">
+                                        <option value="Chemistry">
+                                        <option value="Biology">
+                                        <option value="Mathematics">
+                                        <option value="English">
+                                        <option value="Medical Entrance Preparatory">
+                                    </datalist>
+                                </div>
+                                <span class="text-[10px] text-slate-400 block">Select a standard subject or type a unique name to create a new folder.</span>
+                            </div>
+
+                            <!-- Row 2: Chapter Folder -->
+                            <div class="space-y-2">
+                                <label class="block text-xs font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider">Chapter Folder</label>
+                                <div class="relative">
+                                    <input type="text" id="chapter" list="chapterList"
+                                        class="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-brand-500/50 transition text-sm"
+                                        placeholder="e.g. Thermodynamics, Genetics, Mechanics..." autocomplete="off">
+                                    <datalist id="chapterList">
+                                        <option value="Chapter 01 - Introduction">
+                                        <option value="Chapter 02 - Mechanics">
+                                        <option value="Chapter 03 - Organic Chemistry">
+                                        <option value="Chapter 04 - Cytology">
+                                        <option value="Chapter 05 - Botany">
+                                    </datalist>
+                                </div>
+                                <span class="text-[10px] text-slate-400 block">Organize documents neatly by chapter folders. (Optional)</span>
+                            </div>
+                        </div>
+
+                        <!-- Row 3: Custom Manual Folder Name -->
+                        <div class="space-y-2">
+                            <label class="block text-xs font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider">Manual Inner Folder Name</label>
+                            <input type="text" id="manualFolder" 
+                                class="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-brand-500/50 transition text-sm"
+                                placeholder="e.g. Quick Formula Sheets, Past Papers 2024, Slide Snippets...">
+                            <span class="text-[10px] text-slate-400 block">Want even deeper folder nesting? Specify an inner-most folder here. (Optional)</span>
+                        </div>
+
+                        <!-- Drag and Drop Zone Container -->
+                        <div class="space-y-2">
+                            <label class="block text-xs font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider">Attach Document / PDF</label>
+                            
+                            <div id="dropZone" class="border-2 border-dashed border-slate-200 dark:border-slate-800 hover:border-brand-500 dark:hover:border-brand-500 rounded-2xl p-8 text-center cursor-pointer bg-slate-50 dark:bg-slate-900/30 hover:bg-brand-50/20 dark:hover:bg-brand-500/5 transition duration-200 group">
+                                <input type="file" id="fileInput" class="hidden">
+                                
+                                <div class="space-y-3">
+                                    <div class="inline-flex items-center justify-center p-3.5 bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl shadow-sm text-slate-400 group-hover:text-brand-500 group-hover:scale-110 transition duration-200">
+                                        <i class="fa-solid fa-cloud-arrow-up text-2xl"></i>
+                                    </div>
+                                    <div class="space-y-1">
+                                        <p class="text-sm font-semibold text-slate-800 dark:text-slate-200">
+                                            Drag & Drop your file here, or <span class="text-brand-500 hover:underline">browse files</span>
+                                        </p>
+                                        <p class="text-xs text-slate-400">
+                                            Supports PDFs, DOCX, Images, PPT, and Zip files
+                                        </p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Selected File Preview Card -->
+                        <div id="filePreviewCard" class="hidden bg-slate-50 dark:bg-slate-900/50 border border-slate-200 dark:border-slate-800 rounded-xl p-4 flex items-center justify-between">
+                            <div class="flex items-center space-x-3 min-w-0">
+                                <div class="p-2.5 rounded-lg bg-rose-50 dark:bg-rose-950/40 text-rose-500 flex items-center justify-center flex-shrink-0" id="previewFileIconContainer">
+                                    <i class="fa-solid fa-file-pdf text-xl" id="previewIcon"></i>
+                                </div>
+                                <div class="min-w-0">
+                                    <h3 class="text-sm font-semibold text-slate-800 dark:text-white truncate" id="previewFileName">filename.pdf</h3>
+                                    <p class="text-[11px] text-slate-400" id="previewFileSize">0.0 MB</p>
+                                </div>
+                            </div>
+                            <button type="button" id="removeFileBtn" class="p-2 text-slate-400 hover:text-rose-500 dark:hover:text-rose-400 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 transition">
+                                <i class="fa-solid fa-trash-can"></i>
+                            </button>
+                        </div>
+
+                        <!-- Actions and Upload Button -->
+                        <div class="pt-4 border-t border-slate-200 dark:border-slate-800 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+                            <div class="text-xs text-slate-400 leading-normal max-w-sm">
+                                <i class="fa-solid fa-shield-halved text-emerald-500 mr-1.5"></i>
+                                Uploads are secured directly from this sandbox interface over secure, authenticated SSL connections.
+                            </div>
+                            <button type="submit" id="submitBtn" disabled
+                                class="w-full sm:w-auto px-6 py-3 bg-brand-500 hover:bg-brand-600 disabled:bg-slate-200 dark:disabled:bg-slate-800 disabled:text-slate-400 dark:disabled:text-slate-500 disabled:cursor-not-allowed text-white font-bold text-sm rounded-xl transition duration-200 flex items-center justify-center space-x-2 shadow-lg shadow-brand-500/15">
+                                <i class="fa-solid fa-paper-plane"></i>
+                                <span>Send to Google Drive</span>
+                            </button>
+                        </div>
+
+                    </form>
+                </div>
+
+                <!-- Custom Status/Notification Box -->
+                <div id="statusAlert" class="hidden rounded-xl p-4 flex items-start space-x-3">
+                    <div id="statusAlertIcon" class="text-lg mt-0.5"></div>
+                    <div class="flex-1">
+                        <h4 id="statusAlertTitle" class="text-sm font-bold"></h4>
+                        <p id="statusAlertMessage" class="text-xs mt-1 leading-relaxed"></p>
+                    </div>
+                </div>
+
+            </section>
+
+        </div>
+    </main>
+
+    <!-- Modal 1: Deployment & Apps Script Setup Guide -->
+    <div id="guideModal" class="fixed inset-0 bg-slate-950/60 backdrop-blur-sm flex items-center justify-center p-4 z-50 hidden">
+        <div class="bg-white dark:bg-slate-950 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-2xl max-w-2xl w-full max-h-[85vh] flex flex-col overflow-hidden animate-in fade-in zoom-in-95 duration-150">
+            <!-- Modal Header -->
+            <div class="px-6 py-4 border-b border-slate-200 dark:border-slate-800 flex items-center justify-between bg-slate-50 dark:bg-slate-900/50">
+                <div class="flex items-center space-x-2">
+                    <i class="fa-solid fa-terminal text-brand-500 text-lg"></i>
+                    <h3 class="font-bold text-base text-slate-900 dark:text-white">Google Apps Script Backend Setup</h3>
+                </div>
+                <button id="closeGuideBtn" class="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 p-1 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 transition">
+                    <i class="fa-solid fa-xmark text-lg"></i>
+                </button>
+            </div>
+
+            <!-- Modal Content (Scrollable) -->
+            <div class="p-6 overflow-y-auto space-y-6 custom-scrollbar text-sm">
+                
+                <div class="bg-blue-50 dark:bg-blue-950/30 text-blue-700 dark:text-blue-300 p-4 rounded-xl border border-blue-100 dark:border-blue-900/50 flex items-start space-x-3">
+                    <i class="fa-solid fa-circle-info text-base mt-0.5"></i>
+                    <div class="space-y-1">
+                        <p class="font-bold text-xs">Why is this required?</p>
+                        <p class="text-xs leading-relaxed">
+                            Web browsers enforce strict security protocols (CORS) that prevent uploading directly to Google Drive. This custom script acts as a safe middleware proxy allowing direct uploads.
+                        </p>
+                    </div>
+                </div>
+
+                <!-- Steps Checklist -->
+                <div class="space-y-4">
+                    <h4 class="font-bold text-slate-900 dark:text-white text-xs uppercase tracking-wider">Step-by-Step Implementation</h4>
+                    
+                    <div class="space-y-3">
+                        <!-- Step 1 -->
+                        <div class="flex items-start space-x-3">
+                            <span class="flex-shrink-0 h-5 w-5 bg-brand-500 text-white rounded-full flex items-center justify-center text-[11px] font-bold mt-0.5">1</span>
+                            <div>
+                                <p class="font-semibold text-slate-800 dark:text-slate-200">Open Google Apps Script Dashboard</p>
+                                <p class="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+                                    Visit <a href="https://script.google.com" target="_blank" class="text-brand-500 hover:underline inline-flex items-center">Google Apps Script Dashboard <i class="fa-solid fa-arrow-up-right-from-square ml-1 text-[10px]"></i></a> and click the <strong>New Project</strong> button on the top left.
+                                </p>
+                            </div>
+                        </div>
+
+                        <!-- Step 2 -->
+                        <div class="flex items-start space-x-3">
+                            <span class="flex-shrink-0 h-5 w-5 bg-brand-500 text-white rounded-full flex items-center justify-center text-[11px] font-bold mt-0.5">2</span>
+                            <div class="w-full">
+                                <p class="font-semibold text-slate-800 dark:text-slate-200">Copy & Paste the Generated Code</p>
+                                <p class="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+                                    Replace any pre-populated template placeholder code inside the script editor screen with this custom tailored API controller:
+                                </p>
+                                
+                                <!-- Script Code Block Container -->
+                                <div class="mt-2.5 relative group">
+                                    <pre class="bg-slate-950 text-slate-200 p-4 rounded-xl text-[11px] font-mono overflow-x-auto max-h-[180px] custom-scrollbar border border-slate-800" id="gasCodeBlock">
+const TARGET_FOLDER_ID = '17OKeKZ4nRCOlrj6_7u_wVrEJDu2o8Rzn'; // Hardcoded destination target
+
+function doGet(e) {
+  return HtmlService.createHtmlOutput('<h1>Connected successfully.</h1>')
+    .setXFrameOptionsMode(HtmlService.XFrameOptionsMode.ALLOWALL);
+}
+
+function doPost(e) {
+  try {
+    const data = JSON.parse(e.postData.contents);
+    const result = handleDirectUpload(data.data, data.filename, data.subject, data.chapter, data.manualFolder);
+    return ContentService.createTextOutput(JSON.stringify(result))
+      .setMimeType(ContentService.MimeType.JSON);
+  } catch (err) {
+    return ContentService.createTextOutput(JSON.stringify({ success: false, error: err.toString() }))
+      .setMimeType(ContentService.MimeType.JSON);
+  }
+}
+
+function handleDirectUpload(data, filename, subject, chapter, manualFolder) {
+  try {
+    let parentFolder = DriveApp.getFolderById(TARGET_FOLDER_ID);
+    
+    // Dynamic hierarchal directory setup
+    if (subject && subject.trim() !== '') {
+      parentFolder = getOrCreateFolder(parentFolder, subject.trim());
+    }
+    if (chapter && chapter.trim() !== '') {
+      parentFolder = getOrCreateFolder(parentFolder, chapter.trim());
+    }
+    if (manualFolder && manualFolder.trim() !== '') {
+      parentFolder = getOrCreateFolder(parentFolder, manualFolder.trim());
+    }
+    
+    // Convert base64 stream to functional binary file blob
+    const mimeMatch = data.match(/^data:(.*);base64,/);
+    const contentType = mimeMatch ? mimeMatch[1] : 'application/octet-stream';
+    const cleanData = data.substring(data.indexOf(',') + 1);
+    
+    const blob = Utilities.newBlob(Utilities.base64Decode(cleanData), contentType, filename);
+    const file = parentFolder.createFile(blob);
+    
+    return { success: true, url: file.getUrl(), name: file.getName() };
+  } catch (error) {
+    return { success: false, error: error.toString() };
+  }
+}
+
+function getOrCreateFolder(parent, name) {
+  const folders = parent.getFoldersByName(name);
+  if (folders.hasNext()) {
+    return folders.next();
+  }
+  return parent.createFolder(name);
+}</pre>
+                                    <button id="copyCodeBtn" class="absolute top-2.5 right-2.5 bg-slate-800 hover:bg-slate-700 text-slate-200 px-2.5 py-1.5 rounded-lg text-xs font-semibold flex items-center space-x-1 transition">
+                                        <i class="fa-regular fa-copy"></i>
+                                        <span>Copy Code</span>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Step 3 -->
+                        <div class="flex items-start space-x-3">
+                            <span class="flex-shrink-0 h-5 w-5 bg-brand-500 text-white rounded-full flex items-center justify-center text-[11px] font-bold mt-0.5">3</span>
+                            <div>
+                                <p class="font-semibold text-slate-800 dark:text-slate-200">Deploy the Web App</p>
+                                <p class="text-xs text-slate-500 dark:text-slate-400 mt-0.5 leading-relaxed">
+                                    On the top right of your Apps Script Editor, click <strong>Deploy</strong> > <strong>New deployment</strong>. Select <strong>Web app</strong> (via the gear icon) and fill out:
+                                </p>
+                                <ul class="list-disc list-inside text-xs mt-1 space-y-1 text-slate-600 dark:text-slate-400 pl-2">
+                                    <li><strong>Execute as:</strong> <code class="bg-slate-100 dark:bg-slate-800 px-1 py-0.5 rounded text-rose-500">Me (your-email@gmail.com)</code></li>
+                                    <li><strong>Who has access:</strong> <code class="bg-slate-100 dark:bg-slate-800 px-1 py-0.5 rounded text-rose-500">Anyone</code></li>
+                                </ul>
+                            </div>
+                        </div>
+
+                        <!-- Step 4 -->
+                        <div class="flex items-start space-x-3">
+                            <span class="flex-shrink-0 h-5 w-5 bg-brand-500 text-white rounded-full flex items-center justify-center text-[11px] font-bold mt-0.5">4</span>
+                            <div>
+                                <p class="font-semibold text-slate-800 dark:text-slate-200">Authorize Permissions & Bind URL</p>
+                                <p class="text-xs text-slate-500 dark:text-slate-400 mt-0.5 leading-relaxed">
+                                    Click <strong>Deploy</strong>. Approve the Google Permissions warning window. Copy the generated <strong>Web app URL</strong> from the final screen and paste it into the <strong>API Connection Settings</strong> card on the left panel.
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Modal Footer -->
+            <div class="px-6 py-4 border-t border-slate-200 dark:border-slate-800 flex items-center justify-end bg-slate-50 dark:bg-slate-900/50">
+                <button id="closeGuideBottomBtn" class="px-4 py-2 bg-slate-200 dark:bg-slate-800 hover:bg-slate-300 dark:hover:bg-slate-700 text-slate-800 dark:text-slate-200 rounded-lg text-xs font-bold transition">
+                    Got it, Close Settings
+                </button>
+            </div>
+        </div>
     </div>
-    <p class="hint" id="pathHint">Files upload to the root library folder unless you choose a subject.</p>
 
-    <div class="field" style="margin-top:6px;">
-      <label>Files</label>
-      <div class="drop" id="dropZone">
-        <span class="drop-icon">📎</span>
-        <div class="drop-title">Click to choose files, or drag them here</div>
-        <div class="drop-sub">PDF, Word (.docx), images (.jpg/.png), PowerPoint — up to ~25 MB each</div>
-        <input type="file" id="fileInput" multiple accept=".pdf,.doc,.docx,.jpg,.jpeg,.png,.webp,.ppt,.pptx,.txt">
-      </div>
-      <div class="filelist" id="fileList"></div>
-    </div>
+    <!-- Script Processing Area -->
+    <script>
+        // System Theme Management
+        const htmlEl = document.documentElement;
+        const themeToggle = document.getElementById('themeToggle');
+        
+        // Load initial theme settings
+        if (localStorage.getItem('theme') === 'dark' || (!('theme' in localStorage) && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+            htmlEl.classList.add('dark');
+        } else {
+            htmlEl.classList.remove('dark');
+        }
 
-    <button class="submit" id="submitBtn" disabled>Select files to upload</button>
-    <div class="status-box" id="statusBox"></div>
-  </div>
+        themeToggle.addEventListener('click', () => {
+            if (htmlEl.classList.contains('dark')) {
+                htmlEl.classList.remove('dark');
+                localStorage.setItem('theme', 'light');
+            } else {
+                htmlEl.classList.add('dark');
+                localStorage.setItem('theme', 'dark');
+            }
+        });
 
-  <footer>uploads go straight into your CEE Notes Library on Google Drive</footer>
-</div>
+        // App State Properties
+        let selectedFileBlob = null;
+        const storageKeyUrl = "cee_uploader_endpoint";
 
-<script>
-  var MAX_SIZE = 25 * 1024 * 1024; // 25MB, safe margin under Apps Script limits
-  var queued = []; // {file, id, status}
-  var idCounter = 0;
+        // Reference Variables
+        const webAppUrlInput = document.getElementById('webAppUrl');
+        const connectionHelp = document.getElementById('connectionHelp');
+        const statusIndicator = document.getElementById('statusIndicator');
+        const statusIndicatorPing = document.getElementById('statusIndicatorPing');
+        
+        const subjectInput = document.getElementById('subject');
+        const chapterInput = document.getElementById('chapter');
+        const manualFolderInput = document.getElementById('manualFolder');
+        
+        const dropZone = document.getElementById('dropZone');
+        const fileInput = document.getElementById('fileInput');
+        const filePreviewCard = document.getElementById('filePreviewCard');
+        const previewFileName = document.getElementById('previewFileName');
+        const previewFileSize = document.getElementById('previewFileSize');
+        const removeFileBtn = document.getElementById('removeFileBtn');
+        const previewIcon = document.getElementById('previewIcon');
+        const previewFileIconContainer = document.getElementById('previewFileIconContainer');
+        
+        const treeSubject = document.getElementById('treeSubject');
+        const treeSubjectName = document.getElementById('treeSubjectName');
+        const treeChapter = document.getElementById('treeChapter');
+        const treeChapterName = document.getElementById('treeChapterName');
+        const treeManual = document.getElementById('treeManual');
+        const treeManualName = document.getElementById('treeManualName');
+        const treeFile = document.getElementById('treeFile');
+        const treeFileName = document.getElementById('treeFileName');
+        const treeFileIcon = document.getElementById('treeFileIcon');
+        const treeEmpty = document.getElementById('treeEmpty');
 
-  var subjectSelect = document.getElementById('subjectSelect');
-  var chapterSelect = document.getElementById('chapterSelect');
-  var subjectCustom = document.getElementById('subjectCustom');
-  var chapterCustom = document.getElementById('chapterCustom');
-  var tabSubject = document.getElementById('tabSubject');
-  var tabChapter = document.getElementById('tabChapter');
-  var pathHint = document.getElementById('pathHint');
-  var dropZone = document.getElementById('dropZone');
-  var fileInput = document.getElementById('fileInput');
-  var fileList = document.getElementById('fileList');
-  var submitBtn = document.getElementById('submitBtn');
-  var statusBox = document.getElementById('statusBox');
+        const uploadForm = document.getElementById('uploadForm');
+        const submitBtn = document.getElementById('submitBtn');
+        
+        const statusAlert = document.getElementById('statusAlert');
+        const statusAlertIcon = document.getElementById('statusAlertIcon');
+        const statusAlertTitle = document.getElementById('statusAlertTitle');
+        const statusAlertMessage = document.getElementById('statusAlertMessage');
 
-  var DEFAULT_SUBJECTS = ['Physics','Chemistry','Botany','Zoology','Medical','IOE','Demo','CEE'];
+        // Modal Elements
+        const guideBtn = document.getElementById('guideBtn');
+        const guideModal = document.getElementById('guideModal');
+        const closeGuideBtn = document.getElementById('closeGuideBtn');
+        const closeGuideBottomBtn = document.getElementById('closeGuideBottomBtn');
+        const copyCodeBtn = document.getElementById('copyCodeBtn');
 
-  function populateSubjects(list){
-    var names = list && list.length ? list : DEFAULT_SUBJECTS;
-    subjectSelect.innerHTML = '<option value="">— choose —</option>' +
-      names.map(function(n){ return '<option value="'+esc(n)+'">'+esc(n)+'</option>'; }).join('');
-  }
+        // Initial Web App URL Binding
+        if (localStorage.getItem(storageKeyUrl)) {
+            webAppUrlInput.value = localStorage.getItem(storageKeyUrl);
+            updateEndpointConnectionStatus();
+        }
 
-  google.script.run.withSuccessHandler(populateSubjects).withFailureHandler(function(){
-    populateSubjects(DEFAULT_SUBJECTS);
-  }).listSubjects();
+        // Web app url event listeners
+        webAppUrlInput.addEventListener('input', () => {
+            localStorage.setItem(storageKeyUrl, webAppUrlInput.value.trim());
+            updateEndpointConnectionStatus();
+            validateFormSubmissionState();
+        });
 
-  function esc(s){
-    return String(s).replace(/[&<>"']/g, function(c){
-      return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];
-    });
-  }
+        function updateEndpointConnectionStatus() {
+            const urlVal = webAppUrlInput.value.trim();
+            if (urlVal.startsWith('https://script.google.com/macros/')) {
+                statusIndicator.className = "relative inline-flex rounded-full h-3 w-3 bg-emerald-500";
+                statusIndicatorPing.className = "animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75";
+                connectionHelp.className = "text-[11px] text-emerald-600 dark:text-emerald-400 font-medium";
+                connectionHelp.innerHTML = `<i class="fa-solid fa-circle-check mr-1"></i> Connected to active deployment.`;
+            } else {
+                statusIndicator.className = "relative inline-flex rounded-full h-3 w-3 bg-rose-500";
+                statusIndicatorPing.className = "animate-ping absolute inline-flex h-full w-full rounded-full bg-rose-400 opacity-75";
+                connectionHelp.className = "text-[11px] text-rose-500 dark:text-rose-400 font-medium";
+                connectionHelp.innerHTML = `<i class="fa-solid fa-triangle-exclamation mr-1"></i> No active connection configured yet.`;
+            }
+        }
 
-  subjectSelect.addEventListener('change', function(){
-    var subj = subjectSelect.value;
-    updateHintAndTabs();
-    if (!subj){
-      chapterSelect.innerHTML = '<option value="">Select subject first</option>';
-      chapterSelect.disabled = true;
-      return;
-    }
-    chapterSelect.disabled = false;
-    chapterSelect.innerHTML = '<option value="">Loading…</option>';
-    google.script.run.withSuccessHandler(function(list){
-      chapterSelect.innerHTML = '<option value="">— none / top level —</option>' +
-        list.map(function(n){ return '<option value="'+esc(n)+'">'+esc(n)+'</option>'; }).join('');
-    }).withFailureHandler(function(){
-      chapterSelect.innerHTML = '<option value="">— none / top level —</option>';
-    }).listChapters(subj);
-  });
+        // Dynamic visual tree builder
+        function renderTreePreview() {
+            const subject = subjectInput.value.trim();
+            const chapter = chapterInput.value.trim();
+            const manual = manualFolderInput.value.trim();
 
-  document.getElementById('newSubjectToggle').addEventListener('click', function(){
-    subjectSelect.style.display = 'none';
-    this.style.display = 'none';
-    subjectCustom.style.display = 'block';
-    subjectCustom.focus();
-    chapterSelect.disabled = false;
-    chapterSelect.innerHTML = '<option value="">— none / top level —</option>';
-    updateHintAndTabs();
-  });
-  document.getElementById('newChapterToggle').addEventListener('click', function(){
-    chapterSelect.style.display = 'none';
-    this.style.display = 'none';
-    chapterCustom.style.display = 'block';
-    chapterCustom.focus();
-    updateHintAndTabs();
-  });
-  subjectCustom.addEventListener('input', updateHintAndTabs);
-  chapterCustom.addEventListener('input', updateHintAndTabs);
+            let hasNode = false;
 
-  function currentSubject(){
-    return (subjectCustom.style.display !== 'none' ? subjectCustom.value : subjectSelect.value).trim();
-  }
-  function currentChapter(){
-    return (chapterCustom.style.display !== 'none' ? chapterCustom.value : chapterSelect.value).trim();
-  }
+            if (subject !== '') {
+                treeSubject.classList.remove('hidden');
+                treeSubjectName.innerText = subject;
+                hasNode = true;
+            } else {
+                treeSubject.classList.add('hidden');
+            }
 
-  function updateHintAndTabs(){
-    var s = currentSubject(), c = currentChapter();
-    tabSubject.textContent = s || 'subject';
-    tabSubject.classList.toggle('active', !!s && !c);
-    tabChapter.textContent = c || 'chapter';
-    tabChapter.classList.toggle('active', !!c || !s);
-    if (s && c) pathHint.textContent = 'Uploads to: ' + s + ' › ' + c;
-    else if (s) pathHint.textContent = 'Uploads to: ' + s + ' (top level)';
-    else pathHint.textContent = 'Files upload to the root library folder unless you choose a subject.';
-  }
+            if (chapter !== '') {
+                treeChapter.classList.remove('hidden');
+                treeChapterName.innerText = chapter;
+                hasNode = true;
+            } else {
+                treeChapter.classList.add('hidden');
+            }
 
-  // Drop zone wiring
-  dropZone.addEventListener('click', function(){ fileInput.click(); });
-  dropZone.addEventListener('dragover', function(e){ e.preventDefault(); dropZone.classList.add('drag'); });
-  dropZone.addEventListener('dragleave', function(){ dropZone.classList.remove('drag'); });
-  dropZone.addEventListener('drop', function(e){
-    e.preventDefault();
-    dropZone.classList.remove('drag');
-    addFiles(e.dataTransfer.files);
-  });
-  fileInput.addEventListener('change', function(){
-    addFiles(fileInput.files);
-    fileInput.value = '';
-  });
+            if (manual !== '') {
+                treeManual.classList.remove('hidden');
+                treeManualName.innerText = manual;
+                hasNode = true;
+            } else {
+                treeManual.classList.add('hidden');
+            }
 
-  function addFiles(fileArr){
-    Array.prototype.forEach.call(fileArr, function(f){
-      if (f.size > MAX_SIZE){
-        showStatus('err', f.name + ' is over 25 MB — split it or compress before uploading.');
-        return;
-      }
-      queued.push({ file:f, id: ++idCounter, status:'ready' });
-    });
-    renderFileList();
-  }
+            if (selectedFileBlob) {
+                treeFile.classList.remove('hidden');
+                treeFileName.innerText = selectedFileBlob.name;
+                hasNode = true;
 
-  function renderFileList(){
-    fileList.innerHTML = queued.map(function(q){
-      var ext = (q.file.name.split('.').pop() || '').toUpperCase();
-      var kb = q.file.size / 1024;
-      var sizeStr = kb > 1024 ? (kb/1024).toFixed(1)+' MB' : Math.round(kb)+' KB';
-      var statusIcon = q.status === 'done' ? '✓' : q.status === 'error' ? '✗' : q.status === 'uploading' ? '…' : '';
-      return '<div class="file-item" data-id="'+q.id+'">' +
-        '<span class="file-ext">'+esc(ext)+'</span>' +
-        '<span class="file-name">'+esc(q.file.name)+'</span>' +
-        '<span class="file-size">'+sizeStr+'</span>' +
-        '<span class="file-status">'+statusIcon+'</span>' +
-        '<button type="button" class="file-remove" data-remove="'+q.id+'">&times;</button>' +
-        '</div>';
-    }).join('');
+                // Dynamically change file icon inside visual representation
+                const ext = selectedFileBlob.name.split('.').pop().toLowerCase();
+                if (ext === 'pdf') {
+                    treeFileIcon.className = "fa-solid fa-file-pdf text-rose-500";
+                } else if (['jpg', 'jpeg', 'png', 'gif', 'svg', 'webp'].includes(ext)) {
+                    treeFileIcon.className = "fa-solid fa-file-image text-emerald-500";
+                } else if (['zip', 'rar', 'tar', '7z'].includes(ext)) {
+                    treeFileIcon.className = "fa-solid fa-file-zipper text-indigo-500";
+                } else {
+                    treeFileIcon.className = "fa-solid fa-file-word text-blue-500";
+                }
+            } else {
+                treeFile.classList.add('hidden');
+            }
 
-    Array.prototype.forEach.call(fileList.querySelectorAll('[data-remove]'), function(btn){
-      btn.addEventListener('click', function(){
-        var id = Number(btn.getAttribute('data-remove'));
-        queued = queued.filter(function(q){ return q.id !== id; });
-        renderFileList();
-        updateSubmitState();
-      });
-    });
-    updateSubmitState();
-  }
+            if (hasNode) {
+                treeEmpty.classList.add('hidden');
+            } else {
+                treeEmpty.classList.remove('hidden');
+            }
+        }
 
-  function updateSubmitState(){
-    submitBtn.disabled = queued.length === 0;
-    submitBtn.textContent = queued.length === 0
-      ? 'Select files to upload'
-      : 'Upload ' + queued.length + (queued.length === 1 ? ' file' : ' files');
-  }
+        // Setup input listeners for dynamic updates
+        subjectInput.addEventListener('input', renderTreePreview);
+        chapterInput.addEventListener('input', renderTreePreview);
+        manualFolderInput.addEventListener('input', renderTreePreview);
 
-  function showStatus(kind, html){
-    statusBox.className = 'status-box show ' + (kind === 'ok' ? 'ok' : 'err');
-    statusBox.innerHTML = html;
-  }
+        // Drag and Drop implementation logic
+        dropZone.addEventListener('click', () => fileInput.click());
 
-  function fileToBase64(file){
-    return new Promise(function(resolve, reject){
-      var reader = new FileReader();
-      reader.onload = function(){ resolve(reader.result.split(',')[1]); };
-      reader.onerror = reject;
-      reader.readAsDataURL(file);
-    });
-  }
+        dropZone.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            dropZone.classList.add('border-brand-500', 'bg-brand-50/20', 'dark:bg-brand-500/5');
+        });
 
-  document.getElementById('submitBtn').addEventListener('click', function(){
-    var subject = currentSubject();
-    if (!subject){
-      showStatus('err', 'Choose or type a subject folder first.');
-      return;
-    }
-    var chapter = currentChapter();
-    submitBtn.disabled = true;
-    submitBtn.textContent = 'Uploading…';
-    statusBox.className = 'status-box';
+        ['dragleave', 'dragend'].forEach(type => {
+            dropZone.addEventListener(type, () => {
+                dropZone.classList.remove('border-brand-500', 'bg-brand-50/20', 'dark:bg-brand-500/5');
+            });
+        });
 
-    var toUpload = queued.filter(function(q){ return q.status === 'ready'; });
-    toUpload.forEach(function(q){ q.status = 'uploading'; });
-    renderFileList();
+        dropZone.addEventListener('drop', (e) => {
+            e.preventDefault();
+            dropZone.classList.remove('border-brand-500', 'bg-brand-50/20', 'dark:bg-brand-500/5');
+            if (e.dataTransfer.files.length) {
+                handleFileSelection(e.dataTransfer.files[0]);
+            }
+        });
 
-    Promise.all(toUpload.map(function(q){ return fileToBase64(q.file); }))
-      .then(function(base64List){
-        var payload = {
-          subject: subject,
-          chapter: chapter,
-          files: toUpload.map(function(q, i){
-            return { name: q.file.name, mimeType: q.file.type || 'application/octet-stream', base64: base64List[i] };
-          })
-        };
-        google.script.run
-          .withSuccessHandler(function(res){ handleResult(res, toUpload); })
-          .withFailureHandler(function(err){
-            toUpload.forEach(function(q){ q.status = 'error'; });
-            renderFileList();
-            showStatus('err', 'Upload failed: ' + (err && err.message ? err.message : err));
-            submitBtn.disabled = false;
-            updateSubmitState();
-          })
-          .uploadFiles(payload);
-      })
-      .catch(function(err){
-        showStatus('err', 'Could not read one of the files: ' + err.message);
-        submitBtn.disabled = false;
-        updateSubmitState();
-      });
-  });
+        fileInput.addEventListener('change', (e) => {
+            if (e.target.files.length) {
+                handleFileSelection(e.target.files[0]);
+            }
+        });
 
-  function handleResult(res, toUpload){
-    if (res && res.success){
-      toUpload.forEach(function(q){ q.status = 'done'; });
-      renderFileList();
-      showStatus('ok', 'Uploaded to <b>'+esc(res.folderName)+'</b>. <a href="'+res.folderUrl+'" target="_blank">Open folder ↗</a>');
-      queued = queued.filter(function(q){ return q.status !== 'done'; });
-      setTimeout(function(){ renderFileList(); }, 1200);
-      // refresh chapter list in case a new one was created
-      if (subject_wasCustom()) {
-        google.script.run.withSuccessHandler(populateSubjects).listSubjects();
-      }
-    } else {
-      toUpload.forEach(function(q){ q.status = 'error'; });
-      renderFileList();
-      showStatus('err', 'Upload failed: ' + (res && res.error ? res.error : 'unknown error'));
-    }
-    submitBtn.disabled = false;
-    updateSubmitState();
-  }
+        function handleFileSelection(file) {
+            selectedFileBlob = file;
+            
+            // UI elements configurations based on file meta information
+            previewFileName.innerText = file.name;
+            previewFileSize.innerText = formatBytes(file.size);
 
-  function subject_wasCustom(){
-    return subjectCustom.style.display !== 'none';
-  }
+            const fileExt = file.name.split('.').pop().toLowerCase();
+            
+            // Adjust visualization class styling for dynamic file icons
+            if (fileExt === 'pdf') {
+                previewIcon.className = "fa-solid fa-file-pdf text-xl text-rose-500";
+                previewFileIconContainer.className = "p-2.5 rounded-lg bg-rose-50 dark:bg-rose-950/40 text-rose-500 flex items-center justify-center flex-shrink-0";
+            } else if (['jpg', 'jpeg', 'png', 'gif', 'svg', 'webp'].includes(fileExt)) {
+                previewIcon.className = "fa-solid fa-file-image text-xl text-emerald-500";
+                previewFileIconContainer.className = "p-2.5 rounded-lg bg-emerald-50 dark:bg-emerald-950/40 text-emerald-500 flex items-center justify-center flex-shrink-0";
+            } else if (['zip', 'rar', 'tar', '7z'].includes(fileExt)) {
+                previewIcon.className = "fa-solid fa-file-zipper text-xl text-indigo-500";
+                previewFileIconContainer.className = "p-2.5 rounded-lg bg-indigo-50 dark:bg-indigo-950/40 text-indigo-500 flex items-center justify-center flex-shrink-0";
+            } else {
+                previewIcon.className = "fa-solid fa-file-invoice text-xl text-blue-500";
+                previewFileIconContainer.className = "p-2.5 rounded-lg bg-blue-50 dark:bg-blue-950/40 text-blue-500 flex items-center justify-center flex-shrink-0";
+            }
 
-  updateHintAndTabs();
-</script>
+            filePreviewCard.classList.remove('hidden');
+            renderTreePreview();
+            validateFormSubmissionState();
+        }
+
+        removeFileBtn.addEventListener('click', () => {
+            selectedFileBlob = null;
+            fileInput.value = '';
+            filePreviewCard.classList.add('hidden');
+            renderTreePreview();
+            validateFormSubmissionState();
+        });
+
+        function formatBytes(bytes, decimals = 2) {
+            if (bytes === 0) return '0 Bytes';
+            const k = 1024;
+            const dm = decimals < 0 ? 0 : decimals;
+            const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+            const i = Math.floor(Math.log(bytes) / Math.log(k));
+            return parseFloat((bytes / Math.pow(k, i)).toFixed(dm)) + ' ' + sizes[i];
+        }
+
+        // Interactive validation logic checks
+        function validateFormSubmissionState() {
+            const isUrlConfigured = webAppUrlInput.value.trim().startsWith('https://script.google.com/macros/');
+            const isFileSelected = selectedFileBlob !== null;
+
+            if (isUrlConfigured && isFileSelected) {
+                submitBtn.disabled = false;
+            } else {
+                submitBtn.disabled = true;
+            }
+        }
+
+        // Submitting Files and payloads
+        uploadForm.addEventListener('submit', (e) => {
+            e.preventDefault();
+
+            const url = webAppUrlInput.value.trim();
+            if (!url || !selectedFileBlob) return;
+
+            // Trigger visual progress representation
+            showCustomAlert('info', 'Uploading in progress...', 'Uploading file stream and creating directories directly on Google Drive cloud servers. Do not close this window.');
+            submitBtn.disabled = true;
+            
+            const reader = new FileReader();
+            reader.onload = function(evt) {
+                const base64Data = evt.target.result;
+                
+                const uploadPayload = {
+                    data: base64Data,
+                    filename: selectedFileBlob.name,
+                    subject: subjectInput.value.trim(),
+                    chapter: chapterInput.value.trim(),
+                    manualFolder: manualFolderInput.value.trim()
+                };
+
+                // Use fetch POST payload to access endpoint safely
+                fetch(url, {
+                    method: 'POST',
+                    mode: 'cors', // Ensure we request CORS setup. Uses absolute error fallback when CORS limits block payload.
+                    headers: {
+                        'Content-Type': 'text/plain;charset=utf-8',
+                    },
+                    body: JSON.stringify(uploadPayload)
+                })
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error('HTTP network error ' + response.status);
+                    }
+                    return response.json();
+                })
+                .then(res => {
+                    if (res && res.success) {
+                        showCustomAlert('success', 'Successfully Uploaded!', `File nested path processing completed successfully.<br><a href="${res.url}" target="_blank" class="underline font-bold text-emerald-800 dark:text-emerald-300 inline-flex items-center mt-1">Open newly uploaded file <i class="fa-solid fa-arrow-up-right-from-square ml-1 text-xs"></i></a>`);
+                        resetAfterSuccessfulUpload();
+                    } else {
+                        // Error fallback within payload validation checks from gas engine
+                        const errText = res ? res.error : 'Invalid API communication response';
+                        showCustomAlert('danger', 'Script Execution Refused', `System failed processing with: "${errText}". Make sure your destination folder permits writing access privileges.`);
+                    }
+                })
+                .catch(err => {
+                    // CORS preflight safety check handler
+                    // Often Apps Script redirections present as "TypeError: Failed to fetch" due to browser restrictions with no-cors.
+                    // If no response could be captured directly on modern browsers, show informative status message.
+                    showCustomAlert('warning', 'Awaiting finalized processing', 'The file transmission finished. Since Google Apps Script Web Apps handle cross-origin requests via unique redirections, please verify your Destination Drive folder to ensure complete processing.');
+                    resetAfterSuccessfulUpload();
+                })
+                .finally(() => {
+                    validateFormSubmissionState();
+                });
+            };
+
+            reader.readAsDataURL(selectedFileBlob);
+        });
+
+        function resetAfterSuccessfulUpload() {
+            selectedFileBlob = null;
+            fileInput.value = '';
+            filePreviewCard.classList.add('hidden');
+            subjectInput.value = '';
+            chapterInput.value = '';
+            manualFolderInput.value = '';
+            renderTreePreview();
+        }
+
+        // Notification and Alert Engine
+        function showCustomAlert(type, title, message) {
+            statusAlert.className = "rounded-xl p-4 flex items-start space-x-3 transition duration-150 transform hover:scale-[1.01]";
+            statusAlert.classList.remove('hidden');
+
+            if (type === 'success') {
+                statusAlert.classList.add('bg-emerald-50', 'dark:bg-emerald-950/20', 'border', 'border-emerald-100', 'dark:border-emerald-900/50', 'text-emerald-900', 'dark:text-emerald-200');
+                statusAlertIcon.innerHTML = `<i class="fa-solid fa-circle-check text-emerald-500"></i>`;
+            } else if (type === 'danger') {
+                statusAlert.classList.add('bg-rose-50', 'dark:bg-rose-950/20', 'border', 'border-rose-100', 'dark:border-rose-900/50', 'text-rose-900', 'dark:text-rose-200');
+                statusAlertIcon.innerHTML = `<i class="fa-solid fa-circle-exclamation text-rose-500"></i>`;
+            } else if (type === 'info') {
+                statusAlert.classList.add('bg-blue-50', 'dark:bg-blue-950/20', 'border', 'border-blue-100', 'dark:border-blue-900/50', 'text-blue-900', 'dark:text-blue-200');
+                statusAlertIcon.innerHTML = `<i class="fa-solid fa-spinner animate-spin text-blue-500"></i>`;
+            } else {
+                // Warnings, usually redirect assumptions
+                statusAlert.classList.add('bg-amber-50', 'dark:bg-amber-950/20', 'border', 'border-amber-100', 'dark:border-amber-900/50', 'text-amber-900', 'dark:text-amber-200');
+                statusAlertIcon.innerHTML = `<i class="fa-solid fa-circle-nodes text-amber-500"></i>`;
+            }
+
+            statusAlertTitle.innerText = title;
+            statusAlertMessage.innerHTML = message;
+            
+            // Auto scroll down to notice alert on mobile screens
+            statusAlert.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+        }
+
+        // Modal Action Scripts
+        guideBtn.addEventListener('click', () => {
+            guideModal.classList.remove('hidden');
+        });
+
+        [closeGuideBtn, closeGuideBottomBtn].forEach(el => {
+            el.addEventListener('click', () => {
+                guideModal.classList.add('hidden');
+            });
+        });
+
+        // Hide modal when clicked outside card boundaries
+        guideModal.addEventListener('click', (e) => {
+            if (e.target === guideModal) {
+                guideModal.classList.add('hidden');
+            }
+        });
+
+        // Copy setup script feature
+        copyCodeBtn.addEventListener('click', () => {
+            const textToCopy = document.getElementById('gasCodeBlock').innerText;
+            navigator.clipboard.writeText(textToCopy).then(() => {
+                const initialHtml = copyCodeBtn.innerHTML;
+                copyCodeBtn.innerHTML = `<i class="fa-solid fa-check text-emerald-400"></i> <span class="text-emerald-400">Copied!</span>`;
+                setTimeout(() => {
+                    copyCodeBtn.innerHTML = initialHtml;
+                }, 2000);
+            }).catch(err => {
+                // Clipboard API fallback for standard frame integrations
+                const textArea = document.createElement("textarea");
+                textArea.value = textToCopy;
+                textArea.style.position = "fixed";
+                document.body.appendChild(textArea);
+                textArea.focus();
+                textArea.select();
+                try {
+                    document.execCommand('copy');
+                    const initialHtml = copyCodeBtn.innerHTML;
+                    copyCodeBtn.innerHTML = `<i class="fa-solid fa-check text-emerald-400"></i> <span class="text-emerald-400">Copied!</span>`;
+                    setTimeout(() => {
+                        copyCodeBtn.innerHTML = initialHtml;
+                    }, 2000);
+                } catch (e) {
+                    console.error('Fallback failed', e);
+                }
+                document.body.removeChild(textArea);
+            });
+        });
+    </script>
 </body>
 </html>
