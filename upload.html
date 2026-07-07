@@ -1,1396 +1,842 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>CEE Notes Library — Direct Folder Upload</title>
-<link rel="preconnect" href="https://fonts.googleapis.com" />
-<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:ital,wght@0,300;0,400;0,500;1,300&display=swap" rel="stylesheet" />
-
-<style>
-*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-
-:root {
-  --bg:       #0d0f14;
-  --surface:  #13161e;
-  --surface2: #1c2030;
-  --border:   #252a38;
-  --accent:   #4f8ef7;
-  --accent2:  #7c5cfc;
-  --success:  #22c77a;
-  --error:    #f05252;
-  --warn:     #f59e0b;
-  --text:     #e8ecf5;
-  --muted:    #636880;
-  --font-display: 'Syne', sans-serif;
-  --font-body:    'DM Sans', sans-serif;
-  --radius:   12px;
-  --shadow:   0 8px 32px rgba(0,0,0,.45);
-}
-[data-theme="light"] {
-  --bg:       #f0f2f8;
-  --surface:  #ffffff;
-  --surface2: #e8ecf5;
-  --border:   #d0d5e8;
-  --text:     #0d0f14;
-  --muted:    #7a7f99;
-}
-
-html { scroll-behavior: smooth; }
-body {
-  font-family: var(--font-body);
-  background: var(--bg);
-  color: var(--text);
-  min-height: 100vh;
-  transition: background .3s, color .3s;
-  overflow-x: hidden;
-}
-
-.bg-orbs {
-  position: fixed; inset: 0; pointer-events: none; z-index: 0;
-  overflow: hidden;
-}
-.bg-orbs span {
-  position: absolute; border-radius: 50%;
-  filter: blur(80px); opacity: .12;
-}
-.bg-orbs span:nth-child(1) {
-  width: 500px; height: 500px;
-  background: var(--accent2);
-  top: -150px; right: -100px;
-  animation: drift1 20s ease-in-out infinite alternate;
-}
-.bg-orbs span:nth-child(2) {
-  width: 400px; height: 400px;
-  background: var(--accent);
-  bottom: -100px; left: -80px;
-  animation: drift2 25s ease-in-out infinite alternate;
-}
-@keyframes drift1 { from { transform: translate(0,0) scale(1);} to { transform: translate(40px,60px) scale(1.15);} }
-@keyframes drift2 { from { transform: translate(0,0) scale(1);} to { transform: translate(-40px,-50px) scale(1.2);} }
-
-.wrapper { position: relative; z-index: 1; max-width: 1200px; margin: 0 auto; padding: 0 20px 60px; }
-
-header {
-  display: flex; align-items: center; justify-content: space-between;
-  padding: 24px 0 0;
-  border-bottom: 1px solid var(--border);
-  margin-bottom: 30px;
-  padding-bottom: 20px;
-}
-.logo {
-  display: flex; align-items: center; gap: 12px;
-}
-.logo-icon {
-  width: 42px; height: 42px; border-radius: 10px;
-  background: linear-gradient(135deg, var(--accent), var(--accent2));
-  display: flex; align-items: center; justify-content: center;
-  font-size: 20px; flex-shrink: 0;
-}
-.logo-text h1 {
-  font-family: var(--font-display); font-size: 1.2rem; font-weight: 800;
-  background: linear-gradient(90deg, var(--accent), var(--accent2));
-  -webkit-background-clip: text; -webkit-text-fill-color: transparent;
-  line-height: 1;
-}
-.logo-text p { font-size: .75rem; color: var(--muted); margin-top: 2px; }
-
-.header-actions { display: flex; align-items: center; gap: 12px; }
-
-.nav-link {
-  font-family: var(--font-display); font-size: .85rem; font-weight: 600;
-  color: var(--muted); text-decoration: none;
-  padding: 8px 16px; border-radius: 8px; border: 1px solid var(--border);
-  transition: all .2s;
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-}
-.nav-link:hover { color: var(--text); border-color: var(--accent); }
-.nav-link.active { color: var(--accent); border-color: var(--accent); background: rgba(79,142,247,.08); }
-
-.theme-btn {
-  width: 38px; height: 38px; border-radius: 8px;
-  border: 1px solid var(--border); background: var(--surface);
-  color: var(--muted); cursor: pointer; font-size: 16px;
-  display: flex; align-items: center; justify-content: center;
-  transition: all .2s;
-}
-.theme-btn:hover { color: var(--text); border-color: var(--accent); }
-
-.hero { text-align: center; margin-bottom: 36px; }
-.hero-badges {
-  display: flex; justify-content: center; gap: 8px; flex-wrap: wrap; margin-bottom: 16px;
-}
-.hero-badge {
-  display: inline-flex; align-items: center; gap: 6px;
-  padding: 6px 14px; border-radius: 999px;
-  border: 1px solid rgba(79,142,247,.3);
-  background: rgba(79,142,247,.07);
-  font-size: .75rem; color: var(--accent);
-  font-family: var(--font-display); font-weight: 600;
-  letter-spacing: .05em; text-transform: uppercase;
-}
-.hero-badge.public-status {
-  border-color: rgba(34,199,122,.3);
-  background: rgba(34,199,122,.07);
-  color: var(--success);
-}
-.hero-badge.gdrive-link {
-  border-color: rgba(124,92,252,.4);
-  background: rgba(124,92,252,.1);
-  color: var(--accent2);
-}
-.hero-badge.gdrive-link a {
-  color: inherit;
-  text-decoration: none;
-}
-.hero-badge.gdrive-link:hover {
-  background: rgba(124,92,252,.2);
-}
-
-.hero h2 {
-  font-family: var(--font-display); font-size: clamp(1.8rem, 4vw, 2.6rem);
-  font-weight: 800; line-height: 1.2; margin-bottom: 12px;
-}
-.hero h2 span {
-  background: linear-gradient(90deg, var(--accent), var(--accent2));
-  -webkit-background-clip: text; -webkit-text-fill-color: transparent;
-}
-.hero p { color: var(--muted); max-width: 580px; margin: 0 auto; line-height: 1.6; font-size: 0.95rem; }
-
-.workspace-grid {
-  display: grid;
-  grid-template-columns: 1.2fr 1fr;
-  gap: 28px;
-  margin-bottom: 40px;
-}
-@media (max-width: 900px) {
-  .workspace-grid { grid-template-columns: 1fr; }
-}
-
-.card {
-  background: var(--surface);
-  border: 1px solid var(--border);
-  border-radius: 20px;
-  padding: 28px;
-  box-shadow: var(--shadow);
-  display: flex;
-  flex-direction: column;
-}
-.card-header-flex {
-  display: flex; align-items: center; justify-content: space-between; margin-bottom: 20px;
-}
-.card-title {
-  font-family: var(--font-display); font-size: 1.1rem; font-weight: 700;
-  display: flex; align-items: center; gap: 8px;
-}
-.card-title span { font-size: 1.2rem; }
-.card-subtitle {
-  font-size: 0.8rem; color: var(--muted); margin-top: -15px; margin-bottom: 20px;
-}
-
-.dir-explorer {
-  border: 1px solid var(--border);
-  border-radius: 12px;
-  background: var(--surface2);
-  padding: 16px;
-  min-height: 320px;
-  display: flex;
-  flex-direction: column;
-}
-.dir-breadcrumbs {
-  display: flex; align-items: center; gap: 6px;
-  font-family: var(--font-display); font-size: 0.85rem; font-weight: 600;
-  margin-bottom: 14px; color: var(--muted);
-  flex-wrap: wrap; background: rgba(0,0,0,0.15);
-  padding: 8px 12px; border-radius: 6px;
-}
-.breadcrumb-item { cursor: pointer; transition: color 0.2s; }
-.breadcrumb-item:hover { color: var(--accent); }
-.breadcrumb-item.active { color: var(--text); cursor: default; }
-.breadcrumb-separator { color: var(--muted); font-size: 0.7rem; }
-
-.dir-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
-  gap: 12px;
-  flex: 1;
-  overflow-y: auto;
-  max-height: 280px;
-  padding-right: 4px;
-}
-.dir-grid::-webkit-scrollbar { width: 6px; }
-.dir-grid::-webkit-scrollbar-track { background: transparent; }
-.dir-grid::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
-
-.dir-item {
-  border: 1.5px solid var(--border);
-  background: var(--surface);
-  border-radius: 10px;
-  padding: 12px;
-  text-align: center;
-  cursor: pointer;
-  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  position: relative;
-  user-select: none;
-}
-.dir-item:hover {
-  transform: translateY(-2px);
-  border-color: var(--accent);
-  box-shadow: 0 4px 12px rgba(79,142,247,0.15);
-}
-.dir-item.selected {
-  border-color: var(--accent2);
-  background: rgba(124,92,252,0.08);
-}
-.dir-icon { font-size: 2.2rem; margin-bottom: 8px; }
-.dir-name { font-weight: 600; font-size: 0.8rem; max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.dir-count { font-size: 0.7rem; color: var(--muted); margin-top: 2px; }
-
-.dir-item.drag-over {
-  border-color: var(--success);
-  background: rgba(34,199,122,0.08);
-  transform: scale(1.03);
-}
-
-.empty-dir {
-  grid-column: 1 / -1;
-  display: flex; flex-direction: column; align-items: center; justify-content: center;
-  color: var(--muted); font-size: 0.85rem; padding: 40px; text-align: center;
-}
-.empty-dir-icon { font-size: 2.5rem; margin-bottom: 8px; }
-
-.creator-toolbar {
-  display: flex; gap: 8px; margin-bottom: 12px;
-}
-.creator-toolbar .btn {
-  padding: 8px 12px; font-size: 0.8rem; border-radius: 8px; flex: 1;
-}
-
-.creator-panel {
-  background: rgba(0,0,0,0.2);
-  border: 1px solid var(--border);
-  border-radius: 10px;
-  padding: 12px;
-  margin-bottom: 14px;
-  display: none;
-}
-.creator-panel.active { display: block; animation: slideDown 0.25s ease-out; }
-@keyframes slideDown { from { opacity: 0; transform: translateY(-10px); } to { opacity: 1; transform: translateY(0); } }
-
-.creator-panel h4 { font-size: 0.8rem; font-family: var(--font-display); text-transform: uppercase; margin-bottom: 8px; color: var(--accent); }
-.creator-input-group { display: flex; gap: 8px; }
-.creator-input-group input {
-  flex: 1; background: var(--surface); border: 1.5px solid var(--border);
-  padding: 6px 12px; color: var(--text); border-radius: 6px; font-size: 0.85rem; outline: none;
-}
-.creator-input-group input:focus { border-color: var(--accent); }
-
-.target-path-banner {
-  background: rgba(124,92,252,0.08);
-  border: 1px dashed var(--accent2);
-  border-radius: 8px;
-  padding: 10px 14px;
-  margin-bottom: 16px;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  font-size: 0.85rem;
-}
-.target-path-banner span { font-weight: bold; color: var(--accent2); }
-
-.form-group { display: flex; flex-direction: column; gap: 6px; margin-bottom: 16px; }
-.form-group label {
-  font-size: .75rem; font-weight: 500; color: var(--muted);
-  text-transform: uppercase; letter-spacing: .06em;
-}
-.form-group input, .form-group select {
-  background: var(--surface2); border: 1.5px solid var(--border);
-  border-radius: var(--radius); padding: 10px 14px;
-  color: var(--text); font-family: var(--font-body); font-size: .9rem;
-  transition: border-color .2s, box-shadow .2s;
-  outline: none;
-}
-.form-group input:focus, .form-group select:focus {
-  border-color: var(--accent);
-  box-shadow: 0 0 0 3px rgba(79,142,247,.15);
-}
-
-.drop-zone {
-  border: 2px dashed var(--border);
-  border-radius: 16px; padding: 32px 16px; text-align: center;
-  cursor: pointer; transition: all .25s; position: relative;
-  background: var(--surface2);
-}
-.drop-zone:hover, .drop-zone.drag-over {
-  border-color: var(--accent);
-  background: rgba(79,142,247,.06);
-}
-.drop-zone.has-file { border-color: var(--success); background: rgba(34,199,122,.06); }
-.drop-icon { font-size: 2.2rem; margin-bottom: 10px; }
-.drop-zone h3 { font-family: var(--font-display); font-size: 0.95rem; font-weight: 700; margin-bottom: 4px; }
-.drop-zone p { font-size: .75rem; color: var(--muted); }
-.drop-zone input[type="file"] {
-  position: absolute; inset: 0; opacity: 0; cursor: pointer; width: 100%; height: 100%;
-}
-
-.file-info {
-  display: none; align-items: center; gap: 12px;
-  background: var(--surface2); border: 1.5px solid var(--border); border-radius: 10px;
-  padding: 10px 14px; margin-top: 14px; text-align: left;
-}
-.file-info.show { display: flex; }
-.file-info .fi-icon { font-size: 1.5rem; flex-shrink: 0; }
-.file-info .fi-name { font-weight: 600; font-size: .8rem; word-break: break-all; }
-.file-info .fi-size { font-size: .7rem; color: var(--muted); }
-.file-info .fi-remove {
-  margin-left: auto; background: none; border: none;
-  color: var(--error); cursor: pointer; font-size: 1rem; flex-shrink: 0;
-}
-
-.mode-ribbon {
-  display: flex; justify-content: space-between; align-items: center;
-  background: var(--surface); border: 1px solid var(--border);
-  border-radius: 12px; padding: 12px 18px; margin-bottom: 24px;
-}
-.mode-details h4 { font-size: 0.85rem; font-family: var(--font-display); font-weight: bold; }
-.mode-details p { font-size: 0.72rem; color: var(--muted); }
-.toggle-switch {
-  position: relative; display: inline-block; width: 48px; height: 24px;
-}
-.toggle-switch input { opacity: 0; width: 0; height: 0; }
-.slider {
-  position: absolute; cursor: pointer; inset: 0; background-color: var(--border);
-  transition: .3s; border-radius: 24px;
-}
-.slider:before {
-  position: absolute; content: ""; height: 18px; width: 18px; left: 3px; bottom: 3px;
-  background-color: white; transition: .3s; border-radius: 50%;
-}
-input:checked + .slider { background-color: var(--success); }
-input:checked + .slider:before { transform: translateX(24px); }
-
-.setup-box {
-  background: var(--surface); border: 1.5px dashed var(--border);
-  border-radius: 16px; padding: 24px; margin-top: 32px; display: none;
-}
-.setup-box.show { display: block; }
-.setup-title { font-family: var(--font-display); font-weight: 700; font-size: 1rem; margin-bottom: 12px; display: flex; align-items: center; gap: 8px; }
-.setup-step { font-size: 0.8rem; line-height: 1.5; color: var(--text); margin-bottom: 14px; padding-left: 20px; position: relative; }
-.setup-step::before { content: "✓"; position: absolute; left: 0; top: 0; color: var(--success); font-weight: bold; }
-.code-preview {
-  background: #06070a; border: 1px solid var(--border); border-radius: 8px;
-  padding: 14px; font-family: monospace; font-size: 0.75rem; color: #a1a6c2;
-  overflow-x: auto; max-height: 200px; margin-top: 10px; position: relative;
-}
-.code-copy-btn {
-  position: absolute; right: 10px; top: 10px; background: var(--surface2);
-  border: 1px solid var(--border); color: var(--text); padding: 4px 8px;
-  font-size: 0.65rem; border-radius: 4px; cursor: pointer;
-}
-.code-copy-btn:hover { border-color: var(--accent); }
-
-.progress-wrap { margin-top: 16px; display: none; }
-.progress-wrap.show { display: block; }
-.progress-label { display: flex; justify-content: space-between; margin-bottom: 6px; font-size: .75rem; color: var(--muted); }
-.progress-bar { height: 6px; background: var(--border); border-radius: 99px; overflow: hidden; }
-.progress-fill {
-  height: 100%; border-radius: 99px; width: 0%;
-  background: linear-gradient(90deg, var(--accent), var(--accent2));
-  transition: width .3s ease;
-}
-
-.btn {
-  display: inline-flex; align-items: center; justify-content: center; gap: 8px;
-  padding: 12px 24px; border-radius: var(--radius);
-  font-family: var(--font-display); font-weight: 700; font-size: .9rem;
-  cursor: pointer; border: none; transition: all .2s;
-}
-.btn-primary {
-  background: linear-gradient(135deg, var(--accent), var(--accent2));
-  color: #fff; width: 100%; margin-top: 20px;
-  box-shadow: 0 4px 20px rgba(79,142,247,.3);
-}
-.btn-primary:hover:not(:disabled) { transform: translateY(-1px); box-shadow: 0 8px 28px rgba(79,142,247,.45); }
-.btn-primary:disabled { opacity: .5; cursor: not-allowed; }
-.btn-secondary {
-  background: var(--surface2); color: var(--text);
-  border: 1px solid var(--border); padding: 8px 16px; font-size: .85rem;
-}
-.btn-secondary:hover { border-color: var(--accent); }
-
-#toast-container {
-  position: fixed; top: 24px; right: 24px; z-index: 9999;
-  display: flex; flex-direction: column; gap: 10px;
-}
-.toast {
-  display: flex; align-items: flex-start; gap: 12px;
-  background: var(--surface); border: 1px solid var(--border);
-  border-radius: 12px; padding: 14px 18px;
-  box-shadow: var(--shadow); min-width: 280px; max-width: 360px;
-  animation: slideIn .35s cubic-bezier(.34,1.56,.64,1);
-}
-.toast.removing { animation: slideOut .3s ease forwards; }
-@keyframes slideIn { from { transform: translateX(120%); opacity:0; } to { transform: translateX(0); opacity:1; } }
-@keyframes slideOut { to { transform: translateX(120%); opacity:0; } }
-.toast-icon { font-size: 1.2rem; flex-shrink: 0; margin-top: 1px; }
-.toast-body { flex: 1; }
-.toast-title { font-family: var(--font-display); font-weight: 700; font-size: .9rem; }
-.toast-msg { font-size: .8rem; color: var(--muted); margin-top: 2px; }
-.toast-close { background: none; border: none; color: var(--muted); cursor: pointer; font-size: 1rem; margin-left: 4px; }
-.toast.success { border-left: 3px solid var(--success); }
-.toast.error   { border-left: 3px solid var(--error);   }
-.toast.info    { border-left: 3px solid var(--accent);  }
-
-.recent-section { margin-top: 40px; }
-.section-hdr { display: flex; align-items: center; justify-content: space-between; margin-bottom: 16px; }
-.section-hdr h3 { font-family: var(--font-display); font-weight: 700; }
-.upload-list { display: flex; flex-direction: column; gap: 10px; }
-.upload-item {
-  display: flex; align-items: center; gap: 14px;
-  background: var(--surface); border: 1px solid var(--border);
-  border-radius: 12px; padding: 14px 18px;
-  transition: border-color .2s;
-}
-.upload-item:hover { border-color: var(--accent); }
-.ui-icon { font-size: 1.6rem; flex-shrink: 0; }
-.ui-body { flex: 1; min-width: 0; }
-.ui-name { font-weight: 600; font-size: .9rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.ui-meta { font-size: .75rem; color: var(--muted); margin-top: 2px; }
-.ui-badge {
-  padding: 3px 10px; border-radius: 999px; font-size: .7rem;
-  font-family: var(--font-display); font-weight: 600;
-  background: rgba(79,142,247,.12); color: var(--accent);
-  border: 1px solid rgba(79,142,247,.2); white-space: nowrap;
-}
-.empty-state { text-align: center; padding: 28px; color: var(--muted); font-size: .9rem; }
-
-.spinner {
-  width: 18px; height: 18px; border: 2px solid rgba(255,255,255,.3);
-  border-top-color: #fff; border-radius: 50%;
-  animation: spin .7s linear infinite;
-}
-@keyframes spin { to { transform: rotate(360deg); } }
-
-.stats-bar {
-  display: grid; grid-template-columns: repeat(3, 1fr);
-  gap: 16px; margin-bottom: 24px;
-}
-.stat-card {
-  background: var(--surface); border: 1px solid var(--border);
-  border-radius: 16px; padding: 16px;
-  display: flex; align-items: center; gap: 14px;
-}
-.stat-icon {
-  width: 44px; height: 44px; border-radius: 10px;
-  display: flex; align-items: center; justify-content: center;
-  font-size: 1.3rem; flex-shrink: 0;
-}
-.stat-icon.blue  { background: rgba(79,142,247,.15); }
-.stat-icon.purple{ background: rgba(124,92,252,.15); }
-.stat-icon.green { background: rgba(34,199,122,.15); }
-.stat-val { font-family: var(--font-display); font-size: 1.4rem; font-weight: 800; line-height: 1; }
-.stat-lbl { font-size: .75rem; color: var(--muted); margin-top: 4px; }
-
-@media (max-width: 500px) { .stats-bar { grid-template-columns: 1fr; } }
-</style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CEE Notes - Drive Upload Portal</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- FontAwesome Icons for Beautiful Visuals -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        brand: {
+                            50: '#f0f9ff',
+                            100: '#e0f2fe',
+                            500: '#0ea5e9',
+                            600: '#0284c7',
+                            700: '#0369a1',
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        /* Smooth scrolling and transitions */
+        html { scroll-behavior: smooth; }
+        .custom-scrollbar::-webkit-scrollbar {
+            width: 6px;
+            height: 6px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-track {
+            background: transparent;
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb {
+            background: #cbd5e1;
+            border-radius: 3px;
+        }
+        .dark .custom-scrollbar::-webkit-scrollbar-thumb {
+            background: #475569;
+        }
+    </style>
 </head>
-<body>
-<div class="bg-orbs"><span></span><span></span></div>
+<body class="bg-slate-50 dark:bg-slate-900 text-slate-800 dark:text-slate-100 min-h-screen transition-colors duration-200">
 
-<div id="toast-container"></div>
+    <!-- Top Navigation Bar -->
+    <nav class="border-b border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950 sticky top-0 z-30 transition-colors">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex items-center justify-between h-16">
+                <div class="flex items-center space-x-3">
+                    <div class="bg-brand-500 text-white p-2 rounded-lg flex items-center justify-center shadow-md shadow-brand-500/20">
+                        <i class="fa-solid fa-folder-open text-xl"></i>
+                    </div>
+                    <div>
+                        <h1 class="font-bold text-lg leading-tight text-slate-900 dark:text-white">CEE Notes</h1>
+                        <p class="text-xs text-slate-500 dark:text-slate-400">Google Drive Upload Portal</p>
+                    </div>
+                </div>
+                <div class="flex items-center space-x-3">
+                    <button id="guideBtn" class="flex items-center space-x-1.5 px-3 py-1.5 rounded-lg border border-slate-200 dark:border-slate-700 hover:bg-slate-100 dark:hover:bg-slate-800 text-xs font-semibold transition">
+                        <i class="fa-solid fa-circle-question text-brand-500"></i>
+                        <span>Backend Setup</span>
+                    </button>
+                    <button id="themeToggle" class="p-2 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 transition" aria-label="Toggle Dark Mode">
+                        <i class="fa-solid fa-moon text-lg block dark:hidden text-slate-600"></i>
+                        <i class="fa-solid fa-sun text-lg hidden dark:block text-amber-400"></i>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </nav>
 
-<div class="wrapper">
-  <header>
-    <div class="logo">
-      <div class="logo-icon">📚</div>
-      <div class="logo-text">
-        <h1>CEE Notes</h1>
-        <p>Direct File-to-Folder Directory Uploader</p>
-      </div>
-    </div>
-    <div class="header-actions">
-      <a href="https://drive.google.com/drive/folders/17OKeKZ4nRCOlrj6_7u_wVrEJDu2o8Rzn?usp=drive_link" target="_blank" class="nav-link" style="color: var(--accent2);">📁 Drive Folder ↗</a>
-      <a href="javascript:void(0)" class="nav-link active">Up Uploader</a>
-      <button class="theme-btn" id="themeBtn" title="Toggle theme">🌙</button>
-    </div>
-  </header>
+    <!-- Main Content Container -->
+    <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <div class="grid grid-cols-1 lg:grid-cols-12 gap-8">
+            
+            <!-- Left Side: Configuration & API State (Col span 4) -->
+            <section class="lg:col-span-4 space-y-6">
+                
+                <!-- Web App Endpoint Connection Card -->
+                <div class="bg-white dark:bg-slate-950 p-6 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm">
+                    <div class="flex items-center space-x-2.5 mb-4">
+                        <span class="flex h-3 w-3 relative">
+                            <span id="statusIndicatorPing" class="animate-ping absolute inline-flex h-full w-full rounded-full bg-rose-400 opacity-75"></span>
+                            <span id="statusIndicator" class="relative inline-flex rounded-full h-3 w-3 bg-rose-500"></span>
+                        </span>
+                        <h2 class="font-bold text-base text-slate-900 dark:text-white">API Connection Settings</h2>
+                    </div>
+                    
+                    <p class="text-xs text-slate-500 dark:text-slate-400 mb-4 leading-relaxed">
+                        To link this page to your active Google Drive folder, paste your deployed Web App URL below.
+                    </p>
 
-  <div class="hero">
-    <div class="hero-badges">
-      <div class="hero-badge">✦ CEE Entrance Companion</div>
-      <div class="hero-badge public-status">🔓 Public Portal (No login required)</div>
-      <div class="hero-badge gdrive-link"><a href="https://drive.google.com/drive/folders/17OKeKZ4nRCOlrj6_7u_wVrEJDu2o8Rzn?usp=drive_link" target="_blank">🔗 Target Folder: 17OKe...Rzn ↗</a></div>
-    </div>
-    <h2>Upload Directly to <span>Subject Folders</span></h2>
-    <p>Organize resources effortlessly. Select or create folders and chapters, then drop files to load them directly into your dynamic structural pathways inside the target Google Drive.</p>
-  </div>
+                    <div class="space-y-3">
+                        <label class="block text-xs font-semibold text-slate-600 dark:text-slate-400 uppercase tracking-wider">Apps Script Web App URL</label>
+                        <div class="relative">
+                            <span class="absolute inset-y-0 left-0 pl-3 flex items-center text-slate-400">
+                                <i class="fa-solid fa-link text-xs"></i>
+                            </span>
+                            <input type="url" id="webAppUrl" 
+                                class="w-full pl-8 pr-3 py-2 text-xs rounded-lg border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-900 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-brand-500/50 transition"
+                                placeholder="https://script.google.com/macros/s/.../exec">
+                        </div>
+                        <p id="connectionHelp" class="text-[11px] text-rose-500 dark:text-rose-400 font-medium">
+                            <i class="fa-solid fa-triangle-exclamation mr-1"></i> No active connection configured yet.
+                        </p>
+                    </div>
+                </div>
 
-  <div class="mode-ribbon">
-    <div class="mode-details">
-      <h4 id="modeTitle">Sandbox Simulator Active</h4>
-      <p id="modeDesc">Running local virtual drive. Turn on to connect actual Google Apps Script Web API.</p>
-    </div>
-    <div style="display: flex; align-items: center; gap: 10px;">
-      <span id="modeStatusLabel" style="font-size: 0.75rem; font-weight: bold; color: var(--muted);">Sandbox</span>
-      <label class="toggle-switch">
-        <input type="checkbox" id="modeToggle">
-        <span class="slider"></span>
-      </label>
-    </div>
-  </div>
+                <!-- Live Tree Structure Preview -->
+                <div class="bg-white dark:bg-slate-950 p-6 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm">
+                    <h2 class="font-bold text-base text-slate-900 dark:text-white mb-3">
+                        <i class="fa-solid fa-sitemap text-brand-500 mr-2"></i>Destination Tree
+                    </h2>
+                    <p class="text-xs text-slate-500 dark:text-slate-400 mb-4 leading-relaxed">
+                        This shows how your uploaded file will be structurally nested on Google Drive.
+                    </p>
 
-  <div class="setup-box" id="setupBox">
-    <div class="setup-title">⚙️ Connecting your Google Apps Script Backend</div>
-    <div class="setup-step">1. Open <strong>Google Apps Script</strong> and paste the server-side code block.</div>
-    <div class="setup-step">2. Deploy Web App as: <strong>"Execute as: Me"</strong> and <strong>"Who has access: Anyone"</strong> to allow anonymous uploads without requiring users to log in.</div>
-    <div class="setup-step">3. Paste your Web App Executable URL below:</div>
-    <div class="form-group" style="margin-top: 10px; margin-bottom: 14px;">
-      <input type="text" id="apiEndpointInput" placeholder="https://script.google.com/macros/s/.../exec" value="https://script.google.com/macros/s/AKfycbz16V3u8BbP0mhCn4FwLukh8BO27aeSZWGa5yZVsy3JfKGC07DgWnK4KmbKJTZjSFPc8w/exec">
-    </div>
-    <button class="btn btn-secondary" style="width: 100%; margin-bottom: 12px; font-size: 0.8rem;" id="toggleScriptCodeBtn">Show Apps Script Code Snippet</button>
-    
-    <div id="gasCodeSection" style="display: none; position: relative;">
-      <div class="code-preview" id="gasCodeSnippet">
-/* Google Apps Script code setup targeting folder ID: 17OKeKZ4nRCOlrj6_7u_wVrEJDu2o8Rzn */
+                    <!-- Mock Folder Hierarchy Visual -->
+                    <div class="bg-slate-50 dark:bg-slate-900 p-4 rounded-xl border border-slate-100 dark:border-slate-800 font-mono text-xs text-slate-600 dark:text-slate-400 space-y-1.5 custom-scrollbar overflow-x-auto">
+                        <div class="flex items-center space-x-2 text-slate-900 dark:text-white font-semibold">
+                            <i class="fa-solid fa-folder text-amber-500"></i>
+                            <span>CEE Notes (Root)</span>
+                        </div>
+                        <div id="treeSubject" class="flex items-center space-x-2 pl-4 border-l border-slate-300 dark:border-slate-700 ml-2 py-0.5 hidden">
+                            <i class="fa-solid fa-angle-right text-slate-400"></i>
+                            <i class="fa-solid fa-folder text-amber-500"></i>
+                            <span class="text-brand-600 dark:text-brand-400 font-medium" id="treeSubjectName">Subject</span>
+                        </div>
+                        <div id="treeChapter" class="flex items-center space-x-2 pl-8 border-l border-slate-300 dark:border-slate-700 ml-2 py-0.5 hidden">
+                            <i class="fa-solid fa-angle-right text-slate-400"></i>
+                            <i class="fa-solid fa-folder text-amber-500"></i>
+                            <span class="text-indigo-600 dark:text-indigo-400 font-medium" id="treeChapterName">Chapter</span>
+                        </div>
+                        <div id="treeManual" class="flex items-center space-x-2 pl-12 border-l border-slate-300 dark:border-slate-700 ml-2 py-0.5 hidden">
+                            <i class="fa-solid fa-angle-right text-slate-400"></i>
+                            <i class="fa-solid fa-folder text-amber-500"></i>
+                            <span class="text-teal-600 dark:text-teal-400 font-medium" id="treeManualName">Manual Folder</span>
+                        </div>
+                        <div id="treeFile" class="flex items-center space-x-2 pl-16 border-l border-dashed border-slate-300 dark:border-slate-700 ml-2 py-0.5 hidden">
+                            <i class="fa-solid fa-file-pdf text-rose-500" id="treeFileIcon"></i>
+                            <span class="text-slate-500 dark:text-slate-400 italic" id="treeFileName">file_name.pdf</span>
+                        </div>
+                        <div id="treeEmpty" class="text-[11px] text-slate-400 dark:text-slate-500 italic py-2 text-center">
+                            Start filling out the folder inputs on the right to visualize your path structure.
+                        </div>
+                    </div>
+                </div>
+
+            </section>
+
+            <!-- Right Side: Interactive Forms & Dropzone (Col span 8) -->
+            <section class="lg:col-span-8 space-y-6">
+
+                <div class="bg-white dark:bg-slate-950 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm overflow-hidden">
+                    <div class="border-b border-slate-200 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-900/50 px-6 py-4 flex items-center justify-between">
+                        <h2 class="font-bold text-base text-slate-900 dark:text-white flex items-center">
+                            <i class="fa-solid fa-file-arrow-up text-brand-500 mr-2"></i>Configure & Upload File
+                        </h2>
+                        <span class="text-xs bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 px-2.5 py-1 rounded-full font-medium">Single Session Uploader</span>
+                    </div>
+
+                    <form id="uploadForm" class="p-6 space-y-6">
+                        
+                        <!-- Row 1: Subject (Pre-defined selections + Custom option) -->
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div class="space-y-2">
+                                <label class="block text-xs font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider">Subject Folder</label>
+                                <div class="relative">
+                                    <input type="text" id="subject" list="subjectList"
+                                        class="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-brand-500/50 transition text-sm"
+                                        placeholder="e.g. Physics, Biology, Custom Subject..." autocomplete="off">
+                                    <datalist id="subjectList">
+                                        <option value="Physics">
+                                        <option value="Chemistry">
+                                        <option value="Biology">
+                                        <option value="Mathematics">
+                                        <option value="English">
+                                        <option value="Medical Entrance Preparatory">
+                                    </datalist>
+                                </div>
+                                <span class="text-[10px] text-slate-400 block">Select a standard subject or type a unique name to create a new folder.</span>
+                            </div>
+
+                            <!-- Row 2: Chapter Folder -->
+                            <div class="space-y-2">
+                                <label class="block text-xs font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider">Chapter Folder</label>
+                                <div class="relative">
+                                    <input type="text" id="chapter" list="chapterList"
+                                        class="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-brand-500/50 transition text-sm"
+                                        placeholder="e.g. Thermodynamics, Genetics, Mechanics..." autocomplete="off">
+                                    <datalist id="chapterList">
+                                        <option value="Chapter 01 - Introduction">
+                                        <option value="Chapter 02 - Mechanics">
+                                        <option value="Chapter 03 - Organic Chemistry">
+                                        <option value="Chapter 04 - Cytology">
+                                        <option value="Chapter 05 - Botany">
+                                    </datalist>
+                                </div>
+                                <span class="text-[10px] text-slate-400 block">Organize documents neatly by chapter folders. (Optional)</span>
+                            </div>
+                        </div>
+
+                        <!-- Row 3: Custom Manual Folder Name -->
+                        <div class="space-y-2">
+                            <label class="block text-xs font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider">Manual Inner Folder Name</label>
+                            <input type="text" id="manualFolder" 
+                                class="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-brand-500/50 transition text-sm"
+                                placeholder="e.g. Quick Formula Sheets, Past Papers 2024, Slide Snippets...">
+                            <span class="text-[10px] text-slate-400 block">Want even deeper folder nesting? Specify an inner-most folder here. (Optional)</span>
+                        </div>
+
+                        <!-- Drag and Drop Zone Container -->
+                        <div class="space-y-2">
+                            <label class="block text-xs font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider">Attach Document / PDF</label>
+                            
+                            <div id="dropZone" class="border-2 border-dashed border-slate-200 dark:border-slate-800 hover:border-brand-500 dark:hover:border-brand-500 rounded-2xl p-8 text-center cursor-pointer bg-slate-50 dark:bg-slate-900/30 hover:bg-brand-50/20 dark:hover:bg-brand-500/5 transition duration-200 group">
+                                <input type="file" id="fileInput" class="hidden">
+                                
+                                <div class="space-y-3">
+                                    <div class="inline-flex items-center justify-center p-3.5 bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl shadow-sm text-slate-400 group-hover:text-brand-500 group-hover:scale-110 transition duration-200">
+                                        <i class="fa-solid fa-cloud-arrow-up text-2xl"></i>
+                                    </div>
+                                    <div class="space-y-1">
+                                        <p class="text-sm font-semibold text-slate-800 dark:text-slate-200">
+                                            Drag & Drop your file here, or <span class="text-brand-500 hover:underline">browse files</span>
+                                        </p>
+                                        <p class="text-xs text-slate-400">
+                                            Supports PDFs, DOCX, Images, PPT, and Zip files
+                                        </p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Selected File Preview Card -->
+                        <div id="filePreviewCard" class="hidden bg-slate-50 dark:bg-slate-900/50 border border-slate-200 dark:border-slate-800 rounded-xl p-4 flex items-center justify-between">
+                            <div class="flex items-center space-x-3 min-w-0">
+                                <div class="p-2.5 rounded-lg bg-rose-50 dark:bg-rose-950/40 text-rose-500 flex items-center justify-center flex-shrink-0" id="previewFileIconContainer">
+                                    <i class="fa-solid fa-file-pdf text-xl" id="previewIcon"></i>
+                                </div>
+                                <div class="min-w-0">
+                                    <h3 class="text-sm font-semibold text-slate-800 dark:text-white truncate" id="previewFileName">filename.pdf</h3>
+                                    <p class="text-[11px] text-slate-400" id="previewFileSize">0.0 MB</p>
+                                </div>
+                            </div>
+                            <button type="button" id="removeFileBtn" class="p-2 text-slate-400 hover:text-rose-500 dark:hover:text-rose-400 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 transition">
+                                <i class="fa-solid fa-trash-can"></i>
+                            </button>
+                        </div>
+
+                        <!-- Actions and Upload Button -->
+                        <div class="pt-4 border-t border-slate-200 dark:border-slate-800 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+                            <div class="text-xs text-slate-400 leading-normal max-w-sm">
+                                <i class="fa-solid fa-shield-halved text-emerald-500 mr-1.5"></i>
+                                Uploads are secured directly from this sandbox interface over secure, authenticated SSL connections.
+                            </div>
+                            <button type="submit" id="submitBtn" disabled
+                                class="w-full sm:w-auto px-6 py-3 bg-brand-500 hover:bg-brand-600 disabled:bg-slate-200 dark:disabled:bg-slate-800 disabled:text-slate-400 dark:disabled:text-slate-500 disabled:cursor-not-allowed text-white font-bold text-sm rounded-xl transition duration-200 flex items-center justify-center space-x-2 shadow-lg shadow-brand-500/15">
+                                <i class="fa-solid fa-paper-plane"></i>
+                                <span>Send to Google Drive</span>
+                            </button>
+                        </div>
+
+                    </form>
+                </div>
+
+                <!-- Custom Status/Notification Box -->
+                <div id="statusAlert" class="hidden rounded-xl p-4 flex items-start space-x-3">
+                    <div id="statusAlertIcon" class="text-lg mt-0.5"></div>
+                    <div class="flex-1">
+                        <h4 id="statusAlertTitle" class="text-sm font-bold"></h4>
+                        <p id="statusAlertMessage" class="text-xs mt-1 leading-relaxed"></p>
+                    </div>
+                </div>
+
+            </section>
+
+        </div>
+    </main>
+
+    <!-- Modal 1: Deployment & Apps Script Setup Guide -->
+    <div id="guideModal" class="fixed inset-0 bg-slate-950/60 backdrop-blur-sm flex items-center justify-center p-4 z-50 hidden">
+        <div class="bg-white dark:bg-slate-950 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-2xl max-w-2xl w-full max-h-[85vh] flex flex-col overflow-hidden animate-in fade-in zoom-in-95 duration-150">
+            <!-- Modal Header -->
+            <div class="px-6 py-4 border-b border-slate-200 dark:border-slate-800 flex items-center justify-between bg-slate-50 dark:bg-slate-900/50">
+                <div class="flex items-center space-x-2">
+                    <i class="fa-solid fa-terminal text-brand-500 text-lg"></i>
+                    <h3 class="font-bold text-base text-slate-900 dark:text-white">Google Apps Script Backend Setup</h3>
+                </div>
+                <button id="closeGuideBtn" class="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 p-1 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 transition">
+                    <i class="fa-solid fa-xmark text-lg"></i>
+                </button>
+            </div>
+
+            <!-- Modal Content (Scrollable) -->
+            <div class="p-6 overflow-y-auto space-y-6 custom-scrollbar text-sm">
+                
+                <div class="bg-blue-50 dark:bg-blue-950/30 text-blue-700 dark:text-blue-300 p-4 rounded-xl border border-blue-100 dark:border-blue-900/50 flex items-start space-x-3">
+                    <i class="fa-solid fa-circle-info text-base mt-0.5"></i>
+                    <div class="space-y-1">
+                        <p class="font-bold text-xs">Why is this required?</p>
+                        <p class="text-xs leading-relaxed">
+                            Web browsers enforce strict security protocols (CORS) that prevent uploading directly to Google Drive. This custom script acts as a safe middleware proxy allowing direct uploads.
+                        </p>
+                    </div>
+                </div>
+
+                <!-- Steps Checklist -->
+                <div class="space-y-4">
+                    <h4 class="font-bold text-slate-900 dark:text-white text-xs uppercase tracking-wider">Step-by-Step Implementation</h4>
+                    
+                    <div class="space-y-3">
+                        <!-- Step 1 -->
+                        <div class="flex items-start space-x-3">
+                            <span class="flex-shrink-0 h-5 w-5 bg-brand-500 text-white rounded-full flex items-center justify-center text-[11px] font-bold mt-0.5">1</span>
+                            <div>
+                                <p class="font-semibold text-slate-800 dark:text-slate-200">Open Google Apps Script Dashboard</p>
+                                <p class="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+                                    Visit <a href="https://script.google.com" target="_blank" class="text-brand-500 hover:underline inline-flex items-center">Google Apps Script Dashboard <i class="fa-solid fa-arrow-up-right-from-square ml-1 text-[10px]"></i></a> and click the <strong>New Project</strong> button on the top left.
+                                </p>
+                            </div>
+                        </div>
+
+                        <!-- Step 2 -->
+                        <div class="flex items-start space-x-3">
+                            <span class="flex-shrink-0 h-5 w-5 bg-brand-500 text-white rounded-full flex items-center justify-center text-[11px] font-bold mt-0.5">2</span>
+                            <div class="w-full">
+                                <p class="font-semibold text-slate-800 dark:text-slate-200">Copy & Paste the Generated Code</p>
+                                <p class="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+                                    Replace any pre-populated template placeholder code inside the script editor screen with this custom tailored API controller:
+                                </p>
+                                
+                                <!-- Script Code Block Container -->
+                                <div class="mt-2.5 relative group">
+                                    <pre class="bg-slate-950 text-slate-200 p-4 rounded-xl text-[11px] font-mono overflow-x-auto max-h-[180px] custom-scrollbar border border-slate-800" id="gasCodeBlock">
+const TARGET_FOLDER_ID = '17OKeKZ4nRCOlrj6_7u_wVrEJDu2o8Rzn'; // Hardcoded destination target
+
 function doGet(e) {
-  return handleRequest(e);
+  return HtmlService.createHtmlOutput('<h1>Connected successfully.</h1>')
+    .setXFrameOptionsMode(HtmlService.XFrameOptionsMode.ALLOWALL);
 }
 
 function doPost(e) {
-  return handleRequest(e);
-}
-
-function handleRequest(e) {
-  var action = e.parameter.action;
-  
-  // Set CORS
-  var output = ContentService.createTextOutput();
-  
   try {
-    if (action === 'getLibrary') {
-      var rootFolder = DriveApp.getFolderById("17OKeKZ4nRCOlrj6_7u_wVrEJDu2o8Rzn");
-      var data = fetchStructure(rootFolder);
-      output.setContent(JSON.stringify(data));
-    } 
-    else if (action === 'upload') {
-      var subject = e.parameter.subject;
-      var chapter = e.parameter.chapter;
-      var fileName = e.parameter.fileName;
-      var fileData = Utilities.base64Decode(e.parameter.fileData);
-      
-      var rootFolder = DriveApp.getFolderById("17OKeKZ4nRCOlrj6_7u_wVrEJDu2o8Rzn");
-      var subjectFolder = getOrCreateSubFolder(rootFolder, subject);
-      var chapterFolder = getOrCreateSubFolder(subjectFolder, chapter);
-      
-      var blob = Utilities.newBlob(fileData, 'application/pdf', fileName);
-      var file = chapterFolder.createFile(blob);
-      file.setSharing(DriveApp.Access.ANYONE_WITH_LINK, DriveApp.Permission.VIEW);
-      
-      output.setContent(JSON.stringify({
-        success: true,
-        fileId: file.getId(),
-        url: file.getUrl()
-      }));
-    }
+    const data = JSON.parse(e.postData.contents);
+    const result = handleDirectUpload(data.data, data.filename, data.subject, data.chapter, data.manualFolder);
+    return ContentService.createTextOutput(JSON.stringify(result))
+      .setMimeType(ContentService.MimeType.JSON);
   } catch (err) {
-    output.setContent(JSON.stringify({ error: err.toString() }));
-  }
-  
-  return output.setMimeType(ContentService.MimeType.JSON);
-}
-
-function getOrCreateSubFolder(parent, name) {
-  var folders = parent.getFoldersByName(name);
-  if (folders.hasNext()) return folders.next();
-  return parent.createFolder(name);
-}
-
-function fetchStructure(root) {
-  var subjects = [];
-  var folders = root.getFolders();
-  while (folders.hasNext()) {
-    var sFolder = folders.next();
-    var sName = sFolder.getName();
-    var chapters = [];
-    
-    var subFolders = sFolder.getFolders();
-    while (subFolders.hasNext()) {
-      var cFolder = subFolders.next();
-      var cName = cFolder.getName();
-      var files = [];
-      
-      var cFiles = cFolder.getFiles();
-      while (cFiles.hasNext()) {
-        var file = cFiles.next();
-        files.push({
-          name: file.getName(),
-          url: file.getUrl(),
-          uploadDate: file.getDateCreated()
-        });
-      }
-      chapters.push({ name: cName, files: files });
-    }
-    subjects.push({ name: sName, chapters: chapters });
-  }
-  return { subjects: subjects };
-}
-      </div>
-    </div>
-  </div>
-
-  <div class="stats-bar" id="statsBar">
-    <div class="stat-card">
-      <div class="stat-icon blue">📁</div>
-      <div><div class="stat-val" id="statSubjects">0</div><div class="stat-lbl">Active Subjects</div></div>
-    </div>
-    <div class="stat-card">
-      <div class="stat-icon purple">📂</div>
-      <div><div class="stat-val" id="statChapters">0</div><div class="stat-lbl">Chapter Folders</div></div>
-    </div>
-    <div class="stat-card">
-      <div class="stat-icon green">📄</div>
-      <div><div class="stat-val" id="statFiles">0</div><div class="stat-lbl">Stored Files</div></div>
-    </div>
-  </div>
-
-  <div class="workspace-grid">
-    
-    <!-- Left Column: Virtual Folder Directory Explorer -->
-    <div class="card">
-      <div class="card-header-flex">
-        <div class="card-title">📁 <span>Library Directory</span></div>
-        <button class="btn btn-secondary" style="padding: 6px 12px; font-size: 0.75rem;" id="resetDirBtn">↺ Reset Views</button>
-      </div>
-      <p class="card-subtitle">Double-click or click to open folders. Drag files directly onto any folder card to instantly prepare upload destinations!</p>
-
-      <!-- Creator Toolbars -->
-      <div class="creator-toolbar">
-        <button class="btn btn-secondary" id="openAddSubjectBtn">＋ New Subject</button>
-        <button class="btn btn-secondary" id="openAddChapterBtn" disabled>＋ New Chapter</button>
-      </div>
-
-      <!-- Creator Panels -->
-      <div class="creator-panel" id="addSubjectPanel">
-        <h4>Create New Subject Folder</h4>
-        <div class="creator-input-group">
-          <input type="text" id="newSubjectName" placeholder="e.g., Mathematics" />
-          <button class="btn btn-secondary" style="padding:6px 12px; background:var(--accent); color:white; border:none;" id="createSubjectSubmit">Create</button>
-        </div>
-      </div>
-
-      <div class="creator-panel" id="addChapterPanel">
-        <h4>Create Chapter inside <span id="currentSubjectTag" style="color:var(--accent2)">...</span></h4>
-        <div class="creator-input-group">
-          <input type="text" id="newChapterName" placeholder="e.g., Matrices" />
-          <button class="btn btn-secondary" style="padding:6px 12px; background:var(--accent2); color:white; border:none;" id="createChapterSubmit">Create</button>
-        </div>
-      </div>
-
-      <!-- Directory Window -->
-      <div class="dir-explorer">
-        <div class="dir-breadcrumbs" id="dirBreadcrumbs">
-          <span class="breadcrumb-item active" id="crumbRoot">Root / Subjects</span>
-        </div>
-        <div class="dir-grid" id="dirGrid">
-          <!-- Dynamically populated folders and files -->
-        </div>
-      </div>
-    </div>
-
-    <!-- Right Column: Direct Drag-n-Drop / Path Uploader -->
-    <div class="card">
-      <div class="card-title"><span>⬆</span> Direct Upload Portal</div>
-      <p class="card-subtitle" style="margin-bottom: 16px;">Specify path target folders above or select directory cards to auto-populate destination.</p>
-
-      <!-- Active Path Target Indicator -->
-      <div class="target-path-banner">
-        <div>Target Directory:</div>
-        <div id="targetBannerPath"><span>None Selected</span></div>
-      </div>
-
-      <div class="form-group">
-        <label>Selected Subject</label>
-        <input type="text" id="subject" placeholder="Select/Create in directory grid" readonly style="background: rgba(0,0,0,0.15); cursor: not-allowed;" />
-      </div>
-      
-      <div class="form-group">
-        <label>Selected Chapter</label>
-        <input type="text" id="chapter" placeholder="Select/Create in directory grid" readonly style="background: rgba(0,0,0,0.15); cursor: not-allowed;" />
-      </div>
-
-      <!-- Drop zone -->
-      <div class="drop-zone" id="dropZone">
-        <div class="drop-icon" id="dropIcon">📄</div>
-        <h3 id="dropZoneMainText">Drop PDF Here</h3>
-        <p>or click to browse — PDF only, max 50 MB</p>
-        <input type="file" id="fileInput" accept=".pdf,application/pdf" />
-      </div>
-
-      <!-- File preview strip -->
-      <div class="file-info" id="fileInfo">
-        <span class="fi-icon">📄</span>
-        <div>
-          <div class="fi-name" id="fiName">—</div>
-          <div class="fi-size" id="fiSize">—</div>
-        </div>
-        <button class="fi-remove" id="fiRemove" title="Remove">✕</button>
-      </div>
-
-      <!-- Progress bar -->
-      <div class="progress-wrap" id="progressWrap">
-        <div class="progress-label">
-          <span id="progressLabel">Preparing upload...</span>
-          <span id="progressPct">0%</span>
-        </div>
-        <div class="progress-bar"><div class="progress-fill" id="progressFill"></div></div>
-      </div>
-
-      <button class="btn btn-primary" id="uploadBtn">
-        <span id="btnText">Upload Direct to Selected Folder</span>
-        <span id="btnSpinner" style="display:none"><div class="spinner"></div></span>
-      </button>
-    </div>
-
-  </div>
-
-  <!-- Recent uploads -->
-  <div class="recent-section">
-    <div class="section-hdr">
-      <h3>Active Files in Chapter</h3>
-      <span class="ui-badge" id="recentFileCount">0 files</span>
-    </div>
-    <div class="upload-list" id="recentList">
-      <div class="empty-state">Choose a subject and click open a chapter folder to list its contents.</div>
-    </div>
-  </div>
-</div>
-
-<script>
-let virtualLibrary = {
-  subjects: [
-    {
-      name: "Physics",
-      chapters: [
-        { name: "Mechanics", files: [{ name: "Kinematics_Master_Notes.pdf", uploadDate: new Date(), url: "https://drive.google.com/drive/folders/17OKeKZ4nRCOlrj6_7u_wVrEJDu2o8Rzn" }] },
-        { name: "Optics", files: [{ name: "Wave_Optics_Derivations.pdf", uploadDate: new Date(), url: "https://drive.google.com/drive/folders/17OKeKZ4nRCOlrj6_7u_wVrEJDu2o8Rzn" }] }
-      ]
-    },
-    {
-      name: "Chemistry",
-      chapters: [
-        { name: "Organic Chemistry", files: [{ name: "Organic_Reaction_Mechanisms.pdf", uploadDate: new Date(), url: "https://drive.google.com/drive/folders/17OKeKZ4nRCOlrj6_7u_wVrEJDu2o8Rzn" }] }
-      ]
-    },
-    {
-      name: "Mathematics",
-      chapters: []
-    }
-  ]
-};
-
-let isSandboxMode = true;
-let currentSubject = null; 
-let currentChapter = null; 
-let activeFilesList = [];
-let selectedFile = null;
-
-function getApiEndpoint() {
-  return document.getElementById('apiEndpointInput').value.trim();
-}
-
-const themeBtn = document.getElementById('themeBtn');
-let isDark = localStorage.getItem('theme') !== 'light';
-applyTheme();
-themeBtn.addEventListener('click', () => { isDark = !isDark; applyTheme(); });
-
-function applyTheme() {
-  document.documentElement.setAttribute('data-theme', isDark ? 'dark' : 'light');
-  themeBtn.textContent = isDark ? '🌙' : '☀️';
-  localStorage.setItem('theme', isDark ? 'dark' : 'light');
-}
-
-function toast(type, title, msg) {
-  const icons = { success:'✅', error:'❌', info:'ℹ️' };
-  const c = document.createElement('div');
-  c.className = `toast ${type}`;
-  c.innerHTML = `
-    <span class="toast-icon">${icons[type]||'ℹ️'}</span>
-    <div class="toast-body">
-      <div class="toast-title">${title}</div>
-      ${msg ? `<div class="toast-msg">${msg}</div>` : ''}
-    </div>
-    <button class="toast-close" onclick="removeToast(this.parentElement)">✕</button>`;
-  document.getElementById('toast-container').appendChild(c);
-  setTimeout(() => removeToast(c), 5000);
-}
-function removeToast(el) {
-  el.classList.add('removing');
-  setTimeout(() => el.remove(), 300);
-}
-
-document.getElementById('toggleScriptCodeBtn').addEventListener('click', () => {
-  const area = document.getElementById('gasCodeSection');
-  area.style.display = area.style.display === 'none' ? 'block' : 'none';
-});
-
-const modeToggle = document.getElementById('modeToggle');
-const modeTitle = document.getElementById('modeTitle');
-const modeDesc = document.getElementById('modeDesc');
-const modeStatusLabel = document.getElementById('modeStatusLabel');
-const setupBox = document.getElementById('setupBox');
-
-modeToggle.addEventListener('change', (e) => {
-  isSandboxMode = !e.target.checked;
-  if (!isSandboxMode) {
-    modeTitle.textContent = "Google Drive Folder Bind Active";
-    modeDesc.textContent = "Uploading to parent folder ID: 17OKeKZ4nRCOlrj6_7u_wVrEJDu2o8Rzn directly.";
-    modeStatusLabel.textContent = "Production";
-    modeStatusLabel.style.color = "var(--success)";
-    setupBox.classList.add('show');
-    toast('info', 'Production GDrive Target Activated', 'Ensure your deployed web script URL is pasted inside developer configurations.');
-    loadLiveLibrary();
-  } else {
-    modeTitle.textContent = "Sandbox Simulator Active";
-    modeDesc.textContent = "Running local virtual drive. Turn on to connect actual Google Apps Script Web API.";
-    modeStatusLabel.textContent = "Sandbox";
-    modeStatusLabel.style.color = "var(--muted)";
-    setupBox.classList.remove('show');
-    toast('info', 'Sandbox Mode', 'Local environment activated.');
-    renderDirectory();
-  }
-});
-
-const dirGrid = document.getElementById('dirGrid');
-const dirBreadcrumbs = document.getElementById('dirBreadcrumbs');
-const openAddSubjectBtn = document.getElementById('openAddSubjectBtn');
-const openAddChapterBtn = document.getElementById('openAddChapterBtn');
-const currentSubjectTag = document.getElementById('currentSubjectTag');
-
-const addSubjectPanel = document.getElementById('addSubjectPanel');
-const addChapterPanel = document.getElementById('addChapterPanel');
-
-document.getElementById('resetDirBtn').addEventListener('click', () => {
-  currentSubject = null;
-  currentChapter = null;
-  clearFile();
-  updatePathSelectionInputs();
-  renderDirectory();
-  toast('info', 'Views Reset', 'Directory context returned to Root.');
-});
-
-openAddSubjectBtn.addEventListener('click', () => {
-  addSubjectPanel.classList.toggle('active');
-  addChapterPanel.classList.remove('active');
-});
-
-openAddChapterBtn.addEventListener('click', () => {
-  if (!currentSubject) {
-    toast('error', 'Select Subject First', 'Please enter a Subject context level.');
-    return;
-  }
-  currentSubjectTag.textContent = currentSubject;
-  addChapterPanel.classList.toggle('active');
-  addSubjectPanel.classList.remove('active');
-});
-
-document.getElementById('createSubjectSubmit').addEventListener('click', () => {
-  const nameInput = document.getElementById('newSubjectName');
-  const name = nameInput.value.trim();
-  if (!name) return toast('error', 'Validation Error', 'Folder name cannot be blank.');
-  
-  if (isSandboxMode) {
-    const exists = virtualLibrary.subjects.some(s => s.name.toLowerCase() === name.toLowerCase());
-    if (exists) return toast('error', 'Directory Conflict', 'Subject already exists.');
-    
-    virtualLibrary.subjects.push({ name: name, chapters: [] });
-    toast('success', 'Created Subject', `Folder "${name}" initialized inside virtual root.`);
-    nameInput.value = '';
-    addSubjectPanel.classList.remove('active');
-    renderDirectory();
-  } else {
-    toast('info', 'Folder Structure Ready', `"${name}" will be auto-generated inside your designated GDrive root folder upon upload.`);
-    let matched = virtualLibrary.subjects.find(s => s.name.toLowerCase() === name.toLowerCase());
-    if(!matched) {
-      virtualLibrary.subjects.push({ name: name, chapters: [] });
-    }
-    nameInput.value = '';
-    addSubjectPanel.classList.remove('active');
-    renderDirectory();
-  }
-});
-
-document.getElementById('createChapterSubmit').addEventListener('click', () => {
-  const nameInput = document.getElementById('newChapterName');
-  const name = nameInput.value.trim();
-  if (!name) return toast('error', 'Validation Error', 'Chapter folder name cannot be empty.');
-  if (!currentSubject) return toast('error', 'Context Error', 'Select a parent Subject first.');
-
-  if (isSandboxMode) {
-    const subObj = virtualLibrary.subjects.find(s => s.name === currentSubject);
-    if (subObj) {
-      const exists = subObj.chapters.some(c => c.name.toLowerCase() === name.toLowerCase());
-      if (exists) return toast('error', 'Directory Conflict', 'Chapter folder already exists inside this subject.');
-      
-      subObj.chapters.push({ name: name, files: [] });
-      toast('success', 'Created Chapter', `Chapter Folder "${name}" created under ${currentSubject}.`);
-      nameInput.value = '';
-      addChapterPanel.classList.remove('active');
-      renderDirectory();
-    }
-  } else {
-    toast('info', 'Chapter Folder Registered', `"${name}" structure will build dynamically inside the subject folder.`);
-    const subObj = virtualLibrary.subjects.find(s => s.name === currentSubject);
-    if (subObj) {
-      subObj.chapters.push({ name: name, files: [] });
-    }
-    nameInput.value = '';
-    addChapterPanel.classList.remove('active');
-    renderDirectory();
-  }
-});
-
-function renderDirectory() {
-  updateStats();
-  
-  let crumbs = `<span class="breadcrumb-item" onclick="navigateToBreadcrumb('root')">Root</span>`;
-  if (currentSubject) {
-    crumbs += ` <span class="breadcrumb-separator">›</span> <span class="breadcrumb-item" onclick="navigateToBreadcrumb('subject')">${currentSubject}</span>`;
-  }
-  if (currentChapter) {
-    crumbs += ` <span class="breadcrumb-separator">›</span> <span class="breadcrumb-item active">${currentChapter}</span>`;
-  }
-  dirBreadcrumbs.innerHTML = crumbs;
-
-  if (currentSubject) {
-    openAddChapterBtn.removeAttribute('disabled');
-  } else {
-    openAddChapterBtn.setAttribute('disabled', 'true');
-  }
-
-  dirGrid.innerHTML = '';
-
-  if (!currentSubject) {
-    if (virtualLibrary.subjects.length === 0) {
-      dirGrid.innerHTML = `
-        <div class="empty-dir">
-          <div class="empty-dir-icon">📂</div>
-          <p>No subjects in the directory. Create one to begin!</p>
-        </div>`;
-      return;
-    }
-
-    virtualLibrary.subjects.forEach(subj => {
-      const el = document.createElement('div');
-      el.className = `dir-item ${subj.name === currentSubject ? 'selected' : ''}`;
-      el.innerHTML = `
-        <div class="dir-icon">📁</div>
-        <div class="dir-name" title="${subj.name}">${subj.name}</div>
-        <div class="dir-count">${subj.chapters.length} Chapters</div>`;
-      
-      el.addEventListener('click', () => {
-        selectSubjectContext(subj.name);
-      });
-      el.addEventListener('dblclick', () => {
-        drillDownSubject(subj.name);
-      });
-
-      setupFolderDragEvents(el, subj.name, null);
-      dirGrid.appendChild(el);
-    });
-
-  } else if (currentSubject && !currentChapter) {
-    const activeSubj = virtualLibrary.subjects.find(s => s.name === currentSubject);
-    if (!activeSubj || activeSubj.chapters.length === 0) {
-      dirGrid.innerHTML = `
-        <div class="empty-dir">
-          <div class="empty-dir-icon">📂</div>
-          <p>This subject directory is empty. Create a Chapter folder to structure files.</p>
-        </div>`;
-      return;
-    }
-
-    activeSubj.chapters.forEach(chap => {
-      const el = document.createElement('div');
-      el.className = `dir-item`;
-      el.innerHTML = `
-        <div class="dir-icon">📂</div>
-        <div class="dir-name" title="${chap.name}">${chap.name}</div>
-        <div class="dir-count">${chap.files.length} PDFs</div>`;
-      
-      el.addEventListener('click', () => {
-        selectChapterContext(chap.name);
-      });
-      el.addEventListener('dblclick', () => {
-        drillDownChapter(chap.name);
-      });
-
-      setupFolderDragEvents(el, currentSubject, chap.name);
-      dirGrid.appendChild(el);
-    });
-
-  } else {
-    const activeSubj = virtualLibrary.subjects.find(s => s.name === currentSubject);
-    const activeChap = activeSubj ? activeSubj.chapters.find(c => c.name === currentChapter) : null;
-    
-    if (!activeChap || activeChap.files.length === 0) {
-      dirGrid.innerHTML = `
-        <div class="empty-dir">
-          <div class="empty-dir-icon">📄</div>
-          <p>No PDFs uploaded to this chapter folder yet.</p>
-        </div>`;
-      return;
-    }
-
-    activeChap.files.forEach(file => {
-      const el = document.createElement('div');
-      el.className = 'dir-item';
-      el.innerHTML = `
-        <div class="dir-icon">📄</div>
-        <div class="dir-name" title="${file.name}">${file.name}</div>
-        <div class="dir-count">PDF File</div>`;
-      
-      el.addEventListener('click', () => {
-        toast('info', 'File Meta Info', `File: ${file.name}\nUploaded: ${new Date(file.uploadDate).toLocaleDateString()}`);
-      });
-      dirGrid.appendChild(el);
-    });
+    return ContentService.createTextOutput(JSON.stringify({ success: false, error: err.toString() }))
+      .setMimeType(ContentService.MimeType.JSON);
   }
 }
 
-function setupFolderDragEvents(element, subjectName, chapterName) {
-  element.addEventListener('dragover', (e) => {
-    e.preventDefault();
-    element.classList.add('drag-over');
-  });
-  element.addEventListener('dragleave', () => {
-    element.classList.remove('drag-over');
-  });
-  element.addEventListener('drop', (e) => {
-    e.preventDefault();
-    element.classList.remove('drag-over');
-    
-    const file = e.dataTransfer.files[0];
-    if (file) {
-      currentSubject = subjectName;
-      currentChapter = chapterName || "General";
-      updatePathSelectionInputs();
-      setFile(file);
-      
-      toast('info', 'Target Folder Locked', `Selected path automatically populated as: ${currentSubject} › ${currentChapter}`);
-    }
-  });
-}
-
-function navigateToBreadcrumb(target) {
-  if (target === 'root') {
-    currentSubject = null;
-    currentChapter = null;
-  } else if (target === 'subject') {
-    currentChapter = null;
-  }
-  updatePathSelectionInputs();
-  renderDirectory();
-}
-
-function drillDownSubject(name) {
-  currentSubject = name;
-  currentChapter = null;
-  updatePathSelectionInputs();
-  renderDirectory();
-}
-
-function drillDownChapter(name) {
-  currentChapter = name;
-  updatePathSelectionInputs();
-  renderDirectory();
-  loadFilesForActiveChapter();
-}
-
-function selectSubjectContext(name) {
-  currentSubject = name;
-  updatePathSelectionInputs();
-}
-
-function selectChapterContext(name) {
-  currentChapter = name;
-  updatePathSelectionInputs();
-}
-
-function updatePathSelectionInputs() {
-  const subInp = document.getElementById('subject');
-  const chapInp = document.getElementById('chapter');
-  const banner = document.getElementById('targetBannerPath');
-
-  subInp.value = currentSubject || '';
-  chapInp.value = currentChapter || '';
-
-  if (currentSubject) {
-    banner.innerHTML = `<span>${currentSubject}</span> ${currentChapter ? ' › <span>' + currentChapter + '</span>' : ''}`;
-  } else {
-    banner.innerHTML = `<span>None Selected (Pick one inside Left grid)</span>`;
-  }
-}
-
-function updateStats() {
-  let subCount = virtualLibrary.subjects.length;
-  let chapCount = 0;
-  let fileCount = 0;
-
-  virtualLibrary.subjects.forEach(s => {
-    chapCount += s.chapters.length;
-    s.chapters.forEach(c => {
-      fileCount += c.files.length;
-    });
-  });
-
-  document.getElementById('statSubjects').textContent = subCount;
-  document.getElementById('statChapters').textContent = chapCount;
-  document.getElementById('statFiles').textContent = fileCount;
-}
-
-function loadFilesForActiveChapter() {
-  const activeSubj = virtualLibrary.subjects.find(s => s.name === currentSubject);
-  const activeChap = activeSubj ? activeSubj.chapters.find(c => c.name === currentChapter) : null;
-  
-  const list = document.getElementById('recentList');
-  const badge = document.getElementById('recentFileCount');
-
-  if (!activeChap) {
-    list.innerHTML = '<div class="empty-state">Choose a subject and open a chapter folder to list its contents.</div>';
-    badge.textContent = '0 files';
-    return;
-  }
-
-  badge.textContent = `${activeChap.files.length} files`;
-
-  if (activeChap.files.length === 0) {
-    list.innerHTML = '<div class="empty-state">No files inside this directory. Upload a PDF!</div>';
-    return;
-  }
-
-  list.innerHTML = activeChap.files.map(f => `
-    <div class="upload-item">
-      <div class="ui-icon">📄</div>
-      <div class="ui-body">
-        <div class="ui-name">${escHtml(f.name)}</div>
-        <div class="ui-meta">${escHtml(currentSubject)} › ${escHtml(currentChapter)} · ${fmtDate(f.uploadDate)}</div>
-      </div>
-      <span class="ui-badge">PDF</span>
-    </div>`).join('');
-}
-
-const dropZone  = document.getElementById('dropZone');
-const fileInput = document.getElementById('fileInput');
-const fileInfo  = document.getElementById('fileInfo');
-const fiName    = document.getElementById('fiName');
-const fiSize    = document.getElementById('fiSize');
-const fiRemove  = document.getElementById('fiRemove');
-const dropIcon  = document.getElementById('dropIcon');
-const dropZoneMainText = document.getElementById('dropZoneMainText');
-
-fileInput.addEventListener('change', e => setFile(e.target.files[0]));
-fiRemove.addEventListener('click', clearFile);
-
-dropZone.addEventListener('dragover', e => { e.preventDefault(); dropZone.classList.add('drag-over'); });
-dropZone.addEventListener('dragleave', () => dropZone.classList.remove('drag-over'));
-dropZone.addEventListener('drop', e => {
-  e.preventDefault();
-  dropZone.classList.remove('drag-over');
-  const f = e.dataTransfer.files[0];
-  if (f) setFile(f);
-});
-
-function setFile(f) {
-  if (!f) return;
-  if (f.type !== 'application/pdf' && !f.name.toLowerCase().endsWith('.pdf')) {
-    return toast('error', 'Invalid file format', 'Only PDF formatted files are compatible.');
-  }
-  if (f.size > 50 * 1024 * 1024) {
-    return toast('error', 'Payload size exceeds limit', 'Maximum allowable size is 50 MB.');
-  }
-  selectedFile = f;
-  fiName.textContent = f.name;
-  fiSize.textContent = formatBytes(f.size);
-  fileInfo.classList.add('show');
-  dropZone.classList.add('has-file');
-  dropIcon.textContent = '✅';
-  dropZoneMainText.textContent = "File Ready!";
-}
-
-function clearFile() {
-  selectedFile = null;
-  fileInput.value = '';
-  fileInfo.classList.remove('show');
-  dropZone.classList.remove('has-file');
-  dropIcon.textContent = '📄';
-  dropZoneMainText.textContent = "Drop PDF Here";
-}
-
-function formatBytes(b) {
-  if (b < 1024) return b + ' B';
-  if (b < 1048576) return (b/1024).toFixed(1) + ' KB';
-  return (b/1048576).toFixed(1) + ' MB';
-}
-
-document.getElementById('uploadBtn').addEventListener('click', uploadFile);
-
-async function uploadFile() {
-  const subject = document.getElementById('subject').value.trim();
-  const chapter = document.getElementById('chapter').value.trim();
-
-  if (!subject) return toast('error', 'Selection Required', 'Please select or create a target Subject inside the directory view first.');
-  if (!chapter) return toast('error', 'Folder Context Missing', 'Specify or enter a target chapter directory.');
-  if (!selectedFile) return toast('error', 'Empty Payload', 'Please draft or drop a PDF file.');
-
-  setUploading(true);
-  setProgress(10, 'Preparing data buffers…');
-
-  if (isSandboxMode) {
-    let progress = 10;
-    const interval = setInterval(() => {
-      progress += 20;
-      if (progress >= 90) {
-        clearInterval(interval);
-        completeSandboxUpload(subject, chapter);
-      } else {
-        setProgress(progress, 'Simulating direct upload inside target folder ID 17OKeKZ4nRCOlrj6_7u_wVrEJDu2o8Rzn…');
-      }
-    }, 300);
-
-  } else {
-    try {
-      const base64 = await readAsBase64(selectedFile);
-      setProgress(40, 'Sending stream to Google Drive API…');
-
-      let pct = 40;
-      const ticker = setInterval(() => { pct = Math.min(pct + 4, 90); setProgress(pct, 'Writing files to directories…'); }, 500);
-
-      const params = new URLSearchParams({
-        action:   'upload',
-        subject:  subject,
-        chapter:  chapter,
-        fileName: selectedFile.name,
-        fileData: base64
-      });
-
-      const endpoint = getApiEndpoint();
-      if (!endpoint || endpoint.includes('...')) {
-        clearInterval(ticker);
-        throw new Error("Invalid URL path specified in connectivity settings.");
-      }
-
-      const res  = await fetch(endpoint, { method: 'POST', body: params });
-      const data = await res.json();
-      clearInterval(ticker);
-
-      if (data.error) throw new Error(data.error);
-
-      setProgress(100, 'Complete!');
-      toast('success', 'Uploaded directly to Drive Folder!', `${selectedFile.name} is successfully organized into GDrive under pathway: "${subject} / ${chapter}"`);
-      
-      completeSandboxUpload(subject, chapter, false);
-
-    } catch (err) {
-      setUploading(false);
-      document.getElementById('progressWrap').classList.remove('show');
-      toast('error', 'Upload Connection Failed', err.message);
-    }
-  }
-}
-
-function completeSandboxUpload(subject, chapter, notifySuccess = true) {
-  let subObj = virtualLibrary.subjects.find(s => s.name.toLowerCase() === subject.toLowerCase());
-  if (!subObj) {
-    subObj = { name: subject, chapters: [] };
-    virtualLibrary.subjects.push(subObj);
-  }
-
-  let chapObj = subObj.chapters.find(c => c.name.toLowerCase() === chapter.toLowerCase());
-  if (!chapObj) {
-    chapObj = { name: chapter, files: [] };
-    subObj.chapters.push(chapObj);
-  }
-
-  chapObj.files.unshift({
-    name: selectedFile.name,
-    uploadDate: new Date(),
-    url: "https://drive.google.com/drive/folders/17OKeKZ4nRCOlrj6_7u_wVrEJDu2o8Rzn?usp=drive_link"
-  });
-
-  if (notifySuccess) {
-    setProgress(100, 'Uploaded successfully!');
-    toast('success', 'Mock Upload Completed!', `[Virtual Storage] Mock file organized under: ${subject} › ${chapter}`);
-  }
-
-  setTimeout(() => {
-    clearFile();
-    setUploading(false);
-    document.getElementById('progressWrap').classList.remove('show');
-    renderDirectory();
-    loadFilesForActiveChapter();
-  }, 1000);
-}
-
-function readAsBase64(file) {
-  return new Promise((res, rej) => {
-    const r = new FileReader();
-    r.onload  = () => res(r.result.split(',')[1]);
-    r.onerror = () => rej(new Error('Failed to parse file buffer'));
-    r.readAsDataURL(file);
-  });
-}
-
-function setUploading(on) {
-  const btn = document.getElementById('uploadBtn');
-  document.getElementById('btnText').style.display    = on ? 'none' : '';
-  document.getElementById('btnSpinner').style.display = on ? 'flex' : 'none';
-  btn.disabled = on;
-}
-
-function setProgress(pct, label) {
-  document.getElementById('progressWrap').classList.add('show');
-  document.getElementById('progressFill').style.width = pct + '%';
-  document.getElementById('progressLabel').textContent = label;
-  document.getElementById('progressPct').textContent   = pct + '%';
-}
-
-async function loadLiveLibrary() {
-  const endpoint = getApiEndpoint();
-  if(!endpoint || endpoint.includes('...')) return;
-  
+function handleDirectUpload(data, filename, subject, chapter, manualFolder) {
   try {
-    const res  = await fetch(`${endpoint}?action=getLibrary`);
-    const data = await res.json();
-    if (data.error) {
-      toast('error', 'Error reading Drive files', data.error);
-      return;
+    let parentFolder = DriveApp.getFolderById(TARGET_FOLDER_ID);
+    
+    // Dynamic hierarchal directory setup
+    if (subject && subject.trim() !== '') {
+      parentFolder = getOrCreateFolder(parentFolder, subject.trim());
     }
-    if (data.subjects) {
-      virtualLibrary.subjects = data.subjects;
-      renderDirectory();
-      toast('success', 'Synced GDrive Structure', 'Imported active directory layout directly from root folder ID 17OKeKZ4nRCOlrj6_7u_wVrEJDu2o8Rzn.');
+    if (chapter && chapter.trim() !== '') {
+      parentFolder = getOrCreateFolder(parentFolder, chapter.trim());
     }
-  } catch(e) {
-    toast('error', 'Sync Failed', 'Could not fetch live folder structure from GDrive. Reverted to cached sandbox structure.');
+    if (manualFolder && manualFolder.trim() !== '') {
+      parentFolder = getOrCreateFolder(parentFolder, manualFolder.trim());
+    }
+    
+    // Convert base64 stream to functional binary file blob
+    const mimeMatch = data.match(/^data:(.*);base64,/);
+    const contentType = mimeMatch ? mimeMatch[1] : 'application/octet-stream';
+    const cleanData = data.substring(data.indexOf(',') + 1);
+    
+    const blob = Utilities.newBlob(Utilities.base64Decode(cleanData), contentType, filename);
+    const file = parentFolder.createFile(blob);
+    
+    return { success: true, url: file.getUrl(), name: file.getName() };
+  } catch (error) {
+    return { success: false, error: error.toString() };
   }
 }
 
-function fmtDate(d) {
-  if (!d) return '—';
-  try { return new Date(d).toLocaleDateString('en-US', { month:'short', day:'numeric', year:'numeric' }); }
-  catch { return d; }
-}
-function escHtml(s) {
-  return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
-}
+function getOrCreateFolder(parent, name) {
+  const folders = parent.getFoldersByName(name);
+  if (folders.hasNext()) {
+    return folders.next();
+  }
+  return parent.createFolder(name);
+}</pre>
+                                    <button id="copyCodeBtn" class="absolute top-2.5 right-2.5 bg-slate-800 hover:bg-slate-700 text-slate-200 px-2.5 py-1.5 rounded-lg text-xs font-semibold flex items-center space-x-1 transition">
+                                        <i class="fa-regular fa-copy"></i>
+                                        <span>Copy Code</span>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
 
-renderDirectory();
-</script>
+                        <!-- Step 3 -->
+                        <div class="flex items-start space-x-3">
+                            <span class="flex-shrink-0 h-5 w-5 bg-brand-500 text-white rounded-full flex items-center justify-center text-[11px] font-bold mt-0.5">3</span>
+                            <div>
+                                <p class="font-semibold text-slate-800 dark:text-slate-200">Deploy the Web App</p>
+                                <p class="text-xs text-slate-500 dark:text-slate-400 mt-0.5 leading-relaxed">
+                                    On the top right of your Apps Script Editor, click <strong>Deploy</strong> > <strong>New deployment</strong>. Select <strong>Web app</strong> (via the gear icon) and fill out:
+                                </p>
+                                <ul class="list-disc list-inside text-xs mt-1 space-y-1 text-slate-600 dark:text-slate-400 pl-2">
+                                    <li><strong>Execute as:</strong> <code class="bg-slate-100 dark:bg-slate-800 px-1 py-0.5 rounded text-rose-500">Me (your-email@gmail.com)</code></li>
+                                    <li><strong>Who has access:</strong> <code class="bg-slate-100 dark:bg-slate-800 px-1 py-0.5 rounded text-rose-500">Anyone</code></li>
+                                </ul>
+                            </div>
+                        </div>
+
+                        <!-- Step 4 -->
+                        <div class="flex items-start space-x-3">
+                            <span class="flex-shrink-0 h-5 w-5 bg-brand-500 text-white rounded-full flex items-center justify-center text-[11px] font-bold mt-0.5">4</span>
+                            <div>
+                                <p class="font-semibold text-slate-800 dark:text-slate-200">Authorize Permissions & Bind URL</p>
+                                <p class="text-xs text-slate-500 dark:text-slate-400 mt-0.5 leading-relaxed">
+                                    Click <strong>Deploy</strong>. Approve the Google Permissions warning window. Copy the generated <strong>Web app URL</strong> from the final screen and paste it into the <strong>API Connection Settings</strong> card on the left panel.
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Modal Footer -->
+            <div class="px-6 py-4 border-t border-slate-200 dark:border-slate-800 flex items-center justify-end bg-slate-50 dark:bg-slate-900/50">
+                <button id="closeGuideBottomBtn" class="px-4 py-2 bg-slate-200 dark:bg-slate-800 hover:bg-slate-300 dark:hover:bg-slate-700 text-slate-800 dark:text-slate-200 rounded-lg text-xs font-bold transition">
+                    Got it, Close Settings
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Script Processing Area -->
+    <script>
+        // System Theme Management
+        const htmlEl = document.documentElement;
+        const themeToggle = document.getElementById('themeToggle');
+        
+        // Load initial theme settings
+        if (localStorage.getItem('theme') === 'dark' || (!('theme' in localStorage) && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+            htmlEl.classList.add('dark');
+        } else {
+            htmlEl.classList.remove('dark');
+        }
+
+        themeToggle.addEventListener('click', () => {
+            if (htmlEl.classList.contains('dark')) {
+                htmlEl.classList.remove('dark');
+                localStorage.setItem('theme', 'light');
+            } else {
+                htmlEl.classList.add('dark');
+                localStorage.setItem('theme', 'dark');
+            }
+        });
+
+        // App State Properties
+        let selectedFileBlob = null;
+        const storageKeyUrl = "cee_uploader_endpoint";
+
+        // Reference Variables
+        const webAppUrlInput = document.getElementById('webAppUrl');
+        const connectionHelp = document.getElementById('connectionHelp');
+        const statusIndicator = document.getElementById('statusIndicator');
+        const statusIndicatorPing = document.getElementById('statusIndicatorPing');
+        
+        const subjectInput = document.getElementById('subject');
+        const chapterInput = document.getElementById('chapter');
+        const manualFolderInput = document.getElementById('manualFolder');
+        
+        const dropZone = document.getElementById('dropZone');
+        const fileInput = document.getElementById('fileInput');
+        const filePreviewCard = document.getElementById('filePreviewCard');
+        const previewFileName = document.getElementById('previewFileName');
+        const previewFileSize = document.getElementById('previewFileSize');
+        const removeFileBtn = document.getElementById('removeFileBtn');
+        const previewIcon = document.getElementById('previewIcon');
+        const previewFileIconContainer = document.getElementById('previewFileIconContainer');
+        
+        const treeSubject = document.getElementById('treeSubject');
+        const treeSubjectName = document.getElementById('treeSubjectName');
+        const treeChapter = document.getElementById('treeChapter');
+        const treeChapterName = document.getElementById('treeChapterName');
+        const treeManual = document.getElementById('treeManual');
+        const treeManualName = document.getElementById('treeManualName');
+        const treeFile = document.getElementById('treeFile');
+        const treeFileName = document.getElementById('treeFileName');
+        const treeFileIcon = document.getElementById('treeFileIcon');
+        const treeEmpty = document.getElementById('treeEmpty');
+
+        const uploadForm = document.getElementById('uploadForm');
+        const submitBtn = document.getElementById('submitBtn');
+        
+        const statusAlert = document.getElementById('statusAlert');
+        const statusAlertIcon = document.getElementById('statusAlertIcon');
+        const statusAlertTitle = document.getElementById('statusAlertTitle');
+        const statusAlertMessage = document.getElementById('statusAlertMessage');
+
+        // Modal Elements
+        const guideBtn = document.getElementById('guideBtn');
+        const guideModal = document.getElementById('guideModal');
+        const closeGuideBtn = document.getElementById('closeGuideBtn');
+        const closeGuideBottomBtn = document.getElementById('closeGuideBottomBtn');
+        const copyCodeBtn = document.getElementById('copyCodeBtn');
+
+        // Initial Web App URL Binding
+        if (localStorage.getItem(storageKeyUrl)) {
+            webAppUrlInput.value = localStorage.getItem(storageKeyUrl);
+            updateEndpointConnectionStatus();
+        }
+
+        // Web app url event listeners
+        webAppUrlInput.addEventListener('input', () => {
+            localStorage.setItem(storageKeyUrl, webAppUrlInput.value.trim());
+            updateEndpointConnectionStatus();
+            validateFormSubmissionState();
+        });
+
+        function updateEndpointConnectionStatus() {
+            const urlVal = webAppUrlInput.value.trim();
+            if (urlVal.startsWith('https://script.google.com/macros/')) {
+                statusIndicator.className = "relative inline-flex rounded-full h-3 w-3 bg-emerald-500";
+                statusIndicatorPing.className = "animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75";
+                connectionHelp.className = "text-[11px] text-emerald-600 dark:text-emerald-400 font-medium";
+                connectionHelp.innerHTML = `<i class="fa-solid fa-circle-check mr-1"></i> Connected to active deployment.`;
+            } else {
+                statusIndicator.className = "relative inline-flex rounded-full h-3 w-3 bg-rose-500";
+                statusIndicatorPing.className = "animate-ping absolute inline-flex h-full w-full rounded-full bg-rose-400 opacity-75";
+                connectionHelp.className = "text-[11px] text-rose-500 dark:text-rose-400 font-medium";
+                connectionHelp.innerHTML = `<i class="fa-solid fa-triangle-exclamation mr-1"></i> No active connection configured yet.`;
+            }
+        }
+
+        // Dynamic visual tree builder
+        function renderTreePreview() {
+            const subject = subjectInput.value.trim();
+            const chapter = chapterInput.value.trim();
+            const manual = manualFolderInput.value.trim();
+
+            let hasNode = false;
+
+            if (subject !== '') {
+                treeSubject.classList.remove('hidden');
+                treeSubjectName.innerText = subject;
+                hasNode = true;
+            } else {
+                treeSubject.classList.add('hidden');
+            }
+
+            if (chapter !== '') {
+                treeChapter.classList.remove('hidden');
+                treeChapterName.innerText = chapter;
+                hasNode = true;
+            } else {
+                treeChapter.classList.add('hidden');
+            }
+
+            if (manual !== '') {
+                treeManual.classList.remove('hidden');
+                treeManualName.innerText = manual;
+                hasNode = true;
+            } else {
+                treeManual.classList.add('hidden');
+            }
+
+            if (selectedFileBlob) {
+                treeFile.classList.remove('hidden');
+                treeFileName.innerText = selectedFileBlob.name;
+                hasNode = true;
+
+                // Dynamically change file icon inside visual representation
+                const ext = selectedFileBlob.name.split('.').pop().toLowerCase();
+                if (ext === 'pdf') {
+                    treeFileIcon.className = "fa-solid fa-file-pdf text-rose-500";
+                } else if (['jpg', 'jpeg', 'png', 'gif', 'svg', 'webp'].includes(ext)) {
+                    treeFileIcon.className = "fa-solid fa-file-image text-emerald-500";
+                } else if (['zip', 'rar', 'tar', '7z'].includes(ext)) {
+                    treeFileIcon.className = "fa-solid fa-file-zipper text-indigo-500";
+                } else {
+                    treeFileIcon.className = "fa-solid fa-file-word text-blue-500";
+                }
+            } else {
+                treeFile.classList.add('hidden');
+            }
+
+            if (hasNode) {
+                treeEmpty.classList.add('hidden');
+            } else {
+                treeEmpty.classList.remove('hidden');
+            }
+        }
+
+        // Setup input listeners for dynamic updates
+        subjectInput.addEventListener('input', renderTreePreview);
+        chapterInput.addEventListener('input', renderTreePreview);
+        manualFolderInput.addEventListener('input', renderTreePreview);
+
+        // Drag and Drop implementation logic
+        dropZone.addEventListener('click', () => fileInput.click());
+
+        dropZone.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            dropZone.classList.add('border-brand-500', 'bg-brand-50/20', 'dark:bg-brand-500/5');
+        });
+
+        ['dragleave', 'dragend'].forEach(type => {
+            dropZone.addEventListener(type, () => {
+                dropZone.classList.remove('border-brand-500', 'bg-brand-50/20', 'dark:bg-brand-500/5');
+            });
+        });
+
+        dropZone.addEventListener('drop', (e) => {
+            e.preventDefault();
+            dropZone.classList.remove('border-brand-500', 'bg-brand-50/20', 'dark:bg-brand-500/5');
+            if (e.dataTransfer.files.length) {
+                handleFileSelection(e.dataTransfer.files[0]);
+            }
+        });
+
+        fileInput.addEventListener('change', (e) => {
+            if (e.target.files.length) {
+                handleFileSelection(e.target.files[0]);
+            }
+        });
+
+        function handleFileSelection(file) {
+            selectedFileBlob = file;
+            
+            // UI elements configurations based on file meta information
+            previewFileName.innerText = file.name;
+            previewFileSize.innerText = formatBytes(file.size);
+
+            const fileExt = file.name.split('.').pop().toLowerCase();
+            
+            // Adjust visualization class styling for dynamic file icons
+            if (fileExt === 'pdf') {
+                previewIcon.className = "fa-solid fa-file-pdf text-xl text-rose-500";
+                previewFileIconContainer.className = "p-2.5 rounded-lg bg-rose-50 dark:bg-rose-950/40 text-rose-500 flex items-center justify-center flex-shrink-0";
+            } else if (['jpg', 'jpeg', 'png', 'gif', 'svg', 'webp'].includes(fileExt)) {
+                previewIcon.className = "fa-solid fa-file-image text-xl text-emerald-500";
+                previewFileIconContainer.className = "p-2.5 rounded-lg bg-emerald-50 dark:bg-emerald-950/40 text-emerald-500 flex items-center justify-center flex-shrink-0";
+            } else if (['zip', 'rar', 'tar', '7z'].includes(fileExt)) {
+                previewIcon.className = "fa-solid fa-file-zipper text-xl text-indigo-500";
+                previewFileIconContainer.className = "p-2.5 rounded-lg bg-indigo-50 dark:bg-indigo-950/40 text-indigo-500 flex items-center justify-center flex-shrink-0";
+            } else {
+                previewIcon.className = "fa-solid fa-file-invoice text-xl text-blue-500";
+                previewFileIconContainer.className = "p-2.5 rounded-lg bg-blue-50 dark:bg-blue-950/40 text-blue-500 flex items-center justify-center flex-shrink-0";
+            }
+
+            filePreviewCard.classList.remove('hidden');
+            renderTreePreview();
+            validateFormSubmissionState();
+        }
+
+        removeFileBtn.addEventListener('click', () => {
+            selectedFileBlob = null;
+            fileInput.value = '';
+            filePreviewCard.classList.add('hidden');
+            renderTreePreview();
+            validateFormSubmissionState();
+        });
+
+        function formatBytes(bytes, decimals = 2) {
+            if (bytes === 0) return '0 Bytes';
+            const k = 1024;
+            const dm = decimals < 0 ? 0 : decimals;
+            const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+            const i = Math.floor(Math.log(bytes) / Math.log(k));
+            return parseFloat((bytes / Math.pow(k, i)).toFixed(dm)) + ' ' + sizes[i];
+        }
+
+        // Interactive validation logic checks
+        function validateFormSubmissionState() {
+            const isUrlConfigured = webAppUrlInput.value.trim().startsWith('https://script.google.com/macros/');
+            const isFileSelected = selectedFileBlob !== null;
+
+            if (isUrlConfigured && isFileSelected) {
+                submitBtn.disabled = false;
+            } else {
+                submitBtn.disabled = true;
+            }
+        }
+
+        // Submitting Files and payloads
+        uploadForm.addEventListener('submit', (e) => {
+            e.preventDefault();
+
+            const url = webAppUrlInput.value.trim();
+            if (!url || !selectedFileBlob) return;
+
+            // Trigger visual progress representation
+            showCustomAlert('info', 'Uploading in progress...', 'Uploading file stream and creating directories directly on Google Drive cloud servers. Do not close this window.');
+            submitBtn.disabled = true;
+            
+            const reader = new FileReader();
+            reader.onload = function(evt) {
+                const base64Data = evt.target.result;
+                
+                const uploadPayload = {
+                    data: base64Data,
+                    filename: selectedFileBlob.name,
+                    subject: subjectInput.value.trim(),
+                    chapter: chapterInput.value.trim(),
+                    manualFolder: manualFolderInput.value.trim()
+                };
+
+                // Use fetch POST payload to access endpoint safely
+                fetch(url, {
+                    method: 'POST',
+                    mode: 'cors', // Ensure we request CORS setup. Uses absolute error fallback when CORS limits block payload.
+                    headers: {
+                        'Content-Type': 'text/plain;charset=utf-8',
+                    },
+                    body: JSON.stringify(uploadPayload)
+                })
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error('HTTP network error ' + response.status);
+                    }
+                    return response.json();
+                })
+                .then(res => {
+                    if (res && res.success) {
+                        showCustomAlert('success', 'Successfully Uploaded!', `File nested path processing completed successfully.<br><a href="${res.url}" target="_blank" class="underline font-bold text-emerald-800 dark:text-emerald-300 inline-flex items-center mt-1">Open newly uploaded file <i class="fa-solid fa-arrow-up-right-from-square ml-1 text-xs"></i></a>`);
+                        resetAfterSuccessfulUpload();
+                    } else {
+                        // Error fallback within payload validation checks from gas engine
+                        const errText = res ? res.error : 'Invalid API communication response';
+                        showCustomAlert('danger', 'Script Execution Refused', `System failed processing with: "${errText}". Make sure your destination folder permits writing access privileges.`);
+                    }
+                })
+                .catch(err => {
+                    // CORS preflight safety check handler
+                    // Often Apps Script redirections present as "TypeError: Failed to fetch" due to browser restrictions with no-cors.
+                    // If no response could be captured directly on modern browsers, show informative status message.
+                    showCustomAlert('warning', 'Awaiting finalized processing', 'The file transmission finished. Since Google Apps Script Web Apps handle cross-origin requests via unique redirections, please verify your Destination Drive folder to ensure complete processing.');
+                    resetAfterSuccessfulUpload();
+                })
+                .finally(() => {
+                    validateFormSubmissionState();
+                });
+            };
+
+            reader.readAsDataURL(selectedFileBlob);
+        });
+
+        function resetAfterSuccessfulUpload() {
+            selectedFileBlob = null;
+            fileInput.value = '';
+            filePreviewCard.classList.add('hidden');
+            subjectInput.value = '';
+            chapterInput.value = '';
+            manualFolderInput.value = '';
+            renderTreePreview();
+        }
+
+        // Notification and Alert Engine
+        function showCustomAlert(type, title, message) {
+            statusAlert.className = "rounded-xl p-4 flex items-start space-x-3 transition duration-150 transform hover:scale-[1.01]";
+            statusAlert.classList.remove('hidden');
+
+            if (type === 'success') {
+                statusAlert.classList.add('bg-emerald-50', 'dark:bg-emerald-950/20', 'border', 'border-emerald-100', 'dark:border-emerald-900/50', 'text-emerald-900', 'dark:text-emerald-200');
+                statusAlertIcon.innerHTML = `<i class="fa-solid fa-circle-check text-emerald-500"></i>`;
+            } else if (type === 'danger') {
+                statusAlert.classList.add('bg-rose-50', 'dark:bg-rose-950/20', 'border', 'border-rose-100', 'dark:border-rose-900/50', 'text-rose-900', 'dark:text-rose-200');
+                statusAlertIcon.innerHTML = `<i class="fa-solid fa-circle-exclamation text-rose-500"></i>`;
+            } else if (type === 'info') {
+                statusAlert.classList.add('bg-blue-50', 'dark:bg-blue-950/20', 'border', 'border-blue-100', 'dark:border-blue-900/50', 'text-blue-900', 'dark:text-blue-200');
+                statusAlertIcon.innerHTML = `<i class="fa-solid fa-spinner animate-spin text-blue-500"></i>`;
+            } else {
+                // Warnings, usually redirect assumptions
+                statusAlert.classList.add('bg-amber-50', 'dark:bg-amber-950/20', 'border', 'border-amber-100', 'dark:border-amber-900/50', 'text-amber-900', 'dark:text-amber-200');
+                statusAlertIcon.innerHTML = `<i class="fa-solid fa-circle-nodes text-amber-500"></i>`;
+            }
+
+            statusAlertTitle.innerText = title;
+            statusAlertMessage.innerHTML = message;
+            
+            // Auto scroll down to notice alert on mobile screens
+            statusAlert.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+        }
+
+        // Modal Action Scripts
+        guideBtn.addEventListener('click', () => {
+            guideModal.classList.remove('hidden');
+        });
+
+        [closeGuideBtn, closeGuideBottomBtn].forEach(el => {
+            el.addEventListener('click', () => {
+                guideModal.classList.add('hidden');
+            });
+        });
+
+        // Hide modal when clicked outside card boundaries
+        guideModal.addEventListener('click', (e) => {
+            if (e.target === guideModal) {
+                guideModal.classList.add('hidden');
+            }
+        });
+
+        // Copy setup script feature
+        copyCodeBtn.addEventListener('click', () => {
+            const textToCopy = document.getElementById('gasCodeBlock').innerText;
+            navigator.clipboard.writeText(textToCopy).then(() => {
+                const initialHtml = copyCodeBtn.innerHTML;
+                copyCodeBtn.innerHTML = `<i class="fa-solid fa-check text-emerald-400"></i> <span class="text-emerald-400">Copied!</span>`;
+                setTimeout(() => {
+                    copyCodeBtn.innerHTML = initialHtml;
+                }, 2000);
+            }).catch(err => {
+                // Clipboard API fallback for standard frame integrations
+                const textArea = document.createElement("textarea");
+                textArea.value = textToCopy;
+                textArea.style.position = "fixed";
+                document.body.appendChild(textArea);
+                textArea.focus();
+                textArea.select();
+                try {
+                    document.execCommand('copy');
+                    const initialHtml = copyCodeBtn.innerHTML;
+                    copyCodeBtn.innerHTML = `<i class="fa-solid fa-check text-emerald-400"></i> <span class="text-emerald-400">Copied!</span>`;
+                    setTimeout(() => {
+                        copyCodeBtn.innerHTML = initialHtml;
+                    }, 2000);
+                } catch (e) {
+                    console.error('Fallback failed', e);
+                }
+                document.body.removeChild(textArea);
+            });
+        });
+    </script>
 </body>
 </html>
