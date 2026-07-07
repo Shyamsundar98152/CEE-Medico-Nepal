@@ -3,11 +3,11 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>CEE Notes Library — Upload</title>
+<title>CEE Notes Library — Direct Folder Upload</title>
 <link rel="preconnect" href="https://fonts.googleapis.com" />
 <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:ital,wght@0,300;0,400;0,500;1,300&display=swap" rel="stylesheet" />
+
 <style>
-/* ── Reset & Variables ───────────────────────────────────── */
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
 :root {
@@ -46,7 +46,6 @@ body {
   overflow-x: hidden;
 }
 
-/* ── Ambient background ──────────────────────────────────── */
 .bg-orbs {
   position: fixed; inset: 0; pointer-events: none; z-index: 0;
   overflow: hidden;
@@ -70,15 +69,13 @@ body {
 @keyframes drift1 { from { transform: translate(0,0) scale(1);} to { transform: translate(40px,60px) scale(1.15);} }
 @keyframes drift2 { from { transform: translate(0,0) scale(1);} to { transform: translate(-40px,-50px) scale(1.2);} }
 
-/* ── Layout ──────────────────────────────────────────────── */
-.wrapper { position: relative; z-index: 1; max-width: 900px; margin: 0 auto; padding: 0 20px 60px; }
+.wrapper { position: relative; z-index: 1; max-width: 1200px; margin: 0 auto; padding: 0 20px 60px; }
 
-/* ── Header ──────────────────────────────────────────────── */
 header {
   display: flex; align-items: center; justify-content: space-between;
   padding: 24px 0 0;
   border-bottom: 1px solid var(--border);
-  margin-bottom: 40px;
+  margin-bottom: 30px;
   padding-bottom: 20px;
 }
 .logo {
@@ -105,6 +102,9 @@ header {
   color: var(--muted); text-decoration: none;
   padding: 8px 16px; border-radius: 8px; border: 1px solid var(--border);
   transition: all .2s;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
 }
 .nav-link:hover { color: var(--text); border-color: var(--accent); }
 .nav-link.active { color: var(--accent); border-color: var(--accent); background: rgba(79,142,247,.08); }
@@ -118,8 +118,10 @@ header {
 }
 .theme-btn:hover { color: var(--text); border-color: var(--accent); }
 
-/* ── Hero ────────────────────────────────────────────────── */
-.hero { text-align: center; margin-bottom: 48px; }
+.hero { text-align: center; margin-bottom: 36px; }
+.hero-badges {
+  display: flex; justify-content: center; gap: 8px; flex-wrap: wrap; margin-bottom: 16px;
+}
 .hero-badge {
   display: inline-flex; align-items: center; gap: 6px;
   padding: 6px 14px; border-radius: 999px;
@@ -127,46 +129,190 @@ header {
   background: rgba(79,142,247,.07);
   font-size: .75rem; color: var(--accent);
   font-family: var(--font-display); font-weight: 600;
-  margin-bottom: 16px;
   letter-spacing: .05em; text-transform: uppercase;
 }
+.hero-badge.public-status {
+  border-color: rgba(34,199,122,.3);
+  background: rgba(34,199,122,.07);
+  color: var(--success);
+}
+.hero-badge.gdrive-link {
+  border-color: rgba(124,92,252,.4);
+  background: rgba(124,92,252,.1);
+  color: var(--accent2);
+}
+.hero-badge.gdrive-link a {
+  color: inherit;
+  text-decoration: none;
+}
+.hero-badge.gdrive-link:hover {
+  background: rgba(124,92,252,.2);
+}
+
 .hero h2 {
-  font-family: var(--font-display); font-size: clamp(2rem, 5vw, 3rem);
-  font-weight: 800; line-height: 1.1; margin-bottom: 12px;
+  font-family: var(--font-display); font-size: clamp(1.8rem, 4vw, 2.6rem);
+  font-weight: 800; line-height: 1.2; margin-bottom: 12px;
 }
 .hero h2 span {
   background: linear-gradient(90deg, var(--accent), var(--accent2));
   -webkit-background-clip: text; -webkit-text-fill-color: transparent;
 }
-.hero p { color: var(--muted); max-width: 480px; margin: 0 auto; line-height: 1.6; }
+.hero p { color: var(--muted); max-width: 580px; margin: 0 auto; line-height: 1.6; font-size: 0.95rem; }
 
-/* ── Card ────────────────────────────────────────────────── */
+.workspace-grid {
+  display: grid;
+  grid-template-columns: 1.2fr 1fr;
+  gap: 28px;
+  margin-bottom: 40px;
+}
+@media (max-width: 900px) {
+  .workspace-grid { grid-template-columns: 1fr; }
+}
+
 .card {
   background: var(--surface);
   border: 1px solid var(--border);
   border-radius: 20px;
-  padding: 36px;
+  padding: 28px;
   box-shadow: var(--shadow);
+  display: flex;
+  flex-direction: column;
+}
+.card-header-flex {
+  display: flex; align-items: center; justify-content: space-between; margin-bottom: 20px;
 }
 .card-title {
-  font-family: var(--font-display); font-size: 1rem; font-weight: 700;
-  margin-bottom: 24px; display: flex; align-items: center; gap: 8px;
+  font-family: var(--font-display); font-size: 1.1rem; font-weight: 700;
+  display: flex; align-items: center; gap: 8px;
 }
-.card-title span { font-size: 1.1rem; }
+.card-title span { font-size: 1.2rem; }
+.card-subtitle {
+  font-size: 0.8rem; color: var(--muted); margin-top: -15px; margin-bottom: 20px;
+}
 
-/* ── Form ────────────────────────────────────────────────── */
-.form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
-@media (max-width: 600px) { .form-grid { grid-template-columns: 1fr; } }
+.dir-explorer {
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  background: var(--surface2);
+  padding: 16px;
+  min-height: 320px;
+  display: flex;
+  flex-direction: column;
+}
+.dir-breadcrumbs {
+  display: flex; align-items: center; gap: 6px;
+  font-family: var(--font-display); font-size: 0.85rem; font-weight: 600;
+  margin-bottom: 14px; color: var(--muted);
+  flex-wrap: wrap; background: rgba(0,0,0,0.15);
+  padding: 8px 12px; border-radius: 6px;
+}
+.breadcrumb-item { cursor: pointer; transition: color 0.2s; }
+.breadcrumb-item:hover { color: var(--accent); }
+.breadcrumb-item.active { color: var(--text); cursor: default; }
+.breadcrumb-separator { color: var(--muted); font-size: 0.7rem; }
 
-.form-group { display: flex; flex-direction: column; gap: 8px; }
+.dir-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
+  gap: 12px;
+  flex: 1;
+  overflow-y: auto;
+  max-height: 280px;
+  padding-right: 4px;
+}
+.dir-grid::-webkit-scrollbar { width: 6px; }
+.dir-grid::-webkit-scrollbar-track { background: transparent; }
+.dir-grid::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+
+.dir-item {
+  border: 1.5px solid var(--border);
+  background: var(--surface);
+  border-radius: 10px;
+  padding: 12px;
+  text-align: center;
+  cursor: pointer;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  user-select: none;
+}
+.dir-item:hover {
+  transform: translateY(-2px);
+  border-color: var(--accent);
+  box-shadow: 0 4px 12px rgba(79,142,247,0.15);
+}
+.dir-item.selected {
+  border-color: var(--accent2);
+  background: rgba(124,92,252,0.08);
+}
+.dir-icon { font-size: 2.2rem; margin-bottom: 8px; }
+.dir-name { font-weight: 600; font-size: 0.8rem; max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.dir-count { font-size: 0.7rem; color: var(--muted); margin-top: 2px; }
+
+.dir-item.drag-over {
+  border-color: var(--success);
+  background: rgba(34,199,122,0.08);
+  transform: scale(1.03);
+}
+
+.empty-dir {
+  grid-column: 1 / -1;
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  color: var(--muted); font-size: 0.85rem; padding: 40px; text-align: center;
+}
+.empty-dir-icon { font-size: 2.5rem; margin-bottom: 8px; }
+
+.creator-toolbar {
+  display: flex; gap: 8px; margin-bottom: 12px;
+}
+.creator-toolbar .btn {
+  padding: 8px 12px; font-size: 0.8rem; border-radius: 8px; flex: 1;
+}
+
+.creator-panel {
+  background: rgba(0,0,0,0.2);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 12px;
+  margin-bottom: 14px;
+  display: none;
+}
+.creator-panel.active { display: block; animation: slideDown 0.25s ease-out; }
+@keyframes slideDown { from { opacity: 0; transform: translateY(-10px); } to { opacity: 1; transform: translateY(0); } }
+
+.creator-panel h4 { font-size: 0.8rem; font-family: var(--font-display); text-transform: uppercase; margin-bottom: 8px; color: var(--accent); }
+.creator-input-group { display: flex; gap: 8px; }
+.creator-input-group input {
+  flex: 1; background: var(--surface); border: 1.5px solid var(--border);
+  padding: 6px 12px; color: var(--text); border-radius: 6px; font-size: 0.85rem; outline: none;
+}
+.creator-input-group input:focus { border-color: var(--accent); }
+
+.target-path-banner {
+  background: rgba(124,92,252,0.08);
+  border: 1px dashed var(--accent2);
+  border-radius: 8px;
+  padding: 10px 14px;
+  margin-bottom: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-size: 0.85rem;
+}
+.target-path-banner span { font-weight: bold; color: var(--accent2); }
+
+.form-group { display: flex; flex-direction: column; gap: 6px; margin-bottom: 16px; }
 .form-group label {
-  font-size: .8rem; font-weight: 500; color: var(--muted);
+  font-size: .75rem; font-weight: 500; color: var(--muted);
   text-transform: uppercase; letter-spacing: .06em;
 }
 .form-group input, .form-group select {
   background: var(--surface2); border: 1.5px solid var(--border);
-  border-radius: var(--radius); padding: 12px 16px;
-  color: var(--text); font-family: var(--font-body); font-size: .95rem;
+  border-radius: var(--radius); padding: 10px 14px;
+  color: var(--text); font-family: var(--font-body); font-size: .9rem;
   transition: border-color .2s, box-shadow .2s;
   outline: none;
 }
@@ -174,15 +320,10 @@ header {
   border-color: var(--accent);
   box-shadow: 0 0 0 3px rgba(79,142,247,.15);
 }
-.form-group input::placeholder { color: var(--muted); }
 
-/* ── Datalist hints ──────────────────────────────────────── */
-.hint { font-size: .75rem; color: var(--muted); margin-top: 2px; }
-
-/* ── Drop Zone ───────────────────────────────────────────── */
 .drop-zone {
-  margin-top: 24px; border: 2px dashed var(--border);
-  border-radius: 16px; padding: 40px 20px; text-align: center;
+  border: 2px dashed var(--border);
+  border-radius: 16px; padding: 32px 16px; text-align: center;
   cursor: pointer; transition: all .25s; position: relative;
   background: var(--surface2);
 }
@@ -191,30 +332,72 @@ header {
   background: rgba(79,142,247,.06);
 }
 .drop-zone.has-file { border-color: var(--success); background: rgba(34,199,122,.06); }
-.drop-icon { font-size: 2.5rem; margin-bottom: 12px; }
-.drop-zone h3 { font-family: var(--font-display); font-weight: 700; margin-bottom: 6px; }
-.drop-zone p { font-size: .85rem; color: var(--muted); }
+.drop-icon { font-size: 2.2rem; margin-bottom: 10px; }
+.drop-zone h3 { font-family: var(--font-display); font-size: 0.95rem; font-weight: 700; margin-bottom: 4px; }
+.drop-zone p { font-size: .75rem; color: var(--muted); }
 .drop-zone input[type="file"] {
   position: absolute; inset: 0; opacity: 0; cursor: pointer; width: 100%; height: 100%;
 }
+
 .file-info {
   display: none; align-items: center; gap: 12px;
-  background: var(--surface); border-radius: 10px;
-  padding: 12px 16px; margin-top: 16px; text-align: left;
+  background: var(--surface2); border: 1.5px solid var(--border); border-radius: 10px;
+  padding: 10px 14px; margin-top: 14px; text-align: left;
 }
 .file-info.show { display: flex; }
-.file-info .fi-icon { font-size: 1.8rem; flex-shrink: 0; }
-.file-info .fi-name { font-weight: 600; font-size: .9rem; word-break: break-all; }
-.file-info .fi-size { font-size: .75rem; color: var(--muted); }
+.file-info .fi-icon { font-size: 1.5rem; flex-shrink: 0; }
+.file-info .fi-name { font-weight: 600; font-size: .8rem; word-break: break-all; }
+.file-info .fi-size { font-size: .7rem; color: var(--muted); }
 .file-info .fi-remove {
   margin-left: auto; background: none; border: none;
-  color: var(--error); cursor: pointer; font-size: 1.2rem; flex-shrink: 0;
+  color: var(--error); cursor: pointer; font-size: 1rem; flex-shrink: 0;
 }
 
-/* ── Progress Bar ────────────────────────────────────────── */
-.progress-wrap { margin-top: 20px; display: none; }
+.mode-ribbon {
+  display: flex; justify-content: space-between; align-items: center;
+  background: var(--surface); border: 1px solid var(--border);
+  border-radius: 12px; padding: 12px 18px; margin-bottom: 24px;
+}
+.mode-details h4 { font-size: 0.85rem; font-family: var(--font-display); font-weight: bold; }
+.mode-details p { font-size: 0.72rem; color: var(--muted); }
+.toggle-switch {
+  position: relative; display: inline-block; width: 48px; height: 24px;
+}
+.toggle-switch input { opacity: 0; width: 0; height: 0; }
+.slider {
+  position: absolute; cursor: pointer; inset: 0; background-color: var(--border);
+  transition: .3s; border-radius: 24px;
+}
+.slider:before {
+  position: absolute; content: ""; height: 18px; width: 18px; left: 3px; bottom: 3px;
+  background-color: white; transition: .3s; border-radius: 50%;
+}
+input:checked + .slider { background-color: var(--success); }
+input:checked + .slider:before { transform: translateX(24px); }
+
+.setup-box {
+  background: var(--surface); border: 1.5px dashed var(--border);
+  border-radius: 16px; padding: 24px; margin-top: 32px; display: none;
+}
+.setup-box.show { display: block; }
+.setup-title { font-family: var(--font-display); font-weight: 700; font-size: 1rem; margin-bottom: 12px; display: flex; align-items: center; gap: 8px; }
+.setup-step { font-size: 0.8rem; line-height: 1.5; color: var(--text); margin-bottom: 14px; padding-left: 20px; position: relative; }
+.setup-step::before { content: "✓"; position: absolute; left: 0; top: 0; color: var(--success); font-weight: bold; }
+.code-preview {
+  background: #06070a; border: 1px solid var(--border); border-radius: 8px;
+  padding: 14px; font-family: monospace; font-size: 0.75rem; color: #a1a6c2;
+  overflow-x: auto; max-height: 200px; margin-top: 10px; position: relative;
+}
+.code-copy-btn {
+  position: absolute; right: 10px; top: 10px; background: var(--surface2);
+  border: 1px solid var(--border); color: var(--text); padding: 4px 8px;
+  font-size: 0.65rem; border-radius: 4px; cursor: pointer;
+}
+.code-copy-btn:hover { border-color: var(--accent); }
+
+.progress-wrap { margin-top: 16px; display: none; }
 .progress-wrap.show { display: block; }
-.progress-label { display: flex; justify-content: space-between; margin-bottom: 8px; font-size: .8rem; color: var(--muted); }
+.progress-label { display: flex; justify-content: space-between; margin-bottom: 6px; font-size: .75rem; color: var(--muted); }
 .progress-bar { height: 6px; background: var(--border); border-radius: 99px; overflow: hidden; }
 .progress-fill {
   height: 100%; border-radius: 99px; width: 0%;
@@ -222,16 +405,15 @@ header {
   transition: width .3s ease;
 }
 
-/* ── Button ──────────────────────────────────────────────── */
 .btn {
   display: inline-flex; align-items: center; justify-content: center; gap: 8px;
-  padding: 13px 28px; border-radius: var(--radius);
-  font-family: var(--font-display); font-weight: 700; font-size: .95rem;
+  padding: 12px 24px; border-radius: var(--radius);
+  font-family: var(--font-display); font-weight: 700; font-size: .9rem;
   cursor: pointer; border: none; transition: all .2s;
 }
 .btn-primary {
   background: linear-gradient(135deg, var(--accent), var(--accent2));
-  color: #fff; width: 100%; margin-top: 28px;
+  color: #fff; width: 100%; margin-top: 20px;
   box-shadow: 0 4px 20px rgba(79,142,247,.3);
 }
 .btn-primary:hover:not(:disabled) { transform: translateY(-1px); box-shadow: 0 8px 28px rgba(79,142,247,.45); }
@@ -242,7 +424,6 @@ header {
 }
 .btn-secondary:hover { border-color: var(--accent); }
 
-/* ── Notifications ───────────────────────────────────────── */
 #toast-container {
   position: fixed; top: 24px; right: 24px; z-index: 9999;
   display: flex; flex-direction: column; gap: 10px;
@@ -266,7 +447,6 @@ header {
 .toast.error   { border-left: 3px solid var(--error);   }
 .toast.info    { border-left: 3px solid var(--accent);  }
 
-/* ── Recent uploads strip ────────────────────────────────── */
 .recent-section { margin-top: 40px; }
 .section-hdr { display: flex; align-items: center; justify-content: space-between; margin-bottom: 16px; }
 .section-hdr h3 { font-family: var(--font-display); font-weight: 700; }
@@ -290,7 +470,6 @@ header {
 }
 .empty-state { text-align: center; padding: 28px; color: var(--muted); font-size: .9rem; }
 
-/* ── Spinner ──────────────────────────────────────────────── */
 .spinner {
   width: 18px; height: 18px; border: 2px solid rgba(255,255,255,.3);
   border-top-color: #fff; border-radius: 50%;
@@ -298,14 +477,13 @@ header {
 }
 @keyframes spin { to { transform: rotate(360deg); } }
 
-/* ── Stats bar ───────────────────────────────────────────── */
 .stats-bar {
   display: grid; grid-template-columns: repeat(3, 1fr);
-  gap: 16px; margin-bottom: 40px;
+  gap: 16px; margin-bottom: 24px;
 }
 .stat-card {
   background: var(--surface); border: 1px solid var(--border);
-  border-radius: 16px; padding: 20px;
+  border-radius: 16px; padding: 16px;
   display: flex; align-items: center; gap: 14px;
 }
 .stat-icon {
@@ -316,7 +494,7 @@ header {
 .stat-icon.blue  { background: rgba(79,142,247,.15); }
 .stat-icon.purple{ background: rgba(124,92,252,.15); }
 .stat-icon.green { background: rgba(34,199,122,.15); }
-.stat-val { font-family: var(--font-display); font-size: 1.6rem; font-weight: 800; line-height: 1; }
+.stat-val { font-family: var(--font-display); font-size: 1.4rem; font-weight: 800; line-height: 1; }
 .stat-lbl { font-size: .75rem; color: var(--muted); margin-top: 4px; }
 
 @media (max-width: 500px) { .stats-bar { grid-template-columns: 1fr; } }
@@ -328,123 +506,315 @@ header {
 <div id="toast-container"></div>
 
 <div class="wrapper">
-  <!-- Header -->
   <header>
     <div class="logo">
       <div class="logo-icon">📚</div>
       <div class="logo-text">
         <h1>CEE Notes</h1>
-        <p>Library Management System</p>
+        <p>Direct File-to-Folder Directory Uploader</p>
       </div>
     </div>
     <div class="header-actions">
-      <a href="library.html" class="nav-link">📖 Library</a>
-      <a href="index.html"   class="nav-link active">⬆ Upload</a>
+      <a href="https://drive.google.com/drive/folders/17OKeKZ4nRCOlrj6_7u_wVrEJDu2o8Rzn?usp=drive_link" target="_blank" class="nav-link" style="color: var(--accent2);">📁 Drive Folder ↗</a>
+      <a href="javascript:void(0)" class="nav-link active">Up Uploader</a>
       <button class="theme-btn" id="themeBtn" title="Toggle theme">🌙</button>
     </div>
   </header>
 
-  <!-- Hero -->
   <div class="hero">
-    <div class="hero-badge">✦ CEE Engineering Entrance</div>
-    <h2>Upload <span>Study Notes</span><br>to the Library</h2>
-    <p>Organize PDFs by subject and chapter. Files are stored securely on Google Drive.</p>
+    <div class="hero-badges">
+      <div class="hero-badge">✦ CEE Entrance Companion</div>
+      <div class="hero-badge public-status">🔓 Public Portal (No login required)</div>
+      <div class="hero-badge gdrive-link"><a href="https://drive.google.com/drive/folders/17OKeKZ4nRCOlrj6_7u_wVrEJDu2o8Rzn?usp=drive_link" target="_blank">🔗 Target Folder: 17OKe...Rzn ↗</a></div>
+    </div>
+    <h2>Upload Directly to <span>Subject Folders</span></h2>
+    <p>Organize resources effortlessly. Select or create folders and chapters, then drop files to load them directly into your dynamic structural pathways inside the target Google Drive.</p>
   </div>
 
-  <!-- Stats -->
+  <div class="mode-ribbon">
+    <div class="mode-details">
+      <h4 id="modeTitle">Sandbox Simulator Active</h4>
+      <p id="modeDesc">Running local virtual drive. Turn on to connect actual Google Apps Script Web API.</p>
+    </div>
+    <div style="display: flex; align-items: center; gap: 10px;">
+      <span id="modeStatusLabel" style="font-size: 0.75rem; font-weight: bold; color: var(--muted);">Sandbox</span>
+      <label class="toggle-switch">
+        <input type="checkbox" id="modeToggle">
+        <span class="slider"></span>
+      </label>
+    </div>
+  </div>
+
+  <div class="setup-box" id="setupBox">
+    <div class="setup-title">⚙️ Connecting your Google Apps Script Backend</div>
+    <div class="setup-step">1. Open <strong>Google Apps Script</strong> and paste the server-side code block.</div>
+    <div class="setup-step">2. Deploy Web App as: <strong>"Execute as: Me"</strong> and <strong>"Who has access: Anyone"</strong> to allow anonymous uploads without requiring users to log in.</div>
+    <div class="setup-step">3. Paste your Web App Executable URL below:</div>
+    <div class="form-group" style="margin-top: 10px; margin-bottom: 14px;">
+      <input type="text" id="apiEndpointInput" placeholder="https://script.google.com/macros/s/.../exec" value="https://script.google.com/macros/s/AKfycbz16V3u8BbP0mhCn4FwLukh8BO27aeSZWGa5yZVsy3JfKGC07DgWnK4KmbKJTZjSFPc8w/exec">
+    </div>
+    <button class="btn btn-secondary" style="width: 100%; margin-bottom: 12px; font-size: 0.8rem;" id="toggleScriptCodeBtn">Show Apps Script Code Snippet</button>
+    
+    <div id="gasCodeSection" style="display: none; position: relative;">
+      <div class="code-preview" id="gasCodeSnippet">
+/* Google Apps Script code setup targeting folder ID: 17OKeKZ4nRCOlrj6_7u_wVrEJDu2o8Rzn */
+function doGet(e) {
+  return handleRequest(e);
+}
+
+function doPost(e) {
+  return handleRequest(e);
+}
+
+function handleRequest(e) {
+  var action = e.parameter.action;
+  
+  // Set CORS
+  var output = ContentService.createTextOutput();
+  
+  try {
+    if (action === 'getLibrary') {
+      var rootFolder = DriveApp.getFolderById("17OKeKZ4nRCOlrj6_7u_wVrEJDu2o8Rzn");
+      var data = fetchStructure(rootFolder);
+      output.setContent(JSON.stringify(data));
+    } 
+    else if (action === 'upload') {
+      var subject = e.parameter.subject;
+      var chapter = e.parameter.chapter;
+      var fileName = e.parameter.fileName;
+      var fileData = Utilities.base64Decode(e.parameter.fileData);
+      
+      var rootFolder = DriveApp.getFolderById("17OKeKZ4nRCOlrj6_7u_wVrEJDu2o8Rzn");
+      var subjectFolder = getOrCreateSubFolder(rootFolder, subject);
+      var chapterFolder = getOrCreateSubFolder(subjectFolder, chapter);
+      
+      var blob = Utilities.newBlob(fileData, 'application/pdf', fileName);
+      var file = chapterFolder.createFile(blob);
+      file.setSharing(DriveApp.Access.ANYONE_WITH_LINK, DriveApp.Permission.VIEW);
+      
+      output.setContent(JSON.stringify({
+        success: true,
+        fileId: file.getId(),
+        url: file.getUrl()
+      }));
+    }
+  } catch (err) {
+    output.setContent(JSON.stringify({ error: err.toString() }));
+  }
+  
+  return output.setMimeType(ContentService.MimeType.JSON);
+}
+
+function getOrCreateSubFolder(parent, name) {
+  var folders = parent.getFoldersByName(name);
+  if (folders.hasNext()) return folders.next();
+  return parent.createFolder(name);
+}
+
+function fetchStructure(root) {
+  var subjects = [];
+  var folders = root.getFolders();
+  while (folders.hasNext()) {
+    var sFolder = folders.next();
+    var sName = sFolder.getName();
+    var chapters = [];
+    
+    var subFolders = sFolder.getFolders();
+    while (subFolders.hasNext()) {
+      var cFolder = subFolders.next();
+      var cName = cFolder.getName();
+      var files = [];
+      
+      var cFiles = cFolder.getFiles();
+      while (cFiles.hasNext()) {
+        var file = cFiles.next();
+        files.push({
+          name: file.getName(),
+          url: file.getUrl(),
+          uploadDate: file.getDateCreated()
+        });
+      }
+      chapters.push({ name: cName, files: files });
+    }
+    subjects.push({ name: sName, chapters: chapters });
+  }
+  return { subjects: subjects };
+}
+      </div>
+    </div>
+  </div>
+
   <div class="stats-bar" id="statsBar">
     <div class="stat-card">
       <div class="stat-icon blue">📁</div>
-      <div><div class="stat-val" id="statSubjects">—</div><div class="stat-lbl">Subjects</div></div>
+      <div><div class="stat-val" id="statSubjects">0</div><div class="stat-lbl">Active Subjects</div></div>
     </div>
     <div class="stat-card">
       <div class="stat-icon purple">📂</div>
-      <div><div class="stat-val" id="statChapters">—</div><div class="stat-lbl">Chapters</div></div>
+      <div><div class="stat-val" id="statChapters">0</div><div class="stat-lbl">Chapter Folders</div></div>
     </div>
     <div class="stat-card">
       <div class="stat-icon green">📄</div>
-      <div><div class="stat-val" id="statFiles">—</div><div class="stat-lbl">Total PDFs</div></div>
+      <div><div class="stat-val" id="statFiles">0</div><div class="stat-lbl">Stored Files</div></div>
     </div>
   </div>
 
-  <!-- Upload Card -->
-  <div class="card">
-    <div class="card-title"><span>⬆</span> Upload PDF</div>
+  <div class="workspace-grid">
+    
+    <!-- Left Column: Virtual Folder Directory Explorer -->
+    <div class="card">
+      <div class="card-header-flex">
+        <div class="card-title">📁 <span>Library Directory</span></div>
+        <button class="btn btn-secondary" style="padding: 6px 12px; font-size: 0.75rem;" id="resetDirBtn">↺ Reset Views</button>
+      </div>
+      <p class="card-subtitle">Double-click or click to open folders. Drag files directly onto any folder card to instantly prepare upload destinations!</p>
 
-    <div class="form-grid">
+      <!-- Creator Toolbars -->
+      <div class="creator-toolbar">
+        <button class="btn btn-secondary" id="openAddSubjectBtn">＋ New Subject</button>
+        <button class="btn btn-secondary" id="openAddChapterBtn" disabled>＋ New Chapter</button>
+      </div>
+
+      <!-- Creator Panels -->
+      <div class="creator-panel" id="addSubjectPanel">
+        <h4>Create New Subject Folder</h4>
+        <div class="creator-input-group">
+          <input type="text" id="newSubjectName" placeholder="e.g., Mathematics" />
+          <button class="btn btn-secondary" style="padding:6px 12px; background:var(--accent); color:white; border:none;" id="createSubjectSubmit">Create</button>
+        </div>
+      </div>
+
+      <div class="creator-panel" id="addChapterPanel">
+        <h4>Create Chapter inside <span id="currentSubjectTag" style="color:var(--accent2)">...</span></h4>
+        <div class="creator-input-group">
+          <input type="text" id="newChapterName" placeholder="e.g., Matrices" />
+          <button class="btn btn-secondary" style="padding:6px 12px; background:var(--accent2); color:white; border:none;" id="createChapterSubmit">Create</button>
+        </div>
+      </div>
+
+      <!-- Directory Window -->
+      <div class="dir-explorer">
+        <div class="dir-breadcrumbs" id="dirBreadcrumbs">
+          <span class="breadcrumb-item active" id="crumbRoot">Root / Subjects</span>
+        </div>
+        <div class="dir-grid" id="dirGrid">
+          <!-- Dynamically populated folders and files -->
+        </div>
+      </div>
+    </div>
+
+    <!-- Right Column: Direct Drag-n-Drop / Path Uploader -->
+    <div class="card">
+      <div class="card-title"><span>⬆</span> Direct Upload Portal</div>
+      <p class="card-subtitle" style="margin-bottom: 16px;">Specify path target folders above or select directory cards to auto-populate destination.</p>
+
+      <!-- Active Path Target Indicator -->
+      <div class="target-path-banner">
+        <div>Target Directory:</div>
+        <div id="targetBannerPath"><span>None Selected</span></div>
+      </div>
+
       <div class="form-group">
-        <label>Subject</label>
-        <input type="text" id="subject" list="subjectList" placeholder="e.g. Physics" autocomplete="off" />
-        <datalist id="subjectList"></datalist>
-        <span class="hint">Type or choose an existing subject</span>
+        <label>Selected Subject</label>
+        <input type="text" id="subject" placeholder="Select/Create in directory grid" readonly style="background: rgba(0,0,0,0.15); cursor: not-allowed;" />
       </div>
+      
       <div class="form-group">
-        <label>Chapter</label>
-        <input type="text" id="chapter" placeholder="e.g. Mechanics" autocomplete="off" />
-        <span class="hint">Folder will be created if new</span>
+        <label>Selected Chapter</label>
+        <input type="text" id="chapter" placeholder="Select/Create in directory grid" readonly style="background: rgba(0,0,0,0.15); cursor: not-allowed;" />
       </div>
-    </div>
 
-    <!-- Drop zone -->
-    <div class="drop-zone" id="dropZone">
-      <div class="drop-icon" id="dropIcon">📄</div>
-      <h3>Drop PDF here</h3>
-      <p>or click to browse — PDF only, max 50 MB</p>
-      <input type="file" id="fileInput" accept=".pdf,application/pdf" />
-    </div>
-
-    <!-- File preview strip -->
-    <div class="file-info" id="fileInfo">
-      <span class="fi-icon">📄</span>
-      <div>
-        <div class="fi-name" id="fiName">—</div>
-        <div class="fi-size" id="fiSize">—</div>
+      <!-- Drop zone -->
+      <div class="drop-zone" id="dropZone">
+        <div class="drop-icon" id="dropIcon">📄</div>
+        <h3 id="dropZoneMainText">Drop PDF Here</h3>
+        <p>or click to browse — PDF only, max 50 MB</p>
+        <input type="file" id="fileInput" accept=".pdf,application/pdf" />
       </div>
-      <button class="fi-remove" id="fiRemove" title="Remove">✕</button>
-    </div>
 
-    <!-- Progress bar -->
-    <div class="progress-wrap" id="progressWrap">
-      <div class="progress-label">
-        <span id="progressLabel">Uploading…</span>
-        <span id="progressPct">0%</span>
+      <!-- File preview strip -->
+      <div class="file-info" id="fileInfo">
+        <span class="fi-icon">📄</span>
+        <div>
+          <div class="fi-name" id="fiName">—</div>
+          <div class="fi-size" id="fiSize">—</div>
+        </div>
+        <button class="fi-remove" id="fiRemove" title="Remove">✕</button>
       </div>
-      <div class="progress-bar"><div class="progress-fill" id="progressFill"></div></div>
+
+      <!-- Progress bar -->
+      <div class="progress-wrap" id="progressWrap">
+        <div class="progress-label">
+          <span id="progressLabel">Preparing upload...</span>
+          <span id="progressPct">0%</span>
+        </div>
+        <div class="progress-bar"><div class="progress-fill" id="progressFill"></div></div>
+      </div>
+
+      <button class="btn btn-primary" id="uploadBtn">
+        <span id="btnText">Upload Direct to Selected Folder</span>
+        <span id="btnSpinner" style="display:none"><div class="spinner"></div></span>
+      </button>
     </div>
 
-    <button class="btn btn-primary" id="uploadBtn">
-      <span id="btnText">Upload to Google Drive</span>
-      <span id="btnSpinner" style="display:none"><div class="spinner"></div></span>
-    </button>
   </div>
 
   <!-- Recent uploads -->
   <div class="recent-section">
     <div class="section-hdr">
-      <h3>Recent Uploads</h3>
-      <a href="library.html" class="btn btn-secondary">View All →</a>
+      <h3>Active Files in Chapter</h3>
+      <span class="ui-badge" id="recentFileCount">0 files</span>
     </div>
     <div class="upload-list" id="recentList">
-      <div class="empty-state">Loading recent uploads…</div>
+      <div class="empty-state">Choose a subject and click open a chapter folder to list its contents.</div>
     </div>
   </div>
 </div>
 
 <script>
-const API = 'https://script.google.com/macros/s/AKfycbz16V3u8BbP0mhCn4FwLukh8BO27aeSZWGa5yZVsy3JfKGC07DgWnK4KmbKJTZjSFPc8w/exec';
+let virtualLibrary = {
+  subjects: [
+    {
+      name: "Physics",
+      chapters: [
+        { name: "Mechanics", files: [{ name: "Kinematics_Master_Notes.pdf", uploadDate: new Date(), url: "https://drive.google.com/drive/folders/17OKeKZ4nRCOlrj6_7u_wVrEJDu2o8Rzn" }] },
+        { name: "Optics", files: [{ name: "Wave_Optics_Derivations.pdf", uploadDate: new Date(), url: "https://drive.google.com/drive/folders/17OKeKZ4nRCOlrj6_7u_wVrEJDu2o8Rzn" }] }
+      ]
+    },
+    {
+      name: "Chemistry",
+      chapters: [
+        { name: "Organic Chemistry", files: [{ name: "Organic_Reaction_Mechanisms.pdf", uploadDate: new Date(), url: "https://drive.google.com/drive/folders/17OKeKZ4nRCOlrj6_7u_wVrEJDu2o8Rzn" }] }
+      ]
+    },
+    {
+      name: "Mathematics",
+      chapters: []
+    }
+  ]
+};
 
-// ── Theme ────────────────────────────────────────────────────
+let isSandboxMode = true;
+let currentSubject = null; 
+let currentChapter = null; 
+let activeFilesList = [];
+let selectedFile = null;
+
+function getApiEndpoint() {
+  return document.getElementById('apiEndpointInput').value.trim();
+}
+
 const themeBtn = document.getElementById('themeBtn');
 let isDark = localStorage.getItem('theme') !== 'light';
 applyTheme();
 themeBtn.addEventListener('click', () => { isDark = !isDark; applyTheme(); });
+
 function applyTheme() {
   document.documentElement.setAttribute('data-theme', isDark ? 'dark' : 'light');
   themeBtn.textContent = isDark ? '🌙' : '☀️';
   localStorage.setItem('theme', isDark ? 'dark' : 'light');
 }
 
-// ── Toast notifications ──────────────────────────────────────
 function toast(type, title, msg) {
   const icons = { success:'✅', error:'❌', info:'ℹ️' };
   const c = document.createElement('div');
@@ -464,7 +834,357 @@ function removeToast(el) {
   setTimeout(() => el.remove(), 300);
 }
 
-// ── File input ───────────────────────────────────────────────
+document.getElementById('toggleScriptCodeBtn').addEventListener('click', () => {
+  const area = document.getElementById('gasCodeSection');
+  area.style.display = area.style.display === 'none' ? 'block' : 'none';
+});
+
+const modeToggle = document.getElementById('modeToggle');
+const modeTitle = document.getElementById('modeTitle');
+const modeDesc = document.getElementById('modeDesc');
+const modeStatusLabel = document.getElementById('modeStatusLabel');
+const setupBox = document.getElementById('setupBox');
+
+modeToggle.addEventListener('change', (e) => {
+  isSandboxMode = !e.target.checked;
+  if (!isSandboxMode) {
+    modeTitle.textContent = "Google Drive Folder Bind Active";
+    modeDesc.textContent = "Uploading to parent folder ID: 17OKeKZ4nRCOlrj6_7u_wVrEJDu2o8Rzn directly.";
+    modeStatusLabel.textContent = "Production";
+    modeStatusLabel.style.color = "var(--success)";
+    setupBox.classList.add('show');
+    toast('info', 'Production GDrive Target Activated', 'Ensure your deployed web script URL is pasted inside developer configurations.');
+    loadLiveLibrary();
+  } else {
+    modeTitle.textContent = "Sandbox Simulator Active";
+    modeDesc.textContent = "Running local virtual drive. Turn on to connect actual Google Apps Script Web API.";
+    modeStatusLabel.textContent = "Sandbox";
+    modeStatusLabel.style.color = "var(--muted)";
+    setupBox.classList.remove('show');
+    toast('info', 'Sandbox Mode', 'Local environment activated.');
+    renderDirectory();
+  }
+});
+
+const dirGrid = document.getElementById('dirGrid');
+const dirBreadcrumbs = document.getElementById('dirBreadcrumbs');
+const openAddSubjectBtn = document.getElementById('openAddSubjectBtn');
+const openAddChapterBtn = document.getElementById('openAddChapterBtn');
+const currentSubjectTag = document.getElementById('currentSubjectTag');
+
+const addSubjectPanel = document.getElementById('addSubjectPanel');
+const addChapterPanel = document.getElementById('addChapterPanel');
+
+document.getElementById('resetDirBtn').addEventListener('click', () => {
+  currentSubject = null;
+  currentChapter = null;
+  clearFile();
+  updatePathSelectionInputs();
+  renderDirectory();
+  toast('info', 'Views Reset', 'Directory context returned to Root.');
+});
+
+openAddSubjectBtn.addEventListener('click', () => {
+  addSubjectPanel.classList.toggle('active');
+  addChapterPanel.classList.remove('active');
+});
+
+openAddChapterBtn.addEventListener('click', () => {
+  if (!currentSubject) {
+    toast('error', 'Select Subject First', 'Please enter a Subject context level.');
+    return;
+  }
+  currentSubjectTag.textContent = currentSubject;
+  addChapterPanel.classList.toggle('active');
+  addSubjectPanel.classList.remove('active');
+});
+
+document.getElementById('createSubjectSubmit').addEventListener('click', () => {
+  const nameInput = document.getElementById('newSubjectName');
+  const name = nameInput.value.trim();
+  if (!name) return toast('error', 'Validation Error', 'Folder name cannot be blank.');
+  
+  if (isSandboxMode) {
+    const exists = virtualLibrary.subjects.some(s => s.name.toLowerCase() === name.toLowerCase());
+    if (exists) return toast('error', 'Directory Conflict', 'Subject already exists.');
+    
+    virtualLibrary.subjects.push({ name: name, chapters: [] });
+    toast('success', 'Created Subject', `Folder "${name}" initialized inside virtual root.`);
+    nameInput.value = '';
+    addSubjectPanel.classList.remove('active');
+    renderDirectory();
+  } else {
+    toast('info', 'Folder Structure Ready', `"${name}" will be auto-generated inside your designated GDrive root folder upon upload.`);
+    let matched = virtualLibrary.subjects.find(s => s.name.toLowerCase() === name.toLowerCase());
+    if(!matched) {
+      virtualLibrary.subjects.push({ name: name, chapters: [] });
+    }
+    nameInput.value = '';
+    addSubjectPanel.classList.remove('active');
+    renderDirectory();
+  }
+});
+
+document.getElementById('createChapterSubmit').addEventListener('click', () => {
+  const nameInput = document.getElementById('newChapterName');
+  const name = nameInput.value.trim();
+  if (!name) return toast('error', 'Validation Error', 'Chapter folder name cannot be empty.');
+  if (!currentSubject) return toast('error', 'Context Error', 'Select a parent Subject first.');
+
+  if (isSandboxMode) {
+    const subObj = virtualLibrary.subjects.find(s => s.name === currentSubject);
+    if (subObj) {
+      const exists = subObj.chapters.some(c => c.name.toLowerCase() === name.toLowerCase());
+      if (exists) return toast('error', 'Directory Conflict', 'Chapter folder already exists inside this subject.');
+      
+      subObj.chapters.push({ name: name, files: [] });
+      toast('success', 'Created Chapter', `Chapter Folder "${name}" created under ${currentSubject}.`);
+      nameInput.value = '';
+      addChapterPanel.classList.remove('active');
+      renderDirectory();
+    }
+  } else {
+    toast('info', 'Chapter Folder Registered', `"${name}" structure will build dynamically inside the subject folder.`);
+    const subObj = virtualLibrary.subjects.find(s => s.name === currentSubject);
+    if (subObj) {
+      subObj.chapters.push({ name: name, files: [] });
+    }
+    nameInput.value = '';
+    addChapterPanel.classList.remove('active');
+    renderDirectory();
+  }
+});
+
+function renderDirectory() {
+  updateStats();
+  
+  let crumbs = `<span class="breadcrumb-item" onclick="navigateToBreadcrumb('root')">Root</span>`;
+  if (currentSubject) {
+    crumbs += ` <span class="breadcrumb-separator">›</span> <span class="breadcrumb-item" onclick="navigateToBreadcrumb('subject')">${currentSubject}</span>`;
+  }
+  if (currentChapter) {
+    crumbs += ` <span class="breadcrumb-separator">›</span> <span class="breadcrumb-item active">${currentChapter}</span>`;
+  }
+  dirBreadcrumbs.innerHTML = crumbs;
+
+  if (currentSubject) {
+    openAddChapterBtn.removeAttribute('disabled');
+  } else {
+    openAddChapterBtn.setAttribute('disabled', 'true');
+  }
+
+  dirGrid.innerHTML = '';
+
+  if (!currentSubject) {
+    if (virtualLibrary.subjects.length === 0) {
+      dirGrid.innerHTML = `
+        <div class="empty-dir">
+          <div class="empty-dir-icon">📂</div>
+          <p>No subjects in the directory. Create one to begin!</p>
+        </div>`;
+      return;
+    }
+
+    virtualLibrary.subjects.forEach(subj => {
+      const el = document.createElement('div');
+      el.className = `dir-item ${subj.name === currentSubject ? 'selected' : ''}`;
+      el.innerHTML = `
+        <div class="dir-icon">📁</div>
+        <div class="dir-name" title="${subj.name}">${subj.name}</div>
+        <div class="dir-count">${subj.chapters.length} Chapters</div>`;
+      
+      el.addEventListener('click', () => {
+        selectSubjectContext(subj.name);
+      });
+      el.addEventListener('dblclick', () => {
+        drillDownSubject(subj.name);
+      });
+
+      setupFolderDragEvents(el, subj.name, null);
+      dirGrid.appendChild(el);
+    });
+
+  } else if (currentSubject && !currentChapter) {
+    const activeSubj = virtualLibrary.subjects.find(s => s.name === currentSubject);
+    if (!activeSubj || activeSubj.chapters.length === 0) {
+      dirGrid.innerHTML = `
+        <div class="empty-dir">
+          <div class="empty-dir-icon">📂</div>
+          <p>This subject directory is empty. Create a Chapter folder to structure files.</p>
+        </div>`;
+      return;
+    }
+
+    activeSubj.chapters.forEach(chap => {
+      const el = document.createElement('div');
+      el.className = `dir-item`;
+      el.innerHTML = `
+        <div class="dir-icon">📂</div>
+        <div class="dir-name" title="${chap.name}">${chap.name}</div>
+        <div class="dir-count">${chap.files.length} PDFs</div>`;
+      
+      el.addEventListener('click', () => {
+        selectChapterContext(chap.name);
+      });
+      el.addEventListener('dblclick', () => {
+        drillDownChapter(chap.name);
+      });
+
+      setupFolderDragEvents(el, currentSubject, chap.name);
+      dirGrid.appendChild(el);
+    });
+
+  } else {
+    const activeSubj = virtualLibrary.subjects.find(s => s.name === currentSubject);
+    const activeChap = activeSubj ? activeSubj.chapters.find(c => c.name === currentChapter) : null;
+    
+    if (!activeChap || activeChap.files.length === 0) {
+      dirGrid.innerHTML = `
+        <div class="empty-dir">
+          <div class="empty-dir-icon">📄</div>
+          <p>No PDFs uploaded to this chapter folder yet.</p>
+        </div>`;
+      return;
+    }
+
+    activeChap.files.forEach(file => {
+      const el = document.createElement('div');
+      el.className = 'dir-item';
+      el.innerHTML = `
+        <div class="dir-icon">📄</div>
+        <div class="dir-name" title="${file.name}">${file.name}</div>
+        <div class="dir-count">PDF File</div>`;
+      
+      el.addEventListener('click', () => {
+        toast('info', 'File Meta Info', `File: ${file.name}\nUploaded: ${new Date(file.uploadDate).toLocaleDateString()}`);
+      });
+      dirGrid.appendChild(el);
+    });
+  }
+}
+
+function setupFolderDragEvents(element, subjectName, chapterName) {
+  element.addEventListener('dragover', (e) => {
+    e.preventDefault();
+    element.classList.add('drag-over');
+  });
+  element.addEventListener('dragleave', () => {
+    element.classList.remove('drag-over');
+  });
+  element.addEventListener('drop', (e) => {
+    e.preventDefault();
+    element.classList.remove('drag-over');
+    
+    const file = e.dataTransfer.files[0];
+    if (file) {
+      currentSubject = subjectName;
+      currentChapter = chapterName || "General";
+      updatePathSelectionInputs();
+      setFile(file);
+      
+      toast('info', 'Target Folder Locked', `Selected path automatically populated as: ${currentSubject} › ${currentChapter}`);
+    }
+  });
+}
+
+function navigateToBreadcrumb(target) {
+  if (target === 'root') {
+    currentSubject = null;
+    currentChapter = null;
+  } else if (target === 'subject') {
+    currentChapter = null;
+  }
+  updatePathSelectionInputs();
+  renderDirectory();
+}
+
+function drillDownSubject(name) {
+  currentSubject = name;
+  currentChapter = null;
+  updatePathSelectionInputs();
+  renderDirectory();
+}
+
+function drillDownChapter(name) {
+  currentChapter = name;
+  updatePathSelectionInputs();
+  renderDirectory();
+  loadFilesForActiveChapter();
+}
+
+function selectSubjectContext(name) {
+  currentSubject = name;
+  updatePathSelectionInputs();
+}
+
+function selectChapterContext(name) {
+  currentChapter = name;
+  updatePathSelectionInputs();
+}
+
+function updatePathSelectionInputs() {
+  const subInp = document.getElementById('subject');
+  const chapInp = document.getElementById('chapter');
+  const banner = document.getElementById('targetBannerPath');
+
+  subInp.value = currentSubject || '';
+  chapInp.value = currentChapter || '';
+
+  if (currentSubject) {
+    banner.innerHTML = `<span>${currentSubject}</span> ${currentChapter ? ' › <span>' + currentChapter + '</span>' : ''}`;
+  } else {
+    banner.innerHTML = `<span>None Selected (Pick one inside Left grid)</span>`;
+  }
+}
+
+function updateStats() {
+  let subCount = virtualLibrary.subjects.length;
+  let chapCount = 0;
+  let fileCount = 0;
+
+  virtualLibrary.subjects.forEach(s => {
+    chapCount += s.chapters.length;
+    s.chapters.forEach(c => {
+      fileCount += c.files.length;
+    });
+  });
+
+  document.getElementById('statSubjects').textContent = subCount;
+  document.getElementById('statChapters').textContent = chapCount;
+  document.getElementById('statFiles').textContent = fileCount;
+}
+
+function loadFilesForActiveChapter() {
+  const activeSubj = virtualLibrary.subjects.find(s => s.name === currentSubject);
+  const activeChap = activeSubj ? activeSubj.chapters.find(c => c.name === currentChapter) : null;
+  
+  const list = document.getElementById('recentList');
+  const badge = document.getElementById('recentFileCount');
+
+  if (!activeChap) {
+    list.innerHTML = '<div class="empty-state">Choose a subject and open a chapter folder to list its contents.</div>';
+    badge.textContent = '0 files';
+    return;
+  }
+
+  badge.textContent = `${activeChap.files.length} files`;
+
+  if (activeChap.files.length === 0) {
+    list.innerHTML = '<div class="empty-state">No files inside this directory. Upload a PDF!</div>';
+    return;
+  }
+
+  list.innerHTML = activeChap.files.map(f => `
+    <div class="upload-item">
+      <div class="ui-icon">📄</div>
+      <div class="ui-body">
+        <div class="ui-name">${escHtml(f.name)}</div>
+        <div class="ui-meta">${escHtml(currentSubject)} › ${escHtml(currentChapter)} · ${fmtDate(f.uploadDate)}</div>
+      </div>
+      <span class="ui-badge">PDF</span>
+    </div>`).join('');
+}
+
 const dropZone  = document.getElementById('dropZone');
 const fileInput = document.getElementById('fileInput');
 const fileInfo  = document.getElementById('fileInfo');
@@ -472,7 +1192,7 @@ const fiName    = document.getElementById('fiName');
 const fiSize    = document.getElementById('fiSize');
 const fiRemove  = document.getElementById('fiRemove');
 const dropIcon  = document.getElementById('dropIcon');
-let selectedFile = null;
+const dropZoneMainText = document.getElementById('dropZoneMainText');
 
 fileInput.addEventListener('change', e => setFile(e.target.files[0]));
 fiRemove.addEventListener('click', clearFile);
@@ -489,10 +1209,10 @@ dropZone.addEventListener('drop', e => {
 function setFile(f) {
   if (!f) return;
   if (f.type !== 'application/pdf' && !f.name.toLowerCase().endsWith('.pdf')) {
-    return toast('error', 'Invalid file', 'Only PDF files are allowed.');
+    return toast('error', 'Invalid file format', 'Only PDF formatted files are compatible.');
   }
   if (f.size > 50 * 1024 * 1024) {
-    return toast('error', 'File too large', 'Maximum file size is 50 MB.');
+    return toast('error', 'Payload size exceeds limit', 'Maximum allowable size is 50 MB.');
   }
   selectedFile = f;
   fiName.textContent = f.name;
@@ -500,79 +1220,128 @@ function setFile(f) {
   fileInfo.classList.add('show');
   dropZone.classList.add('has-file');
   dropIcon.textContent = '✅';
+  dropZoneMainText.textContent = "File Ready!";
 }
+
 function clearFile() {
   selectedFile = null;
   fileInput.value = '';
   fileInfo.classList.remove('show');
   dropZone.classList.remove('has-file');
   dropIcon.textContent = '📄';
+  dropZoneMainText.textContent = "Drop PDF Here";
 }
+
 function formatBytes(b) {
   if (b < 1024) return b + ' B';
   if (b < 1048576) return (b/1024).toFixed(1) + ' KB';
   return (b/1048576).toFixed(1) + ' MB';
 }
 
-// ── Upload ───────────────────────────────────────────────────
 document.getElementById('uploadBtn').addEventListener('click', uploadFile);
 
 async function uploadFile() {
   const subject = document.getElementById('subject').value.trim();
   const chapter = document.getElementById('chapter').value.trim();
 
-  if (!subject) return toast('error', 'Missing subject', 'Please enter a subject name.');
-  if (!chapter) return toast('error', 'Missing chapter', 'Please enter a chapter name.');
-  if (!selectedFile) return toast('error', 'No file selected', 'Please select a PDF file.');
+  if (!subject) return toast('error', 'Selection Required', 'Please select or create a target Subject inside the directory view first.');
+  if (!chapter) return toast('error', 'Folder Context Missing', 'Specify or enter a target chapter directory.');
+  if (!selectedFile) return toast('error', 'Empty Payload', 'Please draft or drop a PDF file.');
 
   setUploading(true);
-  setProgress(10, 'Reading file…');
+  setProgress(10, 'Preparing data buffers…');
 
-  try {
-    const base64 = await readAsBase64(selectedFile);
-    setProgress(30, 'Uploading to Drive…');
+  if (isSandboxMode) {
+    let progress = 10;
+    const interval = setInterval(() => {
+      progress += 20;
+      if (progress >= 90) {
+        clearInterval(interval);
+        completeSandboxUpload(subject, chapter);
+      } else {
+        setProgress(progress, 'Simulating direct upload inside target folder ID 17OKeKZ4nRCOlrj6_7u_wVrEJDu2o8Rzn…');
+      }
+    }, 300);
 
-    // Simulate progress while waiting
-    let pct = 30;
-    const ticker = setInterval(() => { pct = Math.min(pct + 5, 88); setProgress(pct, 'Uploading to Drive…'); }, 400);
+  } else {
+    try {
+      const base64 = await readAsBase64(selectedFile);
+      setProgress(40, 'Sending stream to Google Drive API…');
 
-    const params = new URLSearchParams({
-      action:   'upload',
-      subject:  subject,
-      chapter:  chapter,
-      fileName: selectedFile.name,
-      fileData: base64
-    });
+      let pct = 40;
+      const ticker = setInterval(() => { pct = Math.min(pct + 4, 90); setProgress(pct, 'Writing files to directories…'); }, 500);
 
-    const res  = await fetch(API, { method: 'POST', body: params });
-    const data = await res.json();
-    clearInterval(ticker);
+      const params = new URLSearchParams({
+        action:   'upload',
+        subject:  subject,
+        chapter:  chapter,
+        fileName: selectedFile.name,
+        fileData: base64
+      });
 
-    if (data.error) throw new Error(data.error);
+      const endpoint = getApiEndpoint();
+      if (!endpoint || endpoint.includes('...')) {
+        clearInterval(ticker);
+        throw new Error("Invalid URL path specified in connectivity settings.");
+      }
 
-    setProgress(100, 'Complete!');
-    toast('success', 'Uploaded!', `${selectedFile.name} saved under ${subject} / ${chapter}`);
+      const res  = await fetch(endpoint, { method: 'POST', body: params });
+      const data = await res.json();
+      clearInterval(ticker);
 
-    // Reset form
-    setTimeout(() => {
-      clearFile();
+      if (data.error) throw new Error(data.error);
+
+      setProgress(100, 'Complete!');
+      toast('success', 'Uploaded directly to Drive Folder!', `${selectedFile.name} is successfully organized into GDrive under pathway: "${subject} / ${chapter}"`);
+      
+      completeSandboxUpload(subject, chapter, false);
+
+    } catch (err) {
       setUploading(false);
       document.getElementById('progressWrap').classList.remove('show');
-      loadRecent();
-    }, 1200);
+      toast('error', 'Upload Connection Failed', err.message);
+    }
+  }
+}
 
-  } catch (err) {
+function completeSandboxUpload(subject, chapter, notifySuccess = true) {
+  let subObj = virtualLibrary.subjects.find(s => s.name.toLowerCase() === subject.toLowerCase());
+  if (!subObj) {
+    subObj = { name: subject, chapters: [] };
+    virtualLibrary.subjects.push(subObj);
+  }
+
+  let chapObj = subObj.chapters.find(c => c.name.toLowerCase() === chapter.toLowerCase());
+  if (!chapObj) {
+    chapObj = { name: chapter, files: [] };
+    subObj.chapters.push(chapObj);
+  }
+
+  chapObj.files.unshift({
+    name: selectedFile.name,
+    uploadDate: new Date(),
+    url: "https://drive.google.com/drive/folders/17OKeKZ4nRCOlrj6_7u_wVrEJDu2o8Rzn?usp=drive_link"
+  });
+
+  if (notifySuccess) {
+    setProgress(100, 'Uploaded successfully!');
+    toast('success', 'Mock Upload Completed!', `[Virtual Storage] Mock file organized under: ${subject} › ${chapter}`);
+  }
+
+  setTimeout(() => {
+    clearFile();
     setUploading(false);
     document.getElementById('progressWrap').classList.remove('show');
-    toast('error', 'Upload failed', err.message);
-  }
+    renderDirectory();
+    loadFilesForActiveChapter();
+  }, 1000);
 }
 
 function readAsBase64(file) {
   return new Promise((res, rej) => {
     const r = new FileReader();
     r.onload  = () => res(r.result.split(',')[1]);
-    r.onerror = () => rej(new Error('Failed to read file'));
+    r.onerror = () => rej(new Error('Failed to parse file buffer'));
     r.readAsDataURL(file);
   });
 }
@@ -591,54 +1360,24 @@ function setProgress(pct, label) {
   document.getElementById('progressPct').textContent   = pct + '%';
 }
 
-// ── Recent uploads ───────────────────────────────────────────
-async function loadRecent() {
+async function loadLiveLibrary() {
+  const endpoint = getApiEndpoint();
+  if(!endpoint || endpoint.includes('...')) return;
+  
   try {
-    const res  = await fetch(`${API}?action=getLibrary`);
+    const res  = await fetch(`${endpoint}?action=getLibrary`);
     const data = await res.json();
-    if (data.error || !data.subjects) return;
-
-    // Collect all files
-    const allFiles = [];
-    let subjects = 0, chapters = 0;
-    data.subjects.forEach(s => {
-      subjects++;
-      s.chapters.forEach(c => {
-        chapters++;
-        c.files.forEach(f => allFiles.push({ ...f, subject: s.name, chapter: c.name }));
-      });
-    });
-
-    // Stats
-    document.getElementById('statSubjects').textContent = subjects;
-    document.getElementById('statChapters').textContent = chapters;
-    document.getElementById('statFiles').textContent    = allFiles.length;
-
-    // Subject datalist
-    const dl = document.getElementById('subjectList');
-    dl.innerHTML = '';
-    data.subjects.forEach(s => {
-      const o = document.createElement('option'); o.value = s.name; dl.appendChild(o);
-    });
-
-    // Sort by upload date desc
-    allFiles.sort((a,b) => new Date(b.uploadDate) - new Date(a.uploadDate));
-    const recent = allFiles.slice(0, 5);
-
-    const list = document.getElementById('recentList');
-    if (!recent.length) { list.innerHTML = '<div class="empty-state">No uploads yet. Be the first!</div>'; return; }
-
-    list.innerHTML = recent.map(f => `
-      <div class="upload-item">
-        <div class="ui-icon">📄</div>
-        <div class="ui-body">
-          <div class="ui-name">${escHtml(f.name)}</div>
-          <div class="ui-meta">${escHtml(f.subject)} › ${escHtml(f.chapter)} · ${fmtDate(f.uploadDate)}</div>
-        </div>
-        <span class="ui-badge">PDF</span>
-      </div>`).join('');
+    if (data.error) {
+      toast('error', 'Error reading Drive files', data.error);
+      return;
+    }
+    if (data.subjects) {
+      virtualLibrary.subjects = data.subjects;
+      renderDirectory();
+      toast('success', 'Synced GDrive Structure', 'Imported active directory layout directly from root folder ID 17OKeKZ4nRCOlrj6_7u_wVrEJDu2o8Rzn.');
+    }
   } catch(e) {
-    document.getElementById('recentList').innerHTML = '<div class="empty-state">Could not load recent uploads.</div>';
+    toast('error', 'Sync Failed', 'Could not fetch live folder structure from GDrive. Reverted to cached sandbox structure.');
   }
 }
 
@@ -651,7 +1390,7 @@ function escHtml(s) {
   return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
 }
 
-loadRecent();
+renderDirectory();
 </script>
 </body>
 </html>
