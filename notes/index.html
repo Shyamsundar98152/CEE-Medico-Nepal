@@ -191,80 +191,6 @@
   .player-frame-wrap{ width:100%; max-width:960px; aspect-ratio:16/9; border-radius:12px; overflow:hidden; background:#000; box-shadow:0 20px 60px rgba(0,0,0,0.8); position:relative; }
   .player-iframe{ width:100%; height:100%; border:none; display:block; }
 
-  /*
-   * COPY-LINK / SHARE BLOCK STRATEGY:
-   * YouTube's share button sits in the bottom-right ~15% of the player.
-   * A transparent shield div sits on top of ONLY that corner,
-   * blocking pointer events to that region of the iframe.
-   * The rest of the iframe (play, seek, volume, fullscreen) is untouched.
-   *
-   * A second full-size shield captures right-click / long-press on the whole player.
-   * It uses pointer-events:none normally so clicks pass through,
-   * but we catch contextmenu at the document level to suppress it over the player.
-   */
-  /* ── SHIELD: bottom-right Share/Copy Link button ── */
-  .player-shield-corner {
-    position: absolute;
-    bottom: 0; right: 0;
-    width: 18%; height: 14%;
-    z-index: 10;
-    cursor: default;
-    background: transparent;
-  }
-  /* ── SHIELD: top-right "Watch on YouTube" logo ── */
-  .player-shield-topright {
-    position: absolute;
-    top: 0; right: 0;
-    width: 22%; height: 13%;
-    z-index: 10;
-    cursor: default;
-    background: transparent;
-  }
-  /* ── SHIELD: bottom-left YouTube logo / title link ──
-     This logo appears during playback AND in fullscreen.
-     It links to the YouTube page exposing the video URL. */
-  .player-shield-bottomleft {
-    position: absolute;
-    bottom: 0; left: 0;
-    width: 30%; height: 14%;
-    z-index: 10;
-    cursor: default;
-    background: transparent;
-  }
-  /* Full-player ghost — pointer-events:none so play/seek/volume
-     clicks pass through. Used only for JS contextmenu suppression. */
-  .player-shield-full {
-    position: absolute;
-    inset: 0;
-    z-index: 5;
-    background: transparent;
-    pointer-events: none;
-  }
-
-  /*
-   * FULLSCREEN SHIELD FIX:
-   * When the user goes fullscreen, the iframe expands to fill the screen
-   * but our shield divs (which are children of player-frame-wrap) also
-   * expand with it because they are positioned inside the same element.
-   * The :fullscreen pseudo-class lets us fine-tune their size for the
-   * fullscreen viewport so coverage stays accurate.
-   *
-   * Note: the YouTube logo in fullscreen is slightly larger — we widen
-   * the bottom-left shield to 28% height to account for this.
-   */
-  #playerFrameWrap:fullscreen .player-shield-bottomleft,
-  #playerFrameWrap:-webkit-full-screen .player-shield-bottomleft {
-    height: 11%;
-    width: 32%;
-  }
-  #playerFrameWrap:fullscreen .player-shield-corner,
-  #playerFrameWrap:-webkit-full-screen .player-shield-corner {
-    width: 16%; height: 10%;
-  }
-  #playerFrameWrap:fullscreen .player-shield-topright,
-  #playerFrameWrap:-webkit-full-screen .player-shield-topright {
-    width: 20%; height: 10%;
-  }
   .player-controls{ padding:14px 20px 20px; flex-shrink:0; display:flex; flex-direction:column; align-items:center; gap:10px; }
   .speed-row{ display:flex; align-items:center; gap:10px; }
   .speed-label{ color:#94a3b8; font-size:0.8rem; font-weight:600; }
@@ -282,6 +208,8 @@
   .empty-state h4{ font-weight:700; margin-bottom:6px; }
   .empty-state p{ font-size:0.85rem; }
 
+  .home-grid{ display:grid; grid-template-columns:1fr 1fr; gap:20px; align-items:start; }
+
   /* ── WELCOME BANNER ── */
   .welcome-banner{ background:linear-gradient(135deg,#4f46e5,#6366f1,#818cf8); border-radius:var(--radius); padding:28px; color:white; margin-bottom:28px; position:relative; overflow:hidden; }
   .welcome-banner::before{ content:''; position:absolute; top:-40px; right:-40px; width:200px; height:200px; background:rgba(255,255,255,0.05); border-radius:50%; }
@@ -296,14 +224,35 @@
     .sidebar-overlay.show{ display:block; }
     .main{ margin-left:0; }
     #menuBtn{ display:flex; }
+    .home-grid{ grid-template-columns:1fr; }
+  }
+  @media(max-width:768px){
+    .stats-grid{ grid-template-columns:repeat(3,1fr); gap:10px; }
+    .stat-card{ padding:14px; flex-direction:column; text-align:center; gap:8px; }
+    .stat-value{ font-size:1.25rem; }
+    .viewer-box{ height:92vh; border-radius:12px; }
   }
   @media(max-width:640px){
     .page{ padding:16px; }
     .topbar{ padding:0 16px; }
-    .stats-grid{ grid-template-columns:repeat(2,1fr); gap:10px; }
+    .stats-grid{ grid-template-columns:repeat(3,1fr); gap:8px; }
+    .stat-card{ padding:12px 8px; }
+    .stat-icon{ width:36px; height:36px; font-size:0.95rem; }
+    .stat-value{ font-size:1.05rem; }
+    .stat-label{ font-size:0.68rem; }
     .notes-grid{ grid-template-columns:1fr; }
     .section-head{ flex-direction:column; align-items:flex-start; }
-    .player-frame-wrap{ aspect-ratio:16/9; }
+    .section-body{ padding:18px; }
+    .search-bar{ max-width:none; width:100%; }
+    .welcome-banner{ padding:22px 20px; }
+    .welcome-banner h2{ font-size:1.15rem; }
+    .player-frame-wrap{ aspect-ratio:16/9; max-width:100%; }
+    .player-stage{ padding:0 10px; }
+    .speed-row{ flex-wrap:wrap; justify-content:center; }
+    .viewer-box{ height:90vh; }
+  }
+  @media(max-width:400px){
+    .stats-grid{ grid-template-columns:1fr 1fr; }
   }
   </style>
 </head>
@@ -366,7 +315,7 @@
         <div class="stat-card"><div class="stat-icon green"><i class="fas fa-book"></i></div><div><div class="stat-value" id="s-subjects">—</div><div class="stat-label">Subjects</div></div></div>
       </div>
 
-      <div style="display:grid; grid-template-columns:1fr 1fr; gap:20px;">
+      <div class="home-grid">
         <div class="section-card">
           <div class="section-head">
             <div class="section-title"><i class="fas fa-fire" style="color:var(--accent);"></i> Recent Notes</div>
@@ -457,14 +406,6 @@
       <iframe class="player-iframe" id="playerFrame"
         allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; fullscreen"
         allowfullscreen src=""></iframe>
-      <!-- Shield: bottom-right Share/Copy Link button -->
-      <div class="player-shield-corner" oncontextmenu="return false;"></div>
-      <!-- Shield: top-right Watch on YouTube logo -->
-      <div class="player-shield-topright" oncontextmenu="return false;"></div>
-      <!-- Shield: bottom-left YouTube logo/title (main link leak point) -->
-      <div class="player-shield-bottomleft" oncontextmenu="return false;"></div>
-      <!-- Full ghost: contextmenu suppression via JS, clicks pass through -->
-      <div class="player-shield-full" id="shieldFull"></div>
     </div>
   </div>
   <div class="player-controls">
@@ -639,7 +580,6 @@ function renderNoteAccordion(notes) {
 }
 window.toggleAccordion=(btn)=>{
   const content=btn.nextElementSibling;
-  const isOpen=content.classList.contains('show');
   content.classList.toggle('show');
   btn.classList.toggle('open');
 };
@@ -720,8 +660,7 @@ window.closeViewer=()=>{ document.getElementById('pdfViewer').style.display='non
 /* ── Lecture Player ── */
 window.watchLecture=async(id,title,videoId,subject,duration)=>{
   if(!videoId){ alert('Video not available'); return; }
-  // youtube-nocookie.com = privacy enhanced, no share button in embed, no related videos (rel=0)
-  const embedUrl=`https://www.youtube-nocookie.com/embed/${videoId}?rel=0&modestbranding=1&disablekb=0&fs=1&color=white&enablejsapi=1`;
+  const embedUrl=`https://www.youtube.com/embed/${videoId}?rel=0&modestbranding=1&autoplay=1&enablejsapi=1`;
   document.getElementById('playerTitle').textContent=title;
   document.getElementById('playerMeta').textContent=[subject,duration].filter(Boolean).join(' · ');
   document.getElementById('playerFrame').src=embedUrl;
@@ -747,7 +686,6 @@ document.querySelectorAll('.speed-btn').forEach(btn=>{
     const speed=parseFloat(btn.dataset.speed);
     currentPlayerSpeed=speed;
     document.querySelectorAll('.speed-btn').forEach(b=>b.classList.toggle('active',b===btn));
-    // Send postMessage to YouTube iframe player API
     const frame=document.getElementById('playerFrame');
     try {
       frame.contentWindow.postMessage(JSON.stringify({event:'command',func:'setPlaybackRate',args:[speed]}),'*');
@@ -761,66 +699,6 @@ document.addEventListener('keydown',e=>{
     if(document.getElementById('pdfViewer').style.display!=='none') closeViewer();
     if(document.getElementById('lecturePlayer').style.display!=='none') closePlayer();
   }
-});
-
-/* ══════════════════════════════════════════════
-   COPY-LINK / SHARE PROTECTION
-   Strategy: we cannot reach inside the YouTube
-   iframe (cross-origin), so we:
-   1. Place invisible shield divs over the share
-      button corners (CSS above).
-   2. Block right-click (contextmenu) globally
-      while the player is open — prevents
-      "Copy video address" from the browser.
-   3. Block Ctrl+C / Cmd+C on the player overlay
-      so the URL in the address bar can't be
-      clipboard-copied while watching.
-   4. Prevent drag-and-drop of the iframe src.
-   5. On mobile: block long-press selection.
-   Playback speed (postMessage) is unaffected.
-══════════════════════════════════════════════ */
-const playerOverlay = document.getElementById('lecturePlayer');
-
-/* 2. Block right-click while player is visible */
-document.addEventListener('contextmenu', e => {
-  if (playerOverlay.style.display !== 'none') {
-    e.preventDefault();
-    return false;
-  }
-});
-
-/* 3. Block Ctrl+C / Cmd+C while player is open */
-document.addEventListener('keydown', e => {
-  if (playerOverlay.style.display !== 'none') {
-    const isCopy = (e.ctrlKey || e.metaKey) && e.key === 'c';
-    const isU    = (e.ctrlKey || e.metaKey) && e.key === 'u'; // view-source shortcut
-    if (isCopy || isU) { e.preventDefault(); return false; }
-  }
-}, true);
-
-/* 4. Block drag from iframe area */
-playerOverlay.addEventListener('dragstart', e => e.preventDefault());
-
-/* 5. Disable text/link selection inside player overlay on mobile */
-playerOverlay.style.userSelect = 'none';
-playerOverlay.style.webkitUserSelect = 'none';
-
-/* Also make the shield corners show a custom blocked cursor */
-document.querySelectorAll(
-  '.player-shield-corner, .player-shield-topright, .player-shield-bottomleft'
-).forEach(el => {
-  el.addEventListener('click',       e => { e.stopPropagation(); e.preventDefault(); });
-  el.addEventListener('dblclick',    e => { e.stopPropagation(); e.preventDefault(); });
-  el.addEventListener('contextmenu', e => { e.stopPropagation(); e.preventDefault(); });
-  el.addEventListener('mousedown',   e => { e.stopPropagation(); });
-  el.addEventListener('touchstart',  e => { e.stopPropagation(); e.preventDefault(); }, { passive: false });
-  el.addEventListener('touchend',    e => { e.stopPropagation(); e.preventDefault(); }, { passive: false });
-});
-
-/* Extra: if user somehow triggers fullscreen via the iframe API,
-   log it but don't fight it — our shields scale with the element. */
-document.addEventListener('fullscreenchange', () => {
-  // shields are inside playerFrameWrap so they follow it into fullscreen automatically
 });
 
 </script>
