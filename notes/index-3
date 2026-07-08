@@ -1,0 +1,906 @@
+<!DOCTYPE html>
+<html lang="en" class="h-full bg-slate-50">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0"/>
+  
+  <!-- Critical Fix for YouTube Error 153: Directs browser to always send referrers to YouTube -->
+  <meta name="referrer" content="strict-origin-when-cross-origin" />
+  
+  <title>CEE Medico Nepal | Premium Prep Dashboard</title>
+  
+  <!-- Web Fonts & Font Awesome Icons -->
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css"/>
+  
+  <!-- Tailwind CSS Framework -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  
+  <!-- Import Map for Firebase Modules -->
+  <script type="importmap">
+  {
+    "imports": {
+      "firebase/app": "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js",
+      "firebase/auth": "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js",
+      "firebase/database": "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js"
+    }
+  }
+  </script>
+
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['Plus Jakarta Sans', 'sans-serif'],
+          },
+          colors: {
+            brand: {
+              50: '#f0f3ff',
+              100: '#e0e7ff',
+              200: '#c7d2fe',
+              500: '#6366f1',
+              600: '#4f46e5',
+              700: '#4338ca',
+              900: '#1e1b4b',
+            }
+          }
+        }
+      }
+    }
+  </script>
+
+  <style>
+    ::-webkit-scrollbar {
+      width: 6px;
+      height: 6px;
+    }
+    ::-webkit-scrollbar-track {
+      background: transparent;
+    }
+    ::-webkit-scrollbar-thumb {
+      background: #cbd5e1;
+      border-radius: 4px;
+    }
+    ::-webkit-scrollbar-thumb:hover {
+      background: #94a3b8;
+    }
+    .custom-transition {
+      transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+  </style>
+</head>
+<body class="h-full text-slate-800 font-sans antialiased overflow-x-hidden bg-slate-50">
+
+<div class="min-h-screen flex flex-col lg:flex-row">
+
+  <!-- Mobile Sidebar Overlay Backdrop -->
+  <div id="overlay" class="fixed inset-0 bg-slate-950/60 backdrop-blur-sm z-40 hidden custom-transition"></div>
+
+  <!-- Left Side Navigation Sidebar -->
+  <aside id="sidebar" class="fixed inset-y-0 left-0 w-72 bg-brand-900 text-slate-200 flex flex-col z-50 transform -translate-x-full lg:translate-x-0 lg:static lg:flex custom-transition shadow-2xl lg:shadow-none">
+    
+    <!-- Branding Header Section -->
+    <div class="p-6 border-b border-white/10 shrink-0">
+      <div class="flex items-center gap-3">
+        <div class="w-10 h-10 bg-gradient-to-tr from-brand-500 to-indigo-400 rounded-xl flex items-center justify-center text-white shadow-lg">
+          <i class="fas fa-stethoscope text-lg"></i>
+        </div>
+        <div>
+          <h1 class="font-extrabold text-sm tracking-wide text-white">CEE Medico Nepal</h1>
+          <p class="text-[10px] text-brand-200 font-bold tracking-wider uppercase">MBBS Entrance Prep</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Scrollable Navigation Items -->
+    <nav class="flex-1 px-4 py-6 overflow-y-auto space-y-6">
+      <!-- MAIN SYSTEM LINKS -->
+      <div>
+        <p class="px-3 text-[10px] font-bold tracking-wider text-slate-400 uppercase mb-3">Study Portal</p>
+        <ul class="space-y-1.5">
+          <li>
+            <button data-section="home" class="nav-item active w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-xs font-bold text-slate-300 hover:text-white hover:bg-white/5 custom-transition">
+              <span class="w-8 h-8 flex items-center justify-center rounded-lg bg-white/5 text-brand-200"><i class="fas fa-th-large"></i></span>
+              Dashboard Overview
+            </button>
+          </li>
+          <li>
+            <button data-section="notes" class="nav-item w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-xs font-bold text-slate-300 hover:text-white hover:bg-white/5 custom-transition">
+              <span class="w-8 h-8 flex items-center justify-center rounded-lg bg-white/5 text-brand-200"><i class="fas fa-file-pdf"></i></span>
+              Revision Notes
+            </button>
+          </li>
+          <li>
+            <button data-section="lectures" class="nav-item w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-xs font-bold text-slate-300 hover:text-white hover:bg-white/5 custom-transition">
+              <span class="w-8 h-8 flex items-center justify-center rounded-lg bg-white/5 text-brand-200"><i class="fab fa-youtube"></i></span>
+              Video Classes
+            </button>
+          </li>
+        </ul>
+      </div>
+
+      <div>
+        <p class="px-3 text-[10px] font-bold tracking-wider text-slate-400 uppercase mb-3">Self Evaluations</p>
+        <ul class="space-y-1.5">
+          <li>
+            <button data-section="mock" class="nav-item w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-xs font-bold text-slate-300 hover:text-white hover:bg-white/5 custom-transition">
+              <span class="w-8 h-8 flex items-center justify-center rounded-lg bg-white/5 text-brand-200"><i class="fas fa-vial"></i></span>
+              Mock Assessments
+            </button>
+          </li>
+        </ul>
+      </div>
+    </nav>
+
+    <!-- Student Profile Footer Widget -->
+    <div class="p-4 border-t border-white/10 bg-black/10 shrink-0">
+      <div class="flex items-center gap-3 bg-white/5 rounded-xl p-3">
+        <div class="w-9 h-9 bg-gradient-to-tr from-brand-500 to-indigo-400 rounded-full flex items-center justify-center text-white font-bold text-xs" id="userAvatarInit">
+          G
+        </div>
+        <div class="min-w-0 flex-1">
+          <p class="text-xs font-bold text-white truncate" id="userName">Guest Profile</p>
+          <p class="text-[10px] text-slate-400 font-medium">Verified Aspirant</p>
+        </div>
+      </div>
+    </div>
+  </aside>
+
+  <!-- Main View Container -->
+  <div class="flex-1 flex flex-col min-w-0">
+    
+    <!-- Top Action Header Navigation -->
+    <header class="sticky top-0 z-30 bg-white/95 border-b border-slate-100 backdrop-blur px-4 md:px-8 py-3.5 flex items-center justify-between">
+      <div class="flex items-center gap-4">
+        <!-- Sidebar Toggle Icon on Mobile Screens -->
+        <button id="menuBtn" class="lg:hidden w-10 h-10 flex items-center justify-center bg-slate-50 hover:bg-slate-100 border border-slate-200 rounded-xl text-slate-700 custom-transition">
+          <i class="fas fa-bars text-base"></i>
+        </button>
+        <div>
+          <h2 id="pageTitle" class="text-base md:text-lg font-extrabold text-slate-900 tracking-tight">Dashboard Overview</h2>
+          <p class="hidden sm:block text-[10px] text-slate-500 font-semibold mt-0.5">Your study companion for medical entrance exams</p>
+        </div>
+      </div>
+
+      <!-- Quick Profile Indicator -->
+      <div class="flex items-center gap-3">
+        <span class="hidden md:inline text-xs font-extrabold text-slate-700" id="topbarName">Guest Account</span>
+        <div class="w-9 h-9 bg-brand-50 hover:bg-brand-100 rounded-xl flex items-center justify-center text-brand-600 font-bold text-xs border border-brand-100 cursor-pointer custom-transition" id="topbarAvatar">
+          G
+        </div>
+      </div>
+    </header>
+
+    <!-- Page Content Wrapper -->
+    <main class="flex-1 p-4 md:p-8 space-y-6 max-w-7xl mx-auto w-full">
+
+      <!-- SECTION 1: HOME PAGE -->
+      <div id="page-home" class="page active space-y-6">
+        
+        <!-- Welcome Hero Info Card -->
+        <div class="relative bg-gradient-to-r from-brand-600 to-indigo-700 rounded-2xl p-6 md:p-8 text-white shadow-xl overflow-hidden">
+          <div class="relative z-10 max-w-xl space-y-2">
+            <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-white/20 text-white backdrop-blur">
+              🚀 CEE Academic Network Live
+            </span>
+            <h2 id="welcomeName" class="text-xl md:text-2xl font-extrabold tracking-tight">Welcome to CEE Medico Nepal! 🎓</h2>
+            <p class="text-xs md:text-sm text-brand-100 font-medium leading-relaxed">
+              Equipping future medical graduates with interactive high-definition lecture videos, detailed revision notes, and continuous curriculum-aligned mock challenges.
+            </p>
+          </div>
+          <div class="absolute right-0 bottom-0 top-0 w-1/3 hidden md:flex items-center justify-center text-white/5 pointer-events-none">
+            <i class="fas fa-user-md text-[140px]"></i>
+          </div>
+        </div>
+
+        <!-- Analytical Prep Statistics Counters -->
+        <div class="grid grid-cols-3 gap-3 md:gap-6">
+          <div class="bg-white p-4 rounded-xl border border-slate-100 shadow-sm flex items-center gap-3.5">
+            <div class="w-10 h-10 md:w-12 md:h-12 rounded-xl bg-brand-50 text-brand-600 flex items-center justify-center text-base md:text-lg shrink-0">
+              <i class="fas fa-file-pdf"></i>
+            </div>
+            <div>
+              <p class="text-[9px] md:text-[10px] font-bold text-slate-400 uppercase tracking-wider">Revision Notes</p>
+              <h3 id="s-notes" class="text-base md:text-2xl font-black text-slate-800 mt-0.5">—</h3>
+            </div>
+          </div>
+          <div class="bg-white p-4 rounded-xl border border-slate-100 shadow-sm flex items-center gap-3.5">
+            <div class="w-10 h-10 md:w-12 md:h-12 rounded-xl bg-red-50 text-red-600 flex items-center justify-center text-base md:text-lg shrink-0">
+              <i class="fab fa-youtube"></i>
+            </div>
+            <div>
+              <p class="text-[9px] md:text-[10px] font-bold text-slate-400 uppercase tracking-wider">Video Classes</p>
+              <h3 id="s-lectures" class="text-base md:text-2xl font-black text-slate-800 mt-0.5">—</h3>
+            </div>
+          </div>
+          <div class="bg-white p-4 rounded-xl border border-slate-100 shadow-sm flex items-center gap-3.5">
+            <div class="w-10 h-10 md:w-12 md:h-12 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center text-base md:text-lg shrink-0">
+              <i class="fas fa-book"></i>
+            </div>
+            <div>
+              <p class="text-[9px] md:text-[10px] font-bold text-slate-400 uppercase tracking-wider">Active Subjects</p>
+              <h3 id="s-subjects" class="text-base md:text-2xl font-black text-slate-800 mt-0.5">—</h3>
+            </div>
+          </div>
+        </div>
+
+        <!-- Dashboard Home Panels -->
+        <div class="grid grid-cols-1 xl:grid-cols-2 gap-6">
+          
+          <!-- Recent PDF Notes Column -->
+          <div class="bg-white rounded-2xl border border-slate-100 shadow-sm p-5 space-y-4">
+            <div class="flex items-center justify-between">
+              <div class="flex items-center gap-2">
+                <span class="w-2.5 h-5 rounded-full bg-brand-500 block"></span>
+                <h3 class="font-extrabold text-slate-800 text-sm md:text-base">Recently Released Notes</h3>
+              </div>
+              <button onclick="navigate('notes')" class="text-[10px] font-bold text-brand-600 bg-brand-50 hover:bg-brand-100 px-3 py-1.5 rounded-lg custom-transition">
+                View All
+              </button>
+            </div>
+            <div id="homeRecentNotes" class="space-y-3">
+              <!-- Loading Spinner template -->
+              <div class="flex items-center justify-center py-10 text-slate-400 text-xs font-semibold">
+                <i class="fas fa-spinner fa-spin mr-2.5 text-base text-brand-500"></i> Loading note materials...
+              </div>
+            </div>
+          </div>
+
+          <!-- Recent Lectures Column -->
+          <div class="bg-white rounded-2xl border border-slate-100 shadow-sm p-5 space-y-4">
+            <div class="flex items-center justify-between">
+              <div class="flex items-center gap-2">
+                <span class="w-2.5 h-5 rounded-full bg-red-500 block"></span>
+                <h3 class="font-extrabold text-slate-800 text-sm md:text-base">Recent Video Lectures</h3>
+              </div>
+              <button onclick="navigate('lectures')" class="text-[10px] font-bold text-red-600 bg-red-50 hover:bg-red-100 px-3 py-1.5 rounded-lg custom-transition">
+                View All
+              </button>
+            </div>
+            <div id="homeRecentLectures" class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <!-- Loading Spinner template -->
+              <div class="col-span-full flex items-center justify-center py-10 text-slate-400 text-xs font-semibold">
+                <i class="fas fa-spinner fa-spin mr-2.5 text-base text-red-500"></i> Loading latest classes...
+              </div>
+            </div>
+          </div>
+
+        </div>
+      </div>
+
+      <!-- SECTION 2: NOTES LIBRARY -->
+      <div id="page-notes" class="page hidden space-y-6">
+        <div class="bg-white p-5 md:p-6 rounded-2xl border border-slate-100 shadow-sm space-y-5">
+          
+          <!-- Filters & Action Headers -->
+          <div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
+            <div class="relative flex-1 max-w-md">
+              <i class="fas fa-search absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 text-xs"></i>
+              <input type="text" id="noteSearch" placeholder="Search chapters by keyword or unit..." class="w-full pl-10 pr-4 py-2 bg-slate-50 hover:bg-slate-100/70 focus:bg-white border border-slate-200 focus:border-brand-500 rounded-xl text-xs font-medium focus:outline-none focus:ring-1 focus:ring-brand-500 custom-transition">
+            </div>
+            <div class="flex flex-wrap items-center gap-1.5" id="noteFilterTabs">
+              <!-- Filled dynamically by JavaScript execution -->
+            </div>
+          </div>
+
+          <!-- Subject Accordions Group Container -->
+          <div id="notesAccordion" class="space-y-3"></div>
+        </div>
+      </div>
+
+      <!-- SECTION 3: VIDEO LECTURES -->
+      <div id="page-lectures" class="page hidden space-y-6">
+        <div class="bg-white p-5 md:p-6 rounded-2xl border border-slate-100 shadow-sm space-y-5">
+          
+          <!-- Search & Filters Container -->
+          <div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
+            <div class="relative flex-1 max-w-md">
+              <i class="fas fa-search absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 text-xs"></i>
+              <input type="text" id="lectureSearch" placeholder="Search lessons, topics or concepts..." class="w-full pl-10 pr-4 py-2 bg-slate-50 hover:bg-slate-100/70 focus:bg-white border border-slate-200 focus:border-red-500 rounded-xl text-xs font-medium focus:outline-none focus:ring-1 focus:ring-red-500 custom-transition">
+            </div>
+            <div class="flex flex-wrap items-center gap-1.5" id="lectureFilterTabs">
+              <!-- Filled dynamically by JavaScript execution -->
+            </div>
+          </div>
+
+          <!-- Lectures Group Grid -->
+          <div id="lecturesGrid" class="space-y-6"></div>
+        </div>
+      </div>
+
+      <!-- SECTION 4: MOCK TEST -->
+      <div id="page-mock" class="page hidden space-y-6">
+        <div class="bg-white p-10 md:p-14 rounded-2xl border border-slate-100 shadow-sm text-center max-w-lg mx-auto space-y-5">
+          <div class="w-16 h-16 bg-brand-50 text-brand-600 rounded-full flex items-center justify-center text-2xl mx-auto">
+            <i class="fas fa-vial"></i>
+          </div>
+          <div class="space-y-2">
+            <h3 class="text-lg font-black text-slate-800">Mock Assessments Center</h3>
+            <p class="text-slate-500 text-xs leading-relaxed">
+              We are assembling customized timed test environments aligned accurately with the current medical entrance guidelines. Simulator controls will launch dynamically here shortly.
+            </p>
+          </div>
+          <div class="p-3 bg-slate-50 rounded-xl border border-slate-150 inline-flex items-center gap-2 text-[10px] font-bold text-slate-600">
+            <i class="fas fa-bell text-brand-500"></i> Push notifications will notify you upon launch
+          </div>
+        </div>
+      </div>
+
+    </main>
+  </div>
+</div>
+
+<!-- MODAL OVERLAY: Elegant Note Document Viewer -->
+<div id="pdfViewer" class="fixed inset-0 bg-slate-950/80 z-50 flex items-center justify-center p-2 md:p-4 hidden animate-fade-in">
+  <div class="bg-slate-900 rounded-2xl w-full max-w-5xl h-[92vh] flex flex-col shadow-2xl overflow-hidden border border-slate-800">
+    <!-- Header Block -->
+    <div class="p-4 bg-slate-950 border-b border-slate-800 flex items-center justify-between gap-4">
+      <div class="flex items-center gap-2.5">
+        <div class="w-8 h-8 rounded-lg bg-brand-500/10 text-brand-400 flex items-center justify-center">
+          <i class="fas fa-file-pdf text-sm"></i>
+        </div>
+        <span class="text-slate-200 font-extrabold text-xs md:text-sm truncate" id="viewerTitle">Study Document</span>
+      </div>
+      <button onclick="closeViewer()" class="px-3 py-1.5 rounded-lg bg-red-600/10 hover:bg-red-600/25 text-red-400 text-[10px] font-bold custom-transition flex items-center gap-1.5">
+        <i class="fas fa-times"></i> Close Reader
+      </button>
+    </div>
+    <!-- PDF Frame Element, dynamically targeting the online_viewer_net.htm verbatim -->
+    <iframe id="viewerFrame" class="flex-1 w-full border-none bg-slate-800" src=""></iframe>
+  </div>
+</div>
+
+<!-- MODAL OVERLAY: Responsive Lecture Player -->
+<div id="lecturePlayer" class="fixed inset-0 bg-slate-950/98 z-50 flex flex-col hidden animate-fade-in">
+  
+  <!-- Video Header Controls -->
+  <div class="p-4 bg-slate-900/60 border-b border-white/5 flex items-center justify-between gap-4 shrink-0">
+    <div class="flex items-center gap-3">
+      <div class="w-9 h-9 rounded-xl bg-red-500/10 text-red-500 flex items-center justify-center">
+        <i class="fab fa-youtube text-base"></i>
+      </div>
+      <div>
+        <h4 class="text-white font-extrabold text-xs md:text-sm leading-tight" id="playerTitle">Lecture Video</h4>
+        <p class="text-[10px] text-slate-400 font-semibold" id="playerMeta">Subject</p>
+      </div>
+    </div>
+    <div class="flex items-center gap-2">
+      <a id="btnExternalYt" target="_blank" href="#" class="px-3 py-1.5 rounded-lg bg-white/5 hover:bg-white/10 text-slate-200 text-[10px] font-bold custom-transition flex items-center gap-1.5">
+        <i class="fab fa-youtube text-red-500"></i> Open YouTube
+      </a>
+      <button onclick="closePlayer()" class="px-3 py-1.5 rounded-lg bg-red-600 hover:bg-red-700 text-white text-[10px] font-bold custom-transition flex items-center gap-1.5 shadow-lg shadow-red-600/20">
+        <i class="fas fa-times"></i> Close Class
+      </button>
+    </div>
+  </div>
+
+  <!-- Responsive Iframe Frame Aspect container -->
+  <div class="flex-1 flex items-center justify-center p-3 md:p-6">
+    <div class="w-full max-w-4xl aspect-video rounded-xl overflow-hidden bg-black shadow-2xl border border-white/5 relative">
+      <!-- 
+         CRITICAL RESOLUTION FOR ERROR 153:
+         Uses referrerpolicy="strict-origin-when-cross-origin" to guarantee correct origin headers.
+         Uses clean web-share / picture-in-picture permission controls natively.
+      -->
+      <iframe id="playerFrame" class="w-full h-full"
+        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+        referrerpolicy="strict-origin-when-cross-origin"
+        allowfullscreen src=""></iframe>
+    </div>
+  </div>
+
+  <!-- Informative Help Footer -->
+  <div class="p-3 text-center text-[10px] text-slate-500 bg-slate-900/10 shrink-0">
+    <span class="inline-flex items-center gap-1.5">
+      <i class="fas fa-info-circle text-slate-400"></i> 
+      Adjust speed, resolution, subtitles, and standard controls directly inside the YouTube media player layout.
+    </span>
+  </div>
+</div>
+
+<script type="module">
+import { initializeApp } from "firebase/app";
+import { getDatabase, ref, get, update, onValue } from "firebase/database";
+
+// Main Database Configuration
+const firebaseConfig = {
+  apiKey: "AIzaSyDfCO-xxHPpgSfE-I6KTmsw35Lo9n2v56s",
+  authDomain: "live-quiz-6e77b.firebaseapp.com",
+  databaseURL: "https://live-quiz-6e77b-default-rtdb.asia-southeast1.firebasedatabase.app",
+  projectId: "live-quiz-6e77b",
+  storageBucket: "live-quiz-6e77b.firebasestorage.app",
+  messagingSenderId: "50057610341",
+  appId: "1:50057610341:web:d4e88673a20757d4c9328c"
+};
+
+const app = initializeApp(firebaseConfig);
+const db = getDatabase(app);
+
+let allNotes = {};
+let allLectures = {};
+
+// Responsive Mobile Drawer Navigation Handlers
+const sidebar = document.getElementById('sidebar');
+const overlay = document.getElementById('overlay');
+const menuBtn = document.getElementById('menuBtn');
+
+menuBtn.onclick = () => {
+  sidebar.classList.toggle('-translate-x-full');
+  overlay.classList.toggle('hidden');
+};
+
+overlay.onclick = () => {
+  sidebar.classList.add('-translate-x-full');
+  overlay.classList.add('hidden');
+};
+
+// UI Section Navigations Router
+const sections = ['home', 'notes', 'lectures', 'mock'];
+const pageTitles = { home: 'Dashboard Overview', notes: 'Revision Notes Library', lectures: 'Video Class Tutorials', mock: 'Mock Examinations' };
+
+function navigate(targetSection) {
+  sections.forEach(sec => {
+    const pageEl = document.getElementById(`page-${sec}`);
+    if (pageEl) {
+      if (sec === targetSection) {
+        pageEl.classList.remove('hidden');
+      } else {
+        pageEl.classList.add('hidden');
+      }
+    }
+  });
+
+  // Toggle CSS styling parameters on Nav Items
+  document.querySelectorAll('.nav-item').forEach(btn => {
+    if (btn.dataset.section === targetSection) {
+      btn.classList.add('bg-white/10', 'text-white', 'border-r-4', 'border-brand-500');
+      btn.classList.remove('text-slate-300');
+    } else {
+      btn.classList.remove('bg-white/10', 'text-white', 'border-r-4', 'border-brand-500');
+      btn.classList.add('text-slate-300');
+    }
+  });
+
+  document.getElementById('pageTitle').textContent = pageTitles[targetSection] || 'Dashboard Overview';
+  
+  // Clean up overlays on mobile viewport transitions
+  sidebar.classList.add('-translate-x-full');
+  overlay.classList.add('hidden');
+
+  // Relocate viewport position upwards smoothly
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+window.navigate = navigate;
+
+document.querySelectorAll('.nav-item').forEach(item => {
+  item.onclick = () => navigate(item.dataset.section);
+});
+
+// Load real-time database listeners
+listenDatabase();
+
+function listenDatabase() {
+  onValue(ref(db, 'notes'), snap => {
+    allNotes = {};
+    if (snap.exists()) snap.forEach(c => { allNotes[c.key] = c.val(); });
+    updateHomeCounters(); 
+    renderNoteAccordion(allNotes); 
+    renderHomeRecent();
+    buildDynamicFilters('noteFilterTabs', allNotes, selectedClass => {
+      const filtered = selectedClass === 'all' ? allNotes : Object.fromEntries(Object.entries(allNotes).filter(([,n]) => n.class === selectedClass));
+      renderNoteAccordion(filtered);
+    });
+  });
+
+  onValue(ref(db, 'lectures'), snap => {
+    allLectures = {};
+    if (snap.exists()) snap.forEach(c => { allLectures[c.key] = c.val(); });
+    updateHomeCounters(); 
+    renderLecturesGrid(allLectures); 
+    renderHomeLectures();
+    buildDynamicFilters('lectureFilterTabs', allLectures, selectedClass => {
+      const filtered = selectedClass === 'all' ? allLectures : Object.fromEntries(Object.entries(allLectures).filter(([,l]) => l.class === selectedClass));
+      renderLecturesGrid(filtered);
+    }, true);
+  });
+}
+
+function updateHomeCounters() {
+  const subjectsSet = new Set([
+    ...Object.values(allNotes).map(n => n.subject),
+    ...Object.values(allLectures).map(l => l.subject)
+  ].filter(Boolean));
+
+  document.getElementById('s-notes').textContent = Object.keys(allNotes).length;
+  document.getElementById('s-lectures').textContent = Object.keys(allLectures).length;
+  document.getElementById('s-subjects').textContent = subjectsSet.size;
+}
+
+// Build interactive search tabs categories
+function buildDynamicFilters(tabContainerId, dataSet, onFilterSelection, useVideoTheme = false) {
+  const uniqueClasses = ['all', ...new Set(Object.values(dataSet).map(item => item.class).filter(Boolean))];
+  const container = document.getElementById(tabContainerId);
+  if (!container) return;
+  container.innerHTML = '';
+
+  uniqueClasses.forEach((cls, idx) => {
+    const filterBtn = document.createElement('button');
+    filterBtn.dataset.class = cls;
+    filterBtn.textContent = cls === 'all' ? 'All Materials' : cls;
+    
+    // Choose dynamic background highlights
+    const activeClassStyles = useVideoTheme 
+      ? 'bg-red-500 text-white' 
+      : 'bg-brand-600 text-white';
+    const inactiveClassStyles = 'bg-slate-100 text-slate-600 hover:bg-slate-200';
+
+    filterBtn.className = `px-3 py-1.5 rounded-lg text-[10px] font-bold custom-transition ${idx === 0 ? activeClassStyles : inactiveClassStyles}`;
+
+    filterBtn.addEventListener('click', () => {
+      container.querySelectorAll('button').forEach(btn => {
+        btn.className = `px-3 py-1.5 rounded-lg text-[10px] font-bold custom-transition ${inactiveClassStyles}`;
+      });
+      filterBtn.className = `px-3 py-1.5 rounded-lg text-[10px] font-bold custom-transition ${activeClassStyles}`;
+      onFilterSelection(cls);
+    });
+
+    container.appendChild(filterBtn);
+  });
+}
+
+// Live interactive keyword lookups
+document.getElementById('noteSearch').addEventListener('input', e => {
+  const query = e.target.value.toLowerCase();
+  const matched = Object.fromEntries(Object.entries(allNotes).filter(([, n]) => 
+    (n.topic || '').toLowerCase().includes(query) || (n.subject || '').toLowerCase().includes(query)
+  ));
+  renderNoteAccordion(matched);
+});
+
+document.getElementById('lectureSearch').addEventListener('input', e => {
+  const query = e.target.value.toLowerCase();
+  const matched = Object.fromEntries(Object.entries(allLectures).filter(([, l]) => 
+    (l.topic || '').toLowerCase().includes(query) || (l.subject || '').toLowerCase().includes(query)
+  ));
+  renderLecturesGrid(matched);
+});
+
+// Academic subject icons resolver dictionary
+const subjectIcons = { 
+  physics: 'fa-atom text-cyan-500', 
+  chemistry: 'fa-flask text-teal-500', 
+  biology: 'fa-dna text-emerald-500', 
+  maths: 'fa-calculator text-indigo-500', 
+  mathematics: 'fa-calculator text-indigo-500', 
+  botany: 'fa-leaf text-green-500', 
+  zoology: 'fa-paw text-amber-500', 
+  english: 'fa-language text-purple-500' 
+};
+
+function getSubjectIcon(subject) {
+  return subjectIcons[(subject || '').toLowerCase().trim()] || 'fa-file-medical text-brand-500';
+}
+
+// Generate accordions groupings for Revision notes
+function renderNoteAccordion(notes) {
+  const targetElement = document.getElementById('notesAccordion');
+  if (!targetElement) return;
+
+  const entries = Object.entries(notes);
+  if (!entries.length) {
+    targetElement.innerHTML = `
+      <div class="text-center py-10 text-slate-400">
+        <i class="fas fa-folder-open text-3xl mb-2.5 block"></i> 
+        <span class="text-xs font-semibold">No materials match your filter query.</span>
+      </div>`;
+    return;
+  }
+
+  // Group notes dynamically based on: Class -> Subject
+  const grouped = {};
+  entries.forEach(([id, note]) => {
+    const cName = note.class || 'General Material';
+    const sName = note.subject || 'Miscellaneous';
+    if (!grouped[cName]) grouped[cName] = {};
+    if (!grouped[cName][sName]) grouped[cName][sName] = [];
+    grouped[cName][sName].push({ id, ...note });
+  });
+
+  let accordionHtml = '';
+  for (const cName in grouped) {
+    accordionHtml += `<div class="space-y-2">
+      <h3 class="text-[10px] font-black tracking-wider text-slate-400 uppercase pt-2">${cName}</h3>`;
+      
+    for (const sName in grouped[cName]) {
+      const classNotes = grouped[cName][sName];
+      const iconClass = getSubjectIcon(sName);
+      
+      accordionHtml += `
+        <div class="border border-slate-150 bg-slate-50/50 rounded-xl overflow-hidden shadow-sm">
+          <button class="w-full flex items-center justify-between p-3.5 bg-white hover:bg-slate-50/50 text-left font-bold text-slate-800 text-xs custom-transition" onclick="toggleAccordion(this)">
+            <span class="flex items-center gap-2.5">
+              <span class="w-7 h-7 rounded-lg bg-slate-50 flex items-center justify-center border border-slate-100">
+                <i class="fas ${iconClass}"></i>
+              </span>
+              <span>${sName} <span class="text-slate-400 font-medium text-[10px]">(${classNotes.length} files)</span></span>
+            </span>
+            <i class="fas fa-chevron-down text-[10px] text-slate-400 custom-transition"></i>
+          </button>
+          
+          <div class="hidden p-3 bg-white border-t border-slate-100">
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">`;
+            
+            classNotes.forEach(n => {
+              accordionHtml += `
+                <div class="p-3.5 rounded-xl border border-slate-150 hover:border-brand-300 bg-slate-50/30 flex flex-col gap-3 justify-between hover:shadow-md custom-transition">
+                  <div class="space-y-1">
+                    <h5 class="text-xs font-extrabold text-slate-800 line-clamp-2 leading-snug">${n.topic || 'Revision Note'}</h5>
+                    <div class="flex items-center gap-1.5">
+                      <span class="px-2 py-0.5 text-[9px] font-bold bg-slate-100 text-slate-500 rounded">${sName}</span>
+                      <span class="text-[9px] font-semibold text-slate-400"><i class="fas fa-eye"></i> ${n.downloads || 0} hits</span>
+                    </div>
+                  </div>
+                  <button class="w-full py-1.5 px-3 text-[10px] font-bold text-white bg-gradient-to-tr from-brand-600 to-indigo-500 hover:from-brand-700 hover:to-indigo-600 rounded-lg flex items-center justify-center gap-1.5 shadow-sm custom-transition" onclick="viewNote('${n.id}','${(n.topic || 'Study Note').replace(/'/g, "\\'")}', '${encodeURIComponent(n.pdfUrl || '')}')">
+                    <i class="fas fa-book-open"></i> Read Study Materials
+                  </button>
+                </div>`;
+            });
+            
+      accordionHtml += `
+            </div>
+          </div>
+        </div>`;
+    }
+    accordionHtml += `</div>`;
+  }
+  
+  targetElement.innerHTML = accordionHtml;
+}
+
+window.toggleAccordion = (btn) => {
+  const content = btn.nextElementSibling;
+  const chevron = btn.querySelector('.fa-chevron-down');
+  
+  if (content.classList.contains('hidden')) {
+    content.classList.remove('hidden');
+    if (chevron) chevron.classList.add('rotate-180');
+  } else {
+    content.classList.add('hidden');
+    if (chevron) chevron.classList.remove('rotate-180');
+  }
+};
+
+// Render Video Lectures Section Grid
+function renderLecturesGrid(lectures) {
+  const targetElement = document.getElementById('lecturesGrid');
+  if (!targetElement) return;
+
+  const entries = Object.entries(lectures);
+  if (!entries.length) {
+    targetElement.innerHTML = `
+      <div class="text-center py-10 text-slate-400">
+        <i class="fab fa-youtube text-3xl mb-2.5 block text-red-400"></i>
+        <span class="text-xs font-semibold">No live lectures active.</span>
+      </div>`;
+    return;
+  }
+
+  const grouped = {};
+  entries.sort(([, a], [, b]) => (b.createdAt || 0) - (a.createdAt || 0)).forEach(([id, l]) => {
+    const sub = l.subject || 'General Info';
+    if (!grouped[sub]) grouped[sub] = [];
+    grouped[sub].push({ id, ...l });
+  });
+
+  let html = '';
+  for (const sub in grouped) {
+    const iconClass = getSubjectIcon(sub);
+    html += `
+      <div class="space-y-3">
+        <div class="flex items-center gap-2 border-b border-slate-100 pb-1.5">
+          <span class="w-7 h-7 rounded-lg bg-slate-50 flex items-center justify-center border border-slate-100 text-[10px]">
+            <i class="fas ${iconClass}"></i>
+          </span>
+          <h4 class="text-[10px] font-extrabold text-slate-400 tracking-wider uppercase">${sub}</h4>
+        </div>
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">`;
+
+        grouped[sub].forEach(l => {
+          const thumbnail = l.videoId ? `https://img.youtube.com/vi/${l.videoId}/mqdefault.jpg` : '';
+          html += `
+            <div class="group bg-white rounded-xl border border-slate-150 hover:border-red-300 overflow-hidden flex flex-col justify-between hover:shadow-md cursor-pointer custom-transition" onclick="watchLecture('${l.id}','${(l.topic || 'Video Tutorial').replace(/'/g, "\\'")}', '${l.videoId || ''}', '${(l.subject || '').replace(/'/g, "\\'")}', '${(l.duration || '').replace(/'/g, "\\'")}')">
+              <div class="space-y-3">
+                
+                <!-- Video Thumbnail Overlay -->
+                <div class="relative aspect-video bg-slate-950 overflow-hidden">
+                  ${thumbnail ? `<img src="${thumbnail}" alt="lesson preview" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" loading="lazy">` : `<div class="w-full h-full flex items-center justify-center text-red-500 bg-red-50"><i class="fab fa-youtube text-3xl"></i></div>`}
+                  
+                  <div class="absolute inset-0 bg-slate-950/30 opacity-0 group-hover:opacity-100 flex items-center justify-center custom-transition">
+                    <span class="w-10 h-10 rounded-full bg-red-600 text-white flex items-center justify-center text-sm shadow-xl shadow-red-600/30">
+                      <i class="fas fa-play ml-0.5"></i>
+                    </span>
+                  </div>
+                  
+                  ${l.duration ? `<span class="absolute bottom-2 right-2 bg-black/85 px-1.5 py-0.5 rounded text-[9px] font-bold text-white"><i class="fas fa-clock mr-1"></i>${l.duration}</span>` : ''}
+                </div>
+
+                <div class="px-3 space-y-1">
+                  <h5 class="text-xs font-extrabold text-slate-800 group-hover:text-red-600 line-clamp-2 leading-snug custom-transition">${l.topic || 'Curriculum Class'}</h5>
+                  <div class="flex flex-wrap items-center gap-1.5">
+                    <span class="px-2 py-0.5 text-[9px] font-bold bg-slate-100 text-slate-500 rounded">${l.class || 'Class'}</span>
+                    <span class="text-[9px] font-semibold text-slate-400"><i class="fas fa-eye"></i> ${l.views || 0} views</span>
+                  </div>
+                </div>
+
+              </div>
+              
+              <div class="p-3 pt-2 mt-3 border-t border-slate-50 flex items-center justify-between text-[10px] font-bold">
+                <span class="text-red-600 flex items-center gap-1"><i class="fas fa-play-circle"></i> View Class</span>
+                <span class="text-slate-400 font-semibold">YouTube Player</span>
+              </div>
+            </div>`;
+        });
+
+    html += `
+        </div>
+      </div>`;
+  }
+  targetElement.innerHTML = html;
+}
+
+// Generate Dashboard Note Cards on Home Overview
+function renderHomeRecent() {
+  const recentLimit = Object.fromEntries(Object.entries(allNotes).sort(([, a], [, b]) => (b.createdAt || 0) - (a.createdAt || 0)).slice(0, 3));
+  const el = document.getElementById('homeRecentNotes');
+  if (!el) return;
+
+  const entries = Object.entries(recentLimit);
+  if (!entries.length) {
+    el.innerHTML = `<div class="text-center py-6 text-slate-400 text-xs font-medium"><i class="fas fa-info-circle mr-1"></i> No documents uploaded yet.</div>`;
+    return;
+  }
+
+  el.innerHTML = entries.map(([id, n]) => {
+    const iconClass = getSubjectIcon(n.subject);
+    return `
+      <div class="p-3.5 bg-slate-50/60 rounded-xl border border-slate-100 flex items-center justify-between gap-3 hover:shadow-sm custom-transition">
+        <div class="flex items-center gap-2.5 min-w-0">
+          <div class="w-8 h-8 rounded-lg bg-white border border-slate-150 flex items-center justify-center text-xs shrink-0">
+            <i class="fas ${iconClass}"></i>
+          </div>
+          <div class="min-w-0">
+            <h5 class="text-xs font-extrabold text-slate-800 leading-snug truncate">${n.topic || 'Preparation Notes'}</h5>
+            <div class="flex items-center gap-1.5 mt-0.5">
+              <span class="text-[9px] font-bold text-slate-500 uppercase">${n.subject || 'Medical'}</span>
+              <span class="text-[9px] font-semibold text-slate-400">${n.class || 'CEE Prep'}</span>
+            </div>
+          </div>
+        </div>
+        <button onclick="viewNote('${id}','${(n.topic || '').replace(/'/g, "\\'")}', '${encodeURIComponent(n.pdfUrl || '')}')" class="px-3 py-1.5 rounded-lg text-[10px] font-bold text-brand-600 bg-brand-50 hover:bg-brand-100 custom-transition shrink-0">
+          Open File
+        </button>
+      </div>`;
+  }).join('');
+}
+
+// Generate Dashboard Recent Lectures on Home Overview
+function renderHomeLectures() {
+  const recentLimit = Object.fromEntries(Object.entries(allLectures).sort(([, a], [, b]) => (b.createdAt || 0) - (a.createdAt || 0)).slice(0, 2));
+  const el = document.getElementById('homeRecentLectures');
+  if (!el) return;
+
+  const entries = Object.entries(recentLimit);
+  if (!entries.length) {
+    el.innerHTML = `<div class="col-span-full text-center py-6 text-slate-400 text-xs font-medium"><i class="fas fa-info-circle mr-1"></i> No video tutorials uploaded.</div>`;
+    return;
+  }
+
+  el.innerHTML = entries.map(([id, l]) => {
+    const thumb = l.videoId ? `https://img.youtube.com/vi/${l.videoId}/mqdefault.jpg` : '';
+    return `
+      <div class="group bg-slate-50/60 rounded-xl border border-slate-100 overflow-hidden flex flex-col justify-between hover:shadow-sm cursor-pointer custom-transition" onclick="watchLecture('${id}','${(l.topic || 'Video Class').replace(/'/g, "\\'")}', '${l.videoId || ''}', '${(l.subject || '').replace(/'/g, "\\'")}', '${(l.duration || '').replace(/'/g, "\\'")}')">
+        <div class="relative aspect-video bg-slate-950 overflow-hidden">
+          ${thumb ? `<img src="${thumb}" alt="lecture" class="w-full h-full object-cover group-hover:scale-102 transition-transform duration-300" loading="lazy">` : `<div class="w-full h-full flex items-center justify-center text-red-500 bg-red-50"><i class="fab fa-youtube text-xl"></i></div>`}
+          <div class="absolute inset-0 bg-slate-950/20 opacity-0 group-hover:opacity-100 flex items-center justify-center custom-transition">
+            <span class="w-8 h-8 rounded-full bg-red-600 text-white flex items-center justify-center text-xs"><i class="fas fa-play ml-0.5"></i></span>
+          </div>
+        </div>
+        <div class="p-2.5 space-y-0.5">
+          <h5 class="text-[11px] font-black text-slate-800 group-hover:text-red-600 truncate custom-transition">${l.topic || 'Curriculum Video'}</h5>
+          <div class="flex items-center justify-between text-[9px] text-slate-400 font-bold">
+            <span>${l.subject || 'Medical'}</span>
+            ${l.duration ? `<span><i class="fas fa-clock mr-1"></i>${l.duration}</span>` : ''}
+          </div>
+        </div>
+      </div>`;
+  }).join('');
+}
+
+// PDF dynamic viewer targeting the requested verbatim online_viewer_net.htm proxy
+window.viewNote = async (id, title, encodedUrl) => {
+  const url = decodeURIComponent(encodedUrl);
+  let resolvedUrl = url;
+  if (url.includes('drive.google.com')) {
+    resolvedUrl = url.replace('/view', '/preview');
+  }
+
+  document.getElementById('viewerTitle').textContent = title;
+  
+  // Point verification frame directly to requested online_viewer_net.htm
+  const viewerFrame = document.getElementById('viewerFrame');
+  viewerFrame.src = `online_viewer_net.htm?url=${encodeURIComponent(resolvedUrl)}`;
+
+  document.getElementById('pdfViewer').classList.remove('hidden');
+  document.body.classList.add('overflow-hidden');
+
+  try {
+    const dbRef = ref(db, `notes/${id}`);
+    const snapshot = await get(dbRef);
+    if (snapshot.exists()) {
+      update(dbRef, { downloads: (snapshot.val().downloads || 0) + 1 });
+    }
+  } catch (err) {
+    console.warn("View Analytics Warning: ", err);
+  }
+};
+
+window.closeViewer = () => {
+  document.getElementById('pdfViewer').classList.add('hidden');
+  document.getElementById('viewerFrame').src = '';
+  document.body.classList.remove('overflow-hidden');
+};
+
+// YouTube Unrestricted Secure Embed Player Launcher
+window.watchLecture = async (id, title, videoId, subject, duration) => {
+  if (!videoId) {
+    console.error("Lecture launching failed: missing YouTube Video ID.");
+    return;
+  }
+
+  /* 
+     CRITICAL REVISION FOR FIXING ERROR 153 & CONFIGURATION BLOCKS:
+     1. Uses the secure, privacy-friendly 'youtube-nocookie.com' domain.
+     2. Retains standard autoplay configuration.
+     3. Bypasses manual raw postMessage speeds which caused Error 153 mismatched calls.
+  */
+  const cleanEmbedUrl = `https://www.youtube-nocookie.com/embed/${videoId}?autoplay=1&rel=0&modestbranding=1&controls=1`;
+  const extYtUrl = `https://www.youtube.com/watch?v=${videoId}`;
+
+  document.getElementById('playerTitle').textContent = title;
+  document.getElementById('playerMeta').textContent = [subject, duration].filter(Boolean).join(' · ');
+  document.getElementById('playerFrame').src = cleanEmbedUrl;
+  
+  const extBtn = document.getElementById('btnExternalYt');
+  if (extBtn) extBtn.href = extYtUrl;
+
+  document.getElementById('lecturePlayer').classList.remove('hidden');
+  document.body.classList.add('overflow-hidden');
+
+  try {
+    const dbRef = ref(db, `lectures/${id}`);
+    const snapshot = await get(dbRef);
+    if (snapshot.exists()) {
+      update(dbRef, { views: (snapshot.val().views || 0) + 1 });
+    }
+  } catch (err) {
+    console.warn("Lecture Tracker Exception: ", err);
+  }
+};
+
+window.closePlayer = () => {
+  document.getElementById('lecturePlayer').classList.add('hidden');
+  document.getElementById('playerFrame').src = '';
+  document.body.classList.remove('overflow-hidden');
+};
+
+// Close modals via Keyboard Escape inputs
+document.addEventListener('keydown', e => {
+  if (e.key === 'Escape') {
+    closeViewer();
+    closePlayer();
+  }
+});
+</script>
+</body>
+</html>
