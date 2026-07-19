@@ -269,7 +269,7 @@
       border-top: 1px solid rgba(255, 255, 255, 0.15);
       display: flex;
       flex-wrap: wrap;
-      gap: 1.5rem;
+      gap: 1rem;
       position: relative;
       z-index: 2;
     }
@@ -290,7 +290,7 @@
       color: #bae6fd;
     }
 
-    /* --- Stats Section --- */
+    /* --- Stats Grid Section --- */
     .stats-grid {
       display: grid;
       grid-template-columns: repeat(2, 1fr);
@@ -755,6 +755,11 @@
           <i data-lucide="mail" style="width: 16px; height: 16px;"></i>
           <span id="userProfileEmail">Loading Email...</span>
         </div>
+        <!-- Dynamic Expiry Stat Widget -->
+        <div class="profile-stat" id="expiryStat" style="background: rgba(2, 132, 199, 0.25); border-color: rgba(255, 255, 255, 0.15); display: none;">
+          <i data-lucide="calendar" style="width: 16px; height: 16px;"></i>
+          <span id="userExpiryDate" style="font-weight: 500;">Expiry: Loading...</span>
+        </div>
         <div class="profile-stat" style="background: rgba(34, 197, 94, 0.2); border-color: rgba(34, 197, 94, 0.3);">
           <i data-lucide="award" style="width: 16px; height: 16px; color: #4ade80;"></i>
           <span style="color: #f0fdf4; font-weight: 700;">Approved Student</span>
@@ -809,16 +814,17 @@
           Start Practice <i data-lucide="arrow-right" style="width: 16px; height: 16px;"></i>
         </a>
       </article>
-<!-- Notes & Lectures -->
-<article class="module-card" data-search="notes lectures study materials video lectures cee notes mbbs notes biology chemistry physics zoology botany">
-  <span class="tag">Study Hub</span>
-  <h3>Notes &amp; Lectures</h3>
-  <p>Access high-quality CEE notes, PDF study materials, and video lectures for all subjects in one place.</p>
-  <a href="/notes/index.html" class="btn-action">
-    Open Library
-    <i data-lucide="arrow-right" style="width: 16px; height: 16px;"></i>
-  </a>
-</article>
+
+      <!-- Notes & Lectures -->
+      <article class="module-card" data-search="notes lectures study materials video lectures cee notes mbbs notes biology chemistry physics zoology botany">
+        <span class="tag">Study Hub</span>
+        <h3>Notes &amp; Lectures</h3>
+        <p>Access high-quality CEE notes, PDF study materials, and video lectures for all subjects in one place.</p>
+        <a href="/notes/index.html" class="btn-action">
+          Open Library <i data-lucide="arrow-right" style="width: 16px; height: 16px;"></i>
+        </a>
+      </article>
+
       <!-- All Subject Past Questions -->
       <article class="module-card" data-search="high yield all subject past questions exam scheduler">
         <span class="tag">High Yield</span>
@@ -1097,6 +1103,28 @@
               document.getElementById("userProfileName").innerText = user.displayName ? user.displayName : "Medic Student";
               document.getElementById("userProfileEmail").innerText = user.email ? user.email : "N/A";
               setGreetings(user.displayName);
+              
+              // Hydrate and display student expiration limits
+              const expiryStatContainer = document.getElementById("expiryStat");
+              const expiryElement = document.getElementById("userExpiryDate");
+              
+              if (userData.expiryDate) {
+                // Formatting numeric milliseconds timestamp into easily digestible date
+                const expiryDateObj = new Date(userData.expiryDate);
+                const formattedDate = expiryDateObj.toLocaleDateString('en-US', {
+                  year: 'numeric',
+                  month: 'short',
+                  day: 'numeric'
+                });
+                expiryElement.innerText = `Expires: ${formattedDate}`;
+                expiryStatContainer.style.display = "flex";
+              } else {
+                expiryElement.innerText = "Expires: Lifetime";
+                expiryStatContainer.style.display = "flex";
+              }
+              
+              // Refresh Lucide Icons to render calendar correctly in injected container
+              lucide.createIcons();
               
             } else {
               // Lock screen immediately to show customized approval shield
