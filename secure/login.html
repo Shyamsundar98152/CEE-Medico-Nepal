@@ -146,16 +146,31 @@
     .delay-450 { animation-delay: 450ms; }
     .delay-525 { animation-delay: 525ms; }
     .delay-600 { animation-delay: 600ms; }
+
+    /* Custom Scrollbar for Modal content */
+    .custom-scroll::-webkit-scrollbar {
+      width: 6px;
+    }
+    .custom-scroll::-webkit-scrollbar-track {
+      background: #f1f5f9;
+      border-radius: 10px;
+    }
+    .custom-scroll::-webkit-scrollbar-thumb {
+      background: #cbd5e1;
+      border-radius: 10px;
+    }
+    .custom-scroll::-webkit-scrollbar-thumb:hover {
+      background: #94a3b8;
+    }
   </style>
 </head>
+
 <!-- Floating QR Button + Popup (Single Code Block) -->
 <div id="qr-widget">
-
   <!-- Floating Button -->
   <button id="qrBtn" onclick="document.getElementById('qrModal').style.display='flex'">
     <span class="qr-wave qr-wave-1"></span>
     <span class="qr-wave qr-wave-2"></span>
-
     <!-- QR Icon -->
     <svg width="30" height="30" viewBox="0 0 24 24" fill="white" style="position:relative;z-index:2;">
       <path d="M3 3h8v8H3V3zm2 2v4h4V5H5zm8-2h8v8h-8V3zm2 2v4h4V5h-4zM3 13h8v8H3v-8zm2 2v4h4v-4H5zm10 0h2v2h-2zm4 0h2v2h-2zm-4 4h2v2h-2zm2-2h2v2h-2z"/>
@@ -166,16 +181,10 @@
   <div id="qrModal" onclick="if(event.target===this)this.style.display='none'">
     <div id="qrContent">
       <span id="qrClose" onclick="document.getElementById('qrModal').style.display='none'">&times;</span>
-
-      <h3 style="margin:0 0 15px;font-size:20px;font-weight:700;">
-        Scan QR Code
-      </h3>
-
-      <!-- Replace with your QR image -->
+      <h3 style="margin:0 0 15px;font-size:20px;font-weight:700;">Scan QR Code</h3>
       <img src="/img/qr-redirect.jpg" alt="QR Code" style="width:100%;border-radius:12px;">
     </div>
   </div>
-
 </div>
 
 <style>
@@ -195,36 +204,25 @@
   box-shadow:0 10px 25px rgba(0,0,0,.25);
   z-index:9990;
 }
-
 .qr-wave{
   position:absolute;
   inset:0;
   border-radius:50%;
   pointer-events:none;
 }
-
 .qr-wave-1{
   background:#3b82f6;
   animation:pulseRing 2.5s infinite;
 }
-
 .qr-wave-2{
   background:#60a5fa;
   animation:pulseRing 2.5s infinite;
   animation-delay:1.25s;
 }
-
 @keyframes pulseRing{
-  0%{
-    transform:scale(1);
-    opacity:.8;
-  }
-  100%{
-    transform:scale(2.2);
-    opacity:0;
-  }
+  0%{ transform:scale(1); opacity:.8; }
+  100%{ transform:scale(2.2); opacity:0; }
 }
-
 #qrModal{
   position:fixed;
   inset:0;
@@ -234,7 +232,6 @@
   justify-content:center;
   z-index:9999;
 }
-
 #qrContent{
   background:#fff;
   width:90%;
@@ -245,7 +242,6 @@
   position:relative;
   animation:popup .3s ease;
 }
-
 #qrClose{
   position:absolute;
   top:8px;
@@ -254,18 +250,153 @@
   cursor:pointer;
   color:#666;
 }
-
 @keyframes popup{
-  from{
-    opacity:0;
-    transform:scale(.85);
-  }
-  to{
-    opacity:1;
-    transform:scale(1);
-  }
+  from{ opacity:0; transform:scale(.85); }
+  to{ opacity:1; transform:scale(1); }
 }
 </style>
+
+<!-- ================= PREMIUM SUBSCRIPTION MODAL ================= -->
+<div id="subscriptionModal" class="fixed inset-0 z-[9999] flex items-center justify-center hidden p-4">
+  <div class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm transition-opacity duration-300" onclick="toggleSubModal(false)"></div>
+  <div class="bg-white rounded-3xl shadow-2xl border border-sky-100 max-w-4xl w-full max-h-[90vh] flex flex-col relative z-10 transform scale-95 opacity-0 transition-all duration-300 ease-out">
+    
+    <!-- Modal Header -->
+    <div class="p-6 border-b border-slate-100 flex justify-between items-center bg-gradient-to-r from-medical-50 to-white rounded-t-3xl">
+      <div class="flex items-center gap-3">
+        <div class="w-10 h-10 rounded-xl bg-gradient-to-tr from-amber-500 to-yellow-400 flex items-center justify-center text-white shadow-md">
+          <i class="fas fa-graduation-cap text-lg"></i>
+        </div>
+        <div>
+          <h3 class="text-xl font-extrabold text-slate-900 tracking-tight">CEE Medico Nepal Premium Plans</h3>
+          <p class="text-xs text-slate-500 font-medium">Accelerate your CEE preparation journey</p>
+        </div>
+      </div>
+      <button onclick="toggleSubModal(false)" class="w-9 h-9 flex items-center justify-center rounded-xl bg-slate-100 hover:bg-rose-50 hover:text-rose-600 text-slate-500 transition duration-200">
+        <i class="fas fa-times"></i>
+      </button>
+    </div>
+
+    <!-- Modal Content (Scrollable Container) -->
+    <div class="p-6 overflow-y-auto flex-grow custom-scroll space-y-8 bg-slate-50/50">
+      
+      <!-- Subscription Cards Grid -->
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+        
+        <!-- Plan 1 -->
+        <div class="bg-white rounded-2xl p-6 border border-slate-200 shadow-sm flex flex-col justify-between hover:border-medical-400 transition-all duration-300 relative overflow-hidden group">
+          <div class="absolute top-0 right-0 w-24 h-24 bg-sky-50 rounded-bl-full -z-10 group-hover:bg-medical-50 transition-colors duration-300"></div>
+          <div>
+            <div class="flex justify-between items-start mb-4">
+              <span class="bg-sky-50 text-medical-700 text-xs font-bold px-3 py-1 rounded-full border border-sky-100">💎 Plan 1</span>
+            </div>
+            <h4 class="text-lg font-bold text-slate-900">Till CEE 2083 Package</h4>
+            <div class="mt-2 flex items-baseline gap-1">
+              <span class="text-2xl font-black text-slate-900">NPR 199</span>
+              <span class="text-xs text-slate-400 font-medium">/ One-Time Payment</span>
+            </div>
+            <p class="text-xs text-amber-600 font-semibold mt-1"><i class="far fa-clock mr-1"></i>Validity: Until official CEE 2083 Exam</p>
+            
+            <div class="border-t border-slate-100 my-4"></div>
+            
+            <ul class="space-y-2.5 text-xs text-slate-600">
+              <li class="flex items-start gap-2"><i class="fas fa-check-circle text-emerald-500 mt-0.5 shrink-0"></i> <span>Unlimited access to all Premium MCQ Sets</span></li>
+              <li class="flex items-start gap-2"><i class="fas fa-check-circle text-emerald-500 mt-0.5 shrink-0"></i> <span>Chapter-wise MCQs (Phy, Chem, Bot, Zoo & MAT)</span></li>
+              <li class="flex items-start gap-2"><i class="fas fa-check-circle text-emerald-500 mt-0.5 shrink-0"></i> <span>Previous Year CEE Questions</span></li>
+              <li class="flex items-start gap-2"><i class="fas fa-check-circle text-emerald-500 mt-0.5 shrink-0"></i> <span>Daily Live Mock Tests (9:00 PM – 10:00 PM)</span></li>
+              <li class="flex items-start gap-2"><i class="fas fa-check-circle text-emerald-500 mt-0.5 shrink-0"></i> <span>Weekly Mega Mock Tests (200 Marks)</span></li>
+              <li class="flex items-start gap-2"><i class="fas fa-check-circle text-emerald-500 mt-0.5 shrink-0"></i> <span>Real-Time National Ranking & Analytics</span></li>
+              <li class="flex items-start gap-2"><i class="fas fa-check-circle text-emerald-500 mt-0.5 shrink-0"></i> <span>Correct Answers with Explanations</span></li>
+              <li class="flex items-start gap-2"><i class="fas fa-check-circle text-emerald-500 mt-0.5 shrink-0"></i> <span>Unlimited Practice Tests & Question Bank Updates</span></li>
+              <li class="flex items-start gap-2"><i class="fas fa-check-circle text-emerald-500 mt-0.5 shrink-0"></i> <span>Mobile & Desktop Access + Priority Support</span></li>
+            </ul>
+          </div>
+          <div class="mt-6">
+            <p class="text-[11px] text-slate-400 italic mb-3">Best For: Students appearing in CEE 2083 who want affordable preparation until their entrance examination.</p>
+            <a href="https://wa.me/9779812240229?text=I%20want%20to%20subscribe%20to%20Till%20CEE%202083%20Plan" target="_blank" class="w-full py-2.5 bg-slate-900 hover:bg-slate-800 text-white font-bold text-xs rounded-xl flex items-center justify-center gap-2 shadow-sm transition duration-200">
+              Activate Plan 1 <i class="fas fa-arrow-right text-[10px]"></i>
+            </a>
+          </div>
+        </div>
+
+        <!-- Plan 2 -->
+        <div class="bg-white rounded-2xl p-6 border-2 border-medical-500 shadow-md flex flex-col justify-between hover:shadow-xl transition-all duration-300 relative overflow-hidden">
+          <div class="absolute top-0 right-0 bg-medical-500 text-white text-[10px] font-extrabold uppercase tracking-widest px-4 py-1 rounded-bl-xl shadow-sm">Popular</div>
+          <div>
+            <div class="flex justify-between items-start mb-4">
+              <span class="bg-amber-50 text-amber-700 text-xs font-bold px-3 py-1 rounded-full border border-amber-100">🌟 Plan 2</span>
+            </div>
+            <h4 class="text-lg font-bold text-slate-900">Annual Premium Membership</h4>
+            <div class="mt-2 flex items-baseline gap-1">
+              <span class="text-2xl font-black text-slate-900">NPR 499</span>
+              <span class="text-xs text-slate-400 font-medium">/ Year</span>
+            </div>
+            <p class="text-xs text-medical-600 font-semibold mt-1"><i class="far fa-calendar-alt mr-1"></i>Validity: 12 Months from Activation</p>
+            
+            <div class="border-t border-slate-100 my-4"></div>
+            
+            <p class="text-xs font-bold text-slate-800 mb-2">Everything in the Till CEE Plan PLUS:</p>
+            <ul class="space-y-2.5 text-xs text-slate-600">
+              <li class="flex items-start gap-2"><i class="fas fa-plus-circle text-medical-500 mt-0.5 shrink-0"></i> <span>Full 12-Month Uninterrupted Premium Access</span></li>
+              <li class="flex items-start gap-2"><i class="fas fa-plus-circle text-medical-500 mt-0.5 shrink-0"></i> <span>Unlimited Daily Mock Tests & Weekly Grand Tests</span></li>
+              <li class="flex items-start gap-2"><i class="fas fa-plus-circle text-medical-500 mt-0.5 shrink-0"></i> <span>New Target MCQs Added Regular Interval</span></li>
+              <li class="flex items-start gap-2"><i class="fas fa-plus-circle text-medical-500 mt-0.5 shrink-0"></i> <span>Complete Subject-wise Comprehensive Test Series</span></li>
+              <li class="flex items-start gap-2"><i class="fas fa-plus-circle text-medical-500 mt-0.5 shrink-0"></i> <span>Advanced Performance Analytics & Progress Tracking</span></li>
+              <li class="flex items-start gap-2"><i class="fas fa-plus-circle text-medical-500 mt-0.5 shrink-0"></i> <span>Bookmark & Review Modules for Incorrect Qns</span></li>
+              <li class="flex items-start gap-2"><i class="fas fa-plus-circle text-medical-500 mt-0.5 shrink-0"></i> <span>Access concurrently from Multiple Devices</span></li>
+              <li class="flex items-start gap-2"><i class="fas fa-plus-circle text-medical-500 mt-0.5 shrink-0"></i> <span>Priority Feature Updates & Future Premium Content</span></li>
+            </ul>
+          </div>
+          <div class="mt-6">
+            <p class="text-[11px] text-slate-400 italic mb-3">Best For: Students starting preparation early and wanting uninterrupted access throughout the year.</p>
+            <a href="https://wa.me/9779812240229?text=I%20want%20to%20subscribe%20to%20Annual%20Premium%20Membership" target="_blank" class="w-full py-2.5 bg-medical-600 hover:bg-medical-700 text-white font-bold text-xs rounded-xl flex items-center justify-center gap-2 shadow-md shadow-medical-500/20 transition duration-200">
+              Activate Plan 2 <i class="fas fa-arrow-right text-[10px]"></i>
+            </a>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- Core Features Banner -->
+      <div class="bg-white border border-slate-200 rounded-2xl p-5">
+        <h5 class="text-sm font-bold text-slate-900 mb-4 text-center tracking-tight">📚 Premium Membership Highlights</h5>
+        <div class="grid grid-cols-2 sm:grid-cols-5 gap-4 text-center">
+          <div class="p-3 bg-slate-50 border border-slate-100 rounded-xl"><p class="text-base">🩺</p><p class="text-[10px] font-bold text-slate-700 mt-1">100K+ MCQs</p></div>
+          <div class="p-3 bg-slate-50 border border-slate-100 rounded-xl"><p class="text-base">📖</p><p class="text-[10px] font-bold text-slate-700 mt-1">Chapter Practice</p></div>
+          <div class="p-3 bg-slate-50 border border-slate-100 rounded-xl"><p class="text-base">🎯</p><p class="text-[10px] font-bold text-slate-700 mt-1">CEE Blueprint</p></div>
+          <div class="p-3 bg-slate-50 border border-slate-100 rounded-xl"><p class="text-base">📈</p><p class="text-[10px] font-bold text-slate-700 mt-1">Dashboard</p></div>
+          <div class="p-3 bg-slate-50 border border-slate-100 rounded-xl col-span-2 sm:col-span-1"><p class="text-base">🏆</p><p class="text-[10px] font-bold text-slate-700 mt-1">Leaderboard</p></div>
+        </div>
+      </div>
+
+      <!-- Payment Steps Details -->
+      <div class="bg-amber-50/60 border border-amber-200/60 rounded-2xl p-4 flex flex-col sm:flex-row items-center justify-between gap-4">
+        <div class="flex items-center gap-3 text-center sm:text-left">
+          <div class="w-10 h-10 rounded-full bg-amber-100 border border-amber-200 flex items-center justify-center text-amber-700 shrink-0">
+            <i class="fas fa-credit-card text-sm"></i>
+          </div>
+          <div>
+            <h6 class="text-xs font-bold text-slate-900">Instant Manual Verification</h6>
+            <p class="text-[11px] text-slate-600 mt-0.5">After payment via eSewa, your profile will be instantly authorized by the CEE Medico Nepal team.</p>
+          </div>
+        </div>
+        <div class="flex items-center gap-2 shrink-0 bg-white px-3 py-1.5 rounded-xl border border-slate-200 shadow-sm">
+          <span class="text-[10px] font-bold text-slate-400 uppercase tracking-wider mr-1">Supported:</span>
+          <span class="text-xs font-black text-emerald-600 tracking-tight flex items-center gap-1"><span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span> eSewa</span>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<!-- Extra Floating Subscription Activation Button -->
+<div class="fixed bottom-6 right-6 z-[9990]">
+  <button onclick="toggleSubModal(true)" class="bg-gradient-to-r from-medical-600 to-sky-500 hover:from-medical-700 hover:to-sky-600 text-white font-bold text-xs px-5 py-3.5 rounded-full shadow-xl flex items-center gap-2 hover:scale-105 transition-all duration-300 animate-bounce">
+    <i class="fas fa-graduation-cap"></i> View Plans
+  </button>
+</div>
+
 <body class="bg-mesh font-sans min-h-screen flex flex-col justify-between relative overflow-x-hidden antialiased text-slate-800">
 
   <!-- Toast notification portal element -->
@@ -468,6 +599,26 @@
   </div>
 
   <script>
+    // Toggle Premium Subscription Modal Window
+    function toggleSubModal(show) {
+      const modal = document.getElementById("subscriptionModal");
+      const dialog = modal.querySelector('.max-w-4xl');
+      
+      if (show) {
+        modal.classList.remove("hidden");
+        setTimeout(() => {
+          dialog.classList.remove('scale-95', 'opacity-0');
+          dialog.classList.add('scale-100', 'opacity-100');
+        }, 50);
+      } else {
+        dialog.classList.add('scale-95', 'opacity-0');
+        dialog.classList.remove('scale-100', 'opacity-100');
+        setTimeout(() => {
+          modal.classList.add("hidden");
+        }, 200);
+      }
+    }
+
     // Show premium styled alert
     function showCustomAlert(title, message, type = 'info') {
       const modal = document.getElementById("customAlertModal");
@@ -631,6 +782,7 @@
     window.showCustomAlert = showCustomAlert;
     window.showToast = showToast;
     window.closeNotice = closeNotice;
+    window.toggleSubModal = toggleSubModal;
   </script>
 
   <script type="module">
