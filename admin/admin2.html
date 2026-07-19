@@ -6,45 +6,28 @@
     <link rel="icon" type="image/png" sizes="32x32" href="/fevicon/favicon-32x32.png">
     <link rel="icon" type="image/png" sizes="16x16" href="/fevicon/favicon-16x16.png">
     <link rel="manifest" href="/fevicon/site.webmanifest">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
     <title>Admin Panel - User Approval</title>
-    
+
     <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
-    
+
     <style>
         body {
             font-family: 'Poppins', sans-serif;
             background-color: #f3f4f6;
         }
-        
-        /* Custom scrollbar for better visual feel */
-        ::-webkit-scrollbar {
-            width: 6px;
-            height: 6px;
-        }
-        ::-webkit-scrollbar-track {
-            background: #f1f1f1;
-        }
-        ::-webkit-scrollbar-thumb {
-            background: #cbd5e1;
-            border-radius: 4px;
-        }
-        ::-webkit-scrollbar-thumb:hover {
-            background: #94a3b8;
-        }
 
-        /* Modal Overlay Transition */
-        .modal {
-            transition: opacity 0.25s ease;
-        }
-        
-        /* Loading spinner animation */
-        @keyframes spin {
-            to { transform: rotate(360deg); }
-        }
+        ::-webkit-scrollbar { width: 6px; height: 6px; }
+        ::-webkit-scrollbar-track { background: #f1f1f1; }
+        ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
+        ::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
+
+        .modal { transition: opacity 0.25s ease; }
+
+        @keyframes spin { to { transform: rotate(360deg); } }
         .loading-spinner {
             display: inline-block;
             width: 1.25rem;
@@ -54,14 +37,31 @@
             border-top-color: white;
             animation: spin 0.8s linear infinite;
         }
+        .loading-spinner.dark { border-color: rgba(59,130,246,.2); border-top-color: #2563eb; }
+
+        /* Skeleton loading rows */
+        @keyframes pulseSkel { 0%,100% { opacity: 1; } 50% { opacity: .4; } }
+        .skeleton { animation: pulseSkel 1.4s ease-in-out infinite; background: #e2e8f0; border-radius: 6px; }
+
+        button:focus-visible, input:focus-visible, select:focus-visible, textarea:focus-visible, a:focus-visible {
+            outline: 2px solid #3b82f6; outline-offset: 2px;
+        }
+
+        @media (prefers-reduced-motion: reduce) {
+            *, *::before, *::after { animation-duration: 0.001ms !important; animation-iteration-count: 1 !important; transition-duration: 0.001ms !important; }
+        }
+
+        /* Mobile card list */
+        .user-card { transition: box-shadow .15s ease, transform .15s ease; }
+        .user-card:active { transform: scale(0.995); }
     </style>
 </head>
 <body class="text-slate-800 antialiased min-h-screen flex flex-col">
 
-<div class="container mx-auto px-4 py-8 max-w-7xl flex-grow">
-    
+<div class="container mx-auto px-4 py-6 sm:py-8 max-w-7xl flex-grow">
+
     <!-- Login Section -->
-    <div id="loginDiv" class="max-w-md mx-auto my-12 bg-white rounded-2xl shadow-xl p-8 border border-slate-100">
+    <div id="loginDiv" class="max-w-md mx-auto my-12 bg-white rounded-2xl shadow-xl p-6 sm:p-8 border border-slate-100">
         <div class="text-center mb-8">
             <div class="w-16 h-16 bg-blue-100 rounded-2xl flex items-center justify-center mx-auto mb-4">
                 <i class="fas fa-user-shield text-blue-600 text-3xl"></i>
@@ -69,144 +69,173 @@
             <h1 class="text-3xl font-bold text-slate-800">Admin Login</h1>
             <p class="text-slate-500 text-sm mt-1">Access the admin dashboard panel</p>
         </div>
-        
+
         <div class="space-y-4">
             <div>
                 <label class="block text-sm font-medium text-slate-600 mb-1">Email Address</label>
-                <input type="email" id="email" class="w-full px-4 py-2.5 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all" placeholder="admin@example.com" required />
+                <input type="email" id="email" autocomplete="username" class="w-full px-4 py-2.5 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all" placeholder="admin@example.com" required />
             </div>
             <div>
                 <label class="block text-sm font-medium text-slate-600 mb-1">Password</label>
-                <input type="password" id="password" class="w-full px-4 py-2.5 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all" placeholder="••••••••" required />
+                <input type="password" id="password" autocomplete="current-password" class="w-full px-4 py-2.5 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all" placeholder="••••••••" required />
             </div>
-            
+
             <button id="loginBtn" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-medium py-3 rounded-xl transition-all shadow-md hover:shadow-lg flex items-center justify-center gap-2 mt-2">
                 <span id="loginBtnText">Login</span>
                 <span id="loginSpinner" style="display:none;" class="loading-spinner"></span>
             </button>
-            
+
             <div id="loginError" class="text-red-500 text-sm text-center font-medium mt-3"></div>
         </div>
     </div>
 
     <!-- Admin Content Section (Initially Hidden) -->
     <div id="adminContent" style="display:none;" class="space-y-6">
-        
+
         <!-- Header Actions -->
-        <div class="bg-white rounded-2xl shadow-sm p-6 border border-slate-100 flex flex-col md:flex-row md:items-center justify-between gap-4">
+        <div class="bg-white rounded-2xl shadow-sm p-4 sm:p-6 border border-slate-100 flex flex-col md:flex-row md:items-center justify-between gap-4">
             <div class="flex items-center gap-3">
-                <div class="w-12 h-12 bg-blue-50 rounded-xl flex items-center justify-center">
+                <div class="w-12 h-12 bg-blue-50 rounded-xl flex items-center justify-center shrink-0">
                     <i class="fas fa-user-cog text-blue-600 text-xl"></i>
                 </div>
                 <div>
-                    <h1 class="text-2xl font-bold text-slate-800">Admin Dashboard</h1>
-                    <p class="text-sm text-slate-500">Manage user access control and timeline approvals</p>
+                    <h1 class="text-xl sm:text-2xl font-bold text-slate-800">Admin Dashboard</h1>
+                    <p class="text-xs sm:text-sm text-slate-500">Manage user access control and timeline approvals</p>
                 </div>
             </div>
-            <div class="flex flex-wrap gap-2"> 
+            <div class="flex flex-wrap gap-2">
+                <button id="manualRefreshBtn" title="Force refresh from server" class="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 font-medium rounded-xl text-sm transition-all flex items-center gap-2">
+                    <i class="fas fa-sync-alt" id="refreshIcon"></i> <span class="hidden sm:inline">Refresh</span>
+                </button>
                 <a href="/quiz/reset.html" class="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 font-medium rounded-xl text-sm transition-all flex items-center gap-2">
-                    <i class="fas fa-redo text-slate-500"></i> Reset Quiz-Data
+                    <i class="fas fa-redo text-slate-500"></i> <span class="hidden sm:inline">Reset Quiz-Data</span>
                 </a>
                 <a href="/admin/userstatus.html" class="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 font-medium rounded-xl text-sm transition-all flex items-center gap-2">
-                    <i class="fas fa-info-circle text-slate-500"></i> UserStatus
+                    <i class="fas fa-info-circle text-slate-500"></i> <span class="hidden sm:inline">UserStatus</span>
                 </a>
                 <button id="logoutBtn" class="px-4 py-2 bg-red-50 hover:bg-red-100 text-red-600 font-medium rounded-xl text-sm transition-all flex items-center gap-2 border border-red-100">
-                    <i class="fas fa-sign-out-alt"></i> Logout
+                    <i class="fas fa-sign-out-alt"></i> <span class="hidden sm:inline">Logout</span>
                 </button>
             </div>
         </div>
-        
+
         <!-- Statistics Widget Grid -->
-        <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
-            <div class="bg-white rounded-2xl shadow-sm p-6 border border-slate-100 flex items-center justify-between">
+        <div class="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-6">
+            <div class="bg-white rounded-2xl shadow-sm p-4 sm:p-6 border border-slate-100 flex items-center justify-between">
                 <div>
-                    <h3 class="text-slate-400 font-medium text-sm uppercase tracking-wider">Total Users</h3>
-                    <p id="totalUsers" class="text-3xl font-bold text-slate-800 mt-1">0</p>
+                    <h3 class="text-slate-400 font-medium text-[11px] sm:text-sm uppercase tracking-wider">Total Users</h3>
+                    <p id="totalUsers" class="text-2xl sm:text-3xl font-bold text-slate-800 mt-1">0</p>
                 </div>
-                <div class="w-12 h-12 bg-slate-50 rounded-xl flex items-center justify-center text-slate-500">
-                    <i class="fas fa-users text-xl"></i>
+                <div class="w-10 h-10 sm:w-12 sm:h-12 bg-slate-50 rounded-xl flex items-center justify-center text-slate-500 shrink-0">
+                    <i class="fas fa-users text-lg sm:text-xl"></i>
                 </div>
             </div>
-            <div class="bg-white rounded-2xl shadow-sm p-6 border border-slate-100 flex items-center justify-between">
+            <div class="bg-white rounded-2xl shadow-sm p-4 sm:p-6 border border-slate-100 flex items-center justify-between">
                 <div>
-                    <h3 class="text-slate-400 font-medium text-sm uppercase tracking-wider">Approved Active</h3>
-                    <p id="approvedUsers" class="text-3xl font-bold text-emerald-600 mt-1">0</p>
+                    <h3 class="text-slate-400 font-medium text-[11px] sm:text-sm uppercase tracking-wider">Approved</h3>
+                    <p id="approvedUsers" class="text-2xl sm:text-3xl font-bold text-emerald-600 mt-1">0</p>
                 </div>
-                <div class="w-12 h-12 bg-emerald-50 rounded-xl flex items-center justify-center text-emerald-500">
-                    <i class="fas fa-check-circle text-xl"></i>
+                <div class="w-10 h-10 sm:w-12 sm:h-12 bg-emerald-50 rounded-xl flex items-center justify-center text-emerald-500 shrink-0">
+                    <i class="fas fa-check-circle text-lg sm:text-xl"></i>
                 </div>
             </div>
-            <div class="bg-white rounded-2xl shadow-sm p-6 border border-slate-100 flex items-center justify-between">
+            <div class="bg-white rounded-2xl shadow-sm p-4 sm:p-6 border border-slate-100 flex items-center justify-between">
                 <div>
-                    <h3 class="text-slate-400 font-medium text-sm uppercase tracking-wider">Pending Approval</h3>
-                    <p id="pendingUsers" class="text-3xl font-bold text-amber-500 mt-1">0</p>
+                    <h3 class="text-slate-400 font-medium text-[11px] sm:text-sm uppercase tracking-wider">Pending</h3>
+                    <p id="pendingUsers" class="text-2xl sm:text-3xl font-bold text-amber-500 mt-1">0</p>
                 </div>
-                <div class="w-12 h-12 bg-amber-50 rounded-xl flex items-center justify-center text-amber-500">
-                    <i class="fas fa-hourglass-half text-xl"></i>
+                <div class="w-10 h-10 sm:w-12 sm:h-12 bg-amber-50 rounded-xl flex items-center justify-center text-amber-500 shrink-0">
+                    <i class="fas fa-hourglass-half text-lg sm:text-xl"></i>
+                </div>
+            </div>
+            <div class="bg-white rounded-2xl shadow-sm p-4 sm:p-6 border border-slate-100 flex items-center justify-between">
+                <div>
+                    <h3 class="text-slate-400 font-medium text-[11px] sm:text-sm uppercase tracking-wider">Expired</h3>
+                    <p id="expiredUsers" class="text-2xl sm:text-3xl font-bold text-rose-500 mt-1">0</p>
+                </div>
+                <div class="w-10 h-10 sm:w-12 sm:h-12 bg-rose-50 rounded-xl flex items-center justify-center text-rose-500 shrink-0">
+                    <i class="fas fa-ban text-lg sm:text-xl"></i>
                 </div>
             </div>
         </div>
 
         <!-- Filters and Searching -->
-        <div class="bg-white rounded-2xl shadow-sm p-6 border border-slate-100 space-y-4">
-            <div class="flex flex-col md:flex-row gap-4 items-center justify-between">
-                <!-- Search bar -->
-                <div class="relative w-full md:w-96">
-                    <span class="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
-                        <i class="fas fa-search text-slate-400"></i>
-                    </span>
-                    <input type="text" id="userSearchInput" class="w-full pl-10 pr-4 py-2.5 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all text-sm" placeholder="Search by name or email..." />
-                </div>
-                
+        <div class="bg-white rounded-2xl shadow-sm p-4 sm:p-6 border border-slate-100 space-y-4">
+            <div class="flex flex-col md:flex-row gap-4 items-stretch md:items-center justify-between">
+                <!-- Manual search bar -->
+                <form id="searchForm" class="relative w-full md:w-96 flex items-center gap-2">
+                    <div class="relative flex-grow">
+                        <span class="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
+                            <i class="fas fa-search text-slate-400"></i>
+                        </span>
+                        <input type="text" id="userSearchInput" class="w-full pl-10 pr-9 py-2.5 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all text-sm" placeholder="Search by name or email, then press Enter..." />
+                        <button type="button" id="clearSearchBtn" style="display:none;" class="absolute inset-y-0 right-0 flex items-center pr-3 text-slate-400 hover:text-slate-600">
+                            <i class="fas fa-times-circle"></i>
+                        </button>
+                    </div>
+                    <button type="submit" id="searchSubmitBtn" class="px-4 py-2.5 bg-slate-800 hover:bg-slate-900 text-white rounded-xl text-sm font-medium transition-all shrink-0">
+                        Search
+                    </button>
+                </form>
+
                 <!-- Filter category tabs -->
                 <div class="flex flex-wrap gap-2 w-full md:w-auto">
-                    <button id="showAllUsersBtn" class="flex-grow md:flex-grow-0 px-4 py-2 text-sm font-medium rounded-xl transition-all border border-slate-200 text-slate-600 hover:bg-slate-50 filter-button active">
-                        <i class="fas fa-users mr-1"></i> All Users
+                    <button id="showAllUsersBtn" class="flex-grow md:flex-grow-0 px-4 py-2 text-sm font-medium rounded-xl transition-all border border-slate-200 text-slate-600 hover:bg-slate-50 filter-button active" data-filter="all">
+                        <i class="fas fa-users mr-1"></i> All
                     </button>
-                    <button id="showApprovedUsersBtn" class="flex-grow md:flex-grow-0 px-4 py-2 text-sm font-medium rounded-xl transition-all border border-slate-200 text-slate-600 hover:bg-slate-50 filter-button">
+                    <button id="showApprovedUsersBtn" class="flex-grow md:flex-grow-0 px-4 py-2 text-sm font-medium rounded-xl transition-all border border-slate-200 text-slate-600 hover:bg-slate-50 filter-button" data-filter="approved">
                         <i class="fas fa-check-circle mr-1"></i> Approved
                     </button>
-                    <button id="showPendingUsersBtn" class="flex-grow md:flex-grow-0 px-4 py-2 text-sm font-medium rounded-xl transition-all border border-slate-200 text-slate-600 hover:bg-slate-50 filter-button">
+                    <button id="showPendingUsersBtn" class="flex-grow md:flex-grow-0 px-4 py-2 text-sm font-medium rounded-xl transition-all border border-slate-200 text-slate-600 hover:bg-slate-50 filter-button" data-filter="pending">
                         <i class="fas fa-hourglass-half mr-1"></i> Pending
+                    </button>
+                    <button id="showExpiredUsersBtn" class="flex-grow md:flex-grow-0 px-4 py-2 text-sm font-medium rounded-xl transition-all border border-slate-200 text-slate-600 hover:bg-slate-50 filter-button" data-filter="expired">
+                        <i class="fas fa-ban mr-1"></i> Expired
                     </button>
                 </div>
             </div>
+            <div id="activeSearchTag" class="hidden text-xs text-slate-500 items-center gap-2">
+                <i class="fas fa-filter"></i> Searching for "<span id="activeSearchTerm" class="font-semibold text-slate-700"></span>" — <span id="activeSearchCount">0</span> result(s)
+            </div>
         </div>
-        
+
         <!-- User list management card -->
         <div class="bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden">
-            <div class="px-6 py-4 border-b border-slate-100 flex items-center justify-between">
+            <div class="px-4 sm:px-6 py-4 border-b border-slate-100 flex items-center justify-between">
                 <h2 class="text-lg font-bold text-slate-800 flex items-center gap-2">
                     <i class="fas fa-user-shield text-slate-400"></i> User Registry
                 </h2>
-                <span class="text-xs font-semibold text-slate-400 bg-slate-100 px-2.5 py-1 rounded-full uppercase tracking-wider">Timeline Protected</span>
+                <span class="text-[10px] sm:text-xs font-semibold text-slate-400 bg-slate-100 px-2.5 py-1 rounded-full uppercase tracking-wider">Live Sync</span>
             </div>
-            
-            <div class="overflow-x-auto">
+
+            <!-- Desktop table (md and up) -->
+            <div class="overflow-x-auto hidden md:block">
                 <table class="w-full text-left border-collapse">
                     <thead>
                         <tr class="bg-slate-50/75 border-b border-slate-100 text-slate-500 text-xs font-semibold uppercase tracking-wider">
                             <th class="px-6 py-4">User Details</th>
                             <th class="px-6 py-4">Status</th>
-                            <th class="px-6 py-4">Timeline / Validity</th>
+                            <th class="px-6 py-4">Timeline / Countdown</th>
                             <th class="px-6 py-4 text-right">Actions</th>
                         </tr>
                     </thead>
                     <tbody id="usersTableBody" class="divide-y divide-slate-100 text-sm">
-                        <tr>
-                            <td colspan="5" class="px-6 py-12 text-center text-slate-400">
-                                <span class="loading-spinner border-blue-500 mr-2"></span> Loading user database...
-                            </td>
-                        </tr>
+                        <tr><td colspan="4" class="px-6 py-12 text-center text-slate-400"><span class="loading-spinner dark mr-2"></span> Loading user database...</td></tr>
                     </tbody>
                 </table>
             </div>
-            
+
+            <!-- Mobile card list (below md) -->
+            <div id="usersCardList" class="md:hidden divide-y divide-slate-100">
+                <div class="px-6 py-12 text-center text-slate-400 text-sm"><span class="loading-spinner dark mr-2"></span> Loading user database...</div>
+            </div>
+
             <!-- Load More Controls -->
-            <div class="px-6 py-4 bg-slate-50/50 border-t border-slate-100 flex justify-center">
+            <div class="px-6 py-4 bg-slate-50/50 border-t border-slate-100 flex flex-col items-center gap-1">
                 <button id="loadMoreBtn" style="display:none;" class="px-5 py-2 bg-white hover:bg-slate-50 border border-slate-200 text-slate-700 font-medium rounded-xl text-xs shadow-sm transition-all">
                     Load More Registrants
                 </button>
+                <span id="shownCountLabel" class="text-[11px] text-slate-400"></span>
             </div>
         </div>
     </div>
@@ -216,26 +245,17 @@
 <div id="emailModal" class="modal fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/50 backdrop-blur-sm" style="display: none;">
     <div class="bg-white w-full max-w-lg rounded-2xl shadow-2xl overflow-hidden border border-slate-100 transform transition-all duration-300">
         <div class="px-6 py-5 bg-gradient-to-r from-blue-600 to-indigo-600 text-white flex items-center justify-between">
-            <h3 class="font-bold text-lg flex items-center gap-2">
-                <i class="fas fa-envelope"></i> Send Email Notice
-            </h3>
-            <button onclick="closeEmailModal()" class="text-white/80 hover:text-white transition-colors focus:outline-none">
-                <i class="fas fa-times text-xl"></i>
-            </button>
+            <h3 class="font-bold text-lg flex items-center gap-2"><i class="fas fa-envelope"></i> Send Email Notice</h3>
+            <button onclick="closeEmailModal()" class="text-white/80 hover:text-white transition-colors focus:outline-none"><i class="fas fa-times text-xl"></i></button>
         </div>
-        
         <div class="p-6 space-y-4">
             <div class="bg-slate-50 p-4 rounded-xl border border-slate-100">
                 <span class="block text-xs font-semibold text-slate-400 uppercase tracking-wide">Recipient Info</span>
                 <p class="font-semibold text-slate-800 mt-0.5"><span id="recipientName"></span></p>
-                <p class="text-sm text-slate-500 flex items-center gap-1.5 mt-0.5">
-                    <i class="fas fa-at text-xs text-slate-400"></i> <span id="recipientEmail"></span>
-                </p>
+                <p class="text-sm text-slate-500 flex items-center gap-1.5 mt-0.5"><i class="fas fa-at text-xs text-slate-400"></i> <span id="recipientEmail"></span></p>
             </div>
-            
             <div id="emailStatusMessage" class="hidden p-3.5 rounded-xl text-center text-sm font-medium"></div>
         </div>
-        
         <div class="px-6 py-4 bg-slate-50 border-t border-slate-100 flex items-center justify-end gap-3">
             <button id="cancelEmailBtn" class="px-4 py-2 rounded-xl text-sm font-medium text-slate-600 hover:bg-slate-100 transition-all">Cancel</button>
             <button id="sendEmailBtn" class="px-5 py-2 bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-xl text-sm transition-all flex items-center gap-2">
@@ -248,63 +268,50 @@
 
 <!-- APPROVAL TIMELINE SELECTION MODAL -->
 <div id="approvalModal" class="modal fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/50 backdrop-blur-sm" style="display: none;">
-    <div class="bg-white w-full max-w-md rounded-2xl shadow-2xl overflow-hidden border border-slate-100 transform transition-all duration-300">
-        <div class="px-6 py-5 bg-gradient-to-r from-emerald-600 to-teal-600 text-white flex items-center justify-between">
-            <h3 class="font-bold text-lg flex items-center gap-2">
-                <i class="fas fa-clock"></i> Approve User Access
-            </h3>
-            <button onclick="closeApprovalModal()" class="text-white/80 hover:text-white transition-colors focus:outline-none">
-                <i class="fas fa-times text-xl"></i>
-            </button>
+    <div class="bg-white w-full max-w-md rounded-2xl shadow-2xl overflow-hidden border border-slate-100 transform transition-all duration-300 max-h-[90vh] overflow-y-auto">
+        <div class="px-6 py-5 bg-gradient-to-r from-emerald-600 to-teal-600 text-white flex items-center justify-between sticky top-0">
+            <h3 class="font-bold text-lg flex items-center gap-2"><i class="fas fa-clock"></i> Approve User Access</h3>
+            <button onclick="closeApprovalModal()" class="text-white/80 hover:text-white transition-colors focus:outline-none"><i class="fas fa-times text-xl"></i></button>
         </div>
-        
         <div class="p-6 space-y-4">
             <div class="bg-slate-50 p-4 rounded-xl border border-slate-100">
                 <span class="block text-xs font-semibold text-slate-400 uppercase tracking-wide">Granting Access For</span>
                 <p class="font-bold text-slate-800 mt-1" id="approveUserNameLabel">-</p>
                 <p class="text-xs text-slate-400 mt-0.5" id="approveUserEmailLabel">-</p>
             </div>
-            
+
             <div class="space-y-2">
-                <label for="approvalDuration" class="block text-sm font-medium text-slate-700">Choose Approval Duration Timeline</label>
+                <label class="block text-sm font-medium text-slate-700">Choose Approval Duration Timeline</label>
                 <div class="grid grid-cols-2 gap-3" id="timelineRadioGroup">
                     <label class="relative flex items-center justify-between p-3.5 rounded-xl border-2 border-slate-200 cursor-pointer hover:bg-slate-50 transition-all has-[:checked]:border-emerald-500 has-[:checked]:bg-emerald-50/50">
-                        <div>
-                            <span class="block font-bold text-slate-800">1 Month</span>
-                            <span class="text-[10px] text-slate-400 block mt-0.5">Quick access</span>
-                        </div>
+                        <div><span class="block font-bold text-slate-800">1 Month</span><span class="text-[10px] text-slate-400 block mt-0.5">Quick access</span></div>
                         <input type="radio" name="timelineOption" value="1" class="accent-emerald-600 w-4 h-4" checked>
                     </label>
                     <label class="relative flex items-center justify-between p-3.5 rounded-xl border-2 border-slate-200 cursor-pointer hover:bg-slate-50 transition-all has-[:checked]:border-emerald-500 has-[:checked]:bg-emerald-50/50">
-                        <div>
-                            <span class="block font-bold text-slate-800">3 Months</span>
-                            <span class="text-[10px] text-slate-400 block mt-0.5">Standard term</span>
-                        </div>
+                        <div><span class="block font-bold text-slate-800">3 Months</span><span class="text-[10px] text-slate-400 block mt-0.5">Standard term</span></div>
                         <input type="radio" name="timelineOption" value="3" class="accent-emerald-600 w-4 h-4">
                     </label>
                     <label class="relative flex items-center justify-between p-3.5 rounded-xl border-2 border-slate-200 cursor-pointer hover:bg-slate-50 transition-all has-[:checked]:border-emerald-500 has-[:checked]:bg-emerald-50/50">
-                        <div>
-                            <span class="block font-bold text-slate-800">6 Months</span>
-                            <span class="text-[10px] text-slate-400 block mt-0.5">Mid-term lease</span>
-                        </div>
+                        <div><span class="block font-bold text-slate-800">6 Months</span><span class="text-[10px] text-slate-400 block mt-0.5">Mid-term lease</span></div>
                         <input type="radio" name="timelineOption" value="6" class="accent-emerald-600 w-4 h-4">
                     </label>
                     <label class="relative flex items-center justify-between p-3.5 rounded-xl border-2 border-slate-200 cursor-pointer hover:bg-slate-50 transition-all has-[:checked]:border-emerald-500 has-[:checked]:bg-emerald-50/50">
-                        <div>
-                            <span class="block font-bold text-slate-800">12 Months</span>
-                            <span class="text-[10px] text-slate-400 block mt-0.5">Annual pass</span>
-                        </div>
+                        <div><span class="block font-bold text-slate-800">12 Months</span><span class="text-[10px] text-slate-400 block mt-0.5">Annual pass</span></div>
                         <input type="radio" name="timelineOption" value="12" class="accent-emerald-600 w-4 h-4">
                     </label>
+                    <label class="relative col-span-2 flex items-center justify-between p-3.5 rounded-xl border-2 border-slate-200 cursor-pointer hover:bg-slate-50 transition-all has-[:checked]:border-emerald-500 has-[:checked]:bg-emerald-50/50">
+                        <div><span class="block font-bold text-slate-800">Custom Date</span><span class="text-[10px] text-slate-400 block mt-0.5">Pick exact expiry</span></div>
+                        <input type="radio" name="timelineOption" value="custom" class="accent-emerald-600 w-4 h-4">
+                    </label>
                 </div>
+                <input type="date" id="customExpiryDate" style="display:none;" class="w-full px-4 py-2.5 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 text-sm mt-2" />
             </div>
-            
+
             <p class="text-xs text-slate-500 bg-slate-50 p-2.5 rounded-lg border border-slate-100">
                 <i class="fas fa-shield-alt text-slate-400 mr-1"></i> Once approved, the user can log in freely until the duration concludes. After expiration, access is revoked automatically.
             </p>
         </div>
-        
-        <div class="px-6 py-4 bg-slate-50 border-t border-slate-100 flex items-center justify-end gap-3">
+        <div class="px-6 py-4 bg-slate-50 border-t border-slate-100 flex items-center justify-end gap-3 sticky bottom-0">
             <button onclick="closeApprovalModal()" class="px-4 py-2 rounded-xl text-sm font-medium text-slate-600 hover:bg-slate-100 transition-all">Cancel</button>
             <button id="confirmApproveBtn" class="px-5 py-2 bg-emerald-600 hover:bg-emerald-700 text-white font-medium rounded-xl text-sm transition-all flex items-center gap-2 shadow-sm">
                 <i class="fas fa-check"></i> Grant Approval
@@ -313,8 +320,62 @@
     </div>
 </div>
 
+<!-- EDIT USER MODAL (full admin control) -->
+<div id="editModal" class="modal fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/50 backdrop-blur-sm" style="display: none;">
+    <div class="bg-white w-full max-w-lg rounded-2xl shadow-2xl overflow-hidden border border-slate-100 transform transition-all duration-300 max-h-[90vh] flex flex-col">
+        <div class="px-6 py-5 bg-gradient-to-r from-slate-700 to-slate-900 text-white flex items-center justify-between shrink-0">
+            <h3 class="font-bold text-lg flex items-center gap-2"><i class="fas fa-user-edit"></i> Edit User Record</h3>
+            <button onclick="closeEditModal()" class="text-white/80 hover:text-white transition-colors focus:outline-none"><i class="fas fa-times text-xl"></i></button>
+        </div>
+        <div class="p-6 space-y-4 overflow-y-auto">
+            <div>
+                <label class="block text-sm font-medium text-slate-600 mb-1">Full Name</label>
+                <input type="text" id="editName" class="w-full px-4 py-2.5 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 text-sm" />
+            </div>
+            <div>
+                <label class="block text-sm font-medium text-slate-600 mb-1">Email Address</label>
+                <input type="email" id="editEmail" class="w-full px-4 py-2.5 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 text-sm" />
+            </div>
+            <div>
+                <label class="block text-sm font-medium text-slate-600 mb-1">Phone Number</label>
+                <input type="text" id="editPhone" class="w-full px-4 py-2.5 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 text-sm" placeholder="Optional" />
+            </div>
+            <div>
+                <label class="block text-sm font-medium text-slate-600 mb-1">Access Status</label>
+                <select id="editStatus" class="w-full px-4 py-2.5 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 text-sm bg-white">
+                    <option value="pending">Pending Admin Review</option>
+                    <option value="approved">Approved / Active</option>
+                    <option value="blocked">Blocked / Expired</option>
+                </select>
+            </div>
+            <div id="editExpiryWrap">
+                <label class="block text-sm font-medium text-slate-600 mb-1">Access Expiry Date</label>
+                <input type="datetime-local" id="editExpiry" class="w-full px-4 py-2.5 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 text-sm" />
+                <div class="flex flex-wrap gap-2 mt-2">
+                    <button type="button" class="edit-extend-btn px-3 py-1 bg-slate-100 hover:bg-slate-200 rounded-lg text-xs font-medium text-slate-600" data-months="1">+1 Mo</button>
+                    <button type="button" class="edit-extend-btn px-3 py-1 bg-slate-100 hover:bg-slate-200 rounded-lg text-xs font-medium text-slate-600" data-months="3">+3 Mo</button>
+                    <button type="button" class="edit-extend-btn px-3 py-1 bg-slate-100 hover:bg-slate-200 rounded-lg text-xs font-medium text-slate-600" data-months="6">+6 Mo</button>
+                    <button type="button" class="edit-extend-btn px-3 py-1 bg-slate-100 hover:bg-slate-200 rounded-lg text-xs font-medium text-slate-600" data-months="12">+12 Mo</button>
+                </div>
+            </div>
+            <div>
+                <label class="block text-sm font-medium text-slate-600 mb-1">Admin Notes</label>
+                <textarea id="editNotes" rows="3" class="w-full px-4 py-2.5 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 text-sm resize-none" placeholder="Internal notes about this user..."></textarea>
+            </div>
+            <div id="editStatusMessage" class="hidden p-3.5 rounded-xl text-center text-sm font-medium"></div>
+        </div>
+        <div class="px-6 py-4 bg-slate-50 border-t border-slate-100 flex items-center justify-end gap-3 shrink-0">
+            <button onclick="closeEditModal()" class="px-4 py-2 rounded-xl text-sm font-medium text-slate-600 hover:bg-slate-100 transition-all">Cancel</button>
+            <button id="saveEditBtn" class="px-5 py-2 bg-slate-800 hover:bg-slate-900 text-white font-medium rounded-xl text-sm transition-all flex items-center gap-2 shadow-sm">
+                <span id="saveEditBtnText">Save Changes</span>
+                <span id="saveEditSpinner" class="loading-spinner" style="display:none;"></span>
+            </button>
+        </div>
+    </div>
+</div>
+
 <!-- STUNNING NOTIFICATION SYSTEM FOR REPLACING ALERTS -->
-<div id="toastContainer" class="fixed bottom-5 right-5 z-50 flex flex-col gap-2 pointer-events-none"></div>
+<div id="toastContainer" class="fixed bottom-5 right-5 left-5 sm:left-auto z-50 flex flex-col gap-2 pointer-events-none"></div>
 
 <!-- Script SDK Loads -->
 <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
@@ -324,7 +385,9 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/js/all.min.js"></script>
 
 <script>
-    // Firebase configuration (matches original)
+    // ---------------------------------------------------------------------
+    // Firebase configuration
+    // ---------------------------------------------------------------------
     const firebaseConfig = {
         apiKey: "AIzaSyB66MZa0WZk3WPydcjmCDu7P_CE0FD60ug",
         authDomain: "login-2f07b.firebaseapp.com",
@@ -339,11 +402,11 @@
     firebase.initializeApp(firebaseConfig);
     const auth = firebase.auth();
     const db = firebase.database();
+    emailjs.init("LovzJI8eoKJ8O2H2e");
 
-    // Initialize EmailJS with your User ID (matches original)
-    emailjs.init("LovzJI8eoKJ8O2H2e"); 
-
-    // DOM selectors
+    // ---------------------------------------------------------------------
+    // DOM references
+    // ---------------------------------------------------------------------
     const loginDiv = document.getElementById('loginDiv');
     const adminContent = document.getElementById('adminContent');
     const loginBtn = document.getElementById('loginBtn');
@@ -353,55 +416,79 @@
     const passwordInput = document.getElementById('password');
     const loginError = document.getElementById('loginError');
     const usersTableBody = document.getElementById('usersTableBody');
+    const usersCardList = document.getElementById('usersCardList');
     const logoutBtn = document.getElementById('logoutBtn');
+    const manualRefreshBtn = document.getElementById('manualRefreshBtn');
+    const refreshIcon = document.getElementById('refreshIcon');
     const totalUsersEl = document.getElementById('totalUsers');
     const approvedUsersEl = document.getElementById('approvedUsers');
     const pendingUsersEl = document.getElementById('pendingUsers');
+    const expiredUsersEl = document.getElementById('expiredUsers');
     const userSearchInput = document.getElementById('userSearchInput');
+    const searchForm = document.getElementById('searchForm');
+    const clearSearchBtn = document.getElementById('clearSearchBtn');
+    const activeSearchTag = document.getElementById('activeSearchTag');
+    const activeSearchTerm = document.getElementById('activeSearchTerm');
+    const activeSearchCount = document.getElementById('activeSearchCount');
     const loadMoreBtn = document.getElementById('loadMoreBtn');
+    const shownCountLabel = document.getElementById('shownCountLabel');
 
-    // Email Modal DOM Selectors
     const emailModal = document.getElementById('emailModal');
-    const cancelEmailBtn = document.getElementById('cancelEmailBtn'); 
-    const sendEmailBtn = document.getElementById('sendEmailBtn');     
-    const sendEmailBtnText = document.getElementById('sendEmailBtnText'); 
-    const sendEmailSpinner = document.getElementById('sendEmailSpinner'); 
-    const emailStatusMessage = document.getElementById('emailStatusMessage'); 
+    const cancelEmailBtn = document.getElementById('cancelEmailBtn');
+    const sendEmailBtn = document.getElementById('sendEmailBtn');
+    const sendEmailBtnText = document.getElementById('sendEmailBtnText');
+    const sendEmailSpinner = document.getElementById('sendEmailSpinner');
+    const emailStatusMessage = document.getElementById('emailStatusMessage');
     const recipientName = document.getElementById('recipientName');
     const recipientEmail = document.getElementById('recipientEmail');
 
-    // Approval Modal DOM Selectors
     const approvalModal = document.getElementById('approvalModal');
     const approveUserNameLabel = document.getElementById('approveUserNameLabel');
     const approveUserEmailLabel = document.getElementById('approveUserEmailLabel');
     const confirmApproveBtn = document.getElementById('confirmApproveBtn');
+    const customExpiryDate = document.getElementById('customExpiryDate');
 
-    // Filter Buttons
+    const editModal = document.getElementById('editModal');
+    const editName = document.getElementById('editName');
+    const editEmail = document.getElementById('editEmail');
+    const editPhone = document.getElementById('editPhone');
+    const editStatus = document.getElementById('editStatus');
+    const editExpiry = document.getElementById('editExpiry');
+    const editExpiryWrap = document.getElementById('editExpiryWrap');
+    const editNotes = document.getElementById('editNotes');
+    const editStatusMessage = document.getElementById('editStatusMessage');
+    const saveEditBtn = document.getElementById('saveEditBtn');
+    const saveEditBtnText = document.getElementById('saveEditBtnText');
+    const saveEditSpinner = document.getElementById('saveEditSpinner');
+
     const showAllUsersBtn = document.getElementById('showAllUsersBtn');
     const showApprovedUsersBtn = document.getElementById('showApprovedUsersBtn');
     const showPendingUsersBtn = document.getElementById('showPendingUsersBtn');
+    const showExpiredUsersBtn = document.getElementById('showExpiredUsersBtn');
 
-    // Active State Management
-    let currentUser = null;
-    let userToApproveUid = null;
-    let totalUsers = 0;
-    let approvedUsers = 0;
-    let pendingUsers = 0;
-    let currentFilter = 'all'; 
+    // ---------------------------------------------------------------------
+    // State
+    // ---------------------------------------------------------------------
+    let currentUser = null;          // user object targeted for email modal
+    let userToApproveUid = null;     // uid targeted for approval modal
+    let userToEditUid = null;        // uid targeted for edit modal
 
-    // Pagination variables
-    const pageSize = 20;
-    let lastLoadedUserKey = null;
-    let allUsersLoaded = false;
-    let searchTimeout = null;
-    const searchDebounceTime = 300;
+    let localUsers = {};             // uid -> user object, kept in sync via realtime listeners (fast, no full rescans)
+    let currentFilter = 'all';
+    let activeSearchQuery = '';      // only updated on manual search submit (Enter / Search button)
+    const PAGE_SIZE = 20;
+    let renderedCount = PAGE_SIZE;   // client-side pagination over the local cache -- no network round trips
+    let usersListenerAttached = false;
+    const autoExpiredHandled = new Set();
 
-    // Notification UI System (Replacing alert and confirm as requested)
+    // ---------------------------------------------------------------------
+    // Notification / confirm UI helpers
+    // ---------------------------------------------------------------------
     function showNotification(message, type = 'info') {
         const toastContainer = document.getElementById('toastContainer');
         const toast = document.createElement('div');
-        toast.className = `p-4 rounded-xl shadow-lg border text-sm font-medium flex items-center gap-3 transform translate-y-2 opacity-0 transition-all duration-300 pointer-events-auto w-80`;
-        
+        toast.className = `p-4 rounded-xl shadow-lg border text-sm font-medium flex items-center gap-3 transform translate-y-2 opacity-0 transition-all duration-300 pointer-events-auto w-full sm:w-80`;
+
         let icon = '<i class="fas fa-info-circle text-blue-500"></i>';
         if (type === 'success') {
             toast.classList.add('bg-emerald-50', 'border-emerald-200', 'text-emerald-800');
@@ -415,31 +502,21 @@
 
         toast.innerHTML = `
             <div class="text-base">${icon}</div>
-            <div class="flex-grow">${message}</div>
+            <div class="flex-grow">${escapeHtml(message)}</div>
             <button class="text-slate-400 hover:text-slate-600 focus:outline-none" onclick="this.parentElement.remove()">
                 <i class="fas fa-times text-xs"></i>
             </button>
         `;
 
         toastContainer.appendChild(toast);
-        
-        // Trigger entrance animation
-        setTimeout(() => {
-            toast.classList.remove('translate-y-2', 'opacity-0');
-        }, 10);
-
-        // Auto remove after 4 seconds
+        setTimeout(() => toast.classList.remove('translate-y-2', 'opacity-0'), 10);
         setTimeout(() => {
             toast.classList.add('translate-y-2', 'opacity-0');
-            setTimeout(() => {
-                toast.remove();
-            }, 300);
+            setTimeout(() => toast.remove(), 300);
         }, 4000);
     }
 
-    // High-fidelity custom Modal Confirmation replacement for window.confirm
     function customConfirm(message, onConfirm) {
-        // Build interactive confirmation box inside a neat container
         const modalId = 'confirm_modal_' + Date.now();
         const confirmBox = document.createElement('div');
         confirmBox.id = modalId;
@@ -451,7 +528,7 @@
                 </div>
                 <div>
                     <h4 class="font-bold text-slate-800 text-lg">Are you sure?</h4>
-                    <p class="text-sm text-slate-500 mt-1">${message}</p>
+                    <p class="text-sm text-slate-500 mt-1">${escapeHtml(message)}</p>
                 </div>
                 <div class="flex items-center justify-center gap-3 pt-2">
                     <button class="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 font-medium rounded-xl text-sm transition-all" onclick="document.getElementById('${modalId}').remove()">Cancel</button>
@@ -460,48 +537,47 @@
             </div>
         `;
         document.body.appendChild(confirmBox);
-        
         document.getElementById(`${modalId}_okBtn`).addEventListener('click', () => {
             onConfirm();
             confirmBox.remove();
         });
     }
 
-    // Login handler with admin privileges check
+    function escapeHtml(str) {
+        if (str === null || str === undefined) return '';
+        return String(str)
+            .replaceAll('&', '&amp;').replaceAll('<', '&lt;').replaceAll('>', '&gt;')
+            .replaceAll('"', '&quot;').replaceAll("'", '&#39;');
+    }
+
+    // ---------------------------------------------------------------------
+    // Login / Logout
+    // ---------------------------------------------------------------------
     loginBtn.addEventListener('click', () => {
         const email = emailInput.value.trim();
         const password = passwordInput.value.trim();
         loginError.textContent = '';
-        
+
         if (!email || !password) {
             loginError.textContent = "Please enter email and password.";
             return;
         }
-        
+
         loginBtnText.textContent = "Logging in...";
         loginSpinner.style.display = 'inline-block';
         loginBtn.disabled = true;
-        
+
         auth.signInWithEmailAndPassword(email, password)
-            .then(({ user }) => {
-                return db.ref('admins/' + user.uid).once('value')
-                    .then(snapshot => {
-                        if (snapshot.exists() && snapshot.val() === true) {
-                            loginDiv.style.display = 'none';
-                            adminContent.style.display = 'block';
-                            resetAndLoadUsers();
-                            setupRealtimeUpdates();
-                            updateFilterButtons();
-                            showNotification("Welcome back, Admin!", "success");
-                        } else {
-                            auth.signOut();
-                            loginError.textContent = 'Access denied: You are not configured as an admin.';
-                        }
-                    });
-            })
-            .catch(err => {
-                loginError.textContent = 'Login failed: ' + err.message;
-            })
+            .then(({ user }) => db.ref('admins/' + user.uid).once('value').then(snapshot => {
+                if (snapshot.exists() && snapshot.val() === true) {
+                    enterAdminView();
+                    showNotification("Welcome back, Admin!", "success");
+                } else {
+                    auth.signOut();
+                    loginError.textContent = 'Access denied: You are not configured as an admin.';
+                }
+            }))
+            .catch(err => { loginError.textContent = 'Login failed: ' + err.message; })
             .finally(() => {
                 loginBtnText.textContent = "Login";
                 loginSpinner.style.display = 'none';
@@ -509,364 +585,470 @@
             });
     });
 
-    // Logout handler
     logoutBtn.addEventListener('click', () => {
         auth.signOut().then(() => {
+            detachUsersListener();
             adminContent.style.display = 'none';
             loginDiv.style.display = 'block';
             usersTableBody.innerHTML = '';
+            usersCardList.innerHTML = '';
             emailInput.value = '';
             passwordInput.value = '';
             loginError.textContent = '';
-            totalUsers = approvedUsers = pendingUsers = 0;
-            updateStats();
+            localUsers = {};
             currentFilter = 'all';
-            updateFilterButtons();
+            activeSearchQuery = '';
             userSearchInput.value = '';
-            lastLoadedUserKey = null;
-            allUsersLoaded = false;
+            renderedCount = PAGE_SIZE;
+            updateFilterButtons();
             loadMoreBtn.style.display = 'none';
             showNotification("Logged out successfully");
         });
     });
 
-    function resetAndLoadUsers() {
-        lastLoadedUserKey = null;
-        allUsersLoaded = false;
-        usersTableBody.innerHTML = '<tr><td colspan="5" class="px-6 py-12 text-center text-slate-400"><span class="loading-spinner border-blue-500 mr-2"></span> Loading users...</td></tr>';
-        loadMoreBtn.style.display = 'none';
-        loadUsers(false);
+    auth.onAuthStateChanged(user => {
+        if (user) {
+            db.ref('admins/' + user.uid).once('value').then(snapshot => {
+                if (snapshot.exists() && snapshot.val() === true) {
+                    enterAdminView();
+                } else {
+                    auth.signOut();
+                    loginDiv.style.display = 'block';
+                    adminContent.style.display = 'none';
+                    loginError.textContent = 'Access denied: User is not configured as an administrator.';
+                }
+            }).catch(error => {
+                loginDiv.style.display = 'block';
+                adminContent.style.display = 'none';
+                loginError.textContent = `Connection failure: ${error.message}`;
+            });
+        } else {
+            loginDiv.style.display = 'block';
+            adminContent.style.display = 'none';
+        }
+    });
+
+    function enterAdminView() {
+        loginDiv.style.display = 'none';
+        adminContent.style.display = 'block';
+        updateFilterButtons();
+        initUsersData();
     }
 
-    /**
-     * Loads users from RTDB, paginates locally, and checks/auto-expires duration-bound users
-     */
-    function loadUsers(append) {
-        if (!append) {
-            usersTableBody.innerHTML = '<tr><td colspan="5" class="px-6 py-12 text-center text-slate-400"><span class="loading-spinner border-blue-500 mr-2"></span> Loading users...</td></tr>';
-        }
-        loadMoreBtn.disabled = true;
-        loadMoreBtn.textContent = 'Loading...';
+    // ---------------------------------------------------------------------
+    // FAST DATA LOADING
+    // Strategy: one quick once('value') fetch fills the screen immediately,
+    // then lightweight incremental listeners (child_added/changed/removed)
+    // keep the local cache in sync without ever re-fetching or re-scanning
+    // the whole user list. Renders only patch what actually changed.
+    // ---------------------------------------------------------------------
+    function initUsersData() {
+        renderedCount = PAGE_SIZE;
+        showTableLoadingState();
 
-        let usersRef = db.ref('users');
-        let queryRef = usersRef.orderByKey();
-
-        if (append && lastLoadedUserKey) {
-            queryRef = queryRef.startAt(lastLoadedUserKey);
-        }
-
-        queryRef.limitToFirst(pageSize + 1).once('value')
+        db.ref('users').once('value')
             .then(snapshot => {
-                const users = snapshot.val();
-                
-                if (!append) {
-                    usersTableBody.innerHTML = '';
-                    totalUsers = 0;
-                    approvedUsers = 0;
-                    pendingUsers = 0;
-                }
-                
-                if (!users) {
-                    if (!append) {
-                        usersTableBody.innerHTML = '<tr><td colspan="5" class="px-6 py-8 text-center text-slate-400">No users found in database.</td></tr>';
-                    }
-                    allUsersLoaded = true;
-                    loadMoreBtn.style.display = 'none';
-                    updateStats();
-                    return;
-                }
-                
-                const usersArray = [];
-                let newLastLoadedUserKey = null;
-                let count = 0;
-
-                snapshot.forEach(childSnapshot => {
-                    if (count < pageSize) {
-                        usersArray.push({ ...childSnapshot.val(), uid: childSnapshot.key });
-                    }
-                    newLastLoadedUserKey = childSnapshot.key;
-                    count++;
+                localUsers = {};
+                snapshot.forEach(child => {
+                    localUsers[child.key] = { ...child.val(), uid: child.key };
                 });
-
-                if (count > pageSize) {
-                    lastLoadedUserKey = newLastLoadedUserKey;
-                    allUsersLoaded = false;
-                } else {
-                    allUsersLoaded = true;
-                }
-
-                const searchQuery = userSearchInput.value.toLowerCase().trim();
-
-                // Loop through and perform auto-expiration if time expired
-                const currentTime = Date.now();
-                
-                let filteredUsers = usersArray.map(user => {
-                    // Check if approved user has expired their allowed duration
-                    if (user.isApproved === true && user.expiryDate && currentTime > user.expiryDate) {
-                        // Mark as expired and update database
-                        user.isApproved = false;
-                        user.expired = true;
-                        
-                        db.ref('users/' + user.uid).update({
-                            isApproved: false,
-                            expired: true
-                        }).then(() => {
-                            showNotification(`User ${user.name || user.email} access has expired and was auto-blocked.`, 'info');
-                        });
-                    }
-                    return user;
-                }).filter(user => {
-                    const filterMatch = 
-                        (currentFilter === 'all') ||
-                        (currentFilter === 'approved' && user.isApproved === true) ||
-                        (currentFilter === 'pending' && user.isApproved !== true);
-
-                    const searchMatch = 
-                        (searchQuery === '') ||
-                        (user.name && user.name.toLowerCase().includes(searchQuery)) ||
-                        (user.email && user.email.toLowerCase().includes(searchQuery));
-                    
-                    return filterMatch && searchMatch;
-                });
-
-                // Compute real global metrics
-                db.ref('users').once('value').then(allUsersSnapshot => {
-                    totalUsers = 0;
-                    approvedUsers = 0;
-                    pendingUsers = 0;
-                    
-                    allUsersSnapshot.forEach(childSnapshot => {
-                        const u = childSnapshot.val();
-                        totalUsers++;
-                        if (u.isApproved === true) {
-                            approvedUsers++;
-                        } else {
-                            pendingUsers++;
-                        }
-                    });
-                    updateStats();
-                }).catch(err => {
-                    console.error("Error computing user counts:", err);
-                });
-
-                // Render table rows
-                renderUsersTable(filteredUsers, append);
+                renderAll();
+                attachUsersListener();
             })
             .catch(err => {
-                usersTableBody.innerHTML = `<tr><td colspan="5" class="px-6 py-8 text-center text-red-500 font-medium">Error loading users: ${err.message}</td></tr>`;
-                loadMoreBtn.style.display = 'none';
+                usersTableBody.innerHTML = `<tr><td colspan="4" class="px-6 py-8 text-center text-red-500 font-medium">Error loading users: ${escapeHtml(err.message)}</td></tr>`;
+                usersCardList.innerHTML = `<div class="px-6 py-8 text-center text-red-500 font-medium text-sm">Error loading users: ${escapeHtml(err.message)}</div>`;
+                showNotification('Failed to load users: ' + err.message, 'error');
             });
     }
 
-    /**
-     * Populate and render user items into the table UI
-     */
-    function renderUsersTable(users, append) {
-        if (!append && users.length === 0) {
-            usersTableBody.innerHTML = '<tr><td colspan="5" class="px-6 py-8 text-center text-slate-400">No active accounts matching current search.</td></tr>';
-            loadMoreBtn.style.display = 'none';
-            return;
-        }
+    function attachUsersListener() {
+        if (usersListenerAttached) return;
+        usersListenerAttached = true;
 
-        if (append && usersTableBody.innerHTML.includes('Loading users...')) {
-            usersTableBody.innerHTML = '';
-        }
-
-        users.forEach(user => {
-            const tr = document.createElement('tr');
-            tr.setAttribute('data-uid', user.uid);
-            tr.className = "hover:bg-slate-50/50 transition-colors";
-
-            // User Profile Details Column
-            const tdDetails = document.createElement('td');
-            tdDetails.className = "px-6 py-4 whitespace-nowrap";
-            tdDetails.innerHTML = `
-                <div class="flex items-center gap-3">
-                    <div class="w-9 h-9 bg-slate-100 rounded-full flex items-center justify-center font-bold text-slate-600 uppercase text-xs">
-                        ${(user.name || 'U').substring(0,2)}
-                    </div>
-                    <div>
-                        <div class="font-semibold text-slate-800">${user.name || '(No name set)'}</div>
-                        <div class="text-xs text-slate-400">${user.email || '(No email)'}</div>
-                    </div>
-                </div>
-            `;
-            tr.appendChild(tdDetails);
-
-            // Access Status Badge Column
-            const tdStatus = document.createElement('td');
-            tdStatus.className = "px-6 py-4 whitespace-nowrap";
-            
-            let badgeHTML = '';
-            if (user.isApproved === true) {
-                badgeHTML = `<span class="inline-flex items-center gap-1.5 px-3 py-1 text-xs font-semibold rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200">
-                    <span class="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span> Active Access
-                </span>`;
-            } else if (user.expired === true) {
-                badgeHTML = `<span class="inline-flex items-center gap-1.5 px-3 py-1 text-xs font-semibold rounded-full bg-rose-50 text-rose-700 border border-rose-200">
-                    Expired & Blocked
-                </span>`;
-            } else {
-                badgeHTML = `<span class="inline-flex items-center gap-1.5 px-3 py-1 text-xs font-semibold rounded-full bg-amber-50 text-amber-700 border border-amber-200">
-                    Pending Admin
-                </span>`;
-            }
-            tdStatus.innerHTML = badgeHTML;
-            tr.appendChild(tdStatus);
-
-            // Timeline details column showing Approved duration and remaining time
-            const tdTimeline = document.createElement('td');
-            tdTimeline.className = "px-6 py-4 whitespace-nowrap text-xs text-slate-600 space-y-0.5";
-            
-            if (user.isApproved === true && user.approvalDate) {
-                const dateString = new Date(user.approvalDate).toLocaleDateString(undefined, { 
-                    year: 'numeric', month: 'short', day: 'numeric' 
-                });
-                
-                const expText = getExpiryRemainingText(user.expiryDate);
-                const durLabel = user.approvalDuration ? `${user.approvalDuration} Mo` : 'Unlimited';
-                
-                tdTimeline.innerHTML = `
-                    <div class="flex items-center gap-1 text-slate-500">
-                        <i class="far fa-calendar-check text-[10px]"></i> 
-                        <span>Approved: <strong>${dateString}</strong> (${durLabel})</span>
-                    </div>
-                    <div class="mt-0.5 font-medium flex items-center gap-1">
-                        ${expText}
-                    </div>
-                `;
-            } else if (user.expired === true && user.approvalDate) {
-                const dateString = new Date(user.approvalDate).toLocaleDateString(undefined, { 
-                    year: 'numeric', month: 'short', day: 'numeric' 
-                });
-                tdTimeline.innerHTML = `
-                    <div class="text-slate-400 line-through">Approved: ${dateString}</div>
-                    <div class="text-rose-500 font-semibold flex items-center gap-1 mt-0.5">
-                        <i class="fas fa-history"></i> Duration Over (Blocked)
-                    </div>
-                `;
-            } else {
-                tdTimeline.innerHTML = `
-                    <span class="text-slate-400 italic">No active timeline</span>
-                `;
-            }
-            tr.appendChild(tdTimeline);
-
-            // Action Buttons
-            const tdActions = document.createElement('td');
-            tdActions.className = "px-6 py-4 whitespace-nowrap text-right text-sm font-medium";
-            
-            const actionsDiv = document.createElement('div');
-            actionsDiv.className = 'flex items-center justify-end gap-2';
-            
-            if (user.isApproved !== true) {
-                const approveBtn = document.createElement('button');
-                approveBtn.className = 'px-3 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white font-medium rounded-lg text-xs transition-all shadow-sm hover:shadow flex items-center gap-1';
-                approveBtn.innerHTML = '<i class="fas fa-check"></i> Approve...';
-                approveBtn.onclick = () => openApprovalModal(user.uid, user.name, user.email);
-                actionsDiv.appendChild(approveBtn);
-            } else {
-                const revokeBtn = document.createElement('button');
-                revokeBtn.className = 'px-3 py-1.5 bg-amber-50 hover:bg-amber-100 text-amber-700 font-medium rounded-lg text-xs transition-all flex items-center gap-1 border border-amber-200';
-                revokeBtn.innerHTML = '<i class="fas fa-times"></i> Revoke';
-                revokeBtn.onclick = () => revokeApproval(user.uid);
-                actionsDiv.appendChild(revokeBtn);
-            }
-
-            const emailBtn = document.createElement('button');
-            emailBtn.className = 'px-3 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 font-medium rounded-lg text-xs transition-all flex items-center gap-1 border border-slate-200';
-            emailBtn.innerHTML = '<i class="fas fa-envelope"></i> Email';
-            emailBtn.onclick = () => openEmailModal(user);
-            actionsDiv.appendChild(emailBtn);
-
-            const deleteBtn = document.createElement('button');
-            deleteBtn.className = 'px-3 py-1.5 bg-rose-50 hover:bg-rose-100 text-rose-600 font-medium rounded-lg text-xs transition-all flex items-center gap-1 border border-rose-100';
-            deleteBtn.innerHTML = '<i class="fas fa-trash"></i> Delete';
-            deleteBtn.onclick = () => deleteUser(user.uid);
-            actionsDiv.appendChild(deleteBtn);
-            
-            tdActions.appendChild(actionsDiv);
-            tr.appendChild(tdActions);
-
-            usersTableBody.appendChild(tr);
+        db.ref('users').on('child_added', snap => {
+            // Skip entries already present from the initial once() fetch
+            if (localUsers[snap.key]) return;
+            localUsers[snap.key] = { ...snap.val(), uid: snap.key };
+            renderAll();
         });
 
-        if (!allUsersLoaded) {
-            loadMoreBtn.style.display = 'block';
-            loadMoreBtn.disabled = false;
-            loadMoreBtn.textContent = 'Load More Users';
+        db.ref('users').on('child_changed', snap => {
+            localUsers[snap.key] = { ...snap.val(), uid: snap.key };
+            autoExpiredHandled.delete(snap.key);
+            renderAll();
+        });
+
+        db.ref('users').on('child_removed', snap => {
+            delete localUsers[snap.key];
+            renderAll();
+        });
+    }
+
+    function detachUsersListener() {
+        if (!usersListenerAttached) return;
+        db.ref('users').off();
+        usersListenerAttached = false;
+    }
+
+    manualRefreshBtn.addEventListener('click', () => {
+        refreshIcon.classList.add('fa-spin');
+        detachUsersListener();
+        initUsersData();
+        setTimeout(() => refreshIcon.classList.remove('fa-spin'), 600);
+    });
+
+    function showTableLoadingState() {
+        usersTableBody.innerHTML = Array.from({ length: 4 }).map(() => `
+            <tr>
+                <td class="px-6 py-4"><div class="h-9 w-40 skeleton"></div></td>
+                <td class="px-6 py-4"><div class="h-6 w-24 skeleton"></div></td>
+                <td class="px-6 py-4"><div class="h-6 w-32 skeleton"></div></td>
+                <td class="px-6 py-4"><div class="h-8 w-28 skeleton ml-auto"></div></td>
+            </tr>
+        `).join('');
+        usersCardList.innerHTML = `<div class="px-6 py-10 text-center text-slate-400 text-sm"><span class="loading-spinner dark mr-2"></span> Loading user database...</div>`;
+    }
+
+    // ---------------------------------------------------------------------
+    // Filtering, searching, stats -- all computed client-side against the
+    // in-memory cache, so switching tabs or paging never touches the network.
+    // ---------------------------------------------------------------------
+    function classifyUser(u) {
+        if (u.isApproved === true) return 'approved';
+        if (u.expired === true) return 'expired';
+        return 'pending';
+    }
+
+    function getFilteredUsers() {
+        const q = activeSearchQuery.toLowerCase().trim();
+        return Object.values(localUsers).filter(u => {
+            const status = classifyUser(u);
+            const filterMatch = currentFilter === 'all' || currentFilter === status;
+            const searchMatch = !q ||
+                (u.name && u.name.toLowerCase().includes(q)) ||
+                (u.email && u.email.toLowerCase().includes(q)) ||
+                (u.phone && u.phone.toLowerCase().includes(q));
+            return filterMatch && searchMatch;
+        }).sort((a, b) => (a.name || a.email || '').localeCompare(b.name || b.email || ''));
+    }
+
+    function updateStats() {
+        let total = 0, approved = 0, pending = 0, expired = 0;
+        Object.values(localUsers).forEach(u => {
+            total++;
+            const status = classifyUser(u);
+            if (status === 'approved') approved++;
+            else if (status === 'expired') expired++;
+            else pending++;
+        });
+        totalUsersEl.textContent = total;
+        approvedUsersEl.textContent = approved;
+        pendingUsersEl.textContent = pending;
+        expiredUsersEl.textContent = expired;
+    }
+
+    function renderAll() {
+        checkAutoExpirations();
+        updateStats();
+
+        const filtered = getFilteredUsers();
+        if (renderedCount > filtered.length) renderedCount = Math.max(PAGE_SIZE, filtered.length);
+        const toShow = filtered.slice(0, renderedCount);
+
+        if (activeSearchQuery) {
+            activeSearchTag.classList.remove('hidden');
+            activeSearchTag.classList.add('flex');
+            activeSearchTerm.textContent = activeSearchQuery;
+            activeSearchCount.textContent = filtered.length;
         } else {
-            loadMoreBtn.style.display = 'none';
+            activeSearchTag.classList.add('hidden');
+            activeSearchTag.classList.remove('flex');
+        }
+
+        if (toShow.length === 0) {
+            const emptyMsg = activeSearchQuery
+                ? 'No users match your search.'
+                : 'No users found in this category.';
+            usersTableBody.innerHTML = `<tr><td colspan="4" class="px-6 py-10 text-center text-slate-400">${escapeHtml(emptyMsg)}</td></tr>`;
+            usersCardList.innerHTML = `<div class="px-6 py-10 text-center text-slate-400 text-sm">${escapeHtml(emptyMsg)}</div>`;
+        } else {
+            usersTableBody.innerHTML = toShow.map(rowHTML).join('');
+            usersCardList.innerHTML = toShow.map(cardHTML).join('');
+        }
+
+        loadMoreBtn.style.display = renderedCount < filtered.length ? 'block' : 'none';
+        loadMoreBtn.disabled = false;
+        loadMoreBtn.textContent = 'Load More Registrants';
+        shownCountLabel.textContent = filtered.length > 0 ? `Showing ${toShow.length} of ${filtered.length}` : '';
+
+        tickCountdowns();
+    }
+
+    loadMoreBtn.addEventListener('click', () => {
+        renderedCount += PAGE_SIZE;
+        renderAll();
+    });
+
+    // ---------------------------------------------------------------------
+    // Manual search (submits only on Enter / Search button, never per keystroke)
+    // ---------------------------------------------------------------------
+    searchForm.addEventListener('submit', e => {
+        e.preventDefault();
+        activeSearchQuery = userSearchInput.value.trim();
+        clearSearchBtn.style.display = activeSearchQuery ? 'block' : 'none';
+        renderedCount = PAGE_SIZE;
+        renderAll();
+    });
+
+    clearSearchBtn.addEventListener('click', () => {
+        userSearchInput.value = '';
+        activeSearchQuery = '';
+        clearSearchBtn.style.display = 'none';
+        renderedCount = PAGE_SIZE;
+        renderAll();
+    });
+
+    function updateFilterButtons() {
+        document.querySelectorAll('.filter-button').forEach(button => {
+            button.classList.remove('active', 'bg-blue-600', 'text-white', 'border-blue-600');
+            button.classList.add('bg-white', 'text-slate-600', 'border-slate-200');
+        });
+        const map = { all: showAllUsersBtn, approved: showApprovedUsersBtn, pending: showPendingUsersBtn, expired: showExpiredUsersBtn };
+        const activeButton = map[currentFilter];
+        if (activeButton) {
+            activeButton.classList.remove('bg-white', 'text-slate-600', 'border-slate-200');
+            activeButton.classList.add('bg-blue-600', 'text-white', 'border-blue-600', 'active');
         }
     }
 
-    /**
-     * Compute visual remaining text for expiration countdowns
-     */
-    function getExpiryRemainingText(expiryDateMs) {
+    [showAllUsersBtn, showApprovedUsersBtn, showPendingUsersBtn, showExpiredUsersBtn].forEach(btn => {
+        btn.addEventListener('click', () => {
+            currentFilter = btn.dataset.filter;
+            renderedCount = PAGE_SIZE;
+            updateFilterButtons();
+            renderAll();
+        });
+    });
+
+    // ---------------------------------------------------------------------
+    // Row / Card templates (desktop table + mobile cards share the same data)
+    // ---------------------------------------------------------------------
+    function statusBadgeHTML(u) {
+        const status = classifyUser(u);
+        if (status === 'approved') {
+            return `<span class="inline-flex items-center gap-1.5 px-3 py-1 text-xs font-semibold rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200">
+                <span class="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span> Active Access
+            </span>`;
+        }
+        if (status === 'expired') {
+            return `<span class="inline-flex items-center gap-1.5 px-3 py-1 text-xs font-semibold rounded-full bg-rose-50 text-rose-700 border border-rose-200">Expired &amp; Blocked</span>`;
+        }
+        return `<span class="inline-flex items-center gap-1.5 px-3 py-1 text-xs font-semibold rounded-full bg-amber-50 text-amber-700 border border-amber-200">Pending Admin</span>`;
+    }
+
+    function timelineHTML(u) {
+        if (u.isApproved === true && u.approvalDate) {
+            const dateString = new Date(u.approvalDate).toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric' });
+            const durLabel = u.approvalDuration ? `${u.approvalDuration} Mo` : 'Custom';
+            return `
+                <div class="flex items-center gap-1 text-slate-500">
+                    <i class="far fa-calendar-check text-[10px]"></i>
+                    <span>Approved: <strong>${escapeHtml(dateString)}</strong> (${escapeHtml(durLabel)})</span>
+                </div>
+                <div class="mt-0.5 font-medium flex items-center gap-1 countdown" data-expiry="${u.expiryDate || ''}" data-uid="${u.uid}">
+                    ${countdownText(u.expiryDate)}
+                </div>
+            `;
+        }
+        if (u.expired === true && u.approvalDate) {
+            const dateString = new Date(u.approvalDate).toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric' });
+            return `
+                <div class="text-slate-400 line-through">Approved: ${escapeHtml(dateString)}</div>
+                <div class="text-rose-500 font-semibold flex items-center gap-1 mt-0.5"><i class="fas fa-history"></i> Duration Over (Blocked)</div>
+            `;
+        }
+        return `<span class="text-slate-400 italic">No active timeline</span>`;
+    }
+
+    function actionButtonsHTML(u, mobile) {
+        const sizeCls = mobile ? 'px-3 py-2 text-xs flex-1 justify-center' : 'px-3 py-1.5 text-xs';
+        const approveOrRevoke = u.isApproved !== true
+            ? `<button class="${sizeCls} bg-emerald-600 hover:bg-emerald-700 text-white font-medium rounded-lg transition-all shadow-sm flex items-center gap-1" data-action="approve" data-uid="${u.uid}"><i class="fas fa-check"></i> Approve</button>`
+            : `<button class="${sizeCls} bg-amber-50 hover:bg-amber-100 text-amber-700 font-medium rounded-lg transition-all flex items-center gap-1 border border-amber-200" data-action="revoke" data-uid="${u.uid}"><i class="fas fa-times"></i> Revoke</button>`;
+        return `
+            <div class="flex items-center ${mobile ? 'flex-wrap' : 'justify-end'} gap-2">
+                ${approveOrRevoke}
+                <button class="${sizeCls} bg-slate-100 hover:bg-slate-200 text-slate-700 font-medium rounded-lg transition-all flex items-center gap-1 border border-slate-200" data-action="edit" data-uid="${u.uid}"><i class="fas fa-user-edit"></i> Edit</button>
+                <button class="${sizeCls} bg-blue-50 hover:bg-blue-100 text-blue-700 font-medium rounded-lg transition-all flex items-center gap-1 border border-blue-100" data-action="email" data-uid="${u.uid}"><i class="fas fa-envelope"></i> Email</button>
+                <button class="${sizeCls} bg-rose-50 hover:bg-rose-100 text-rose-600 font-medium rounded-lg transition-all flex items-center gap-1 border border-rose-100" data-action="delete" data-uid="${u.uid}"><i class="fas fa-trash"></i> Delete</button>
+            </div>
+        `;
+    }
+
+    function rowHTML(u) {
+        const initials = (u.name || 'U').substring(0, 2).toUpperCase();
+        return `
+            <tr data-uid="${u.uid}" class="hover:bg-slate-50/50 transition-colors">
+                <td class="px-6 py-4 whitespace-nowrap">
+                    <div class="flex items-center gap-3">
+                        <div class="w-9 h-9 bg-slate-100 rounded-full flex items-center justify-center font-bold text-slate-600 uppercase text-xs shrink-0">${escapeHtml(initials)}</div>
+                        <div>
+                            <div class="font-semibold text-slate-800">${escapeHtml(u.name || '(No name set)')}</div>
+                            <div class="text-xs text-slate-400">${escapeHtml(u.email || '(No email)')}</div>
+                            ${u.phone ? `<div class="text-xs text-slate-400"><i class="fas fa-phone-alt text-[9px]"></i> ${escapeHtml(u.phone)}</div>` : ''}
+                        </div>
+                    </div>
+                </td>
+                <td class="px-6 py-4 whitespace-nowrap">${statusBadgeHTML(u)}</td>
+                <td class="px-6 py-4 whitespace-nowrap text-xs text-slate-600 space-y-0.5">${timelineHTML(u)}</td>
+                <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">${actionButtonsHTML(u, false)}</td>
+            </tr>
+        `;
+    }
+
+    function cardHTML(u) {
+        const initials = (u.name || 'U').substring(0, 2).toUpperCase();
+        return `
+            <div class="user-card px-4 py-4 space-y-3" data-uid="${u.uid}">
+                <div class="flex items-start justify-between gap-3">
+                    <div class="flex items-center gap-3 min-w-0">
+                        <div class="w-10 h-10 bg-slate-100 rounded-full flex items-center justify-center font-bold text-slate-600 uppercase text-xs shrink-0">${escapeHtml(initials)}</div>
+                        <div class="min-w-0">
+                            <div class="font-semibold text-slate-800 truncate">${escapeHtml(u.name || '(No name set)')}</div>
+                            <div class="text-xs text-slate-400 truncate">${escapeHtml(u.email || '(No email)')}</div>
+                            ${u.phone ? `<div class="text-xs text-slate-400"><i class="fas fa-phone-alt text-[9px]"></i> ${escapeHtml(u.phone)}</div>` : ''}
+                        </div>
+                    </div>
+                    <div class="shrink-0">${statusBadgeHTML(u)}</div>
+                </div>
+                <div class="text-xs text-slate-600 bg-slate-50 rounded-xl p-3 space-y-0.5">${timelineHTML(u)}</div>
+                ${actionButtonsHTML(u, true)}
+            </div>
+        `;
+    }
+
+    // Event delegation: one listener each for the table body and card list,
+    // handles approve/revoke/edit/email/delete for every rendered row/card.
+    function handleActionClick(e) {
+        const btn = e.target.closest('[data-action]');
+        if (!btn) return;
+        const uid = btn.dataset.uid;
+        const user = localUsers[uid];
+        if (!user) return;
+        switch (btn.dataset.action) {
+            case 'approve': openApprovalModal(uid, user.name, user.email); break;
+            case 'revoke': revokeApproval(uid); break;
+            case 'edit': openEditModal(uid); break;
+            case 'email': openEmailModal(user); break;
+            case 'delete': deleteUser(uid); break;
+        }
+    }
+    usersTableBody.addEventListener('click', handleActionClick);
+    usersCardList.addEventListener('click', handleActionClick);
+
+    // ---------------------------------------------------------------------
+    // Live countdown ticking -- updates existing DOM text every second
+    // for every approved user, without re-rendering the whole list.
+    // ---------------------------------------------------------------------
+    function countdownText(expiryDateMs) {
         if (!expiryDateMs) return '<span class="text-slate-400">Unlimited access</span>';
         const now = Date.now();
         const diff = expiryDateMs - now;
-        
+
         if (diff <= 0) {
             return '<span class="text-rose-500 font-semibold"><i class="fas fa-ban"></i> Expired</span>';
         }
-        
-        const days = Math.ceil(diff / (1000 * 60 * 60 * 24));
-        if (days > 30) {
-            const months = Math.floor(days / 30);
-            const remainingDays = days % 30;
-            return `<span class="text-emerald-600 font-medium"><i class="fas fa-hourglass-half"></i> ${months}m ${remainingDays}d left</span>`;
-        }
-        
-        if (days <= 5) {
-            return `<span class="text-rose-600 font-bold animate-pulse"><i class="fas fa-exclamation-triangle"></i> only ${days}d left!</span>`;
-        }
-        
-        return `<span class="text-amber-600 font-medium"><i class="fas fa-hourglass-half"></i> ${days} days left</span>`;
+
+        const totalSeconds = Math.floor(diff / 1000);
+        const days = Math.floor(totalSeconds / 86400);
+        const hours = Math.floor((totalSeconds % 86400) / 3600);
+        const minutes = Math.floor((totalSeconds % 3600) / 60);
+        const seconds = totalSeconds % 60;
+
+        let colorCls = 'text-emerald-600';
+        let pulse = '';
+        if (days < 1) { colorCls = 'text-rose-600'; pulse = 'animate-pulse'; }
+        else if (days <= 7) colorCls = 'text-amber-600';
+
+        const parts = days > 0
+            ? `${days}d ${hours}h ${minutes}m`
+            : `${hours}h ${minutes}m ${seconds}s`;
+
+        return `<span class="${colorCls} font-medium ${pulse}"><i class="fas fa-hourglass-half"></i> ${parts} left</span>`;
     }
 
-    // Set up realtime updates for users from database
-    function setupRealtimeUpdates() {
-        db.ref('users').on('value', snapshot => {
-            // Keep paginated updates reactive without manual click actions
-            loadUsers(false);
+    function tickCountdowns() {
+        document.querySelectorAll('.countdown[data-expiry]').forEach(el => {
+            const expiry = parseInt(el.dataset.expiry);
+            if (!expiry) return;
+            el.innerHTML = countdownText(expiry);
+        });
+    }
+    setInterval(tickCountdowns, 1000);
+
+    // Auto-expire users locally the instant their countdown hits zero, and
+    // persist it once per session per user so we don't spam writes.
+    function checkAutoExpirations() {
+        const now = Date.now();
+        Object.values(localUsers).forEach(u => {
+            if (u.isApproved === true && u.expiryDate && now > u.expiryDate && !autoExpiredHandled.has(u.uid)) {
+                autoExpiredHandled.add(u.uid);
+                db.ref('users/' + u.uid).update({ isApproved: false, expired: true })
+                    .then(() => showNotification(`User ${u.name || u.email} access has expired and was auto-blocked.`, 'info'))
+                    .catch(() => autoExpiredHandled.delete(u.uid));
+            }
         });
     }
 
-    /**
-     * Opens the timeline approval options modal for the selected user
-     */
+    // ---------------------------------------------------------------------
+    // Approve (with preset or custom expiry date)
+    // ---------------------------------------------------------------------
+    document.querySelectorAll('input[name="timelineOption"]').forEach(radio => {
+        radio.addEventListener('change', () => {
+            customExpiryDate.style.display = radio.value === 'custom' && radio.checked ? 'block' : 'none';
+        });
+    });
+
     function openApprovalModal(uid, name, email) {
         userToApproveUid = uid;
         approveUserNameLabel.textContent = name || '(No name set)';
         approveUserEmailLabel.textContent = email || '(No email)';
+        const oneMonthRadio = document.querySelector('input[name="timelineOption"][value="1"]');
+        if (oneMonthRadio) oneMonthRadio.checked = true;
+        customExpiryDate.style.display = 'none';
+        const tomorrow = new Date(Date.now() + 86400000);
+        customExpiryDate.min = tomorrow.toISOString().split('T')[0];
         approvalModal.style.display = 'flex';
     }
 
-    /**
-     * Closes the timeline approval modal
-     */
     function closeApprovalModal() {
         approvalModal.style.display = 'none';
         userToApproveUid = null;
     }
 
-    // Bind event for the Grant Approval confirmation button
     confirmApproveBtn.addEventListener('click', () => {
         if (!userToApproveUid) return;
-        
-        // Retrieve selected duration in months
         const selectedRadio = document.querySelector('input[name="timelineOption"]:checked');
-        const durationMonths = parseInt(selectedRadio.value);
-        
-        // Compute calendar expiration date accurately
-        const approvalDate = new Date();
-        const expiryDate = new Date();
-        expiryDate.setMonth(expiryDate.getMonth() + durationMonths);
-        
-        const approvalTimestamp = approvalDate.getTime();
-        const expiryTimestamp = expiryDate.getTime();
+        const value = selectedRadio.value;
+
+        let expiryTimestamp, durationMonths;
+        const approvalTimestamp = Date.now();
+
+        if (value === 'custom') {
+            if (!customExpiryDate.value) {
+                showNotification('Please pick a custom expiry date.', 'error');
+                return;
+            }
+            const chosen = new Date(customExpiryDate.value + 'T23:59:59');
+            expiryTimestamp = chosen.getTime();
+            durationMonths = null;
+        } else {
+            durationMonths = parseInt(value);
+            const expiryDate = new Date();
+            expiryDate.setMonth(expiryDate.getMonth() + durationMonths);
+            expiryTimestamp = expiryDate.getTime();
+        }
 
         db.ref('users/' + userToApproveUid).update({
             isApproved: true,
@@ -874,60 +1056,146 @@
             approvalDate: approvalTimestamp,
             approvalDuration: durationMonths,
             expiryDate: expiryTimestamp
-        })
-        .then(() => {
+        }).then(() => {
+            autoExpiredHandled.delete(userToApproveUid);
             showNotification("User approved with customized timeline successfully!", "success");
             closeApprovalModal();
-        })
-        .catch(err => {
-            showNotification("Error during approval process: " + err.message, "error");
-        });
+        }).catch(err => showNotification("Error during approval process: " + err.message, "error"));
     });
 
-    // Revoke access for an approved account
     function revokeApproval(uid) {
         customConfirm('Are you sure you want to immediately block and revoke access for this user?', () => {
-            db.ref('users/' + uid).update({ 
-                isApproved: false,
-                expired: false // Reset explicit expired marker, but block them
-            })
-            .then(() => {
-                showNotification("User's active access has been manually revoked.");
-            })
-            .catch(err => {
-                showNotification('Error revoking approval: ' + err.message, "error");
-            });
+            db.ref('users/' + uid).update({ isApproved: false, expired: false })
+                .then(() => showNotification("User's active access has been manually revoked."))
+                .catch(err => showNotification('Error revoking approval: ' + err.message, "error"));
         });
     }
 
-    // Delete a user registry record entirely
     function deleteUser(uid) {
         customConfirm('Are you sure you want to delete this user? This action cannot be undone and deletes their entire record.', () => {
             db.ref('users/' + uid).remove()
-                .then(() => {
-                    showNotification("User completely removed from system registry.", "success");
-                })
-                .catch(err => {
-                    showNotification('Error deleting user: ' + err.message, "error");
-                });
+                .then(() => showNotification("User completely removed from system registry.", "success"))
+                .catch(err => showNotification('Error deleting user: ' + err.message, "error"));
         });
     }
 
-    // Update global numerical counter widgets
-    function updateStats() {
-        totalUsersEl.textContent = totalUsers;
-        approvedUsersEl.textContent = approvedUsers;
-        pendingUsersEl.textContent = pendingUsers;
+    // ---------------------------------------------------------------------
+    // Edit modal -- admins can edit every field on every user, approved or not
+    // ---------------------------------------------------------------------
+    function toDatetimeLocalValue(ms) {
+        if (!ms) return '';
+        const d = new Date(ms);
+        const pad = n => String(n).padStart(2, '0');
+        return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
     }
 
-    /**
-     * Launch sending modal for notices
-     */
+    function openEditModal(uid) {
+        const u = localUsers[uid];
+        if (!u) return;
+        userToEditUid = uid;
+
+        editName.value = u.name || '';
+        editEmail.value = u.email || '';
+        editPhone.value = u.phone || '';
+        editStatus.value = classifyUser(u);
+        editExpiry.value = toDatetimeLocalValue(u.expiryDate);
+        editNotes.value = u.notes || '';
+
+        editExpiryWrap.style.display = editStatus.value === 'approved' ? 'block' : 'none';
+        editStatusMessage.style.display = 'none';
+
+        editModal.style.display = 'flex';
+    }
+
+    function closeEditModal() {
+        editModal.style.display = 'none';
+        userToEditUid = null;
+    }
+
+    editStatus.addEventListener('change', () => {
+        editExpiryWrap.style.display = editStatus.value === 'approved' ? 'block' : 'none';
+        if (editStatus.value === 'approved' && !editExpiry.value) {
+            const d = new Date();
+            d.setMonth(d.getMonth() + 1);
+            editExpiry.value = toDatetimeLocalValue(d.getTime());
+        }
+    });
+
+    document.querySelectorAll('.edit-extend-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+            const months = parseInt(btn.dataset.months);
+            const base = editExpiry.value ? new Date(editExpiry.value) : new Date();
+            const start = base.getTime() > Date.now() ? base : new Date();
+            start.setMonth(start.getMonth() + months);
+            editExpiry.value = toDatetimeLocalValue(start.getTime());
+        });
+    });
+
+    saveEditBtn.addEventListener('click', () => {
+        if (!userToEditUid) return;
+
+        const name = editName.value.trim();
+        const email = editEmail.value.trim();
+        if (!name && !email) {
+            editStatusMessage.textContent = 'Please provide at least a name or email.';
+            editStatusMessage.className = 'p-3.5 rounded-xl text-center text-sm font-medium bg-red-50 text-red-800 border border-red-200';
+            editStatusMessage.style.display = 'block';
+            return;
+        }
+
+        const status = editStatus.value;
+        const update = {
+            name,
+            email,
+            phone: editPhone.value.trim(),
+            notes: editNotes.value.trim(),
+            isApproved: status === 'approved',
+            expired: status === 'blocked'
+        };
+
+        if (status === 'approved') {
+            if (!editExpiry.value) {
+                editStatusMessage.textContent = 'Please set an expiry date for approved access.';
+                editStatusMessage.className = 'p-3.5 rounded-xl text-center text-sm font-medium bg-red-50 text-red-800 border border-red-200';
+                editStatusMessage.style.display = 'block';
+                return;
+            }
+            update.expiryDate = new Date(editExpiry.value).getTime();
+            const existing = localUsers[userToEditUid] || {};
+            if (!existing.approvalDate) update.approvalDate = Date.now();
+        }
+
+        saveEditBtnText.textContent = 'Saving...';
+        saveEditSpinner.style.display = 'inline-block';
+        saveEditBtn.disabled = true;
+
+        db.ref('users/' + userToEditUid).update(update)
+            .then(() => {
+                autoExpiredHandled.delete(userToEditUid);
+                showNotification('User record updated successfully.', 'success');
+                closeEditModal();
+            })
+            .catch(err => {
+                editStatusMessage.textContent = 'Error saving changes: ' + err.message;
+                editStatusMessage.className = 'p-3.5 rounded-xl text-center text-sm font-medium bg-red-50 text-red-800 border border-red-200';
+                editStatusMessage.style.display = 'block';
+            })
+            .finally(() => {
+                saveEditBtnText.textContent = 'Save Changes';
+                saveEditSpinner.style.display = 'none';
+                saveEditBtn.disabled = false;
+            });
+    });
+
+    editModal.addEventListener('click', e => { if (e.target === editModal) closeEditModal(); });
+
+    // ---------------------------------------------------------------------
+    // Email modal
+    // ---------------------------------------------------------------------
     function openEmailModal(user) {
         currentUser = user;
-        recipientEmail.textContent = (user.email && user.email.trim() !== '') ? user.email : '(No email provided)'; 
+        recipientEmail.textContent = (user.email && user.email.trim() !== '') ? user.email : '(No email provided)';
         recipientName.textContent = user.name || 'User';
-        
         emailStatusMessage.style.display = 'none';
         emailStatusMessage.className = 'hidden p-3.5 rounded-xl text-center text-sm font-medium';
         emailModal.style.display = 'flex';
@@ -941,9 +1209,6 @@
         sendEmailBtn.disabled = false;
     }
 
-    /**
-     * Send email notification trigger
-     */
     function sendEmail() {
         if (!currentUser || !currentUser.email || currentUser.email.trim() === '') {
             emailStatusMessage.textContent = 'Cannot send email: Recipient email is missing/invalid.';
@@ -951,12 +1216,12 @@
             emailStatusMessage.style.display = 'block';
             return;
         }
-        
+
         sendEmailBtnText.textContent = 'Sending...';
         sendEmailSpinner.style.display = 'inline-block';
         sendEmailBtn.disabled = true;
         emailStatusMessage.style.display = 'none';
-        
+
         const templateParams = {
             to_name: currentUser.name || 'User',
             to_email: currentUser.email,
@@ -966,110 +1231,24 @@
         };
 
         emailjs.send('service_h4czyfx', 'template_z8piizr', templateParams)
-            .then(function(response) {
+            .then(function () {
                 emailStatusMessage.textContent = 'Notice dispatched and sent successfully!';
                 emailStatusMessage.className = 'p-3.5 rounded-xl text-center text-sm font-medium bg-emerald-50 text-emerald-800 border border-emerald-200';
                 emailStatusMessage.style.display = 'block';
-                
-                setTimeout(() => {
-                    closeEmailModal();
-                }, 1500);
-            }, function(error) {
+                setTimeout(closeEmailModal, 1500);
+            }, function (error) {
                 emailStatusMessage.textContent = `Email failure: ${error.text || error.message || 'Unknown network error'}`;
                 emailStatusMessage.className = 'p-3.5 rounded-xl text-center text-sm font-medium bg-red-50 text-red-800 border border-red-200';
                 emailStatusMessage.style.display = 'block';
-                
                 sendEmailBtnText.textContent = 'Send Mail';
                 sendEmailSpinner.style.display = 'none';
                 sendEmailBtn.disabled = false;
             });
     }
 
-    function updateFilterButtons() {
-        document.querySelectorAll('.filter-button').forEach(button => {
-            button.classList.remove('active', 'bg-blue-600', 'text-white', 'border-blue-600');
-            button.classList.add('bg-white', 'text-slate-600', 'border-slate-200');
-        });
-        
-        let activeButton;
-        if (currentFilter === 'all') {
-            activeButton = showAllUsersBtn;
-        } else if (currentFilter === 'approved') {
-            activeButton = showApprovedUsersBtn;
-        } else if (currentFilter === 'pending') {
-            activeButton = showPendingUsersBtn;
-        }
-        
-        if (activeButton) {
-            activeButton.classList.remove('bg-white', 'text-slate-600', 'border-slate-200');
-            activeButton.classList.add('bg-blue-600', 'text-white', 'border-blue-600', 'active');
-        }
-    }
-
-    showAllUsersBtn.addEventListener('click', () => {
-        currentFilter = 'all';
-        resetAndLoadUsers();
-        updateFilterButtons();
-    });
-
-    showApprovedUsersBtn.addEventListener('click', () => {
-        currentFilter = 'approved';
-        resetAndLoadUsers();
-        updateFilterButtons();
-    });
-
-    showPendingUsersBtn.addEventListener('click', () => {
-        currentFilter = 'pending';
-        resetAndLoadUsers();
-        updateFilterButtons();
-    });
-
-    userSearchInput.addEventListener('keyup', () => {
-        clearTimeout(searchTimeout);
-        searchTimeout = setTimeout(() => {
-            resetAndLoadUsers();
-        }, searchDebounceTime);
-    });
-
-    loadMoreBtn.addEventListener('click', () => {
-        loadUsers(true);
-    });
-
     cancelEmailBtn.addEventListener('click', closeEmailModal);
     sendEmailBtn.addEventListener('click', sendEmail);
-    
-    emailModal.addEventListener('click', function(e) {
-        if (e.target === this) {
-            closeEmailModal();
-        }
-    });
-
-    auth.onAuthStateChanged(user => {
-        if (user) {
-            db.ref('admins/' + user.uid).once('value').then(snapshot => {
-                if (snapshot.exists() && snapshot.val() === true) {
-                    loginDiv.style.display = 'none';
-                    adminContent.style.display = 'block';
-                    resetAndLoadUsers();
-                    setupRealtimeUpdates();
-                    updateFilterButtons();
-                } else {
-                    auth.signOut();
-                    loginDiv.style.display = 'block';
-                    adminContent.style.display = 'none';
-                    loginError.textContent = 'Access denied: User is not configured as an administrator.';
-                }
-            })
-            .catch(error => {
-                loginDiv.style.display = 'block';
-                adminContent.style.display = 'none';
-                loginError.textContent = `Connection failure: ${error.message}`;
-            });
-        } else {
-            loginDiv.style.display = 'block';
-            adminContent.style.display = 'none';
-        }
-    });
+    emailModal.addEventListener('click', e => { if (e.target === emailModal) closeEmailModal(); });
 </script>
 
 </body>
