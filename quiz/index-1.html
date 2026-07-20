@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-   <meta property="og:title" content="CEE Medico Nepal – Practice MCQs & Mock Tests for CEE 2081/2082">
+    <meta property="og:title" content="CEE Medico Nepal – Practice MCQs & Mock Tests for CEE 2081/2082">
     <meta property="og:description" content="Nepal's leading platform for CEE medical entrance preparation. Free MCQs, quizzes, and NEET-style mock tests.">
     <meta property="og:url" content="https://ceemediconepal.xyz/">
     <meta property="og:type" content="website">
@@ -27,6 +27,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Sora:wght@300;400;600;700;800&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
 <style>
 :root {
   --blue: #0062ff;
@@ -61,7 +62,7 @@ nav ul{display:flex;list-style:none;gap:6px;}
 nav ul a{color:rgba(255,255,255,0.85);text-decoration:none;font-size:0.88rem;font-weight:600;padding:7px 14px;border-radius:6px;transition:background 0.2s;}
 nav ul a:hover{background:rgba(255,255,255,0.15);color:#fff;}
 .hamburger{display:none;background:none;border:none;cursor:pointer;padding:8px;color:#fff;font-size:1.4rem;}
-.nav-menu{display:flex;}
+.nav-menu{display:flex;align-items:center;}
 @media(max-width:768px){
   .hamburger{display:block;}
   .nav-menu{display:none;position:absolute;top:64px;left:-24px;right:-24px;background:var(--blue);flex-direction:column;padding:12px 0;box-shadow:0 8px 24px rgba(0,0,0,0.2);z-index:100;opacity:0;visibility:hidden;transform:translateY(-10px);transition:all .3s ease;}
@@ -96,9 +97,61 @@ nav ul a:hover{background:rgba(255,255,255,0.15);color:#fff;}
 .exam-tab.live-tab.selected{border-color:var(--green);}
 .exam-tab-title{font-weight:700;font-size:0.92rem;}
 .exam-tab-meta{font-size:0.78rem;color:var(--muted);margin-top:3px;}
-.badge-live{background:rgba(0,201,122,0.12);color:var(--green);border:1px solid rgba(0,201,122,0.3);padding:3px 10px;border-radius:20px;font-size:0.72rem;font-weight:700;}
+.badge-live{display:inline-flex;align-items:center;gap:6px;background:rgba(0,201,122,0.12);color:var(--green);border:1px solid rgba(0,201,122,0.3);padding:3px 10px;border-radius:20px;font-size:0.72rem;font-weight:700;}
 .badge-upcoming{background:#fffbea;color:#c8860a;border:1px solid #ffe066;padding:3px 10px;border-radius:20px;font-size:0.72rem;font-weight:700;}
 .badge-closed{background:#fff0f3;color:var(--red);border:1px solid #ffb3c1;padding:3px 10px;border-radius:20px;font-size:0.72rem;font-weight:700;}
+
+/* PAST EXAMS DRAWER */
+#past-exams-drawer {
+  position: fixed;
+  top: 0;
+  right: -340px;
+  width: 340px;
+  max-width: 85%;
+  height: 100%;
+  background: var(--card);
+  box-shadow: -5px 0 25px rgba(0,0,0,0.15);
+  z-index: 1001;
+  transition: right 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  display: flex;
+  flex-direction: column;
+  padding: 24px;
+}
+#past-exams-drawer.open {
+  right: 0;
+}
+#drawer-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(13, 27, 42, 0.4);
+  backdrop-filter: blur(4px);
+  z-index: 1000;
+  opacity: 0;
+  visibility: hidden;
+  transition: opacity 0.3s ease, visibility 0.3s ease;
+}
+#drawer-overlay.show {
+  opacity: 1;
+  visibility: visible;
+}
+.past-exam-item {
+  padding: 14px;
+  border: 1.5px solid var(--border);
+  border-radius: 10px;
+  cursor: pointer;
+  transition: all 0.2s;
+  background: #fafbff;
+}
+.past-exam-item:hover {
+  border-color: var(--blue);
+  background: var(--blue-light);
+  transform: translateX(-2px);
+}
+.past-exam-item.selected {
+  border-color: var(--blue);
+  background: var(--blue-light);
+  box-shadow: 0 4px 12px rgba(0,98,255,0.08);
+}
 
 /* MAIN */
 .main-content{max-width:900px;margin:-36px auto 60px;padding:0 16px;}
@@ -221,13 +274,13 @@ footer a{color:#fff;font-weight:700;}
 .blocker-modal p{color:var(--muted);font-size:0.9rem;margin-bottom:24px;line-height:1.6;}
 .blocker-modal .btn-row{justify-content:center;}
 
-/* PRINT — only shows the answer key / review section */
+/* PRINT STYLE SHEET RULES */
 @media print {
   *{transition:none!important;}
   body{background:#fff!important;color:#000;font-size:11pt;}
   header,footer,.hero,.filter-tabs,.btn-row,.no-print,
   #quiz-back-blocker,#status-banner,#exam-selector-card,
-  #login-card,#quiz-area,
+  #login-card,#quiz-area,#past-exams-drawer,#drawer-overlay,#notif-banner,
   /* hide score card, leaderboard, result banner inside result-area */
   #result-area > .card:not(#review-card),
   #result-area > div:not(#review-card):not(.print-answerkey-header){
@@ -255,7 +308,6 @@ footer a{color:#fff;font-weight:700;}
   .section-title{display:none!important;}
   #review-content{padding:0!important;}
 }
-/* Print answer key header — hidden on screen, shown when printing */
 .print-answerkey-header{
   display:none;
   text-align:center;
@@ -265,9 +317,7 @@ footer a{color:#fff;font-weight:700;}
 }
 .print-answerkey-header h1{font-size:1.3rem;font-weight:800;margin-bottom:4px;}
 .print-answerkey-header p{color:#6b7c93;font-size:0.82rem;}
-/* Screen-only print meta (inside result banner) */
 .print-header{display:none;}
-
 
 /* RESPONSIVE */
 @media(max-width:768px){
@@ -318,6 +368,22 @@ footer a{color:#fff;font-weight:700;}
   </div>
 </div>
 
+<!-- Drawer Overlay for sliding past exams panel -->
+<div id="drawer-overlay" onclick="closeDrawer()"></div>
+
+<!-- Slide-out Drawer for closed/past exams list -->
+<div id="past-exams-drawer">
+  <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px; border-bottom:1px solid var(--border); padding-bottom:14px;">
+    <h3 style="font-size:1.1rem; font-weight:800; color:var(--text); display:flex; align-items:center; gap:8px;">
+      <i class="fas fa-history" style="color:var(--blue);"></i> Past Exams
+    </h3>
+    <button onclick="closeDrawer()" style="background:none; border:none; font-size:1.2rem; cursor:pointer; color:var(--muted);"><i class="fas fa-times"></i></button>
+  </div>
+  <div id="past-exams-list" style="display:flex; flex-direction:column; gap:12px; overflow-y:auto; flex-grow:1; padding-right:4px;">
+    <!-- Rendered Closed exams list injected here -->
+  </div>
+</div>
+
 <header>
 <nav>
   <a href="https://ceemediconepal.xyz" class="logo">
@@ -330,8 +396,8 @@ footer a{color:#fff;font-weight:700;}
   <ul class="nav-menu">
     <li><a href="https://ceemediconepal.xyz">Home</a></li>
     <li><a href="dashboard.html">Dashboard</a></li>
+    <li><a href="#" id="nav-past-exams" onclick="openDrawer(event)"><i class="fas fa-history"></i> Past Exams</a></li>
     <li><a href="#result-area" id="nav-result-link" class="hidden">Results</a></li>
-    <li><a href="admin.html">Admin</a></li>
   </ul>
 </nav>
 </header>
@@ -342,11 +408,29 @@ footer a{color:#fff;font-weight:700;}
   <div class="next-exam-badge">
     <div class="pulse-dot"></div>
     <span id="next-exam-text">Loading schedule...</span>
+    <span id="notif-badge" class="hidden" style="background: rgba(0, 201, 122, 0.2); color: #00ffd0; border: 1px solid rgba(0, 201, 122, 0.4); padding: 2px 8px; border-radius: 20px; font-size: 0.72rem; font-weight: 700; margin-left: 8px;">
+      <i class="fas fa-bell"></i> Alerts Active
+    </span>
   </div>
 </div>
 
 <div class="main-content">
 
+  <!-- Local Notification Permission Banner -->
+  <div id="notif-banner" class="card hidden no-print" style="background: linear-gradient(135deg, #e8f0ff, #ffffff); border: 2px solid var(--blue); padding: 18px 22px; display: flex; align-items: center; justify-content: space-between; gap: 16px; margin-bottom: 24px;">
+    <div style="display: flex; align-items: center; gap: 14px;">
+      <span style="font-size: 1.8rem; animation: floatBadge 2.5s infinite;">🔔</span>
+      <div>
+        <strong style="color: var(--blue); font-size: 0.95rem; display: block; margin-bottom: 2px;">Never Miss CEE Weekly Exams!</strong>
+        <p style="font-size: 0.8rem; color: var(--muted); line-height: 1.4;">Allow browser notifications to alert you the instant scheduled tests go live.</p>
+      </div>
+    </div>
+    <button class="btn btn-primary btn-sm" onclick="requestNotificationPermission()" style="white-space: nowrap; width: auto; min-height: unset; padding: 10px 18px;">
+      Enable Alerts
+    </button>
+  </div>
+
+  <!-- Main Exam Selector Card: Strictly shows LIVE & UPCOMING only -->
   <div class="exam-selector-card hidden" id="exam-selector-card">
     <h3><i class="fas fa-calendar-check"></i> Available Exams</h3>
     <div class="exam-tab-list" id="exam-tab-list"></div>
@@ -470,6 +554,7 @@ footer a{color:#fff;font-weight:700;}
 
 <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-database-compat.js"></script>
+
 <script>
 const firebaseConfig = {
   apiKey: "AIzaSyDI-O7KiPzKKAc94UBcy-EusldtOMD_ZbE",
@@ -495,10 +580,10 @@ let deviceId = localStorage.getItem('cee_device_id') || crypto.randomUUID();
 localStorage.setItem('cee_device_id', deviceId);
 let currentUser = null;
 let examKey = null;
-let quizActive = false;     // true while exam is running
-let backBlockerPending = false; // are we showing the blocker?
+let quizActive = false;     
+let backBlockerPending = false;
 
-/* ─── Back / Navigate blocker ─── */
+/* ─── Navigation/Back Blockers ─── */
 function pushQuizState() {
   history.pushState({ quizActive: true }, '', window.location.href);
 }
@@ -535,11 +620,82 @@ function forceExit() {
   window.location.href = 'https://ceemediconepal.xyz';
 }
 
-/* ─── Init ─── */
+/* ─── STREAMING_CHUNK: Configuring browser notification engine routines ─── */
+// Browser Notification logic
+function initNotifications() {
+  if (!('Notification' in window)) {
+    console.log('This browser does not support desktop notifications');
+    return;
+  }
+
+  updateNotifUI();
+
+  // Background scheduled checks running every 15 seconds to catch LIVE shifts on current open tab
+  setInterval(checkAndNotifyLiveExams, 15000);
+}
+
+function updateNotifUI() {
+  const banner = document.getElementById('notif-banner');
+  const badge = document.getElementById('notif-badge');
+
+  if (Notification.permission === 'granted') {
+    if (banner) banner.classList.add('hidden');
+    if (badge) badge.classList.remove('hidden');
+  } else if (Notification.permission === 'default') {
+    if (banner) banner.classList.remove('hidden');
+    if (badge) badge.classList.add('hidden');
+  } else {
+    // denied
+    if (banner) banner.classList.add('hidden');
+    if (badge) badge.classList.add('hidden');
+  }
+}
+
+async function requestNotificationPermission() {
+  if (!('Notification' in window)) return;
+  
+  const permission = await Notification.requestPermission();
+  updateNotifUI();
+
+  if (permission === 'granted') {
+    new Notification("🔔 CEE Exam Reminders Enabled!", {
+      body: "Excellent! We will notify you here the exact second scheduled exams go live.",
+      icon: "https://ceemediconepal.xyz/fevicon/android-chrome-512x512.png"
+    });
+  }
+}
+
+function checkAndNotifyLiveExams() {
+  if (Notification.permission !== 'granted') return;
+
+  const now = Date.now();
+  const notified = JSON.parse(localStorage.getItem('cee_notified_exams') || '[]');
+
+  allExams.forEach(exam => {
+    if (notified.includes(exam.id)) return;
+
+    const status = getStatus(exam);
+    if (status === 'live' && exam.startTime) {
+      // Ensure we only alert for exam sessions starting within a reasonable active timeframe (last 2 hours to avoid stale alerts)
+      if (now >= exam.startTime && now <= (exam.startTime + 7200000)) {
+        new Notification("🔴 LIVE EXAM: " + (exam.title || "Weekly CEE Challenging Exam"), {
+          body: "The exam is now open for attempts! Click here to login and begin immediately.",
+          icon: "https://ceemediconepal.xyz/fevicon/android-chrome-512x512.png",
+          requireInteraction: true
+        });
+        notified.push(exam.id);
+        localStorage.setItem('cee_notified_exams', JSON.stringify(notified));
+      }
+    }
+  });
+}
+
+/* ─── STREAMING_CHUNK: Declaring portal initialization and exam retrievals ─── */
 init();
 
 async function init() {
   try {
+    initNotifications();
     await loadAllExams();
     await checkPreviousAttempts();
   } catch(e) {
@@ -556,23 +712,31 @@ async function loadAllExams() {
     snap.forEach(child => { allExams.push({ id: child.key, ...child.val() }); });
   }
 
+  // Segment exams based on current live status
   const liveExams     = allExams.filter(e => getStatus(e) === 'live');
   const upcomingExams = allExams.filter(e => getStatus(e) === 'upcoming');
+  const closedExams   = allExams.filter(e => getStatus(e) === 'closed');
 
-  if (liveExams.length === 1) {
-    selectExam(liveExams[0]);
-  } else if (liveExams.length > 1) {
-    renderExamSelector(liveExams.concat(upcomingExams));
-    selectExam(liveExams[0]);
+  // Render strictly LIVE and UPCOMING exams on the main page selector
+  const activeExams = liveExams.concat(upcomingExams);
+  renderExamSelector(activeExams);
+
+  // Render CLOSED exams inside the side drawer panel
+  renderPastExamsDrawerList(closedExams);
+
+  // Default selection algorithm
+  if (liveExams.length > 0) {
+    await selectExam(liveExams[0]);
   } else if (upcomingExams.length > 0) {
-    if (upcomingExams.length === 1) selectExam(upcomingExams[0]);
-    else { renderExamSelector(upcomingExams); selectExam(upcomingExams[0]); }
+    await selectExam(upcomingExams[0]);
+  } else if (closedExams.length > 0) {
+    await selectExam(closedExams[0]);
   } else {
-    const closed = allExams.filter(e => getStatus(e) === 'closed');
-    closed.sort((a,b) => (b.endTime||0)-(a.endTime||0));
-    if (closed.length) selectExam(closed[0]);
-    else updateUINoExam();
+    updateUINoExam();
   }
+
+  // Run a quick proactive check on loading exams lists
+  checkAndNotifyLiveExams();
 }
 
 function getStatus(exam) {
@@ -585,26 +749,20 @@ function getStatus(exam) {
   return 'closed';
 }
 
-function selectExam(exam) {
-  selectedExam = exam;
-  examKey = exam.examKey || exam.id;
-  document.querySelectorAll('.exam-tab').forEach(t => {
-    t.classList.toggle('selected', t.dataset.id === exam.id);
-  });
-  updateUI();
-}
-
 function renderExamSelector(exams) {
   const card = document.getElementById('exam-selector-card');
   const list = document.getElementById('exam-tab-list');
+  if (exams.length === 0) {
+    card.classList.add('hidden');
+    return;
+  }
   card.classList.remove('hidden');
+  
   list.innerHTML = exams.map(e => {
     const st = getStatus(e);
     const badge = st === 'live'
       ? '<span class="badge-live">🟢 LIVE</span>'
-      : st === 'upcoming'
-        ? '<span class="badge-upcoming">⏰ Upcoming</span>'
-        : '<span class="badge-closed">🔒 Closed</span>';
+      : '<span class="badge-upcoming">⏰ Upcoming</span>';
     const timeInfo = e.startTime
       ? `${new Date(e.startTime).toLocaleString()} → ${e.endTime ? new Date(e.endTime).toLocaleString() : '—'}`
       : 'Open ended';
@@ -616,6 +774,103 @@ function renderExamSelector(exams) {
       ${badge}
     </div>`;
   }).join('');
+}
+
+function renderPastExamsDrawerList(exams) {
+  const list = document.getElementById('past-exams-list');
+  if (!list) return;
+  if (exams.length === 0) {
+    list.innerHTML = `<p class="text-muted" style="text-align:center; padding: 20px 0; font-size:0.85rem;">No past exams available.</p>`;
+    return;
+  }
+  
+  list.innerHTML = exams.map(e => {
+    const timeInfo = e.endTime 
+      ? `Ended: ${new Date(e.endTime).toLocaleDateString()}` 
+      : 'Closed';
+    return `<div class="past-exam-item" data-id="${e.id}" onclick="selectPastExam('${e.id}')">
+      <div style="font-weight:700; font-size:0.88rem; color:var(--text);">${e.title || e.examKey || e.id}</div>
+      <div style="font-size:0.75rem; color:var(--muted); margin-top:4px;"><i class="fas fa-calendar-alt"></i> ${timeInfo}</div>
+    </div>`;
+  }).join('');
+}
+
+function openDrawer(e) {
+  if (e) e.preventDefault();
+  document.getElementById('past-exams-drawer').classList.add('open');
+  document.getElementById('drawer-overlay').classList.add('show');
+  // Auto-collapse mobile navigation hamburger bar if opened
+  document.querySelector('.nav-menu').classList.remove('open');
+}
+
+function closeDrawer() {
+  document.getElementById('past-exams-drawer').classList.remove('open');
+  document.getElementById('drawer-overlay').classList.remove('show');
+}
+
+async function selectPastExam(examId) {
+  const exam = allExams.find(x => x.id === examId);
+  if (exam) {
+    await selectExam(exam);
+    closeDrawer();
+    // Scroll to status/result top banner view gracefully
+    const topElement = document.getElementById('status-banner').style.display !== 'none' 
+      ? document.getElementById('status-banner') 
+      : document.getElementById('result-area');
+    topElement.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }
+}
+
+async function selectExam(exam) {
+  selectedExam = exam;
+  examKey = exam.examKey || exam.id;
+  
+  // Highlight currently selected elements across lists
+  document.querySelectorAll('.exam-tab').forEach(t => {
+    t.classList.toggle('selected', t.dataset.id === exam.id);
+  });
+  document.querySelectorAll('.past-exam-item').forEach(t => {
+    t.classList.toggle('selected', t.dataset.id === exam.id);
+  });
+
+  // Reset core container screens to load selected context cleanly
+  document.getElementById('login-card').style.display = 'block';
+  document.getElementById('status-banner').style.display = 'flex';
+  document.getElementById('quiz-area').style.display = 'none';
+  document.getElementById('result-area').style.display = 'none';
+  document.getElementById('nav-result-link').classList.add('hidden');
+
+  try {
+    // Dynamic Attempt Retrieval: Check if user completed this specific exam
+    const snap = await db.ref(`results/${examKey}/${deviceId}`).once('value');
+    if (snap.exists()) {
+      const data = snap.val();
+
+      // Ensure stable retrieval of historical database snapshots
+      if (data.questions) {
+        questions = data.questions;
+      } else {
+        const setId = selectedExam.questionSetId;
+        if (setId) {
+          const qSnap = await db.ref(`question_sets/${setId}/questions`).once('value');
+          if (qSnap.exists()) {
+            const allQs = qSnap.val();
+            questions = (Array.isArray(allQs) ? allQs : Object.values(allQs)).filter(q => q && q.question);
+          }
+        }
+      }
+
+      document.getElementById('login-card').style.display = 'none';
+      document.getElementById('status-banner').style.display = 'none';
+      document.getElementById('nav-result-link').classList.remove('hidden');
+      showResults(data, data.answers || {}, true);
+    } else {
+      updateUI();
+    }
+  } catch(e) {
+    console.error('Selection recovery failure:', e);
+    updateUI();
+  }
 }
 
 function updateUI() {
@@ -640,7 +895,7 @@ function updateUI() {
     nextTxt.textContent = `Opens: ${new Date(startTime).toLocaleDateString('en-US',{weekday:'long',month:'short',day:'numeric',hour:'2-digit',minute:'2-digit'})}`;
   } else {
     banner.className = 'status-banner closed';
-    banner.innerHTML = '<i class="fas fa-lock"></i><span>No active exam right now. Check back on Saturday!</span>';
+    banner.innerHTML = `<i class="fas fa-lock"></i><span><strong>${selectedExam.title||selectedExam.examKey}</strong> is closed. View past performance or explore the menu!</span>`;
     btn.disabled = true;
     btn.innerHTML = '<i class="fas fa-lock"></i> Exam Closed';
     nextTxt.textContent = `Next: ${getNextSaturday()}`;
@@ -650,7 +905,7 @@ function updateUI() {
 function updateUINoExam() {
   const banner = document.getElementById('status-banner');
   banner.className = 'status-banner closed';
-  banner.innerHTML = '<i class="fas fa-lock"></i><span>No exams scheduled. Check back later!</span>';
+  banner.innerHTML = '<i class="fas fa-lock"></i><span>No active exams scheduled right now. Check back soon!</span>';
   document.getElementById('start-btn').disabled = true;
   document.getElementById('start-btn').innerHTML = '<i class="fas fa-lock"></i> No Exam';
   document.getElementById('next-exam-text').textContent = `Next: ${getNextSaturday()}`;
@@ -665,33 +920,22 @@ function getNextSaturday() {
 }
 
 async function checkPreviousAttempts() {
+  // Try scanning active/selected exam first
+  if (selectedExam) {
+    const key = selectedExam.examKey || selectedExam.id;
+    const snap = await db.ref(`results/${key}/${deviceId}`).once('value');
+    if (snap.exists()) {
+      await selectExam(selectedExam);
+      return;
+    }
+  }
+  
+  // Otherwise search across all exams to load the latest completed attempt by the user
   for (const exam of allExams) {
     const key = exam.examKey || exam.id;
     const snap = await db.ref(`results/${key}/${deviceId}`).once('value');
     if (snap.exists()) {
-      const data = snap.val();
-      selectedExam = exam;
-      examKey = key;
-
-      // FIX: Recover exact session structure from historical database snapshots
-      if (data.questions) {
-        questions = data.questions;
-      } else {
-        const setId = selectedExam.questionSetId;
-        if (setId) {
-          const qSnap = await db.ref(`question_sets/${setId}/questions`).once('value');
-          if (qSnap.exists()) {
-            const allQs = qSnap.val();
-            questions = (Array.isArray(allQs) ? allQs : Object.values(allQs)).filter(q => q && q.question);
-          }
-        }
-      }
-
-      document.getElementById('login-card').style.display = 'none';
-      document.getElementById('status-banner').style.display = 'none';
-      document.getElementById('exam-selector-card').classList.add('hidden');
-      document.getElementById('nav-result-link').classList.remove('hidden');
-      showResults(data, data.answers || {}, true);
+      await selectExam(exam);
       return;
     }
   }
@@ -734,10 +978,12 @@ async function startExam() {
     if (!qSnap.exists()) { showLoginError('Questions not found. Contact admin.'); resetBtn(btn); return; }
 
     const allQs = qSnap.val();
+    
+    // Strict Database Ordering: Load exactly as original uploaded backend order
     questions = (Array.isArray(allQs) ? allQs : Object.values(allQs)).filter(q => q && q.question);
     if (questions.length === 0) { showLoginError('No valid questions found.'); resetBtn(btn); return; }
 
-    questions = shuffle(questions).slice(0, Math.min(200, questions.length));
+    questions = questions.slice(0, Math.min(200, questions.length));
 
     document.getElementById('login-card').style.display = 'none';
     document.getElementById('status-banner').style.display = 'none';
@@ -767,15 +1013,6 @@ async function startExam() {
 function resetBtn(btn) {
   btn.disabled = false;
   btn.innerHTML = '<i class="fas fa-play"></i> Start Exam';
-}
-
-function shuffle(arr) {
-  const a = [...arr];
-  for (let i = a.length - 1; i > 0; i--) {
-    const j = Math.floor(Math.random() * (i + 1));
-    [a[i], a[j]] = [a[j], a[i]];
-  }
-  return a;
 }
 
 function renderQuestions() {
@@ -838,7 +1075,6 @@ async function submitExam(auto) {
   let correct = 0, wrong = 0, unattempted = 0;
   questions.forEach((q, i) => {
     if (userAnswers[i] === undefined) { unattempted++; return; }
-    // FIX: String sanitization comparison to prevent Data-Type mismatches from Firebase values
     if (String(userAnswers[i]) === String(q.correct)) correct++;
     else wrong++;
   });
@@ -854,21 +1090,27 @@ async function submitExam(auto) {
     total: questions.length,
     answers: userAnswers,
     timestamp: Date.now(),
-    questions: questions // FIX: Captures active shuffled states permanently to layout matches cleanly on reload
+    questions: questions 
   };
 
   await db.ref(`results/${examKey}/${deviceId}`).set(resultData);
   document.getElementById('quiz-area').style.display = 'none';
   document.getElementById('nav-result-link').classList.remove('hidden');
-  showResults(resultData, userAnswers, false);
+  
+  // Reload all available exam data arrays dynamically
+  await loadAllExams();
+  
+  // Reload specific selected exam metrics dashboard
+  const updatedSelect = allExams.find(x => x.id === selectedExam.id);
+  if (updatedSelect) selectExam(updatedSelect);
+  
   window.scrollTo({ top: 0, behavior: 'smooth' });
 }
 
-/* ─── Results ─── */
 function showResults(data, answers, fromPrev) {
   document.getElementById('result-area').style.display = 'block';
 
-  // FIX: Force reset scroll animation opacity styles on components hidden inside display wrappers
+  // Overwrite scroll-triggered delays on the scorecard component containers
   document.querySelectorAll('#result-area .card').forEach(card => {
     card.style.opacity = '1';
     card.style.transform = 'translateY(0)';
@@ -933,7 +1175,6 @@ function renderReview(answers, fromPrev) {
       let cls = '';
       const jStr = String(j);
       
-      // FIX: Standardize explicit conversion variables for validation checking
       if (jStr === correctStr) cls = 'correct';
       else if (selStr !== undefined && jStr === selStr) cls = 'wrong';
 
@@ -1004,14 +1245,14 @@ function showLoginError(msg) {
   btn.innerHTML = '<i class="fas fa-play"></i> Start Exam';
 }
 
-// FIX: Renamed function hook to properly catch execution requests from the native HTML elements
 function printAnswerKey() {
   document.querySelectorAll('.review-q').forEach(q => q.style.display = '');
   window.print();
 }
 </script>
+
 <script>
-/* Scroll animation */
+/* Scroll animation helper */
 const observer = new IntersectionObserver((entries) => {
   entries.forEach(entry => {
     if (entry.isIntersecting) {
