@@ -412,6 +412,16 @@
         <h3 id="alertTitle" class="text-lg font-bold text-slate-900">System Notification</h3>
       </div>
       <p id="alertMessage" class="text-slate-600 leading-relaxed mb-6"></p>
+      
+      <!-- Container for dynamic contact admin CTA button -->
+      <div id="alertActionContainer" class="mb-4 hidden">
+        <a href="https://wa.me/9779812240229?text=Hello%20Admin,%20my%20account%20is%20pending%20approval.%20Please%20approve%20my%20access." 
+           target="_blank" 
+           class="w-full py-2.5 bg-emerald-500 hover:bg-emerald-600 text-white font-bold rounded-xl text-sm flex items-center justify-center gap-2 shadow-lg shadow-emerald-500/20 transition duration-200">
+          <i class="fab fa-whatsapp text-lg"></i> Contact Admin on WhatsApp
+        </a>
+      </div>
+
       <div class="flex justify-end">
         <button onclick="hideAlert()" id="alertConfirmBtn" class="px-5 py-2.5 bg-medical-600 hover:bg-medical-700 text-white font-medium rounded-xl transition duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-medical-500">
           Continue
@@ -619,16 +629,23 @@
       }
     }
 
-    // Show premium styled alert
-    function showCustomAlert(title, message, type = 'info') {
+    // Show premium styled alert with optional action button
+    function showCustomAlert(title, message, type = 'info', showContactBtn = false) {
       const modal = document.getElementById("customAlertModal");
       const titleEl = document.getElementById("alertTitle");
       const messageEl = document.getElementById("alertMessage");
       const iconCont = document.getElementById("alertIconContainer");
       const confirmBtn = document.getElementById("alertConfirmBtn");
+      const actionCont = document.getElementById("alertActionContainer");
 
       titleEl.innerText = title;
       messageEl.innerText = message;
+
+      if (showContactBtn) {
+        actionCont.classList.remove("hidden");
+      } else {
+        actionCont.classList.add("hidden");
+      }
 
       // Type-based aesthetic enhancements
       if (type === 'success') {
@@ -923,11 +940,12 @@
           }, 1500);
 
         } else {
-          // NOT APPROVED YET -> ASK USER TO WAIT FOR APPROVAL
+          // NOT APPROVED YET (isApproved === false) -> INSTRUCT TO WAIT & CONTACT ADMIN
           window.showCustomAlert(
-            "Pending Approval", 
-            "⏳ Your account is currently not approved. Please wait for admin approval.", 
-            "warning"
+            "Account Not Approved", 
+            "⏳ Your account status is currently pending approval. Please wait for admin verification or contact the admin directly to request activation.", 
+            "warning",
+            true // Displays the WhatsApp Contact Admin button
           );
           
           const deviceRef = ref(db, `userDevices/${user.uid}/${deviceId}`);
@@ -956,8 +974,9 @@
         
         window.showCustomAlert(
           "Registration Sent!", 
-          "📝 Account created successfully. Please wait for admin approval.", 
-          "warning"
+          "📝 Account created successfully. Please wait for admin approval or contact admin to activate your access.", 
+          "warning",
+          true // Displays the WhatsApp Contact Admin button
         );
         await signOut(auth);
         toggleSubmitLoading(false);
