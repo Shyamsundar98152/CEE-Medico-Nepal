@@ -165,7 +165,7 @@
   </style>
 </head>
 
-<!-- Floating QR Button + Popup (Single Code Block) -->
+<!-- Floating QR Button + Popup -->
 <div id="qr-widget">
   <!-- Floating Button -->
   <button id="qrBtn" onclick="document.getElementById('qrModal').style.display='flex'">
@@ -875,6 +875,8 @@
 
       if (snapshot.exists()) {
         const userData = snapshot.val();
+        
+        // CHECK IF APPROVED
         if (userData.isApproved === true) {
           const devicesRef = ref(db, `userDevices/${user.uid}`);
           const devicesSnapshot = await get(devicesRef);
@@ -921,10 +923,10 @@
           }, 1500);
 
         } else {
-          // Account registration unapproved yet
+          // NOT APPROVED YET -> ASK USER TO WAIT FOR APPROVAL
           window.showCustomAlert(
-            "Access Pending", 
-            "⛔ Your portal registration is still awaiting administrator validation. Please check back shortly or reach out on WhatsApp.", 
+            "Pending Approval", 
+            "⏳ Your account is currently not approved. Please wait for admin approval.", 
             "warning"
           );
           
@@ -937,7 +939,7 @@
           toggleSubmitLoading(false);
         }
       } else {
-        // Init newly registered member setup
+        // NEW USER ACCOUNT CREATION
         window.showToast("Configuring new account setup...", "info");
         await set(userRef, {
           email: user.email,
@@ -954,8 +956,8 @@
         
         window.showCustomAlert(
           "Registration Sent!", 
-          "📝 Account created successfully. Registration has been queued for verification. Please wait for admin approval.", 
-          "success"
+          "📝 Account created successfully. Please wait for admin approval.", 
+          "warning"
         );
         await signOut(auth);
         toggleSubmitLoading(false);
@@ -975,7 +977,12 @@
         await checkApproval(userCredential.user);
       } catch (error) {
         toggleSubmitLoading(false);
-        window.showCustomAlert("Connection Error", "❌ Login failed: " + error.message, "error");
+        // WRONG EMAIL OR PASSWORD -> ASK USER TO CORRECT DETAILS
+        window.showCustomAlert(
+          "Login Failed", 
+          "❌ Incorrect email or password. Please correct your details.", 
+          "error"
+        );
       }
     });
 
@@ -990,7 +997,11 @@
         await checkApproval(result.user);
       } catch (error) {
         googleBtnText.innerText = originalText;
-        window.showCustomAlert("Workspace Error", "❌ Google authorization failed: " + error.message, "error");
+        window.showCustomAlert(
+          "Authorization Error", 
+          "❌ Google authentication failed. Please correct your details or try again.", 
+          "error"
+        );
       }
     });
   </script>
