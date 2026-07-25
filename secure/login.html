@@ -79,7 +79,7 @@
     .animate-orb2 { animation: floatOrb2 22s ease-in-out infinite; }
     .animate-orb3 { animation: floatOrb3 20s ease-in-out infinite; }
 
-    /* Elegant entry animations (Cubic Bezier curves) */
+    /* Elegant entry animations */
     @keyframes fadeInUp {
       from {
         opacity: 0;
@@ -653,12 +653,12 @@
         iconCont.innerHTML = '<i class="fas fa-check-circle"></i>';
         confirmBtn.className = "px-5 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white font-medium rounded-xl transition duration-200 focus:ring-emerald-500";
       } else if (type === 'error') {
-        iconCont.className = "w-12 h-12 rounded-full flex items-center justify-center text-xl bg-rose-50 text-rose-600 border border-rose-100 animate-shake";
-        iconCont.innerHTML = '<i class="fas fa-times-circle animate-pulse"></i>';
+        iconCont.className = "w-12 h-12 rounded-full flex items-center justify-center text-xl bg-rose-50 text-rose-600 border border-rose-100";
+        iconCont.innerHTML = '<i class="fas fa-times-circle text-rose-500"></i>';
         confirmBtn.className = "px-5 py-2.5 bg-rose-600 hover:bg-rose-700 text-white font-medium rounded-xl transition duration-200 focus:ring-rose-500";
       } else if (type === 'warning') {
         iconCont.className = "w-12 h-12 rounded-full flex items-center justify-center text-xl bg-amber-50 text-amber-600 border border-amber-100";
-        iconCont.innerHTML = '<i class="fas fa-exclamation-triangle"></i>';
+        iconCont.innerHTML = '<i class="fas fa-user-clock text-amber-600"></i>';
         confirmBtn.className = "px-5 py-2.5 bg-amber-600 hover:bg-amber-700 text-white font-medium rounded-xl transition duration-200 focus:ring-amber-500";
       } else {
         iconCont.className = "w-12 h-12 rounded-full flex items-center justify-center text-xl bg-sky-50 text-sky-600 border border-sky-100";
@@ -817,6 +817,9 @@
       set,
       get,
       update,
+      query,
+      orderByChild,
+      equalTo,
       serverTimestamp
     } from "https://www.gstatic.com/firebasejs/11.8.1/firebase-database.js";
 
@@ -869,7 +872,7 @@
       if (isLoading) {
         btn.disabled = true;
         btn.classList.add("opacity-80", "cursor-not-allowed");
-        text.innerText = "Signing in...";
+        text.innerText = "Checking Credentials...";
         icon.classList.add("hidden");
         spinner.classList.remove("hidden");
       } else {
@@ -937,13 +940,13 @@
           window.showToast("Login approved! Moving you to portal...", "success");
           setTimeout(() => {
             window.location.href = "/secure/protected.html";
-          }, 1500);
+          }, 1200);
 
         } else {
-          // NOT APPROVED YET (isApproved === false) -> INSTRUCT TO WAIT & CONTACT ADMIN
+          // NOT APPROVED YET -> INSTRUCT USER TO CONTACT ADMIN
           window.showCustomAlert(
             "Account Not Approved", 
-            "⏳ Your account status is currently pending approval. Please wait for admin verification or contact the admin directly to request activation.", 
+            "⏳ Your account status is not approved. Please contact the admin for approval to activate your account.", 
             "warning",
             true // Displays the WhatsApp Contact Admin button
           );
@@ -973,8 +976,8 @@
         });
         
         window.showCustomAlert(
-          "Registration Sent!", 
-          "📝 Account created successfully. Please wait for admin approval or contact admin to activate your access.", 
+          "Account Not Approved", 
+          "📝 Account created successfully. Your account is currently not approved. Please contact the admin for approval.", 
           "warning",
           true // Displays the WhatsApp Contact Admin button
         );
@@ -983,23 +986,85 @@
       }
     }
 
-    // Email Credential login listener
+    // Form submit listener with FIRST APPROVAL CHECK then PASSWORD CHECK logic
     document.getElementById("loginForm").addEventListener("submit", async function (e) {
       e.preventDefault();
-      const email = document.getElementById("email").value;
-      const password = document.getElementById("password").value;
+      const emailInput = document.getElementById("email").value.trim();
+      const passwordInput = document.getElementById("password").value;
       
       toggleSubmitLoading(true);
       
       try {
-        const userCredential = await signInWithEmailAndPassword(auth, email, password);
-        await checkApproval(userCredential.user);
-      } catch (error) {
+        // STEP 1: FIRST CHECK APPROVAL STATUS IN REALTIME DATABASE BEFORE PASSWORD AUTHENTICATION
+        let isApprovedStatus = null;
+        let userRecordFound = false;
+
+        try {
+          const usersRef = ref(db, "users");
+          const userQuery = query(usersRef, orderByChild("email"), equalTo(emailInput));
+          const querySnapshot = await get(userQuery);
+
+          if (querySnapshot.exists()) {
+            querySnapshot.forEach((childSnap) => {
+              const val = childSnap.val();
+              if (val && val.email && val.email.toLowerCase() === emailInput.toLowerCase()) {
+                userRecordFound = true;
+                isApprovedStatus = val.isApproved;
+              }
+            });
+          }
+        } catch (dbErr) {
+          console.warn("Pre-check database approval query notice:", dbErr);
+        }
+
+        // IF RECORD EXISTS & ACCOUNT IS NOT APPROVED -> POPUP MESSAGE TO CONTACT ADMIN FOR APPROVAL IMMEDIATELY
+        if (userRecordFound && isApprovedStatus === false) {
+          toggleSubmitLoading(false);
+          window.showCustomAlert(
+            "Account Not Approved", 
+            "⏳ Your account is not approved yet. Please contact admin for approval to get access.", 
+            "warning",
+            true // Displays the WhatsApp Contact Admin button
+          );
+          return;
+        }
+
+        // STEP 2: IF APPROVED (OR PENDING CREATION), NOW VALIDATE EMAIL & PASSWORD
+        try {
+          const userCredential = await signInWithEmailAndPassword(auth, emailInput, passwordInput);
+          // Password is valid -> execute profile approval and active session flow
+          await checkApproval(userCredential.user);
+        } catch (authError) {
+          toggleSubmitLoading(false);
+          
+          const errorCode = authError.code;
+          if (errorCode === 'auth/wrong-password' || errorCode === 'auth/invalid-credential') {
+            // EXPLICIT PASSWORD WRONG NOTIFICATION
+            window.showCustomAlert(
+              "Password Wrong", 
+              "❌ Password wrong! Please check your password and try again.", 
+              "error"
+            );
+          } else if (errorCode === 'auth/user-not-found') {
+            window.showCustomAlert(
+              "Account Not Found", 
+              "❌ No account found with this email. Please check your details or create a new account.", 
+              "error"
+            );
+          } else {
+            window.showCustomAlert(
+              "Password Wrong", 
+              "❌ Password wrong or invalid login details. Please try again.", 
+              "error"
+            );
+          }
+        }
+
+      } catch (err) {
         toggleSubmitLoading(false);
-        // WRONG EMAIL OR PASSWORD -> ASK USER TO CORRECT DETAILS
         window.showCustomAlert(
-          "Login Failed", 
-          "❌ Incorrect email or password. Please correct your details.", 
+          "Error", 
+          "❌ An unexpected error occurred. Please try again later.", 
           "error"
         );
       }
@@ -1018,7 +1083,7 @@
         googleBtnText.innerText = originalText;
         window.showCustomAlert(
           "Authorization Error", 
-          "❌ Google authentication failed. Please correct your details or try again.", 
+          "❌ Google authentication failed. Please try again.", 
           "error"
         );
       }
