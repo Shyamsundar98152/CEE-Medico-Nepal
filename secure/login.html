@@ -79,7 +79,7 @@
     .animate-orb2 { animation: floatOrb2 22s ease-in-out infinite; }
     .animate-orb3 { animation: floatOrb3 20s ease-in-out infinite; }
 
-    /* Elegant entry animations */
+    /* Elegant entry animations (Cubic Bezier curves) */
     @keyframes fadeInUp {
       from {
         opacity: 0;
@@ -165,7 +165,7 @@
   </style>
 </head>
 
-<!-- Floating QR Button + Popup -->
+<!-- Floating QR Button + Popup (Single Code Block) -->
 <div id="qr-widget">
   <!-- Floating Button -->
   <button id="qrBtn" onclick="document.getElementById('qrModal').style.display='flex'">
@@ -412,16 +412,6 @@
         <h3 id="alertTitle" class="text-lg font-bold text-slate-900">System Notification</h3>
       </div>
       <p id="alertMessage" class="text-slate-600 leading-relaxed mb-6"></p>
-      
-      <!-- Container for dynamic contact admin CTA button -->
-      <div id="alertActionContainer" class="mb-4 hidden">
-        <a href="https://wa.me/9779812240229?text=Hello%20Admin,%20my%20account%20is%20pending%20approval.%20Please%20approve%20my%20access." 
-           target="_blank" 
-           class="w-full py-2.5 bg-emerald-500 hover:bg-emerald-600 text-white font-bold rounded-xl text-sm flex items-center justify-center gap-2 shadow-lg shadow-emerald-500/20 transition duration-200">
-          <i class="fab fa-whatsapp text-lg"></i> Contact Admin on WhatsApp
-        </a>
-      </div>
-
       <div class="flex justify-end">
         <button onclick="hideAlert()" id="alertConfirmBtn" class="px-5 py-2.5 bg-medical-600 hover:bg-medical-700 text-white font-medium rounded-xl transition duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-medical-500">
           Continue
@@ -629,23 +619,16 @@
       }
     }
 
-    // Show premium styled alert with optional action button
-    function showCustomAlert(title, message, type = 'info', showContactBtn = false) {
+    // Show premium styled alert
+    function showCustomAlert(title, message, type = 'info') {
       const modal = document.getElementById("customAlertModal");
       const titleEl = document.getElementById("alertTitle");
       const messageEl = document.getElementById("alertMessage");
       const iconCont = document.getElementById("alertIconContainer");
       const confirmBtn = document.getElementById("alertConfirmBtn");
-      const actionCont = document.getElementById("alertActionContainer");
 
       titleEl.innerText = title;
       messageEl.innerText = message;
-
-      if (showContactBtn) {
-        actionCont.classList.remove("hidden");
-      } else {
-        actionCont.classList.add("hidden");
-      }
 
       // Type-based aesthetic enhancements
       if (type === 'success') {
@@ -653,12 +636,12 @@
         iconCont.innerHTML = '<i class="fas fa-check-circle"></i>';
         confirmBtn.className = "px-5 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white font-medium rounded-xl transition duration-200 focus:ring-emerald-500";
       } else if (type === 'error') {
-        iconCont.className = "w-12 h-12 rounded-full flex items-center justify-center text-xl bg-rose-50 text-rose-600 border border-rose-100";
-        iconCont.innerHTML = '<i class="fas fa-times-circle text-rose-500"></i>';
+        iconCont.className = "w-12 h-12 rounded-full flex items-center justify-center text-xl bg-rose-50 text-rose-600 border border-rose-100 animate-shake";
+        iconCont.innerHTML = '<i class="fas fa-times-circle animate-pulse"></i>';
         confirmBtn.className = "px-5 py-2.5 bg-rose-600 hover:bg-rose-700 text-white font-medium rounded-xl transition duration-200 focus:ring-rose-500";
       } else if (type === 'warning') {
         iconCont.className = "w-12 h-12 rounded-full flex items-center justify-center text-xl bg-amber-50 text-amber-600 border border-amber-100";
-        iconCont.innerHTML = '<i class="fas fa-user-clock text-amber-600"></i>';
+        iconCont.innerHTML = '<i class="fas fa-exclamation-triangle"></i>';
         confirmBtn.className = "px-5 py-2.5 bg-amber-600 hover:bg-amber-700 text-white font-medium rounded-xl transition duration-200 focus:ring-amber-500";
       } else {
         iconCont.className = "w-12 h-12 rounded-full flex items-center justify-center text-xl bg-sky-50 text-sky-600 border border-sky-100";
@@ -817,9 +800,6 @@
       set,
       get,
       update,
-      query,
-      orderByChild,
-      equalTo,
       serverTimestamp
     } from "https://www.gstatic.com/firebasejs/11.8.1/firebase-database.js";
 
@@ -872,7 +852,7 @@
       if (isLoading) {
         btn.disabled = true;
         btn.classList.add("opacity-80", "cursor-not-allowed");
-        text.innerText = "Checking Credentials...";
+        text.innerText = "Signing in...";
         icon.classList.add("hidden");
         spinner.classList.remove("hidden");
       } else {
@@ -895,8 +875,6 @@
 
       if (snapshot.exists()) {
         const userData = snapshot.val();
-        
-        // CHECK IF APPROVED
         if (userData.isApproved === true) {
           const devicesRef = ref(db, `userDevices/${user.uid}`);
           const devicesSnapshot = await get(devicesRef);
@@ -940,15 +918,14 @@
           window.showToast("Login approved! Moving you to portal...", "success");
           setTimeout(() => {
             window.location.href = "/secure/protected.html";
-          }, 1200);
+          }, 1500);
 
         } else {
-          // NOT APPROVED YET -> INSTRUCT USER TO CONTACT ADMIN
+          // Account registration unapproved yet
           window.showCustomAlert(
-            "Account Not Approved", 
-            "⏳ Your account status is not approved. Please contact the admin for approval to activate your account.", 
-            "warning",
-            true // Displays the WhatsApp Contact Admin button
+            "Access Pending", 
+            "⛔ Your portal registration is still awaiting administrator validation. Please check back shortly or reach out on WhatsApp.", 
+            "warning"
           );
           
           const deviceRef = ref(db, `userDevices/${user.uid}/${deviceId}`);
@@ -960,7 +937,7 @@
           toggleSubmitLoading(false);
         }
       } else {
-        // NEW USER ACCOUNT CREATION
+        // Init newly registered member setup
         window.showToast("Configuring new account setup...", "info");
         await set(userRef, {
           email: user.email,
@@ -976,97 +953,29 @@
         });
         
         window.showCustomAlert(
-          "Account Not Approved", 
-          "📝 Account created successfully. Your account is currently not approved. Please contact the admin for approval.", 
-          "warning",
-          true // Displays the WhatsApp Contact Admin button
+          "Registration Sent!", 
+          "📝 Account created successfully. Registration has been queued for verification. Please wait for admin approval.", 
+          "success"
         );
         await signOut(auth);
         toggleSubmitLoading(false);
       }
     }
 
-    // Form submit listener with FIRST APPROVAL CHECK then PASSWORD CHECK logic
+    // Email Credential login listener
     document.getElementById("loginForm").addEventListener("submit", async function (e) {
       e.preventDefault();
-      const emailInput = document.getElementById("email").value.trim();
-      const passwordInput = document.getElementById("password").value;
+      const email = document.getElementById("email").value;
+      const password = document.getElementById("password").value;
       
       toggleSubmitLoading(true);
       
       try {
-        // STEP 1: FIRST CHECK APPROVAL STATUS IN REALTIME DATABASE BEFORE PASSWORD AUTHENTICATION
-        let isApprovedStatus = null;
-        let userRecordFound = false;
-
-        try {
-          const usersRef = ref(db, "users");
-          const userQuery = query(usersRef, orderByChild("email"), equalTo(emailInput));
-          const querySnapshot = await get(userQuery);
-
-          if (querySnapshot.exists()) {
-            querySnapshot.forEach((childSnap) => {
-              const val = childSnap.val();
-              if (val && val.email && val.email.toLowerCase() === emailInput.toLowerCase()) {
-                userRecordFound = true;
-                isApprovedStatus = val.isApproved;
-              }
-            });
-          }
-        } catch (dbErr) {
-          console.warn("Pre-check database approval query notice:", dbErr);
-        }
-
-        // IF RECORD EXISTS & ACCOUNT IS NOT APPROVED -> POPUP MESSAGE TO CONTACT ADMIN FOR APPROVAL IMMEDIATELY
-        if (userRecordFound && isApprovedStatus === false) {
-          toggleSubmitLoading(false);
-          window.showCustomAlert(
-            "Account Not Approved", 
-            "⏳ Your account is not approved yet. Please contact admin for approval to get access.", 
-            "warning",
-            true // Displays the WhatsApp Contact Admin button
-          );
-          return;
-        }
-
-        // STEP 2: IF APPROVED (OR PENDING CREATION), NOW VALIDATE EMAIL & PASSWORD
-        try {
-          const userCredential = await signInWithEmailAndPassword(auth, emailInput, passwordInput);
-          // Password is valid -> execute profile approval and active session flow
-          await checkApproval(userCredential.user);
-        } catch (authError) {
-          toggleSubmitLoading(false);
-          
-          const errorCode = authError.code;
-          if (errorCode === 'auth/wrong-password' || errorCode === 'auth/invalid-credential') {
-            // EXPLICIT PASSWORD WRONG NOTIFICATION
-            window.showCustomAlert(
-              "Password Wrong", 
-              "❌ Password wrong! Please check your password and try again.", 
-              "error"
-            );
-          } else if (errorCode === 'auth/user-not-found') {
-            window.showCustomAlert(
-              "Account Not Found", 
-              "❌ No account found with this email. Please check your details or create a new account.", 
-              "error"
-            );
-          } else {
-            window.showCustomAlert(
-              "Password Wrong", 
-              "❌ Password wrong or invalid login details. Please try again.", 
-              "error"
-            );
-          }
-        }
-
-      } catch (err) {
+        const userCredential = await signInWithEmailAndPassword(auth, email, password);
+        await checkApproval(userCredential.user);
+      } catch (error) {
         toggleSubmitLoading(false);
-        window.showCustomAlert(
-          "Error", 
-          "❌ An unexpected error occurred. Please try again later.", 
-          "error"
-        );
+        window.showCustomAlert("Connection Error", "❌ Login failed: " + error.message, "error");
       }
     });
 
@@ -1081,11 +990,7 @@
         await checkApproval(result.user);
       } catch (error) {
         googleBtnText.innerText = originalText;
-        window.showCustomAlert(
-          "Authorization Error", 
-          "❌ Google authentication failed. Please try again.", 
-          "error"
-        );
+        window.showCustomAlert("Workspace Error", "❌ Google authorization failed: " + error.message, "error");
       }
     });
   </script>
