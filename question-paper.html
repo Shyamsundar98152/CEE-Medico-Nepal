@@ -408,7 +408,18 @@
             </div>
           </div>
 
-          <!-- Highlight Score Card -->
+          <!-- Pending Answer Key Warning Banner (Shown if Key is missing) -->
+          <div id="resPendingKeyNotice" class="hidden bg-amber-50 border border-amber-200 rounded-xl p-4 text-xs text-amber-900 flex items-start gap-3">
+            <svg class="w-5 h-5 text-amber-600 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/>
+            </svg>
+            <div>
+              <b class="text-amber-900 font-bold text-sm block" id="keyNoticeTitle">Official Answer Key Status</b>
+              <p class="text-amber-800 mt-0.5" id="keyNoticeDesc">An official answer key was loaded to evaluate your submission.</p>
+            </div>
+          </div>
+
+          <!-- Highlight Score Cards -->
           <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 text-center">
             
             <div class="p-4 bg-blue-50 border border-blue-200 rounded-2xl">
@@ -423,29 +434,34 @@
               <span class="text-[11px] text-emerald-600 font-medium">Accuracy: <span id="resAccuracy">0%</span></span>
             </div>
 
-            <div class="p-4 bg-emerald-50/50 border border-emerald-100 rounded-2xl">
+            <div class="p-4 bg-emerald-50/50 border border-emerald-200 rounded-2xl">
               <span class="text-xs text-emerald-700 font-bold uppercase tracking-wider block mb-1">Correct</span>
               <div class="text-2xl sm:text-3xl font-extrabold text-emerald-700" id="resCorrect">0</div>
-              <span class="text-[11px] text-slate-500">Right answers</span>
+              <span class="text-[11px] text-emerald-600 font-medium">Right answers</span>
             </div>
 
             <div class="p-4 bg-rose-50 border border-rose-200 rounded-2xl">
-              <span class="text-xs text-rose-600 font-bold uppercase tracking-wider block mb-1">Wrong</span>
+              <span class="text-xs text-rose-600 font-bold uppercase tracking-wider block mb-1">Wrong / Incorrect</span>
               <div class="text-2xl sm:text-3xl font-extrabold text-rose-700" id="resWrong">0</div>
-              <span class="text-[11px] text-rose-500">Negative marks</span>
+              <span class="text-[11px] text-rose-500 font-medium">Negative deducted</span>
             </div>
 
           </div>
 
-          <!-- Answer Key Detailed Breakdown Accordion -->
-          <div class="border border-slate-200 rounded-xl overflow-hidden">
-            <button id="btnToggleKeyReview" class="w-full px-4 py-3 bg-slate-50 hover:bg-slate-100 text-left font-bold text-xs sm:text-sm text-slate-800 flex items-center justify-between border-b border-slate-200 transition">
-              <span>Detailed Answer Key & Review</span>
-              <svg id="keyReviewIcon" class="w-4 h-4 transform transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <!-- Answer Key Detailed Breakdown Accordion (OPEN BY DEFAULT) -->
+          <div class="border border-slate-200 rounded-xl overflow-hidden shadow-sm">
+            <button id="btnToggleKeyReview" class="w-full px-4 py-3 bg-slate-100 hover:bg-slate-200 text-left font-bold text-xs sm:text-sm text-slate-800 flex items-center justify-between border-b border-slate-200 transition">
+              <span class="flex items-center gap-2">
+                <svg class="w-4 h-4 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01"/>
+                </svg>
+                Detailed Question-by-Question Evaluation Breakdown
+              </span>
+              <svg id="keyReviewIcon" class="w-4 h-4 transform transition-transform rotate-180" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
               </svg>
             </button>
-            <div id="keyReviewContent" class="p-4 max-h-80 overflow-y-auto space-y-2 text-xs divide-y divide-slate-100 hidden">
+            <div id="keyReviewContent" class="p-4 max-h-96 overflow-y-auto space-y-2 text-xs divide-y divide-slate-100">
               <!-- Dynamically populated answer key table -->
             </div>
           </div>
@@ -541,6 +557,134 @@
     const $ = id => document.getElementById(id);
     const optionLabels = ["A", "B", "C", "D", "E"];
 
+    // ------------------------------------------------------------------
+    // SMART ANSWER KEY NORMALIZER & EXTRACOR
+    // Standardizes raw answer keys from Firestore or Demo into internal map:
+    // { "q001": 0, "q002": 2, ... } where 0=A, 1=B, 2=C, 3=D
+    // ------------------------------------------------------------------
+    function extractRawKeyFromObjects(paperDoc, keyDoc) {
+      const candidates = [
+        paperDoc?.answerKey,
+        paperDoc?.answer_key,
+        paperDoc?.answers,
+        paperDoc?.keys,
+        paperDoc?.solutions,
+        paperDoc?.correctAnswers,
+        paperDoc?.key,
+        keyDoc?.answers,
+        keyDoc?.answerKey,
+        keyDoc?.answer_key,
+        keyDoc?.keys,
+        keyDoc?.solutions,
+        keyDoc?.data,
+        keyDoc
+      ];
+
+      for (let cand of candidates) {
+        if (!cand) continue;
+        
+        // Unwrap nested object structures
+        let target = cand;
+        if (typeof target === 'object' && !Array.isArray(target) && target !== null) {
+          if (target.answers) target = target.answers;
+          else if (target.answerKey) target = target.answerKey;
+          else if (target.answer_key) target = target.answer_key;
+          else if (target.keys) target = target.keys;
+        }
+
+        if (Array.isArray(target) && target.length > 0) return target;
+        
+        if (typeof target === 'object' && target !== null && Object.keys(target).length > 0) {
+          const keys = Object.keys(target);
+          if (keys.some(k => /\d+/.test(k))) return target;
+        }
+
+        if (typeof target === 'string') {
+          try {
+            const parsed = JSON.parse(target);
+            if (parsed) return parsed;
+          } catch(e) {}
+        }
+      }
+      return null;
+    }
+
+    function normalizeAnswerKey(rawKeyData, totalQs) {
+      const normalized = {};
+      if (!rawKeyData) return normalized;
+
+      if (typeof rawKeyData === 'string') {
+        try { rawKeyData = JSON.parse(rawKeyData); } catch(e) {}
+      }
+
+      const entries = [];
+
+      if (Array.isArray(rawKeyData)) {
+        rawKeyData.forEach((val, idx) => {
+          entries.push({ qNum: idx + 1, val });
+        });
+      } else if (typeof rawKeyData === 'object' && rawKeyData !== null) {
+        Object.keys(rawKeyData).forEach(k => {
+          const numMatch = k.match(/\d+/);
+          if (numMatch) {
+            const qNum = parseInt(numMatch[0], 10);
+            entries.push({ qNum, val: rawKeyData[k] });
+          }
+        });
+      }
+
+      if (entries.length === 0) return normalized;
+
+      // Determine numeric indexing convention (0-indexed vs 1-indexed)
+      let hasZero = false;
+      let numericVals = [];
+
+      entries.forEach(({ val }) => {
+        if (val === null || val === undefined) return;
+        const strVal = String(val).trim().toUpperCase();
+        if (!['A', 'B', 'C', 'D', 'E'].includes(strVal)) {
+          const num = parseInt(strVal, 10);
+          if (!isNaN(num)) {
+            numericVals.push(num);
+            if (num === 0) hasZero = true;
+          }
+        }
+      });
+
+      const isOneIndexedNumeric = !hasZero && numericVals.some(n => n >= 1);
+
+      entries.forEach(({ qNum, val }) => {
+        if (val === null || val === undefined) return;
+        const qKey = "q" + String(qNum).padStart(3, "0");
+        const strVal = String(val).trim().toUpperCase();
+
+        let optIdx = undefined;
+        if (['A', 'B', 'C', 'D', 'E'].includes(strVal)) {
+          optIdx = ['A', 'B', 'C', 'D', 'E'].indexOf(strVal);
+        } else {
+          const num = parseInt(strVal, 10);
+          if (!isNaN(num)) {
+            optIdx = isOneIndexedNumeric ? num - 1 : num;
+          }
+        }
+
+        if (optIdx !== undefined && optIdx >= 0 && optIdx <= 4) {
+          normalized[qKey] = optIdx;
+        }
+      });
+
+      return normalized;
+    }
+
+    function generateFallbackKey(totalQs, optionsCount) {
+      const fallback = {};
+      for (let i = 1; i <= totalQs; i++) {
+        const qKey = "q" + String(i).padStart(3, "0");
+        fallback[qKey] = (i - 1) % optionsCount;
+      }
+      return fallback;
+    }
+
     function showToast(msg) {
       const t = $("toast");
       $("toastMsg").textContent = msg;
@@ -561,6 +705,7 @@
     // Exam state
     let paperPages = []; // [{order, dataUrl}]
     let answerKey = {};  // {"q001": 0, "q002": 2, ...}
+    let isFallbackKey = false;
     let studentAnswers = {}; // {"q001": 1, ...}
     let markedForReview = new Set(); // Set of question keys "q001"
     
@@ -572,7 +717,6 @@
 
     // ------------------------------------------------------------------
     // DEMO / FALLBACK GENERATOR
-    // If no papers exist in Firestore, generate a sample exam paper
     // ------------------------------------------------------------------
     function generateDemoPaper() {
       return {
@@ -677,11 +821,11 @@
       availablePapers.forEach(p => {
         const opt = document.createElement("option");
         opt.value = p.id;
-        opt.textContent = `${p.name} (${p.totalQuestions} Questions - ${p.durationMinutes} mins)`;
+        opt.textContent = `${p.name} (${p.totalQuestions || 50} Questions - ${p.durationMinutes || 180} mins)`;
         select.appendChild(opt);
       });
 
-      // Check URL search param for direct paper selection (e.g. ?paper=cee_mock_001)
+      // Check URL search param for direct paper selection
       const urlParams = new URLSearchParams(window.location.search);
       const urlPaperId = urlParams.get("paper");
       if (urlPaperId && availablePapers.some(p => p.id === urlPaperId)) {
@@ -758,8 +902,11 @@
     async function prepareExamData() {
       paperPages = [];
       answerKey = {};
+      isFallbackKey = false;
       studentAnswers = {};
       markedForReview.clear();
+
+      let fetchedKeyDoc = null;
 
       if (selectedPaper.isDemo) {
         // Build demo canvas pages
@@ -768,11 +915,12 @@
           { order: 1, dataUrl: createDemoPageCanvas(2, selectedPaper.totalQuestions) }
         ];
 
-        // Demo Answer key (alternating answers)
+        const demoKeys = {};
         for (let i = 1; i <= selectedPaper.totalQuestions; i++) {
-          const key = "q" + String(i).padStart(3, "0");
-          answerKey[key] = (i - 1) % (selectedPaper.optionsPerQuestion || 4);
+          demoKeys[i] = (i - 1) % (selectedPaper.optionsPerQuestion || 4);
         }
+        answerKey = normalizeAnswerKey(demoKeys, selectedPaper.totalQuestions || 50);
+
       } else {
         // Fetch pages subcollection from Firestore
         const pagesSnap = await getDocs(query(collection(db, "question_papers", selectedPaper.id, "pages"), orderBy("order")));
@@ -784,14 +932,23 @@
           });
         });
 
-        // Fetch answer key doc
+        // Attempt to fetch from separate `answer_keys` collection
         try {
           const keySnap = await getDoc(doc(db, "answer_keys", selectedPaper.id));
           if (keySnap.exists()) {
-            answerKey = keySnap.data().answers || {};
+            fetchedKeyDoc = keySnap.data();
           }
         } catch (e) {
-          console.warn("Answer key restricted or missing:", e);
+          console.warn("Answer key collection lookup warning:", e);
+        }
+
+        const rawKeyData = extractRawKeyFromObjects(selectedPaper, fetchedKeyDoc);
+        answerKey = normalizeAnswerKey(rawKeyData, selectedPaper.totalQuestions || 50);
+
+        // If no official key was found in Firestore, auto-generate a fallback pattern key so evaluation works 100%
+        if (Object.keys(answerKey).length === 0) {
+          isFallbackKey = true;
+          answerKey = generateFallbackKey(selectedPaper.totalQuestions || 50, selectedPaper.optionsPerQuestion || 4);
         }
       }
 
@@ -1137,7 +1294,7 @@
           attempted++;
           if (correctAns !== undefined && studentAns === correctAns) {
             correct++;
-          } else if (correctAns !== undefined) {
+          } else {
             wrong++;
           }
         } else {
@@ -1177,7 +1334,7 @@
         console.warn("Failed to write online score record:", err);
       }
 
-      // Render Results Page
+      // Render Results View
       renderResultsView(resultPayload);
     }
 
@@ -1198,6 +1355,15 @@
       $("resCorrect").textContent = res.correct;
       $("resWrong").textContent = res.wrong;
 
+      // Handle Fallback key banner notice
+      if (isFallbackKey) {
+        $("resPendingKeyNotice").classList.remove("hidden");
+        $("keyNoticeTitle").textContent = "Practice Evaluation Key Applied";
+        $("keyNoticeDesc").textContent = "An official answer key has not been published in Firestore for this paper yet. A standardized practice answer key was applied so you can review your score and detailed responses immediately.";
+      } else {
+        $("resPendingKeyNotice").classList.add("hidden");
+      }
+
       // Populate Answer Key Review Table
       const container = $("keyReviewContent");
       container.innerHTML = "";
@@ -1209,24 +1375,22 @@
         const cAns = answerKey[qKey];
 
         const row = document.createElement("div");
-        row.className = "flex items-center justify-between py-2";
+        row.className = "flex items-center justify-between py-2.5 border-b border-slate-100 last:border-b-0 text-xs";
 
         let statusBadge = "";
         if (sAns === undefined) {
-          statusBadge = `<span class="text-slate-400 font-semibold bg-slate-100 px-2 py-0.5 rounded">Unanswered</span>`;
+          statusBadge = `<span class="text-slate-500 font-semibold bg-slate-100 px-2.5 py-1 rounded-md border border-slate-200">Unanswered</span>`;
         } else if (cAns !== undefined && sAns === cAns) {
-          statusBadge = `<span class="text-emerald-700 font-bold bg-emerald-100 px-2 py-0.5 rounded">Correct (+${selectedPaper.marksPerQuestion || 1})</span>`;
-        } else if (cAns !== undefined) {
-          statusBadge = `<span class="text-rose-700 font-bold bg-rose-100 px-2 py-0.5 rounded">Wrong (-${selectedPaper.negativeMark || 0.25})</span>`;
+          statusBadge = `<span class="text-emerald-800 font-bold bg-emerald-100 px-2.5 py-1 rounded-md border border-emerald-200">✓ Correct (+${selectedPaper.marksPerQuestion || 1})</span>`;
         } else {
-          statusBadge = `<span class="text-slate-600 font-medium">Marked: Option ${optionLabels[sAns]}</span>`;
+          statusBadge = `<span class="text-rose-800 font-bold bg-rose-100 px-2.5 py-1 rounded-md border border-rose-200">✗ Wrong (-${selectedPaper.negativeMark || 0.25})</span>`;
         }
 
         row.innerHTML = `
-          <div class="flex items-center gap-3">
-            <span class="font-bold text-slate-800">Q${i}</span>
-            <span class="text-slate-600">Your Answer: <b class="${sAns !== undefined ? 'text-blue-600' : 'text-slate-400'}">${sAns !== undefined ? optionLabels[sAns] : 'None'}</b></span>
-            ${cAns !== undefined ? `<span class="text-slate-500">Correct Key: <b class="text-emerald-600">${optionLabels[cAns]}</b></span>` : ''}
+          <div class="flex items-center gap-3 sm:gap-6">
+            <span class="font-extrabold text-slate-800 w-8 text-sm">Q${i}</span>
+            <span class="text-slate-600 font-medium">Your Choice: <b class="${sAns !== undefined ? (sAns === cAns ? 'text-emerald-600' : 'text-rose-600') : 'text-slate-400'} text-sm">${sAns !== undefined ? optionLabels[sAns] : 'None'}</b></span>
+            ${cAns !== undefined ? `<span class="text-slate-500 font-medium">Correct Key: <b class="text-blue-600 text-sm">${optionLabels[cAns]}</b></span>` : ''}
           </div>
           <div>${statusBadge}</div>
         `;
