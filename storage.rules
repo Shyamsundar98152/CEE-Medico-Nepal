@@ -1,0 +1,45 @@
+rules_version = '2';
+
+// =====================================================================
+// CEE MEDICO NEPAL — Question Paper System — Storage Security Rules
+// =====================================================================
+// Layout:
+//   question-images/{paperId}/page-001.jpg  (public once paper published)
+//   question-images/{paperId}/page-002.jpg
+//
+// Answer keys are NEVER stored in Storage — they live only in the
+// private Firestore "answer_keys" collection, which these rules
+// cannot expose. Do not add an answer-key path here.
+// =====================================================================
+
+service firebase.storage {
+  match /b/{bucket}/o {
+
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function isAdmin() {
+      return isSignedIn() &&
+        firestore.get(/databases/(default)/documents/admins/$(request.auth.uid)).data.isAdmin == true;
+    }
+
+    function paperIsPublished(paperId) {
+      return firestore.get(/databases/(default)/documents/question_papers/$(paperId)).data.published == true;
+    }
+
+    match /question-images/{paperId}/{fileName} {
+      allow read: if isAdmin() || paperIsPublished(paperId);
+      allow write: if isAdmin()
+        && request.resource.size < 15 * 1024 * 1024
+        && request.resource.contentType.matches('image/.*|application/pdf');
+      allow delete: if isAdmin();
+    }
+
+    // Explicitly deny everything else, including any attempt to store
+    // answer-key files in Storage.
+    match /{allPaths=**} {
+      allow read, write: if false;
+    }
+  }
+}
