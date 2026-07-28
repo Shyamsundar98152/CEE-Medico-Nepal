@@ -1,0 +1,790 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no" />
+<title>CEE Medico Nepal — Online Question Paper</title>
+<style>
+  :root{
+    --navy:#0B2E59;
+    --blue:#1D4ED8;
+    --blue-light:#EAF1FF;
+    --blue-pale:#F5F8FF;
+    --green:#16A34A;
+    --green-light:#DCFCE7;
+    --amber:#D97706;
+    --red:#DC2626;
+    --red-light:#FEE2E2;
+    --ink:#101828;
+    --sub:#5B6472;
+    --line:#E3E8F0;
+    --white:#ffffff;
+    --radius:14px;
+    --shadow:0 1px 2px rgba(16,24,40,.04), 0 8px 24px -8px rgba(16,24,40,.10);
+  }
+  *{box-sizing:border-box;}
+  html,body{height:100%;}
+  body{
+    margin:0;
+    font-family:'Segoe UI',system-ui,-apple-system,Roboto,Arial,sans-serif;
+    background:var(--blue-pale);
+    color:var(--ink);
+    -webkit-font-smoothing:antialiased;
+  }
+  button{font-family:inherit;cursor:pointer;}
+  ::selection{background:var(--blue-light);}
+
+  /* ---------- Loading / gate screens ---------- */
+  .gate{
+    min-height:100vh;display:flex;align-items:center;justify-content:center;padding:24px;
+  }
+  .gate-card{
+    background:var(--white);border-radius:20px;box-shadow:var(--shadow);
+    max-width:520px;width:100%;padding:36px 32px;text-align:center;
+  }
+  .gate-card .spinner{
+    width:34px;height:34px;border-radius:50%;border:3px solid var(--blue-light);
+    border-top-color:var(--blue);margin:0 auto 18px;animation:spin 0.8s linear infinite;
+  }
+  @keyframes spin{to{transform:rotate(360deg);}}
+  .brand-mark{
+    display:inline-flex;align-items:center;gap:10px;font-weight:800;color:var(--navy);
+    letter-spacing:.2px;margin-bottom:18px;font-size:15px;
+  }
+  .brand-mark .dot{width:9px;height:9px;border-radius:50%;background:var(--blue);}
+  .gate-card h1{font-size:20px;margin:0 0 6px;color:var(--navy);}
+  .gate-card p{color:var(--sub);font-size:14px;line-height:1.55;margin:0 0 18px;}
+  .paper-meta-grid{
+    display:grid;grid-template-columns:1fr 1fr;gap:10px;text-align:left;
+    background:var(--blue-pale);border-radius:12px;padding:16px;margin:18px 0;
+  }
+  .paper-meta-grid div span{display:block;}
+  .paper-meta-grid .k{font-size:11px;color:var(--sub);text-transform:uppercase;letter-spacing:.05em;}
+  .paper-meta-grid .v{font-size:15px;font-weight:700;color:var(--ink);margin-top:2px;}
+  .field{text-align:left;margin-bottom:12px;}
+  .field label{display:block;font-size:12.5px;font-weight:600;color:var(--sub);margin-bottom:5px;}
+  .field input{
+    width:100%;padding:11px 12px;border:1.5px solid var(--line);border-radius:10px;
+    font-size:14.5px;outline:none;transition:border-color .15s;
+  }
+  .field input:focus{border-color:var(--blue);}
+  .instructions{
+    text-align:left;font-size:13px;color:var(--sub);background:var(--blue-pale);
+    border-radius:12px;padding:14px 16px;margin-bottom:18px;line-height:1.7;
+  }
+  .instructions li{margin-bottom:3px;}
+  .btn{
+    border:none;border-radius:11px;font-weight:700;font-size:15px;padding:13px 20px;
+    display:inline-flex;align-items:center;justify-content:center;gap:8px;transition:filter .12s, transform .05s;
+  }
+  .btn:active{transform:scale(.98);}
+  .btn-primary{background:var(--blue);color:#fff;width:100%;}
+  .btn-primary:hover{filter:brightness(1.08);}
+  .btn-primary:disabled{background:#B9C7E8;cursor:not-allowed;}
+  .btn-ghost{background:var(--blue-light);color:var(--blue);}
+  .btn-danger{background:var(--red);color:#fff;}
+  .btn-outline{background:#fff;border:1.5px solid var(--line);color:var(--ink);}
+  .error-box{
+    background:var(--red-light);color:var(--red);padding:12px 14px;border-radius:10px;
+    font-size:13.5px;margin-bottom:16px;text-align:left;
+  }
+
+  /* ---------- Exam shell ---------- */
+  .exam-shell{display:none;min-height:100vh;flex-direction:column;}
+  .exam-shell.active{display:flex;}
+
+  header.exam-header{
+    background:var(--navy);color:#fff;padding:10px 20px;display:flex;align-items:center;
+    gap:18px;flex-wrap:wrap;position:sticky;top:0;z-index:40;box-shadow:0 2px 10px rgba(0,0,0,.12);
+  }
+  .exam-header .logo{font-weight:800;font-size:14.5px;letter-spacing:.2px;white-space:nowrap;}
+  .exam-header .logo small{display:block;font-weight:500;opacity:.7;font-size:10.5px;}
+  .exam-header .paper-title{flex:1;min-width:160px;}
+  .exam-header .paper-title .name{font-weight:700;font-size:14px;}
+  .exam-header .paper-title .subject{font-size:12px;opacity:.75;}
+  .timer-pill{
+    background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.18);border-radius:10px;
+    padding:8px 14px;font-variant-numeric:tabular-nums;font-weight:800;font-size:16px;letter-spacing:.03em;
+  }
+  .timer-pill.low{background:rgba(220,38,38,.25);border-color:rgba(220,38,38,.55);color:#FFD5D5;animation:pulse 1s infinite;}
+  @keyframes pulse{0%,100%{opacity:1;}50%{opacity:.55;}}
+  .icon-btn{
+    background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.18);color:#fff;
+    border-radius:9px;padding:9px 12px;font-size:13px;font-weight:600;
+  }
+  .icon-btn:hover{background:rgba(255,255,255,.18);}
+  .submit-btn{background:#fff;color:var(--navy);border-radius:9px;padding:9px 16px;font-weight:800;font-size:13.5px;border:none;}
+
+  .exam-body{flex:1;display:flex;gap:16px;padding:16px;align-items:flex-start;}
+  @media(max-width:880px){.exam-body{flex-direction:column;padding:10px;gap:10px;}}
+
+  /* ---------- Viewer ---------- */
+  .viewer-panel{
+    flex:1;background:#fff;border-radius:var(--radius);box-shadow:var(--shadow);
+    display:flex;flex-direction:column;overflow:hidden;min-width:0;
+  }
+  .viewer-toolbar{
+    display:flex;align-items:center;gap:8px;padding:9px 12px;border-bottom:1px solid var(--line);
+    flex-wrap:wrap;background:#fff;
+  }
+  .viewer-toolbar .pagepos{font-size:12.5px;font-weight:700;color:var(--sub);margin-right:auto;}
+  .zoom-controls{display:flex;align-items:center;gap:4px;background:var(--blue-pale);border-radius:9px;padding:3px;}
+  .zoom-controls button{
+    width:30px;height:30px;border:none;background:transparent;border-radius:7px;font-size:16px;
+    font-weight:700;color:var(--blue);display:flex;align-items:center;justify-content:center;
+  }
+  .zoom-controls button:hover{background:var(--blue-light);}
+  .zoom-controls .pct{font-size:12px;font-weight:700;color:var(--sub);min-width:42px;text-align:center;}
+  .small-btn{
+    border:1.5px solid var(--line);background:#fff;border-radius:8px;padding:6px 10px;font-size:12.5px;font-weight:600;color:var(--ink);
+  }
+  .small-btn:hover{border-color:var(--blue);color:var(--blue);}
+
+  .viewer-stage{
+    flex:1;overflow:auto;background:#EEF1F6;position:relative;
+    display:flex;align-items:flex-start;justify-content:center;
+    touch-action:none;min-height:340px;
+  }
+  .viewer-stage.fit-width{align-items:flex-start;}
+  .viewer-canvas{
+    padding:22px;display:flex;justify-content:center;transform-origin:top center;
+  }
+  .viewer-canvas img{
+    max-width:none;display:block;box-shadow:0 4px 24px rgba(16,24,40,.14);border-radius:4px;
+    background:#fff;user-select:none;-webkit-user-drag:none;pointer-events:none;
+  }
+  .page-nav{
+    display:flex;align-items:center;justify-content:center;gap:14px;padding:10px;
+    border-top:1px solid var(--line);background:#fff;
+  }
+
+  /* ---------- Answer palette ---------- */
+  .palette-panel{
+    width:300px;flex-shrink:0;background:#fff;border-radius:var(--radius);box-shadow:var(--shadow);
+    display:flex;flex-direction:column;overflow:hidden;max-height:calc(100vh - 90px);position:sticky;top:78px;
+  }
+  @media(max-width:880px){.palette-panel{width:100%;position:static;max-height:none;}}
+  .palette-header{padding:14px 16px 10px;border-bottom:1px solid var(--line);}
+  .palette-header h3{margin:0 0 8px;font-size:14px;color:var(--navy);}
+  .legend{display:flex;gap:12px;flex-wrap:wrap;font-size:11px;color:var(--sub);}
+  .legend span{display:inline-flex;align-items:center;gap:5px;}
+  .legend i{width:11px;height:11px;border-radius:3px;display:inline-block;}
+  .dot-grey{background:#D9DEE7;}
+  .dot-green{background:var(--green);}
+  .dot-blue{background:var(--blue);}
+  .dot-flag{background:var(--amber);}
+
+  .qgrid{
+    display:grid;grid-template-columns:repeat(5,1fr);gap:8px;padding:14px 16px;overflow-y:auto;flex:1;
+  }
+  .qbtn{
+    aspect-ratio:1;border-radius:9px;border:1.5px solid var(--line);background:#fff;
+    font-weight:700;font-size:13px;color:var(--ink);position:relative;
+  }
+  .qbtn.answered{background:var(--green-light);border-color:var(--green);color:#166534;}
+  .qbtn.current{outline:2.5px solid var(--blue);outline-offset:1px;}
+  .qbtn.flagged::after{
+    content:"";position:absolute;top:-3px;right:-3px;width:9px;height:9px;border-radius:50%;background:var(--amber);border:1.5px solid #fff;
+  }
+  .palette-footer{padding:12px 16px;border-top:1px solid var(--line);}
+  .progress-line{display:flex;justify-content:space-between;font-size:12px;color:var(--sub);margin-bottom:10px;}
+  .progress-line b{color:var(--ink);}
+
+  /* ---------- Question modal ---------- */
+  .modal-overlay{
+    position:fixed;inset:0;background:rgba(16,24,40,.55);display:none;align-items:center;justify-content:center;
+    z-index:100;padding:16px;
+  }
+  .modal-overlay.active{display:flex;}
+  .modal-card{
+    background:#fff;border-radius:16px;max-width:420px;width:100%;padding:24px;box-shadow:var(--shadow);
+  }
+  .modal-card h3{margin:0 0 4px;color:var(--navy);font-size:17px;}
+  .modal-card .qhint{font-size:12.5px;color:var(--sub);margin-bottom:16px;}
+  .opt-list{display:flex;flex-direction:column;gap:9px;margin-bottom:18px;}
+  .opt-row{
+    display:flex;align-items:center;gap:12px;border:1.5px solid var(--line);border-radius:11px;
+    padding:12px 14px;font-weight:600;font-size:14.5px;
+  }
+  .opt-row:hover{border-color:var(--blue);background:var(--blue-pale);}
+  .opt-row.selected{border-color:var(--blue);background:var(--blue-light);color:var(--blue);}
+  .opt-letter{
+    width:26px;height:26px;border-radius:50%;background:var(--blue-pale);color:var(--blue);
+    display:flex;align-items:center;justify-content:center;font-size:12.5px;font-weight:800;flex-shrink:0;
+  }
+  .opt-row.selected .opt-letter{background:var(--blue);color:#fff;}
+  .modal-actions{display:flex;gap:10px;}
+  .modal-actions .btn{flex:1;}
+
+  /* ---------- Submit / result modal ---------- */
+  .result-card .row{display:flex;justify-content:space-between;padding:9px 0;border-bottom:1px dashed var(--line);font-size:14px;}
+  .result-card .row b{font-weight:800;}
+  .result-card .score-big{
+    text-align:center;padding:18px;background:var(--blue-pale);border-radius:14px;margin:16px 0;
+  }
+  .result-card .score-big .num{font-size:34px;font-weight:800;color:var(--blue);}
+  .result-card .score-big .lbl{font-size:12px;color:var(--sub);margin-top:2px;}
+
+  .toast{
+    position:fixed;bottom:20px;left:50%;transform:translateX(-50%);background:var(--navy);color:#fff;
+    padding:11px 18px;border-radius:10px;font-size:13.5px;box-shadow:var(--shadow);z-index:200;
+    opacity:0;pointer-events:none;transition:opacity .25s, bottom .25s;
+  }
+  .toast.show{opacity:1;bottom:30px;}
+  .hidden{display:none !important;}
+</style>
+</head>
+<body>
+
+<!-- ============================================================= -->
+<!-- LOADING SCREEN                                                 -->
+<!-- ============================================================= -->
+<div class="gate" id="loadingGate">
+  <div class="gate-card">
+    <div class="spinner"></div>
+    <p>Loading question paper…</p>
+  </div>
+</div>
+
+<!-- ============================================================= -->
+<!-- PRE-EXAM INSTRUCTIONS / START SCREEN                           -->
+<!-- ============================================================= -->
+<div class="gate hidden" id="startGate">
+  <div class="gate-card">
+    <div class="brand-mark"><span class="dot"></span>CEE MEDICO NEPAL</div>
+    <h1 id="startPaperName">Question Paper</h1>
+    <p id="startPaperSubject">Subject</p>
+
+    <div class="paper-meta-grid">
+      <div><span class="k">Duration</span><span class="v" id="metaDuration">—</span></div>
+      <div><span class="k">Questions</span><span class="v" id="metaQuestions">—</span></div>
+      <div><span class="k">Marks / Question</span><span class="v" id="metaMarks">—</span></div>
+      <div><span class="k">Negative Mark</span><span class="v" id="metaNegative">—</span></div>
+    </div>
+
+    <ul class="instructions">
+      <li>The question paper appears as an image — zoom and scroll to read it clearly.</li>
+      <li>Select answers from the answer sheet panel, not on the image itself.</li>
+      <li>The timer starts the moment you click Start Exam and cannot be paused.</li>
+      <li>The exam auto-submits when time expires.</li>
+      <li>Do not switch tabs or exit full screen — this may be recorded.</li>
+    </ul>
+
+    <div id="startError" class="error-box hidden"></div>
+
+    <div class="field">
+      <label for="studentName">Full Name</label>
+      <input id="studentName" type="text" placeholder="e.g. Sujata Sharma" autocomplete="name"/>
+    </div>
+    <div class="field">
+      <label for="rollNumber">Roll Number / Phone (optional)</label>
+      <input id="rollNumber" type="text" placeholder="e.g. 2082-CEE-0451" autocomplete="off"/>
+    </div>
+
+    <button class="btn btn-primary" id="startBtn">Start Exam</button>
+  </div>
+</div>
+
+<!-- ============================================================= -->
+<!-- EXAM SHELL                                                     -->
+<!-- ============================================================= -->
+<div class="exam-shell" id="examShell">
+  <header class="exam-header">
+    <div class="logo">CEE MEDICO NEPAL<small>Online Examination</small></div>
+    <div class="paper-title">
+      <div class="name" id="hdrPaperName">—</div>
+      <div class="subject" id="hdrSubject">—</div>
+    </div>
+    <div class="timer-pill" id="timerPill">--:--:--</div>
+    <button class="icon-btn" id="fullscreenBtn">⛶ Full Screen</button>
+    <button class="submit-btn" id="openSubmitBtn">Submit Test</button>
+  </header>
+
+  <div class="exam-body">
+    <!-- Question paper viewer -->
+    <div class="viewer-panel">
+      <div class="viewer-toolbar">
+        <div class="pagepos"><span id="pageIndicator">Page 1 / 1</span></div>
+        <div class="zoom-controls">
+          <button id="zoomOut">−</button>
+          <span class="pct" id="zoomPct">100%</span>
+          <button id="zoomIn">+</button>
+        </div>
+        <button class="small-btn" id="fitWidthBtn">Fit Width</button>
+        <button class="small-btn" id="stageFullscreenBtn">Full Screen</button>
+      </div>
+      <div class="viewer-stage" id="viewerStage">
+        <div class="viewer-canvas" id="viewerCanvas">
+          <img id="pageImage" draggable="false" alt="Question paper page" />
+        </div>
+      </div>
+      <div class="page-nav">
+        <button class="small-btn" id="prevPageBtn">‹ Previous Page</button>
+        <span id="pageNavLabel" style="font-size:12.5px;color:var(--sub);font-weight:700;">1 / 1</span>
+        <button class="small-btn" id="nextPageBtn">Next Page ›</button>
+      </div>
+    </div>
+
+    <!-- Answer palette -->
+    <div class="palette-panel">
+      <div class="palette-header">
+        <h3>Answer Sheet</h3>
+        <div class="legend">
+          <span><i class="dot-grey"></i>Not answered</span>
+          <span><i class="dot-green"></i>Answered</span>
+          <span><i class="dot-blue"></i>Current</span>
+          <span><i class="dot-flag"></i>Flagged</span>
+        </div>
+      </div>
+      <div class="qgrid" id="qGrid"></div>
+      <div class="palette-footer">
+        <div class="progress-line"><span>Answered</span><b id="answeredCount">0 / 0</b></div>
+        <button class="btn btn-outline" style="width:100%" id="openSubmitBtn2">Review &amp; Submit</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ============================================================= -->
+<!-- QUESTION ANSWER MODAL                                          -->
+<!-- ============================================================= -->
+<div class="modal-overlay" id="qModal">
+  <div class="modal-card">
+    <h3 id="qModalTitle">Question 1</h3>
+    <div class="qhint">Select your answer, then save.</div>
+    <div class="opt-list" id="optList"></div>
+    <label style="display:flex;align-items:center;gap:8px;font-size:13px;color:var(--sub);margin-bottom:16px;">
+      <input type="checkbox" id="flagCheck"/> Flag this question for review
+    </label>
+    <div class="modal-actions">
+      <button class="btn btn-outline" id="qCancelBtn">Cancel</button>
+      <button class="btn btn-primary" id="qSaveBtn">Save Answer</button>
+    </div>
+  </div>
+</div>
+
+<!-- ============================================================= -->
+<!-- SUBMIT CONFIRMATION MODAL                                      -->
+<!-- ============================================================= -->
+<div class="modal-overlay" id="submitModal">
+  <div class="modal-card">
+    <h3>Submit Question Paper?</h3>
+    <div class="qhint" id="submitSummary">Answered: 0 / 0</div>
+    <p style="font-size:13px;color:var(--sub);">Once submitted, you cannot change your answers.</p>
+    <div class="modal-actions">
+      <button class="btn btn-outline" id="continueTestBtn">Continue Test</button>
+      <button class="btn btn-danger" id="confirmSubmitBtn">Submit Test</button>
+    </div>
+  </div>
+</div>
+
+<!-- ============================================================= -->
+<!-- RESULT MODAL                                                   -->
+<!-- ============================================================= -->
+<div class="modal-overlay" id="resultModal">
+  <div class="modal-card result-card">
+    <h3 id="resultTitle">Test Submitted</h3>
+    <div class="score-big">
+      <div class="num" id="resultScore">—</div>
+      <div class="lbl">Score</div>
+    </div>
+    <div class="row"><span>Total Questions</span><b id="resTotal">—</b></div>
+    <div class="row"><span>Attempted</span><b id="resAttempted">—</b></div>
+    <div class="row"><span>Correct</span><b id="resCorrect">—</b></div>
+    <div class="row"><span>Wrong</span><b id="resWrong">—</b></div>
+    <div class="row"><span>Unanswered</span><b id="resUnanswered">—</b></div>
+    <div class="row"><span>Percentage</span><b id="resPercentage">—</b></div>
+    <div class="modal-actions" style="margin-top:18px;">
+      <button class="btn btn-outline" id="viewReviewBtn">View Review</button>
+      <button class="btn btn-primary" id="closeResultBtn">Close</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-app.js";
+import {
+  getAuth, signInAnonymously, onAuthStateChanged
+} from "https://www.gstatic.com/firebasejs/10.13.0/firebase-auth.js";
+import {
+  getFirestore, doc, getDoc
+} from "https://www.gstatic.com/firebasejs/10.13.0/firebase-firestore.js";
+import {
+  getFunctions, httpsCallable
+} from "https://www.gstatic.com/firebasejs/10.13.0/firebase-functions.js";
+
+// =====================================================================
+// >>> INSERT YOUR FIREBASE CONFIGURATION BELOW (same project as admin) <<<
+// =====================================================================
+const firebaseConfig = {
+  apiKey: "AIzaSyBOH3AsRvA6n2bnt8FavJwfu1s7wSRV-qU",
+  authDomain: "cee-medico-nepal-mat.firebaseapp.com",
+  projectId: "cee-medico-nepal-mat",
+  storageBucket: "cee-medico-nepal-mat.firebasestorage.app",
+  messagingSenderId: "641096804690",
+  appId: "1:641096804690:web:20c096088e65ed66b0728b"
+};
+// =====================================================================
+
+const app = initializeApp(firebaseConfig);
+const auth = getAuth(app);
+const db = getFirestore(app);
+const functions = getFunctions(app, "asia-south1"); // must match functions region in index.js
+
+const startExamFn   = httpsCallable(functions, "startExam");
+const submitExamFn  = httpsCallable(functions, "submitExam");
+const getReviewFn   = httpsCallable(functions, "getReview");
+
+// ---------------------------------------------------------------------
+// State
+// ---------------------------------------------------------------------
+const params = new URLSearchParams(location.search);
+const paperId = params.get("paper");
+
+let paper = null;             // question_papers/{paperId} data
+let attemptId = null;
+let deadlineMs = null;        // server-anchored deadline
+let clockOffsetMs = 0;        // serverNow - localNow, applied to all time math
+let timerInterval = null;
+let submitted = false;
+
+let currentPage = 0;
+let zoom = 1;
+let optionsPerQuestion = 4;
+let totalQuestions = 0;
+
+const answers = {};           // { q001: 0, ... }
+const flagged = new Set();
+const proctorEvents = { tabSwitches: 0, fullscreenExits: 0 };
+
+const $ = (id) => document.getElementById(id);
+function toast(msg){
+  const t = $("toast"); t.textContent = msg; t.classList.add("show");
+  clearTimeout(toast._timer);
+  toast._timer = setTimeout(()=>t.classList.remove("show"), 2600);
+}
+function qId(n){ return "q" + String(n).padStart(3,"0"); }
+
+// ---------------------------------------------------------------------
+// Boot
+// ---------------------------------------------------------------------
+(async function boot(){
+  if(!paperId){
+    showFatal("No question paper specified. Open this page with ?paper=YOUR_PAPER_ID in the URL.");
+    return;
+  }
+  onAuthStateChanged(auth, async (user) => {
+    if(!user){
+      try { await signInAnonymously(auth); } catch(e){ showFatal("Could not sign in: " + e.message); }
+      return;
+    }
+    await loadPaper();
+  });
+})();
+
+function showFatal(msg){
+  $("loadingGate").innerHTML = `<div class="gate-card"><div class="error-box">${msg}</div></div>`;
+}
+
+async function loadPaper(){
+  try{
+    const snap = await getDoc(doc(db, "question_papers", paperId));
+    if(!snap.exists() || snap.data().published !== true){
+      showFatal("This question paper is not currently available.");
+      return;
+    }
+    paper = snap.data();
+    optionsPerQuestion = paper.optionsPerQuestion || 4;
+    totalQuestions = paper.totalQuestions || (paper.pages ? 0 : 0);
+
+    $("startPaperName").textContent = paper.name || "Question Paper";
+    $("startPaperSubject").textContent = paper.subject || "";
+    $("metaDuration").textContent = (paper.durationMinutes || 0) + " min";
+    $("metaQuestions").textContent = paper.totalQuestions || "—";
+    $("metaMarks").textContent = paper.marksPerQuestion || 1;
+    $("metaNegative").textContent = paper.negativeMark || 0;
+
+    $("hdrPaperName").textContent = paper.name || "Question Paper";
+    $("hdrSubject").textContent = paper.subject || "";
+
+    $("loadingGate").classList.add("hidden");
+    $("startGate").classList.remove("hidden");
+  }catch(e){
+    showFatal("Failed to load question paper: " + e.message);
+  }
+}
+
+// ---------------------------------------------------------------------
+// Start exam
+// ---------------------------------------------------------------------
+$("startBtn").addEventListener("click", async () => {
+  const name = $("studentName").value.trim();
+  if(!name){
+    $("startError").textContent = "Please enter your full name to begin.";
+    $("startError").classList.remove("hidden");
+    return;
+  }
+  $("startBtn").disabled = true;
+  $("startBtn").textContent = "Starting…";
+  try{
+    const res = await startExamFn({
+      paperId, studentName: name, rollNumber: $("rollNumber").value.trim()
+    });
+    const d = res.data;
+    attemptId = d.attemptId;
+    totalQuestions = d.totalQuestions;
+    optionsPerQuestion = d.optionsPerQuestion || 4;
+    clockOffsetMs = d.serverNowMs - Date.now();
+    deadlineMs = d.startedAtMs + d.durationMinutes * 60000;
+
+    sessionStorage.setItem("cee_attempt_" + paperId, JSON.stringify({attemptId, deadlineMs, clockOffsetMs}));
+
+    $("startGate").classList.add("hidden");
+    launchExam();
+  }catch(e){
+    $("startError").textContent = e.message || "Could not start the exam. Please try again.";
+    $("startError").classList.remove("hidden");
+    $("startBtn").disabled = false;
+    $("startBtn").textContent = "Start Exam";
+  }
+});
+
+function launchExam(){
+  buildPalette();
+  renderPage();
+  $("examShell").classList.add("active");
+  startTimer();
+  try{ document.documentElement.requestFullscreen && document.documentElement.requestFullscreen().catch(()=>{}); }catch(e){}
+  document.addEventListener("visibilitychange", () => {
+    if(document.hidden && !submitted){
+      proctorEvents.tabSwitches++;
+      toast("Tab switch detected — this has been recorded.");
+    }
+  });
+  document.addEventListener("fullscreenchange", () => {
+    if(!document.fullscreenElement && !submitted){
+      proctorEvents.fullscreenExits++;
+    }
+  });
+  window.addEventListener("beforeunload", (e) => {
+    if(!submitted){ e.preventDefault(); e.returnValue = ""; }
+  });
+}
+
+// ---------------------------------------------------------------------
+// Timer (server-anchored)
+// ---------------------------------------------------------------------
+function startTimer(){
+  tickTimer();
+  timerInterval = setInterval(tickTimer, 1000);
+}
+function tickTimer(){
+  const serverNow = Date.now() + clockOffsetMs;
+  let remaining = deadlineMs - serverNow;
+  if(remaining <= 0){
+    remaining = 0;
+    clearInterval(timerInterval);
+    doAutoSubmit();
+  }
+  const h = Math.floor(remaining/3600000);
+  const m = Math.floor((remaining%3600000)/60000);
+  const s = Math.floor((remaining%60000)/1000);
+  const pill = $("timerPill");
+  pill.textContent = [h,m,s].map(v=>String(v).padStart(2,"0")).join(":");
+  pill.classList.toggle("low", remaining < 5*60000);
+}
+async function doAutoSubmit(){
+  toast("Time expired — submitting your test.");
+  await finalizeSubmit();
+  $("resultTitle").textContent = "Time Expired — Auto-Submitted";
+}
+
+// ---------------------------------------------------------------------
+// Palette + question modal
+// ---------------------------------------------------------------------
+function buildPalette(){
+  const grid = $("qGrid");
+  grid.innerHTML = "";
+  for(let i=1;i<=totalQuestions;i++){
+    const btn = document.createElement("button");
+    btn.className = "qbtn";
+    btn.textContent = i;
+    btn.dataset.q = i;
+    btn.addEventListener("click", () => openQuestion(i));
+    grid.appendChild(btn);
+  }
+  updateProgress();
+}
+function updateProgress(){
+  const answeredN = Object.keys(answers).length;
+  $("answeredCount").textContent = `${answeredN} / ${totalQuestions}`;
+}
+function refreshPaletteButton(n){
+  const btn = $("qGrid").querySelector(`[data-q="${n}"]`);
+  if(!btn) return;
+  btn.classList.toggle("answered", answers[qId(n)] !== undefined);
+  btn.classList.toggle("flagged", flagged.has(n));
+}
+
+let activeQ = null;
+function openQuestion(n){
+  activeQ = n;
+  $("qModalTitle").textContent = "Question " + n;
+  $("flagCheck").checked = flagged.has(n);
+  const list = $("optList");
+  list.innerHTML = "";
+  const current = answers[qId(n)];
+  for(let i=0;i<optionsPerQuestion;i++){
+    const letter = String.fromCharCode(65+i);
+    const row = document.createElement("div");
+    row.className = "opt-row" + (current === i ? " selected" : "");
+    row.dataset.i = i;
+    row.innerHTML = `<span class="opt-letter">${letter}</span><span>Option ${letter}</span>`;
+    row.addEventListener("click", () => {
+      list.querySelectorAll(".opt-row").forEach(r=>r.classList.remove("selected"));
+      row.classList.add("selected");
+      row.dataset.selected = "1";
+    });
+    if(current === i) row.dataset.selected = "1";
+    list.appendChild(row);
+  }
+  $("qModal").classList.add("active");
+  $("qGrid").querySelectorAll(".qbtn").forEach(b=>b.classList.remove("current"));
+  const cur = $("qGrid").querySelector(`[data-q="${n}"]`);
+  if(cur) cur.classList.add("current");
+}
+$("qCancelBtn").addEventListener("click", () => $("qModal").classList.remove("active"));
+$("qSaveBtn").addEventListener("click", () => {
+  const sel = $("optList").querySelector('[data-selected="1"]');
+  if(sel){ answers[qId(activeQ)] = parseInt(sel.dataset.i, 10); }
+  if($("flagCheck").checked) flagged.add(activeQ); else flagged.delete(activeQ);
+  refreshPaletteButton(activeQ);
+  updateProgress();
+  $("qModal").classList.remove("active");
+});
+
+// ---------------------------------------------------------------------
+// Page viewer (zoom / pan / navigation)
+// ---------------------------------------------------------------------
+function renderPage(){
+  const pages = paper.pages || [];
+  const img = $("pageImage");
+  img.src = pages[currentPage] || "";
+  $("pageIndicator").textContent = `Page ${currentPage+1} / ${pages.length || 1}`;
+  $("pageNavLabel").textContent = `${currentPage+1} / ${pages.length || 1}`;
+  applyZoom();
+}
+$("prevPageBtn").addEventListener("click", () => { if(currentPage>0){ currentPage--; renderPage(); }});
+$("nextPageBtn").addEventListener("click", () => { const n=(paper.pages||[]).length; if(currentPage<n-1){ currentPage++; renderPage(); }});
+
+function applyZoom(){
+  $("viewerCanvas").style.transform = `scale(${zoom})`;
+  $("zoomPct").textContent = Math.round(zoom*100) + "%";
+}
+$("zoomIn").addEventListener("click", () => { zoom = Math.min(zoom+0.2, 3); applyZoom(); });
+$("zoomOut").addEventListener("click", () => { zoom = Math.max(zoom-0.2, 0.4); applyZoom(); });
+$("fitWidthBtn").addEventListener("click", () => { zoom = 1; applyZoom(); });
+$("fullscreenBtn").addEventListener("click", toggleFullscreen);
+$("stageFullscreenBtn").addEventListener("click", () => {
+  const el = $("viewerStage");
+  if(el.requestFullscreen) el.requestFullscreen().catch(()=>{});
+});
+function toggleFullscreen(){
+  if(!document.fullscreenElement){
+    document.documentElement.requestFullscreen && document.documentElement.requestFullscreen().catch(()=>{});
+  } else {
+    document.exitFullscreen && document.exitFullscreen();
+  }
+}
+
+// Basic pinch-to-zoom + drag-to-pan for touch devices
+(function enableTouchGestures(){
+  const stage = $("viewerStage");
+  let lastDist = null;
+  let panStart = null;
+  stage.addEventListener("touchstart", (e) => {
+    if(e.touches.length === 2){
+      lastDist = Math.hypot(
+        e.touches[0].clientX - e.touches[1].clientX,
+        e.touches[0].clientY - e.touches[1].clientY
+      );
+    } else if(e.touches.length === 1 && zoom > 1){
+      panStart = { x: e.touches[0].clientX, y: e.touches[0].clientY, sl: stage.scrollLeft, st: stage.scrollTop };
+    }
+  }, {passive:true});
+  stage.addEventListener("touchmove", (e) => {
+    if(e.touches.length === 2 && lastDist){
+      const dist = Math.hypot(
+        e.touches[0].clientX - e.touches[1].clientX,
+        e.touches[0].clientY - e.touches[1].clientY
+      );
+      const delta = (dist - lastDist) / 200;
+      zoom = Math.min(3, Math.max(0.4, zoom + delta));
+      applyZoom();
+      lastDist = dist;
+    } else if(e.touches.length === 1 && panStart){
+      stage.scrollLeft = panStart.sl - (e.touches[0].clientX - panStart.x);
+      stage.scrollTop  = panStart.st - (e.touches[0].clientY - panStart.y);
+    }
+  }, {passive:true});
+  stage.addEventListener("touchend", () => { lastDist = null; panStart = null; });
+})();
+
+// ---------------------------------------------------------------------
+// Submit flow
+// ---------------------------------------------------------------------
+function openSubmitModal(){
+  const answeredN = Object.keys(answers).length;
+  $("submitSummary").textContent = `Answered: ${answeredN} / ${totalQuestions}   ·   Unanswered: ${totalQuestions-answeredN}`;
+  $("submitModal").classList.add("active");
+}
+$("openSubmitBtn").addEventListener("click", openSubmitModal);
+$("openSubmitBtn2").addEventListener("click", openSubmitModal);
+$("continueTestBtn").addEventListener("click", () => $("submitModal").classList.remove("active"));
+$("confirmSubmitBtn").addEventListener("click", async () => {
+  $("submitModal").classList.remove("active");
+  await finalizeSubmit();
+});
+
+let lastResult = null;
+async function finalizeSubmit(){
+  if(submitted) return;
+  submitted = true;
+  clearInterval(timerInterval);
+  try{
+    const res = await submitExamFn({ attemptId, answers, proctorEvents });
+    lastResult = res.data;
+    showResult(lastResult);
+  }catch(e){
+    toast("Submission error: " + e.message);
+    submitted = false; // allow retry
+  }
+}
+function showResult(r){
+  $("resultTitle").textContent = "Test Submitted";
+  $("resultScore").textContent = r.score;
+  $("resTotal").textContent = r.totalQuestions;
+  $("resAttempted").textContent = r.attempted;
+  $("resCorrect").textContent = r.correct;
+  $("resWrong").textContent = r.wrong;
+  $("resUnanswered").textContent = r.unanswered;
+  $("resPercentage").textContent = r.percentage + "%";
+  $("resultModal").classList.add("active");
+}
+$("closeResultBtn").addEventListener("click", () => $("resultModal").classList.remove("active"));
+$("viewReviewBtn").addEventListener("click", async () => {
+  try{
+    const res = await getReviewFn({ attemptId });
+    const lines = res.data.review.map(q =>
+      `${q.questionId.toUpperCase()} — Your answer: ${q.yourAnswer || "—"} · Correct: ${q.correctAnswer} · ${q.status}`
+    ).join("\n");
+    alert(lines || "No review data available.");
+  }catch(e){
+    toast("Could not load review: " + e.message);
+  }
+});
+</script>
+</body>
+</html>
