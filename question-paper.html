@@ -409,7 +409,7 @@ import {
   getAuth, signInAnonymously, onAuthStateChanged
 } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-auth.js";
 import {
-  getFirestore, doc, getDoc
+  getFirestore, doc, getDoc, collection, getDocs, query, orderBy
 } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-firestore.js";
 import {
   getFunctions, httpsCallable
@@ -444,6 +444,7 @@ const params = new URLSearchParams(location.search);
 const paperId = params.get("paper");
 
 let paper = null;             // question_papers/{paperId} data
+let paperPages = [];          // array of "data:image/jpeg;base64,..." strings, in order
 let attemptId = null;
 let deadlineMs = null;        // server-anchored deadline
 let clockOffsetMs = 0;        // serverNow - localNow, applied to all time math
@@ -497,7 +498,18 @@ async function loadPaper(){
     }
     paper = snap.data();
     optionsPerQuestion = paper.optionsPerQuestion || 4;
-    totalQuestions = paper.totalQuestions || (paper.pages ? 0 : 0);
+    totalQuestions = paper.totalQuestions || 0;
+
+    const pagesSnap = await getDocs(query(collection(db, "question_papers", paperId, "pages"), orderBy("order")));
+    paperPages = [];
+    pagesSnap.forEach(d => {
+      const pd = d.data();
+      paperPages.push(`data:${pd.contentType};base64,${pd.data}`);
+    });
+    if(paperPages.length === 0){
+      showFatal("This question paper has no pages uploaded yet. Please check back later.");
+      return;
+    }
 
     $("startPaperName").textContent = paper.name || "Question Paper";
     $("startPaperSubject").textContent = paper.subject || "";
@@ -669,15 +681,14 @@ $("qSaveBtn").addEventListener("click", () => {
 // Page viewer (zoom / pan / navigation)
 // ---------------------------------------------------------------------
 function renderPage(){
-  const pages = paper.pages || [];
   const img = $("pageImage");
-  img.src = pages[currentPage] || "";
-  $("pageIndicator").textContent = `Page ${currentPage+1} / ${pages.length || 1}`;
-  $("pageNavLabel").textContent = `${currentPage+1} / ${pages.length || 1}`;
+  img.src = paperPages[currentPage] || "";
+  $("pageIndicator").textContent = `Page ${currentPage+1} / ${paperPages.length || 1}`;
+  $("pageNavLabel").textContent = `${currentPage+1} / ${paperPages.length || 1}`;
   applyZoom();
 }
 $("prevPageBtn").addEventListener("click", () => { if(currentPage>0){ currentPage--; renderPage(); }});
-$("nextPageBtn").addEventListener("click", () => { const n=(paper.pages||[]).length; if(currentPage<n-1){ currentPage++; renderPage(); }});
+$("nextPageBtn").addEventListener("click", () => { if(currentPage<paperPages.length-1){ currentPage++; renderPage(); }});
 
 function applyZoom(){
   $("viewerCanvas").style.transform = `scale(${zoom})`;
