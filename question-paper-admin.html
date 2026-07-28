@@ -265,11 +265,9 @@ import {
   getAuth, signInWithEmailAndPassword, onAuthStateChanged, signOut
 } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-auth.js";
 import {
-  getFirestore, collection, doc, getDoc, getDocs, setDoc, updateDoc, deleteDoc, query, where, serverTimestamp
+  getFirestore, collection, doc, getDoc, getDocs, setDoc, updateDoc, deleteDoc,
+  query, where, orderBy, writeBatch, serverTimestamp
 } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-firestore.js";
-import {
-  getStorage, ref, uploadBytes, getDownloadURL, deleteObject
-} from "https://www.gstatic.com/firebasejs/10.13.0/firebase-storage.js";
 import {
   getFunctions, httpsCallable
 } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-functions.js";
@@ -290,8 +288,15 @@ const firebaseConfig = {
 const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
 const db = getFirestore(app);
-const storage = getStorage(app);
 const functions = getFunctions(app, "asia-south1");
+
+// Page images are stored as base64 strings inside Firestore documents
+// (question_papers/{paperId}/pages/{pageId}), NOT in Firebase Storage.
+// Firestore caps a single document at 1 MiB, and base64 inflates file
+// size by ~33%, so every page is resized/compressed client-side to fit
+// comfortably under that limit before it's written.
+const MAX_PAGE_DOC_BYTES = 700 * 1024; // leaves headroom under the 1 MiB doc cap
+const MAX_PAGE_DIMENSION = 1600;       // px, longest side, before compression
 const setAdminClaimFn = httpsCallable(functions, "setAdminClaim");
 
 const $ = (id) => document.getElementById(id);
@@ -399,7 +404,7 @@ $("createPaperBtn").addEventListener("click", async () => {
     marksPerQuestion: parseFloat($("cMarks").value) || 1,
     negativeMark: parseFloat($("cNegative").value) || 0,
     published: false,
-    pages: [],
+    pageCount: 0,
     answerKeyUploaded: false,
     answerKeyCount: 0,
     createdAt: serverTimestamp(),
@@ -437,7 +442,22 @@ async function openManagePaper(id){
   activePaperId = id;
   const snap = await getDoc(doc(db, "question_papers", id));
   activePaperData = snap.data();
-  pendingPages = (activePaperData.pages || []).map((url,i) => ({url, name: "page-" + String(i+1).padStart(3,"0")}));
+
+  // Load existing pages from the Firestore subcollection (already base64,
+  // no re-compression needed unless the admin replaces them).
+  const pagesSnap = await getDocs(query(collection(db, "question_papers", id, "pages"), orderBy("order")));
+  pendingPages = [];
+  pagesSnap.forEach(d => {
+    const pd = d.data();
+    pendingPages.push({
+      docId: d.id,
+      dataUrl: `data:${pd.contentType};base64,${pd.data}`,
+      contentType: pd.contentType,
+      base64: pd.data,
+      name: "page-" + String(pd.order + 1).padStart(3, "0"),
+    });
+  });
+
   renderPaperInfo();
   renderPageList();
   $("manageDetail").classList.remove("hidden");
@@ -448,6 +468,7 @@ function renderPaperInfo(){
     <b>${p.name}</b> — ${p.subject||"—"}<br/>
     Duration: ${p.durationMinutes} min · Questions: ${p.totalQuestions} · Options: ${p.optionsPerQuestion||4}<br/>
     Marks: ${p.marksPerQuestion} · Negative: ${p.negativeMark}<br/>
+    Pages: ${p.pageCount || 0}<br/>
     Answer key: ${p.answerKeyUploaded ? `<span class="badge badge-green">Uploaded (${p.answerKeyCount})</span>` : `<span class="badge badge-amber">Not uploaded</span>`}<br/>
     Status: ${p.published ? `<span class="badge badge-green">Published</span>` : `<span class="badge badge-grey">Draft</span>`}
   `;
@@ -455,7 +476,7 @@ function renderPaperInfo(){
 }
 $("togglePublishBtn").addEventListener("click", async () => {
   const newVal = !activePaperData.published;
-  if(newVal && (!activePaperData.pages || activePaperData.pages.length===0)){
+  if(newVal && (!activePaperData.pageCount || activePaperData.pageCount===0)){
     toast("Upload at least one page image before publishing.");
     return;
   }
@@ -475,6 +496,10 @@ $("copyLinkBtn").addEventListener("click", () => {
 });
 $("deletePaperBtn").addEventListener("click", async () => {
   if(!confirm("Delete this paper permanently? This cannot be undone.")) return;
+  const pagesSnap = await getDocs(collection(db,"question_papers",activePaperId,"pages"));
+  const batch = writeBatch(db);
+  pagesSnap.forEach(d => batch.delete(d.ref));
+  await batch.commit().catch(()=>{});
   await deleteDoc(doc(db,"question_papers",activePaperId));
   await deleteDoc(doc(db,"answer_keys",activePaperId)).catch(()=>{});
   toast("Paper deleted.");
@@ -493,7 +518,7 @@ $("fileInput").addEventListener("change", e => handleFiles(e.target.files));
 function handleFiles(fileList){
   Array.from(fileList).forEach(file => {
     const localUrl = URL.createObjectURL(file);
-    pendingPages.push({file, url: localUrl, name: file.name});
+    pendingPages.push({file, dataUrl: localUrl, name: file.name});
   });
   renderPageList();
 }
@@ -503,7 +528,7 @@ function renderPageList(){
   pendingPages.forEach((p, idx) => {
     const row = document.createElement("div");
     row.className = "page-item";
-    row.innerHTML = `<img src="${p.url}"/><div class="name">Page ${idx+1} — ${p.name}</div>
+    row.innerHTML = `<img src="${p.dataUrl}"/><div class="name">Page ${idx+1} — ${p.name}</div>
       <div class="ops">
         <button data-act="up">↑</button><button data-act="down">↓</button><button data-act="remove">✕</button>
       </div>`;
@@ -513,29 +538,78 @@ function renderPageList(){
     list.appendChild(row);
   });
 }
+
+// Resizes/compresses an image file client-side and returns
+// { base64, contentType } small enough to fit in one Firestore document.
+function compressImageToBase64(file){
+  return new Promise((resolve, reject) => {
+    const img = new Image();
+    const objectUrl = URL.createObjectURL(file);
+    img.onload = () => {
+      URL.revokeObjectURL(objectUrl);
+      let { width, height } = img;
+      if(Math.max(width, height) > MAX_PAGE_DIMENSION){
+        const scale = MAX_PAGE_DIMENSION / Math.max(width, height);
+        width = Math.round(width * scale);
+        height = Math.round(height * scale);
+      }
+      const canvas = document.createElement("canvas");
+      canvas.width = width; canvas.height = height;
+      const ctx = canvas.getContext("2d");
+      ctx.fillStyle = "#fff"; ctx.fillRect(0,0,width,height); // flatten transparency
+      ctx.drawImage(img, 0, 0, width, height);
+
+      let quality = 0.92;
+      let dataUrl = canvas.toDataURL("image/jpeg", quality);
+      // Step quality down until the base64 payload fits under the doc cap.
+      while(dataUrl.length * 0.75 > MAX_PAGE_DOC_BYTES && quality > 0.35){
+        quality -= 0.1;
+        dataUrl = canvas.toDataURL("image/jpeg", quality);
+      }
+      if(dataUrl.length * 0.75 > MAX_PAGE_DOC_BYTES){
+        reject(new Error(`${file.name} is too dense to fit under Firestore's 1MB document limit even after compression. Try splitting it into more pages or reducing source resolution.`));
+        return;
+      }
+      resolve({ base64: dataUrl.split(",")[1], contentType: "image/jpeg" });
+    };
+    img.onerror = () => reject(new Error(`Could not read ${file.name} as an image.`));
+    img.src = objectUrl;
+  });
+}
+
 $("savePagesBtn").addEventListener("click", async () => {
-  $("savePagesBtn").textContent = "Uploading…";
+  $("savePagesBtn").textContent = "Compressing & saving…";
   $("savePagesBtn").disabled = true;
   try{
-    const urls = [];
-    for(let i=0;i<pendingPages.length;i++){
-      const p = pendingPages[i];
-      if(p.file){
-        const path = `question-images/${activePaperId}/page-${String(i+1).padStart(3,"0")}-${Date.now()}.${(p.file.type.split("/")[1]||"jpg")}`;
-        const sref = ref(storage, path);
-        await uploadBytes(sref, p.file);
-        const url = await getDownloadURL(sref);
-        urls.push(url);
-      } else {
-        urls.push(p.url); // already-uploaded page kept as-is
+    // Compress any newly-added files first (existing pages already have base64).
+    for(const p of pendingPages){
+      if(p.file && !p.base64){
+        const { base64, contentType } = await compressImageToBase64(p.file);
+        p.base64 = base64;
+        p.contentType = contentType;
       }
     }
-    await updateDoc(doc(db,"question_papers",activePaperId), {pages: urls, updatedAt: serverTimestamp()});
-    activePaperData.pages = urls;
+
+    // Wipe the old subcollection, then write the current order fresh —
+    // simplest way to handle reordering, replacement, and deletion at once.
+    const existingSnap = await getDocs(collection(db,"question_papers",activePaperId,"pages"));
+    const delBatch = writeBatch(db);
+    existingSnap.forEach(d => delBatch.delete(d.ref));
+    await delBatch.commit();
+
+    const addBatch = writeBatch(db);
+    pendingPages.forEach((p, idx) => {
+      const pageRef = doc(db, "question_papers", activePaperId, "pages", "page-" + String(idx+1).padStart(3,"0"));
+      addBatch.set(pageRef, { order: idx, data: p.base64, contentType: p.contentType, updatedAt: serverTimestamp() });
+    });
+    await addBatch.commit();
+
+    await updateDoc(doc(db,"question_papers",activePaperId), { pageCount: pendingPages.length, updatedAt: serverTimestamp() });
+    activePaperData.pageCount = pendingPages.length;
     renderPaperInfo();
-    toast("Page images saved.");
+    toast("Page images saved to Firestore.");
   }catch(e){
-    toast("Upload failed: " + e.message);
+    toast("Save failed: " + e.message);
   }
   $("savePagesBtn").textContent = "Save Page Order";
   $("savePagesBtn").disabled = false;
