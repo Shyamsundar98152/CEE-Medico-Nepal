@@ -453,37 +453,54 @@ $("manageSelect").addEventListener("change", async (e) => {
 
 async function openManagePaper(id){
   activePaperId = id;
-  const snap = await getDoc(doc(db, "question_papers", id));
-  activePaperData = snap.data();
+  try {
+    const snap = await getDoc(doc(db, "question_papers", id));
+    activePaperData = snap.data();
+    if(!activePaperData){
+      toast("Could not find that paper (it may have been deleted).");
+      return;
+    }
 
-  // Load existing pages from the Firestore subcollection (already base64,
-  // no re-compression needed unless the admin replaces them).
-  const pagesSnap = await getDocs(query(collection(db, "question_papers", id, "pages"), orderBy("order")));
-  pendingPages = [];
-  pagesSnap.forEach(d => {
-    const pd = d.data();
-    pendingPages.push({
-      docId: d.id,
-      dataUrl: `data:${pd.contentType};base64,${pd.data}`,
-      contentType: pd.contentType,
-      base64: pd.data,
-      name: "page-" + String(pd.order + 1).padStart(3, "0"),
+    // Load existing pages from the Firestore subcollection (already base64,
+    // no re-compression needed unless the admin replaces them).
+    const pagesSnap = await getDocs(query(collection(db, "question_papers", id, "pages"), orderBy("order")));
+    pendingPages = [];
+    pagesSnap.forEach(d => {
+      const pd = d.data();
+      pendingPages.push({
+        docId: d.id,
+        dataUrl: `data:${pd.contentType};base64,${pd.data}`,
+        contentType: pd.contentType,
+        base64: pd.data,
+        name: "page-" + String(pd.order + 1).padStart(3, "0"),
+      });
     });
-  });
+  } catch (err) {
+    toast("Failed to load paper: " + err.message);
+    console.error("openManagePaper failed:", err);
+    return;
+  }
 
-  // Load existing solution booklet pages the same way.
-  const solSnap = await getDocs(query(collection(db, "question_papers", id, "solution_pages"), orderBy("order")));
+  // Load existing solution booklet pages the same way. Wrapped in try/catch
+  // so that missing Firestore rules for this newer subcollection (or any
+  // other transient read error) can't block loading the rest of the paper.
   pendingSolutionPages = [];
-  solSnap.forEach(d => {
-    const pd = d.data();
-    pendingSolutionPages.push({
-      docId: d.id,
-      dataUrl: `data:${pd.contentType};base64,${pd.data}`,
-      contentType: pd.contentType,
-      base64: pd.data,
-      name: "solution-" + String(pd.order + 1).padStart(3, "0"),
+  try {
+    const solSnap = await getDocs(query(collection(db, "question_papers", id, "solution_pages"), orderBy("order")));
+    solSnap.forEach(d => {
+      const pd = d.data();
+      pendingSolutionPages.push({
+        docId: d.id,
+        dataUrl: `data:${pd.contentType};base64,${pd.data}`,
+        contentType: pd.contentType,
+        base64: pd.data,
+        name: "solution-" + String(pd.order + 1).padStart(3, "0"),
+      });
     });
-  });
+  } catch (err) {
+    console.warn("Could not load solution pages (check Firestore rules for 'solution_pages'):", err);
+    toast("Couldn't load solution pages: " + err.message);
+  }
 
   renderPaperInfo();
   renderPageList();
