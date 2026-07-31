@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>CEE Medico Nepal — Question Paper Admin</title>
+<title>CEE Medico Nepal — Question & Solution Paper Admin</title>
 <style>
   :root{
     --navy:#0B2E59; --blue:#1D4ED8; --blue-light:#EAF1FF; --blue-pale:#F5F8FF;
@@ -40,7 +40,7 @@
 
   .app{display:none;min-height:100vh;}
   .app.active{display:flex;}
-  .sidebar{width:230px;background:var(--navy);color:#fff;flex-shrink:0;display:flex;flex-direction:column;padding:20px 14px;}
+  .sidebar{width:240px;background:var(--navy);color:#fff;flex-shrink:0;display:flex;flex-direction:column;padding:20px 14px;}
   .sidebar .brand{color:#fff;margin-bottom:26px;padding:0 6px;}
   .nav-item{
     display:flex;align-items:center;gap:10px;padding:11px 12px;border-radius:10px;color:rgba(255,255,255,.75);
@@ -61,19 +61,9 @@
   .card h3{margin:0 0 14px;font-size:15px;color:var(--navy);}
   .grid-2{display:grid;grid-template-columns:1fr 1fr;gap:14px;}
   .grid-3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:14px;}
-  @media(max-width:760px){.grid-2,.grid-3{grid-template-columns:1fr;}}
-
-  table{width:100%;border-collapse:collapse;font-size:13.5px;}
-  th{text-align:left;color:var(--sub);font-weight:700;font-size:11.5px;text-transform:uppercase;letter-spacing:.04em;padding:9px 10px;border-bottom:1.5px solid var(--line);}
-  td{padding:10px;border-bottom:1px solid var(--line);}
-  tr:hover td{background:var(--blue-pale);}
-  .badge{padding:3px 9px;border-radius:20px;font-size:11px;font-weight:700;}
-  .badge-green{background:var(--green-light);color:#166534;}
-  .badge-grey{background:#EEF0F4;color:var(--sub);}
-  .badge-amber{background:var(--amber-light);color:#92400E;}
 
   .dropzone{
-    border:2px dashed var(--line);border-radius:14px;padding:30px;text-align:center;color:var(--sub);font-size:13.5px;
+    border:2px dashed var(--line);border-radius:14px;padding:24px;text-align:center;color:var(--sub);font-size:13.5px;
     background:var(--blue-pale);cursor:pointer;
   }
   .dropzone.drag{border-color:var(--blue);background:var(--blue-light);}
@@ -83,6 +73,7 @@
   }
   .page-item img{width:48px;height:64px;object-fit:cover;border-radius:6px;background:#eee;}
   .page-item .name{flex:1;font-size:12.5px;font-weight:600;}
+  .page-item .ops button{border:none;background:var(--blue-pale);border-radius:7px;padding:6px 8px;font-size:12px;margin-left:4px;}
 
   .toast{
     position:fixed;bottom:20px;left:50%;transform:translateX(-50%);background:var(--navy);color:#fff;
@@ -98,10 +89,10 @@
   <div class="login-card">
     <div class="brand"><span class="dot"></span>CEE MEDICO NEPAL</div>
     <h1>Admin Sign In</h1>
-    <p>Question Paper System — authorized staff only.</p>
+    <p>Question & Solution Paper Portal Admin</p>
     <div id="loginError" class="error-box hidden"></div>
-    <div class="field"><label>Email</label><input id="loginEmail" type="email" autocomplete="username"/></div>
-    <div class="field"><label>Password</label><input id="loginPassword" type="password" autocomplete="current-password"/></div>
+    <div class="field"><label>Email</label><input id="loginEmail" type="email"/></div>
+    <div class="field"><label>Password</label><input id="loginPassword" type="password"/></div>
     <button class="btn btn-primary" id="loginBtn">Sign In</button>
   </div>
 </div>
@@ -110,9 +101,8 @@
   <aside class="sidebar">
     <div class="brand"><span class="dot"></span>CEE MEDICO NEPAL</div>
     <button class="nav-item active" data-view="dashboard">📊 Dashboard</button>
-    <button class="nav-item" data-view="create">➕ Create Question Paper</button>
-    <button class="nav-item" data-view="manage">🗂 Manage Papers</button>
-    <button class="nav-item" data-view="results">🏆 View Results</button>
+    <button class="nav-item" data-view="create">➕ Create Exam Paper</button>
+    <button class="nav-item" data-view="manage">🗂 Manage Papers & Solutions</button>
     <div class="sidebar-foot">
       <div class="who" id="whoAmI">—</div>
       <button class="nav-item" id="logoutBtn">↩ Logout</button>
@@ -122,89 +112,69 @@
   <main class="main">
     <section class="view active" id="view-dashboard">
       <h2>Dashboard</h2>
-      <p class="sub">Overview of your question paper system.</p>
       <div class="card">
-        <h3>Recent Papers</h3>
-        <table><thead><tr><th>Name</th><th>Subject</th><th>Status</th><th>Questions</th></tr></thead>
-          <tbody id="dashPapersBody"><tr><td colspan="4">Loading…</td></tr></tbody>
-        </table>
+        <h3>Exam & Solution Papers Overview</h3>
+        <p style="font-size:13px;color:var(--sub);">Manage question scans, official solution booklets, and JSON answer keys.</p>
       </div>
     </section>
 
     <section class="view" id="view-create">
-      <h2>Create Question Paper</h2>
-      <p class="sub">Define the exam configuration.</p>
+      <h2>Create Question & Solution Paper</h2>
       <div class="card">
         <div id="createMsg"></div>
         <div class="grid-2">
           <div class="field"><label>Paper ID</label><input id="cPaperId" placeholder="cee_mock_001"/></div>
           <div class="field"><label>Paper Name</label><input id="cName" placeholder="CEE Full Mock Test 01"/></div>
-          <div class="field"><label>Subject</label><input id="cSubject" placeholder="Full Length Mock Test"/></div>
-          <div class="field"><label>Duration (minutes)</label><input id="cDuration" type="number" value="180"/></div>
+          <div class="field"><label>Subject</label><input id="cSubject" placeholder="Full Syllabus"/></div>
+          <div class="field"><label>Duration (Mins)</label><input id="cDuration" type="number" value="180"/></div>
           <div class="field"><label>Total Questions</label><input id="cTotal" type="number" value="200"/></div>
-          <div class="field"><label>Options per Question</label>
-            <select id="cOptions"><option value="4" selected>4 (A–D)</option><option value="5">5 (A–E)</option></select>
-          </div>
         </div>
-        <button class="btn btn-primary" id="createPaperBtn" style="width:auto;margin-top:10px;">Create Paper</button>
+        <button class="btn btn-primary" id="createPaperBtn" style="width:auto;">Create Paper Record</button>
       </div>
     </section>
 
     <section class="view" id="view-manage">
-      <h2>Manage Papers</h2>
-      <p class="sub">Upload page images, answer key, and solution paper link.</p>
+      <h2>Manage Papers & Solutions</h2>
       <div class="card">
-        <label style="font-size:12.5px;font-weight:600;color:var(--sub);">Select a paper</label>
+        <label style="font-size:12.5px;font-weight:600;color:var(--sub);">Select Paper</label>
         <select id="manageSelect" style="width:100%;padding:11px;border:1.5px solid var(--line);border-radius:10px;margin-top:6px;"></select>
       </div>
 
       <div id="manageDetail" class="hidden">
+        
+        <!-- 1. Question Booklet Upload -->
         <div class="card">
-          <h3>Paper Info</h3>
-          <div id="paperInfoBox" style="font-size:13.5px;color:var(--sub);line-height:1.9;"></div>
-          <div style="display:flex;gap:10px;margin-top:14px;flex-wrap:wrap;">
-            <button class="btn btn-outline btn-sm" id="togglePublishBtn">Publish</button>
-            <button class="btn btn-danger btn-sm" id="deletePaperBtn">Delete Paper</button>
+          <h3>1. Upload Question Paper Scans</h3>
+          <div class="dropzone" id="dropzoneQ">
+            Drag &amp; drop Question Paper pages here (JPG / PNG)
+            <input type="file" id="fileInputQ" accept="image/*" multiple class="hidden"/>
           </div>
+          <div class="page-list" id="pageListQ"></div>
+          <button class="btn btn-primary" id="savePagesBtnQ" style="width:auto;margin-top:14px;">Save Question Pages</button>
         </div>
 
-        <!-- NEW SOLUTION PAPER CARD -->
+        <!-- 2. Solution Booklet Upload -->
         <div class="card">
-          <h3>Attach Solution Paper Document / Link</h3>
-          <p style="font-size:12.5px;color:var(--sub);">Provide a URL to the official solution booklet (e.g. Google Drive PDF, Dropbox link, or web URL). Students can view this paper right after submitting their exam.</p>
-          <div class="field">
-            <label>Solution Paper URL / PDF Link</label>
-            <input id="solutionPaperUrl" placeholder="https://drive.google.com/file/d/... or https://example.com/solution.pdf"/>
+          <h3>2. Upload Official Solution Paper Scans</h3>
+          <p style="font-size:12.5px;color:var(--sub);">Upload scanned model solution booklet pages with worked-out answers and diagrams.</p>
+          <div class="dropzone" id="dropzoneS">
+            Drag &amp; drop Solution Paper pages here (JPG / PNG)
+            <input type="file" id="fileInputS" accept="image/*" multiple class="hidden"/>
           </div>
-          <button class="btn btn-primary" id="saveSolutionBtn" style="width:auto;">Save Solution Link</button>
+          <div class="page-list" id="pageListS"></div>
+          <button class="btn btn-primary" id="savePagesBtnS" style="width:auto;margin-top:14px;">Save Solution Pages</button>
         </div>
 
+        <!-- 3. Answer Key & Explanations JSON Upload -->
         <div class="card">
-          <h3>Upload Question Paper Pages</h3>
-          <div class="dropzone" id="dropzone">
-            Drag & drop page images here (JPG / PNG / WebP), or click to browse.
-            <input type="file" id="fileInput" accept="image/*" multiple class="hidden"/>
-          </div>
-          <div class="page-list" id="pageList"></div>
-          <button class="btn btn-primary" id="savePagesBtn" style="width:auto;margin-top:14px;">Save Page Order</button>
-        </div>
-
-        <div class="card">
-          <h3>Upload Answer Key JSON</h3>
+          <h3>3. Upload Answer Key & Explanations JSON</h3>
+          <p style="font-size:12.5px;color:var(--sub);">
+            JSON Structure: <code>{"answers": {"q001": "A", "q002": "C"}, "explanations": {"q001": "Detailed explanation..."}}</code>
+          </p>
           <input type="file" id="answerKeyFile" accept="application/json"/>
-          <div id="akPreview" style="margin-top:12px;font-size:13.5px;"></div>
-          <button class="btn btn-primary hidden" id="confirmAkBtn" style="width:auto;margin-top:12px;">Confirm Upload</button>
+          <button class="btn btn-primary hidden" id="confirmAkBtn" style="width:auto;margin-top:12px;">Upload Key & Explanations</button>
         </div>
-      </div>
-    </section>
 
-    <section class="view" id="view-results">
-      <h2>Exam Results</h2>
-      <div class="card">
-        <table>
-          <thead><tr><th>Student</th><th>Roll</th><th>Attempted</th><th>Score</th><th>Submitted</th></tr></thead>
-          <tbody id="resultsBody"><tr><td colspan="5">Select a paper to view results.</td></tr></tbody>
-        </table>
       </div>
     </section>
   </main>
@@ -215,7 +185,7 @@
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-app.js";
 import { getAuth, signInWithEmailAndPassword, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-auth.js";
-import { getFirestore, collection, doc, getDoc, getDocs, setDoc, updateDoc, deleteDoc, query, orderBy, writeBatch, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-firestore.js";
+import { getFirestore, collection, doc, getDoc, getDocs, setDoc, updateDoc, query, orderBy, writeBatch, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-firestore.js";
 
 const firebaseConfig = {
   apiKey: "AIzaSyBOH3AsRvA6n2bnt8FavJwfu1s7wSRV-qU",
@@ -233,98 +203,65 @@ const db = getFirestore(app);
 const $ = (id) => document.getElementById(id);
 function toast(msg){
   const t = $("toast"); t.textContent = msg; t.classList.add("show");
-  clearTimeout(toast._timer);
-  toast._timer = setTimeout(()=>t.classList.remove("show"), 2800);
+  setTimeout(()=>t.classList.remove("show"), 2800);
 }
+
+let activePaperId = null;
+let pendingPagesQ = [];
+let pendingPagesS = [];
 
 $("loginBtn").addEventListener("click", async () => {
   try {
     await signInWithEmailAndPassword(auth, $("loginEmail").value.trim(), $("loginPassword").value);
-  } catch(e) {
-    $("loginError").textContent = e.message;
-    $("loginError").classList.remove("hidden");
+  } catch(e) { alert(e.message); }
+});
+
+onAuthStateChanged(auth, (user) => {
+  if (user) {
+    $("loginWrap").classList.add("hidden");
+    $("app").classList.add("active");
+    loadManageSelect();
   }
 });
-$("logoutBtn").addEventListener("click", () => signOut(auth));
 
-onAuthStateChanged(auth, async (user) => {
-  if(!user) return $("loginWrap").classList.remove("hidden"), $("app").classList.remove("active");
-  $("whoAmI").textContent = user.email;
-  $("loginWrap").classList.add("hidden");
-  $("app").classList.add("active");
-  loadDashboard();
-  loadManageSelect();
-});
-
-document.querySelectorAll(".nav-item[data-view]").forEach(btn => {
-  btn.addEventListener("click", () => {
-    document.querySelectorAll(".nav-item[data-view]").forEach(b=>b.classList.remove("active"));
-    btn.classList.add("active");
-    document.querySelectorAll(".view").forEach(v=>v.classList.remove("active"));
-    $("view-" + btn.dataset.view).classList.add("active");
-  });
-});
-
-async function loadDashboard(){
-  const snap = await getDocs(collection(db, "question_papers"));
-  const rows = [];
-  snap.forEach(d => {
-    const p = d.data();
-    rows.push(`<tr><td>${p.name||d.id}</td><td>${p.subject||"—"}</td><td><span class="badge ${p.published?"badge-green":"badge-grey"}">${p.published?"Published":"Draft"}</span></td><td>${p.totalQuestions||"—"}</td></tr>`);
-  });
-  $("dashPapersBody").innerHTML = rows.join("") || `<tr><td colspan="4">No papers yet.</td></tr>`;
-}
-
-let activePaperId = null;
-let activePaperData = null;
-
-async function loadManageSelect(){
+async function loadManageSelect() {
   const snap = await getDocs(collection(db, "question_papers"));
   const sel = $("manageSelect");
-  sel.innerHTML = `<option value="">— Select a paper —</option>`;
+  sel.innerHTML = `<option value="">-- Select Paper --</option>`;
   snap.forEach(d => sel.innerHTML += `<option value="${d.id}">${d.data().name || d.id}</option>`);
 }
 
 $("manageSelect").addEventListener("change", async (e) => {
-  const id = e.target.value;
-  if(!id) return $("manageDetail").classList.add("hidden");
-  activePaperId = id;
-  const snap = await getDoc(doc(db, "question_papers", id));
-  activePaperData = snap.data();
+  activePaperId = e.target.value;
+  if (!activePaperId) return $("manageDetail").classList.add("hidden");
   
-  $("solutionPaperUrl").value = activePaperData.solutionPaperUrl || "";
-  renderPaperInfo();
+  // Load Question pages
+  const qSnap = await getDocs(query(collection(db, "question_papers", activePaperId, "pages"), orderBy("order")));
+  pendingPagesQ = [];
+  qSnap.forEach(d => pendingPagesQ.push({ dataUrl: `data:${d.data().contentType};base64,${d.data().data}`, base64: d.data().data, contentType: d.data().contentType }));
+
+  // Load Solution pages
+  const sSnap = await getDocs(query(collection(db, "question_papers", activePaperId, "solution_pages"), orderBy("order")));
+  pendingPagesS = [];
+  sSnap.forEach(d => pendingPagesS.push({ dataUrl: `data:${d.data().contentType};base64,${d.data().data}`, base64: d.data().data, contentType: d.data().contentType }));
+
+  renderPageLists();
   $("manageDetail").classList.remove("hidden");
 });
 
-function renderPaperInfo(){
-  const p = activePaperData;
-  $("paperInfoBox").innerHTML = `
-    <b>${p.name}</b> (${p.subject||"—"})<br/>
-    Solution Paper Attached: ${p.solutionPaperUrl ? `<span class="badge badge-green">Yes</span>` : `<span class="badge badge-amber">No</span>`}<br/>
-    Status: ${p.published ? `<span class="badge badge-green">Published</span>` : `<span class="badge badge-grey">Draft</span>`}
-  `;
-  $("togglePublishBtn").textContent = p.published ? "Unpublish" : "Publish";
+function renderPageLists() {
+  $("pageListQ").innerHTML = pendingPagesQ.map((p, i) => `<div class="page-item"><img src="${p.dataUrl}"/><span>Question Page ${i+1}</span></div>`).join('');
+  $("pageListS").innerHTML = pendingPagesS.map((p, i) => `<div class="page-item"><img src="${p.dataUrl}"/><span>Solution Page ${i+1}</span></div>`).join('');
 }
 
-$("saveSolutionBtn").addEventListener("click", async () => {
-  if(!activePaperId) return;
-  const url = $("solutionPaperUrl").value.trim();
-  await updateDoc(doc(db, "question_papers", activePaperId), {
-    solutionPaperUrl: url,
-    updatedAt: serverTimestamp()
+$("savePagesBtnS").addEventListener("click", async () => {
+  const batch = writeBatch(db);
+  pendingPagesS.forEach((p, idx) => {
+    const ref = doc(db, "question_papers", activePaperId, "solution_pages", "sol-" + String(idx+1).padStart(3,"0"));
+    batch.set(ref, { order: idx, data: p.base64, contentType: p.contentType || "image/jpeg" });
   });
-  activePaperData.solutionPaperUrl = url;
-  renderPaperInfo();
-  toast("Solution paper link saved!");
-});
-
-$("togglePublishBtn").addEventListener("click", async () => {
-  const newVal = !activePaperData.published;
-  await updateDoc(doc(db,"question_papers",activePaperId), {published:newVal, updatedAt: serverTimestamp()});
-  activePaperData.published = newVal;
-  renderPaperInfo();
-  toast(newVal ? "Paper published." : "Paper unpublished.");
+  await batch.commit();
+  toast("Solution Paper pages successfully uploaded!");
 });
 </script>
 </body>
