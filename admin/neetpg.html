@@ -1,0 +1,233 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>NEET PG Admin Panel | MCQ Manager</title>
+  <meta name="robots" content="noindex, nofollow">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+  <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;500;600;700;800&family=Lora:wght@600;700&display=swap" rel="stylesheet">
+  <script src="https://cdn.tailwindcss.com"></script>
+
+  <style>
+  :root {
+    --primary:      #1a6fa8;
+    --primary-dk:   #145a8a;
+    --primary-lt:   rgba(26,111,168,.1);
+    --secondary:    #1b2d45;
+    --success:      #2ecc71;
+    --danger:       #e74c3c;
+    --warning:      #f39c12;
+    --white:        #ffffff;
+    --bg:           #f0f4f8;
+    --text:         #2d3748;
+    --text-muted:   #718096;
+    --border:       #e2e8f0;
+    --radius-sm:    6px;
+    --radius:       10px;
+    --radius-lg:    14px;
+    --font-body:    'Nunito', sans-serif;
+  }
+  body{font-family:var(--font-body);background:var(--bg);color:var(--text);min-height:100vh;display:flex;flex-direction:column}
+  header{background:var(--secondary);padding:14px 0;color:#fff}
+  .container{width:90%;max-width:1200px;margin:0 auto;padding:0 16px}
+  
+  .card{background:var(--white);border-radius:var(--radius-lg);padding:24px;box-shadow:0 4px 12px rgba(0,0,0,.08);margin-bottom:24px}
+  .form-group{margin-bottom:16px}
+  .form-group label{display:block;font-size:.78rem;font-weight:800;color:var(--text);margin-bottom:5px;text-transform:uppercase}
+  .form-group input, .form-group select, .form-group textarea{width:100%;padding:10px;border:2px solid var(--border);border-radius:var(--radius-sm);outline:none}
+  
+  .btn{padding:10px 18px;border-radius:var(--radius-sm);font-weight:700;cursor:pointer;border:none;display:inline-flex;align-items:center;gap:6px}
+  .btn-primary{background:var(--primary);color:#fff}
+  .btn-danger{background:var(--danger);color:#fff}
+  .btn-success{background:var(--success);color:#fff}
+  
+  .nav-tabs{display:flex;gap:8px;margin-bottom:20px}
+  .nav-tab{padding:10px 16px;background:var(--white);border-radius:var(--radius-sm);cursor:pointer;font-weight:700}
+  .nav-tab.active{background:var(--secondary);color:#fff}
+  
+  .panel{display:none}
+  .panel.active{display:block}
+  
+  .set-row{display:flex;justify-content:space-between;align-items:center;padding:12px;border:1px solid var(--border);border-radius:var(--radius-sm);margin-bottom:8px;background:#fff}
+  </style>
+</head>
+<body>
+
+<header>
+  <div class="container" style="display:flex;justify-content:space-between;align-items:center;">
+    <h2>🩺 NEET PG Admin Console</h2>
+    <button class="btn btn-danger" id="btn-logout" style="display:none;" onclick="logout()">Logout</button>
+  </div>
+</header>
+
+<main class="container" style="padding:32px 16px;">
+
+  <!-- LOGIN MODULE -->
+  <div id="login-wall" class="card" style="max-width:400px;margin:40px auto;text-align:center;">
+    <h3 style="font-size:1.2rem;font-weight:700;margin-bottom:12px;">Admin Authentication</h3>
+    <div class="form-group">
+      <input type="password" id="admin-pass" placeholder="Enter Admin Password">
+    </div>
+    <button class="btn btn-primary" style="width:100%;justify-content:center;" onclick="login()">Login</button>
+  </div>
+
+  <!-- MAIN CONSOLE MODULE -->
+  <div id="admin-console" style="display:none;">
+    
+    <div class="nav-tabs">
+      <div class="nav-tab active" onclick="switchTab(this, 'panel-sets')">Manage Question Sets</div>
+      <div class="nav-tab" onclick="switchTab(this, 'panel-upload')">Upload New JSON/Set</div>
+    </div>
+
+    <!-- PANEL: ALL SETS -->
+    <div id="panel-sets" class="panel active">
+      <div class="card">
+        <h3 style="font-weight:700;margin-bottom:16px;">Existing NEET PG Question Sets</h3>
+        <div id="sets-list">Loading Sets…</div>
+      </div>
+    </div>
+
+    <!-- PANEL: UPLOAD SET -->
+    <div id="panel-upload" class="panel">
+      <div class="card">
+        <h3 style="font-weight:700;margin-bottom:16px;">Create / Import New Question Set</h3>
+        <div class="form-group">
+          <label>Set Name</label>
+          <input type="text" id="new-set-name" placeholder="e.g., NEET PG Grand Test 01">
+        </div>
+        <div class="form-group">
+          <label>Subject</label>
+          <select id="new-set-subject">
+            <option value="General">General / Full Mock</option>
+            <option value="Anatomy">Anatomy</option>
+            <option value="Physiology">Physiology</option>
+            <option value="Biochemistry">Biochemistry</option>
+            <option value="Pathology">Pathology</option>
+            <option value="Pharmacology">Pharmacology</option>
+            <option value="Microbiology">Microbiology</option>
+            <option value="Forensic Medicine">Forensic Medicine</option>
+            <option value="Community Medicine">Community Medicine</option>
+            <option value="General Medicine">General Medicine</option>
+            <option value="General Surgery">General Surgery</option>
+            <option value="OBG">OBG</option>
+            <option value="Pediatrics">Pediatrics</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>JSON Data String</label>
+          <textarea id="json-input" rows="8" placeholder='[{"question":"...","options":["A","B","C","D"],"correct":0,"explanation":"..."}]'></textarea>
+        </div>
+        <button class="btn btn-success" onclick="saveSet()"><i class="fas fa-upload"></i> Save to Database</button>
+      </div>
+    </div>
+
+  </div>
+
+</main>
+
+<script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-database-compat.js"></script>
+
+<script>
+const firebaseConfig = {
+  apiKey: "AIzaSyD7oo7cXU3KxNimQ8BK8T8GtKeQOSpU_Sc",
+  authDomain: "nmcle-94a3d.firebaseapp.com",
+  databaseURL: "https://nmcle-94a3d-default-rtdb.asia-southeast1.firebasedatabase.app",
+  projectId: "nmcle-94a3d",
+  storageBucket: "nmcle-94a3d.firebasestorage.app",
+  messagingSenderId: "1024414109225",
+  appId: "1:1024414109225:web:7505bbb4a3a9551303d638"
+};
+firebase.initializeApp(firebaseConfig);
+const db = firebase.database();
+
+function login() {
+  const p = document.getElementById('admin-pass').value;
+  if (p === 'admin123' || p === 'admin') {
+    document.getElementById('login-wall').style.display = 'none';
+    document.getElementById('admin-console').style.display = 'block';
+    document.getElementById('btn-logout').style.display = 'inline-flex';
+    fetchSets();
+  } else {
+    alert("Incorrect password");
+  }
+}
+
+function logout() {
+  document.getElementById('login-wall').style.display = 'block';
+  document.getElementById('admin-console').style.display = 'none';
+  document.getElementById('btn-logout').style.display = 'none';
+}
+
+function switchTab(el, panelId) {
+  document.querySelectorAll('.nav-tab').forEach(t => t.classList.remove('active'));
+  document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+  el.classList.add('active');
+  document.getElementById(panelId).classList.add('active');
+}
+
+function fetchSets() {
+  const list = document.getElementById('sets-list');
+  db.ref('neetpg_sets').on('value', snap => {
+    const data = snap.val() || {};
+    list.innerHTML = '';
+    const keys = Object.keys(data);
+    if (!keys.length) {
+      list.innerHTML = '<p>No question sets added yet.</p>';
+      return;
+    }
+    keys.forEach(k => {
+      const set = data[k];
+      const count = Array.isArray(set.questions) ? set.questions.length : Object.keys(set.questions || {}).length;
+      const row = document.createElement('div');
+      row.className = 'set-row';
+      row.innerHTML = `
+        <div>
+          <strong>${set.name || k}</strong> (${set.subject || 'General'})
+          <div style="font-size:0.8rem;color:#718096;">Questions: ${count}</div>
+        </div>
+        <button class="btn btn-danger" onclick="deleteSet('${k}')"><i class="fas fa-trash"></i> Delete</button>
+      `;
+      list.appendChild(row);
+    });
+  });
+}
+
+function saveSet() {
+  const name = document.getElementById('new-set-name').value.trim();
+  const subject = document.getElementById('new-set-subject').value;
+  const rawJson = document.getElementById('json-input').value.trim();
+
+  if (!name || !rawJson) {
+    alert("Please enter a Set Name and valid JSON questions.");
+    return;
+  }
+
+  try {
+    const questions = JSON.parse(rawJson);
+    const newRef = db.ref('neetpg_sets').push();
+    newRef.set({
+      name: name,
+      subject: subject,
+      questions: questions,
+      uploadedAt: new Date().toISOString()
+    }).then(() => {
+      alert("Set saved successfully!");
+      document.getElementById('new-set-name').value = '';
+      document.getElementById('json-input').value = '';
+      switchTab(document.querySelectorAll('.nav-tab')[0], 'panel-sets');
+    });
+  } catch (err) {
+    alert("Invalid JSON format: " + err.message);
+  }
+}
+
+function deleteSet(key) {
+  if (confirm("Are you sure you want to delete this question set?")) {
+    db.ref('neetpg_sets/' + key).remove();
+  }
+}
+</script>
+</body>
+</html>
