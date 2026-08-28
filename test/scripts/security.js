@@ -26,7 +26,7 @@ const db = getDatabase(app);
 const COURSE_TARGET_MAP = {
   cee: "/secure/protected.html",
   ioe: "/ioe-premium.html",
-  nmcle: "/mbbs/nmcle.html"
+  nmcle: "https://ceemediconepal.xyz/mbbs/nmcle/index.html"
 };
 
 // =======================
