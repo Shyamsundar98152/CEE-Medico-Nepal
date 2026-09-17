@@ -1,0 +1,566 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="theme-color" content="#07111f">
+<title>CEE Medico Nepal — Universal Thumbnail Studio</title>
+<style>
+:root{
+ --bg:#050a12;--panel:#0b1421;--border:#203149;--text:#f8fafc;--muted:#91a4bb;--field:#07111e;
+ --fieldBorder:#2a3c55;--accentFocus:#38bdf8;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:Inter,Segoe UI,Roboto,Arial,sans-serif;background:var(--bg);color:var(--text);min-height:100vh;padding:18px}
+.app{max-width:1320px;margin:auto}
+.header{text-align:center;margin:5px 0 18px}
+.logo{font-size:clamp(25px,4vw,38px);font-weight:950;letter-spacing:-1px}.logo b{color:#38bdf8}
+.header p{color:var(--muted);font-size:13px;margin-top:6px}
+.layout{display:grid;grid-template-columns:360px 1fr;gap:16px}
+.panel{background:var(--panel);border:1px solid var(--border);border-radius:18px;box-shadow:0 20px 60px #0008}
+.controls{padding:18px;max-height:calc(100vh - 40px);overflow-y:auto}
+.controls::-webkit-scrollbar{width:8px}.controls::-webkit-scrollbar-thumb{background:#22344c;border-radius:8px}
+.preview{padding:16px;position:sticky;top:18px;align-self:start}
+.section{font-size:11px;letter-spacing:1.3px;text-transform:uppercase;color:#8eb0cf;font-weight:900;margin:16px 0 10px;display:flex;align-items:center;gap:8px}
+.section:first-child{margin-top:2px}
+.section::after{content:"";flex:1;height:1px;background:#1c2c42}
+.field{margin-bottom:11px}
+label{display:flex;justify-content:space-between;font-size:11px;font-weight:800;color:#cbd8e6;margin-bottom:5px}
+label span.count{color:#5b7290;font-weight:700}
+input,select,textarea{width:100%;background:var(--field);border:1px solid var(--fieldBorder);color:#fff;border-radius:9px;padding:10px;font-size:13px;outline:none;font-family:inherit}
+input:focus,select:focus,textarea:focus{border-color:var(--accentFocus);box-shadow:0 0 0 3px #38bdf81a}
+input[type=color]{padding:3px;height:38px;cursor:pointer}
+input[type=range]{padding:0;accent-color:#38bdf8}
+input[type=file]{padding:7px;font-size:11px}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:9px}
+.grid3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:9px}
+button{border:0;border-radius:9px;padding:10px;font-weight:900;cursor:pointer;color:white;font-size:12.5px}
+.primary{background:linear-gradient(135deg,#0284c7,#2563eb)}
+.secondary{background:#17263a;border:1px solid #2a3c55;color:#dbe6f2}
+.danger{background:#2a1420;border:1px solid #5a2436;color:#ff9aab}
+.buttons{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:6px}
+.full{grid-column:1/-1}
+.row{display:flex;align-items:center;gap:8px}
+.toggle-row{display:flex;align-items:center;justify-content:space-between;background:var(--field);border:1px solid var(--fieldBorder);border-radius:9px;padding:9px 11px;margin-bottom:9px}
+.toggle-row label{margin:0;font-size:12px}
+.switch{position:relative;width:38px;height:21px;flex:none}
+.switch input{opacity:0;width:0;height:0}
+.slider{position:absolute;inset:0;background:#2a3c55;border-radius:99px;cursor:pointer;transition:.15s}
+.slider::before{content:"";position:absolute;width:15px;height:15px;left:3px;top:3px;background:#fff;border-radius:50%;transition:.15s}
+.switch input:checked + .slider{background:#2563eb}
+.switch input:checked + .slider::before{transform:translateX(17px)}
+.rangeval{font-size:10.5px;color:#6f8bab;text-align:right}
+.pillbtns{display:flex;gap:7px;flex-wrap:wrap}
+.pillbtn{flex:1;min-width:70px;text-align:center;padding:9px 6px;border-radius:9px;background:var(--field);border:1px solid var(--fieldBorder);color:#cbd8e6;font-size:11.5px;font-weight:800;cursor:pointer}
+.pillbtn.active{background:#0284c71a;border-color:#38bdf8;color:#7cd4ff}
+.preset-item{display:flex;align-items:center;gap:8px;background:var(--field);border:1px solid var(--fieldBorder);border-radius:9px;padding:7px 9px;margin-bottom:7px;font-size:12px}
+.preset-item span{flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.preset-item button{padding:5px 9px;font-size:11px}
+.preview-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;font-size:13px;gap:8px}
+.status{font-size:10px;padding:5px 8px;border-radius:99px;background:#38bdf812;color:#73d9ff;border:1px solid #38bdf833;white-space:nowrap}
+.canvas-wrap{overflow:hidden;border-radius:12px;border:1px solid #293c55;background:#02060c;display:flex;align-items:center;justify-content:center}
+canvas{display:block;max-width:100%;max-height:78vh;width:auto;height:auto}
+.tip{text-align:center;color:#71869d;font-size:10px;margin-top:8px}
+.hint{font-size:10.5px;color:#5b7290;margin-top:4px;line-height:1.4}
+@media(max-width:980px){.layout{grid-template-columns:1fr}.preview{order:1;position:static}.controls{order:2;max-height:none}}
+@media(max-width:520px){body{padding:9px}.grid2,.grid3,.buttons{grid-template-columns:1fr 1fr}}
+</style>
+</head>
+<body>
+<div class="app">
+<header class="header">
+<div class="logo">CEE <b>Medico</b> Nepal</div>
+<p>Universal YouTube Thumbnail Studio · Physics · Chemistry · Botany · Zoology · Biology · Anatomy · Radiology · More</p>
+</header>
+
+<div class="layout">
+<section class="panel controls">
+
+<div class="section">Content</div>
+<div class="field"><label>Main Title <span class="count" id="cnt-title">0/34</span></label><input id="title" value="MODERN PHYSICS" maxlength="34" oninput="onField()"></div>
+<div class="field"><label>Topic / Subtitle <span class="count" id="cnt-subtitle">0/60</span></label><input id="subtitle" value="Photoelectric • X-ray • de Broglie" maxlength="60" oninput="onField()"></div>
+<div class="field"><label>Exam / Audience <span class="count" id="cnt-target">0/48</span></label><input id="target" value="CEE • NEET • NEB 11 & 12" maxlength="48" oninput="onField()"></div>
+<div class="field"><label>Formula / Highlight <span class="count" id="cnt-formula">0/28</span></label><input id="formula" value="λ = h / p" maxlength="28" oninput="onField()"></div>
+
+<div class="section">Format</div>
+<div class="pillbtns" id="formatBtns"></div>
+
+<div class="section">Theme &amp; Style</div>
+<div class="grid2">
+<div class="field"><label>Subject</label>
+<select id="subject" onchange="applySubject()">
+<option value="physics">⚡ Physics</option>
+<option value="chemistry">⚗ Chemistry</option>
+<option value="botany">🌿 Botany</option>
+<option value="zoology">🧬 Zoology</option>
+<option value="biology">🫀 Human Biology</option>
+<option value="anatomy">🦴 Anatomy</option>
+<option value="radiology">☢ Radiology</option>
+<option value="mathematics">📐 Mathematics</option>
+<option value="general">🎓 General</option>
+</select></div>
+<div class="field"><label>Visual Style</label>
+<select id="style" onchange="draw()">
+<option value="neon">Neon Science</option>
+<option value="clean">Clean Medical</option>
+<option value="bold">Bold Exam</option>
+<option value="glass">Glassmorphism</option>
+<option value="minimal">Minimal Premium</option>
+<option value="dark">Dark Cinematic</option>
+<option value="tech">Tech Grid</option>
+<option value="organic">Organic Nature</option>
+</select></div>
+</div>
+
+<div class="grid2">
+<div class="field"><label>Font</label>
+<select id="font" onchange="draw()">
+<option value="Arial">Arial Black</option>
+<option value="Impact">Impact</option>
+<option value="Trebuchet MS">Trebuchet MS</option>
+<option value="Georgia">Georgia</option>
+<option value="Verdana">Verdana</option>
+<option value="Courier New">Courier New</option>
+<option value="Times New Roman">Times New Roman</option>
+</select></div>
+<div class="field"><label>Badge</label>
+<select id="badge" onchange="onBadgeChange()">
+<option>LIVE QAD</option><option>IMPORTANT MCQs</option><option>CONCEPTS + FORMULAS</option>
+<option>EXAM FOCUSED</option><option>ONE SHOT</option><option>REVISION</option><option>PYQs</option>
+<option value="__custom">Custom…</option>
+</select></div>
+</div>
+<div class="field" id="customBadgeWrap" style="display:none"><label>Custom Badge Text</label><input id="customBadge" maxlength="24" value="SPECIAL CLASS" oninput="draw()"></div>
+
+<div class="section">Colors</div>
+<div class="toggle-row">
+<label for="customColors">Use custom colors instead of theme</label>
+<div class="switch"><input type="checkbox" id="customColors" onchange="draw()"><span class="slider" onclick="document.getElementById('customColors').click()"></span></div>
+</div>
+<div class="grid2">
+<div class="field"><label>Accent</label><input type="color" id="colorA" value="#38bdf8" oninput="draw()"></div>
+<div class="field"><label>Secondary</label><input type="color" id="colorB" value="#2563eb" oninput="draw()"></div>
+</div>
+
+<div class="section">Background Image</div>
+<div class="field"><input type="file" id="bgFile" accept="image/*" onchange="onBgFile(event)"></div>
+<div class="field"><label>Overlay Darkness <span class="rangeval" id="rv-overlay"></span></label>
+<input type="range" id="bgOverlay" min="0" max="100" value="55" oninput="draw();syncRangeLabels()"></div>
+<button class="secondary full" onclick="clearBg()">✕ Remove Background Image</button>
+
+<div class="section">Effects</div>
+<div class="toggle-row">
+<label for="textStroke">Bold text outline</label>
+<div class="switch"><input type="checkbox" id="textStroke" onchange="draw()"><span class="slider" onclick="document.getElementById('textStroke').click()"></span></div>
+</div>
+<div class="toggle-row">
+<label for="grain">Cinematic grain overlay</label>
+<div class="switch"><input type="checkbox" id="grain" onchange="draw()"><span class="slider" onclick="document.getElementById('grain').click()"></span></div>
+</div>
+<div class="toggle-row">
+<label for="showIcon">Show subject icon</label>
+<div class="switch"><input type="checkbox" id="showIcon" checked onchange="draw()"><span class="slider" onclick="document.getElementById('showIcon').click()"></span></div>
+</div>
+<div class="field"><label>Glow Intensity <span class="rangeval" id="rv-glow"></span></label>
+<input type="range" id="glow" min="0" max="100" value="60" oninput="draw();syncRangeLabels()"></div>
+
+<div class="section">Layout</div>
+<div class="grid2">
+<div class="field"><label>Title Position</label>
+<select id="position" onchange="draw()"><option value="center">Center</option><option value="left">Left</option><option value="right">Right</option></select></div>
+<div class="field"><label>Density</label>
+<select id="density" onchange="draw()"><option value="balanced">Balanced</option><option value="simple">Simple</option><option value="dynamic">Dynamic</option></select></div>
+</div>
+
+<div class="section">Export</div>
+<div class="toggle-row">
+<label for="hdExport">HD export (2× resolution)</label>
+<div class="switch"><input type="checkbox" id="hdExport" checked><span class="slider" onclick="document.getElementById('hdExport').click()"></span></div>
+</div>
+<div class="buttons">
+<button class="primary full" onclick="download()">⬇ Download PNG</button>
+</div>
+<div class="buttons">
+<button class="secondary" onclick="randomize()">✨ Random Style</button>
+<button class="secondary" onclick="resetAll()">↺ Reset</button>
+</div>
+
+<div class="section">Presets</div>
+<div class="buttons">
+<button class="secondary full" onclick="savePreset()">💾 Save Current as Preset</button>
+</div>
+<div id="presetList" style="margin-top:9px"></div>
+<div class="hint">Presets are saved locally in this browser only.</div>
+
+</section>
+
+<section class="panel preview">
+<div class="preview-head"><strong>Live Preview</strong><span class="status" id="dimStatus">1280 × 720 HD</span></div>
+<div class="canvas-wrap"><canvas id="c" width="1280" height="720"></canvas></div>
+<div class="tip">Designed for YouTube thumbnails · all generation happens locally in your browser.</div>
+</section>
+</div>
+</div>
+
+<script>
+const c=document.getElementById("c");
+const FORMATS={
+ landscape:{w:1280,h:720,label:"YouTube 16:9"},
+ square:{w:1080,h:1080,label:"Square 1:1"},
+ portrait:{w:1080,h:1920,label:"Shorts 9:16"}
+};
+let currentFormat="landscape";
+let bgImage=null;
+
+const themes={
+physics:{a:"#38bdf8",b:"#2563eb",bg1:"#030a16",bg2:"#10294a",icon:"PHYSICS"},
+chemistry:{a:"#a78bfa",b:"#7c3aed",bg1:"#090615",bg2:"#241447",icon:"CHEMISTRY"},
+botany:{a:"#4ade80",b:"#15803d",bg1:"#03100a",bg2:"#12351e",icon:"BOTANY"},
+zoology:{a:"#fb923c",b:"#c2410c",bg1:"#110904",bg2:"#3a190b",icon:"ZOOLOGY"},
+biology:{a:"#f472b6",b:"#db2777",bg1:"#10040c",bg2:"#35102a",icon:"BIOLOGY"},
+anatomy:{a:"#f87171",b:"#b91c1c",bg1:"#100405",bg2:"#3a1114",icon:"ANATOMY"},
+radiology:{a:"#67e8f9",b:"#0891b2",bg1:"#031014",bg2:"#0b3440",icon:"RADIOLOGY"},
+mathematics:{a:"#fbbf24",b:"#d97706",bg1:"#120c02",bg2:"#3a2705",icon:"MATHEMATICS"},
+general:{a:"#facc15",b:"#ca8a04",bg1:"#0d0b03",bg2:"#322606",icon:"CEE MEDICO"}
+};
+let subject="physics";
+
+function rr(x,px,py,w,h,r,fill,stroke){
+ x.beginPath();x.roundRect(px,py,w,h,r);if(fill){x.fillStyle=fill;x.fill()}if(stroke){x.strokeStyle=stroke;x.stroke()}
+}
+function fontFit(x,t,max,start,family,weight="900"){
+ let s=start;while(s>18){x.font=`${weight} ${s}px "${family}"`;if(x.measureText(t).width<=max)return s;s-=2}return s;
+}
+function glowCircle(x,px,py,r,color,alpha){
+ let g=x.createRadialGradient(px,py,5,px,py,r);g.addColorStop(0,color+alpha);g.addColorStop(1,"rgba(0,0,0,0)");
+ x.fillStyle=g;x.fillRect(px-r,py-r,2*r,2*r)
+}
+function drawScienceIcon(x,t,a,px,py,scale){
+ x.save();x.translate(px,py);x.scale(scale,scale);x.strokeStyle=a;x.fillStyle=a;x.lineWidth=5;
+ if(t==="physics"){for(let r of [45,82,120]){x.beginPath();x.ellipse(0,0,r,r*.38,r*.15,0,Math.PI*2);x.stroke()}x.beginPath();x.arc(0,0,20,0,7);x.fill()}
+ else if(t==="chemistry"){x.beginPath();x.arc(0,0,58,0,7);x.stroke();for(let i=0;i<6;i++){let q=i*Math.PI/3;x.beginPath();x.arc(Math.cos(q)*58,Math.sin(q)*58,12,0,7);x.fill()}}
+ else if(t==="botany"){x.beginPath();x.moveTo(0,70);x.lineTo(0,-55);x.stroke();for(let i=0;i<5;i++){x.beginPath();x.ellipse(-22,35-i*22,25,12,-.6,0,7);x.fill();x.beginPath();x.ellipse(22,20-i*22,25,12,.6,0,7);x.fill()}}
+ else if(t==="zoology"){x.beginPath();x.arc(0,0,65,0,7);x.stroke();x.beginPath();x.arc(-25,-10,7,0,7);x.fill();x.beginPath();x.arc(25,-10,7,0,7);x.fill();x.beginPath();x.arc(0,25,25,.1,3);x.stroke()}
+ else if(t==="anatomy"){x.beginPath();x.arc(0,-45,27,0,7);x.stroke();x.beginPath();x.moveTo(0,-18);x.lineTo(0,80);x.moveTo(-55,10);x.lineTo(55,10);x.moveTo(0,80);x.lineTo(-38,135);x.moveTo(0,80);x.lineTo(38,135);x.stroke()}
+ else if(t==="radiology"){x.beginPath();x.arc(0,0,70,0,7);x.stroke();x.font="900 52px Arial";x.textAlign="center";x.fillText("X",0,18)}
+ else if(t==="mathematics"){x.beginPath();x.arc(0,0,65,0,7);x.stroke();x.font="900 46px Arial";x.textAlign="center";x.fillText("π",0,16)}
+ else {x.beginPath();x.arc(0,0,65,0,7);x.stroke();x.font="900 42px Arial";x.textAlign="center";x.fillText("✓",0,15)}
+ x.restore()
+}
+
+function hexA(hex,alphaHex){return hex+alphaHex}
+
+function buildFormatButtons(){
+ const wrap=document.getElementById("formatBtns");wrap.innerHTML="";
+ Object.keys(FORMATS).forEach(key=>{
+  const f=FORMATS[key];
+  const b=document.createElement("div");
+  b.className="pillbtn"+(key===currentFormat?" active":"");
+  b.textContent=f.label;
+  b.onclick=()=>{currentFormat=key;buildFormatButtons();draw()};
+  wrap.appendChild(b);
+ });
+}
+
+function onField(){syncCounts();draw()}
+function syncCounts(){
+ [["title",34],["subtitle",60],["target",48],["formula",28]].forEach(([id,max])=>{
+  document.getElementById("cnt-"+id).textContent=document.getElementById(id).value.length+"/"+max;
+ });
+}
+function syncRangeLabels(){
+ document.getElementById("rv-overlay").textContent=document.getElementById("bgOverlay").value+"%";
+ document.getElementById("rv-glow").textContent=document.getElementById("glow").value+"%";
+}
+function onBadgeChange(){
+ const v=document.getElementById("badge").value;
+ document.getElementById("customBadgeWrap").style.display=v==="__custom"?"block":"none";
+ draw();
+}
+function onBgFile(e){
+ const file=e.target.files[0];if(!file)return;
+ const reader=new FileReader();
+ reader.onload=ev=>{
+  const img=new Image();
+  img.onload=()=>{bgImage=img;draw()};
+  img.src=ev.target.result;
+ };
+ reader.readAsDataURL(file);
+}
+function clearBg(){bgImage=null;document.getElementById("bgFile").value="";draw()}
+
+function applySubject(){
+ subject=document.getElementById("subject").value;
+ const defaults={
+ physics:["MODERN PHYSICS","Photoelectric • X-ray • de Broglie","CEE • NEET • NEB 11 & 12","λ = h / p"],
+ chemistry:["CHEMICAL BONDING","VSEPR • Hybridization • MOT","CEE • NEET • NEB 11 & 12","Bond order = ½(Nb−Na)"],
+ botany:["PLANT PHYSIOLOGY","Photosynthesis • Respiration • Transport","CEE • NEET • NEB 11 & 12","ATP = Energy"],
+ zoology:["HUMAN PHYSIOLOGY","Nervous • Endocrine • Circulation","CEE • NEET • NEB 11 & 12","Homeostasis"],
+ biology:["HUMAN BIOLOGY","Systems • Hormones • Diseases","CEE • NEET • NEB 11 & 12","Life = Organization"],
+ anatomy:["HUMAN ANATOMY","Gross • Histology • Neuroanatomy","MBBS • CEE • Medical","Anatomy = Structure"],
+ radiology:["RADIOLOGY","X-ray • CT • MRI • Ultrasound","MBBS • Clinical • Revision","Density → Image"],
+ mathematics:["CALCULUS ESSENTIALS","Limits • Derivatives • Integrals","CEE • NEB 11 & 12","d/dx"],
+ general:["CEE REVISION","High-Yield Concepts • MCQs","CEE • NEET • NEB 11 & 12","REVISION"]
+ };
+ let d=defaults[subject]||defaults.general;
+ ["title","subtitle","target","formula"].forEach((id,i)=>document.getElementById(id).value=d[i]);
+ syncCounts();
+ draw()
+}
+
+// core render function — operates on any context/size so it can be reused for on-screen preview AND HD export
+function render(x,W,H){
+ const T=themes[subject]||themes.general;
+ const useCustom=document.getElementById("customColors").checked;
+ const A=useCustom?document.getElementById("colorA").value:T.a;
+ const B=useCustom?document.getElementById("colorB").value:T.b;
+ const style=document.getElementById("style").value;
+ const title=document.getElementById("title").value.trim().toUpperCase()||"CEE MEDICO";
+ const sub=document.getElementById("subtitle").value.trim();
+ const target=document.getElementById("target").value.trim();
+ const formula=document.getElementById("formula").value.trim();
+ const badgeSel=document.getElementById("badge").value;
+ const badge=badgeSel==="__custom"?(document.getElementById("customBadge").value.trim()||"SPECIAL CLASS"):badgeSel;
+ const family=document.getElementById("font").value;
+ const pos=document.getElementById("position").value;
+ const density=document.getElementById("density").value;
+ const glowPct=document.getElementById("glow").value/100;
+ const overlayPct=document.getElementById("bgOverlay").value/100;
+ const strokeOn=document.getElementById("textStroke").checked;
+ const grainOn=document.getElementById("grain").checked;
+ const iconOn=document.getElementById("showIcon").checked;
+
+ const S=H/720; // vertical scale factor relative to original design baseline
+
+ x.clearRect(0,0,W,H);
+
+ // background: image (cover-fit) or gradient
+ if(bgImage){
+  const ir=bgImage.width/bgImage.height, cr=W/H;
+  let dw,dh,dx,dy;
+  if(ir>cr){dh=H;dw=H*ir;dx=(W-dw)/2;dy=0} else {dw=W;dh=W/ir;dx=0;dy=(H-dh)/2}
+  x.drawImage(bgImage,dx,dy,dw,dh);
+  x.fillStyle=`rgba(2,6,12,${overlayPct})`;
+  x.fillRect(0,0,W,H);
+ } else {
+  let bg=x.createLinearGradient(0,0,W,H);bg.addColorStop(0,T.bg1);bg.addColorStop(1,T.bg2);
+  x.fillStyle=bg;x.fillRect(0,0,W,H);
+  if(style!=="minimal"&&glowPct>0){
+   glowCircle(x,W*0.8,H*0.42,H*0.65*glowPct+ H*0.15,A,Math.round(glowPct*0.28*255).toString(16).padStart(2,"0"));
+   glowCircle(x,W*0.14,H*0.81,H*0.46*glowPct+H*0.1,B,Math.round(glowPct*0.22*255).toString(16).padStart(2,"0"));
+  }
+  if(style==="tech"||style==="neon"){
+   x.strokeStyle=A+"18";x.lineWidth=1;
+   for(let q=0;q<W;q+=64*S){x.beginPath();x.moveTo(q,0);x.lineTo(q,H);x.stroke()}
+   for(let q=0;q<H;q+=64*S){x.beginPath();x.moveTo(0,q);x.lineTo(W,q);x.stroke()}
+  }
+  if(style==="organic"){
+   x.fillStyle=A+"12";for(let i=0;i<8;i++){x.beginPath();x.arc(W*0.82+i*30*S,H*0.11+i*55*S,90*S,0,7);x.fill()}
+  }
+ }
+
+ // top brand
+ x.textAlign="left";x.fillStyle="#fff";x.font=`900 ${20*S}px Arial`;x.fillText("CEE MEDICO NEPAL",W*.0406,H*.0667);
+ x.fillStyle=A;x.fillRect(W*.0406,H*.0806,W*.1367,4*S);
+
+ // badge
+ rr(x,W*.0406,H*.1139,W*.1641,H*.0722,26*S,style==="glass"?"#ffffff18":B);
+ x.fillStyle="#fff";x.textAlign="center";x.font=`900 ${20*S}px Arial`;x.fillText("● "+badge,W*.1227,H*.1597);
+
+ // title region
+ let center=pos==="left"?W*.3359:pos==="right"?W*.6641:W*.5;
+ let max=pos==="center"?W*.5625:W*.46875;
+ let size=fontFit(x,title,max,86*S,family);
+ x.font=`900 ${size}px "${family}"`;x.fillStyle="#fff";
+ x.shadowColor="#000c";x.shadowBlur=(style==="neon"?25:12)*S;
+ x.textAlign=pos==="left"?"left":pos==="right"?"right":"center";
+ if(strokeOn){x.lineWidth=Math.max(2,size*0.045);x.strokeStyle="#000";x.strokeText(title,center,H*.3611)}
+ x.fillText(title,center,H*.3611);x.shadowBlur=0;
+
+ // subtitle
+ x.fillStyle=A;x.font=`800 ${fontFit(x,sub,max,38*S,family,"800")}px "${family}"`;
+ x.fillText(sub,center,H*.4472);
+
+ // target pill
+ rr(x,center-max/2,H*.5139,max,H*.0889,18*S,style==="glass"?"#ffffff12":"#020914bb",A+"88");
+ x.fillStyle="#fff";x.font=`800 ${fontFit(x,target,max-50*S,27*S,family,"800")}px "${family}"`;x.textAlign="center";x.fillText(target,center,H*.5708);
+
+ // formula
+ if(density!=="simple"&&formula){
+  rr(x,center-215*S,H*.65,430*S,H*.0972,16*S,style==="glass"?"#ffffff12":"#020914dd","#ffffff20");
+  x.fillStyle="#9fb1c5";x.font=`800 ${13*S}px Arial`;x.fillText("KEY HIGHLIGHT",center,H*.6833);
+  x.fillStyle="#fff";x.font=`900 ${fontFit(x,formula,380*S,28*S,family)}px "${family}"`;x.fillText(formula,center,H*.725);
+ }
+
+ // science visual
+ if(iconOn){drawScienceIcon(x,T.icon,A,W*.8125,H*.7153,S)}
+
+ // subject tag
+ x.textAlign="left";x.fillStyle=A;x.font=`900 ${13*S}px Arial`;
+ x.fillText(T.icon+" • "+document.getElementById("style").selectedOptions[0].text.toUpperCase(),W*.0406,H*.8472);
+
+ // footer
+ x.fillStyle="#02060dcc";x.fillRect(0,H*.9028,W,H*.0972);
+ x.fillStyle="#8fa4ba";x.font=`700 ${17*S}px Arial`;x.textAlign="left";x.fillText("CEE • NEET • NEB • HIGH-YIELD REVISION",W*.0406,H*.9611);
+ x.fillStyle=A;x.font=`900 ${20*S}px Arial`;x.textAlign="right";x.fillText("CEE Medico Nepal",W*.9594,H*.9611);
+
+ // grain overlay
+ if(grainOn){
+  const dotCount=Math.round(W*H/2600);
+  x.fillStyle="rgba(255,255,255,0.05)";
+  for(let i=0;i<dotCount;i++){
+   const gx=Math.random()*W,gy=Math.random()*H;
+   x.fillRect(gx,gy,1*S,1*S);
+  }
+ }
+}
+
+function draw(){
+ subject=document.getElementById("subject").value;
+ const f=FORMATS[currentFormat];
+ if(c.width!==f.w||c.height!==f.h){c.width=f.w;c.height=f.h}
+ const x=c.getContext("2d");
+ render(x,f.w,f.h);
+ document.getElementById("dimStatus").textContent=`${f.w} × ${f.h} HD`;
+ syncRangeLabels();
+}
+
+function download(){
+ const f=FORMATS[currentFormat];
+ const hd=document.getElementById("hdExport").checked;
+ const scale=hd?2:1;
+ const off=document.createElement("canvas");
+ off.width=f.w*scale;off.height=f.h*scale;
+ const octx=off.getContext("2d");
+ render(octx,f.w*scale,f.h*scale);
+ let n=(document.getElementById("title").value||"thumbnail").replace(/[^a-z0-9]+/gi,"_");
+ let a=document.createElement("a");
+ a.download="CEE_Medico_Nepal_"+n+"_"+currentFormat+(hd?"_2x":"")+".png";
+ a.href=off.toDataURL("image/png");
+ a.click();
+}
+
+function randomize(){
+ const styles=["neon","clean","bold","glass","minimal","dark","tech","organic"];
+ const fonts=["Arial","Impact","Trebuchet MS","Georgia","Verdana","Courier New","Times New Roman"];
+ document.getElementById("style").value=styles[Math.floor(Math.random()*styles.length)];
+ document.getElementById("font").value=fonts[Math.floor(Math.random()*fonts.length)];
+ document.getElementById("position").value=["center","left","right"][Math.floor(Math.random()*3)];
+ draw()
+}
+
+function resetAll(){
+ currentFormat="landscape";buildFormatButtons();
+ bgImage=null;document.getElementById("bgFile").value="";
+ document.getElementById("customColors").checked=false;
+ document.getElementById("colorA").value="#38bdf8";document.getElementById("colorB").value="#2563eb";
+ document.getElementById("textStroke").checked=false;
+ document.getElementById("grain").checked=false;
+ document.getElementById("showIcon").checked=true;
+ document.getElementById("glow").value=60;
+ document.getElementById("bgOverlay").value=55;
+ document.getElementById("subject").value="physics";document.getElementById("style").value="neon";document.getElementById("font").value="Arial";
+ document.getElementById("badge").value="LIVE QAD";onBadgeChange();
+ document.getElementById("position").value="center";document.getElementById("density").value="balanced";
+ applySubject()
+}
+
+// ---------- Presets (localStorage) ----------
+const PRESET_KEY="cee_thumb_presets_v1";
+function readPresets(){try{return JSON.parse(localStorage.getItem(PRESET_KEY)||"[]")}catch(e){return[]}}
+function writePresets(p){try{localStorage.setItem(PRESET_KEY,JSON.stringify(p))}catch(e){}}
+function currentSettings(){
+ return {
+  title:document.getElementById("title").value,
+  subtitle:document.getElementById("subtitle").value,
+  target:document.getElementById("target").value,
+  formula:document.getElementById("formula").value,
+  format:currentFormat,
+  subject:document.getElementById("subject").value,
+  style:document.getElementById("style").value,
+  font:document.getElementById("font").value,
+  badge:document.getElementById("badge").value,
+  customBadge:document.getElementById("customBadge").value,
+  position:document.getElementById("position").value,
+  density:document.getElementById("density").value,
+  customColors:document.getElementById("customColors").checked,
+  colorA:document.getElementById("colorA").value,
+  colorB:document.getElementById("colorB").value,
+  textStroke:document.getElementById("textStroke").checked,
+  grain:document.getElementById("grain").checked,
+  showIcon:document.getElementById("showIcon").checked,
+  glow:document.getElementById("glow").value,
+  bgOverlay:document.getElementById("bgOverlay").value
+ };
+}
+function applySettings(s){
+ currentFormat=s.format||"landscape";buildFormatButtons();
+ document.getElementById("title").value=s.title??"";
+ document.getElementById("subtitle").value=s.subtitle??"";
+ document.getElementById("target").value=s.target??"";
+ document.getElementById("formula").value=s.formula??"";
+ document.getElementById("subject").value=s.subject??"physics";
+ document.getElementById("style").value=s.style??"neon";
+ document.getElementById("font").value=s.font??"Arial";
+ document.getElementById("badge").value=s.badge??"LIVE QAD";
+ document.getElementById("customBadge").value=s.customBadge??"SPECIAL CLASS";
+ onBadgeChange();
+ document.getElementById("position").value=s.position??"center";
+ document.getElementById("density").value=s.density??"balanced";
+ document.getElementById("customColors").checked=!!s.customColors;
+ document.getElementById("colorA").value=s.colorA??"#38bdf8";
+ document.getElementById("colorB").value=s.colorB??"#2563eb";
+ document.getElementById("textStroke").checked=!!s.textStroke;
+ document.getElementById("grain").checked=!!s.grain;
+ document.getElementById("showIcon").checked=s.showIcon!==false;
+ document.getElementById("glow").value=s.glow??60;
+ document.getElementById("bgOverlay").value=s.bgOverlay??55;
+ subject=document.getElementById("subject").value;
+ syncCounts();
+ draw();
+}
+function savePreset(){
+ const name=prompt("Name this preset:","My Thumbnail "+(readPresets().length+1));
+ if(!name)return;
+ const presets=readPresets();
+ presets.unshift({id:Date.now(),name,settings:currentSettings()});
+ writePresets(presets.slice(0,20));
+ renderPresets();
+}
+function loadPreset(id){
+ const presets=readPresets();
+ const p=presets.find(p=>p.id===id);
+ if(p)applySettings(p.settings);
+}
+function deletePreset(id){
+ writePresets(readPresets().filter(p=>p.id!==id));
+ renderPresets();
+}
+function renderPresets(){
+ const list=document.getElementById("presetList");
+ const presets=readPresets();
+ if(!presets.length){list.innerHTML='<div class="hint">No saved presets yet.</div>';return}
+ list.innerHTML="";
+ presets.forEach(p=>{
+  const row=document.createElement("div");
+  row.className="preset-item";
+  row.innerHTML=`<span>${p.name}</span>`;
+  const loadBtn=document.createElement("button");
+  loadBtn.className="secondary";loadBtn.textContent="Load";
+  loadBtn.onclick=()=>loadPreset(p.id);
+  const delBtn=document.createElement("button");
+  delBtn.className="danger";delBtn.textContent="✕";
+  delBtn.onclick=()=>{if(confirm("Delete preset \""+p.name+"\"?"))deletePreset(p.id)};
+  row.appendChild(loadBtn);row.appendChild(delBtn);
+  list.appendChild(row);
+ });
+}
+
+// init
+buildFormatButtons();
+syncCounts();
+applySubject();
+renderPresets();
+</script>
+</body>
+</html>
