@@ -1,0 +1,1323 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DOC Nepal — Drug of Choice & Clinical Reference</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Lucide Icons -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <!-- React & ReactDOM -->
+    <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+    <!-- Babel for JSX -->
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    <!-- Firebase v10 Compat SDKs -->
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
+    <style>
+        .custom-scrollbar::-webkit-scrollbar {
+            width: 6px;
+            height: 6px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-track {
+            background: #f1f5f9;
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb {
+            background: #cbd5e1;
+            border-radius: 4px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+            background: #94a3b8;
+        }
+    </style>
+</head>
+<body class="bg-slate-50 text-slate-800 font-sans antialiased selection:bg-sky-500 selection:text-white">
+    <div id="root"></div>
+
+    <script type="text/babel">
+        const { useState, useEffect, useMemo, useRef } = React;
+
+        // Sample initial fallback dataset for instant user demonstration if DB is empty
+        const INITIAL_DEMO_DRUGS = [
+            {
+                id: 'paracetamol',
+                genericName: 'Paracetamol (Acetaminophen)',
+                drugClass: 'Analgesic & Antipyretic',
+                brandNames: ['Metacin', 'Cetamol', 'Crocin', 'Napa'],
+                indications: 'Management of mild-to-moderate pain and fever reduction in adult and pediatric populations.',
+                mechanismOfAction: 'Inhibits prostaglandin synthesis in the central nervous system and peripherally blocks pain impulse generation.',
+                adultDose: '500 mg - 1000 mg PO every 4-6 hours as needed (Max: 4000 mg/day).',
+                pediatricDose: '10-15 mg/kg PO every 4-6 hours as needed (Max: 75 mg/kg/day).',
+                adverseDrugReactions: 'Nausea, allergic skin rash, elevated liver enzymes. Severe hepatotoxicity in acute overdose (>10g).',
+                contraindications: 'Severe hepatic impairment, active severe liver disease, hypersensitivity to paracetamol.',
+                precautions: 'Chronic alcoholism, renal impairment, malnourishment. Check concurrent medications for acetaminophen content.',
+                priceNPR: 'NPR 1.50 - 2.50 per 500mg tablet',
+                published: true
+            },
+            {
+                id: 'amoxicillin',
+                genericName: 'Amoxicillin',
+                drugClass: 'Aminopenicillin Antibiotic',
+                brandNames: ['Mox', 'Novamox', 'Amoxil'],
+                indications: 'Bacterial infection of upper respiratory tract, otitis media, UTI, Helicobacter pylori eradication.',
+                mechanismOfAction: 'Inhibits bacterial cell wall synthesis by binding to penicillin-binding proteins (PBPs).',
+                adultDose: '250 mg to 500 mg PO every 8 hours, or 875 mg PO every 12 hours.',
+                pediatricDose: '20-40 mg/kg/day in divided doses every 8 hours.',
+                adverseDrugReactions: 'Diarrhea, skin rash, maculopapular exanthem, candidiasis, nausea.',
+                contraindications: 'History of severe allergic reaction/anaphylaxis to penicillins or cephalosporins.',
+                precautions: 'Mononucleosis (high risk of skin rash), renal function impairment (adjust dose).',
+                priceNPR: 'NPR 5.00 - 8.50 per 500mg capsule',
+                published: true
+            },
+            {
+                id: 'metformin',
+                genericName: 'Metformin HCl',
+                drugClass: 'Biguanide Antidiabetic',
+                brandNames: ['Glycomet', 'Obimet', 'Glucophage'],
+                indications: 'First-line therapy for Type 2 Diabetes Mellitus, polycystic ovary syndrome (PCOS).',
+                mechanismOfAction: 'Decreases hepatic glucose production, decreases intestinal absorption of glucose, improves insulin sensitivity.',
+                adultDose: '500 mg PO twice daily with meals, titrate up to max 2550 mg/day.',
+                pediatricDose: '500 mg PO daily for children >10 years.',
+                adverseDrugReactions: 'Gastrointestinal distress (diarrhea, abdominal cramps, nausea), metallic taste, Vitamin B12 deficiency.',
+                contraindications: 'eGFR < 30 mL/min/1.73m², acute metabolic acidosis, severe renal/hepatic failure.',
+                precautions: 'Withhold prior to intravascular iodinated contrast procedures. Monitor renal function annually.',
+                priceNPR: 'NPR 3.00 - 6.00 per 500mg tablet',
+                published: true
+            }
+        ];
+
+        // ==========================================
+        // 1. FIREBASE INITIALIZATION & CONFIGURATION
+        // ==========================================
+        const firebaseConfig = {
+          apiKey: "AIzaSyANTEvessOCqYqfzYVX9V11CAN-xjF7ubQ",
+          authDomain: "doc-drug-of-choice.firebaseapp.com",
+          projectId: "doc-drug-of-choice",
+          storageBucket: "doc-drug-of-choice.firebasestorage.app",
+          messagingSenderId: "177639649857",
+          appId: "1:177639649857:web:98d71685c6b31b93084cc0",
+          measurementId: "G-XML2TZYJG7"
+        };
+
+        let app, auth, db;
+        try {
+          if (!firebase.apps.length) {
+            app = firebase.initializeApp(firebaseConfig);
+          } else {
+            app = firebase.app();
+          }
+          auth = firebase.auth();
+          db = firebase.firestore();
+        } catch (e) {
+          console.error("Firebase initialization error:", e);
+        }
+
+        // Helper for Lucide Icons
+        function Icon({ name, className = "w-4 h-4 inline-block" }) {
+          useEffect(() => {
+            if (window.lucide) {
+              window.lucide.createIcons();
+            }
+          }, [name]);
+          return <i data-lucide={name} className={className}></i>;
+        }
+
+        // ==========================================
+        // 2. MAIN APP COMPONENT
+        // ==========================================
+        function App() {
+          const [currentView, setCurrentView] = useState('home');
+          const [selectedEntityId, setSelectedEntityId] = useState(null);
+          const [comparedDrugs, setComparedDrugs] = useState([]);
+          
+          // Data states
+          const [drugs, setDrugs] = useState([]);
+          const [conditions, setConditions] = useState([]);
+          const [prices, setPrices] = useState([]);
+          const [references, setReferences] = useState([]);
+          const [isLoading, setIsLoading] = useState(true);
+          
+          // User Preferences & Settings
+          const [fontSize, setFontSize] = useState(() => localStorage.getItem('doc_font_size') || 'normal'); // small, normal, large
+          const [compactMode, setCompactMode] = useState(() => localStorage.getItem('doc_compact_mode') === 'true');
+          const [favorites, setFavorites] = useState(() => {
+            try { return JSON.parse(localStorage.getItem('doc_favorites') || '[]'); } catch(e){ return []; }
+          });
+
+          const [user, setUser] = useState(null);
+          const [authLoading, setAuthLoading] = useState(true);
+          const [syncStatus, setSyncStatus] = useState('Connecting...');
+
+          const [searchQuery, setSearchQuery] = useState('');
+          const [searchFilter, setSearchFilter] = useState('all');
+          const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+
+          // Save Preferences
+          useEffect(() => {
+            localStorage.setItem('doc_font_size', fontSize);
+            localStorage.setItem('doc_compact_mode', compactMode);
+            localStorage.setItem('doc_favorites', JSON.stringify(favorites));
+          }, [fontSize, compactMode, favorites]);
+
+          // Auth Listener
+          useEffect(() => {
+            if (!auth) {
+              setAuthLoading(false);
+              return;
+            }
+            const unsubscribe = auth.onAuthStateChanged((currentUser) => {
+              setUser(currentUser);
+              setAuthLoading(false);
+            });
+            return () => unsubscribe();
+          }, []);
+
+          // Fetch Live Data from Firestore
+          const fetchFirestoreData = async () => {
+            setIsLoading(true);
+            if (!db) {
+              setDrugs(INITIAL_DEMO_DRUGS);
+              setSyncStatus('Local Demo Mode');
+              setIsLoading(false);
+              return;
+            }
+            try {
+              const drugSnap = await db.collection('drugs').get();
+              const loadedDrugs = drugSnap.docs.map(d => ({ id: d.id, ...d.data() }));
+              
+              const condSnap = await db.collection('conditions').get();
+              const loadedConds = condSnap.docs.map(d => ({ id: d.id, ...d.data() }));
+
+              const priceSnap = await db.collection('prices').get();
+              const loadedPrices = priceSnap.docs.map(d => ({ id: d.id, ...d.data() }));
+
+              const refSnap = await db.collection('references').get();
+              const loadedRefs = refSnap.docs.map(d => ({ id: d.id, ...d.data() }));
+
+              // Fall back to demo dataset if Firestore has 0 drugs
+              setDrugs(loadedDrugs.length > 0 ? loadedDrugs : INITIAL_DEMO_DRUGS);
+              setConditions(loadedConds);
+              setPrices(loadedPrices);
+              setReferences(loadedRefs);
+
+              setSyncStatus(loadedDrugs.length > 0 ? 'Live Firestore Connected' : 'Demo Fallback Active');
+            } catch (err) {
+              console.error("Firestore read error:", err);
+              setDrugs(INITIAL_DEMO_DRUGS);
+              setSyncStatus('Offline / Local Demo');
+            } finally {
+              setIsLoading(false);
+            }
+          };
+
+          useEffect(() => {
+            fetchFirestoreData();
+          }, []);
+
+          const toggleFavorite = (id) => {
+            setFavorites(prev => 
+              prev.includes(id) ? prev.filter(item => item !== id) : [...prev, id]
+            );
+          };
+
+          const navigateTo = (view, entityId = null) => {
+            setCurrentView(view);
+            if (entityId) setSelectedEntityId(entityId);
+            setMobileMenuOpen(false);
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+          };
+
+          // Font size dynamic class helper
+          const fontSizeClass = {
+            small: 'text-xs',
+            normal: 'text-sm',
+            large: 'text-base'
+          }[fontSize];
+
+          return (
+            <div className={`min-h-screen bg-slate-50 text-slate-800 flex flex-col font-sans ${fontSizeClass}`}>
+              {/* Top Announcement & Quick Controls Bar */}
+              <div className="bg-sky-950 text-sky-100 text-xs py-1.5 px-4 flex flex-wrap justify-between items-center gap-2 border-b border-sky-900">
+                <div className="flex items-center gap-2">
+                  <span className="bg-sky-600 text-white font-bold text-[10px] px-2 py-0.5 rounded uppercase">Clinical</span>
+                  <span className="hidden sm:inline">Nepal Standard Drug & Guidelines Reference Portal</span>
+                </div>
+                
+                <div className="flex items-center gap-4 ml-auto text-[11px]">
+                  {/* Preferences Controls */}
+                  <div className="flex items-center gap-1.5 bg-sky-900/60 px-2.5 py-1 rounded-md border border-sky-800">
+                    <span className="text-sky-300 font-medium">Font:</span>
+                    <button onClick={() => setFontSize('small')} className={`px-1 rounded ${fontSize === 'small' ? 'bg-sky-600 font-bold text-white' : 'hover:text-white'}`}>S</button>
+                    <button onClick={() => setFontSize('normal')} className={`px-1 rounded ${fontSize === 'normal' ? 'bg-sky-600 font-bold text-white' : 'hover:text-white'}`}>M</button>
+                    <button onClick={() => setFontSize('large')} className={`px-1 rounded ${fontSize === 'large' ? 'bg-sky-600 font-bold text-white' : 'hover:text-white'}`}>L</button>
+                  </div>
+
+                  <button 
+                    onClick={() => setCompactMode(!compactMode)}
+                    className={`px-2 py-1 rounded border transition ${compactMode ? 'bg-sky-700 border-sky-500 text-white font-medium' : 'border-sky-800 hover:bg-sky-900 text-sky-200'}`}
+                  >
+                    {compactMode ? 'Compact On' : 'Compact Off'}
+                  </button>
+
+                  <div className="hidden md:block bg-sky-900 text-sky-200 px-2.5 py-1 rounded font-mono text-[10px]">
+                    {syncStatus}
+                  </div>
+                </div>
+              </div>
+
+              {/* Responsive Header */}
+              <header className="bg-white border-b border-slate-200 sticky top-0 z-50 shadow-sm">
+                <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between gap-4">
+                  <div className="flex items-center gap-3 cursor-pointer shrink-0" onClick={() => navigateTo('home')}>
+                    <div className="w-10 h-10 rounded-xl bg-gradient-to-tr from-sky-800 to-sky-600 text-white flex items-center justify-center font-black text-xl shadow-md tracking-wider">
+                      DN
+                    </div>
+                    <div>
+                      <h1 className="font-extrabold text-slate-900 text-base leading-tight tracking-tight">DOC Nepal</h1>
+                      <p className="text-[11px] text-sky-700 font-medium hidden sm:block">Drug of Choice • Nepal Clinical Database</p>
+                    </div>
+                  </div>
+
+                  {/* Quick Search Header Bar */}
+                  {currentView !== 'home' && (
+                    <div className="hidden lg:flex flex-1 max-w-md mx-4">
+                      <div className="relative w-full">
+                        <input 
+                          type="text" 
+                          placeholder="Global search (Name, Class, ADR, C/I, Uses...)"
+                          value={searchQuery}
+                          onChange={(e) => setSearchQuery(e.target.value)}
+                          onKeyDown={(e) => e.key === 'Enter' && navigateTo('search')}
+                          className="w-full bg-slate-100 border border-slate-300 rounded-lg pl-9 pr-4 py-1.5 text-xs focus:outline-none focus:bg-white focus:border-sky-600 transition"
+                        />
+                        <span className="absolute left-3 top-2 text-slate-400">
+                          <Icon name="search" className="w-3.5 h-3.5" />
+                        </span>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Desktop Nav */}
+                  <nav className="hidden md:flex items-center gap-5 text-xs font-semibold text-slate-600">
+                    <button onClick={() => navigateTo('home')} className={`hover:text-sky-700 transition ${currentView === 'home' ? 'text-sky-700 font-bold border-b-2 border-sky-700 py-5' : ''}`}>Home</button>
+                    <button onClick={() => navigateTo('search')} className={`hover:text-sky-700 transition ${currentView === 'search' ? 'text-sky-700 font-bold border-b-2 border-sky-700 py-5' : ''}`}>Browse All</button>
+                    <button onClick={() => navigateTo('prices')} className={`hover:text-sky-700 transition ${currentView === 'prices' ? 'text-sky-700 font-bold border-b-2 border-sky-700 py-5' : ''}`}>Prices</button>
+                    <button onClick={() => navigateTo('compare')} className={`hover:text-sky-700 transition relative ${currentView === 'compare' ? 'text-sky-700 font-bold border-b-2 border-sky-700 py-5' : ''}`}>
+                      Compare
+                      {comparedDrugs.length > 0 && (
+                        <span className="ml-1 bg-sky-700 text-white text-[10px] px-1.5 py-0.2 rounded-full">{comparedDrugs.length}</span>
+                      )}
+                    </button>
+                    <button onClick={() => navigateTo('favorites')} className={`hover:text-sky-700 transition relative ${currentView === 'favorites' ? 'text-sky-700 font-bold border-b-2 border-sky-700 py-5' : ''}`}>
+                      Saved
+                      {favorites.length > 0 && (
+                        <span className="ml-1 bg-amber-500 text-white text-[10px] px-1.5 py-0.2 rounded-full">{favorites.length}</span>
+                      )}
+                    </button>
+                  </nav>
+
+                  {/* Admin & Auth Actions */}
+                  <div className="flex items-center gap-2">
+                    {user ? (
+                      <div className="flex items-center gap-2">
+                        <button 
+                          onClick={() => navigateTo('admin')}
+                          className="bg-sky-700 hover:bg-sky-800 text-white text-xs px-3.5 py-2 rounded-lg font-semibold shadow-sm transition flex items-center gap-1.5"
+                        >
+                          <Icon name="shield-check" className="w-4 h-4" />
+                          <span>Admin Portal</span>
+                        </button>
+                        <button 
+                          onClick={() => auth.signOut()}
+                          className="text-slate-500 hover:text-red-600 text-xs font-semibold px-2 py-1"
+                        >
+                          Logout
+                        </button>
+                      </div>
+                    ) : (
+                      <button 
+                        onClick={() => navigateTo('login')}
+                        className="border border-slate-300 hover:border-sky-600 text-slate-700 hover:text-sky-700 text-xs px-3.5 py-2 rounded-lg font-semibold transition"
+                      >
+                        Admin Login
+                      </button>
+                    )}
+
+                    {/* Mobile Menu Toggle Button */}
+                    <button 
+                      onClick={() => setMobileMenuOpen(!mobileMenuOpen)} 
+                      className="md:hidden p-2 rounded-lg border border-slate-200 text-slate-600 hover:bg-slate-100"
+                    >
+                      <Icon name={mobileMenuOpen ? "x" : "menu"} className="w-5 h-5" />
+                    </button>
+                  </div>
+                </div>
+
+                {/* Mobile Dropdown Menu */}
+                {mobileMenuOpen && (
+                  <div className="md:hidden border-t border-slate-200 bg-white px-4 pt-3 pb-4 space-y-2 text-sm font-medium shadow-lg">
+                    <button onClick={() => navigateTo('home')} className="block w-full text-left py-2 px-3 rounded-lg hover:bg-slate-100">Home</button>
+                    <button onClick={() => navigateTo('search')} className="block w-full text-left py-2 px-3 rounded-lg hover:bg-slate-100">Browse & Search Database</button>
+                    <button onClick={() => navigateTo('prices')} className="block w-full text-left py-2 px-3 rounded-lg hover:bg-slate-100">Nepal Price Index</button>
+                    <button onClick={() => navigateTo('compare')} className="block w-full text-left py-2 px-3 rounded-lg hover:bg-slate-100">Drug Comparison ({comparedDrugs.length})</button>
+                    <button onClick={() => navigateTo('favorites')} className="block w-full text-left py-2 px-3 rounded-lg hover:bg-slate-100">Saved Bookmarks ({favorites.length})</button>
+                  </div>
+                )}
+              </header>
+
+              {/* Main App Body */}
+              <main className="flex-grow">
+                {isLoading && currentView !== 'login' && (
+                  <div className="max-w-7xl mx-auto px-4 py-12 text-center text-slate-500">
+                    <div className="inline-block animate-spin rounded-full h-8 w-8 border-4 border-sky-700 border-t-transparent mb-3"></div>
+                    <p className="text-xs font-semibold text-slate-600">Synchronizing database entries...</p>
+                  </div>
+                )}
+
+                {!isLoading && currentView === 'home' && (
+                  <HomeView 
+                    drugs={drugs} 
+                    conditions={conditions} 
+                    prices={prices} 
+                    navigateTo={navigateTo} 
+                    searchQuery={searchQuery}
+                    setSearchQuery={setSearchQuery}
+                    compactMode={compactMode}
+                    favorites={favorites}
+                    toggleFavorite={toggleFavorite}
+                  />
+                )}
+                {currentView === 'search' && (
+                  <SearchResultsView 
+                    drugs={drugs} 
+                    conditions={conditions} 
+                    prices={prices} 
+                    initialQuery={searchQuery}
+                    searchFilter={searchFilter}
+                    setSearchFilter={setSearchFilter}
+                    navigateTo={navigateTo}
+                    compactMode={compactMode}
+                    favorites={favorites}
+                    toggleFavorite={toggleFavorite}
+                  />
+                )}
+                {currentView === 'drug-detail' && (
+                  <DrugDetailView 
+                    drugId={selectedEntityId} 
+                    drugs={drugs} 
+                    prices={prices} 
+                    navigateTo={navigateTo}
+                    comparedDrugs={comparedDrugs}
+                    setComparedDrugs={setComparedDrugs}
+                    favorites={favorites}
+                    toggleFavorite={toggleFavorite}
+                  />
+                )}
+                {currentView === 'condition-detail' && (
+                  <ConditionDetailView 
+                    conditionId={selectedEntityId} 
+                    conditions={conditions} 
+                    drugs={drugs} 
+                    navigateTo={navigateTo}
+                  />
+                )}
+                {currentView === 'prices' && (
+                  <PricesView prices={prices} drugs={drugs} navigateTo={navigateTo} />
+                )}
+                {currentView === 'compare' && (
+                  <CompareView comparedDrugs={comparedDrugs} setComparedDrugs={setComparedDrugs} navigateTo={navigateTo} />
+                )}
+                {currentView === 'favorites' && (
+                  <FavoritesView drugs={drugs} favorites={favorites} toggleFavorite={toggleFavorite} navigateTo={navigateTo} />
+                )}
+                {currentView === 'login' && (
+                  <LoginView navigateTo={navigateTo} />
+                )}
+                {currentView === 'admin' && user && (
+                  <AdminDashboard 
+                    drugs={drugs} 
+                    conditions={conditions} 
+                    prices={prices}
+                    references={references}
+                    refreshData={fetchFirestoreData}
+                  />
+                )}
+                {currentView === 'admin' && !user && (
+                  <div className="max-w-md mx-auto mt-20 p-8 bg-white rounded-xl shadow-md border border-slate-200 text-center">
+                    <h2 className="text-xl font-bold text-slate-900 mb-2">Restricted Portal</h2>
+                    <p className="text-xs text-slate-600 mb-6">Log in with administrator credentials to edit database items or batch import JSON records.</p>
+                    <button onClick={() => navigateTo('login')} className="w-full bg-sky-700 text-white font-semibold py-2.5 rounded-lg shadow hover:bg-sky-800 transition">
+                      Proceed to Admin Login
+                    </button>
+                  </div>
+                )}
+              </main>
+
+              {/* Footer */}
+              <footer className="bg-slate-900 text-slate-400 text-xs py-10 mt-16 border-t border-slate-800">
+                <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col md:flex-row justify-between items-center gap-6">
+                  <div className="text-center md:text-left">
+                    <p className="font-bold text-white text-sm mb-1">DOC Nepal — Clinical Pharmacology Reference</p>
+                    <p className="text-slate-400 max-w-xl">Comprehensive clinical decision support system for medical officers, pharmacists, and healthcare practitioners in Nepal.</p>
+                  </div>
+                  <div className="flex items-center gap-4 text-xs">
+                    <button onClick={() => navigateTo('home')} className="hover:text-white">Home</button>
+                    <button onClick={() => navigateTo('prices')} className="hover:text-white">Price List</button>
+                    <button onClick={() => navigateTo('search')} className="hover:text-white">Database</button>
+                  </div>
+                </div>
+              </footer>
+            </div>
+          );
+        }
+
+        // ==========================================
+        // 3. HOME VIEW
+        // ==========================================
+        function HomeView({ drugs, conditions, prices, navigateTo, searchQuery, setSearchQuery, compactMode, favorites, toggleFavorite }) {
+          const publishedDrugs = useMemo(() => drugs.filter(d => d.published !== false), [drugs]);
+          const publishedConditions = useMemo(() => conditions.filter(c => c.published !== false), [conditions]);
+
+          return (
+            <div>
+              {/* Hero Banner */}
+              <div className="bg-gradient-to-b from-sky-950 via-sky-900 to-slate-900 text-white py-14 sm:py-20 px-4 shadow-inner">
+                <div className="max-w-4xl mx-auto text-center">
+                  <span className="bg-sky-700/50 text-sky-200 text-xs font-semibold px-3 py-1 rounded-full uppercase tracking-wider mb-4 inline-block border border-sky-500/30">
+                    Nepal Clinical Search & Pharmacology Standard
+                  </span>
+                  <h1 className="text-3xl sm:text-5xl font-black tracking-tight mb-4 leading-tight">
+                    Instant Drug Information & Clinical Guidelines
+                  </h1>
+                  <p className="text-sky-100 text-xs sm:text-base mb-8 max-w-2xl mx-auto font-normal leading-relaxed">
+                    Search by generic name, brand, indication, adverse reactions (ADR), or contraindications.
+                  </p>
+                  
+                  {/* Global Search Input Box */}
+                  <form 
+                    onSubmit={(e) => { e.preventDefault(); navigateTo('search'); }} 
+                    className="max-w-2xl mx-auto flex flex-col sm:flex-row bg-white rounded-xl shadow-2xl p-2 border-2 border-sky-400/50 gap-2"
+                  >
+                    <div className="relative flex-1">
+                      <input 
+                        type="text"
+                        value={searchQuery}
+                        onChange={(e) => setSearchQuery(e.target.value)}
+                        placeholder="Search generic, brand, ADR, C/I, dose, or indication..."
+                        className="w-full pl-4 pr-4 py-3 text-slate-800 placeholder-slate-400 text-sm focus:outline-none bg-transparent"
+                      />
+                    </div>
+                    <button type="submit" className="bg-sky-700 hover:bg-sky-800 text-white font-bold px-6 py-3 rounded-lg transition shrink-0 flex items-center justify-center gap-2">
+                      <Icon name="search" className="w-4 h-4" />
+                      <span>Search All</span>
+                    </button>
+                  </form>
+                </div>
+              </div>
+
+              {/* Main Content Grid */}
+              <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                  {/* Drug Monographs Summary List */}
+                  <div className="bg-white rounded-xl shadow-sm border border-slate-200 p-6">
+                    <div className="flex items-center justify-between mb-5">
+                      <div>
+                        <h2 className="text-lg font-bold text-slate-900">Drug Monographs ({publishedDrugs.length})</h2>
+                        <p className="text-xs text-slate-500">Comprehensive dosing, ADR, & contraindications</p>
+                      </div>
+                      <button onClick={() => navigateTo('search')} className="text-xs text-sky-700 font-bold hover:underline">View All &rarr;</button>
+                    </div>
+
+                    {publishedDrugs.length === 0 ? (
+                      <div className="p-8 text-center text-slate-500 text-xs bg-slate-50 rounded-lg border border-dashed border-slate-300">
+                        No published drug records available.
+                      </div>
+                    ) : (
+                      <div className="space-y-3">
+                        {publishedDrugs.slice(0, 6).map((drug) => (
+                          <div 
+                            key={drug.id} 
+                            onClick={() => navigateTo('drug-detail', drug.id)} 
+                            className={`p-4 rounded-xl border border-slate-200 hover:border-sky-500 hover:shadow-md transition cursor-pointer bg-slate-50/50 group ${compactMode ? 'py-2.5' : ''}`}
+                          >
+                            <div className="flex justify-between items-start gap-2">
+                              <div>
+                                <h3 className="font-bold text-slate-900 group-hover:text-sky-700 transition">{drug.genericName}</h3>
+                                <span className="inline-block bg-sky-100 text-sky-800 text-[10px] font-semibold px-2 py-0.5 rounded-md mt-1">{drug.drugClass}</span>
+                              </div>
+                              <button 
+                                onClick={(e) => { e.stopPropagation(); toggleFavorite(drug.id); }} 
+                                className={`text-slate-400 hover:text-amber-500 p-1 ${favorites.includes(drug.id) ? 'text-amber-500 fill-amber-500' : ''}`}
+                              >
+                                <Icon name="star" className="w-4 h-4" />
+                              </button>
+                            </div>
+
+                            {!compactMode && (
+                              <div className="mt-3 text-xs text-slate-600 space-y-1">
+                                <p className="line-clamp-1"><strong>Uses:</strong> {drug.indications}</p>
+                                {drug.priceNPR && <p className="text-emerald-700 font-semibold text-[11px]">Est. Price: {drug.priceNPR}</p>}
+                              </div>
+                            )}
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Conditions & Standard Guidelines */}
+                  <div className="bg-white rounded-xl shadow-sm border border-slate-200 p-6">
+                    <div className="flex items-center justify-between mb-5">
+                      <div>
+                        <h2 className="text-lg font-bold text-slate-900">Treatment Guidelines ({publishedConditions.length})</h2>
+                        <p className="text-xs text-slate-500">First-line & alternative drug of choice protocols</p>
+                      </div>
+                      <button onClick={() => navigateTo('search')} className="text-xs text-sky-700 font-bold hover:underline">View All &rarr;</button>
+                    </div>
+
+                    {publishedConditions.length === 0 ? (
+                      <div className="p-8 text-center text-slate-500 text-xs bg-slate-50 rounded-lg border border-dashed border-slate-300">
+                        No published condition guidelines found.
+                      </div>
+                    ) : (
+                      <div className="space-y-3">
+                        {publishedConditions.slice(0, 6).map((cond) => (
+                          <div 
+                            key={cond.id} 
+                            onClick={() => navigateTo('condition-detail', cond.id)} 
+                            className={`p-4 rounded-xl border border-slate-200 hover:border-sky-500 hover:shadow-md transition cursor-pointer bg-slate-50/50 group ${compactMode ? 'py-2.5' : ''}`}
+                          >
+                            <h3 className="font-bold text-slate-900 group-hover:text-sky-700 transition">{cond.name}</h3>
+                            {!compactMode && <p className="text-xs text-slate-600 line-clamp-2 mt-1">{cond.overview}</p>}
+                            <div className="mt-2 flex items-center gap-1.5 text-[11px] text-emerald-800 font-semibold bg-emerald-50 px-2.5 py-1 rounded border border-emerald-200">
+                              <span>DOC (1st Line):</span>
+                              <span className="truncate">{cond.firstLineTreatment}</span>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                </div>
+              </div>
+            </div>
+          );
+        }
+
+        // ==========================================
+        // 4. SEARCH & FILTERING VIEW (SEARCH EVERYTHING)
+        // ==========================================
+        function SearchResultsView({ drugs, conditions, prices, initialQuery, searchFilter, setSearchFilter, navigateTo, compactMode, favorites, toggleFavorite }) {
+          const [query, setQuery] = useState(initialQuery || '');
+
+          // Multi-field Deep Search Implementation
+          const filteredDrugs = useMemo(() => {
+            const q = query.toLowerCase().trim();
+            if (!q) return drugs;
+            return drugs.filter(d => 
+              d.genericName?.toLowerCase().includes(q) || 
+              d.drugClass?.toLowerCase().includes(q) ||
+              d.indications?.toLowerCase().includes(q) ||
+              d.adverseDrugReactions?.toLowerCase().includes(q) ||
+              d.contraindications?.toLowerCase().includes(q) ||
+              d.precautions?.toLowerCase().includes(q) ||
+              (Array.isArray(d.brandNames) ? d.brandNames.some(b => b.toLowerCase().includes(q)) : d.brandNames?.toLowerCase().includes(q))
+            );
+          }, [drugs, query]);
+
+          const filteredConditions = useMemo(() => {
+            const q = query.toLowerCase().trim();
+            if (!q) return conditions;
+            return conditions.filter(c => 
+              c.name?.toLowerCase().includes(q) ||
+              c.overview?.toLowerCase().includes(q) ||
+              c.firstLineTreatment?.toLowerCase().includes(q) ||
+              c.alternativeTreatments?.toLowerCase().includes(q)
+            );
+          }, [conditions, query]);
+
+          const filteredPrices = useMemo(() => {
+            const q = query.toLowerCase().trim();
+            if (!q) return prices;
+            return prices.filter(p => 
+              p.brandName?.toLowerCase().includes(q) || 
+              p.genericName?.toLowerCase().includes(q) ||
+              p.manufacturer?.toLowerCase().includes(q)
+            );
+          }, [prices, query]);
+
+          return (
+            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+              {/* Top Search Controls */}
+              <div className="bg-white p-5 rounded-xl border border-slate-200 shadow-sm mb-8 space-y-4">
+                <div className="flex flex-col sm:flex-row gap-4 items-center justify-between">
+                  <div className="relative w-full sm:w-96">
+                    <input 
+                      type="text"
+                      value={query}
+                      onChange={(e) => setQuery(e.target.value)}
+                      placeholder="Search drugs, ADR, C/I, brands, conditions..."
+                      className="w-full pl-9 pr-4 py-2.5 bg-slate-50 border border-slate-300 rounded-lg text-xs sm:text-sm focus:outline-none focus:bg-white focus:border-sky-600 shadow-inner"
+                    />
+                    <span className="absolute left-3 top-3 text-slate-400">
+                      <Icon name="search" className="w-4 h-4" />
+                    </span>
+                  </div>
+
+                  {/* Filter Categories */}
+                  <div className="flex items-center gap-1.5 overflow-x-auto w-full sm:w-auto pb-1 sm:pb-0">
+                    {['all', 'drugs', 'conditions', 'prices'].map(f => (
+                      <button 
+                        key={f} 
+                        onClick={() => setSearchFilter(f)} 
+                        className={`px-3.5 py-1.5 rounded-lg text-xs font-semibold capitalize whitespace-nowrap transition ${searchFilter === f ? 'bg-sky-700 text-white shadow-sm' : 'bg-slate-100 hover:bg-slate-200 text-slate-700'}`}
+                      >
+                        {f}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                {query && (
+                  <p className="text-xs text-slate-500">
+                    Found <strong>{filteredDrugs.length}</strong> drugs, <strong>{filteredConditions.length}</strong> conditions, <strong>{filteredPrices.length}</strong> prices.
+                  </p>
+                )}
+              </div>
+
+              <div className="space-y-10">
+                {/* Drug Results */}
+                {(searchFilter === 'all' || searchFilter === 'drugs') && (
+                  <div>
+                    <h2 className="text-lg font-bold text-slate-900 mb-4 flex items-center gap-2">
+                      <span>Drugs Monograph ({filteredDrugs.length})</span>
+                    </h2>
+                    {filteredDrugs.length === 0 ? (
+                      <p className="text-xs text-slate-500 italic bg-white p-4 rounded-lg border">No matching drug monographs found.</p>
+                    ) : (
+                      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                        {filteredDrugs.map(drug => (
+                          <div 
+                            key={drug.id} 
+                            onClick={() => navigateTo('drug-detail', drug.id)} 
+                            className="bg-white p-5 rounded-xl border border-slate-200 hover:border-sky-500 shadow-sm hover:shadow transition cursor-pointer flex flex-col justify-between"
+                          >
+                            <div>
+                              <div className="flex justify-between items-start mb-2">
+                                <h3 className="font-bold text-slate-900 text-base">{drug.genericName}</h3>
+                                <button 
+                                  onClick={(e) => { e.stopPropagation(); toggleFavorite(drug.id); }}
+                                  className={`p-1 text-slate-300 hover:text-amber-500 ${favorites.includes(drug.id) ? 'text-amber-500' : ''}`}
+                                >
+                                  <Icon name="star" className="w-4 h-4" />
+                                </button>
+                              </div>
+                              <span className="bg-sky-50 text-sky-700 text-[10px] font-bold px-2 py-0.5 rounded border border-sky-200 mb-3 inline-block">
+                                {drug.drugClass}
+                              </span>
+
+                              <div className="text-xs space-y-1.5 text-slate-600">
+                                <p><strong className="text-slate-700">Uses:</strong> {drug.indications}</p>
+                                {drug.adverseDrugReactions && (
+                                  <p className="line-clamp-2"><strong className="text-slate-700">ADR:</strong> {drug.adverseDrugReactions}</p>
+                                )}
+                                {drug.contraindications && (
+                                  <p className="line-clamp-2"><strong className="text-slate-700">C/I:</strong> {drug.contraindications}</p>
+                                )}
+                              </div>
+                            </div>
+
+                            {drug.priceNPR && (
+                              <div className="mt-4 pt-3 border-t border-slate-100 text-xs font-semibold text-emerald-700">
+                                Price: {drug.priceNPR}
+                              </div>
+                            )}
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                )}
+
+                {/* Condition Results */}
+                {(searchFilter === 'all' || searchFilter === 'conditions') && (
+                  <div>
+                    <h2 className="text-lg font-bold text-slate-900 mb-4">Treatment Protocols ({filteredConditions.length})</h2>
+                    {filteredConditions.length === 0 ? (
+                      <p className="text-xs text-slate-500 italic bg-white p-4 rounded-lg border">No matching condition guidelines found.</p>
+                    ) : (
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        {filteredConditions.map(cond => (
+                          <div key={cond.id} onClick={() => navigateTo('condition-detail', cond.id)} className="bg-white p-5 rounded-xl border border-slate-200 hover:border-sky-500 shadow-sm cursor-pointer">
+                            <h3 className="font-bold text-slate-900 text-base mb-1">{cond.name}</h3>
+                            <p className="text-xs text-slate-600 line-clamp-2 mb-3">{cond.overview}</p>
+                            <div className="text-xs bg-emerald-50 text-emerald-800 p-2 rounded border border-emerald-200 font-medium">
+                              <strong>First Line:</strong> {cond.firstLineTreatment}
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                )}
+              </div>
+            </div>
+          );
+        }
+
+        // ==========================================
+        // 5. DRUG DETAIL MONOGRAPH VIEW
+        // ==========================================
+        function DrugDetailView({ drugId, drugs, prices, navigateTo, comparedDrugs, setComparedDrugs, favorites, toggleFavorite }) {
+          const drug = drugs.find(d => d.id === drugId);
+          if (!drug) return <div className="p-12 text-center text-slate-500 text-sm">Drug record not found in database.</div>;
+
+          const isCompared = comparedDrugs.some(d => d.id === drug.id);
+          const isFav = favorites.includes(drug.id);
+
+          return (
+            <div className="max-w-5xl mx-auto px-4 py-8 space-y-6">
+              {/* Header Box */}
+              <div className="bg-white rounded-xl border border-slate-200 p-6 shadow-sm">
+                <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 border-b pb-4 mb-4">
+                  <div>
+                    <span className="bg-sky-100 text-sky-800 text-xs font-bold px-2.5 py-1 rounded-full uppercase tracking-wider">{drug.drugClass}</span>
+                    <h1 className="text-2xl sm:text-3xl font-black text-slate-900 mt-2">{drug.genericName}</h1>
+                  </div>
+
+                  <div className="flex items-center gap-2">
+                    <button 
+                      onClick={() => toggleFavorite(drug.id)}
+                      className={`px-3 py-2 rounded-lg text-xs font-semibold border transition flex items-center gap-1.5 ${isFav ? 'bg-amber-50 border-amber-300 text-amber-800' : 'bg-white border-slate-300 text-slate-700'}`}
+                    >
+                      <Icon name="star" className={`w-4 h-4 ${isFav ? 'fill-amber-500 text-amber-500' : ''}`} />
+                      <span>{isFav ? 'Saved' : 'Save'}</span>
+                    </button>
+
+                    <button 
+                      onClick={() => setComparedDrugs(isCompared ? comparedDrugs.filter(d => d.id !== drug.id) : [...comparedDrugs, drug])}
+                      className={`px-3 py-2 rounded-lg text-xs font-semibold border transition ${isCompared ? 'bg-sky-700 border-sky-700 text-white' : 'bg-white border-slate-300 text-slate-700 hover:bg-slate-50'}`}
+                    >
+                      {isCompared ? 'In Comparison' : '+ Compare'}
+                    </button>
+                  </div>
+                </div>
+
+                {drug.brandNames && (
+                  <div className="text-xs text-slate-700 bg-slate-50 p-3.5 rounded-lg border border-slate-200">
+                    <strong className="text-slate-900">Nepal Brand Names:</strong>{' '}
+                    {Array.isArray(drug.brandNames) ? drug.brandNames.join(', ') : drug.brandNames}
+                  </div>
+                )}
+              </div>
+
+              {/* Main Clinical Details Grid */}
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <div className="md:col-span-2 space-y-6">
+                  <DetailCard title="Indications & Uses" content={drug.indications} tag="uses" />
+                  <DetailCard title="Mechanism of Action" content={drug.mechanismOfAction} />
+                  
+                  {/* Dosing Section */}
+                  <div className="bg-white rounded-xl border border-slate-200 p-5 shadow-sm space-y-3">
+                    <h3 className="font-bold text-slate-900 text-sm uppercase tracking-wider text-sky-900 flex items-center gap-2">
+                      <span>Dosage & Administration</span>
+                    </h3>
+                    {drug.adultDose && (
+                      <div className="bg-sky-50/50 p-3 rounded-lg border border-sky-100 text-xs">
+                        <strong className="text-sky-900 block mb-0.5">Adult Dosage:</strong>
+                        <span className="text-slate-700">{drug.adultDose}</span>
+                      </div>
+                    )}
+                    {drug.pediatricDose && (
+                      <div className="bg-slate-50 p-3 rounded-lg border border-slate-200 text-xs">
+                        <strong className="text-slate-900 block mb-0.5">Pediatric Dosage:</strong>
+                        <span className="text-slate-700">{drug.pediatricDose}</span>
+                      </div>
+                    )}
+                  </div>
+
+                  {/* ADR & Contraindications */}
+                  <DetailCard title="Adverse Drug Reactions (ADR)" content={drug.adverseDrugReactions} warning />
+                  <DetailCard title="Contraindications (C/I)" content={drug.contraindications} danger />
+                  <DetailCard title="Precautions & Warnings" content={drug.precautions} alert />
+                </div>
+
+                {/* Sidebar Info */}
+                <div className="space-y-6">
+                  <div className="bg-white rounded-xl border border-slate-200 p-5 shadow-sm">
+                    <h3 className="font-bold text-xs uppercase text-slate-500 tracking-wider mb-3">Nepal Retail Price (NPR)</h3>
+                    {drug.priceNPR ? (
+                      <div className="p-3 bg-emerald-50 text-emerald-900 rounded-lg border border-emerald-200 font-bold text-sm">
+                        {drug.priceNPR}
+                      </div>
+                    ) : (
+                      <p className="text-xs text-slate-500 italic">No price range defined.</p>
+                    )}
+                  </div>
+                </div>
+              </div>
+            </div>
+          );
+        }
+
+        function DetailCard({ title, content, warning, danger, alert }) {
+          if (!content) return null;
+          let colorClasses = "bg-white border-slate-200 text-slate-900";
+          if (danger) colorClasses = "bg-red-50/40 border-red-200 text-red-900";
+          if (warning) colorClasses = "bg-amber-50/40 border-amber-200 text-amber-900";
+          if (alert) colorClasses = "bg-sky-50/30 border-sky-200 text-sky-900";
+
+          return (
+            <div className={`rounded-xl border p-5 shadow-sm ${colorClasses}`}>
+              <h3 className="font-bold text-sm uppercase tracking-wider mb-2">{title}</h3>
+              <p className="text-xs sm:text-sm text-slate-700 leading-relaxed whitespace-pre-line">{content}</p>
+            </div>
+          );
+        }
+
+        // ==========================================
+        // 6. CONDITION DETAIL VIEW
+        // ==========================================
+        function ConditionDetailView({ conditionId, conditions }) {
+          const condition = conditions.find(c => c.id === conditionId);
+          if (!condition) return <div className="p-12 text-center text-slate-500 text-sm">Condition record not found.</div>;
+
+          return (
+            <div className="max-w-4xl mx-auto px-4 py-8 space-y-6">
+              <div className="bg-white rounded-xl border border-slate-200 p-6 shadow-sm">
+                <span className="text-xs font-bold text-sky-700 uppercase tracking-wider">Clinical Protocol</span>
+                <h1 className="text-3xl font-black text-slate-900 mt-1">{condition.name}</h1>
+                <p className="text-xs sm:text-sm text-slate-600 mt-3 leading-relaxed">{condition.overview}</p>
+              </div>
+
+              <DetailCard title="First-Line Treatment (Drug of Choice)" content={condition.firstLineTreatment} alert />
+              <DetailCard title="Alternative Treatments" content={condition.alternativeTreatments} />
+              <DetailCard title="Referral Criteria & Red Flags" content={condition.referralCriteria} danger />
+            </div>
+          );
+        }
+
+        // ==========================================
+        // 7. PRICES & COMPARISON & FAVORITES VIEWS
+        // ==========================================
+        function PricesView({ prices, drugs, navigateTo }) {
+          return (
+            <div className="max-w-7xl mx-auto px-4 py-8">
+              <h1 className="text-2xl font-bold text-slate-900 mb-6">Nepal Medicine Price Index</h1>
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                {drugs.map(d => (
+                  <div key={d.id} onClick={() => navigateTo('drug-detail', d.id)} className="bg-white p-5 rounded-xl border shadow-sm hover:border-sky-500 cursor-pointer">
+                    <h3 className="font-bold text-slate-900">{d.genericName}</h3>
+                    <p className="text-xs text-slate-500 mb-2">{d.drugClass}</p>
+                    <p className="text-xs font-bold text-emerald-700 bg-emerald-50 p-2 rounded border border-emerald-200">
+                      {d.priceNPR || 'Price on request'}
+                    </p>
+                  </div>
+                ))}
+              </div>
+            </div>
+          );
+        }
+
+        function CompareView({ comparedDrugs, setComparedDrugs, navigateTo }) {
+          if (comparedDrugs.length === 0) {
+            return (
+              <div className="max-w-md mx-auto px-4 py-16 text-center space-y-3">
+                <h2 className="text-xl font-bold text-slate-900">No Drugs Selected</h2>
+                <p className="text-xs text-slate-500">Add medicines to side-by-side comparison from any drug page.</p>
+                <button onClick={() => navigateTo('home')} className="bg-sky-700 text-white px-5 py-2 rounded-lg text-xs font-semibold">Browse Monograph</button>
+              </div>
+            );
+          }
+
+          return (
+            <div className="max-w-7xl mx-auto px-4 py-8">
+              <div className="flex justify-between items-center mb-6">
+                <h1 className="text-2xl font-bold text-slate-900">Side-by-Side Comparison</h1>
+                <button onClick={() => setComparedDrugs([])} className="text-xs text-red-600 font-semibold hover:underline">Clear Comparison</button>
+              </div>
+
+              <div className="overflow-x-auto">
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4 min-w-[600px]">
+                  {comparedDrugs.map(d => (
+                    <div key={d.id} className="bg-white rounded-xl border border-slate-200 p-5 shadow-sm space-y-4">
+                      <div className="flex justify-between items-start border-b pb-3">
+                        <div>
+                          <h2 className="font-bold text-base text-slate-900">{d.genericName}</h2>
+                          <span className="text-[10px] font-bold text-sky-700">{d.drugClass}</span>
+                        </div>
+                        <button onClick={() => setComparedDrugs(comparedDrugs.filter(item => item.id !== d.id))} className="text-xs text-slate-400 hover:text-red-600">Remove</button>
+                      </div>
+
+                      <div className="text-xs space-y-3 text-slate-700">
+                        <div><strong className="block text-slate-900">Uses:</strong> {d.indications}</div>
+                        <div><strong className="block text-slate-900">Adult Dose:</strong> {d.adultDose || 'N/A'}</div>
+                        <div><strong className="block text-slate-900">ADR:</strong> {d.adverseDrugReactions || 'N/A'}</div>
+                        <div><strong className="block text-slate-900">Contraindications:</strong> {d.contraindications || 'N/A'}</div>
+                        <div><strong className="block text-emerald-800">Price:</strong> {d.priceNPR || 'N/A'}</div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+          );
+        }
+
+        function FavoritesView({ drugs, favorites, toggleFavorite, navigateTo }) {
+          const favDrugs = drugs.filter(d => favorites.includes(d.id));
+
+          return (
+            <div className="max-w-5xl mx-auto px-4 py-8">
+              <h1 className="text-2xl font-bold text-slate-900 mb-6">Saved Monograph Bookmarks ({favDrugs.length})</h1>
+              {favDrugs.length === 0 ? (
+                <div className="p-8 text-center text-slate-500 bg-white rounded-xl border text-xs">
+                  No saved drugs yet. Click the star icon on any drug monograph to save it for quick reference.
+                </div>
+              ) : (
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  {favDrugs.map(d => (
+                    <div key={d.id} onClick={() => navigateTo('drug-detail', d.id)} className="bg-white p-5 rounded-xl border hover:border-sky-600 shadow-sm cursor-pointer flex justify-between items-start">
+                      <div>
+                        <h3 className="font-bold text-slate-900 text-base">{d.genericName}</h3>
+                        <p className="text-xs text-sky-700 mb-2">{d.drugClass}</p>
+                        <p className="text-xs text-slate-600 line-clamp-2">{d.indications}</p>
+                      </div>
+                      <button onClick={(e) => { e.stopPropagation(); toggleFavorite(d.id); }} className="text-amber-500 p-1">
+                        <Icon name="star" className="w-4 h-4 fill-amber-500" />
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          );
+        }
+
+        function LoginView({ navigateTo }) {
+          const [email, setEmail] = useState('');
+          const [password, setPassword] = useState('');
+          const [error, setError] = useState('');
+
+          const handleLogin = async (e) => {
+            e.preventDefault();
+            try {
+              await auth.signInWithEmailAndPassword(email, password);
+              navigateTo('admin');
+            } catch (err) {
+              setError(err.message);
+            }
+          };
+
+          return (
+            <div className="max-w-md mx-auto mt-16 p-8 bg-white rounded-xl shadow border border-slate-200">
+              <h2 className="text-2xl font-bold text-center mb-6 text-slate-900">Admin Authentication</h2>
+              {error && <div className="mb-4 p-3 bg-red-50 text-red-700 text-xs rounded-lg">{error}</div>}
+              <form onSubmit={handleLogin} className="space-y-4">
+                <div>
+                  <label className="block text-xs font-semibold text-slate-700 mb-1">Email</label>
+                  <input type="email" value={email} onChange={e => setEmail(e.target.value)} required className="w-full px-3 py-2 border rounded-lg text-xs focus:outline-none focus:border-sky-600" />
+                </div>
+                <div>
+                  <label className="block text-xs font-semibold text-slate-700 mb-1">Password</label>
+                  <input type="password" value={password} onChange={e => setPassword(e.target.value)} required className="w-full px-3 py-2 border rounded-lg text-xs focus:outline-none focus:border-sky-600" />
+                </div>
+                <button type="submit" className="w-full bg-sky-700 hover:bg-sky-800 text-white py-2.5 rounded-lg text-xs font-semibold transition shadow">Sign In to Dashboard</button>
+              </form>
+            </div>
+          );
+        }
+
+        // ==========================================
+        // 8. ADMIN DASHBOARD (EDIT ANYTHING & JSON BATCH)
+        // ==========================================
+        function AdminDashboard({ drugs, conditions, prices, references, refreshData }) {
+          const [activeTab, setActiveTab] = useState('editor'); // 'editor' | 'json'
+          const [editingDrug, setEditingDrug] = useState(null);
+          const [status, setStatus] = useState('');
+          const [jsonText, setJsonText] = useState('');
+          const [isSaving, setIsSaving] = useState(false);
+
+          const emptyDrugForm = {
+            id: '',
+            genericName: '',
+            drugClass: '',
+            brandNames: '',
+            indications: '',
+            mechanismOfAction: '',
+            adultDose: '',
+            pediatricDose: '',
+            adverseDrugReactions: '',
+            contraindications: '',
+            precautions: '',
+            priceNPR: '',
+            published: true
+          };
+
+          const [form, setForm] = useState(emptyDrugForm);
+
+          const startEditing = (drug) => {
+            setEditingDrug(drug);
+            setForm({
+              ...drug,
+              brandNames: Array.isArray(drug.brandNames) ? drug.brandNames.join(', ') : (drug.brandNames || '')
+            });
+            setActiveTab('editor');
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+          };
+
+          const saveDrugRecord = async (e) => {
+            e.preventDefault();
+            if (!form.genericName) {
+              setStatus('Error: Generic Name is required.');
+              return;
+            }
+            setIsSaving(true);
+            setStatus('Saving record to Firestore...');
+
+            try {
+              const docId = form.id || form.genericName.toLowerCase().replace(/[^a-z0-9]+/g, '-');
+              const formattedData = {
+                ...form,
+                id: docId,
+                brandNames: form.brandNames ? form.brandNames.split(',').map(b => b.trim()) : [],
+                updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+              };
+
+              await db.collection('drugs').doc(docId).set(formattedData, { merge: true });
+              setStatus(`Success! Drug record '${form.genericName}' updated.`);
+              setForm(emptyDrugForm);
+              setEditingDrug(null);
+              refreshData();
+            } catch (err) {
+              setStatus(`Failed to save: ${err.message}`);
+            } me {
+              setIsSaving(false);
+            }
+          };
+
+          const deleteDrugRecord = async (id) => {
+            if (!confirm("Are you sure you want to delete this drug monograph?")) return;
+            try {
+              await db.collection('drugs').doc(id).delete();
+              setStatus('Record deleted successfully.');
+              refreshData();
+            } catch (err) {
+              setStatus(`Delete error: ${err.message}`);
+            }
+          };
+
+          const handleBulkUpload = async () => {
+            if (!jsonText.trim()) {
+              setStatus('Error: JSON block cannot be empty.');
+              return;
+            }
+            setIsSaving(true);
+            setStatus('Parsing and importing records...');
+
+            try {
+              const parsed = JSON.parse(jsonText);
+              const batch = db.batch();
+              let total = 0;
+
+              if (Array.isArray(parsed.drugs)) {
+                parsed.drugs.forEach(d => {
+                  const id = d.id || d.genericName.toLowerCase().replace(/[^a-z0-9]+/g, '-');
+                  const ref = db.collection('drugs').doc(id);
+                  batch.set(ref, { ...d, id, published: d.published ?? true }, { merge: true });
+                  total++;
+                });
+              }
+
+              if (Array.isArray(parsed.conditions)) {
+                parsed.conditions.forEach(c => {
+                  const id = c.id || c.name.toLowerCase().replace(/[^a-z0-9]+/g, '-');
+                  const ref = db.collection('conditions').doc(id);
+                  batch.set(ref, { ...c, id, published: c.published ?? true }, { merge: true });
+                  total++;
+                });
+              }
+
+              await batch.commit();
+              setStatus(`Successfully committed ${total} records to Firestore!`);
+              setJsonText('');
+              refreshData();
+            } catch (err) {
+              setStatus(`JSON Upload Error: ${err.message}`);
+            } finally {
+              setIsSaving(false);
+            }
+          };
+
+          return (
+            <div className="max-w-7xl mx-auto px-4 py-8 space-y-6">
+              <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+                <div>
+                  <h1 className="text-2xl font-black text-slate-900">Admin Editing & Management Portal</h1>
+                  <p className="text-xs text-slate-500">Edit any drug property, manage ADR/contraindications, or bulk upload JSON</p>
+                </div>
+
+                <div className="flex gap-2">
+                  <button 
+                    onClick={() => setActiveTab('editor')}
+                    className={`px-4 py-2 rounded-lg text-xs font-semibold ${activeTab === 'editor' ? 'bg-sky-700 text-white' : 'bg-white border text-slate-700'}`}
+                  >
+                    Interactive Editor
+                  </button>
+                  <button 
+                    onClick={() => setActiveTab('json')}
+                    className={`px-4 py-2 rounded-lg text-xs font-semibold ${activeTab === 'json' ? 'bg-sky-700 text-white' : 'bg-white border text-slate-700'}`}
+                  >
+                    Bulk JSON Importer
+                  </button>
+                </div>
+              </div>
+
+              {status && (
+                <div className={`p-3 text-xs rounded-lg font-semibold ${status.includes('Success') || status.includes('committed') ? 'bg-emerald-50 text-emerald-800 border border-emerald-200' : 'bg-amber-50 text-amber-800 border border-amber-200'}`}>
+                  {status}
+                </div>
+              )}
+
+              {activeTab === 'editor' && (
+                <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                  {/* Form */}
+                  <form onSubmit={saveDrugRecord} className="lg:col-span-2 bg-white p-6 rounded-xl border border-slate-200 shadow-sm space-y-4">
+                    <h2 className="text-base font-bold text-slate-900 border-b pb-2">
+                      {editingDrug ? `Edit: ${editingDrug.genericName}` : 'Add New Drug Monograph'}
+                    </h2>
+
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                      <div>
+                        <label className="block text-xs font-bold text-slate-700 mb-1">Generic Name *</label>
+                        <input type="text" required value={form.genericName} onChange={e => setForm({...form, genericName: e.target.value})} className="w-full px-3 py-2 border rounded-lg text-xs focus:outline-none focus:border-sky-600" />
+                      </div>
+                      <div>
+                        <label className="block text-xs font-bold text-slate-700 mb-1">Drug Class</label>
+                        <input type="text" value={form.drugClass} onChange={e => setForm({...form, drugClass: e.target.value})} className="w-full px-3 py-2 border rounded-lg text-xs focus:outline-none focus:border-sky-600" />
+                      </div>
+                    </div>
+
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                      <div>
+                        <label className="block text-xs font-bold text-slate-700 mb-1">Nepal Brand Names (Comma Separated)</label>
+                        <input type="text" value={form.brandNames} onChange={e => setForm({...form, brandNames: e.target.value})} className="w-full px-3 py-2 border rounded-lg text-xs focus:outline-none focus:border-sky-600" />
+                      </div>
+                      <div>
+                        <label className="block text-xs font-bold text-slate-700 mb-1">Nepal Retail Price (NPR)</label>
+                        <input type="text" value={form.priceNPR} onChange={e => setForm({...form, priceNPR: e.target.value})} placeholder="e.g. NPR 5.00 - 8.00 per tab" className="w-full px-3 py-2 border rounded-lg text-xs focus:outline-none focus:border-sky-600" />
+                      </div>
+                    </div>
+
+                    <div>
+                      <label className="block text-xs font-bold text-slate-700 mb-1">Indications & Clinical Uses</label>
+                      <textarea rows={2} value={form.indications} onChange={e => setForm({...form, indications: e.target.value})} className="w-full px-3 py-2 border rounded-lg text-xs focus:outline-none focus:border-sky-600" />
+                    </div>
+
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                      <div>
+                        <label className="block text-xs font-bold text-slate-700 mb-1">Adult Dosage</label>
+                        <textarea rows={2} value={form.adultDose} onChange={e => setForm({...form, adultDose: e.target.value})} className="w-full px-3 py-2 border rounded-lg text-xs focus:outline-none focus:border-sky-600" />
+                      </div>
+                      <div>
+                        <label className="block text-xs font-bold text-slate-700 mb-1">Pediatric Dosage</label>
+                        <textarea rows={2} value={form.pediatricDose} onChange={e => setForm({...form, pediatricDose: e.target.value})} className="w-full px-3 py-2 border rounded-lg text-xs focus:outline-none focus:border-sky-600" />
+                      </div>
+                    </div>
+
+                    <div>
+                      <label className="block text-xs font-bold text-slate-700 mb-1">Adverse Drug Reactions (ADR)</label>
+                      <textarea rows={2} value={form.adverseDrugReactions} onChange={e => setForm({...form, adverseDrugReactions: e.target.value})} className="w-full px-3 py-2 border rounded-lg text-xs focus:outline-none focus:border-sky-600" />
+                    </div>
+
+                    <div>
+                      <label className="block text-xs font-bold text-slate-700 mb-1">Contraindications (C/I)</label>
+                      <textarea rows={2} value={form.contraindications} onChange={e => setForm({...form, contraindications: e.target.value})} className="w-full px-3 py-2 border rounded-lg text-xs focus:outline-none focus:border-sky-600" />
+                    </div>
+
+                    <div>
+                      <label className="block text-xs font-bold text-slate-700 mb-1">Precautions & Special Warnings</label>
+                      <textarea rows={2} value={form.precautions} onChange={e => setForm({...form, precautions: e.target.value})} className="w-full px-3 py-2 border rounded-lg text-xs focus:outline-none focus:border-sky-600" />
+                    </div>
+
+                    <div className="flex items-center gap-4 pt-2">
+                      <button type="submit" disabled={isSaving} className="bg-sky-700 hover:bg-sky-800 text-white font-bold px-6 py-2.5 rounded-lg text-xs shadow transition">
+                        {isSaving ? 'Saving...' : (editingDrug ? 'Update Record' : 'Publish Drug Record')}
+                      </button>
+
+                      {editingDrug && (
+                        <button type="button" onClick={() => { setEditingDrug(null); setForm(emptyDrugForm); }} className="text-xs text-slate-500 font-semibold hover:underline">
+                          Cancel Editing
+                        </button>
+                      )}
+                    </div>
+                  </form>
+
+                  {/* List of Drugs to Edit */}
+                  <div className="bg-white p-6 rounded-xl border border-slate-200 shadow-sm space-y-4 max-h-[800px] overflow-y-auto custom-scrollbar">
+                    <h2 className="text-base font-bold text-slate-900 border-b pb-2">Existing Monographs ({drugs.length})</h2>
+                    <div className="space-y-3">
+                      {drugs.map(d => (
+                        <div key={d.id} className="p-3 bg-slate-50 rounded-lg border flex justify-between items-center text-xs">
+                          <div>
+                            <div className="font-bold text-slate-900">{d.genericName}</div>
+                            <div className="text-[10px] text-sky-700">{d.drugClass}</div>
+                          </div>
+                          <div className="flex items-center gap-2">
+                            <button onClick={() => startEditing(d)} className="text-sky-700 font-bold hover:underline">Edit</button>
+                            <button onClick={() => deleteDrugRecord(d.id)} className="text-red-600 font-bold hover:underline">Delete</button>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {activeTab === 'json' && (
+                <div className="bg-white p-6 rounded-xl border border-slate-200 shadow-sm space-y-4">
+                  <h2 className="text-lg font-bold text-slate-900">Bulk Multi-Record JSON Importer</h2>
+                  <p className="text-xs text-slate-600">
+                    Paste a structured JSON payload to write multiple drugs or condition guidelines simultaneously.
+                  </p>
+                  
+                  <textarea 
+                    rows={12} 
+                    value={jsonText} 
+                    onChange={e => setJsonText(e.target.value)}
+                    placeholder={`{
+  "drugs": [
+    {
+      "genericName": "Amlodipine",
+      "drugClass": "Calcium Channel Blocker",
+      "indications": "Hypertension, Chronic Stable Angina",
+      "adultDose": "5 mg PO once daily, max 10 mg daily",
+      "adverseDrugReactions": "Peripheral edema, headache, flushing",
+      "contraindications": "Severe hypotension, cardiogenic shock",
+      "priceNPR": "NPR 3.50 - 6.00 per 5mg tablet"
+    }
+  ]
+}`}
+                    className="w-full p-4 font-mono text-xs bg-slate-50 border border-slate-300 rounded-lg focus:outline-none focus:border-sky-600"
+                  />
+
+                  <button 
+                    onClick={handleBulkUpload}
+                    disabled={isSaving}
+                    className="bg-sky-700 hover:bg-sky-800 text-white font-bold px-6 py-2.5 rounded-lg text-xs shadow transition"
+                  >
+                    {isSaving ? 'Uploading Payload...' : 'Batch Import JSON to Firestore'}
+                  </button>
+                </div>
+              )}
+            </div>
+          );
+        }
+
+        ReactDOM.createRoot(document.getElementById('root')).render(<App />);
+    </script>
+</body>
+</html>
