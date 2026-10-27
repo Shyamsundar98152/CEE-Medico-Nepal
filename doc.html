@@ -1,1324 +1,507 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>DOC Nepal — Drug of Choice & Clinical Reference</title>
-    <!-- Tailwind CSS CDN -->
-    <script src="https://cdn.tailwindcss.com"></script>
-    <!-- Lucide Icons -->
-    <script src="https://unpkg.com/lucide@latest"></script>
-    <!-- React & ReactDOM -->
-    <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
-    <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
-    <!-- Babel for JSX -->
-    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
-    <!-- Firebase v10 Compat SDKs -->
-    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-auth-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
-    <style>
-        .custom-scrollbar::-webkit-scrollbar {
-            width: 6px;
-            height: 6px;
-        }
-        .custom-scrollbar::-webkit-scrollbar-track {
-            background: #f1f5f9;
-        }
-        .custom-scrollbar::-webkit-scrollbar-thumb {
-            background: #cbd5e1;
-            border-radius: 4px;
-        }
-        .custom-scrollbar::-webkit-scrollbar-thumb:hover {
-            background: #94a3b8;
-        }
-    </style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>DOC Nepal — Drug of Choice</title>
+<link href="https://fonts.googleapis.com/css2?family=Source+Sans+3:wght@400;600;700&family=Source+Serif+4:wght@600;700&display=swap" rel="stylesheet">
+<script src="https://cdn.tailwindcss.com/3.4.17"></script>
+<script src="https://unpkg.com/react@18.3.1/umd/react.production.min.js"></script>
+<script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.production.min.js"></script>
+<script src="https://unpkg.com/@babel/standalone@7.24.7/babel.min.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
+<style>
+:root{--bg:#f5f6f2;--card:#fff;--tx:#16262b;--mu:#5d6d72;--ln:#dde2dc;--br:#0f6b6b;--brd:#0a4f4f;--soft:#e3f0ee;--rd:#a8142f;--rds:#fbeaed;--am:#9a5b00;--ams:#fdf1dc;--hl:#fff1a8}
+html.dark{--bg:#0f1b1e;--card:#172629;--tx:#e6eeee;--mu:#98aaad;--ln:#2a3d41;--br:#3fb5ad;--brd:#7fd3cc;--soft:#1b3438;--rd:#ff8fa3;--rds:#3a1c24;--am:#f0b45a;--ams:#33270f;--hl:#665a10}
+html{font-size:16px}html.fs-l{font-size:18px}html.fs-s{font-size:14.5px}
+body{background:var(--bg);color:var(--tx);font-family:'Source Sans 3',system-ui,sans-serif}
+.serif{font-family:'Source Serif 4',Georgia,serif}
+.card{background:var(--card);border:1px solid var(--ln);border-radius:10px}
+.inp{width:100%;background:var(--card);color:var(--tx);border:1px solid var(--ln);border-radius:8px;padding:.55rem .75rem;font-size:.95rem}
+.inp:focus,.btn:focus-visible,.btn2:focus-visible,summary:focus-visible{outline:2px solid var(--br);outline-offset:1px}
+.btn{background:var(--br);color:#fff;border-radius:8px;padding:.5rem .9rem;font-weight:600;font-size:.875rem}
+html.dark .btn{color:#06201f}
+.btn:hover{background:var(--brd)}html.dark .btn:hover{background:var(--brd)}
+.btn2{border:1px solid var(--ln);background:var(--card);border-radius:8px;padding:.45rem .8rem;font-weight:600;font-size:.85rem}
+.btn2:hover{border-color:var(--br)}.btn2.on{background:var(--soft);border-color:var(--br);color:var(--brd)}
+.dng{color:var(--rd)}
+mark{background:var(--hl);color:inherit;border-radius:2px}
+.mu{color:var(--mu)}
+details>summary{cursor:pointer;list-style:none}details>summary::-webkit-details-marker{display:none}
+details[open] .chev{transform:rotate(90deg)}.chev{transition:transform .15s}
+.tag{display:inline-block;font-size:.72rem;font-weight:600;padding:.1rem .5rem;border-radius:99px;background:var(--soft);color:var(--brd)}
+.tag.p{background:var(--ams);color:var(--am)}.tag.c{background:var(--rds);color:var(--rd)}
+.hide-sb{scrollbar-width:none}.hide-sb::-webkit-scrollbar{display:none}
+@media(prefers-reduced-motion:reduce){*{transition:none!important}}
+</style>
 </head>
-<body class="bg-slate-50 text-slate-800 font-sans antialiased selection:bg-sky-500 selection:text-white">
-    <div id="root"></div>
-
-    <script type="text/babel">
-        const { useState, useEffect, useMemo, useRef } = React;
-
-        // Sample initial fallback dataset for instant user demonstration if DB is empty
-        const INITIAL_DEMO_DRUGS = [
-            {
-                id: 'paracetamol',
-                genericName: 'Paracetamol (Acetaminophen)',
-                drugClass: 'Analgesic & Antipyretic',
-                brandNames: ['Metacin', 'Cetamol', 'Crocin', 'Napa'],
-                indications: 'Management of mild-to-moderate pain and fever reduction in adult and pediatric populations.',
-                mechanismOfAction: 'Inhibits prostaglandin synthesis in the central nervous system and peripherally blocks pain impulse generation.',
-                adultDose: '500 mg - 1000 mg PO every 4-6 hours as needed (Max: 4000 mg/day).',
-                pediatricDose: '10-15 mg/kg PO every 4-6 hours as needed (Max: 75 mg/kg/day).',
-                adverseDrugReactions: 'Nausea, allergic skin rash, elevated liver enzymes. Severe hepatotoxicity in acute overdose (>10g).',
-                contraindications: 'Severe hepatic impairment, active severe liver disease, hypersensitivity to paracetamol.',
-                precautions: 'Chronic alcoholism, renal impairment, malnourishment. Check concurrent medications for acetaminophen content.',
-                priceNPR: 'NPR 1.50 - 2.50 per 500mg tablet',
-                published: true
-            },
-            {
-                id: 'amoxicillin',
-                genericName: 'Amoxicillin',
-                drugClass: 'Aminopenicillin Antibiotic',
-                brandNames: ['Mox', 'Novamox', 'Amoxil'],
-                indications: 'Bacterial infection of upper respiratory tract, otitis media, UTI, Helicobacter pylori eradication.',
-                mechanismOfAction: 'Inhibits bacterial cell wall synthesis by binding to penicillin-binding proteins (PBPs).',
-                adultDose: '250 mg to 500 mg PO every 8 hours, or 875 mg PO every 12 hours.',
-                pediatricDose: '20-40 mg/kg/day in divided doses every 8 hours.',
-                adverseDrugReactions: 'Diarrhea, skin rash, maculopapular exanthem, candidiasis, nausea.',
-                contraindications: 'History of severe allergic reaction/anaphylaxis to penicillins or cephalosporins.',
-                precautions: 'Mononucleosis (high risk of skin rash), renal function impairment (adjust dose).',
-                priceNPR: 'NPR 5.00 - 8.50 per 500mg capsule',
-                published: true
-            },
-            {
-                id: 'metformin',
-                genericName: 'Metformin HCl',
-                drugClass: 'Biguanide Antidiabetic',
-                brandNames: ['Glycomet', 'Obimet', 'Glucophage'],
-                indications: 'First-line therapy for Type 2 Diabetes Mellitus, polycystic ovary syndrome (PCOS).',
-                mechanismOfAction: 'Decreases hepatic glucose production, decreases intestinal absorption of glucose, improves insulin sensitivity.',
-                adultDose: '500 mg PO twice daily with meals, titrate up to max 2550 mg/day.',
-                pediatricDose: '500 mg PO daily for children >10 years.',
-                adverseDrugReactions: 'Gastrointestinal distress (diarrhea, abdominal cramps, nausea), metallic taste, Vitamin B12 deficiency.',
-                contraindications: 'eGFR < 30 mL/min/1.73m², acute metabolic acidosis, severe renal/hepatic failure.',
-                precautions: 'Withhold prior to intravascular iodinated contrast procedures. Monitor renal function annually.',
-                priceNPR: 'NPR 3.00 - 6.00 per 500mg tablet',
-                published: true
-            }
-        ];
-
-        // ==========================================
-        // 1. FIREBASE INITIALIZATION & CONFIGURATION
-        // ==========================================
-        const firebaseConfig = {
-          apiKey: "AIzaSyANTEvessOCqYqfzYVX9V11CAN-xjF7ubQ",
-          authDomain: "doc-drug-of-choice.firebaseapp.com",
-          projectId: "doc-drug-of-choice",
-          storageBucket: "doc-drug-of-choice.firebasestorage.app",
-          messagingSenderId: "177639649857",
-          appId: "1:177639649857:web:98d71685c6b31b93084cc0",
-          measurementId: "G-XML2TZYJG7"
-        };
-
-        let app, auth, db;
-        try {
-          if (!firebase.apps.length) {
-            app = firebase.initializeApp(firebaseConfig);
-          } else {
-            app = firebase.app();
-          }
-          auth = firebase.auth();
-          db = firebase.firestore();
-        } catch (e) {
-          console.error("Firebase initialization error:", e);
-        }
-
-        // Helper for Lucide Icons
-        function Icon({ name, className = "w-4 h-4 inline-block" }) {
-          useEffect(() => {
-            if (window.lucide) {
-              window.lucide.createIcons();
-            }
-          }, [name]);
-          return <i data-lucide={name} className={className}></i>;
-        }
-
-        // ==========================================
-        // 2. MAIN APP COMPONENT
-        // ==========================================
-        function App() {
-          const [currentView, setCurrentView] = useState('home');
-          const [selectedEntityId, setSelectedEntityId] = useState(null);
-          const [comparedDrugs, setComparedDrugs] = useState([]);
-          
-          // Data states
-          const [drugs, setDrugs] = useState([]);
-          const [conditions, setConditions] = useState([]);
-          const [prices, setPrices] = useState([]);
-          const [references, setReferences] = useState([]);
-          const [isLoading, setIsLoading] = useState(true);
-          
-          // User Preferences & Settings
-          const [fontSize, setFontSize] = useState(() => localStorage.getItem('doc_font_size') || 'normal');
-          const [compactMode, setCompactMode] = useState(() => localStorage.getItem('doc_compact_mode') === 'true');
-          const [favorites, setFavorites] = useState(() => {
-            try { return JSON.parse(localStorage.getItem('doc_favorites') || '[]'); } catch(e){ return []; }
-          });
-
-          const [user, setUser] = useState(null);
-          const [authLoading, setAuthLoading] = useState(true);
-          const [syncStatus, setSyncStatus] = useState('Connecting...');
-
-          const [searchQuery, setSearchQuery] = useState('');
-          const [searchFilter, setSearchFilter] = useState('all');
-          const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-
-          // Save Preferences
-          useEffect(() => {
-            localStorage.setItem('doc_font_size', fontSize);
-            localStorage.setItem('doc_compact_mode', compactMode);
-            localStorage.setItem('doc_favorites', JSON.stringify(favorites));
-          }, [fontSize, compactMode, favorites]);
-
-          // Auth Listener
-          useEffect(() => {
-            if (!auth) {
-              setAuthLoading(false);
-              return;
-            }
-            const unsubscribe = auth.onAuthStateChanged((currentUser) => {
-              setUser(currentUser);
-              setAuthLoading(false);
-            });
-            return () => unsubscribe();
-          }, []);
-
-          // Fetch Live Data from Firestore
-          const fetchFirestoreData = async () => {
-            setIsLoading(true);
-            if (!db) {
-              setDrugs(INITIAL_DEMO_DRUGS);
-              setSyncStatus('Local Demo Mode');
-              setIsLoading(false);
-              return;
-            }
-            try {
-              const drugSnap = await db.collection('drugs').get();
-              const loadedDrugs = drugSnap.docs
-                .map(d => ({ id: d.id, ...d.data() }))
-                .filter(d => d.published === true || (auth.currentUser && auth.currentUser.uid));
-              
-              const condSnap = await db.collection('conditions').get();
-              const loadedConds = condSnap.docs
-                .map(d => ({ id: d.id, ...d.data() }))
-                .filter(c => c.published === true || (auth.currentUser && auth.currentUser.uid));
-
-              const priceSnap = await db.collection('prices').get();
-              const loadedPrices = priceSnap.docs.map(d => ({ id: d.id, ...d.data() }));
-
-              const refSnap = await db.collection('references').get();
-              const loadedRefs = refSnap.docs.map(d => ({ id: d.id, ...d.data() }));
-
-              setDrugs(loadedDrugs.length > 0 ? loadedDrugs : INITIAL_DEMO_DRUGS);
-              setConditions(loadedConds);
-              setPrices(loadedPrices);
-              setReferences(loadedRefs);
-
-              setSyncStatus(loadedDrugs.length > 0 ? 'Live Firestore Connected' : 'Demo Fallback Active');
-            } catch (err) {
-              console.error("Firestore read error:", err);
-              setDrugs(INITIAL_DEMO_DRUGS);
-              setSyncStatus('Offline / Local Demo');
-            } finally {
-              setIsLoading(false);
-            }
-          };
-
-          useEffect(() => {
-            fetchFirestoreData();
-          }, []);
-
-          const toggleFavorite = (id) => {
-            setFavorites(prev => 
-              prev.includes(id) ? prev.filter(item => item !== id) : [...prev, id]
-            );
-          };
-
-          const navigateTo = (view, entityId = null) => {
-            setCurrentView(view);
-            if (entityId) setSelectedEntityId(entityId);
-            setMobileMenuOpen(false);
-            window.scrollTo({ top: 0, behavior: 'smooth' });
-          };
-
-          const fontSizeClass = {
-            small: 'text-xs',
-            normal: 'text-sm',
-            large: 'text-base'
-          }[fontSize];
-
-          return (
-            <div className={`min-h-screen bg-slate-50 text-slate-800 flex flex-col font-sans ${fontSizeClass}`}>
-              {/* Top Announcement & Quick Controls Bar */}
-              <div className="bg-sky-950 text-sky-100 text-xs py-1.5 px-4 flex flex-wrap justify-between items-center gap-2 border-b border-sky-900">
-                <div className="flex items-center gap-2">
-                  <span className="bg-sky-600 text-white font-bold text-[10px] px-2 py-0.5 rounded uppercase">Clinical</span>
-                  <span className="hidden sm:inline">Nepal Standard Drug & Guidelines Reference Portal</span>
-                </div>
-                
-                <div className="flex items-center gap-4 ml-auto text-[11px]">
-                  <div className="flex items-center gap-1.5 bg-sky-900/60 px-2.5 py-1 rounded-md border border-sky-800">
-                    <span className="text-sky-300 font-medium">Font:</span>
-                    <button onClick={() => setFontSize('small')} className={`px-1 rounded ${fontSize === 'small' ? 'bg-sky-600 font-bold text-white' : 'hover:text-white'}`}>S</button>
-                    <button onClick={() => setFontSize('normal')} className={`px-1 rounded ${fontSize === 'normal' ? 'bg-sky-600 font-bold text-white' : 'hover:text-white'}`}>M</button>
-                    <button onClick={() => setFontSize('large')} className={`px-1 rounded ${fontSize === 'large' ? 'bg-sky-600 font-bold text-white' : 'hover:text-white'}`}>L</button>
-                  </div>
-
-                  <button 
-                    onClick={() => setCompactMode(!compactMode)}
-                    className={`px-2 py-1 rounded border transition ${compactMode ? 'bg-sky-700 border-sky-500 text-white font-medium' : 'border-sky-800 hover:bg-sky-900 text-sky-200'}`}
-                  >
-                    {compactMode ? 'Compact On' : 'Compact Off'}
-                  </button>
-
-                  <div className="hidden md:block bg-sky-900 text-sky-200 px-2.5 py-1 rounded font-mono text-[10px]">
-                    {syncStatus}
-                  </div>
-                </div>
-              </div>
-
-              {/* Responsive Header */}
-              <header className="bg-white border-b border-slate-200 sticky top-0 z-50 shadow-sm">
-                <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between gap-4">
-                  <div className="flex items-center gap-3 cursor-pointer shrink-0" onClick={() => navigateTo('home')}>
-                    <div className="w-10 h-10 rounded-xl bg-gradient-to-tr from-sky-800 to-sky-600 text-white flex items-center justify-center font-black text-xl shadow-md tracking-wider">
-                      DN
-                    </div>
-                    <div>
-                      <h1 className="font-extrabold text-slate-900 text-base leading-tight tracking-tight">DOC Nepal</h1>
-                      <p className="text-[11px] text-sky-700 font-medium hidden sm:block">Drug of Choice • Nepal Clinical Database</p>
-                    </div>
-                  </div>
-
-                  {currentView !== 'home' && (
-                    <div className="hidden lg:flex flex-1 max-w-md mx-4">
-                      <div className="relative w-full">
-                        <input 
-                          type="text" 
-                          placeholder="Global search (Name, Class, ADR, C/I, Uses...)"
-                          value={searchQuery}
-                          onChange={(e) => setSearchQuery(e.target.value)}
-                          onKeyDown={(e) => e.key === 'Enter' && navigateTo('search')}
-                          className="w-full bg-slate-100 border border-slate-300 rounded-lg pl-9 pr-4 py-1.5 text-xs focus:outline-none focus:bg-white focus:border-sky-600 transition"
-                        />
-                        <span className="absolute left-3 top-2 text-slate-400">
-                          <Icon name="search" className="w-3.5 h-3.5" />
-                        </span>
-                      </div>
-                    </div>
-                  )}
-
-                  <nav className="hidden md:flex items-center gap-5 text-xs font-semibold text-slate-600">
-                    <button onClick={() => navigateTo('home')} className={`hover:text-sky-700 transition ${currentView === 'home' ? 'text-sky-700 font-bold border-b-2 border-sky-700 py-5' : ''}`}>Home</button>
-                    <button onClick={() => navigateTo('search')} className={`hover:text-sky-700 transition ${currentView === 'search' ? 'text-sky-700 font-bold border-b-2 border-sky-700 py-5' : ''}`}>Browse All</button>
-                    <button onClick={() => navigateTo('prices')} className={`hover:text-sky-700 transition ${currentView === 'prices' ? 'text-sky-700 font-bold border-b-2 border-sky-700 py-5' : ''}`}>Prices</button>
-                    <button onClick={() => navigateTo('compare')} className={`hover:text-sky-700 transition relative ${currentView === 'compare' ? 'text-sky-700 font-bold border-b-2 border-sky-700 py-5' : ''}`}>
-                      Compare
-                      {comparedDrugs.length > 0 && (
-                        <span className="ml-1 bg-sky-700 text-white text-[10px] px-1.5 py-0.2 rounded-full">{comparedDrugs.length}</span>
-                      )}
-                    </button>
-                    <button onClick={() => navigateTo('favorites')} className={`hover:text-sky-700 transition relative ${currentView === 'favorites' ? 'text-sky-700 font-bold border-b-2 border-sky-700 py-5' : ''}`}>
-                      Saved
-                      {favorites.length > 0 && (
-                        <span className="ml-1 bg-amber-500 text-white text-[10px] px-1.5 py-0.2 rounded-full">{favorites.length}</span>
-                      )}
-                    </button>
-                  </nav>
-
-                  <div className="flex items-center gap-2">
-                    {user ? (
-                      <div className="flex items-center gap-2">
-                        <button 
-                          onClick={() => navigateTo('admin')}
-                          className="bg-sky-700 hover:bg-sky-800 text-white text-xs px-3.5 py-2 rounded-lg font-semibold shadow-sm transition flex items-center gap-1.5"
-                        >
-                          <Icon name="shield-check" className="w-4 h-4" />
-                          <span>Admin Portal</span>
-                        </button>
-                        <button 
-                          onClick={() => auth.signOut()}
-                          className="text-slate-500 hover:text-red-600 text-xs font-semibold px-2 py-1"
-                        >
-                          Logout
-                        </button>
-                      </div>
-                    ) : (
-                      <button 
-                        onClick={() => navigateTo('login')}
-                        className="border border-slate-300 hover:border-sky-600 text-slate-700 hover:text-sky-700 text-xs px-3.5 py-2 rounded-lg font-semibold transition"
-                      >
-                        Admin Login
-                      </button>
-                    )}
-
-                    <button 
-                      onClick={() => setMobileMenuOpen(!mobileMenuOpen)} 
-                      className="md:hidden p-2 rounded-lg border border-slate-200 text-slate-600 hover:bg-slate-100"
-                    >
-                      <Icon name={mobileMenuOpen ? "x" : "menu"} className="w-5 h-5" />
-                    </button>
-                  </div>
-                </div>
-
-                {mobileMenuOpen && (
-                  <div className="md:hidden border-t border-slate-200 bg-white px-4 pt-3 pb-4 space-y-2 text-sm font-medium shadow-lg">
-                    <button onClick={() => navigateTo('home')} className="block w-full text-left py-2 px-3 rounded-lg hover:bg-slate-100">Home</button>
-                    <button onClick={() => navigateTo('search')} className="block w-full text-left py-2 px-3 rounded-lg hover:bg-slate-100">Browse & Search Database</button>
-                    <button onClick={() => navigateTo('prices')} className="block w-full text-left py-2 px-3 rounded-lg hover:bg-slate-100">Nepal Price Index</button>
-                    <button onClick={() => navigateTo('compare')} className="block w-full text-left py-2 px-3 rounded-lg hover:bg-slate-100">Drug Comparison ({comparedDrugs.length})</button>
-                    <button onClick={() => navigateTo('favorites')} className="block w-full text-left py-2 px-3 rounded-lg hover:bg-slate-100">Saved Bookmarks ({favorites.length})</button>
-                  </div>
-                )}
-              </header>
-
-              {/* Main App Body */}
-              <main className="flex-grow">
-                {isLoading && currentView !== 'login' && (
-                  <div className="max-w-7xl mx-auto px-4 py-12 text-center text-slate-500">
-                    <div className="inline-block animate-spin rounded-full h-8 w-8 border-4 border-sky-700 border-t-transparent mb-3"></div>
-                    <p className="text-xs font-semibold text-slate-600">Synchronizing database entries...</p>
-                  </div>
-                )}
-
-                {!isLoading && currentView === 'home' && (
-                  <HomeView 
-                    drugs={drugs} 
-                    conditions={conditions} 
-                    prices={prices} 
-                    navigateTo={navigateTo} 
-                    searchQuery={searchQuery}
-                    setSearchQuery={setSearchQuery}
-                    compactMode={compactMode}
-                    favorites={favorites}
-                    toggleFavorite={toggleFavorite}
-                  />
-                )}
-                {currentView === 'search' && (
-                  <SearchResultsView 
-                    drugs={drugs} 
-                    conditions={conditions} 
-                    prices={prices} 
-                    initialQuery={searchQuery}
-                    searchFilter={searchFilter}
-                    setSearchFilter={setSearchFilter}
-                    navigateTo={navigateTo}
-                    compactMode={compactMode}
-                    favorites={favorites}
-                    toggleFavorite={toggleFavorite}
-                  />
-                )}
-                {currentView === 'drug-detail' && (
-                  <DrugDetailView 
-                    drugId={selectedEntityId} 
-                    drugs={drugs} 
-                    prices={prices} 
-                    navigateTo={navigateTo}
-                    comparedDrugs={comparedDrugs}
-                    setComparedDrugs={setComparedDrugs}
-                    favorites={favorites}
-                    toggleFavorite={toggleFavorite}
-                  />
-                )}
-                {currentView === 'condition-detail' && (
-                  <ConditionDetailView 
-                    conditionId={selectedEntityId} 
-                    conditions={conditions} 
-                    drugs={drugs} 
-                    navigateTo={navigateTo}
-                  />
-                )}
-                {currentView === 'prices' && (
-                  <PricesView prices={prices} drugs={drugs} navigateTo={navigateTo} />
-                )}
-                {currentView === 'compare' && (
-                  <CompareView comparedDrugs={comparedDrugs} setComparedDrugs={setComparedDrugs} navigateTo={navigateTo} />
-                )}
-                {currentView === 'favorites' && (
-                  <FavoritesView drugs={drugs} favorites={favorites} toggleFavorite={toggleFavorite} navigateTo={navigateTo} />
-                )}
-                {currentView === 'login' && (
-                  <LoginView navigateTo={navigateTo} />
-                )}
-                {currentView === 'admin' && user && (
-                  <AdminDashboard 
-                    drugs={drugs} 
-                    conditions={conditions} 
-                    prices={prices}
-                    references={references}
-                    refreshData={fetchFirestoreData}
-                  />
-                )}
-                {currentView === 'admin' && !user && (
-                  <div className="max-w-md mx-auto mt-20 p-8 bg-white rounded-xl shadow-md border border-slate-200 text-center">
-                    <h2 className="text-xl font-bold text-slate-900 mb-2">Restricted Portal</h2>
-                    <p className="text-xs text-slate-600 mb-6">Log in with administrator credentials to edit database items or batch import JSON records.</p>
-                    <button onClick={() => navigateTo('login')} className="w-full bg-sky-700 text-white font-semibold py-2.5 rounded-lg shadow hover:bg-sky-800 transition">
-                      Proceed to Admin Login
-                    </button>
-                  </div>
-                )}
-              </main>
-
-              {/* Footer */}
-              <footer className="bg-slate-900 text-slate-400 text-xs py-10 mt-16 border-t border-slate-800">
-                <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col md:flex-row justify-between items-center gap-6">
-                  <div className="text-center md:text-left">
-                    <p className="font-bold text-white text-sm mb-1">DOC Nepal — Clinical Pharmacology Reference</p>
-                    <p className="text-slate-400 max-w-xl">Comprehensive clinical decision support system for medical officers, pharmacists, and healthcare practitioners in Nepal.</p>
-                  </div>
-                  <div className="flex items-center gap-4 text-xs">
-                    <button onClick={() => navigateTo('home')} className="hover:text-white">Home</button>
-                    <button onClick={() => navigateTo('prices')} className="hover:text-white">Price List</button>
-                    <button onClick={() => navigateTo('search')} className="hover:text-white">Database</button>
-                  </div>
-                </div>
-              </footer>
-            </div>
-          );
-        }
-
-        // ==========================================
-        // 3. HOME VIEW
-        // ==========================================
-        function HomeView({ drugs, conditions, prices, navigateTo, searchQuery, setSearchQuery, compactMode, favorites, toggleFavorite }) {
-          const publishedDrugs = useMemo(() => drugs.filter(d => d.published !== false), [drugs]);
-          const publishedConditions = useMemo(() => conditions.filter(c => c.published !== false), [conditions]);
-
-          return (
-            <div>
-              {/* Hero Banner */}
-              <div className="bg-gradient-to-b from-sky-950 via-sky-900 to-slate-900 text-white py-14 sm:py-20 px-4 shadow-inner">
-                <div className="max-w-4xl mx-auto text-center">
-                  <span className="bg-sky-700/50 text-sky-200 text-xs font-semibold px-3 py-1 rounded-full uppercase tracking-wider mb-4 inline-block border border-sky-500/30">
-                    Nepal Clinical Search & Pharmacology Standard
-                  </span>
-                  <h1 className="text-3xl sm:text-5xl font-black tracking-tight mb-4 leading-tight">
-                    Instant Drug Information & Clinical Guidelines
-                  </h1>
-                  <p className="text-sky-100 text-xs sm:text-base mb-8 max-w-2xl mx-auto font-normal leading-relaxed">
-                    Search by generic name, brand, indication, adverse reactions (ADR), or contraindications.
-                  </p>
-                  
-                  {/* Global Search Input Box */}
-                  <form 
-                    onSubmit={(e) => { e.preventDefault(); navigateTo('search'); }} 
-                    className="max-w-2xl mx-auto flex flex-col sm:flex-row bg-white rounded-xl shadow-2xl p-2 border-2 border-sky-400/50 gap-2"
-                  >
-                    <div className="relative flex-1">
-                      <input 
-                        type="text"
-                        value={searchQuery}
-                        onChange={(e) => setSearchQuery(e.target.value)}
-                        placeholder="Search generic, brand, ADR, C/I, dose, or indication..."
-                        className="w-full pl-4 pr-4 py-3 text-slate-800 placeholder-slate-400 text-sm focus:outline-none bg-transparent"
-                      />
-                    </div>
-                    <button type="submit" className="bg-sky-700 hover:bg-sky-800 text-white font-bold px-6 py-3 rounded-lg transition shrink-0 flex items-center justify-center gap-2">
-                      <Icon name="search" className="w-4 h-4" />
-                      <span>Search All</span>
-                    </button>
-                  </form>
-                </div>
-              </div>
-
-              {/* Main Content Grid */}
-              <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
-                <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-                  {/* Drug Monographs Summary List */}
-                  <div className="bg-white rounded-xl shadow-sm border border-slate-200 p-6">
-                    <div className="flex items-center justify-between mb-5">
-                      <div>
-                        <h2 className="text-lg font-bold text-slate-900">Drug Monographs ({publishedDrugs.length})</h2>
-                        <p className="text-xs text-slate-500">Comprehensive dosing, ADR, & contraindications</p>
-                      </div>
-                      <button onClick={() => navigateTo('search')} className="text-xs text-sky-700 font-bold hover:underline">View All &rarr;</button>
-                    </div>
-
-                    {publishedDrugs.length === 0 ? (
-                      <div className="p-8 text-center text-slate-500 text-xs bg-slate-50 rounded-lg border border-dashed border-slate-300">
-                        No published drug records available.
-                      </div>
-                    ) : (
-                      <div className="space-y-3">
-                        {publishedDrugs.slice(0, 6).map((drug) => (
-                          <div 
-                            key={drug.id} 
-                            onClick={() => navigateTo('drug-detail', drug.id)} 
-                            className={`p-4 rounded-xl border border-slate-200 hover:border-sky-500 hover:shadow-md transition cursor-pointer bg-slate-50/50 group ${compactMode ? 'py-2.5' : ''}`}
-                          >
-                            <div className="flex justify-between items-start gap-2">
-                              <div>
-                                <h3 className="font-bold text-slate-900 group-hover:text-sky-700 transition">{drug.genericName}</h3>
-                                <span className="inline-block bg-sky-100 text-sky-800 text-[10px] font-semibold px-2 py-0.5 rounded-md mt-1">{drug.drugClass}</span>
-                              </div>
-                              <button 
-                                onClick={(e) => { e.stopPropagation(); toggleFavorite(drug.id); }} 
-                                className={`text-slate-400 hover:text-amber-500 p-1 ${favorites.includes(drug.id) ? 'text-amber-500 fill-amber-500' : ''}`}
-                              >
-                                <Icon name="star" className="w-4 h-4" />
-                              </button>
-                            </div>
-
-                            {!compactMode && (
-                              <div className="mt-3 text-xs text-slate-600 space-y-1">
-                                <p className="line-clamp-1"><strong>Uses:</strong> {drug.indications}</p>
-                                {drug.priceNPR && <p className="text-emerald-700 font-semibold text-[11px]">Est. Price: {drug.priceNPR}</p>}
-                              </div>
-                            )}
-                          </div>
-                        ))}
-                      </div>
-                    )}
-                  </div>
-
-                  {/* Conditions & Standard Guidelines */}
-                  <div className="bg-white rounded-xl shadow-sm border border-slate-200 p-6">
-                    <div className="flex items-center justify-between mb-5">
-                      <div>
-                        <h2 className="text-lg font-bold text-slate-900">Treatment Guidelines ({publishedConditions.length})</h2>
-                        <p className="text-xs text-slate-500">First-line & alternative drug of choice protocols</p>
-                      </div>
-                      <button onClick={() => navigateTo('search')} className="text-xs text-sky-700 font-bold hover:underline">View All &rarr;</button>
-                    </div>
-
-                    {publishedConditions.length === 0 ? (
-                      <div className="p-8 text-center text-slate-500 text-xs bg-slate-50 rounded-lg border border-dashed border-slate-300">
-                        No published condition guidelines found.
-                      </div>
-                    ) : (
-                      <div className="space-y-3">
-                        {publishedConditions.slice(0, 6).map((cond) => (
-                          <div 
-                            key={cond.id} 
-                            onClick={() => navigateTo('condition-detail', cond.id)} 
-                            className={`p-4 rounded-xl border border-slate-200 hover:border-sky-500 hover:shadow-md transition cursor-pointer bg-slate-50/50 group ${compactMode ? 'py-2.5' : ''}`}
-                          >
-                            <h3 className="font-bold text-slate-900 group-hover:text-sky-700 transition">{cond.name}</h3>
-                            {!compactMode && <p className="text-xs text-slate-600 line-clamp-2 mt-1">{cond.overview}</p>}
-                            <div className="mt-2 flex items-center gap-1.5 text-[11px] text-emerald-800 font-semibold bg-emerald-50 px-2.5 py-1 rounded border border-emerald-200">
-                              <span>DOC (1st Line):</span>
-                              <span className="truncate">{cond.firstLineTreatment}</span>
-                            </div>
-                          </div>
-                        ))}
-                      </div>
-                    )}
-                  </div>
-                </div>
-              </div>
-            </div>
-          );
-        }
-
-        // ==========================================
-        // 4. SEARCH & FILTERING VIEW
-        // ==========================================
-        function SearchResultsView({ drugs, conditions, prices, initialQuery, searchFilter, setSearchFilter, navigateTo, compactMode, favorites, toggleFavorite }) {
-          const [query, setQuery] = useState(initialQuery || '');
-
-          const filteredDrugs = useMemo(() => {
-            const q = query.toLowerCase().trim();
-            if (!q) return drugs;
-            return drugs.filter(d => 
-              d.genericName?.toLowerCase().includes(q) || 
-              d.drugClass?.toLowerCase().includes(q) ||
-              d.indications?.toLowerCase().includes(q) ||
-              d.adverseDrugReactions?.toLowerCase().includes(q) ||
-              d.contraindications?.toLowerCase().includes(q) ||
-              d.precautions?.toLowerCase().includes(q) ||
-              (Array.isArray(d.brandNames) ? d.brandNames.some(b => b.toLowerCase().includes(q)) : d.brandNames?.toLowerCase().includes(q))
-            );
-          }, [drugs, query]);
-
-          const filteredConditions = useMemo(() => {
-            const q = query.toLowerCase().trim();
-            if (!q) return conditions;
-            return conditions.filter(c => 
-              c.name?.toLowerCase().includes(q) ||
-              c.overview?.toLowerCase().includes(q) ||
-              c.firstLineTreatment?.toLowerCase().includes(q) ||
-              c.alternativeTreatments?.toLowerCase().includes(q)
-            );
-          }, [conditions, query]);
-
-          const filteredPrices = useMemo(() => {
-            const q = query.toLowerCase().trim();
-            if (!q) return prices;
-            return prices.filter(p => 
-              p.brandName?.toLowerCase().includes(q) || 
-              p.genericName?.toLowerCase().includes(q) ||
-              p.manufacturer?.toLowerCase().includes(q)
-            );
-          }, [prices, query]);
-
-          return (
-            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-              <div className="bg-white p-5 rounded-xl border border-slate-200 shadow-sm mb-8 space-y-4">
-                <div className="flex flex-col sm:flex-row gap-4 items-center justify-between">
-                  <div className="relative w-full sm:w-96">
-                    <input 
-                      type="text"
-                      value={query}
-                      onChange={(e) => setQuery(e.target.value)}
-                      placeholder="Search drugs, ADR, C/I, brands, conditions..."
-                      className="w-full pl-9 pr-4 py-2.5 bg-slate-50 border border-slate-300 rounded-lg text-xs sm:text-sm focus:outline-none focus:bg-white focus:border-sky-600 shadow-inner"
-                    />
-                    <span className="absolute left-3 top-3 text-slate-400">
-                      <Icon name="search" className="w-4 h-4" />
-                    </span>
-                  </div>
-
-                  <div className="flex items-center gap-1.5 overflow-x-auto w-full sm:w-auto pb-1 sm:pb-0">
-                    {['all', 'drugs', 'conditions', 'prices'].map(f => (
-                      <button 
-                        key={f} 
-                        onClick={() => setSearchFilter(f)} 
-                        className={`px-3.5 py-1.5 rounded-lg text-xs font-semibold capitalize whitespace-nowrap transition ${searchFilter === f ? 'bg-sky-700 text-white shadow-sm' : 'bg-slate-100 hover:bg-slate-200 text-slate-700'}`}
-                      >
-                        {f}
-                      </button>
-                    ))}
-                  </div>
-                </div>
-
-                {query && (
-                  <p className="text-xs text-slate-500">
-                    Found <strong>{filteredDrugs.length}</strong> drugs, <strong>{filteredConditions.length}</strong> conditions, <strong>{filteredPrices.length}</strong> prices.
-                  </p>
-                )}
-              </div>
-
-              <div className="space-y-10">
-                {(searchFilter === 'all' || searchFilter === 'drugs') && (
-                  <div>
-                    <h2 className="text-lg font-bold text-slate-900 mb-4 flex items-center gap-2">
-                      <span>Drugs Monograph ({filteredDrugs.length})</span>
-                    </h2>
-                    {filteredDrugs.length === 0 ? (
-                      <p className="text-xs text-slate-500 italic bg-white p-4 rounded-lg border">No matching drug monographs found.</p>
-                    ) : (
-                      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                        {filteredDrugs.map(drug => (
-                          <div 
-                            key={drug.id} 
-                            onClick={() => navigateTo('drug-detail', drug.id)} 
-                            className="bg-white p-5 rounded-xl border border-slate-200 hover:border-sky-500 shadow-sm hover:shadow transition cursor-pointer flex flex-col justify-between"
-                          >
-                            <div>
-                              <div className="flex justify-between items-start mb-2">
-                                <h3 className="font-bold text-slate-900 text-base">{drug.genericName}</h3>
-                                <button 
-                                  onClick={(e) => { e.stopPropagation(); toggleFavorite(drug.id); }}
-                                  className={`p-1 text-slate-300 hover:text-amber-500 ${favorites.includes(drug.id) ? 'text-amber-500' : ''}`}
-                                >
-                                  <Icon name="star" className="w-4 h-4" />
-                                </button>
-                              </div>
-                              <span className="bg-sky-50 text-sky-700 text-[10px] font-bold px-2 py-0.5 rounded border border-sky-200 mb-3 inline-block">
-                                {drug.drugClass}
-                              </span>
-
-                              <div className="text-xs space-y-1.5 text-slate-600">
-                                <p><strong className="text-slate-700">Uses:</strong> {drug.indications}</p>
-                                {drug.adverseDrugReactions && (
-                                  <p className="line-clamp-2"><strong className="text-slate-700">ADR:</strong> {drug.adverseDrugReactions}</p>
-                                )}
-                                {drug.contraindications && (
-                                  <p className="line-clamp-2"><strong className="text-slate-700">C/I:</strong> {drug.contraindications}</p>
-                                )}
-                              </div>
-                            </div>
-
-                            {drug.priceNPR && (
-                              <div className="mt-4 pt-3 border-t border-slate-100 text-xs font-semibold text-emerald-700">
-                                Price: {drug.priceNPR}
-                              </div>
-                            )}
-                          </div>
-                        ))}
-                      </div>
-                    )}
-                  </div>
-                )}
-
-                {(searchFilter === 'all' || searchFilter === 'conditions') && (
-                  <div>
-                    <h2 className="text-lg font-bold text-slate-900 mb-4">Treatment Protocols ({filteredConditions.length})</h2>
-                    {filteredConditions.length === 0 ? (
-                      <p className="text-xs text-slate-500 italic bg-white p-4 rounded-lg border">No matching condition guidelines found.</p>
-                    ) : (
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        {filteredConditions.map(cond => (
-                          <div key={cond.id} onClick={() => navigateTo('condition-detail', cond.id)} className="bg-white p-5 rounded-xl border border-slate-200 hover:border-sky-500 shadow-sm cursor-pointer">
-                            <h3 className="font-bold text-slate-900 text-base mb-1">{cond.name}</h3>
-                            <p className="text-xs text-slate-600 line-clamp-2 mb-3">{cond.overview}</p>
-                            <div className="text-xs bg-emerald-50 text-emerald-800 p-2 rounded border border-emerald-200 font-medium">
-                              <strong>First Line:</strong> {cond.firstLineTreatment}
-                            </div>
-                          </div>
-                        ))}
-                      </div>
-                    )}
-                  </div>
-                )}
-              </div>
-            </div>
-          );
-        }
-
-        // ==========================================
-        // 5. DRUG DETAIL MONOGRAPH VIEW
-        // ==========================================
-        function DrugDetailView({ drugId, drugs, prices, navigateTo, comparedDrugs, setComparedDrugs, favorites, toggleFavorite }) {
-          const drug = drugs.find(d => d.id === drugId);
-          if (!drug) return <div className="p-12 text-center text-slate-500 text-sm">Drug record not found in database.</div>;
-
-          const isCompared = comparedDrugs.some(d => d.id === drug.id);
-          const isFav = favorites.includes(drug.id);
-
-          return (
-            <div className="max-w-5xl mx-auto px-4 py-8 space-y-6">
-              <div className="bg-white rounded-xl border border-slate-200 p-6 shadow-sm">
-                <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 border-b pb-4 mb-4">
-                  <div>
-                    <span className="bg-sky-100 text-sky-800 text-xs font-bold px-2.5 py-1 rounded-full uppercase tracking-wider">{drug.drugClass}</span>
-                    <h1 className="text-2xl sm:text-3xl font-black text-slate-900 mt-2">{drug.genericName}</h1>
-                  </div>
-
-                  <div className="flex items-center gap-2">
-                    <button 
-                      onClick={() => toggleFavorite(drug.id)}
-                      className={`px-3 py-2 rounded-lg text-xs font-semibold border transition flex items-center gap-1.5 ${isFav ? 'bg-amber-50 border-amber-300 text-amber-800' : 'bg-white border-slate-300 text-slate-700'}`}
-                    >
-                      <Icon name="star" className={`w-4 h-4 ${isFav ? 'fill-amber-500 text-amber-500' : ''}`} />
-                      <span>{isFav ? 'Saved' : 'Save'}</span>
-                    </button>
-
-                    <button 
-                      onClick={() => setComparedDrugs(isCompared ? comparedDrugs.filter(d => d.id !== drug.id) : [...comparedDrugs, drug])}
-                      className={`px-3 py-2 rounded-lg text-xs font-semibold border transition ${isCompared ? 'bg-sky-700 border-sky-700 text-white' : 'bg-white border-slate-300 text-slate-700 hover:bg-slate-50'}`}
-                    >
-                      {isCompared ? 'In Comparison' : '+ Compare'}
-                    </button>
-                  </div>
-                </div>
-
-                {drug.brandNames && (
-                  <div className="text-xs text-slate-700 bg-slate-50 p-3.5 rounded-lg border border-slate-200">
-                    <strong className="text-slate-900">Nepal Brand Names:</strong>{' '}
-                    {Array.isArray(drug.brandNames) ? drug.brandNames.join(', ') : drug.brandNames}
-                  </div>
-                )}
-              </div>
-
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                <div className="md:col-span-2 space-y-6">
-                  <DetailCard title="Indications & Uses" content={drug.indications} alert />
-                  <DetailCard title="Mechanism of Action" content={drug.mechanismOfAction} />
-                  
-                  <div className="bg-white rounded-xl border border-slate-200 p-5 shadow-sm space-y-3">
-                    <h3 className="font-bold text-slate-900 text-sm uppercase tracking-wider text-sky-900 flex items-center gap-2">
-                      <span>Dosage & Administration</span>
-                    </h3>
-                    {drug.adultDose && (
-                      <div className="bg-sky-50/50 p-3 rounded-lg border border-sky-100 text-xs">
-                        <strong className="text-sky-900 block mb-0.5">Adult Dosage:</strong>
-                        <span className="text-slate-700">{drug.adultDose}</span>
-                      </div>
-                    )}
-                    {drug.pediatricDose && (
-                      <div className="bg-slate-50 p-3 rounded-lg border border-slate-200 text-xs">
-                        <strong className="text-slate-900 block mb-0.5">Pediatric Dosage:</strong>
-                        <span className="text-slate-700">{drug.pediatricDose}</span>
-                      </div>
-                    )}
-                  </div>
-
-                  <DetailCard title="Adverse Drug Reactions (ADR)" content={drug.adverseDrugReactions} warning />
-                  <DetailCard title="Contraindications (C/I)" content={drug.contraindications} danger />
-                  <DetailCard title="Precautions & Warnings" content={drug.precautions} alert />
-                </div>
-
-                <div className="space-y-6">
-                  <div className="bg-white rounded-xl border border-slate-200 p-5 shadow-sm">
-                    <h3 className="font-bold text-xs uppercase text-slate-500 tracking-wider mb-3">Nepal Retail Price (NPR)</h3>
-                    {drug.priceNPR ? (
-                      <div className="p-3 bg-emerald-50 text-emerald-900 rounded-lg border border-emerald-200 font-bold text-sm">
-                        {drug.priceNPR}
-                      </div>
-                    ) : (
-                      <p className="text-xs text-slate-500 italic">No price range defined.</p>
-                    )}
-                  </div>
-                </div>
-              </div>
-            </div>
-          );
-        }
-
-        function DetailCard({ title, content, warning, danger, alert }) {
-          if (!content) return null;
-          let colorClasses = "bg-white border-slate-200 text-slate-900";
-          if (danger) colorClasses = "bg-red-50/40 border-red-200 text-red-900";
-          if (warning) colorClasses = "bg-amber-50/40 border-amber-200 text-amber-900";
-          if (alert) colorClasses = "bg-sky-50/30 border-sky-200 text-sky-900";
-
-          return (
-            <div className={`rounded-xl border p-5 shadow-sm ${colorClasses}`}>
-              <h3 className="font-bold text-sm uppercase tracking-wider mb-2">{title}</h3>
-              <p className="text-xs sm:text-sm text-slate-700 leading-relaxed whitespace-pre-line">{content}</p>
-            </div>
-          );
-        }
-
-        // ==========================================
-        // 6. CONDITION DETAIL VIEW
-        // ==========================================
-        function ConditionDetailView({ conditionId, conditions }) {
-          const condition = conditions.find(c => c.id === conditionId);
-          if (!condition) return <div className="p-12 text-center text-slate-500 text-sm">Condition record not found.</div>;
-
-          return (
-            <div className="max-w-4xl mx-auto px-4 py-8 space-y-6">
-              <div className="bg-white rounded-xl border border-slate-200 p-6 shadow-sm">
-                <span className="text-xs font-bold text-sky-700 uppercase tracking-wider">Clinical Protocol</span>
-                <h1 className="text-3xl font-black text-slate-900 mt-1">{condition.name}</h1>
-                <p className="text-xs sm:text-sm text-slate-600 mt-3 leading-relaxed">{condition.overview}</p>
-              </div>
-
-              <DetailCard title="First-Line Treatment (Drug of Choice)" content={condition.firstLineTreatment} alert />
-              <DetailCard title="Alternative Treatments" content={condition.alternativeTreatments} />
-              <DetailCard title="Referral Criteria & Red Flags" content={condition.referralCriteria} danger />
-            </div>
-          );
-        }
-
-        // ==========================================
-        // 7. PRICES & COMPARISON & FAVORITES VIEWS
-        // ==========================================
-        function PricesView({ prices, drugs, navigateTo }) {
-          return (
-            <div className="max-w-7xl mx-auto px-4 py-8">
-              <h1 className="text-2xl font-bold text-slate-900 mb-6">Nepal Medicine Price Index</h1>
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                {drugs.map(d => (
-                  <div key={d.id} onClick={() => navigateTo('drug-detail', d.id)} className="bg-white p-5 rounded-xl border shadow-sm hover:border-sky-500 cursor-pointer">
-                    <h3 className="font-bold text-slate-900">{d.genericName}</h3>
-                    <p className="text-xs text-slate-500 mb-2">{d.drugClass}</p>
-                    <p className="text-xs font-bold text-emerald-700 bg-emerald-50 p-2 rounded border border-emerald-200">
-                      {d.priceNPR || 'Price on request'}
-                    </p>
-                  </div>
-                ))}
-              </div>
-            </div>
-          );
-        }
-
-        function CompareView({ comparedDrugs, setComparedDrugs, navigateTo }) {
-          if (comparedDrugs.length === 0) {
-            return (
-              <div className="max-w-md mx-auto px-4 py-16 text-center space-y-3">
-                <h2 className="text-xl font-bold text-slate-900">No Drugs Selected</h2>
-                <p className="text-xs text-slate-500">Add medicines to side-by-side comparison from any drug page.</p>
-                <button onClick={() => navigateTo('home')} className="bg-sky-700 text-white px-5 py-2 rounded-lg text-xs font-semibold">Browse Monograph</button>
-              </div>
-            );
-          }
-
-          return (
-            <div className="max-w-7xl mx-auto px-4 py-8">
-              <div className="flex justify-between items-center mb-6">
-                <h1 className="text-2xl font-bold text-slate-900">Side-by-Side Comparison</h1>
-                <button onClick={() => setComparedDrugs([])} className="text-xs text-red-600 font-semibold hover:underline">Clear Comparison</button>
-              </div>
-
-              <div className="overflow-x-auto">
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4 min-w-[600px]">
-                  {comparedDrugs.map(d => (
-                    <div key={d.id} className="bg-white rounded-xl border border-slate-200 p-5 shadow-sm space-y-4">
-                      <div className="flex justify-between items-start border-b pb-3">
-                        <div>
-                          <h2 className="font-bold text-base text-slate-900">{d.genericName}</h2>
-                          <span className="text-[10px] font-bold text-sky-700">{d.drugClass}</span>
-                        </div>
-                        <button onClick={() => setComparedDrugs(comparedDrugs.filter(item => item.id !== d.id))} className="text-xs text-slate-400 hover:text-red-600">Remove</button>
-                      </div>
-
-                      <div className="text-xs space-y-3 text-slate-700">
-                        <div><strong className="block text-slate-900">Uses:</strong> {d.indications}</div>
-                        <div><strong className="block text-slate-900">Adult Dose:</strong> {d.adultDose || 'N/A'}</div>
-                        <div><strong className="block text-slate-900">ADR:</strong> {d.adverseDrugReactions || 'N/A'}</div>
-                        <div><strong className="block text-slate-900">Contraindications:</strong> {d.contraindications || 'N/A'}</div>
-                        <div><strong className="block text-emerald-800">Price:</strong> {d.priceNPR || 'N/A'}</div>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            </div>
-          );
-        }
-
-        function FavoritesView({ drugs, favorites, toggleFavorite, navigateTo }) {
-          const favDrugs = drugs.filter(d => favorites.includes(d.id));
-
-          return (
-            <div className="max-w-5xl mx-auto px-4 py-8">
-              <h1 className="text-2xl font-bold text-slate-900 mb-6">Saved Monograph Bookmarks ({favDrugs.length})</h1>
-              {favDrugs.length === 0 ? (
-                <div className="p-8 text-center text-slate-500 bg-white rounded-xl border text-xs">
-                  No saved drugs yet. Click the star icon on any drug monograph to save it for quick reference.
-                </div>
-              ) : (
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  {favDrugs.map(d => (
-                    <div key={d.id} onClick={() => navigateTo('drug-detail', d.id)} className="bg-white p-5 rounded-xl border hover:border-sky-600 shadow-sm cursor-pointer flex justify-between items-start">
-                      <div>
-                        <h3 className="font-bold text-slate-900 text-base">{d.genericName}</h3>
-                        <p className="text-xs text-sky-700 mb-2">{d.drugClass}</p>
-                        <p className="text-xs text-slate-600 line-clamp-2">{d.indications}</p>
-                      </div>
-                      <button onClick={(e) => { e.stopPropagation(); toggleFavorite(d.id); }} className="text-amber-500 p-1">
-                        <Icon name="star" className="w-4 h-4 fill-amber-500" />
-                      </button>
-                    </div>
-                  ))}
-                </div>
-              )}
-            </div>
-          );
-        }
-
-        function LoginView({ navigateTo }) {
-          const [email, setEmail] = useState('');
-          const [password, setPassword] = useState('');
-          const [error, setError] = useState('');
-
-          const handleLogin = async (e) => {
-            e.preventDefault();
-            try {
-              await auth.signInWithEmailAndPassword(email, password);
-              navigateTo('admin');
-            } catch (err) {
-              setError(err.message);
-            }
-          };
-
-          return (
-            <div className="max-w-md mx-auto mt-16 p-8 bg-white rounded-xl shadow border border-slate-200">
-              <h2 className="text-2xl font-bold text-center mb-6 text-slate-900">Admin Authentication</h2>
-              {error && <div className="mb-4 p-3 bg-red-50 text-red-700 text-xs rounded-lg">{error}</div>}
-              <form onSubmit={handleLogin} className="space-y-4">
-                <div>
-                  <label className="block text-xs font-semibold text-slate-700 mb-1">Email</label>
-                  <input type="email" value={email} onChange={e => setEmail(e.target.value)} required className="w-full px-3 py-2 border rounded-lg text-xs focus:outline-none focus:border-sky-600" />
-                </div>
-                <div>
-                  <label className="block text-xs font-semibold text-slate-700 mb-1">Password</label>
-                  <input type="password" value={password} onChange={e => setPassword(e.target.value)} required className="w-full px-3 py-2 border rounded-lg text-xs focus:outline-none focus:border-sky-600" />
-                </div>
-                <button type="submit" className="w-full bg-sky-700 hover:bg-sky-800 text-white py-2.5 rounded-lg text-xs font-semibold transition shadow">Sign In to Dashboard</button>
-              </form>
-            </div>
-          );
-        }
-
-        // ==========================================
-        // 8. ADMIN DASHBOARD
-        // ==========================================
-        function AdminDashboard({ drugs, conditions, prices, references, refreshData }) {
-          const [activeTab, setActiveTab] = useState('editor'); // 'editor' | 'json'
-          const [editingDrug, setEditingDrug] = useState(null);
-          const [status, setStatus] = useState('');
-          const [jsonText, setJsonText] = useState('');
-          const [isSaving, setIsSaving] = useState(false);
-
-          const emptyDrugForm = {
-            id: '',
-            genericName: '',
-            drugClass: '',
-            brandNames: '',
-            indications: '',
-            mechanismOfAction: '',
-            adultDose: '',
-            pediatricDose: '',
-            adverseDrugReactions: '',
-            contraindications: '',
-            precautions: '',
-            priceNPR: '',
-            published: true
-          };
-
-          const [form, setForm] = useState(emptyDrugForm);
-
-          const startEditing = (drug) => {
-            setEditingDrug(drug);
-            setForm({
-              ...drug,
-              brandNames: Array.isArray(drug.brandNames) ? drug.brandNames.join(', ') : (drug.brandNames || '')
-            });
-            setActiveTab('editor');
-            window.scrollTo({ top: 0, behavior: 'smooth' });
-          };
-
-          const saveDrugRecord = async (e) => {
-            e.preventDefault();
-            if (!form.genericName) {
-              setStatus('Error: Generic Name is required.');
-              return;
-            }
-            setIsSaving(true);
-            setStatus('Saving record to Firestore...');
-
-            try {
-              const docId = form.id || form.genericName.toLowerCase().replace(/[^a-z0-9]+/g, '-');
-              const formattedData = {
-                id: docId,
-                genericName: form.genericName.trim(),
-                drugClass: form.drugClass || 'General',
-                brandNames: form.brandNames ? form.brandNames.split(',').map(b => b.trim()) : [],
-                indications: form.indications || '',
-                mechanismOfAction: form.mechanismOfAction || '',
-                adultDose: form.adultDose || '',
-                pediatricDose: form.pediatricDose || '',
-                adverseDrugReactions: form.adverseDrugReactions || '',
-                contraindications: form.contraindications || '',
-                precautions: form.precautions || '',
-                priceNPR: form.priceNPR || '',
-                published: Boolean(form.published),
-                updatedAt: firebase.firestore.FieldValue.serverTimestamp()
-              };
-
-              await db.collection('drugs').doc(docId).set(formattedData, { merge: true });
-              
-              try {
-                await db.collection('auditLogs').add({
-                  action: 'SAVE_DRUG',
-                  targetId: docId,
-                  performedBy: auth.currentUser ? auth.currentUser.uid : 'admin',
-                  timestamp: firebase.firestore.FieldValue.serverTimestamp()
-                });
-              } catch(e) { }
-
-              setStatus(`Success! Drug record '${form.genericName}' updated.`);
-              setForm(emptyDrugForm);
-              setEditingDrug(null);
-              refreshData();
-            } catch (err) {
-              setStatus(`Failed to save: ${err.message}`);
-            } finally {
-              setIsSaving(false);
-            }
-          };
-
-          const deleteDrugRecord = async (id) => {
-            if (!window.confirm("Are you sure you want to delete this drug monograph?")) return;
-            try {
-              await db.collection('drugs').doc(id).delete();
-              setStatus('Record deleted successfully.');
-              refreshData();
-            } catch (err) {
-              setStatus(`Delete error: ${err.message}`);
-            }
-          };
-
-          const handleBulkUpload = async () => {
-            if (!jsonText.trim()) {
-              setStatus('Error: JSON block cannot be empty.');
-              return;
-            }
-            setIsSaving(true);
-            setStatus('Parsing and importing records...');
-
-            try {
-              const parsed = JSON.parse(jsonText);
-              const batch = db.batch();
-              let total = 0;
-
-              if (Array.isArray(parsed.drugs)) {
-                parsed.drugs.forEach(d => {
-                  const id = d.id || d.genericName.toLowerCase().replace(/[^a-z0-9]+/g, '-');
-                  const ref = db.collection('drugs').doc(id);
-                  const validPayload = {
-                    ...d,
-                    id,
-                    genericName: d.genericName || 'Unnamed Drug',
-                    drugClass: d.drugClass || 'Uncategorized',
-                    published: d.published ?? true
-                  };
-                  batch.set(ref, validPayload, { merge: true });
-                  total++;
-                });
-              }
-
-              if (Array.isArray(parsed.conditions)) {
-                parsed.conditions.forEach(c => {
-                  const id = c.id || c.name.toLowerCase().replace(/[^a-z0-9]+/g, '-');
-                  const ref = db.collection('conditions').doc(id);
-                  const validPayload = {
-                    ...c,
-                    id,
-                    name: c.name || 'Unnamed Condition',
-                    published: c.published ?? true
-                  };
-                  batch.set(ref, validPayload, { merge: true });
-                  total++;
-                });
-              }
-
-              await batch.commit();
-              setStatus(`Batch import completed successfully! (${total} items synchronized)`);
-              setJsonText('');
-              refreshData();
-            } catch (err) {
-              setStatus(`Import error: ${err.message}`);
-            } finally {
-              setIsSaving(false);
-            }
-          };
-
-          return (
-            <div className="max-w-7xl mx-auto px-4 py-8 space-y-8">
-              <div className="bg-slate-900 text-white p-6 rounded-xl flex justify-between items-center">
-                <div>
-                  <h1 className="text-xl font-bold">DOC Nepal Clinical Administrative Console</h1>
-                  <p className="text-xs text-slate-400">Manage clinical monographs, price lists, and batch data imports.</p>
-                </div>
-                <div className="flex gap-2">
-                  <button onClick={() => setActiveTab('editor')} className={`px-4 py-2 text-xs font-semibold rounded-lg ${activeTab === 'editor' ? 'bg-sky-600 text-white' : 'bg-slate-800 text-slate-300'}`}>Monograph Form</button>
-                  <button onClick={() => setActiveTab('json')} className={`px-4 py-2 text-xs font-semibold rounded-lg ${activeTab === 'json' ? 'bg-sky-600 text-white' : 'bg-slate-800 text-slate-300'}`}>Batch JSON Upload</button>
-                </div>
-              </div>
-
-              {status && (
-                <div className={`p-4 rounded-xl text-xs font-semibold ${status.startsWith('Error') || status.startsWith('Failed') ? 'bg-red-100 text-red-800 border border-red-200' : 'bg-emerald-100 text-emerald-800 border border-emerald-200'}`}>
-                  {status}
-                </div>
-              )}
-
-              {activeTab === 'editor' ? (
-                <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-                  <div className="lg:col-span-2 bg-white p-6 rounded-xl border border-slate-200 shadow-sm space-y-4">
-                    <h2 className="text-base font-bold text-slate-900">{editingDrug ? `Edit: ${editingDrug.genericName}` : 'Add New Drug Monograph'}</h2>
-                    
-                    <form onSubmit={saveDrugRecord} className="space-y-4 text-xs">
-                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                        <div>
-                          <label className="block font-semibold mb-1">Generic Name *</label>
-                          <input type="text" value={form.genericName} onChange={e => setForm({...form, genericName: e.target.value})} className="w-full p-2.5 border rounded-lg" placeholder="e.g. Paracetamol" required />
-                        </div>
-                        <div>
-                          <label className="block font-semibold mb-1">Drug Class</label>
-                          <input type="text" value={form.drugClass} onChange={e => setForm({...form, drugClass: e.target.value})} className="w-full p-2.5 border rounded-lg" placeholder="e.g. Analgesic & Antipyretic" />
-                        </div>
-                      </div>
-
-                      <div>
-                        <label className="block font-semibold mb-1">Brand Names (Comma separated)</label>
-                        <input type="text" value={form.brandNames} onChange={e => setForm({...form, brandNames: e.target.value})} className="w-full p-2.5 border rounded-lg" placeholder="Cetamol, Metacin, Napa" />
-                      </div>
-
-                      <div>
-                        <label className="block font-semibold mb-1">Indications & Clinical Uses</label>
-                        <textarea rows="3" value={form.indications} onChange={e => setForm({...form, indications: e.target.value})} className="w-full p-2.5 border rounded-lg" />
-                      </div>
-
-                      <div>
-                        <label className="block font-semibold mb-1">Mechanism of Action</label>
-                        <textarea rows="2" value={form.mechanismOfAction} onChange={e => setForm({...form, mechanismOfAction: e.target.value})} className="w-full p-2.5 border rounded-lg" />
-                      </div>
-
-                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                        <div>
-                          <label className="block font-semibold mb-1">Adult Dosage</label>
-                          <textarea rows="2" value={form.adultDose} onChange={e => setForm({...form, adultDose: e.target.value})} className="w-full p-2.5 border rounded-lg" />
-                        </div>
-                        <div>
-                          <label className="block font-semibold mb-1">Pediatric Dosage</label>
-                          <textarea rows="2" value={form.pediatricDose} onChange={e => setForm({...form, pediatricDose: e.target.value})} className="w-full p-2.5 border rounded-lg" />
-                        </div>
-                      </div>
-
-                      <div>
-                        <label className="block font-semibold mb-1">Adverse Drug Reactions (ADR)</label>
-                        <textarea rows="2" value={form.adverseDrugReactions} onChange={e => setForm({...form, adverseDrugReactions: e.target.value})} className="w-full p-2.5 border rounded-lg" />
-                      </div>
-
-                      <div>
-                        <label className="block font-semibold mb-1">Contraindications (C/I)</label>
-                        <textarea rows="2" value={form.contraindications} onChange={e => setForm({...form, contraindications: e.target.value})} className="w-full p-2.5 border rounded-lg" />
-                      </div>
-
-                      <div>
-                        <label className="block font-semibold mb-1">Precautions & Special Warnings</label>
-                        <textarea rows="2" value={form.precautions} onChange={e => setForm({...form, precautions: e.target.value})} className="w-full p-2.5 border rounded-lg" />
-                      </div>
-
-                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 items-center">
-                        <div>
-                          <label className="block font-semibold mb-1">Nepal Retail Price (NPR)</label>
-                          <input type="text" value={form.priceNPR} onChange={e => setForm({...form, priceNPR: e.target.value})} className="w-full p-2.5 border rounded-lg" placeholder="NPR 2.00 per tablet" />
-                        </div>
-                        <div className="flex items-center gap-2 pt-5">
-                          <input type="checkbox" id="published" checked={form.published} onChange={e => setForm({...form, published: e.target.checked})} className="w-4 h-4 rounded text-sky-600" />
-                          <label htmlFor="published" className="font-semibold text-slate-800">Publish immediately</label>
-                        </div>
-                      </div>
-
-                      <div className="flex gap-3 pt-3">
-                        <button type="submit" disabled={isSaving} className="bg-sky-700 hover:bg-sky-800 text-white font-bold px-6 py-2.5 rounded-lg transition shadow">
-                          {isSaving ? 'Saving Record...' : 'Save Monograph'}
-                        </button>
-                        {editingDrug && (
-                          <button type="button" onClick={() => { setEditingDrug(null); setForm(emptyDrugForm); }} className="bg-slate-200 hover:bg-slate-300 text-slate-800 px-4 py-2.5 rounded-lg">
-                            Cancel Edit
-                          </button>
-                        )}
-                      </div>
-                    </form>
-                  </div>
-
-                  <div className="bg-white p-6 rounded-xl border border-slate-200 shadow-sm space-y-4">
-                    <h2 className="text-base font-bold text-slate-900">Database Records ({drugs.length})</h2>
-                    <div className="space-y-3 max-h-[700px] overflow-y-auto custom-scrollbar">
-                      {drugs.map(d => (
-                        <div key={d.id} className="p-3 bg-slate-50 border rounded-lg flex justify-between items-center text-xs">
-                          <div>
-                            <p className="font-bold text-slate-900">{d.genericName}</p>
-                            <p className="text-[10px] text-slate-500">{d.drugClass}</p>
-                          </div>
-                          <div className="flex gap-2">
-                            <button onClick={() => startEditing(d)} className="text-sky-700 hover:underline font-semibold">Edit</button>
-                            <button onClick={() => deleteDrugRecord(d.id)} className="text-red-600 hover:underline font-semibold">Delete</button>
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                </div>
-              ) : (
-                <div className="bg-white p-6 rounded-xl border border-slate-200 shadow-sm space-y-4 max-w-3xl mx-auto">
-                  <h2 className="text-base font-bold text-slate-900">Batch JSON Import</h2>
-                  <p className="text-xs text-slate-600">Paste JSON object containing arrays of <code>drugs</code> and/or <code>conditions</code> to batch upload into Firestore.</p>
-                  
-                  <textarea 
-                    rows="12" 
-                    value={jsonText} 
-                    onChange={e => setJsonText(e.target.value)} 
-                    placeholder={`{\n  "drugs": [\n    {\n      "genericName": "Ciprofloxacin",\n      "drugClass": "Fluoroquinolone Antibiotic",\n      "indications": "UTI, Infectious Diarrhea",\n      "published": true\n    }\n  ]\n}`} 
-                    className="w-full p-3 font-mono text-xs border rounded-lg bg-slate-50 focus:bg-white"
-                  />
-
-                  <button 
-                    onClick={handleBulkUpload} 
-                    disabled={isSaving} 
-                    className="bg-sky-700 hover:bg-sky-800 text-white font-bold px-6 py-2.5 rounded-lg text-xs transition shadow"
-                  >
-                    {isSaving ? 'Processing Batch...' : 'Upload Batch JSON'}
-                  </button>
-                </div>
-              )}
-            </div>
-          );
-        }
-
-        // Render React Application
-        const root = ReactDOM.createRoot(document.getElementById('root'));
-        root.render(<App />);
-    </script>
+<body>
+<div id="root"></div>
+<script type="text/babel">
+const {useState,useEffect,useMemo,useRef}=React;
+
+/* ============ FIREBASE (your existing project) ============ */
+const firebaseConfig={apiKey:"AIzaSyANTEvessOCqYqfzYVX9V11CAN-xjF7ubQ",authDomain:"doc-drug-of-choice.firebaseapp.com",projectId:"doc-drug-of-choice",storageBucket:"doc-drug-of-choice.firebasestorage.app",messagingSenderId:"177639649857",appId:"1:177639649857:web:98d71685c6b31b93084cc0",measurementId:"G-XML2TZYJG7"};
+let auth,db;
+try{if(!firebase.apps.length)firebase.initializeApp(firebaseConfig);auth=firebase.auth();db=firebase.firestore();}catch(e){console.error(e)}
+// Same UID as in your Firestore rules. This only decides which buttons the UI shows; the rules do the real enforcing.
+const ADMIN_UIDS=['XDzOhJQkiRhJ8PNV5V24IopnGyZ2'];
+
+/* ============ SCHEMA: admin forms are generated from this, so every field is editable ============ */
+const SCHEMAS={
+ drugs:{label:'Drugs',one:'drug',title:'genericName',sub:'drugClass',fields:[
+  {k:'genericName',l:'Generic name',req:1},{k:'brandNames',l:'Brand names (comma separated)',t:'list'},{k:'drugClass',l:'Drug class'},
+  {k:'indications',l:'Uses / Indications',t:'area'},{k:'mechanismOfAction',l:'Mechanism of action',t:'area'},
+  {k:'adultDose',l:'Adult dose',t:'area'},{k:'pediatricDose',l:'Pediatric dose',t:'area'},
+  {k:'adverseDrugReactions',l:'Adverse drug reactions (ADR)',t:'area'},{k:'contraindications',l:'Contraindications (C/I)',t:'area'},
+  {k:'published',l:'Visible to the public',t:'bool'}]},
+ conditions:{label:'Conditions',one:'condition',title:'name',sub:'overview',fields:[
+  {k:'name',l:'Condition name',req:1},{k:'overview',l:'Overview',t:'area'},{k:'firstLineTreatment',l:'First-line treatment',t:'area'},
+  {k:'alternativeTreatments',l:'Alternative treatments',t:'area'},{k:'referralCriteria',l:'Referral criteria',t:'area'},
+  {k:'published',l:'Visible to the public',t:'bool'}]},
+ prices:{label:'Prices',one:'price',title:'brandName',sub:'genericName',fields:[
+  {k:'brandName',l:'Brand name',req:1},{k:'genericName',l:'Generic name (must match the drug)',req:1},{k:'strength',l:'Strength / form (e.g. 500 mg tablet)'},
+  {k:'packSize',l:'Pack size'},{k:'manufacturer',l:'Manufacturer'},{k:'priceNPR',l:'Price (NPR)',t:'num',req:1},
+  {k:'verificationStatus',l:'Verification (the public only sees Verified prices)',t:'sel',o:['Verified','Unverified','Outdated']}]},
+ references:{label:'References',one:'reference',title:'title',sub:'publisher',fields:[
+  {k:'title',l:'Title',req:1},{k:'publisher',l:'Publisher'},{k:'publicationDate',l:'Publication date'},{k:'url',l:'Link (URL)'}]}
+};
+const DRUG_SECTIONS=[['indications','Uses'],['dose','Dosage'],['adverseDrugReactions','ADR (side effects)'],['contraindications','C/I (contraindications)'],['mechanismOfAction','Mechanism of action'],['prices','Nepal prices']];
+
+/* ============ HELPERS ============ */
+const slug=s=>String(s||'').toLowerCase().replace(/[^a-z0-9]+/g,'-').replace(/^-|-$/g,'')||('item-'+Date.now());
+const lsGet=(k,d)=>{try{const v=localStorage.getItem(k);return v?JSON.parse(v):d}catch(e){return d}};
+const lsSet=(k,v)=>{try{localStorage.setItem(k,JSON.stringify(v))}catch(e){}};
+const npr=n=>typeof n==='number'?'NPR '+n.toLocaleString('en-IN',{minimumFractionDigits:2,maximumFractionDigits:2}):'—';
+const flat=o=>Object.entries(o).filter(([k])=>!['id','updatedAt','published'].includes(k)).map(([,v])=>Array.isArray(v)?v.join(' '):(v&&typeof v==='object')?'':v).join(' ').toLowerCase();
+const parseRoute=()=>{const [,n='home',id='']=location.hash.replace('#','').split('/');return{n,id:decodeURIComponent(id)}};
+const go=(n,id)=>{location.hash='/'+n+(id?'/'+encodeURIComponent(id):'')};
+function hl(t,toks){
+ if(t==null||t==='')return t; if(!toks||!toks.length)return t;
+ const re=new RegExp('('+toks.map(x=>x.replace(/[.*+?^${}()|[\]\\]/g,'\\$&')).join('|')+')','gi');
+ return String(t).split(re).map((p,i)=>i%2?<mark key={i}>{p}</mark>:p);
+}
+function download(name,obj){const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([JSON.stringify(obj,null,2)],{type:'application/json'}));a.download=name;a.click();}
+
+/* ============ APP ============ */
+function App(){
+ const [route,setRoute]=useState(parseRoute());
+ const [data,setData]=useState({drugs:[],conditions:[],prices:[],references:[]});
+ const [loaded,setLoaded]=useState({});
+ const [err,setErr]=useState('');
+ const [user,setUser]=useState(null);
+ const [adm,setAdm]=useState(false); // false = not admin, null = checking, true = admin
+ const [q,setQ]=useState('');
+ const [prefs,setPrefs]=useState(()=>({theme:'light',size:'m',compact:false,sections:{indications:1,dose:1,adverseDrugReactions:1,contraindications:1,mechanismOfAction:1,prices:1},...lsGet('doc_prefs',{})}));
+ const [favs,setFavs]=useState(()=>lsGet('doc_favs',[]));
+ const [recent,setRecent]=useState(()=>lsGet('doc_recent',[]));
+ const [cmp,setCmp]=useState([]);
+ const [editor,setEditor]=useState(null);
+ const [toast,setToast]=useState('');
+
+ useEffect(()=>{const f=()=>{setRoute(parseRoute());window.scrollTo(0,0)};window.addEventListener('hashchange',f);return()=>window.removeEventListener('hashchange',f)},[]);
+ useEffect(()=>{if(!auth)return;return auth.onAuthStateChanged(async u=>{
+  setUser(u);if(!u){setAdm(false);return}setAdm(null);
+  try{const r=await u.getIdTokenResult(true);setAdm(r.claims.admin===true||ADMIN_UIDS.includes(u.uid))}catch(e){setAdm(ADMIN_UIDS.includes(u.uid))}
+ })},[]);
+ useEffect(()=>{
+  if(!db){setErr('Firebase did not start. Check your connection.');return}
+  if(adm===null)return; // still checking admin status
+  // Your rules only let the public read published drugs/conditions and Verified prices,
+  // so the query itself must filter, otherwise Firestore rejects the whole read.
+  const qf=c=>{const r=db.collection(c);if(adm===true)return r;
+   if(c==='drugs'||c==='conditions')return r.where('published','==',true);
+   if(c==='prices')return r.where('verificationStatus','==','Verified');return r};
+  const offs=Object.keys(SCHEMAS).map(c=>qf(c).onSnapshot(s=>{
+    setData(d=>({...d,[c]:s.docs.map(x=>({id:x.id,...x.data()}))}));setLoaded(l=>({...l,[c]:1}));setErr('');
+  },e=>{console.error(e);setErr('Could not read "'+c+'": '+e.message)}));
+  return()=>offs.forEach(o=>o());
+ },[adm]);
+ useEffect(()=>{
+  const h=document.documentElement;h.classList.toggle('dark',prefs.theme==='dark');
+  h.classList.toggle('fs-l',prefs.size==='l');h.classList.toggle('fs-s',prefs.size==='s');lsSet('doc_prefs',prefs);
+ },[prefs]);
+ useEffect(()=>lsSet('doc_favs',favs),[favs]);
+ useEffect(()=>lsSet('doc_recent',recent),[recent]);
+ useEffect(()=>{if(toast){const t=setTimeout(()=>setToast(''),2500);return()=>clearTimeout(t)}},[toast]);
+
+ const isAdmin=adm===true;
+ const vis=useMemo(()=>{const o={};for(const c in data)o[c]=data[c].filter(x=>isAdmin||x.published!==false);return o},[data,isAdmin]);
+ const pricesByGeneric=useMemo(()=>{const m={};vis.prices.forEach(p=>{const k=(p.genericName||'').toLowerCase().trim();(m[k]=m[k]||[]).push(p)});return m},[vis.prices]);
+
+ // One search index over everything: drugs (incl. their brands and prices), conditions, prices, references
+ const index=useMemo(()=>{
+  const L=[];
+  vis.drugs.forEach(d=>{const ps=pricesByGeneric[(d.genericName||'').toLowerCase().trim()]||[];
+   L.push({type:'drugs',id:d.id,item:d,name:(d.genericName+' '+(d.brandNames||[]).join(' ')).toLowerCase(),text:flat(d)+' '+ps.map(p=>flat(p)).join(' ')})});
+  vis.conditions.forEach(c=>L.push({type:'conditions',id:c.id,item:c,name:(c.name||'').toLowerCase(),text:flat(c)}));
+  vis.prices.forEach(p=>L.push({type:'prices',id:p.id,item:p,name:((p.brandName||'')+' '+(p.genericName||'')).toLowerCase(),text:flat(p)}));
+  vis.references.forEach(r=>L.push({type:'references',id:r.id,item:r,name:(r.title||'').toLowerCase(),text:flat(r)}));
+  return L;
+ },[vis,pricesByGeneric]);
+ const toks=useMemo(()=>q.toLowerCase().split(/\s+/).filter(Boolean),[q]);
+ const results=useMemo(()=>{
+  if(!toks.length)return[];
+  return index.filter(r=>toks.every(t=>r.text.includes(t)||r.name.includes(t)))
+   .map(r=>({...r,score:toks.reduce((s,t)=>s+(r.name.startsWith(t)?4:r.name.includes(t)?2:0),0)}))
+   .sort((a,b)=>b.score-a.score);
+ },[index,toks]);
+
+ const ctx={route,data,vis,user,isAdmin,q,setQ,prefs,setPrefs,favs,setFavs,recent,setRecent,cmp,setCmp,editor,setEditor,toast:setToast,results,toks,pricesByGeneric,index};
+ const ready=loaded.drugs&&loaded.conditions&&loaded.prices&&loaded.references;
+ const n=route.n;
+ const nav=[['home','Home'],['search','Search'],['prices','Prices'],['favorites','Saved ('+favs.length+')'],['compare','Compare ('+cmp.length+')'],['references','References'],['settings','Settings']];
+
+ return(<div className="min-h-screen flex flex-col">
+  <header className="sticky top-0 z-40 border-b" style={{background:'var(--card)',borderColor:'var(--ln)'}}>
+   <div className="max-w-6xl mx-auto px-4 h-14 flex items-center gap-4">
+    <button onClick={()=>go('home')} className="flex items-baseline gap-2 shrink-0" aria-label="DOC Nepal home">
+     <span className="serif text-xl font-bold" style={{color:'var(--br)'}}>DOC Nepal</span><span className="mu text-xs hidden sm:inline">Drug of Choice</span>
+    </button>
+    <nav className="flex gap-1 overflow-x-auto hide-sb flex-1" aria-label="Main">
+     {nav.map(([k,l])=><button key={k} onClick={()=>go(k)} className={'btn2 whitespace-nowrap '+(n===k?'on':'')} style={n===k?{}:{border:'none',background:'transparent'}}>{l}</button>)}
+    </nav>
+    {user?<div className="flex gap-2 shrink-0">{isAdmin&&<button className="btn" onClick={()=>go('admin')}>Admin</button>}<button className="btn2" onClick={()=>auth.signOut()}>Log out</button></div>
+     :<button className="btn2 shrink-0" onClick={()=>go('login')}>Admin login</button>}
+   </div>
+  </header>
+  {err&&<div className="text-sm text-center py-2" style={{background:'var(--rds)',color:'var(--rd)'}}>{err}</div>}
+  <main className="flex-1">
+   {!ready&&n!=='login'&&n!=='settings'&&!err?<div className="text-center py-20 mu">Loading the drug database…</div>:<>
+    {n==='home'&&<Home {...ctx}/>}
+    {n==='search'&&<Search {...ctx}/>}
+    {n==='drug'&&<DrugPage {...ctx}/>}
+    {n==='condition'&&<ConditionPage {...ctx}/>}
+    {n==='prices'&&<Prices {...ctx}/>}
+    {n==='favorites'&&<Favorites {...ctx}/>}
+    {n==='compare'&&<Compare {...ctx}/>}
+    {n==='references'&&<References {...ctx}/>}
+    {n==='settings'&&<Settings {...ctx}/>}
+    {n==='login'&&<Login/>}
+    {n==='admin'&&(isAdmin?<Admin {...ctx}/>:user&&adm===null?<div className="text-center py-20 mu">Checking admin access…</div>:<div className="max-w-md mx-auto mt-16 card p-8 text-center"><p className="mb-4">{user?'This account is not an administrator, so it cannot edit records.':'Log in as an administrator to manage records.'}</p>{!user&&<button className="btn" onClick={()=>go('login')}>Go to login</button>}</div>)}
+   </>}
+  </main>
+  <footer className="text-xs text-center py-6 mu border-t" style={{borderColor:'var(--ln)'}}>
+   Reference for healthcare professionals. It does not replace clinical judgment. Prices are indicative; check the label and the latest market rate.
+  </footer>
+  {editor&&<Editor {...ctx}/>}
+  {toast&&<div role="status" className="fixed bottom-5 left-1/2 -translate-x-1/2 px-4 py-2 rounded-lg text-sm font-semibold shadow-lg z-50" style={{background:'var(--tx)',color:'var(--bg)'}}>{toast}</div>}
+ </div>);
+}
+
+/* ============ SMALL SHARED PIECES ============ */
+function SearchBox({q,setQ,big,index,toks}){
+ const [open,setOpen]=useState(false);
+ const sug=useMemo(()=>{if(!toks.length)return[];return index.filter(r=>toks.every(t=>r.name.includes(t))).slice(0,6)},[index,toks]);
+ return(<div className="relative">
+  <form onSubmit={e=>{e.preventDefault();setOpen(false);go('search')}}>
+   <input className="inp" style={big?{padding:'.9rem 1rem',fontSize:'1.05rem'}:{}} value={q} onChange={e=>{setQ(e.target.value);setOpen(true)}} onFocus={()=>setOpen(true)}
+    placeholder="Search drug, brand, use, side effect, C/I, condition, price…" aria-label="Search"/>
+  </form>
+  {open&&sug.length>0&&<div className="card absolute left-0 right-0 mt-1 z-30 overflow-hidden shadow-lg">
+   {sug.map(r=><button key={r.type+r.id} className="w-full text-left px-4 py-2 hover:opacity-80 flex justify-between gap-2 border-b" style={{borderColor:'var(--ln)'}}
+    onClick={()=>{setOpen(false);r.type==='drugs'?go('drug',r.id):r.type==='conditions'?go('condition',r.id):go('search')}}>
+    <span>{hl(r.item.genericName||r.item.name||r.item.brandName||r.item.title,toks)}</span><span className="tag">{r.type}</span></button>)}
+   <button className="w-full text-left px-4 py-2 text-sm mu" onClick={()=>{setOpen(false);go('search')}}>See all results</button>
+  </div>}
+ </div>);
+}
+const Empty=({children})=><div className="card p-8 text-center mu text-sm">{children}</div>;
+function Star({id,favs,setFavs}){
+ const on=favs.includes(id);
+ return <button className={'btn2 '+(on?'on':'')} aria-pressed={on} onClick={()=>setFavs(on?favs.filter(x=>x!==id):[...favs,id])}>{on?'★ Saved':'☆ Save'}</button>;
+}
+function AdminBtns({coll,item,ctx,small}){
+ if(!ctx.isAdmin)return null;
+ return <span className="inline-flex gap-1"><button className="btn2" style={small?{padding:'.15rem .5rem',fontSize:'.75rem'}:{}} onClick={e=>{e.stopPropagation();ctx.setEditor({coll,item})}}>Edit</button>
+  <button className="btn2 dng" style={small?{padding:'.15rem .5rem',fontSize:'.75rem'}:{}} onClick={e=>{e.stopPropagation();delRec(coll,item,ctx)}}>Delete</button></span>;
+}
+async function delRec(coll,item,ctx){
+ if(!confirm('Delete "'+(item[SCHEMAS[coll].title]||item.id)+'"? This cannot be undone.'))return;
+ try{await db.collection(coll).doc(item.id).delete();ctx.toast('Deleted');if(ctx.route.n==='drug'||ctx.route.n==='condition')go('home')}catch(e){ctx.toast('Delete failed: '+e.message)}
+}
+function DrugCard({d,toks,pricesByGeneric,compact,favs}){
+ const ps=pricesByGeneric[(d.genericName||'').toLowerCase().trim()]||[];
+ const min=ps.length?Math.min(...ps.map(p=>p.priceNPR).filter(x=>typeof x==='number')):null;
+ return(<button onClick={()=>go('drug',d.id)} className="card p-4 text-left w-full hover:shadow-md transition" style={{borderLeft:'4px solid var(--br)'}}>
+  <div className="flex justify-between gap-2 items-start"><div className="serif text-lg font-bold">{hl(d.genericName,toks)} {favs.includes('drugs:'+d.id)&&<span style={{color:'var(--am)'}}>★</span>}</div>
+   {d.published===false&&<span className="tag p">Draft</span>}</div>
+  <div className="text-sm" style={{color:'var(--brd)'}}>{hl(d.drugClass,toks)}</div>
+  {d.brandNames?.length>0&&<div className="text-xs mu mt-1">Brands: {hl(d.brandNames.join(', '),toks)}</div>}
+  {!compact&&d.indications&&<p className="text-sm mt-2 line-clamp-2">{hl(d.indications,toks)}</p>}
+  {Number.isFinite(min)&&<div className="text-xs mt-2 font-semibold" style={{color:'var(--am)'}}>From {npr(min)}</div>}
+ </button>);
+}
+
+/* ============ HOME ============ */
+function Home(c){
+ const {vis,favs,recent,setQ,prefs}=c;
+ const classes=useMemo(()=>{const m={};vis.drugs.forEach(d=>d.drugClass&&(m[d.drugClass]=(m[d.drugClass]||0)+1));return Object.entries(m).sort((a,b)=>b[1]-a[1]).slice(0,10)},[vis.drugs]);
+ const favDrugs=vis.drugs.filter(d=>favs.includes('drugs:'+d.id));
+ const pick=t=>{setQ(t);go('search')};
+ return(<div className="max-w-6xl mx-auto px-4 py-8 space-y-8">
+  <section className="py-6">
+   <h1 className="serif text-3xl sm:text-4xl font-bold mb-2">Find the right drug, dose and price.</h1>
+   <p className="mu mb-5 max-w-xl">Uses, side effects, contraindications and Nepal prices in one place. Type anything: a drug, a brand, a symptom or a price.</p>
+   <SearchBox {...c} big/>
+   {recent.length>0&&<div className="flex flex-wrap gap-2 mt-3 items-center"><span className="text-xs mu">Recent:</span>
+    {recent.slice(0,6).map(r=><button key={r} className="btn2" style={{padding:'.15rem .6rem',fontSize:'.8rem'}} onClick={()=>pick(r)}>{r}</button>)}
+    <button className="text-xs mu underline" onClick={()=>c.setRecent([])}>Clear</button></div>}
+  </section>
+  {classes.length>0&&<section><h2 className="font-bold mb-2">Browse by drug class</h2>
+   <div className="flex flex-wrap gap-2">{classes.map(([k,v])=><button key={k} className="btn2" onClick={()=>pick(k)}>{k} <span className="mu">{v}</span></button>)}</div></section>}
+  {favDrugs.length>0&&<section><h2 className="font-bold mb-2">Your saved drugs</h2>
+   <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-3">{favDrugs.map(d=><DrugCard key={d.id} d={d} {...c} toks={[]} compact/>)}</div></section>}
+  <section><div className="flex justify-between items-center mb-2"><h2 className="font-bold">All drugs ({vis.drugs.length})</h2>
+   {c.isAdmin&&<button className="btn" onClick={()=>c.setEditor({coll:'drugs',item:null})}>+ Add drug</button>}</div>
+   {vis.drugs.length===0?<Empty>No drugs yet. {c.isAdmin?'Use “Add drug” above.':'An administrator needs to add records.'}</Empty>:
+   <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-3">{[...vis.drugs].sort((a,b)=>(a.genericName||'').localeCompare(b.genericName||'')).slice(0,12).map(d=><DrugCard key={d.id} d={d} {...c} toks={[]} compact={prefs.compact}/>)}</div>}
+   {vis.drugs.length>12&&<button className="btn2 mt-3" onClick={()=>{setQ(' ');go('search')}}>Show all drugs</button>}
+  </section>
+  {vis.conditions.length>0&&<section><h2 className="font-bold mb-2">Conditions ({vis.conditions.length})</h2>
+   <div className="grid sm:grid-cols-2 gap-3">{vis.conditions.slice(0,6).map(x=><button key={x.id} onClick={()=>go('condition',x.id)} className="card p-4 text-left hover:shadow-md">
+    <div className="serif font-bold text-lg">{x.name}</div>{x.firstLineTreatment&&<div className="text-sm mt-1" style={{color:'var(--brd)'}}>First-line: {x.firstLineTreatment.slice(0,110)}</div>}</button>)}</div></section>}
+ </div>);
+}
+
+/* ============ SEARCH ============ */
+function Search(c){
+ const {results,toks,q,setQ,recent,setRecent,prefs,vis}=c;
+ const [type,setType]=useState('all');
+ const [sort,setSort]=useState('rel');
+ useEffect(()=>{const t=q.trim();if(t.length>2){const id=setTimeout(()=>setRecent([t,...recent.filter(x=>x!==t)].slice(0,8)),1200);return()=>clearTimeout(id)}},[q]);
+ const all=toks.length?results:c.index.filter(()=>true).slice(0,0);
+ const counts={all:all.length};all.forEach(r=>counts[r.type]=(counts[r.type]||0)+1);
+ let list=type==='all'?all:all.filter(r=>r.type===type);
+ if(sort==='az')list=[...list].sort((a,b)=>a.name.localeCompare(b.name));
+ if(sort==='price')list=[...list].sort((a,b)=>(a.item.priceNPR??1e12)-(b.item.priceNPR??1e12));
+ const label={drugs:'Drugs',conditions:'Conditions',prices:'Prices',references:'References'};
+ return(<div className="max-w-6xl mx-auto px-4 py-6 space-y-4">
+  <SearchBox {...c}/>
+  <div className="flex flex-wrap gap-2 items-center justify-between">
+   <div className="flex flex-wrap gap-2">{['all','drugs','conditions','prices','references'].map(t=><button key={t} className={'btn2 '+(type===t?'on':'')} onClick={()=>setType(t)}>{t==='all'?'Everything':label[t]} <span className="mu">{counts[t]||0}</span></button>)}</div>
+   <select className="inp" style={{width:'auto'}} value={sort} onChange={e=>setSort(e.target.value)} aria-label="Sort"><option value="rel">Best match</option><option value="az">A to Z</option><option value="price">Lowest price</option></select>
+  </div>
+  {!toks.length?<Empty>Type above to search. Try “headache”, “renal impairment”, “amoxicillin”, or a brand name.</Empty>
+   :list.length===0?<Empty>Nothing matched “{q}”. Check the spelling or try fewer words.</Empty>
+   :<div className="grid md:grid-cols-2 gap-3">{list.slice(0,80).map(r=>{
+     const x=r.item;
+     if(r.type==='drugs')return <DrugCard key={'d'+r.id} d={x} {...c} compact={prefs.compact}/>;
+     if(r.type==='conditions')return(<button key={'c'+r.id} onClick={()=>go('condition',x.id)} className="card p-4 text-left hover:shadow-md"><span className="tag">Condition</span><div className="serif font-bold text-lg mt-1">{hl(x.name,toks)}</div><p className="text-sm mu line-clamp-2">{hl(x.overview,toks)}</p></button>);
+     if(r.type==='prices')return(<div key={'p'+r.id} className="card p-4 flex justify-between gap-3"><div><span className="tag p">Price</span><div className="font-bold mt-1">{hl(x.brandName,toks)} <span className="mu font-normal text-sm">{hl(x.strength,toks)}</span></div><div className="text-sm mu">{hl(x.genericName,toks)} · {hl(x.manufacturer,toks)}</div></div><div className="text-right font-bold" style={{color:'var(--am)'}}>{npr(x.priceNPR)}</div></div>);
+     return(<div key={'r'+r.id} className="card p-4"><span className="tag">Reference</span><div className="font-bold mt-1">{hl(x.title,toks)}</div><div className="text-sm mu">{hl(x.publisher,toks)} {x.publicationDate}</div></div>);
+   })}</div>}
+ </div>);
+}
+
+/* ============ DRUG PAGE ============ */
+function Sec({title,children,alert,open=true,id}){
+ return(<details open={open} id={id} className="card" style={alert?{borderColor:'var(--rd)'}:{}}>
+  <summary className="px-5 py-3 flex items-center gap-2 font-bold" style={alert?{color:'var(--rd)'}:{color:'var(--brd)'}}><span className="chev">▸</span>{title}</summary>
+  <div className="px-5 pb-4 text-[0.95rem] leading-relaxed whitespace-pre-line">{children}</div></details>);
+}
+function DrugPage(c){
+ const {route,data,vis,prefs,pricesByGeneric,cmp,setCmp,favs,setFavs,isAdmin}=c;
+ const d=data.drugs.find(x=>x.id===route.id);
+ if(!d)return <div className="p-16 text-center mu">Drug not found. <button className="underline" onClick={()=>go('home')}>Back to home</button></div>;
+ const ps=(pricesByGeneric[(d.genericName||'').toLowerCase().trim()]||[]).slice().sort((a,b)=>(a.priceNPR??1e12)-(b.priceNPR??1e12));
+ const inC=cmp.includes(d.id);
+ const S=prefs.sections;
+ const jump=DRUG_SECTIONS.filter(([k])=>S[k]);
+ return(<div className="max-w-4xl mx-auto px-4 py-6 space-y-4">
+  <button className="text-sm mu" onClick={()=>history.length>1?history.back():go('home')}>← Back</button>
+  <div className="card p-5">
+   <div className="flex flex-wrap justify-between gap-3">
+    <div><div className="flex gap-2 items-center">{d.drugClass&&<span className="tag">{d.drugClass}</span>}{d.published===false&&<span className="tag p">Draft: hidden from public</span>}</div>
+     <h1 className="serif text-3xl font-bold mt-1">{d.genericName}</h1></div>
+    <div className="flex flex-wrap gap-2 items-start">
+     <Star id={'drugs:'+d.id} favs={favs} setFavs={setFavs}/>
+     <button className={'btn2 '+(inC?'on':'')} onClick={()=>setCmp(inC?cmp.filter(x=>x!==d.id):[...cmp,d.id].slice(-4))}>{inC?'✓ In compare':'+ Compare'}</button>
+     <AdminBtns coll="drugs" item={d} ctx={c}/>
+    </div>
+   </div>
+   {d.brandNames?.length>0&&<p className="text-sm mt-3"><b>Brands in Nepal:</b> {d.brandNames.join(', ')}</p>}
+   <div className="flex flex-wrap gap-2 mt-4">{jump.map(([k,l])=><a key={k} href={'#/drug/'+encodeURIComponent(d.id)} onClick={e=>{e.preventDefault();const el=document.getElementById('s-'+k);if(el){el.open=true;el.scrollIntoView({behavior:'smooth',block:'start'})}}} className="btn2" style={{padding:'.2rem .7rem',fontSize:'.8rem'}}>{l}</a>)}</div>
+  </div>
+  {S.indications&&d.indications&&<Sec id="s-indications" title="Uses and indications">{d.indications}</Sec>}
+  {S.dose&&(d.adultDose||d.pediatricDose)&&<Sec id="s-dose" title="Dosage">{d.adultDose&&<p><b>Adult:</b> {d.adultDose}</p>}{d.pediatricDose&&<p className="mt-2"><b>Pediatric:</b> {d.pediatricDose}</p>}</Sec>}
+  {S.adverseDrugReactions&&d.adverseDrugReactions&&<Sec id="s-adverseDrugReactions" title="Adverse drug reactions (ADR)">{d.adverseDrugReactions}</Sec>}
+  {S.contraindications&&d.contraindications&&<Sec id="s-contraindications" title="Contraindications (C/I)" alert>{d.contraindications}</Sec>}
+  {S.mechanismOfAction&&d.mechanismOfAction&&<Sec id="s-mechanismOfAction" title="Mechanism of action" open={false}>{d.mechanismOfAction}</Sec>}
+  {S.prices&&<Sec id="s-prices" title={'Nepal prices ('+ps.length+')'}>
+   {ps.length===0?<span className="mu">No prices recorded for this drug yet.</span>:
+   <div className="overflow-x-auto"><table className="w-full text-sm whitespace-normal"><thead className="text-left mu"><tr><th className="py-1">Brand</th><th>Strength</th><th>Maker</th><th className="text-right">Price</th>{isAdmin&&<th></th>}</tr></thead>
+    <tbody>{ps.map(p=><tr key={p.id} className="border-t" style={{borderColor:'var(--ln)'}}><td className="py-2 font-semibold">{p.brandName}</td><td>{p.strength||p.packSize||'—'}</td><td>{p.manufacturer}</td><td className="text-right font-bold" style={{color:'var(--am)'}}>{npr(p.priceNPR)}</td>{isAdmin&&<td className="text-right"><AdminBtns coll="prices" item={p} ctx={c} small/></td>}</tr>)}</tbody></table></div>}
+   {isAdmin&&<button className="btn2 mt-3" onClick={()=>c.setEditor({coll:'prices',item:null,preset:{genericName:d.genericName}})}>+ Add price for {d.genericName}</button>}
+  </Sec>}
+ </div>);
+}
+
+function ConditionPage(c){
+ const {route,data}=c;const x=data.conditions.find(y=>y.id===route.id);
+ if(!x)return <div className="p-16 text-center mu">Condition not found.</div>;
+ return(<div className="max-w-4xl mx-auto px-4 py-6 space-y-4">
+  <button className="text-sm mu" onClick={()=>history.length>1?history.back():go('home')}>← Back</button>
+  <div className="card p-5 flex justify-between gap-3 flex-wrap"><div><h1 className="serif text-3xl font-bold">{x.name}</h1><p className="mt-2 mu">{x.overview}</p></div><AdminBtns coll="conditions" item={x} ctx={c}/></div>
+  {x.firstLineTreatment&&<Sec title="First-line treatment">{x.firstLineTreatment}</Sec>}
+  {x.alternativeTreatments&&<Sec title="Alternative treatments">{x.alternativeTreatments}</Sec>}
+  {x.referralCriteria&&<Sec title="When to refer" alert>{x.referralCriteria}</Sec>}
+ </div>);
+}
+
+/* ============ PRICES ============ */
+function Prices(c){
+ const {vis,isAdmin}=c;
+ const [f,setF]=useState('');const [s,setS]=useState({k:'brandName',dir:1});
+ const toks=f.toLowerCase().split(/\s+/).filter(Boolean);
+ let rows=vis.prices.filter(p=>toks.every(t=>flat(p).includes(t)));
+ rows=[...rows].sort((a,b)=>{const x=a[s.k],y=b[s.k];return (typeof x==='number'||typeof y==='number'?(x??1e12)-(y??1e12):String(x||'').localeCompare(String(y||'')))*s.dir});
+ const th=(k,l,r)=><th className={'p-3 cursor-pointer select-none '+(r?'text-right':'')} onClick={()=>setS({k,dir:s.k===k?-s.dir:1})}>{l}{s.k===k?(s.dir>0?' ▲':' ▼'):''}</th>;
+ return(<div className="max-w-6xl mx-auto px-4 py-6 space-y-4">
+  <div className="flex flex-wrap gap-3 justify-between items-center"><h1 className="serif text-2xl font-bold">Nepal medicine prices</h1>
+   {isAdmin&&<button className="btn" onClick={()=>c.setEditor({coll:'prices',item:null})}>+ Add price</button>}</div>
+  <input className="inp" placeholder="Filter by brand, generic, maker, strength…" value={f} onChange={e=>setF(e.target.value)} aria-label="Filter prices"/>
+  {rows.length===0?<Empty>No prices match.</Empty>:
+  <div className="card overflow-x-auto"><table className="w-full text-sm"><thead className="text-left" style={{background:'var(--soft)'}}><tr>{th('brandName','Brand')}{th('genericName','Generic')}{th('strength','Strength')}{th('manufacturer','Maker')}{th('priceNPR','Price',1)}{isAdmin&&<th></th>}</tr></thead>
+   <tbody>{rows.map(p=><tr key={p.id} className="border-t" style={{borderColor:'var(--ln)'}}>
+    <td className="p-3 font-semibold">{hl(p.brandName,toks)}</td><td className="p-3">{hl(p.genericName,toks)}</td><td className="p-3">{hl(p.strength||p.packSize||'',toks)}</td>
+    <td className="p-3 mu">{hl(p.manufacturer,toks)}</td><td className="p-3 text-right font-bold" style={{color:'var(--am)'}}>{npr(p.priceNPR)}</td>
+    {isAdmin&&<td className="p-3 text-right"><AdminBtns coll="prices" item={p} ctx={c} small/></td>}</tr>)}</tbody></table></div>}
+ </div>);
+}
+
+/* ============ SAVED / COMPARE / REFERENCES / SETTINGS ============ */
+function Favorites(c){
+ const list=c.vis.drugs.filter(d=>c.favs.includes('drugs:'+d.id));
+ return(<div className="max-w-6xl mx-auto px-4 py-6"><h1 className="serif text-2xl font-bold mb-4">Saved drugs</h1>
+  {list.length===0?<Empty>Nothing saved yet. Open a drug and tap “Save” to keep it here.</Empty>:<div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-3">{list.map(d=><DrugCard key={d.id} d={d} {...c} toks={[]} compact={c.prefs.compact}/>)}</div>}</div>);
+}
+function Compare(c){
+ const list=c.cmp.map(id=>c.data.drugs.find(d=>d.id===id)).filter(Boolean);
+ if(!list.length)return <div className="max-w-xl mx-auto px-4 py-16"><Empty>Pick up to 4 drugs with “+ Compare” on a drug page to see them side by side.</Empty></div>;
+ const rows=[['Class','drugClass'],['Uses','indications'],['Adult dose','adultDose'],['Pediatric dose','pediatricDose'],['ADR','adverseDrugReactions'],['C/I','contraindications']];
+ return(<div className="max-w-6xl mx-auto px-4 py-6"><div className="flex justify-between mb-4"><h1 className="serif text-2xl font-bold">Compare drugs</h1><button className="btn2" onClick={()=>c.setCmp([])}>Clear</button></div>
+  <div className="card overflow-x-auto"><table className="w-full text-sm align-top" style={{minWidth:640}}><thead><tr><th className="p-3 w-28"></th>{list.map(d=><th key={d.id} className="p-3 text-left serif text-lg"><button onClick={()=>go('drug',d.id)}>{d.genericName}</button></th>)}</tr></thead>
+   <tbody>{rows.map(([l,k])=><tr key={k} className="border-t align-top" style={{borderColor:'var(--ln)'}}><td className="p-3 font-bold mu">{l}</td>{list.map(d=><td key={d.id} className="p-3 whitespace-pre-line">{d[k]||'—'}</td>)}</tr>)}
+    <tr className="border-t" style={{borderColor:'var(--ln)'}}><td className="p-3 font-bold mu">Lowest price</td>{list.map(d=>{const ps=(c.pricesByGeneric[(d.genericName||'').toLowerCase().trim()]||[]).map(p=>p.priceNPR).filter(Number.isFinite);return <td key={d.id} className="p-3 font-bold" style={{color:'var(--am)'}}>{ps.length?npr(Math.min(...ps)):'—'}</td>})}</tr></tbody></table></div></div>);
+}
+function References({vis,isAdmin,setEditor}){
+ return(<div className="max-w-4xl mx-auto px-4 py-6 space-y-3"><div className="flex justify-between"><h1 className="serif text-2xl font-bold">Sources</h1>{isAdmin&&<button className="btn" onClick={()=>setEditor({coll:'references',item:null})}>+ Add reference</button>}</div>
+  {vis.references.length===0?<Empty>No references yet.</Empty>:vis.references.map(r=><div key={r.id} className="card p-4 flex justify-between gap-3"><div><div className="font-bold">{r.url?<a className="underline" href={r.url} target="_blank" rel="noopener">{r.title}</a>:r.title}</div><div className="text-sm mu">{r.publisher} {r.publicationDate&&'('+r.publicationDate+')'}</div></div>
+   {isAdmin&&<div className="shrink-0"><button className="btn2" onClick={()=>setEditor({coll:'references',item:r})}>Edit</button></div>}</div>)}</div>);
+}
+function Settings({prefs,setPrefs,favs,setFavs,setRecent,toast}){
+ const set=(k,v)=>setPrefs({...prefs,[k]:v});
+ const Opt=({k,v,l})=><button className={'btn2 '+(prefs[k]===v?'on':'')} aria-pressed={prefs[k]===v} onClick={()=>set(k,v)}>{l}</button>;
+ return(<div className="max-w-2xl mx-auto px-4 py-6 space-y-4"><h1 className="serif text-2xl font-bold">My preferences</h1>
+  <p className="text-sm mu">Saved on this device only.</p>
+  <div className="card p-5 space-y-5">
+   <div><div className="font-bold mb-2">Theme</div><div className="flex gap-2"><Opt k="theme" v="light" l="Light"/><Opt k="theme" v="dark" l="Dark (night shifts)"/></div></div>
+   <div><div className="font-bold mb-2">Text size</div><div className="flex gap-2"><Opt k="size" v="s" l="Small"/><Opt k="size" v="m" l="Medium"/><Opt k="size" v="l" l="Large"/></div></div>
+   <div><div className="font-bold mb-2">Drug cards</div><div className="flex gap-2"><button className={'btn2 '+(!prefs.compact?'on':'')} onClick={()=>set('compact',false)}>Detailed</button><button className={'btn2 '+(prefs.compact?'on':'')} onClick={()=>set('compact',true)}>Compact</button></div></div>
+   <div><div className="font-bold mb-2">Sections shown on drug pages</div><div className="flex flex-wrap gap-2">
+    {DRUG_SECTIONS.map(([k,l])=><label key={k} className="btn2 flex items-center gap-2 cursor-pointer"><input type="checkbox" checked={!!prefs.sections[k]} onChange={e=>setPrefs({...prefs,sections:{...prefs.sections,[k]:e.target.checked?1:0}})}/>{l}</label>)}</div></div>
+   <div className="flex gap-2 pt-2 border-t" style={{borderColor:'var(--ln)'}}><button className="btn2" onClick={()=>{setRecent([]);toast('Search history cleared')}}>Clear search history</button><button className="btn2" onClick={()=>{setFavs([]);toast('Saved drugs cleared')}}>Clear saved drugs</button></div>
+  </div></div>);
+}
+
+/* ============ LOGIN ============ */
+function Login(){
+ const [e,setE]=useState('');const [p,setP]=useState('');const [er,setEr]=useState('');
+ const submit=async ev=>{ev.preventDefault();try{await auth.signInWithEmailAndPassword(e,p);go('admin')}catch(x){setEr(x.message)}};
+ return(<form onSubmit={submit} className="max-w-sm mx-auto mt-16 card p-6 space-y-3"><h1 className="serif text-2xl font-bold">Admin login</h1>
+  {er&&<div className="text-sm p-2 rounded" style={{background:'var(--rds)',color:'var(--rd)'}}>{er}</div>}
+  <input className="inp" type="email" placeholder="Email" value={e} onChange={x=>setE(x.target.value)} required autoComplete="username"/>
+  <input className="inp" type="password" placeholder="Password" value={p} onChange={x=>setP(x.target.value)} required autoComplete="current-password"/>
+  <button className="btn w-full" type="submit">Log in</button></form>);
+}
+
+/* ============ EDITOR: one form for every record type ============ */
+function Editor({editor,setEditor,toast}){
+ const sc=SCHEMAS[editor.coll];const it=editor.item;
+ const [v,setV]=useState(()=>{const o={};sc.fields.forEach(f=>{const x=it?it[f.k]:(editor.preset?.[f.k]);
+  o[f.k]=f.t==='list'?(x||[]).join(', '):f.t==='bool'?(x!==false):(x??(f.t==='sel'?f.o[0]:''))});return o});
+ const [busy,setBusy]=useState(false);const [er,setEr]=useState('');
+ const save=async ev=>{ev.preventDefault();setBusy(true);setEr('');
+  try{
+   const out={};
+   sc.fields.forEach(f=>{let x=v[f.k];
+    if(f.t==='list')x=String(x).split(',').map(s=>s.trim()).filter(Boolean);
+    if(f.t==='num')x=x===''?null:Number(x);
+    out[f.k]=x});
+   out.updatedAt=firebase.firestore.FieldValue.serverTimestamp();
+   const id=it?it.id:slug(editor.coll==='prices'?v.brandName+' '+(v.strength||''):v[sc.title]);
+   await db.collection(editor.coll).doc(id).set(out,{merge:true});
+   toast(it?'Saved changes':'Added');setEditor(null);
+  }catch(x){setEr(x.message)}finally{setBusy(false)}};
+ return(<div className="fixed inset-0 z-50 flex items-start justify-center overflow-y-auto p-4" style={{background:'rgba(0,0,0,.5)'}} onMouseDown={e=>e.target===e.currentTarget&&setEditor(null)}>
+  <form onSubmit={save} className="card w-full max-w-2xl p-5 my-6 space-y-3" role="dialog" aria-modal="true">
+   <h2 className="serif text-xl font-bold">{it?'Edit':'Add'} {sc.one}</h2>
+   {er&&<div className="text-sm p-2 rounded" style={{background:'var(--rds)',color:'var(--rd)'}}>{er}</div>}
+   {sc.fields.map(f=><label key={f.k} className="block text-sm font-semibold">{f.l}{f.req&&' *'}
+    {f.t==='area'?<textarea className="inp mt-1 font-normal" rows={3} value={v[f.k]} onChange={e=>setV({...v,[f.k]:e.target.value})}/>
+    :f.t==='bool'?<span className="flex items-center gap-2 mt-1 font-normal"><input type="checkbox" checked={!!v[f.k]} onChange={e=>setV({...v,[f.k]:e.target.checked})}/> {v[f.k]?'Published':'Draft (only admins can see it)'}</span>
+    :f.t==='sel'?<select className="inp mt-1 font-normal" value={v[f.k]} onChange={e=>setV({...v,[f.k]:e.target.value})}>{f.o.map(o=><option key={o}>{o}</option>)}</select>
+    :<input className="inp mt-1 font-normal" type={f.t==='num'?'number':'text'} step="any" required={!!f.req} value={v[f.k]} onChange={e=>setV({...v,[f.k]:e.target.value})}/>}</label>)}
+   <div className="flex justify-end gap-2 pt-2"><button type="button" className="btn2" onClick={()=>setEditor(null)}>Cancel</button><button className="btn" disabled={busy}>{busy?'Saving…':'Save changes'}</button></div>
+  </form></div>);
+}
+
+/* ============ ADMIN DASHBOARD ============ */
+function Admin(c){
+ const {data,setEditor,toast}=c;
+ const [coll,setColl]=useState('drugs');const [f,setF]=useState('');const [json,setJson]=useState('');const [sel,setSel]=useState([]);
+ const sc=SCHEMAS[coll];const toks=f.toLowerCase().split(/\s+/).filter(Boolean);
+ const rows=data[coll].filter(x=>toks.every(t=>flat(x).includes(t))).sort((a,b)=>String(a[sc.title]||'').localeCompare(String(b[sc.title]||'')));
+ const togglePub=async x=>{try{await db.collection(coll).doc(x.id).update({published:x.published===false})}catch(e){toast(e.message)}};
+ const delMany=async()=>{if(!sel.length||!confirm('Delete '+sel.length+' selected records?'))return;
+  try{const b=db.batch();sel.forEach(id=>b.delete(db.collection(coll).doc(id)));await b.commit();setSel([]);toast('Deleted '+sel.length)}catch(e){toast(e.message)}};
+ const summ=(()=>{if(!json.trim())return null;try{let d=JSON.parse(json);if(Array.isArray(d))d={[coll]:d};
+  const p=Object.keys(SCHEMAS).filter(k=>Array.isArray(d[k])).map(k=>d[k].length+' '+SCHEMAS[k].label.toLowerCase());
+  return p.length?{ok:1,t:'Ready to import: '+p.join(', ')+'.'}:{t:'No drugs, conditions, prices or references found in this file.'}}catch(e){return{t:'This is not valid JSON: '+e.message}}})();
+ const sample=()=>download('doc-nepal-sample.json',{drugs:[{genericName:'Paracetamol',brandNames:['Crocin','Dolo'],drugClass:'Analgesic / antipyretic',indications:'Mild to moderate pain; fever.',adultDose:'500 to 1000 mg every 4 to 6 hours. Max 4 g/day.',pediatricDose:'10 to 15 mg/kg every 4 to 6 hours.',adverseDrugReactions:'Rash; hepatotoxicity in overdose.',contraindications:'Severe hepatic impairment; hypersensitivity.',mechanismOfAction:'Central COX inhibition.',published:true}],prices:[{brandName:'Dolo 500',genericName:'Paracetamol',strength:'500 mg tablet',packSize:'10 tablets',manufacturer:'Example Pharma',priceNPR:25,verificationStatus:'Verified'}],conditions:[],references:[]});
+ const bulk=async()=>{
+  try{let d=JSON.parse(json);if(Array.isArray(d))d={[coll]:d};let n=0,skipped=0;let b=db.batch();
+   for(const c2 of Object.keys(SCHEMAS)){if(!Array.isArray(d[c2]))continue;
+    for(const r of d[c2]){const t=SCHEMAS[c2].title;const id=r.id||slug(c2==='prices'?(r.brandName+' '+(r.strength||'')):r[t]);const {id:_,...rest}=r;
+     if(!r.id&&!r[t]){skipped++;continue}
+     if(typeof rest.brandNames==='string')rest.brandNames=rest.brandNames.split(',').map(s=>s.trim()).filter(Boolean);
+     if(typeof rest.priceNPR==='string')rest.priceNPR=Number(rest.priceNPR);
+     if(c2==='drugs'){rest.published=rest.published??true;rest.drugClass=rest.drugClass??''}
+     if(c2==='conditions')rest.published=rest.published??true;
+     if(c2==='prices')rest.verificationStatus=rest.verificationStatus||'Verified';
+     b.set(db.collection(c2).doc(id),{...rest,updatedAt:firebase.firestore.FieldValue.serverTimestamp()},{merge:true});n++;
+     if(n%400===0){await b.commit();b=db.batch()}}}
+   await b.commit();toast('Imported '+n+' records'+(skipped?' ('+skipped+' skipped: no name)':''));setJson('')}catch(e){toast('Import failed: '+e.message)}};
+ return(<div className="max-w-6xl mx-auto px-4 py-6 space-y-5">
+  <div className="flex flex-wrap justify-between gap-2"><h1 className="serif text-2xl font-bold">Admin: manage records</h1>
+   <button className="btn2" onClick={()=>download('doc-nepal-backup-'+new Date().toISOString().slice(0,10)+'.json',Object.fromEntries(Object.keys(SCHEMAS).map(k=>[k,data[k].map(({updatedAt,...r})=>r)])))}>Download backup (JSON)</button></div>
+  <div className="flex flex-wrap gap-2">{Object.entries(SCHEMAS).map(([k,s])=><button key={k} className={'btn2 '+(coll===k?'on':'')} onClick={()=>{setColl(k);setSel([]);setF('')}}>{s.label} <span className="mu">{data[k].length}</span></button>)}</div>
+  <div className="flex flex-wrap gap-2"><input className="inp flex-1" style={{minWidth:200}} placeholder={'Search '+sc.label.toLowerCase()+'…'} value={f} onChange={e=>setF(e.target.value)}/>
+   <button className="btn" onClick={()=>setEditor({coll,item:null})}>+ Add {sc.one}</button>
+   {sel.length>0&&<button className="btn2 dng" onClick={delMany}>Delete {sel.length} selected</button>}</div>
+  {rows.length===0?<Empty>No {sc.label.toLowerCase()} found.</Empty>:
+  <div className="card overflow-x-auto"><table className="w-full text-sm"><tbody>{rows.map(x=><tr key={x.id} className="border-t first:border-t-0" style={{borderColor:'var(--ln)'}}>
+   <td className="p-3 w-8"><input type="checkbox" aria-label="Select" checked={sel.includes(x.id)} onChange={e=>setSel(e.target.checked?[...sel,x.id]:sel.filter(i=>i!==x.id))}/></td>
+   <td className="p-3"><div className="font-bold">{x[sc.title]||x.id}</div><div className="mu line-clamp-1">{coll==='prices'?[x.genericName,x.strength,npr(x.priceNPR)].filter(Boolean).join(' · '):x[sc.sub]}</div></td>
+   <td className="p-3 text-right whitespace-nowrap">
+    {'published' in (sc.fields.find(f=>f.k==='published')?{published:1}:{})&&<button className={'tag mr-2 '+(x.published===false?'p':'')} onClick={()=>togglePub(x)} title="Click to toggle">{x.published===false?'Draft':'Published'}</button>}
+    {coll==='prices'&&x.verificationStatus&&<span className="tag mr-2">{x.verificationStatus}</span>}
+    <button className="btn2" onClick={()=>setEditor({coll,item:x})}>Edit</button></td></tr>)}</tbody></table></div>}
+  <details className="card"><summary className="px-5 py-3 font-bold">Bulk import (JSON)</summary><div className="px-5 pb-5 space-y-2">
+   <p className="text-sm mu">Upload a .json file or paste it below. Use {'{ "drugs": [...], "conditions": [...], "prices": [...], "references": [...] }'}, or a plain list, which goes into the tab you have open ({sc.label}). Records with the same id or name are updated, not duplicated.</p>
+   <div className="flex flex-wrap gap-2 items-center">
+    <label className="btn cursor-pointer">Choose JSON file<input type="file" accept=".json,application/json" className="sr-only" onChange={async e=>{const fl=e.target.files[0];if(fl){setJson(await fl.text());toast('Loaded '+fl.name)}e.target.value=''}}/></label>
+    <button type="button" className="btn2" onClick={sample}>Download sample file</button></div>
+   <textarea className="inp font-mono text-xs" rows={8} value={json} onChange={e=>setJson(e.target.value)} placeholder="Or paste JSON here"/>
+   {summ&&<div className="text-sm p-2 rounded" style={summ.ok?{background:'var(--soft)',color:'var(--brd)'}:{background:'var(--rds)',color:'var(--rd)'}}>{summ.t}</div>}
+   <button className="btn" onClick={bulk} disabled={!summ?.ok}>Import records</button></div></details>
+ </div>);
+}
+
+ReactDOM.createRoot(document.getElementById('root')).render(<App/>);
+</script>
 </body>
 </html>
