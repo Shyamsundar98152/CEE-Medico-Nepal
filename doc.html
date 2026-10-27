@@ -1094,7 +1094,7 @@
               refreshData();
             } catch (err) {
               setStatus(`Failed to save: ${err.message}`);
-            } me {
+            } finally {
               setIsSaving(false);
             }
           };
@@ -1279,38 +1279,102 @@
 
               {activeTab === 'json' && (
                 <div className="bg-white p-6 rounded-xl border border-slate-200 shadow-sm space-y-4">
-                  <h2 className="text-lg font-bold text-slate-900">Bulk Multi-Record JSON Importer</h2>
-                  <p className="text-xs text-slate-600">
-                    Paste a structured JSON payload to write multiple drugs or condition guidelines simultaneously.
-                  </p>
+                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b pb-3">
+                    <div>
+                      <h2 className="text-lg font-bold text-slate-900">Bulk Multi-Record JSON Importer</h2>
+                      <p className="text-xs text-slate-600">
+                        Paste a structured JSON payload to batch write multiple drugs or condition guidelines simultaneously.
+                      </p>
+                    </div>
+
+                    {/* Quick JSON Template Loaders */}
+                    <div className="flex items-center gap-2">
+                      <span className="text-xs font-semibold text-slate-500">Insert Sample JSON:</span>
+                      <button 
+                        type="button"
+                        onClick={() => setJsonText(JSON.stringify({
+                          drugs: [
+                            {
+                              genericName: "Amlodipine Besylate",
+                              drugClass: "Calcium Channel Blocker (CCB)",
+                              brandNames: ["Amlod", "Stamlo", "Amlovas"],
+                              indications: "Essential hypertension, chronic stable angina, vasospastic angina.",
+                              mechanismOfAction: "Inhibits transmembrane influx of calcium ions into vascular smooth muscle and cardiac muscle, causing peripheral vasodilation.",
+                              adultDose: "5 mg PO once daily; may increase to maximum 10 mg PO once daily.",
+                              pediatricDose: "2.5 mg to 5 mg PO once daily (children 6-17 years).",
+                              adverseDrugReactions: "Peripheral edema, headache, dizziness, flushing, fatigue, palpitations.",
+                              contraindications: "Severe hypotension, cardiogenic shock, hypersensitivity to dihydropyridines.",
+                              precautions: "Hepatic impairment, aortic stenosis. Monitor blood pressure closely during titration.",
+                              priceNPR: "NPR 3.50 - 6.00 per 5mg tablet",
+                              published: true
+                            },
+                            {
+                              genericName: "Azithromycin",
+                              drugClass: "Macrolide Antibiotic",
+                              brandNames: ["Azithral", "Azee", "Zithromax"],
+                              indications: "Community-acquired pneumonia, acute bacterial sinusitis, pharyngitis, skin infections, chlamydia.",
+                              mechanismOfAction: "Binds to the 50S ribosomal subunit of susceptible microorganisms, interfering with microbial protein synthesis.",
+                              adultDose: "500 mg PO on Day 1, followed by 250 mg PO once daily on Days 2-5 (Total 1.5g).",
+                              pediatricDose: "10 mg/kg PO once daily on Day 1, then 5 mg/kg once daily on Days 2-5.",
+                              adverseDrugReactions: "Diarrhea, nausea, abdominal pain, QT prolongation, cholestatic jaundice.",
+                              contraindications: "History of cholestatic jaundice/hepatic dysfunction with prior azithromycin use.",
+                              precautions: "QT interval prolongation, myasthenia gravis, hepatic dysfunction.",
+                              priceNPR: "NPR 12.00 - 22.00 per 500mg tablet",
+                              published: true
+                            }
+                          ]
+                        }, null, 2))}
+                        className="px-2.5 py-1 bg-slate-100 hover:bg-slate-200 text-sky-800 text-xs font-semibold rounded border border-slate-300 transition"
+                      >
+                        Drug JSON Format
+                      </button>
+
+                      <button 
+                        type="button"
+                        onClick={() => setJsonText(JSON.stringify({
+                          conditions: [
+                            {
+                              name: "Acute Uncomplicated Cystitis (UTI)",
+                              overview: "Bacterial infection of the lower urinary tract predominantly caused by Escherichia coli in non-pregnant adult females.",
+                              firstLineTreatment: "Nitrofurantoin 100 mg PO twice daily for 5 days OR Cotrimoxazole (TMP-SMX) 160/800 mg PO twice daily for 3 days.",
+                              alternativeTreatments: "Ciprofloxacin 250 mg PO twice daily for 3 days OR Cefpodoxime 100 mg PO twice daily for 5-7 days.",
+                              referralCriteria: "High fever (>38.5°C), severe flank pain, chills, vomiting (suspected pyelonephritis), pregnancy, male UTI, or recurrent failure.",
+                              published: true
+                            }
+                          ]
+                        }, null, 2))}
+                        className="px-2.5 py-1 bg-slate-100 hover:bg-slate-200 text-emerald-800 text-xs font-semibold rounded border border-slate-300 transition"
+                      >
+                        Condition JSON Format
+                      </button>
+                    </div>
+                  </div>
                   
                   <textarea 
-                    rows={12} 
+                    rows={14} 
                     value={jsonText} 
                     onChange={e => setJsonText(e.target.value)}
-                    placeholder={`{
-  "drugs": [
-    {
-      "genericName": "Amlodipine",
-      "drugClass": "Calcium Channel Blocker",
-      "indications": "Hypertension, Chronic Stable Angina",
-      "adultDose": "5 mg PO once daily, max 10 mg daily",
-      "adverseDrugReactions": "Peripheral edema, headache, flushing",
-      "contraindications": "Severe hypotension, cardiogenic shock",
-      "priceNPR": "NPR 3.50 - 6.00 per 5mg tablet"
-    }
-  ]
-}`}
+                    placeholder={`{\n  "drugs": [\n    {\n      "genericName": "Amlodipine",\n      "drugClass": "Calcium Channel Blocker",\n      "brandNames": ["Amlod", "Stamlo"],\n      "indications": "Hypertension, Chronic Stable Angina",\n      "adultDose": "5 mg PO once daily, max 10 mg daily",\n      "adverseDrugReactions": "Peripheral edema, headache, flushing",\n      "contraindications": "Severe hypotension, cardiogenic shock",\n      "priceNPR": "NPR 3.50 - 6.00 per 5mg tablet",\n      "published": true\n    }\n  ]\n}`}
                     className="w-full p-4 font-mono text-xs bg-slate-50 border border-slate-300 rounded-lg focus:outline-none focus:border-sky-600"
                   />
 
-                  <button 
-                    onClick={handleBulkUpload}
-                    disabled={isSaving}
-                    className="bg-sky-700 hover:bg-sky-800 text-white font-bold px-6 py-2.5 rounded-lg text-xs shadow transition"
-                  >
-                    {isSaving ? 'Uploading Payload...' : 'Batch Import JSON to Firestore'}
-                  </button>
+                  <div className="flex items-center justify-between">
+                    <button 
+                      onClick={handleBulkUpload}
+                      disabled={isSaving}
+                      className="bg-sky-700 hover:bg-sky-800 text-white font-bold px-6 py-2.5 rounded-lg text-xs shadow transition"
+                    >
+                      {isSaving ? 'Uploading Payload...' : 'Batch Import JSON to Firestore'}
+                    </button>
+
+                    <button
+                      type="button"
+                      onClick={() => setJsonText('')}
+                      className="text-xs text-slate-500 hover:text-red-600 font-semibold"
+                    >
+                      Clear Editor
+                    </button>
+                  </div>
                 </div>
               )}
             </div>
