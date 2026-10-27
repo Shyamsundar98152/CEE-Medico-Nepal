@@ -141,7 +141,7 @@
           const [isLoading, setIsLoading] = useState(true);
           
           // User Preferences & Settings
-          const [fontSize, setFontSize] = useState(() => localStorage.getItem('doc_font_size') || 'normal'); // small, normal, large
+          const [fontSize, setFontSize] = useState(() => localStorage.getItem('doc_font_size') || 'normal');
           const [compactMode, setCompactMode] = useState(() => localStorage.getItem('doc_compact_mode') === 'true');
           const [favorites, setFavorites] = useState(() => {
             try { return JSON.parse(localStorage.getItem('doc_favorites') || '[]'); } catch(e){ return []; }
@@ -186,10 +186,14 @@
             }
             try {
               const drugSnap = await db.collection('drugs').get();
-              const loadedDrugs = drugSnap.docs.map(d => ({ id: d.id, ...d.data() }));
+              const loadedDrugs = drugSnap.docs
+                .map(d => ({ id: d.id, ...d.data() }))
+                .filter(d => d.published === true || (auth.currentUser && auth.currentUser.uid));
               
               const condSnap = await db.collection('conditions').get();
-              const loadedConds = condSnap.docs.map(d => ({ id: d.id, ...d.data() }));
+              const loadedConds = condSnap.docs
+                .map(d => ({ id: d.id, ...d.data() }))
+                .filter(c => c.published === true || (auth.currentUser && auth.currentUser.uid));
 
               const priceSnap = await db.collection('prices').get();
               const loadedPrices = priceSnap.docs.map(d => ({ id: d.id, ...d.data() }));
@@ -197,7 +201,6 @@
               const refSnap = await db.collection('references').get();
               const loadedRefs = refSnap.docs.map(d => ({ id: d.id, ...d.data() }));
 
-              // Fall back to demo dataset if Firestore has 0 drugs
               setDrugs(loadedDrugs.length > 0 ? loadedDrugs : INITIAL_DEMO_DRUGS);
               setConditions(loadedConds);
               setPrices(loadedPrices);
@@ -230,7 +233,6 @@
             window.scrollTo({ top: 0, behavior: 'smooth' });
           };
 
-          // Font size dynamic class helper
           const fontSizeClass = {
             small: 'text-xs',
             normal: 'text-sm',
@@ -247,7 +249,6 @@
                 </div>
                 
                 <div className="flex items-center gap-4 ml-auto text-[11px]">
-                  {/* Preferences Controls */}
                   <div className="flex items-center gap-1.5 bg-sky-900/60 px-2.5 py-1 rounded-md border border-sky-800">
                     <span className="text-sky-300 font-medium">Font:</span>
                     <button onClick={() => setFontSize('small')} className={`px-1 rounded ${fontSize === 'small' ? 'bg-sky-600 font-bold text-white' : 'hover:text-white'}`}>S</button>
@@ -281,7 +282,6 @@
                     </div>
                   </div>
 
-                  {/* Quick Search Header Bar */}
                   {currentView !== 'home' && (
                     <div className="hidden lg:flex flex-1 max-w-md mx-4">
                       <div className="relative w-full">
@@ -300,7 +300,6 @@
                     </div>
                   )}
 
-                  {/* Desktop Nav */}
                   <nav className="hidden md:flex items-center gap-5 text-xs font-semibold text-slate-600">
                     <button onClick={() => navigateTo('home')} className={`hover:text-sky-700 transition ${currentView === 'home' ? 'text-sky-700 font-bold border-b-2 border-sky-700 py-5' : ''}`}>Home</button>
                     <button onClick={() => navigateTo('search')} className={`hover:text-sky-700 transition ${currentView === 'search' ? 'text-sky-700 font-bold border-b-2 border-sky-700 py-5' : ''}`}>Browse All</button>
@@ -319,7 +318,6 @@
                     </button>
                   </nav>
 
-                  {/* Admin & Auth Actions */}
                   <div className="flex items-center gap-2">
                     {user ? (
                       <div className="flex items-center gap-2">
@@ -346,7 +344,6 @@
                       </button>
                     )}
 
-                    {/* Mobile Menu Toggle Button */}
                     <button 
                       onClick={() => setMobileMenuOpen(!mobileMenuOpen)} 
                       className="md:hidden p-2 rounded-lg border border-slate-200 text-slate-600 hover:bg-slate-100"
@@ -356,7 +353,6 @@
                   </div>
                 </div>
 
-                {/* Mobile Dropdown Menu */}
                 {mobileMenuOpen && (
                   <div className="md:hidden border-t border-slate-200 bg-white px-4 pt-3 pb-4 space-y-2 text-sm font-medium shadow-lg">
                     <button onClick={() => navigateTo('home')} className="block w-full text-left py-2 px-3 rounded-lg hover:bg-slate-100">Home</button>
@@ -608,12 +604,11 @@
         }
 
         // ==========================================
-        // 4. SEARCH & FILTERING VIEW (SEARCH EVERYTHING)
+        // 4. SEARCH & FILTERING VIEW
         // ==========================================
         function SearchResultsView({ drugs, conditions, prices, initialQuery, searchFilter, setSearchFilter, navigateTo, compactMode, favorites, toggleFavorite }) {
           const [query, setQuery] = useState(initialQuery || '');
 
-          // Multi-field Deep Search Implementation
           const filteredDrugs = useMemo(() => {
             const q = query.toLowerCase().trim();
             if (!q) return drugs;
@@ -651,7 +646,6 @@
 
           return (
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-              {/* Top Search Controls */}
               <div className="bg-white p-5 rounded-xl border border-slate-200 shadow-sm mb-8 space-y-4">
                 <div className="flex flex-col sm:flex-row gap-4 items-center justify-between">
                   <div className="relative w-full sm:w-96">
@@ -667,7 +661,6 @@
                     </span>
                   </div>
 
-                  {/* Filter Categories */}
                   <div className="flex items-center gap-1.5 overflow-x-auto w-full sm:w-auto pb-1 sm:pb-0">
                     {['all', 'drugs', 'conditions', 'prices'].map(f => (
                       <button 
@@ -689,7 +682,6 @@
               </div>
 
               <div className="space-y-10">
-                {/* Drug Results */}
                 {(searchFilter === 'all' || searchFilter === 'drugs') && (
                   <div>
                     <h2 className="text-lg font-bold text-slate-900 mb-4 flex items-center gap-2">
@@ -742,7 +734,6 @@
                   </div>
                 )}
 
-                {/* Condition Results */}
                 {(searchFilter === 'all' || searchFilter === 'conditions') && (
                   <div>
                     <h2 className="text-lg font-bold text-slate-900 mb-4">Treatment Protocols ({filteredConditions.length})</h2>
@@ -780,7 +771,6 @@
 
           return (
             <div className="max-w-5xl mx-auto px-4 py-8 space-y-6">
-              {/* Header Box */}
               <div className="bg-white rounded-xl border border-slate-200 p-6 shadow-sm">
                 <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 border-b pb-4 mb-4">
                   <div>
@@ -814,13 +804,11 @@
                 )}
               </div>
 
-              {/* Main Clinical Details Grid */}
               <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                 <div className="md:col-span-2 space-y-6">
-                  <DetailCard title="Indications & Uses" content={drug.indications} tag="uses" />
+                  <DetailCard title="Indications & Uses" content={drug.indications} alert />
                   <DetailCard title="Mechanism of Action" content={drug.mechanismOfAction} />
                   
-                  {/* Dosing Section */}
                   <div className="bg-white rounded-xl border border-slate-200 p-5 shadow-sm space-y-3">
                     <h3 className="font-bold text-slate-900 text-sm uppercase tracking-wider text-sky-900 flex items-center gap-2">
                       <span>Dosage & Administration</span>
@@ -839,13 +827,11 @@
                     )}
                   </div>
 
-                  {/* ADR & Contraindications */}
                   <DetailCard title="Adverse Drug Reactions (ADR)" content={drug.adverseDrugReactions} warning />
                   <DetailCard title="Contraindications (C/I)" content={drug.contraindications} danger />
                   <DetailCard title="Precautions & Warnings" content={drug.precautions} alert />
                 </div>
 
-                {/* Sidebar Info */}
                 <div className="space-y-6">
                   <div className="bg-white rounded-xl border border-slate-200 p-5 shadow-sm">
                     <h3 className="font-bold text-xs uppercase text-slate-500 tracking-wider mb-3">Nepal Retail Price (NPR)</h3>
@@ -1032,7 +1018,7 @@
         }
 
         // ==========================================
-        // 8. ADMIN DASHBOARD (EDIT ANYTHING & JSON BATCH)
+        // 8. ADMIN DASHBOARD
         // ==========================================
         function AdminDashboard({ drugs, conditions, prices, references, refreshData }) {
           const [activeTab, setActiveTab] = useState('editor'); // 'editor' | 'json'
@@ -1081,13 +1067,33 @@
             try {
               const docId = form.id || form.genericName.toLowerCase().replace(/[^a-z0-9]+/g, '-');
               const formattedData = {
-                ...form,
                 id: docId,
+                genericName: form.genericName.trim(),
+                drugClass: form.drugClass || 'General',
                 brandNames: form.brandNames ? form.brandNames.split(',').map(b => b.trim()) : [],
+                indications: form.indications || '',
+                mechanismOfAction: form.mechanismOfAction || '',
+                adultDose: form.adultDose || '',
+                pediatricDose: form.pediatricDose || '',
+                adverseDrugReactions: form.adverseDrugReactions || '',
+                contraindications: form.contraindications || '',
+                precautions: form.precautions || '',
+                priceNPR: form.priceNPR || '',
+                published: Boolean(form.published),
                 updatedAt: firebase.firestore.FieldValue.serverTimestamp()
               };
 
               await db.collection('drugs').doc(docId).set(formattedData, { merge: true });
+              
+              try {
+                await db.collection('auditLogs').add({
+                  action: 'SAVE_DRUG',
+                  targetId: docId,
+                  performedBy: auth.currentUser ? auth.currentUser.uid : 'admin',
+                  timestamp: firebase.firestore.FieldValue.serverTimestamp()
+                });
+              } catch(e) { }
+
               setStatus(`Success! Drug record '${form.genericName}' updated.`);
               setForm(emptyDrugForm);
               setEditingDrug(null);
@@ -1100,7 +1106,7 @@
           };
 
           const deleteDrugRecord = async (id) => {
-            if (!confirm("Are you sure you want to delete this drug monograph?")) return;
+            if (!window.confirm("Are you sure you want to delete this drug monograph?")) return;
             try {
               await db.collection('drugs').doc(id).delete();
               setStatus('Record deleted successfully.');
@@ -1127,7 +1133,14 @@
                 parsed.drugs.forEach(d => {
                   const id = d.id || d.genericName.toLowerCase().replace(/[^a-z0-9]+/g, '-');
                   const ref = db.collection('drugs').doc(id);
-                  batch.set(ref, { ...d, id, published: d.published ?? true }, { merge: true });
+                  const validPayload = {
+                    ...d,
+                    id,
+                    genericName: d.genericName || 'Unnamed Drug',
+                    drugClass: d.drugClass || 'Uncategorized',
+                    published: d.published ?? true
+                  };
+                  batch.set(ref, validPayload, { merge: true });
                   total++;
                 });
               }
@@ -1136,252 +1149,176 @@
                 parsed.conditions.forEach(c => {
                   const id = c.id || c.name.toLowerCase().replace(/[^a-z0-9]+/g, '-');
                   const ref = db.collection('conditions').doc(id);
-                  batch.set(ref, { ...c, id, published: c.published ?? true }, { merge: true });
+                  const validPayload = {
+                    ...c,
+                    id,
+                    name: c.name || 'Unnamed Condition',
+                    published: c.published ?? true
+                  };
+                  batch.set(ref, validPayload, { merge: true });
                   total++;
                 });
               }
 
               await batch.commit();
-              setStatus(`Successfully committed ${total} records to Firestore!`);
+              setStatus(`Batch import completed successfully! (${total} items synchronized)`);
               setJsonText('');
               refreshData();
             } catch (err) {
-              setStatus(`JSON Upload Error: ${err.message}`);
+              setStatus(`Import error: ${err.message}`);
             } finally {
               setIsSaving(false);
             }
           };
 
           return (
-            <div className="max-w-7xl mx-auto px-4 py-8 space-y-6">
-              <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+            <div className="max-w-7xl mx-auto px-4 py-8 space-y-8">
+              <div className="bg-slate-900 text-white p-6 rounded-xl flex justify-between items-center">
                 <div>
-                  <h1 className="text-2xl font-black text-slate-900">Admin Editing & Management Portal</h1>
-                  <p className="text-xs text-slate-500">Edit any drug property, manage ADR/contraindications, or bulk upload JSON</p>
+                  <h1 className="text-xl font-bold">DOC Nepal Clinical Administrative Console</h1>
+                  <p className="text-xs text-slate-400">Manage clinical monographs, price lists, and batch data imports.</p>
                 </div>
-
                 <div className="flex gap-2">
-                  <button 
-                    onClick={() => setActiveTab('editor')}
-                    className={`px-4 py-2 rounded-lg text-xs font-semibold ${activeTab === 'editor' ? 'bg-sky-700 text-white' : 'bg-white border text-slate-700'}`}
-                  >
-                    Interactive Editor
-                  </button>
-                  <button 
-                    onClick={() => setActiveTab('json')}
-                    className={`px-4 py-2 rounded-lg text-xs font-semibold ${activeTab === 'json' ? 'bg-sky-700 text-white' : 'bg-white border text-slate-700'}`}
-                  >
-                    Bulk JSON Importer
-                  </button>
+                  <button onClick={() => setActiveTab('editor')} className={`px-4 py-2 text-xs font-semibold rounded-lg ${activeTab === 'editor' ? 'bg-sky-600 text-white' : 'bg-slate-800 text-slate-300'}`}>Monograph Form</button>
+                  <button onClick={() => setActiveTab('json')} className={`px-4 py-2 text-xs font-semibold rounded-lg ${activeTab === 'json' ? 'bg-sky-600 text-white' : 'bg-slate-800 text-slate-300'}`}>Batch JSON Upload</button>
                 </div>
               </div>
 
               {status && (
-                <div className={`p-3 text-xs rounded-lg font-semibold ${status.includes('Success') || status.includes('committed') ? 'bg-emerald-50 text-emerald-800 border border-emerald-200' : 'bg-amber-50 text-amber-800 border border-amber-200'}`}>
+                <div className={`p-4 rounded-xl text-xs font-semibold ${status.startsWith('Error') || status.startsWith('Failed') ? 'bg-red-100 text-red-800 border border-red-200' : 'bg-emerald-100 text-emerald-800 border border-emerald-200'}`}>
                   {status}
                 </div>
               )}
 
-              {activeTab === 'editor' && (
+              {activeTab === 'editor' ? (
                 <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-                  {/* Form */}
-                  <form onSubmit={saveDrugRecord} className="lg:col-span-2 bg-white p-6 rounded-xl border border-slate-200 shadow-sm space-y-4">
-                    <h2 className="text-base font-bold text-slate-900 border-b pb-2">
-                      {editingDrug ? `Edit: ${editingDrug.genericName}` : 'Add New Drug Monograph'}
-                    </h2>
-
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                      <div>
-                        <label className="block text-xs font-bold text-slate-700 mb-1">Generic Name *</label>
-                        <input type="text" required value={form.genericName} onChange={e => setForm({...form, genericName: e.target.value})} className="w-full px-3 py-2 border rounded-lg text-xs focus:outline-none focus:border-sky-600" />
+                  <div className="lg:col-span-2 bg-white p-6 rounded-xl border border-slate-200 shadow-sm space-y-4">
+                    <h2 className="text-base font-bold text-slate-900">{editingDrug ? `Edit: ${editingDrug.genericName}` : 'Add New Drug Monograph'}</h2>
+                    
+                    <form onSubmit={saveDrugRecord} className="space-y-4 text-xs">
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <div>
+                          <label className="block font-semibold mb-1">Generic Name *</label>
+                          <input type="text" value={form.genericName} onChange={e => setForm({...form, genericName: e.target.value})} className="w-full p-2.5 border rounded-lg" placeholder="e.g. Paracetamol" required />
+                        </div>
+                        <div>
+                          <label className="block font-semibold mb-1">Drug Class</label>
+                          <input type="text" value={form.drugClass} onChange={e => setForm({...form, drugClass: e.target.value})} className="w-full p-2.5 border rounded-lg" placeholder="e.g. Analgesic & Antipyretic" />
+                        </div>
                       </div>
+
                       <div>
-                        <label className="block text-xs font-bold text-slate-700 mb-1">Drug Class</label>
-                        <input type="text" value={form.drugClass} onChange={e => setForm({...form, drugClass: e.target.value})} className="w-full px-3 py-2 border rounded-lg text-xs focus:outline-none focus:border-sky-600" />
+                        <label className="block font-semibold mb-1">Brand Names (Comma separated)</label>
+                        <input type="text" value={form.brandNames} onChange={e => setForm({...form, brandNames: e.target.value})} className="w-full p-2.5 border rounded-lg" placeholder="Cetamol, Metacin, Napa" />
                       </div>
-                    </div>
 
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                       <div>
-                        <label className="block text-xs font-bold text-slate-700 mb-1">Nepal Brand Names (Comma Separated)</label>
-                        <input type="text" value={form.brandNames} onChange={e => setForm({...form, brandNames: e.target.value})} className="w-full px-3 py-2 border rounded-lg text-xs focus:outline-none focus:border-sky-600" />
+                        <label className="block font-semibold mb-1">Indications & Clinical Uses</label>
+                        <textarea rows="3" value={form.indications} onChange={e => setForm({...form, indications: e.target.value})} className="w-full p-2.5 border rounded-lg" />
                       </div>
+
                       <div>
-                        <label className="block text-xs font-bold text-slate-700 mb-1">Nepal Retail Price (NPR)</label>
-                        <input type="text" value={form.priceNPR} onChange={e => setForm({...form, priceNPR: e.target.value})} placeholder="e.g. NPR 5.00 - 8.00 per tab" className="w-full px-3 py-2 border rounded-lg text-xs focus:outline-none focus:border-sky-600" />
+                        <label className="block font-semibold mb-1">Mechanism of Action</label>
+                        <textarea rows="2" value={form.mechanismOfAction} onChange={e => setForm({...form, mechanismOfAction: e.target.value})} className="w-full p-2.5 border rounded-lg" />
                       </div>
-                    </div>
 
-                    <div>
-                      <label className="block text-xs font-bold text-slate-700 mb-1">Indications & Clinical Uses</label>
-                      <textarea rows={2} value={form.indications} onChange={e => setForm({...form, indications: e.target.value})} className="w-full px-3 py-2 border rounded-lg text-xs focus:outline-none focus:border-sky-600" />
-                    </div>
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <div>
+                          <label className="block font-semibold mb-1">Adult Dosage</label>
+                          <textarea rows="2" value={form.adultDose} onChange={e => setForm({...form, adultDose: e.target.value})} className="w-full p-2.5 border rounded-lg" />
+                        </div>
+                        <div>
+                          <label className="block font-semibold mb-1">Pediatric Dosage</label>
+                          <textarea rows="2" value={form.pediatricDose} onChange={e => setForm({...form, pediatricDose: e.target.value})} className="w-full p-2.5 border rounded-lg" />
+                        </div>
+                      </div>
 
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                       <div>
-                        <label className="block text-xs font-bold text-slate-700 mb-1">Adult Dosage</label>
-                        <textarea rows={2} value={form.adultDose} onChange={e => setForm({...form, adultDose: e.target.value})} className="w-full px-3 py-2 border rounded-lg text-xs focus:outline-none focus:border-sky-600" />
+                        <label className="block font-semibold mb-1">Adverse Drug Reactions (ADR)</label>
+                        <textarea rows="2" value={form.adverseDrugReactions} onChange={e => setForm({...form, adverseDrugReactions: e.target.value})} className="w-full p-2.5 border rounded-lg" />
                       </div>
+
                       <div>
-                        <label className="block text-xs font-bold text-slate-700 mb-1">Pediatric Dosage</label>
-                        <textarea rows={2} value={form.pediatricDose} onChange={e => setForm({...form, pediatricDose: e.target.value})} className="w-full px-3 py-2 border rounded-lg text-xs focus:outline-none focus:border-sky-600" />
+                        <label className="block font-semibold mb-1">Contraindications (C/I)</label>
+                        <textarea rows="2" value={form.contraindications} onChange={e => setForm({...form, contraindications: e.target.value})} className="w-full p-2.5 border rounded-lg" />
                       </div>
-                    </div>
 
-                    <div>
-                      <label className="block text-xs font-bold text-slate-700 mb-1">Adverse Drug Reactions (ADR)</label>
-                      <textarea rows={2} value={form.adverseDrugReactions} onChange={e => setForm({...form, adverseDrugReactions: e.target.value})} className="w-full px-3 py-2 border rounded-lg text-xs focus:outline-none focus:border-sky-600" />
-                    </div>
+                      <div>
+                        <label className="block font-semibold mb-1">Precautions & Special Warnings</label>
+                        <textarea rows="2" value={form.precautions} onChange={e => setForm({...form, precautions: e.target.value})} className="w-full p-2.5 border rounded-lg" />
+                      </div>
 
-                    <div>
-                      <label className="block text-xs font-bold text-slate-700 mb-1">Contraindications (C/I)</label>
-                      <textarea rows={2} value={form.contraindications} onChange={e => setForm({...form, contraindications: e.target.value})} className="w-full px-3 py-2 border rounded-lg text-xs focus:outline-none focus:border-sky-600" />
-                    </div>
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 items-center">
+                        <div>
+                          <label className="block font-semibold mb-1">Nepal Retail Price (NPR)</label>
+                          <input type="text" value={form.priceNPR} onChange={e => setForm({...form, priceNPR: e.target.value})} className="w-full p-2.5 border rounded-lg" placeholder="NPR 2.00 per tablet" />
+                        </div>
+                        <div className="flex items-center gap-2 pt-5">
+                          <input type="checkbox" id="published" checked={form.published} onChange={e => setForm({...form, published: e.target.checked})} className="w-4 h-4 rounded text-sky-600" />
+                          <label htmlFor="published" className="font-semibold text-slate-800">Publish immediately</label>
+                        </div>
+                      </div>
 
-                    <div>
-                      <label className="block text-xs font-bold text-slate-700 mb-1">Precautions & Special Warnings</label>
-                      <textarea rows={2} value={form.precautions} onChange={e => setForm({...form, precautions: e.target.value})} className="w-full px-3 py-2 border rounded-lg text-xs focus:outline-none focus:border-sky-600" />
-                    </div>
-
-                    <div className="flex items-center gap-4 pt-2">
-                      <button type="submit" disabled={isSaving} className="bg-sky-700 hover:bg-sky-800 text-white font-bold px-6 py-2.5 rounded-lg text-xs shadow transition">
-                        {isSaving ? 'Saving...' : (editingDrug ? 'Update Record' : 'Publish Drug Record')}
-                      </button>
-
-                      {editingDrug && (
-                        <button type="button" onClick={() => { setEditingDrug(null); setForm(emptyDrugForm); }} className="text-xs text-slate-500 font-semibold hover:underline">
-                          Cancel Editing
+                      <div className="flex gap-3 pt-3">
+                        <button type="submit" disabled={isSaving} className="bg-sky-700 hover:bg-sky-800 text-white font-bold px-6 py-2.5 rounded-lg transition shadow">
+                          {isSaving ? 'Saving Record...' : 'Save Monograph'}
                         </button>
-                      )}
-                    </div>
-                  </form>
+                        {editingDrug && (
+                          <button type="button" onClick={() => { setEditingDrug(null); setForm(emptyDrugForm); }} className="bg-slate-200 hover:bg-slate-300 text-slate-800 px-4 py-2.5 rounded-lg">
+                            Cancel Edit
+                          </button>
+                        )}
+                      </div>
+                    </form>
+                  </div>
 
-                  {/* List of Drugs to Edit */}
-                  <div className="bg-white p-6 rounded-xl border border-slate-200 shadow-sm space-y-4 max-h-[800px] overflow-y-auto custom-scrollbar">
-                    <h2 className="text-base font-bold text-slate-900 border-b pb-2">Existing Monographs ({drugs.length})</h2>
-                    <div className="space-y-3">
+                  <div className="bg-white p-6 rounded-xl border border-slate-200 shadow-sm space-y-4">
+                    <h2 className="text-base font-bold text-slate-900">Database Records ({drugs.length})</h2>
+                    <div className="space-y-3 max-h-[700px] overflow-y-auto custom-scrollbar">
                       {drugs.map(d => (
-                        <div key={d.id} className="p-3 bg-slate-50 rounded-lg border flex justify-between items-center text-xs">
+                        <div key={d.id} className="p-3 bg-slate-50 border rounded-lg flex justify-between items-center text-xs">
                           <div>
-                            <div className="font-bold text-slate-900">{d.genericName}</div>
-                            <div className="text-[10px] text-sky-700">{d.drugClass}</div>
+                            <p className="font-bold text-slate-900">{d.genericName}</p>
+                            <p className="text-[10px] text-slate-500">{d.drugClass}</p>
                           </div>
-                          <div className="flex items-center gap-2">
-                            <button onClick={() => startEditing(d)} className="text-sky-700 font-bold hover:underline">Edit</button>
-                            <button onClick={() => deleteDrugRecord(d.id)} className="text-red-600 font-bold hover:underline">Delete</button>
+                          <div className="flex gap-2">
+                            <button onClick={() => startEditing(d)} className="text-sky-700 hover:underline font-semibold">Edit</button>
+                            <button onClick={() => deleteDrugRecord(d.id)} className="text-red-600 hover:underline font-semibold">Delete</button>
                           </div>
                         </div>
                       ))}
                     </div>
                   </div>
                 </div>
-              )}
-
-              {activeTab === 'json' && (
-                <div className="bg-white p-6 rounded-xl border border-slate-200 shadow-sm space-y-4">
-                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b pb-3">
-                    <div>
-                      <h2 className="text-lg font-bold text-slate-900">Bulk Multi-Record JSON Importer</h2>
-                      <p className="text-xs text-slate-600">
-                        Paste a structured JSON payload to batch write multiple drugs or condition guidelines simultaneously.
-                      </p>
-                    </div>
-
-                    {/* Quick JSON Template Loaders */}
-                    <div className="flex items-center gap-2">
-                      <span className="text-xs font-semibold text-slate-500">Insert Sample JSON:</span>
-                      <button 
-                        type="button"
-                        onClick={() => setJsonText(JSON.stringify({
-                          drugs: [
-                            {
-                              genericName: "Amlodipine Besylate",
-                              drugClass: "Calcium Channel Blocker (CCB)",
-                              brandNames: ["Amlod", "Stamlo", "Amlovas"],
-                              indications: "Essential hypertension, chronic stable angina, vasospastic angina.",
-                              mechanismOfAction: "Inhibits transmembrane influx of calcium ions into vascular smooth muscle and cardiac muscle, causing peripheral vasodilation.",
-                              adultDose: "5 mg PO once daily; may increase to maximum 10 mg PO once daily.",
-                              pediatricDose: "2.5 mg to 5 mg PO once daily (children 6-17 years).",
-                              adverseDrugReactions: "Peripheral edema, headache, dizziness, flushing, fatigue, palpitations.",
-                              contraindications: "Severe hypotension, cardiogenic shock, hypersensitivity to dihydropyridines.",
-                              precautions: "Hepatic impairment, aortic stenosis. Monitor blood pressure closely during titration.",
-                              priceNPR: "NPR 3.50 - 6.00 per 5mg tablet",
-                              published: true
-                            },
-                            {
-                              genericName: "Azithromycin",
-                              drugClass: "Macrolide Antibiotic",
-                              brandNames: ["Azithral", "Azee", "Zithromax"],
-                              indications: "Community-acquired pneumonia, acute bacterial sinusitis, pharyngitis, skin infections, chlamydia.",
-                              mechanismOfAction: "Binds to the 50S ribosomal subunit of susceptible microorganisms, interfering with microbial protein synthesis.",
-                              adultDose: "500 mg PO on Day 1, followed by 250 mg PO once daily on Days 2-5 (Total 1.5g).",
-                              pediatricDose: "10 mg/kg PO once daily on Day 1, then 5 mg/kg once daily on Days 2-5.",
-                              adverseDrugReactions: "Diarrhea, nausea, abdominal pain, QT prolongation, cholestatic jaundice.",
-                              contraindications: "History of cholestatic jaundice/hepatic dysfunction with prior azithromycin use.",
-                              precautions: "QT interval prolongation, myasthenia gravis, hepatic dysfunction.",
-                              priceNPR: "NPR 12.00 - 22.00 per 500mg tablet",
-                              published: true
-                            }
-                          ]
-                        }, null, 2))}
-                        className="px-2.5 py-1 bg-slate-100 hover:bg-slate-200 text-sky-800 text-xs font-semibold rounded border border-slate-300 transition"
-                      >
-                        Drug JSON Format
-                      </button>
-
-                      <button 
-                        type="button"
-                        onClick={() => setJsonText(JSON.stringify({
-                          conditions: [
-                            {
-                              name: "Acute Uncomplicated Cystitis (UTI)",
-                              overview: "Bacterial infection of the lower urinary tract predominantly caused by Escherichia coli in non-pregnant adult females.",
-                              firstLineTreatment: "Nitrofurantoin 100 mg PO twice daily for 5 days OR Cotrimoxazole (TMP-SMX) 160/800 mg PO twice daily for 3 days.",
-                              alternativeTreatments: "Ciprofloxacin 250 mg PO twice daily for 3 days OR Cefpodoxime 100 mg PO twice daily for 5-7 days.",
-                              referralCriteria: "High fever (>38.5°C), severe flank pain, chills, vomiting (suspected pyelonephritis), pregnancy, male UTI, or recurrent failure.",
-                              published: true
-                            }
-                          ]
-                        }, null, 2))}
-                        className="px-2.5 py-1 bg-slate-100 hover:bg-slate-200 text-emerald-800 text-xs font-semibold rounded border border-slate-300 transition"
-                      >
-                        Condition JSON Format
-                      </button>
-                    </div>
-                  </div>
+              ) : (
+                <div className="bg-white p-6 rounded-xl border border-slate-200 shadow-sm space-y-4 max-w-3xl mx-auto">
+                  <h2 className="text-base font-bold text-slate-900">Batch JSON Import</h2>
+                  <p className="text-xs text-slate-600">Paste JSON object containing arrays of <code>drugs</code> and/or <code>conditions</code> to batch upload into Firestore.</p>
                   
                   <textarea 
-                    rows={14} 
+                    rows="12" 
                     value={jsonText} 
-                    onChange={e => setJsonText(e.target.value)}
-                    placeholder={`{\n  "drugs": [\n    {\n      "genericName": "Amlodipine",\n      "drugClass": "Calcium Channel Blocker",\n      "brandNames": ["Amlod", "Stamlo"],\n      "indications": "Hypertension, Chronic Stable Angina",\n      "adultDose": "5 mg PO once daily, max 10 mg daily",\n      "adverseDrugReactions": "Peripheral edema, headache, flushing",\n      "contraindications": "Severe hypotension, cardiogenic shock",\n      "priceNPR": "NPR 3.50 - 6.00 per 5mg tablet",\n      "published": true\n    }\n  ]\n}`}
-                    className="w-full p-4 font-mono text-xs bg-slate-50 border border-slate-300 rounded-lg focus:outline-none focus:border-sky-600"
+                    onChange={e => setJsonText(e.target.value)} 
+                    placeholder={`{\n  "drugs": [\n    {\n      "genericName": "Ciprofloxacin",\n      "drugClass": "Fluoroquinolone Antibiotic",\n      "indications": "UTI, Infectious Diarrhea",\n      "published": true\n    }\n  ]\n}`} 
+                    className="w-full p-3 font-mono text-xs border rounded-lg bg-slate-50 focus:bg-white"
                   />
 
-                  <div className="flex items-center justify-between">
-                    <button 
-                      onClick={handleBulkUpload}
-                      disabled={isSaving}
-                      className="bg-sky-700 hover:bg-sky-800 text-white font-bold px-6 py-2.5 rounded-lg text-xs shadow transition"
-                    >
-                      {isSaving ? 'Uploading Payload...' : 'Batch Import JSON to Firestore'}
-                    </button>
-
-                    <button
-                      type="button"
-                      onClick={() => setJsonText('')}
-                      className="text-xs text-slate-500 hover:text-red-600 font-semibold"
-                    >
-                      Clear Editor
-                    </button>
-                  </div>
+                  <button 
+                    onClick={handleBulkUpload} 
+                    disabled={isSaving} 
+                    className="bg-sky-700 hover:bg-sky-800 text-white font-bold px-6 py-2.5 rounded-lg text-xs transition shadow"
+                  >
+                    {isSaving ? 'Processing Batch...' : 'Upload Batch JSON'}
+                  </button>
                 </div>
               )}
             </div>
           );
         }
 
-        ReactDOM.createRoot(document.getElementById('root')).render(<App />);
+        // Render React Application
+        const root = ReactDOM.createRoot(document.getElementById('root'));
+        root.render(<App />);
     </script>
 </body>
 </html>
