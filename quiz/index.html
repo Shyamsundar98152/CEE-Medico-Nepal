@@ -888,11 +888,20 @@ async function startExam() {
 
     const allQs = qSnap.val();
     
-    // Strict Database Ordering: Load exactly as original uploaded backend order
-    questions = (Array.isArray(allQs) ? allQs : Object.values(allQs)).filter(q => q && q.question);
-    if (questions.length === 0) { showLoginError('No valid questions found.'); resetBtn(btn); return; }
+    
+/* Load ALL valid questions from Firebase Realtime Database.
+   Preserve the original backend order and do not limit to 200. */
+questions = (Array.isArray(allQs) ? allQs : Object.values(allQs))
+    .filter(q => q && q.question);
 
-    questions = questions.slice(0, Math.min(200, questions.length));
+if (questions.length === 0) {
+    showLoginError('No valid questions found in this question set.');
+    resetBtn(btn);
+    return;
+}
+
+console.log(`Loaded ${questions.length} questions from Firebase.`);
+
 
     document.getElementById('login-card').style.display = 'none';
     document.getElementById('status-banner').style.display = 'none';
