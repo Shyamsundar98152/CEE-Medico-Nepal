@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>DOC Nepal — Drug of Choice</title>
+<meta name="theme-color" content="#0f6b6b"><meta name="apple-mobile-web-app-capable" content="yes"><title>DOC Nepal — Drug of Choice</title>
 <link href="https://fonts.googleapis.com/css2?family=Source+Sans+3:wght@400;600;700&family=Source+Serif+4:wght@600;700&display=swap" rel="stylesheet">
 <script src="https://cdn.tailwindcss.com/3.4.17"></script>
 <script src="https://unpkg.com/react@18.3.1/umd/react.production.min.js"></script>
@@ -19,7 +19,7 @@ html{font-size:16px}html.fs-l{font-size:18px}html.fs-s{font-size:14.5px}
 body{background:var(--bg);color:var(--tx);font-family:'Source Sans 3',system-ui,sans-serif}
 .serif{font-family:'Source Serif 4',Georgia,serif}
 .card{background:var(--card);border:1px solid var(--ln);border-radius:10px}
-.inp{width:100%;background:var(--card);color:var(--tx);border:1px solid var(--ln);border-radius:8px;padding:.55rem .75rem;font-size:.95rem}
+.inp{width:100%;background:var(--card);color:var(--tx);border:1px solid var(--ln);border-radius:8px;padding:.55rem .75rem;font-size:1rem}
 .inp:focus,.btn:focus-visible,.btn2:focus-visible,summary:focus-visible{outline:2px solid var(--br);outline-offset:1px}
 .btn{background:var(--br);color:#fff;border-radius:8px;padding:.5rem .9rem;font-weight:600;font-size:.875rem}
 html.dark .btn{color:#06201f}
@@ -34,7 +34,26 @@ details[open] .chev{transform:rotate(90deg)}.chev{transition:transform .15s}
 .tag{display:inline-block;font-size:.72rem;font-weight:600;padding:.1rem .5rem;border-radius:99px;background:var(--soft);color:var(--brd)}
 .tag.p{background:var(--ams);color:var(--am)}.tag.c{background:var(--rds);color:var(--rd)}
 .hide-sb{scrollbar-width:none}.hide-sb::-webkit-scrollbar{display:none}
-@media(prefers-reduced-motion:reduce){*{transition:none!important}}
+@keyframes pg{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+@keyframes pop{from{opacity:0;transform:scale(.96) translateY(8px)}to{opacity:1;transform:none}}
+@keyframes fade{from{opacity:0}to{opacity:1}}
+@keyframes sh{to{background-position:-200% 0}}
+@keyframes up{from{opacity:0;transform:translate(-50%,12px)}to{opacity:1;transform:translate(-50%,0)}}
+.pg{animation:pg .28s cubic-bezier(.2,.7,.2,1) both}
+.card{transition:box-shadow .2s,transform .2s,border-color .2s}
+button.card:hover{transform:translateY(-2px);box-shadow:0 6px 18px rgba(15,107,107,.14)}
+.btn,.btn2{transition:background .15s,transform .1s,border-color .15s;min-height:40px}
+.btn:active,.btn2:active,button.card:active{transform:scale(.97)}
+details>div{animation:fade .25s ease}
+.modal{animation:fade .18s ease}.modal>form,.modal>div{animation:pop .24s cubic-bezier(.2,.7,.2,1)}
+.sk{background:linear-gradient(90deg,var(--soft) 25%,var(--ln) 50%,var(--soft) 75%);background-size:200% 100%;animation:sh 1.2s linear infinite;border-radius:10px;height:84px}
+.toast{animation:up .25s ease}
+.tabbar{position:fixed;bottom:0;left:0;right:0;z-index:40;background:var(--card);border-top:1px solid var(--ln);display:flex;padding-bottom:env(safe-area-inset-bottom)}
+.tabbar button{flex:1;padding:.5rem 0 .4rem;font-size:.7rem;font-weight:600;color:var(--mu);display:flex;flex-direction:column;align-items:center;gap:2px;transition:color .15s}
+.tabbar button.on{color:var(--br)}.tabbar svg{width:23px;height:23px;transition:transform .2s}.tabbar button.on svg{transform:translateY(-2px) scale(1.12)}
+@media(max-width:767px){.dsk{display:none!important}footer{padding-bottom:88px}}
+@media(min-width:768px){.tabbar,.mob{display:none!important}}
+@media(prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
 </style>
 </head>
 <body>
@@ -45,8 +64,9 @@ const {useState,useEffect,useMemo,useRef}=React;
 /* ============ FIREBASE (your existing project) ============ */
 const firebaseConfig={apiKey:"AIzaSyANTEvessOCqYqfzYVX9V11CAN-xjF7ubQ",authDomain:"doc-drug-of-choice.firebaseapp.com",projectId:"doc-drug-of-choice",storageBucket:"doc-drug-of-choice.firebasestorage.app",messagingSenderId:"177639649857",appId:"1:177639649857:web:98d71685c6b31b93084cc0",measurementId:"G-XML2TZYJG7"};
 let auth,db;
-try{if(!firebase.apps.length)firebase.initializeApp(firebaseConfig);auth=firebase.auth();db=firebase.firestore();}catch(e){console.error(e)}
+try{if(!firebase.apps.length)firebase.initializeApp(firebaseConfig);auth=firebase.auth();db=firebase.firestore();try{db.enablePersistence({synchronizeTabs:true}).catch(e=>console.warn("Offline cache:",e.code))}catch(e){}}catch(e){console.error(e)}
 // Same UID as in your Firestore rules. This only decides which buttons the UI shows; the rules do the real enforcing.
+if('serviceWorker' in navigator&&location.protocol.startsWith('http'))navigator.serviceWorker.register('sw.js').catch(()=>{});
 const ADMIN_UIDS=['XDzOhJQkiRhJ8PNV5V24IopnGyZ2'];
 
 /* ============ SCHEMA: admin forms are generated from this, so every field is editable ============ */
@@ -57,10 +77,13 @@ const SCHEMAS={
   {k:'adultDose',l:'Adult dose',t:'area'},{k:'pediatricDose',l:'Pediatric dose',t:'area'},
   {k:'adverseDrugReactions',l:'Adverse drug reactions (ADR)',t:'area'},{k:'contraindications',l:'Contraindications (C/I)',t:'area'},
   {k:'published',l:'Visible to the public',t:'bool'}]},
- conditions:{label:'Conditions',one:'condition',title:'name',sub:'overview',fields:[
-  {k:'name',l:'Condition name',req:1},{k:'overview',l:'Overview',t:'area'},{k:'firstLineTreatment',l:'First-line treatment',t:'area'},
-  {k:'alternativeTreatments',l:'Alternative treatments',t:'area'},{k:'referralCriteria',l:'Referral criteria',t:'area'},
+ conditions:{label:'Diseases',one:'disease',title:'name',sub:'category',fields:[
+  {k:'name',l:'Disease / illness name',req:1},{k:'category',l:'Category (e.g. Cardiology, Infection)'},{k:'overview',l:'Overview',t:'area'},{k:'symptoms',l:'Symptoms and signs',t:'area'},{k:'investigations',l:'Investigations',t:'area'},{k:'firstLineTreatment',l:'First-line treatment',t:'area'},
+  {k:'alternativeTreatments',l:'Alternative treatments',t:'area'},{k:'nonPharm',l:'Non-drug advice (lifestyle, diet)',t:'area'},{k:'referralCriteria',l:'Referral criteria',t:'area'},
   {k:'published',l:'Visible to the public',t:'bool'}]},
+ conditionDrugLinks:{label:'Prescriptions',one:'prescription',title:'drugName',sub:'conditionName',id:r=>r.conditionId+' '+r.drugName,fields:[
+  {k:'conditionId',l:'Disease',t:'cond',req:1},{k:'drugName',l:'Drug (generic name)',t:'drug',req:1},{k:'line',l:'Line of treatment',t:'sel',o:['First-line','Second-line','Alternative','Adjunct','Emergency']},
+  {k:'regimen',l:'Prescription (dose, route, frequency)',t:'area'},{k:'duration',l:'Duration'},{k:'notes',l:'Cautions / notes',t:'area'},{k:'published',l:'Visible to the public',t:'bool'}]},
  prices:{label:'Prices',one:'price',title:'brandName',sub:'genericName',fields:[
   {k:'brandName',l:'Brand name',req:1},{k:'genericName',l:'Generic name (must match the drug)',req:1},{k:'strength',l:'Strength / form (e.g. 500 mg tablet)'},
   {k:'packSize',l:'Pack size'},{k:'manufacturer',l:'Manufacturer'},{k:'priceNPR',l:'Price (NPR)',t:'num',req:1},
@@ -71,6 +94,7 @@ const SCHEMAS={
 const DRUG_SECTIONS=[['indications','Uses'],['dose','Dosage'],['adverseDrugReactions','ADR (side effects)'],['contraindications','C/I (contraindications)'],['mechanismOfAction','Mechanism of action'],['prices','Nepal prices']];
 
 /* ============ HELPERS ============ */
+const mkId=(c,r)=>{const s=SCHEMAS[c];return slug(s.id?s.id(r):c==='prices'?r.brandName+' '+(r.strength||''):r[s.title])};
 const slug=s=>String(s||'').toLowerCase().replace(/[^a-z0-9]+/g,'-').replace(/^-|-$/g,'')||('item-'+Date.now());
 const lsGet=(k,d)=>{try{const v=localStorage.getItem(k);return v?JSON.parse(v):d}catch(e){return d}};
 const lsSet=(k,v)=>{try{localStorage.setItem(k,JSON.stringify(v))}catch(e){}};
@@ -88,7 +112,7 @@ function download(name,obj){const a=document.createElement('a');a.href=URL.creat
 /* ============ APP ============ */
 function App(){
  const [route,setRoute]=useState(parseRoute());
- const [data,setData]=useState({drugs:[],conditions:[],prices:[],references:[]});
+ const [data,setData]=useState({drugs:[],conditions:[],conditionDrugLinks:[],prices:[],references:[],reports:[]});
  const [loaded,setLoaded]=useState({});
  const [err,setErr]=useState('');
  const [user,setUser]=useState(null);
@@ -100,6 +124,8 @@ function App(){
  const [cmp,setCmp]=useState([]);
  const [editor,setEditor]=useState(null);
  const [toast,setToast]=useState('');
+ const [online,setOnline]=useState(navigator.onLine);const [report,setReport]=useState(null);
+ useEffect(()=>{const a=()=>setOnline(true),b=()=>setOnline(false);window.addEventListener('online',a);window.addEventListener('offline',b);return()=>{window.removeEventListener('online',a);window.removeEventListener('offline',b)}},[]);
 
  useEffect(()=>{const f=()=>{setRoute(parseRoute());window.scrollTo(0,0)};window.addEventListener('hashchange',f);return()=>window.removeEventListener('hashchange',f)},[]);
  useEffect(()=>{if(!auth)return;return auth.onAuthStateChanged(async u=>{
@@ -112,11 +138,12 @@ function App(){
   // Your rules only let the public read published drugs/conditions and Verified prices,
   // so the query itself must filter, otherwise Firestore rejects the whole read.
   const qf=c=>{const r=db.collection(c);if(adm===true)return r;
-   if(c==='drugs'||c==='conditions')return r.where('published','==',true);
+   if(c==='drugs'||c==='conditions'||c==='conditionDrugLinks')return r.where('published','==',true);
    if(c==='prices')return r.where('verificationStatus','==','Verified');return r};
   const offs=Object.keys(SCHEMAS).map(c=>qf(c).onSnapshot(s=>{
     setData(d=>({...d,[c]:s.docs.map(x=>({id:x.id,...x.data()}))}));setLoaded(l=>({...l,[c]:1}));setErr('');
   },e=>{console.error(e);setErr('Could not read "'+c+'": '+e.message)}));
+  if(adm===true)offs.push(db.collection('reports').onSnapshot(s=>setData(d=>({...d,reports:s.docs.map(x=>({id:x.id,...x.data()}))})),e=>console.error(e)));
   return()=>offs.forEach(o=>o());
  },[adm]);
  useEffect(()=>{
@@ -132,15 +159,18 @@ function App(){
  const pricesByGeneric=useMemo(()=>{const m={};vis.prices.forEach(p=>{const k=(p.genericName||'').toLowerCase().trim();(m[k]=m[k]||[]).push(p)});return m},[vis.prices]);
 
  // One search index over everything: drugs (incl. their brands and prices), conditions, prices, references
+ const linksBy=useMemo(()=>{const m={};vis.conditionDrugLinks.forEach(l=>(m[l.conditionId]=m[l.conditionId]||[]).push(l));return m},[vis.conditionDrugLinks]);
+ const linksByDrug=useMemo(()=>{const m={};vis.conditionDrugLinks.forEach(l=>{const k=(l.drugName||'').toLowerCase().trim();(m[k]=m[k]||[]).push(l)});return m},[vis.conditionDrugLinks]);
+ const openReports=data.reports.filter(r=>r.status==='Open').length;
  const index=useMemo(()=>{
   const L=[];
   vis.drugs.forEach(d=>{const ps=pricesByGeneric[(d.genericName||'').toLowerCase().trim()]||[];
-   L.push({type:'drugs',id:d.id,item:d,name:(d.genericName+' '+(d.brandNames||[]).join(' ')).toLowerCase(),text:flat(d)+' '+ps.map(p=>flat(p)).join(' ')})});
-  vis.conditions.forEach(c=>L.push({type:'conditions',id:c.id,item:c,name:(c.name||'').toLowerCase(),text:flat(c)}));
+   L.push({type:'drugs',id:d.id,item:d,name:(d.genericName+' '+(d.brandNames||[]).join(' ')).toLowerCase(),text:flat(d)+' '+ps.map(p=>flat(p)).join(' ')+' '+(linksByDrug[(d.genericName||'').toLowerCase().trim()]||[]).map(l=>l.conditionName).join(' ')})});
+  vis.conditions.forEach(c=>L.push({type:'conditions',id:c.id,item:c,name:(c.name||'').toLowerCase(),text:flat(c)+' '+(linksBy[c.id]||[]).map(l=>l.drugName).join(' ')}));
   vis.prices.forEach(p=>L.push({type:'prices',id:p.id,item:p,name:((p.brandName||'')+' '+(p.genericName||'')).toLowerCase(),text:flat(p)}));
   vis.references.forEach(r=>L.push({type:'references',id:r.id,item:r,name:(r.title||'').toLowerCase(),text:flat(r)}));
   return L;
- },[vis,pricesByGeneric]);
+ },[vis,pricesByGeneric,linksBy,linksByDrug]);
  const toks=useMemo(()=>q.toLowerCase().split(/\s+/).filter(Boolean),[q]);
  const results=useMemo(()=>{
   if(!toks.length)return[];
@@ -149,10 +179,12 @@ function App(){
    .sort((a,b)=>b.score-a.score);
  },[index,toks]);
 
- const ctx={route,data,vis,user,isAdmin,q,setQ,prefs,setPrefs,favs,setFavs,recent,setRecent,cmp,setCmp,editor,setEditor,toast:setToast,results,toks,pricesByGeneric,index};
- const ready=loaded.drugs&&loaded.conditions&&loaded.prices&&loaded.references;
+ const ctx={route,data,vis,user,isAdmin,q,setQ,prefs,setPrefs,favs,setFavs,recent,setRecent,cmp,setCmp,editor,setEditor,toast:setToast,results,toks,pricesByGeneric,index,linksBy,linksByDrug,setReport,online};
+ const ready=loaded.drugs&&loaded.conditions&&loaded.conditionDrugLinks&&loaded.prices&&loaded.references;
  const n=route.n;
- const nav=[['home','Home'],['search','Search'],['prices','Prices'],['favorites','Saved ('+favs.length+')'],['compare','Compare ('+cmp.length+')'],['references','References'],['settings','Settings']];
+ const nav=[['home','Home'],['diseases','Diseases'],['search','Search'],['prices','Prices'],['favorites','Saved ('+favs.length+')'],['compare','Compare ('+cmp.length+')'],['references','References'],['settings','Settings']];
+ const tabs=[['home','Home','home'],['diseases','Diseases','dis'],['search','Search','search'],['prices','Prices','tag'],['more','More','more']];
+ const moreSet=['favorites','compare','references','settings','admin','reports','login'];
 
  return(<div className="min-h-screen flex flex-col">
   <header className="sticky top-0 z-40 border-b" style={{background:'var(--card)',borderColor:'var(--ln)'}}>
@@ -160,18 +192,22 @@ function App(){
     <button onClick={()=>go('home')} className="flex items-baseline gap-2 shrink-0" aria-label="DOC Nepal home">
      <span className="serif text-xl font-bold" style={{color:'var(--br)'}}>DOC Nepal</span><span className="mu text-xs hidden sm:inline">Drug of Choice</span>
     </button>
-    <nav className="flex gap-1 overflow-x-auto hide-sb flex-1" aria-label="Main">
+    <nav className="dsk flex gap-1 overflow-x-auto hide-sb flex-1" aria-label="Main">
      {nav.map(([k,l])=><button key={k} onClick={()=>go(k)} className={'btn2 whitespace-nowrap '+(n===k?'on':'')} style={n===k?{}:{border:'none',background:'transparent'}}>{l}</button>)}
-    </nav>
-    {user?<div className="flex gap-2 shrink-0">{isAdmin&&<button className="btn" onClick={()=>go('admin')}>Admin</button>}<button className="btn2" onClick={()=>auth.signOut()}>Log out</button></div>
-     :<button className="btn2 shrink-0" onClick={()=>go('login')}>Admin login</button>}
+    </nav><div className="flex-1 mob"/>
+    <button className="btn2 shrink-0" aria-label="Toggle dark mode" onClick={()=>setPrefs({...prefs,theme:prefs.theme==='dark'?'light':'dark'})}>{prefs.theme==='dark'?'☀':'☾'}</button>
+    {user?<div className="dsk flex gap-2 shrink-0">{isAdmin&&<><button className="btn" onClick={()=>go('admin')}>Admin</button><button className="btn2" onClick={()=>go('reports')}>Reports{openReports>0&&<span className="tag c ml-1">{openReports}</span>}</button></>}<button className="btn2" onClick={()=>auth.signOut()}>Log out</button></div>
+     :<button className="btn2 shrink-0 dsk" onClick={()=>go('login')}>Admin login</button>}
    </div>
   </header>
+  {!online&&<div className="text-sm text-center py-1.5" style={{background:'var(--ams)',color:'var(--am)'}}>You are offline. Showing data saved on this device. Reports will send when you reconnect.</div>}
   {err&&<div className="text-sm text-center py-2" style={{background:'var(--rds)',color:'var(--rd)'}}>{err}</div>}
-  <main className="flex-1">
-   {!ready&&n!=='login'&&n!=='settings'&&!err?<div className="text-center py-20 mu">Loading the drug database…</div>:<>
+  <main className="flex-1"><div className="pg" key={route.n+'/'+route.id}>
+   {!ready&&n!=='login'&&n!=='settings'&&n!=='more'&&!err?<div className="max-w-6xl mx-auto px-4 py-8 space-y-3"><div className="sk" style={{height:56}}/>{[0,1,2,3].map(i=><div key={i} className="sk"/>)}{!online&&<p className="text-center mu text-sm">Waiting for a connection to download the data for the first time…</p>}</div>:<>
     {n==='home'&&<Home {...ctx}/>}
     {n==='search'&&<Search {...ctx}/>}
+    {n==='diseases'&&<Diseases {...ctx}/>}
+    {n==='more'&&<More {...ctx}/>}
     {n==='drug'&&<DrugPage {...ctx}/>}
     {n==='condition'&&<ConditionPage {...ctx}/>}
     {n==='prices'&&<Prices {...ctx}/>}
@@ -180,14 +216,16 @@ function App(){
     {n==='references'&&<References {...ctx}/>}
     {n==='settings'&&<Settings {...ctx}/>}
     {n==='login'&&<Login/>}
-    {n==='admin'&&(isAdmin?<Admin {...ctx}/>:user&&adm===null?<div className="text-center py-20 mu">Checking admin access…</div>:<div className="max-w-md mx-auto mt-16 card p-8 text-center"><p className="mb-4">{user?'This account is not an administrator, so it cannot edit records.':'Log in as an administrator to manage records.'}</p>{!user&&<button className="btn" onClick={()=>go('login')}>Go to login</button>}</div>)}
+    {(n==='admin'||n==='reports')&&(isAdmin?(n==='admin'?<Admin {...ctx}/>:<Reports {...ctx}/>):user&&adm===null?<div className="text-center py-20 mu">Checking admin access…</div>:<div className="max-w-md mx-auto mt-16 card p-8 text-center"><p className="mb-4">{user?'This account is not an administrator, so it cannot edit records.':'Log in as an administrator to manage records.'}</p>{!user&&<button className="btn" onClick={()=>go('login')}>Go to login</button>}</div>)}
    </>}
-  </main>
+  </div></main>
   <footer className="text-xs text-center py-6 mu border-t" style={{borderColor:'var(--ln)'}}>
    Reference for healthcare professionals. It does not replace clinical judgment. Prices are indicative; check the label and the latest market rate.
   </footer>
+  <nav className="tabbar" aria-label="Main">{tabs.map(([k,l,i])=><button key={k} className={n===k||(k==='more'&&moreSet.includes(n))?'on':''} onClick={()=>go(k)}><Ic n={i}/>{l}</button>)}</nav>
   {editor&&<Editor {...ctx}/>}
-  {toast&&<div role="status" className="fixed bottom-5 left-1/2 -translate-x-1/2 px-4 py-2 rounded-lg text-sm font-semibold shadow-lg z-50" style={{background:'var(--tx)',color:'var(--bg)'}}>{toast}</div>}
+  {report&&<Report report={report} setReport={setReport} toast={setToast}/>}
+  {toast&&<div role="status" className="toast fixed bottom-20 md:bottom-5 left-1/2 -translate-x-1/2 px-4 py-2 rounded-lg text-sm font-semibold shadow-lg z-50" style={{background:'var(--tx)',color:'var(--bg)'}}>{toast}</div>}
  </div>);
 }
 
@@ -198,7 +236,7 @@ function SearchBox({q,setQ,big,index,toks}){
  return(<div className="relative">
   <form onSubmit={e=>{e.preventDefault();setOpen(false);go('search')}}>
    <input className="inp" style={big?{padding:'.9rem 1rem',fontSize:'1.05rem'}:{}} value={q} onChange={e=>{setQ(e.target.value);setOpen(true)}} onFocus={()=>setOpen(true)}
-    placeholder="Search drug, brand, use, side effect, C/I, condition, price…" aria-label="Search"/>
+    placeholder="Search disease, drug, brand, side effect, price…" inputMode="search" aria-label="Search"/>
   </form>
   {open&&sug.length>0&&<div className="card absolute left-0 right-0 mt-1 z-30 overflow-hidden shadow-lg">
    {sug.map(r=><button key={r.type+r.id} className="w-full text-left px-4 py-2 hover:opacity-80 flex justify-between gap-2 border-b" style={{borderColor:'var(--ln)'}}
@@ -220,7 +258,7 @@ function AdminBtns({coll,item,ctx,small}){
 }
 async function delRec(coll,item,ctx){
  if(!confirm('Delete "'+(item[SCHEMAS[coll].title]||item.id)+'"? This cannot be undone.'))return;
- try{await db.collection(coll).doc(item.id).delete();ctx.toast('Deleted');if(ctx.route.n==='drug'||ctx.route.n==='condition')go('home')}catch(e){ctx.toast('Delete failed: '+e.message)}
+ try{await db.collection(coll).doc(item.id).delete();ctx.toast('Deleted');if(coll==='drugs'||coll==='conditions')go('home')}catch(e){ctx.toast('Delete failed: '+e.message)}
 }
 function DrugCard({d,toks,pricesByGeneric,compact,favs}){
  const ps=pricesByGeneric[(d.genericName||'').toLowerCase().trim()]||[];
@@ -243,13 +281,15 @@ function Home(c){
  const pick=t=>{setQ(t);go('search')};
  return(<div className="max-w-6xl mx-auto px-4 py-8 space-y-8">
   <section className="py-6">
-   <h1 className="serif text-3xl sm:text-4xl font-bold mb-2">Find the right drug, dose and price.</h1>
-   <p className="mu mb-5 max-w-xl">Uses, side effects, contraindications and Nepal prices in one place. Type anything: a drug, a brand, a symptom or a price.</p>
+   <h1 className="serif text-3xl sm:text-4xl font-bold mb-2">From disease to prescription in seconds.</h1>
+   <p className="mu mb-5 max-w-xl">Search an illness, drug or brand. See what to prescribe, the dose, side effects, contraindications and Nepal prices.</p>
    <SearchBox {...c} big/>
    {recent.length>0&&<div className="flex flex-wrap gap-2 mt-3 items-center"><span className="text-xs mu">Recent:</span>
     {recent.slice(0,6).map(r=><button key={r} className="btn2" style={{padding:'.15rem .6rem',fontSize:'.8rem'}} onClick={()=>pick(r)}>{r}</button>)}
     <button className="text-xs mu underline" onClick={()=>c.setRecent([])}>Clear</button></div>}
   </section>
+  <section><div className="flex justify-between items-center mb-2"><h2 className="font-bold">Diseases ({vis.conditions.length})</h2><button className="btn2" onClick={()=>go('diseases')}>See all</button></div>
+   {vis.conditions.length===0?<Empty>No diseases yet.{c.isAdmin?' Add them from Admin.':''}</Empty>:<div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-3">{[...vis.conditions].sort((a,b)=>(a.name||'').localeCompare(b.name||'')).slice(0,6).map(x=><DiseaseCard key={x.id} x={x} {...c} toks={[]}/>)}</div>}</section>
   {classes.length>0&&<section><h2 className="font-bold mb-2">Browse by drug class</h2>
    <div className="flex flex-wrap gap-2">{classes.map(([k,v])=><button key={k} className="btn2" onClick={()=>pick(k)}>{k} <span className="mu">{v}</span></button>)}</div></section>}
   {favDrugs.length>0&&<section><h2 className="font-bold mb-2">Your saved drugs</h2>
@@ -260,9 +300,6 @@ function Home(c){
    <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-3">{[...vis.drugs].sort((a,b)=>(a.genericName||'').localeCompare(b.genericName||'')).slice(0,12).map(d=><DrugCard key={d.id} d={d} {...c} toks={[]} compact={prefs.compact}/>)}</div>}
    {vis.drugs.length>12&&<button className="btn2 mt-3" onClick={()=>{setQ(' ');go('search')}}>Show all drugs</button>}
   </section>
-  {vis.conditions.length>0&&<section><h2 className="font-bold mb-2">Conditions ({vis.conditions.length})</h2>
-   <div className="grid sm:grid-cols-2 gap-3">{vis.conditions.slice(0,6).map(x=><button key={x.id} onClick={()=>go('condition',x.id)} className="card p-4 text-left hover:shadow-md">
-    <div className="serif font-bold text-lg">{x.name}</div>{x.firstLineTreatment&&<div className="text-sm mt-1" style={{color:'var(--brd)'}}>First-line: {x.firstLineTreatment.slice(0,110)}</div>}</button>)}</div></section>}
  </div>);
 }
 
@@ -277,7 +314,7 @@ function Search(c){
  let list=type==='all'?all:all.filter(r=>r.type===type);
  if(sort==='az')list=[...list].sort((a,b)=>a.name.localeCompare(b.name));
  if(sort==='price')list=[...list].sort((a,b)=>(a.item.priceNPR??1e12)-(b.item.priceNPR??1e12));
- const label={drugs:'Drugs',conditions:'Conditions',prices:'Prices',references:'References'};
+ const label={drugs:'Drugs',conditions:'Diseases',prices:'Prices',references:'References'};
  return(<div className="max-w-6xl mx-auto px-4 py-6 space-y-4">
   <SearchBox {...c}/>
   <div className="flex flex-wrap gap-2 items-center justify-between">
@@ -289,7 +326,7 @@ function Search(c){
    :<div className="grid md:grid-cols-2 gap-3">{list.slice(0,80).map(r=>{
      const x=r.item;
      if(r.type==='drugs')return <DrugCard key={'d'+r.id} d={x} {...c} compact={prefs.compact}/>;
-     if(r.type==='conditions')return(<button key={'c'+r.id} onClick={()=>go('condition',x.id)} className="card p-4 text-left hover:shadow-md"><span className="tag">Condition</span><div className="serif font-bold text-lg mt-1">{hl(x.name,toks)}</div><p className="text-sm mu line-clamp-2">{hl(x.overview,toks)}</p></button>);
+     if(r.type==='conditions')return <DiseaseCard key={'c'+r.id} x={x} {...c}/>;
      if(r.type==='prices')return(<div key={'p'+r.id} className="card p-4 flex justify-between gap-3"><div><span className="tag p">Price</span><div className="font-bold mt-1">{hl(x.brandName,toks)} <span className="mu font-normal text-sm">{hl(x.strength,toks)}</span></div><div className="text-sm mu">{hl(x.genericName,toks)} · {hl(x.manufacturer,toks)}</div></div><div className="text-right font-bold" style={{color:'var(--am)'}}>{npr(x.priceNPR)}</div></div>);
      return(<div key={'r'+r.id} className="card p-4"><span className="tag">Reference</span><div className="font-bold mt-1">{hl(x.title,toks)}</div><div className="text-sm mu">{hl(x.publisher,toks)} {x.publicationDate}</div></div>);
    })}</div>}
@@ -310,6 +347,7 @@ function DrugPage(c){
  const inC=cmp.includes(d.id);
  const S=prefs.sections;
  const jump=DRUG_SECTIONS.filter(([k])=>S[k]);
+ const dl=c.linksByDrug[(d.genericName||'').toLowerCase().trim()]||[];
  return(<div className="max-w-4xl mx-auto px-4 py-6 space-y-4">
   <button className="text-sm mu" onClick={()=>history.length>1?history.back():go('home')}>← Back</button>
   <div className="card p-5">
@@ -319,7 +357,7 @@ function DrugPage(c){
     <div className="flex flex-wrap gap-2 items-start">
      <Star id={'drugs:'+d.id} favs={favs} setFavs={setFavs}/>
      <button className={'btn2 '+(inC?'on':'')} onClick={()=>setCmp(inC?cmp.filter(x=>x!==d.id):[...cmp,d.id].slice(-4))}>{inC?'✓ In compare':'+ Compare'}</button>
-     <AdminBtns coll="drugs" item={d} ctx={c}/>
+     <RepBtn big c={c} t="drugs" id={d.id} n={d.genericName}/><AdminBtns coll="drugs" item={d} ctx={c}/>
     </div>
    </div>
    {d.brandNames?.length>0&&<p className="text-sm mt-3"><b>Brands in Nepal:</b> {d.brandNames.join(', ')}</p>}
@@ -330,24 +368,68 @@ function DrugPage(c){
   {S.adverseDrugReactions&&d.adverseDrugReactions&&<Sec id="s-adverseDrugReactions" title="Adverse drug reactions (ADR)">{d.adverseDrugReactions}</Sec>}
   {S.contraindications&&d.contraindications&&<Sec id="s-contraindications" title="Contraindications (C/I)" alert>{d.contraindications}</Sec>}
   {S.mechanismOfAction&&d.mechanismOfAction&&<Sec id="s-mechanismOfAction" title="Mechanism of action" open={false}>{d.mechanismOfAction}</Sec>}
+  {dl.length>0&&S.diseases!==0&&<Sec id="s-diseases" title={'Prescribed for ('+dl.length+')'}><div className="space-y-2">{dl.map(l=><button key={l.id} onClick={()=>go('condition',l.conditionId)} className="card p-3 text-left w-full block"><div className="flex justify-between gap-2"><b>{l.conditionName}</b><span className="tag">{l.line}</span></div>{l.regimen&&<div className="text-sm mt-1 whitespace-normal">{l.regimen}</div>}</button>)}</div></Sec>}
   {S.prices&&<Sec id="s-prices" title={'Nepal prices ('+ps.length+')'}>
    {ps.length===0?<span className="mu">No prices recorded for this drug yet.</span>:
-   <div className="overflow-x-auto"><table className="w-full text-sm whitespace-normal"><thead className="text-left mu"><tr><th className="py-1">Brand</th><th>Strength</th><th>Maker</th><th className="text-right">Price</th>{isAdmin&&<th></th>}</tr></thead>
-    <tbody>{ps.map(p=><tr key={p.id} className="border-t" style={{borderColor:'var(--ln)'}}><td className="py-2 font-semibold">{p.brandName}</td><td>{p.strength||p.packSize||'—'}</td><td>{p.manufacturer}</td><td className="text-right font-bold" style={{color:'var(--am)'}}>{npr(p.priceNPR)}</td>{isAdmin&&<td className="text-right"><AdminBtns coll="prices" item={p} ctx={c} small/></td>}</tr>)}</tbody></table></div>}
+   <div className="overflow-x-auto"><table className="w-full text-sm whitespace-normal"><thead className="text-left mu"><tr><th className="py-1">Brand</th><th>Strength</th><th>Maker</th><th className="text-right">Price</th><th></th></tr></thead>
+    <tbody>{ps.map(p=><tr key={p.id} className="border-t" style={{borderColor:'var(--ln)'}}><td className="py-2 font-semibold">{p.brandName}</td><td>{p.strength||p.packSize||'—'}</td><td>{p.manufacturer}</td><td className="text-right font-bold" style={{color:'var(--am)'}}>{npr(p.priceNPR)}</td><td className="text-right whitespace-nowrap"><RepBtn c={c} t="prices" id={p.id} n={p.brandName+' '+(p.strength||'')}/> <AdminBtns coll="prices" item={p} ctx={c} small/></td></tr>)}</tbody></table></div>}
    {isAdmin&&<button className="btn2 mt-3" onClick={()=>c.setEditor({coll:'prices',item:null,preset:{genericName:d.genericName}})}>+ Add price for {d.genericName}</button>}
   </Sec>}
  </div>);
 }
 
+const LINES=['First-line','Second-line','Alternative','Adjunct','Emergency'];
+function Rx({l,c}){
+ const k=(l.drugName||'').toLowerCase().trim();
+ const d=c.vis.drugs.find(x=>(x.genericName||'').toLowerCase().trim()===k);
+ const ps=(c.pricesByGeneric[k]||[]).map(p=>p.priceNPR).filter(Number.isFinite);
+ return(<div className="card p-3 whitespace-normal" style={{borderLeft:'3px solid var(--br)'}}>
+  <div className="flex justify-between gap-2 items-start"><div>{d?<button className="serif font-bold text-lg underline decoration-dotted" onClick={()=>go('drug',d.id)}>{l.drugName}</button>:<span className="serif font-bold text-lg">{l.drugName}</span>}
+   {d?.brandNames?.length>0&&<div className="text-xs mu">{d.brandNames.slice(0,4).join(', ')}</div>}</div>
+   {ps.length>0&&<span className="tag p">From {npr(Math.min(...ps))}</span>}</div>
+  {l.regimen&&<p className="mt-1">{l.regimen}</p>}
+  {l.duration&&<p className="text-sm mu">Duration: {l.duration}</p>}
+  {l.notes&&<p className="text-sm mt-1" style={{color:'var(--am)'}}>⚠ {l.notes}</p>}
+  <div className="flex gap-1 mt-2 flex-wrap"><RepBtn c={c} t="conditionDrugLinks" id={l.conditionId} n={(l.conditionName||'')+' → '+l.drugName}/><AdminBtns coll="conditionDrugLinks" item={l} ctx={c} small/></div></div>);
+}
 function ConditionPage(c){
- const {route,data}=c;const x=data.conditions.find(y=>y.id===route.id);
- if(!x)return <div className="p-16 text-center mu">Condition not found.</div>;
+ const {route,data,linksBy,isAdmin}=c;const x=data.conditions.find(y=>y.id===route.id);
+ if(!x)return <div className="p-16 text-center mu">Disease not found. <button className="underline" onClick={()=>go('diseases')}>See all diseases</button></div>;
+ const ls=linksBy[x.id]||[];
  return(<div className="max-w-4xl mx-auto px-4 py-6 space-y-4">
-  <button className="text-sm mu" onClick={()=>history.length>1?history.back():go('home')}>← Back</button>
-  <div className="card p-5 flex justify-between gap-3 flex-wrap"><div><h1 className="serif text-3xl font-bold">{x.name}</h1><p className="mt-2 mu">{x.overview}</p></div><AdminBtns coll="conditions" item={x} ctx={c}/></div>
-  {x.firstLineTreatment&&<Sec title="First-line treatment">{x.firstLineTreatment}</Sec>}
+  <button className="text-sm mu" onClick={()=>history.length>1?history.back():go('diseases')}>← Back</button>
+  <div className="card p-5"><div className="flex justify-between gap-3 flex-wrap"><div>{x.category&&<span className="tag">{x.category}</span>}<h1 className="serif text-3xl font-bold mt-1">{x.name}</h1></div>
+   <div className="flex gap-2 flex-wrap items-start"><RepBtn big c={c} t="conditions" id={x.id} n={x.name}/><AdminBtns coll="conditions" item={x} ctx={c}/></div></div>
+   {x.overview&&<p className="mt-2 mu whitespace-pre-line">{x.overview}</p>}</div>
+  {x.symptoms&&<Sec title="Symptoms and signs">{x.symptoms}</Sec>}
+  {x.investigations&&<Sec title="Investigations">{x.investigations}</Sec>}
+  <Sec title={'Prescriptions ('+ls.length+')'}>
+   {ls.length===0?<span className="mu">No prescriptions added yet.</span>:<div className="space-y-4">{LINES.map(g=>{const gs=ls.filter(l=>(l.line||'First-line')===g);return gs.length>0&&<div key={g}><div className="text-xs font-bold uppercase tracking-wide mu mb-2">{g}</div><div className="space-y-2">{gs.map(l=><Rx key={l.id} l={l} c={c}/>)}</div></div>})}</div>}
+   {isAdmin&&<button className="btn2 mt-3" onClick={()=>c.setEditor({coll:'conditionDrugLinks',item:null,preset:{conditionId:x.id}})}>+ Add prescription</button>}
+  </Sec>
+  {x.firstLineTreatment&&<Sec title="Treatment summary">{x.firstLineTreatment}</Sec>}
   {x.alternativeTreatments&&<Sec title="Alternative treatments">{x.alternativeTreatments}</Sec>}
+  {x.nonPharm&&<Sec title="Non-drug advice">{x.nonPharm}</Sec>}
   {x.referralCriteria&&<Sec title="When to refer" alert>{x.referralCriteria}</Sec>}
+ </div>);
+}
+function DiseaseCard({x,linksBy,toks=[]}){
+ const ls=linksBy[x.id]||[];const first=ls.filter(l=>(l.line||'First-line')==='First-line').map(l=>l.drugName);
+ return(<button onClick={()=>go('condition',x.id)} className="card p-4 text-left w-full" style={{borderLeft:'4px solid var(--am)'}}>
+  <div className="flex justify-between gap-2 items-start"><div className="serif font-bold text-lg">{hl(x.name,toks)}</div>{x.category&&<span className="tag">{x.category}</span>}</div>
+  {first.length>0?<div className="text-sm mt-1" style={{color:'var(--brd)'}}>First-line: {first.join(', ')}</div>:x.overview&&<p className="text-sm mu mt-1 line-clamp-2">{x.overview}</p>}
+  <div className="text-xs mu mt-1">{ls.length} prescription{ls.length===1?'':'s'}</div></button>);
+}
+function Diseases(c){
+ const {vis,linksBy}=c;const [f,setF]=useState('');const [cat,setCat]=useState('');
+ const cats=[...new Set(vis.conditions.map(x=>x.category).filter(Boolean))].sort();
+ const toks=f.toLowerCase().split(/\s+/).filter(Boolean);
+ const list=vis.conditions.filter(x=>(!cat||x.category===cat)&&toks.every(t=>(flat(x)+' '+(linksBy[x.id]||[]).map(l=>l.drugName).join(' ')).includes(t))).sort((a,b)=>(a.name||'').localeCompare(b.name||''));
+ return(<div className="max-w-6xl mx-auto px-4 py-6 space-y-4">
+  <div className="flex flex-wrap justify-between gap-2"><h1 className="serif text-2xl font-bold">Diseases and prescriptions</h1>{c.isAdmin&&<button className="btn" onClick={()=>c.setEditor({coll:'conditions',item:null})}>+ Add disease</button>}</div>
+  <input className="inp" placeholder="Search a disease, symptom or drug…" value={f} onChange={e=>setF(e.target.value)} aria-label="Search diseases"/>
+  {cats.length>0&&<div className="flex gap-2 overflow-x-auto hide-sb pb-1"><button className={'btn2 whitespace-nowrap '+(!cat?'on':'')} onClick={()=>setCat('')}>All</button>{cats.map(k=><button key={k} className={'btn2 whitespace-nowrap '+(cat===k?'on':'')} onClick={()=>setCat(k)}>{k}</button>)}</div>}
+  {list.length===0?<Empty>No diseases found.</Empty>:<div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-3">{list.map(x=><DiseaseCard key={x.id} x={x} linksBy={linksBy} toks={toks}/>)}</div>}
  </div>);
 }
 
@@ -364,11 +446,12 @@ function Prices(c){
    {isAdmin&&<button className="btn" onClick={()=>c.setEditor({coll:'prices',item:null})}>+ Add price</button>}</div>
   <input className="inp" placeholder="Filter by brand, generic, maker, strength…" value={f} onChange={e=>setF(e.target.value)} aria-label="Filter prices"/>
   {rows.length===0?<Empty>No prices match.</Empty>:
-  <div className="card overflow-x-auto"><table className="w-full text-sm"><thead className="text-left" style={{background:'var(--soft)'}}><tr>{th('brandName','Brand')}{th('genericName','Generic')}{th('strength','Strength')}{th('manufacturer','Maker')}{th('priceNPR','Price',1)}{isAdmin&&<th></th>}</tr></thead>
+  <div className="card overflow-x-auto dsk"><table className="w-full text-sm"><thead className="text-left" style={{background:'var(--soft)'}}><tr>{th('brandName','Brand')}{th('genericName','Generic')}{th('strength','Strength')}{th('manufacturer','Maker')}{th('priceNPR','Price',1)}<th></th></tr></thead>
    <tbody>{rows.map(p=><tr key={p.id} className="border-t" style={{borderColor:'var(--ln)'}}>
     <td className="p-3 font-semibold">{hl(p.brandName,toks)}</td><td className="p-3">{hl(p.genericName,toks)}</td><td className="p-3">{hl(p.strength||p.packSize||'',toks)}</td>
     <td className="p-3 mu">{hl(p.manufacturer,toks)}</td><td className="p-3 text-right font-bold" style={{color:'var(--am)'}}>{npr(p.priceNPR)}</td>
-    {isAdmin&&<td className="p-3 text-right"><AdminBtns coll="prices" item={p} ctx={c} small/></td>}</tr>)}</tbody></table></div>}
+    <td className="p-3 text-right whitespace-nowrap"><RepBtn c={c} t="prices" id={p.id} n={p.brandName+' '+(p.strength||'')}/> <AdminBtns coll="prices" item={p} ctx={c} small/></td></tr>)}</tbody></table></div>}
+  {rows.length>0&&<div className="mob space-y-2">{rows.slice(0,100).map(p=><div key={p.id} className="card p-3"><div className="flex justify-between gap-2"><div><div className="font-bold">{hl(p.brandName,toks)}</div><div className="text-sm mu">{hl(p.genericName,toks)} · {p.strength||p.packSize||''}</div><div className="text-xs mu">{p.manufacturer}</div></div><div className="font-bold" style={{color:'var(--am)'}}>{npr(p.priceNPR)}</div></div><div className="flex gap-1 mt-2"><RepBtn c={c} t="prices" id={p.id} n={p.brandName+' '+(p.strength||'')}/><AdminBtns coll="prices" item={p} ctx={c} small/></div></div>)}</div>}
  </div>);
 }
 
@@ -396,7 +479,7 @@ function Settings({prefs,setPrefs,favs,setFavs,setRecent,toast}){
  const set=(k,v)=>setPrefs({...prefs,[k]:v});
  const Opt=({k,v,l})=><button className={'btn2 '+(prefs[k]===v?'on':'')} aria-pressed={prefs[k]===v} onClick={()=>set(k,v)}>{l}</button>;
  return(<div className="max-w-2xl mx-auto px-4 py-6 space-y-4"><h1 className="serif text-2xl font-bold">My preferences</h1>
-  <p className="text-sm mu">Saved on this device only.</p>
+  <p className="text-sm mu">Saved on this device only. Anything you have opened is also kept for offline use.</p>
   <div className="card p-5 space-y-5">
    <div><div className="font-bold mb-2">Theme</div><div className="flex gap-2"><Opt k="theme" v="light" l="Light"/><Opt k="theme" v="dark" l="Dark (night shifts)"/></div></div>
    <div><div className="font-bold mb-2">Text size</div><div className="flex gap-2"><Opt k="size" v="s" l="Small"/><Opt k="size" v="m" l="Medium"/><Opt k="size" v="l" l="Large"/></div></div>
@@ -419,7 +502,7 @@ function Login(){
 }
 
 /* ============ EDITOR: one form for every record type ============ */
-function Editor({editor,setEditor,toast}){
+function Editor({editor,setEditor,toast,data}){
  const sc=SCHEMAS[editor.coll];const it=editor.item;
  const [v,setV]=useState(()=>{const o={};sc.fields.forEach(f=>{const x=it?it[f.k]:(editor.preset?.[f.k]);
   o[f.k]=f.t==='list'?(x||[]).join(', '):f.t==='bool'?(x!==false):(x??(f.t==='sel'?f.o[0]:''))});return o});
@@ -432,17 +515,20 @@ function Editor({editor,setEditor,toast}){
     if(f.t==='num')x=x===''?null:Number(x);
     out[f.k]=x});
    out.updatedAt=firebase.firestore.FieldValue.serverTimestamp();
-   const id=it?it.id:slug(editor.coll==='prices'?v.brandName+' '+(v.strength||''):v[sc.title]);
+   if(editor.coll==='conditionDrugLinks')out.conditionName=(data.conditions.find(c=>c.id===out.conditionId)||{}).name||'';
+   const id=it?it.id:mkId(editor.coll,v);
    await db.collection(editor.coll).doc(id).set(out,{merge:true});
    toast(it?'Saved changes':'Added');setEditor(null);
   }catch(x){setEr(x.message)}finally{setBusy(false)}};
- return(<div className="fixed inset-0 z-50 flex items-start justify-center overflow-y-auto p-4" style={{background:'rgba(0,0,0,.5)'}} onMouseDown={e=>e.target===e.currentTarget&&setEditor(null)}>
+ return(<div className="modal fixed inset-0 z-50 flex items-start justify-center overflow-y-auto p-4" style={{background:'rgba(0,0,0,.5)'}} onMouseDown={e=>e.target===e.currentTarget&&setEditor(null)}>
   <form onSubmit={save} className="card w-full max-w-2xl p-5 my-6 space-y-3" role="dialog" aria-modal="true">
    <h2 className="serif text-xl font-bold">{it?'Edit':'Add'} {sc.one}</h2>
    {er&&<div className="text-sm p-2 rounded" style={{background:'var(--rds)',color:'var(--rd)'}}>{er}</div>}
    {sc.fields.map(f=><label key={f.k} className="block text-sm font-semibold">{f.l}{f.req&&' *'}
     {f.t==='area'?<textarea className="inp mt-1 font-normal" rows={3} value={v[f.k]} onChange={e=>setV({...v,[f.k]:e.target.value})}/>
     :f.t==='bool'?<span className="flex items-center gap-2 mt-1 font-normal"><input type="checkbox" checked={!!v[f.k]} onChange={e=>setV({...v,[f.k]:e.target.checked})}/> {v[f.k]?'Published':'Draft (only admins can see it)'}</span>
+    :f.t==='cond'?<select className="inp mt-1 font-normal" required value={v[f.k]} onChange={e=>setV({...v,[f.k]:e.target.value})}><option value="">Choose a disease…</option>{[...data.conditions].sort((a,b)=>(a.name||'').localeCompare(b.name||'')).map(c=>{return <option key={c.id} value={c.id}>{c.name}</option>})}</select>
+    :f.t==='drug'?<><input className="inp mt-1 font-normal" list="dl-drugs" required value={v[f.k]} onChange={e=>setV({...v,[f.k]:e.target.value})}/><datalist id="dl-drugs">{data.drugs.map(d=><option key={d.id} value={d.genericName}/>)}</datalist></>
     :f.t==='sel'?<select className="inp mt-1 font-normal" value={v[f.k]} onChange={e=>setV({...v,[f.k]:e.target.value})}>{f.o.map(o=><option key={o}>{o}</option>)}</select>
     :<input className="inp mt-1 font-normal" type={f.t==='num'?'number':'text'} step="any" required={!!f.req} value={v[f.k]} onChange={e=>setV({...v,[f.k]:e.target.value})}/>}</label>)}
    <div className="flex justify-end gap-2 pt-2"><button type="button" className="btn2" onClick={()=>setEditor(null)}>Cancel</button><button className="btn" disabled={busy}>{busy?'Saving…':'Save changes'}</button></div>
@@ -461,16 +547,16 @@ function Admin(c){
  const summ=(()=>{if(!json.trim())return null;try{let d=JSON.parse(json);if(Array.isArray(d))d={[coll]:d};
   const p=Object.keys(SCHEMAS).filter(k=>Array.isArray(d[k])).map(k=>d[k].length+' '+SCHEMAS[k].label.toLowerCase());
   return p.length?{ok:1,t:'Ready to import: '+p.join(', ')+'.'}:{t:'No drugs, conditions, prices or references found in this file.'}}catch(e){return{t:'This is not valid JSON: '+e.message}}})();
- const sample=()=>download('doc-nepal-sample.json',{drugs:[{genericName:'Paracetamol',brandNames:['Crocin','Dolo'],drugClass:'Analgesic / antipyretic',indications:'Mild to moderate pain; fever.',adultDose:'500 to 1000 mg every 4 to 6 hours. Max 4 g/day.',pediatricDose:'10 to 15 mg/kg every 4 to 6 hours.',adverseDrugReactions:'Rash; hepatotoxicity in overdose.',contraindications:'Severe hepatic impairment; hypersensitivity.',mechanismOfAction:'Central COX inhibition.',published:true}],prices:[{brandName:'Dolo 500',genericName:'Paracetamol',strength:'500 mg tablet',packSize:'10 tablets',manufacturer:'Example Pharma',priceNPR:25,verificationStatus:'Verified'}],conditions:[],references:[]});
+ const sample=()=>download('doc-nepal-sample.json',{drugs:[{genericName:'Paracetamol',brandNames:['Crocin','Dolo'],drugClass:'Analgesic / antipyretic',indications:'Mild to moderate pain; fever.',adultDose:'500 to 1000 mg every 4 to 6 hours. Max 4 g/day.',pediatricDose:'10 to 15 mg/kg every 4 to 6 hours.',adverseDrugReactions:'Rash; hepatotoxicity in overdose.',contraindications:'Severe hepatic impairment; hypersensitivity.',mechanismOfAction:'Central COX inhibition.',published:true}],prices:[{brandName:'Dolo 500',genericName:'Paracetamol',strength:'500 mg tablet',packSize:'10 tablets',manufacturer:'Example Pharma',priceNPR:25,verificationStatus:'Verified'}],conditions:[{name:'Fever',category:'General',overview:'Raised body temperature.',symptoms:'Warmth, sweating, chills.',published:true}],conditionDrugLinks:[{conditionId:'fever',conditionName:'Fever',drugName:'Paracetamol',line:'First-line',regimen:'500 to 1000 mg orally every 6 hours',duration:'3 days',notes:'Max 4 g/day.',published:true}],references:[]});
  const bulk=async()=>{
   try{let d=JSON.parse(json);if(Array.isArray(d))d={[coll]:d};let n=0,skipped=0;let b=db.batch();
    for(const c2 of Object.keys(SCHEMAS)){if(!Array.isArray(d[c2]))continue;
-    for(const r of d[c2]){const t=SCHEMAS[c2].title;const id=r.id||slug(c2==='prices'?(r.brandName+' '+(r.strength||'')):r[t]);const {id:_,...rest}=r;
+    for(const r of d[c2]){const t=SCHEMAS[c2].title;const id=r.id||mkId(c2,r);const {id:_,...rest}=r;
      if(!r.id&&!r[t]){skipped++;continue}
      if(typeof rest.brandNames==='string')rest.brandNames=rest.brandNames.split(',').map(s=>s.trim()).filter(Boolean);
      if(typeof rest.priceNPR==='string')rest.priceNPR=Number(rest.priceNPR);
      if(c2==='drugs'){rest.published=rest.published??true;rest.drugClass=rest.drugClass??''}
-     if(c2==='conditions')rest.published=rest.published??true;
+     if(c2==='conditions'||c2==='conditionDrugLinks')rest.published=rest.published??true;
      if(c2==='prices')rest.verificationStatus=rest.verificationStatus||'Verified';
      b.set(db.collection(c2).doc(id),{...rest,updatedAt:firebase.firestore.FieldValue.serverTimestamp()},{merge:true});n++;
      if(n%400===0){await b.commit();b=db.batch()}}}
@@ -499,6 +585,56 @@ function Admin(c){
    {summ&&<div className="text-sm p-2 rounded" style={summ.ok?{background:'var(--soft)',color:'var(--brd)'}:{background:'var(--rds)',color:'var(--rd)'}}>{summ.t}</div>}
    <button className="btn" onClick={bulk} disabled={!summ?.ok}>Import records</button></div></details>
  </div>);
+}
+
+const IC={home:'M3 11l9-8 9 8M5 10v10h5v-6h4v6h5V10',dis:'M3 12h4l2-6 4 12 2-6h6',search:'M11 4a7 7 0 100 14 7 7 0 000-14zM21 21l-5-5',tag:'M20 12l-8 8-9-9V3h8l9 9zM7.5 7.5h.01',more:'M5 12h.01M12 12h.01M19 12h.01'};
+const Ic=({n})=><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d={IC[n]}/></svg>;
+function RepBtn({c,t,id,n,big}){return <button className="btn2" style={big?{}:{padding:'.15rem .5rem',fontSize:'.75rem'}} title="Report an error" onClick={e=>{e.stopPropagation();c.setReport({targetType:t,targetId:id,targetName:n})}}>⚑ Report error</button>}
+
+const CATS=['Wrong dose','Wrong price','Side effect or C/I missing or wrong','Wrong drug for this disease','Spelling or other'];
+function Report({report,setReport,toast}){
+ const [cat,setCat]=useState(CATS[0]);const [msg,setMsg]=useState('');const [ct,setCt]=useState('');const [busy,setBusy]=useState(false);const [er,setEr]=useState('');
+ const send=async ev=>{ev.preventDefault();if(msg.trim().length<5){setEr('Please describe the problem in a few words.');return}
+  setBusy(true);
+  try{const p=db.collection('reports').add({targetType:report.targetType,targetId:report.targetId||'',targetName:report.targetName||'',category:cat,message:msg.trim().slice(0,1000),contact:ct.trim().slice(0,120),status:'Open',createdAt:firebase.firestore.FieldValue.serverTimestamp()});
+   if(navigator.onLine)await p;else p.catch(()=>{});
+   toast(navigator.onLine?'Thank you. Report sent to the admin.':'Saved. It will be sent when you are back online.');setReport(null);
+  }catch(x){setEr(x.message)}finally{setBusy(false)}};
+ return(<div className="modal fixed inset-0 z-50 flex items-end sm:items-center justify-center sm:p-4" style={{background:'rgba(0,0,0,.5)'}} onMouseDown={e=>e.target===e.currentTarget&&setReport(null)}>
+  <form onSubmit={send} className="card w-full max-w-md p-5 space-y-3" role="dialog" aria-modal="true">
+   <h2 className="serif text-xl font-bold">Report an error</h2>
+   <p className="text-sm mu">About: <b>{report.targetName||'General'}</b></p>
+   {er&&<div className="text-sm p-2 rounded" style={{background:'var(--rds)',color:'var(--rd)'}}>{er}</div>}
+   <label className="block text-sm font-semibold">What is wrong?<select className="inp mt-1 font-normal" value={cat} onChange={e=>setCat(e.target.value)}>{CATS.map(x=><option key={x}>{x}</option>)}</select></label>
+   <label className="block text-sm font-semibold">Details<textarea className="inp mt-1 font-normal" rows={4} maxLength={1000} placeholder="What should it say instead? A source helps." value={msg} onChange={e=>setMsg(e.target.value)}/></label>
+   <label className="block text-sm font-semibold">Your phone or email (optional)<input className="inp mt-1 font-normal" maxLength={120} value={ct} onChange={e=>setCt(e.target.value)}/></label>
+   <div className="flex justify-end gap-2"><button type="button" className="btn2" onClick={()=>setReport(null)}>Cancel</button><button className="btn" disabled={busy}>{busy?'Sending…':'Send report'}</button></div>
+  </form></div>);
+}
+function Reports(c){
+ const {data,toast}=c;const [st,setSt]=useState('Open');
+ const rows=data.reports.filter(r=>st==='All'||r.status===st).sort((a,b)=>(b.createdAt?.seconds||9e9)-(a.createdAt?.seconds||9e9));
+ const setS=(r,v)=>db.collection('reports').doc(r.id).update({status:v}).then(()=>toast(v==='Open'?'Reopened':'Marked resolved')).catch(e=>toast(e.message));
+ const del=r=>confirm('Delete this report?')&&db.collection('reports').doc(r.id).delete().catch(e=>toast(e.message));
+ const open=r=>r.targetType==='drugs'?go('drug',r.targetId):(r.targetType==='conditions'||r.targetType==='conditionDrugLinks')?go('condition',r.targetId):r.targetType==='prices'?go('prices'):null;
+ return(<div className="max-w-3xl mx-auto px-4 py-6 space-y-4"><h1 className="serif text-2xl font-bold">Error reports</h1>
+  <div className="flex gap-2">{['Open','Resolved','All'].map(k=><button key={k} className={'btn2 '+(st===k?'on':'')} onClick={()=>setSt(k)}>{k}</button>)}</div>
+  {rows.length===0?<Empty>No {st==='All'?'':st.toLowerCase()+' '}reports.</Empty>:rows.map(r=><div key={r.id} className="card p-4 space-y-1">
+   <div className="flex justify-between gap-2 flex-wrap"><div className="font-bold">{r.targetName||'General'}</div><div className="flex gap-1"><span className="tag">{r.targetType}</span><span className={'tag '+(r.status==='Open'?'c':'')}>{r.status}</span></div></div>
+   <div className="text-sm font-semibold" style={{color:'var(--am)'}}>{r.category}</div>
+   <p className="whitespace-pre-line">{r.message}</p>
+   <div className="text-xs mu">{r.createdAt?.toDate?r.createdAt.toDate().toLocaleString():'Just now'}{r.contact&&' · '+r.contact}</div>
+   <div className="flex gap-2 pt-1 flex-wrap">{open(r)!==null&&<button className="btn2" onClick={()=>open(r)}>Open record</button>}
+    <button className="btn2" onClick={()=>setS(r,r.status==='Open'?'Resolved':'Open')}>{r.status==='Open'?'Mark resolved':'Reopen'}</button><button className="btn2 dng" onClick={()=>del(r)}>Delete</button></div></div>)}
+ </div>);
+}
+function More(c){
+ const {user,isAdmin,openReports}=c;
+ const items=[['favorites','Saved drugs'],['compare','Compare drugs'],['references','Sources'],['settings','Settings and text size'],...(isAdmin?[['admin','Admin: manage records'],['reports','Error reports']]:[]),...(user?[]:[['login','Admin login']])];
+ return(<div className="max-w-md mx-auto px-4 py-6 space-y-2"><h1 className="serif text-2xl font-bold mb-2">More</h1>
+  {items.map(([k,l])=><button key={k} className="card p-4 w-full text-left font-semibold flex justify-between" onClick={()=>go(k)}>{l}<span className="mu">›</span></button>)}
+  <button className="card p-4 w-full text-left font-semibold" onClick={()=>c.setReport({targetType:'other',targetId:'',targetName:'General'})}>⚑ Report a problem</button>
+  {user&&<button className="card p-4 w-full text-left font-semibold" onClick={()=>auth.signOut()}>Log out</button>}</div>);
 }
 
 ReactDOM.createRoot(document.getElementById('root')).render(<App/>);
