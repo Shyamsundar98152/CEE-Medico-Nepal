@@ -3,7 +3,9 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<meta name="theme-color" content="#0f6b6b"><meta name="apple-mobile-web-app-capable" content="yes"><title>DOC Nepal — Drug of Choice</title>
+<meta name="theme-color" content="#0f6b6b">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<title>DOC Nepal — Drug of Choice Reference</title>
 <link href="https://fonts.googleapis.com/css2?family=Source+Sans+3:wght@400;600;700&family=Source+Serif+4:wght@600;700&display=swap" rel="stylesheet">
 <script src="https://cdn.tailwindcss.com/3.4.17"></script>
 <script src="https://unpkg.com/react@18.3.1/umd/react.production.min.js"></script>
@@ -13,7 +15,7 @@
 <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
 <style>
-:root{--bg:#f5f6f2;--card:#fff;--tx:#16262b;--mu:#5d6d72;--ln:#dde2dc;--br:#0f6b6b;--brd:#0a4f4f;--soft:#e3f0ee;--rd:#a8142f;--rds:#fbeaed;--am:#9a5b00;--ams:#fdf1dc;--hl:#fff1a8}
+:root{--bg:#f5f6f2;--card:#ffffff;--tx:#16262b;--mu:#5d6d72;--ln:#dde2dc;--br:#0f6b6b;--brd:#0a4f4f;--soft:#e3f0ee;--rd:#a8142f;--rds:#fbeaed;--am:#9a5b00;--ams:#fdf1dc;--hl:#fff1a8}
 html.dark{--bg:#0f1b1e;--card:#172629;--tx:#e6eeee;--mu:#98aaad;--ln:#2a3d41;--br:#3fb5ad;--brd:#7fd3cc;--soft:#1b3438;--rd:#ff8fa3;--rds:#3a1c24;--am:#f0b45a;--ams:#33270f;--hl:#665a10}
 html{font-size:16px}html.fs-l{font-size:18px}html.fs-s{font-size:14.5px}
 body{background:var(--bg);color:var(--tx);font-family:'Source Sans 3',system-ui,sans-serif}
@@ -21,10 +23,10 @@ body{background:var(--bg);color:var(--tx);font-family:'Source Sans 3',system-ui,
 .card{background:var(--card);border:1px solid var(--ln);border-radius:10px}
 .inp{width:100%;background:var(--card);color:var(--tx);border:1px solid var(--ln);border-radius:8px;padding:.55rem .75rem;font-size:1rem}
 .inp:focus,.btn:focus-visible,.btn2:focus-visible,summary:focus-visible{outline:2px solid var(--br);outline-offset:1px}
-.btn{background:var(--br);color:#fff;border-radius:8px;padding:.5rem .9rem;font-weight:600;font-size:.875rem}
+.btn{background:var(--br);color:#ffffff;border-radius:8px;padding:.5rem .9rem;font-weight:600;font-size:.875rem;cursor:pointer}
 html.dark .btn{color:#06201f}
-.btn:hover{background:var(--brd)}html.dark .btn:hover{background:var(--brd)}
-.btn2{border:1px solid var(--ln);background:var(--card);border-radius:8px;padding:.45rem .8rem;font-weight:600;font-size:.85rem}
+.btn:hover{background:var(--brd)}
+.btn2{border:1px solid var(--ln);background:var(--card);border-radius:8px;padding:.45rem .8rem;font-weight:600;font-size:.85rem;cursor:pointer}
 .btn2:hover{border-color:var(--br)}.btn2.on{background:var(--soft);border-color:var(--br);color:var(--brd)}
 .dng{color:var(--rd)}
 mark{background:var(--hl);color:inherit;border-radius:2px}
@@ -58,583 +60,1560 @@ details>div{animation:fade .25s ease}
 </head>
 <body>
 <div id="root"></div>
+
 <script type="text/babel">
-const {useState,useEffect,useMemo,useRef}=React;
+const {useState, useEffect, useMemo, useRef} = React;
 
-/* ============ FIREBASE (your existing project) ============ */
-const firebaseConfig={apiKey:"AIzaSyANTEvessOCqYqfzYVX9V11CAN-xjF7ubQ",authDomain:"doc-drug-of-choice.firebaseapp.com",projectId:"doc-drug-of-choice",storageBucket:"doc-drug-of-choice.firebasestorage.app",messagingSenderId:"177639649857",appId:"1:177639649857:web:98d71685c6b31b93084cc0",measurementId:"G-XML2TZYJG7"};
-let auth,db;
-try{if(!firebase.apps.length)firebase.initializeApp(firebaseConfig);auth=firebase.auth();db=firebase.firestore();try{db.enablePersistence({synchronizeTabs:true}).catch(e=>console.warn("Offline cache:",e.code))}catch(e){}}catch(e){console.error(e)}
-// Same UID as in your Firestore rules. This only decides which buttons the UI shows; the rules do the real enforcing.
-if('serviceWorker' in navigator&&location.protocol.startsWith('http'))navigator.serviceWorker.register('sw.js').catch(()=>{});
-const ADMIN_UIDS=['XDzOhJQkiRhJ8PNV5V24IopnGyZ2'];
-
-/* ============ SCHEMA: admin forms are generated from this, so every field is editable ============ */
-const SCHEMAS={
- drugs:{label:'Drugs',one:'drug',title:'genericName',sub:'drugClass',fields:[
-  {k:'genericName',l:'Generic name',req:1},{k:'brandNames',l:'Brand names (comma separated)',t:'list'},{k:'drugClass',l:'Drug class'},
-  {k:'indications',l:'Uses / Indications',t:'area'},{k:'mechanismOfAction',l:'Mechanism of action',t:'area'},
-  {k:'adultDose',l:'Adult dose',t:'area'},{k:'pediatricDose',l:'Pediatric dose',t:'area'},
-  {k:'adverseDrugReactions',l:'Adverse drug reactions (ADR)',t:'area'},{k:'contraindications',l:'Contraindications (C/I)',t:'area'},
-  {k:'published',l:'Visible to the public',t:'bool'}]},
- conditions:{label:'Diseases',one:'disease',title:'name',sub:'category',fields:[
-  {k:'name',l:'Disease / illness name',req:1},{k:'category',l:'Category (e.g. Cardiology, Infection)'},{k:'overview',l:'Overview',t:'area'},{k:'symptoms',l:'Symptoms and signs',t:'area'},{k:'investigations',l:'Investigations',t:'area'},{k:'firstLineTreatment',l:'First-line treatment',t:'area'},
-  {k:'alternativeTreatments',l:'Alternative treatments',t:'area'},{k:'nonPharm',l:'Non-drug advice (lifestyle, diet)',t:'area'},{k:'referralCriteria',l:'Referral criteria',t:'area'},
-  {k:'published',l:'Visible to the public',t:'bool'}]},
- conditionDrugLinks:{label:'Prescriptions',one:'prescription',title:'drugName',sub:'conditionName',id:r=>r.conditionId+' '+r.drugName,fields:[
-  {k:'conditionId',l:'Disease',t:'cond',req:1},{k:'drugName',l:'Drug (generic name)',t:'drug',req:1},{k:'line',l:'Line of treatment',t:'sel',o:['First-line','Second-line','Alternative','Adjunct','Emergency']},
-  {k:'regimen',l:'Prescription (dose, route, frequency)',t:'area'},{k:'duration',l:'Duration'},{k:'notes',l:'Cautions / notes',t:'area'},{k:'published',l:'Visible to the public',t:'bool'}]},
- prices:{label:'Prices',one:'price',title:'brandName',sub:'genericName',fields:[
-  {k:'brandName',l:'Brand name',req:1},{k:'genericName',l:'Generic name (must match the drug)',req:1},{k:'strength',l:'Strength / form (e.g. 500 mg tablet)'},
-  {k:'packSize',l:'Pack size'},{k:'manufacturer',l:'Manufacturer'},{k:'priceNPR',l:'Price (NPR)',t:'num',req:1},
-  {k:'verificationStatus',l:'Verification (the public only sees Verified prices)',t:'sel',o:['Verified','Unverified','Outdated']}]},
- references:{label:'References',one:'reference',title:'title',sub:'publisher',fields:[
-  {k:'title',l:'Title',req:1},{k:'publisher',l:'Publisher'},{k:'publicationDate',l:'Publication date'},{k:'url',l:'Link (URL)'}]}
+/* ============ FIREBASE INITIALIZATION ============ */
+const firebaseConfig = {
+  apiKey: "AIzaSyANTEvessOCqYqfzYVX9V11CAN-xjF7ubQ",
+  authDomain: "doc-drug-of-choice.firebaseapp.com",
+  projectId: "doc-drug-of-choice",
+  storageBucket: "doc-drug-of-choice.firebasestorage.app",
+  messagingSenderId: "177639649857",
+  appId: "1:177639649857:web:98d71685c6b31b93084cc0",
+  measurementId: "G-XML2TZYJG7"
 };
-const DRUG_SECTIONS=[['indications','Uses'],['dose','Dosage'],['adverseDrugReactions','ADR (side effects)'],['contraindications','C/I (contraindications)'],['mechanismOfAction','Mechanism of action'],['prices','Nepal prices']];
 
-/* ============ HELPERS ============ */
-const mkId=(c,r)=>{const s=SCHEMAS[c];return slug(s.id?s.id(r):c==='prices'?r.brandName+' '+(r.strength||''):r[s.title])};
-const slug=s=>String(s||'').toLowerCase().replace(/[^a-z0-9]+/g,'-').replace(/^-|-$/g,'')||('item-'+Date.now());
-const lsGet=(k,d)=>{try{const v=localStorage.getItem(k);return v?JSON.parse(v):d}catch(e){return d}};
-const lsSet=(k,v)=>{try{localStorage.setItem(k,JSON.stringify(v))}catch(e){}};
-const npr=n=>typeof n==='number'?'NPR '+n.toLocaleString('en-IN',{minimumFractionDigits:2,maximumFractionDigits:2}):'—';
-const flat=o=>Object.entries(o).filter(([k])=>!['id','updatedAt','published'].includes(k)).map(([,v])=>Array.isArray(v)?v.join(' '):(v&&typeof v==='object')?'':v).join(' ').toLowerCase();
-const parseRoute=()=>{const [,n='home',id='']=location.hash.replace('#','').split('/');return{n,id:decodeURIComponent(id)}};
-const go=(n,id)=>{location.hash='/'+n+(id?'/'+encodeURIComponent(id):'')};
-function hl(t,toks){
- if(t==null||t==='')return t; if(!toks||!toks.length)return t;
- const re=new RegExp('('+toks.map(x=>x.replace(/[.*+?^${}()|[\]\\]/g,'\\$&')).join('|')+')','gi');
- return String(t).split(re).map((p,i)=>i%2?<mark key={i}>{p}</mark>:p);
+let auth, db;
+try {
+  if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
+  auth = firebase.auth();
+  db = firebase.firestore();
+  try {
+    db.enablePersistence({ synchronizeTabs: true }).catch(e => console.warn("Offline cache:", e.code));
+  } catch (e) {}
+} catch (e) {
+  console.error("Firebase Initialization Error:", e);
 }
-function download(name,obj){const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([JSON.stringify(obj,null,2)],{type:'application/json'}));a.download=name;a.click();}
 
-/* ============ APP ============ */
-function App(){
- const [route,setRoute]=useState(parseRoute());
- const [data,setData]=useState({drugs:[],conditions:[],conditionDrugLinks:[],prices:[],references:[],reports:[]});
- const [loaded,setLoaded]=useState({});
- const [err,setErr]=useState('');
- const [user,setUser]=useState(null);
- const [adm,setAdm]=useState(false); // false = not admin, null = checking, true = admin
- const [q,setQ]=useState('');
- const [prefs,setPrefs]=useState(()=>({theme:'light',size:'m',compact:false,sections:{indications:1,dose:1,adverseDrugReactions:1,contraindications:1,mechanismOfAction:1,prices:1},...lsGet('doc_prefs',{})}));
- const [favs,setFavs]=useState(()=>lsGet('doc_favs',[]));
- const [recent,setRecent]=useState(()=>lsGet('doc_recent',[]));
- const [cmp,setCmp]=useState([]);
- const [editor,setEditor]=useState(null);
- const [toast,setToast]=useState('');
- const [online,setOnline]=useState(navigator.onLine);const [report,setReport]=useState(null);
- useEffect(()=>{const a=()=>setOnline(true),b=()=>setOnline(false);window.addEventListener('online',a);window.addEventListener('offline',b);return()=>{window.removeEventListener('online',a);window.removeEventListener('offline',b)}},[]);
+if ('serviceWorker' in navigator && location.protocol.startsWith('http')) {
+  navigator.serviceWorker.register('sw.js').catch(() => {});
+}
 
- useEffect(()=>{const f=()=>{setRoute(parseRoute());window.scrollTo(0,0)};window.addEventListener('hashchange',f);return()=>window.removeEventListener('hashchange',f)},[]);
- useEffect(()=>{if(!auth)return;return auth.onAuthStateChanged(async u=>{
-  setUser(u);if(!u){setAdm(false);return}setAdm(null);
-  try{const r=await u.getIdTokenResult(true);setAdm(r.claims.admin===true||ADMIN_UIDS.includes(u.uid))}catch(e){setAdm(ADMIN_UIDS.includes(u.uid))}
- })},[]);
- useEffect(()=>{
-  if(!db){setErr('Firebase did not start. Check your connection.');return}
-  if(adm===null)return; // still checking admin status
-  // Your rules only let the public read published drugs/conditions and Verified prices,
-  // so the query itself must filter, otherwise Firestore rejects the whole read.
-  const qf=c=>{const r=db.collection(c);if(adm===true)return r;
-   if(c==='drugs'||c==='conditions'||c==='conditionDrugLinks')return r.where('published','==',true);
-   if(c==='prices')return r.where('verificationStatus','==','Verified');return r};
-  const offs=Object.keys(SCHEMAS).map(c=>qf(c).onSnapshot(s=>{
-    setData(d=>({...d,[c]:s.docs.map(x=>({id:x.id,...x.data()}))}));setLoaded(l=>({...l,[c]:1}));setErr('');
-  },e=>{console.error(e);setErr('Could not read "'+c+'": '+e.message)}));
-  if(adm===true)offs.push(db.collection('reports').onSnapshot(s=>setData(d=>({...d,reports:s.docs.map(x=>({id:x.id,...x.data()}))})),e=>console.error(e)));
-  return()=>offs.forEach(o=>o());
- },[adm]);
- useEffect(()=>{
-  const h=document.documentElement;h.classList.toggle('dark',prefs.theme==='dark');
-  h.classList.toggle('fs-l',prefs.size==='l');h.classList.toggle('fs-s',prefs.size==='s');lsSet('doc_prefs',prefs);
- },[prefs]);
- useEffect(()=>lsSet('doc_favs',favs),[favs]);
- useEffect(()=>lsSet('doc_recent',recent),[recent]);
- useEffect(()=>{if(toast){const t=setTimeout(()=>setToast(''),2500);return()=>clearTimeout(t)}},[toast]);
+const ADMIN_UIDS = ['XDzOhJQkiRhJ8PNV5V24IopnGyZ2'];
 
- const isAdmin=adm===true;
- const vis=useMemo(()=>{const o={};for(const c in data)o[c]=data[c].filter(x=>isAdmin||x.published!==false);return o},[data,isAdmin]);
- const pricesByGeneric=useMemo(()=>{const m={};vis.prices.forEach(p=>{const k=(p.genericName||'').toLowerCase().trim();(m[k]=m[k]||[]).push(p)});return m},[vis.prices]);
+/* ============ SCHEMA DEFINITIONS ============ */
+const SCHEMAS = {
+  drugs: {
+    label: 'Drugs', one: 'drug', title: 'genericName', sub: 'drugClass',
+    fields: [
+      { k: 'genericName', l: 'Generic name', req: 1 },
+      { k: 'brandNames', l: 'Brand names (comma separated)', t: 'list' },
+      { k: 'drugClass', l: 'Drug class', req: 1 },
+      { k: 'indications', l: 'Uses / Indications', t: 'area' },
+      { k: 'mechanismOfAction', l: 'Mechanism of action', t: 'area' },
+      { k: 'adultDose', l: 'Adult dose', t: 'area' },
+      { k: 'pediatricDose', l: 'Pediatric dose', t: 'area' },
+      { k: 'adverseDrugReactions', l: 'Adverse drug reactions (ADR)', t: 'area' },
+      { k: 'contraindications', l: 'Contraindications (C/I)', t: 'area' },
+      { k: 'published', l: 'Visible to the public', t: 'bool' }
+    ]
+  },
+  conditions: {
+    label: 'Diseases', one: 'disease', title: 'name', sub: 'category',
+    fields: [
+      { k: 'name', l: 'Disease / illness name', req: 1 },
+      { k: 'category', l: 'Category (e.g. Cardiology, Infection)' },
+      { k: 'overview', l: 'Overview', t: 'area' },
+      { k: 'symptoms', l: 'Symptoms and signs', t: 'area' },
+      { k: 'investigations', l: 'Investigations', t: 'area' },
+      { k: 'firstLineTreatment', l: 'First-line treatment', t: 'area' },
+      { k: 'alternativeTreatments', l: 'Alternative treatments', t: 'area' },
+      { k: 'nonPharm', l: 'Non-drug advice (lifestyle, diet)', t: 'area' },
+      { k: 'referralCriteria', l: 'Referral criteria', t: 'area' },
+      { k: 'published', l: 'Visible to the public', t: 'bool' }
+    ]
+  },
+  conditionDrugLinks: {
+    label: 'Prescriptions', one: 'prescription', title: 'drugName', sub: 'conditionName',
+    id: r => r.conditionId + ' ' + r.drugName,
+    fields: [
+      { k: 'conditionId', l: 'Disease', t: 'cond', req: 1 },
+      { k: 'drugName', l: 'Drug (generic name)', t: 'drug', req: 1 },
+      { k: 'line', l: 'Line of treatment', t: 'sel', o: ['First-line', 'Second-line', 'Alternative', 'Adjunct', 'Emergency'] },
+      { k: 'regimen', l: 'Prescription (dose, route, frequency)', t: 'area' },
+      { k: 'duration', l: 'Duration' },
+      { k: 'notes', l: 'Cautions / notes', t: 'area' },
+      { k: 'published', l: 'Visible to the public', t: 'bool' }
+    ]
+  },
+  prices: {
+    label: 'Prices', one: 'price', title: 'brandName', sub: 'genericName',
+    fields: [
+      { k: 'brandName', l: 'Brand name', req: 1 },
+      { k: 'genericName', l: 'Generic name (must match the drug)', req: 1 },
+      { k: 'strength', l: 'Strength / form (e.g. 500 mg tablet)' },
+      { k: 'packSize', l: 'Pack size' },
+      { k: 'manufacturer', l: 'Manufacturer' },
+      { k: 'priceNPR', l: 'Price (NPR)', t: 'num', req: 1 },
+      { k: 'verificationStatus', l: 'Verification status', t: 'sel', o: ['Verified', 'Unverified', 'Outdated'] }
+    ]
+  },
+  references: {
+    label: 'References', one: 'reference', title: 'title', sub: 'publisher',
+    fields: [
+      { k: 'title', l: 'Title', req: 1 },
+      { k: 'publisher', l: 'Publisher' },
+      { k: 'publicationDate', l: 'Publication date' },
+      { k: 'url', l: 'Link (URL)' }
+    ]
+  }
+};
 
- // One search index over everything: drugs (incl. their brands and prices), conditions, prices, references
- const linksBy=useMemo(()=>{const m={};vis.conditionDrugLinks.forEach(l=>(m[l.conditionId]=m[l.conditionId]||[]).push(l));return m},[vis.conditionDrugLinks]);
- const linksByDrug=useMemo(()=>{const m={};vis.conditionDrugLinks.forEach(l=>{const k=(l.drugName||'').toLowerCase().trim();(m[k]=m[k]||[]).push(l)});return m},[vis.conditionDrugLinks]);
- const openReports=data.reports.filter(r=>r.status==='Open').length;
- const index=useMemo(()=>{
-  const L=[];
-  vis.drugs.forEach(d=>{const ps=pricesByGeneric[(d.genericName||'').toLowerCase().trim()]||[];
-   L.push({type:'drugs',id:d.id,item:d,name:(d.genericName+' '+(d.brandNames||[]).join(' ')).toLowerCase(),text:flat(d)+' '+ps.map(p=>flat(p)).join(' ')+' '+(linksByDrug[(d.genericName||'').toLowerCase().trim()]||[]).map(l=>l.conditionName).join(' ')})});
-  vis.conditions.forEach(c=>L.push({type:'conditions',id:c.id,item:c,name:(c.name||'').toLowerCase(),text:flat(c)+' '+(linksBy[c.id]||[]).map(l=>l.drugName).join(' ')}));
-  vis.prices.forEach(p=>L.push({type:'prices',id:p.id,item:p,name:((p.brandName||'')+' '+(p.genericName||'')).toLowerCase(),text:flat(p)}));
-  vis.references.forEach(r=>L.push({type:'references',id:r.id,item:r,name:(r.title||'').toLowerCase(),text:flat(r)}));
-  return L;
- },[vis,pricesByGeneric,linksBy,linksByDrug]);
- const toks=useMemo(()=>q.toLowerCase().split(/\s+/).filter(Boolean),[q]);
- const results=useMemo(()=>{
-  if(!toks.length)return[];
-  return index.filter(r=>toks.every(t=>r.text.includes(t)||r.name.includes(t)))
-   .map(r=>({...r,score:toks.reduce((s,t)=>s+(r.name.startsWith(t)?4:r.name.includes(t)?2:0),0)}))
-   .sort((a,b)=>b.score-a.score);
- },[index,toks]);
+const DRUG_SECTIONS = [
+  ['indications', 'Uses'],
+  ['dose', 'Dosage'],
+  ['adverseDrugReactions', 'ADR (side effects)'],
+  ['contraindications', 'C/I (contraindications)'],
+  ['mechanismOfAction', 'Mechanism of action'],
+  ['prices', 'Nepal prices']
+];
 
- const ctx={route,data,vis,user,isAdmin,q,setQ,prefs,setPrefs,favs,setFavs,recent,setRecent,cmp,setCmp,editor,setEditor,toast:setToast,results,toks,pricesByGeneric,index,linksBy,linksByDrug,setReport,online};
- const ready=loaded.drugs&&loaded.conditions&&loaded.conditionDrugLinks&&loaded.prices&&loaded.references;
- const n=route.n;
- const nav=[['home','Home'],['diseases','Diseases'],['search','Search'],['prices','Prices'],['favorites','Saved ('+favs.length+')'],['compare','Compare ('+cmp.length+')'],['references','References'],['settings','Settings']];
- const tabs=[['home','Home','home'],['diseases','Diseases','dis'],['search','Search','search'],['prices','Prices','tag'],['more','More','more']];
- const moreSet=['favorites','compare','references','settings','admin','reports','login'];
+/* ============ UTILITY FUNCTIONS ============ */
+const mkId = (c, r) => {
+  const s = SCHEMAS[c];
+  return slug(s.id ? s.id(r) : c === 'prices' ? r.brandName + ' ' + (r.strength || '') : r[s.title]);
+};
 
- return(<div className="min-h-screen flex flex-col">
-  <header className="sticky top-0 z-40 border-b" style={{background:'var(--card)',borderColor:'var(--ln)'}}>
-   <div className="max-w-6xl mx-auto px-4 h-14 flex items-center gap-4">
-    <button onClick={()=>go('home')} className="flex items-baseline gap-2 shrink-0" aria-label="DOC Nepal home">
-     <span className="serif text-xl font-bold" style={{color:'var(--br)'}}>DOC Nepal</span><span className="mu text-xs hidden sm:inline">Drug of Choice</span>
+const slug = s => String(s || '').toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '') || ('item-' + Date.now());
+
+const lsGet = (k, d) => {
+  try {
+    const v = localStorage.getItem(k);
+    return v ? JSON.parse(v) : d;
+  } catch (e) {
+    return d;
+  }
+};
+
+const lsSet = (k, v) => {
+  try {
+    localStorage.setItem(k, JSON.stringify(v));
+  } catch (e) {}
+};
+
+const npr = n => typeof n === 'number' ? 'NPR ' + n.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) : '—';
+
+const flat = o => Object.entries(o)
+  .filter(([k]) => !['id', 'updatedAt', 'published'].includes(k))
+  .map(([, v]) => Array.isArray(v) ? v.join(' ') : (v && typeof v === 'object') ? '' : v)
+  .join(' ')
+  .toLowerCase();
+
+const parseRoute = () => {
+  const [, n = 'home', id = ''] = location.hash.replace('#', '').split('/');
+  return { n, id: decodeURIComponent(id) };
+};
+
+const go = (n, id) => {
+  location.hash = '/' + n + (id ? '/' + encodeURIComponent(id) : '');
+};
+
+function hl(t, toks) {
+  if (t == null || t === '') return t;
+  if (!toks || !toks.length) return t;
+  const re = new RegExp('(' + toks.map(x => x.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')).join('|') + ')', 'gi');
+  return String(t).split(re).map((p, i) => i % 2 ? <mark key={i}>{p}</mark> : p);
+}
+
+function download(name, obj) {
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(new Blob([JSON.stringify(obj, null, 2)], { type: 'application/json' }));
+  a.download = name;
+  a.click();
+}
+
+/* ============ MAIN APPLICATION COMPONENT ============ */
+function App() {
+  const [route, setRoute] = useState(parseRoute());
+  const [data, setData] = useState({ drugs: [], conditions: [], conditionDrugLinks: [], prices: [], references: [], reports: [] });
+  const [loaded, setLoaded] = useState({});
+  const [err, setErr] = useState('');
+  const [user, setUser] = useState(null);
+  const [adm, setAdm] = useState(false); // false = public/not admin, null = checking, true = admin
+  const [q, setQ] = useState('');
+  const [prefs, setPrefs] = useState(() => ({
+    theme: 'light', size: 'm', compact: false,
+    sections: { indications: 1, dose: 1, adverseDrugReactions: 1, contraindications: 1, mechanismOfAction: 1, prices: 1 },
+    ...lsGet('doc_prefs', {})
+  }));
+  const [favs, setFavs] = useState(() => lsGet('doc_favs', []));
+  const [recent, setRecent] = useState(() => lsGet('doc_recent', []));
+  const [cmp, setCmp] = useState([]);
+  const [editor, setEditor] = useState(null);
+  const [toast, setToast] = useState('');
+  const [online, setOnline] = useState(navigator.onLine);
+  const [report, setReport] = useState(null);
+
+  useEffect(() => {
+    const a = () => setOnline(true), b = () => setOnline(false);
+    window.addEventListener('online', a);
+    window.addEventListener('offline', b);
+    return () => {
+      window.removeEventListener('online', a);
+      window.removeEventListener('offline', b);
+    };
+  }, []);
+
+  useEffect(() => {
+    const f = () => { setRoute(parseRoute()); window.scrollTo(0, 0); };
+    window.addEventListener('hashchange', f);
+    return () => window.removeEventListener('hashchange', f);
+  }, []);
+
+  useEffect(() => {
+    if (!auth) return;
+    return auth.onAuthStateChanged(async u => {
+      setUser(u);
+      if (!u) {
+        setAdm(false);
+        return;
+      }
+      setAdm(null);
+      try {
+        const r = await u.getIdTokenResult(true);
+        setAdm(r.claims.admin === true || ADMIN_UIDS.includes(u.uid));
+      } catch (e) {
+        setAdm(ADMIN_UIDS.includes(u.uid));
+      }
+    });
+  }, []);
+
+  // Sync data with Firestore based on current security rules context
+  useEffect(() => {
+    if (!db) {
+      setErr('Firebase initialization failed. Please check network connection.');
+      return;
+    }
+    if (adm === null) return; // Still resolving admin authorization state
+
+    const qf = c => {
+      const r = db.collection(c);
+      if (adm === true) return r; // Admin mode: read everything
+      // Security Rules Compliant Queries for non-admin context:
+      if (c === 'drugs' || c === 'conditions' || c === 'conditionDrugLinks') return r.where('published', '==', true);
+      if (c === 'prices') return r.where('verificationStatus', '==', 'Verified');
+      return r;
+    };
+
+    const offs = Object.keys(SCHEMAS).map(c => qf(c).onSnapshot(s => {
+      setData(d => ({ ...d, [c]: s.docs.map(x => ({ id: x.id, ...x.data() })) }));
+      setLoaded(l => ({ ...l, [c]: 1 }));
+      setErr('');
+    }, e => {
+      console.error(e);
+      setErr(`Could not synchronized "${c}": ${e.message}`);
+    }));
+
+    if (adm === true) {
+      offs.push(db.collection('reports').onSnapshot(s => {
+        setData(d => ({ ...d, reports: s.docs.map(x => ({ id: x.id, ...x.data() })) }));
+      }, e => console.error(e)));
+    }
+
+    return () => offs.forEach(o => o());
+  }, [adm]);
+
+  useEffect(() => {
+    const h = document.documentElement;
+    h.classList.toggle('dark', prefs.theme === 'dark');
+    h.classList.toggle('fs-l', prefs.size === 'l');
+    h.classList.toggle('fs-s', prefs.size === 's');
+    lsSet('doc_prefs', prefs);
+  }, [prefs]);
+
+  useEffect(() => lsSet('doc_favs', favs), [favs]);
+  useEffect(() => lsSet('doc_recent', recent), [recent]);
+  useEffect(() => {
+    if (toast) {
+      const t = setTimeout(() => setToast(''), 2500);
+      return () => clearTimeout(t);
+    }
+  }, [toast]);
+
+  const isAdmin = adm === true;
+  const vis = useMemo(() => {
+    const o = {};
+    for (const c in data) {
+      o[c] = data[c].filter(x => isAdmin || x.published !== false);
+    }
+    return o;
+  }, [data, isAdmin]);
+
+  const pricesByGeneric = useMemo(() => {
+    const m = {};
+    vis.prices.forEach(p => {
+      const k = (p.genericName || '').toLowerCase().trim();
+      (m[k] = m[k] || []).push(p);
+    });
+    return m;
+  }, [vis.prices]);
+
+  const linksBy = useMemo(() => {
+    const m = {};
+    vis.conditionDrugLinks.forEach(l => (m[l.conditionId] = m[l.conditionId] || []).push(l));
+    return m;
+  }, [vis.conditionDrugLinks]);
+
+  const linksByDrug = useMemo(() => {
+    const m = {};
+    vis.conditionDrugLinks.forEach(l => {
+      const k = (l.drugName || '').toLowerCase().trim();
+      (m[k] = m[k] || []).push(l);
+    });
+    return m;
+  }, [vis.conditionDrugLinks]);
+
+  const openReports = (data.reports || []).filter(r => r.status === 'Open').length;
+
+  const index = useMemo(() => {
+    const L = [];
+    vis.drugs.forEach(d => {
+      const ps = pricesByGeneric[(d.genericName || '').toLowerCase().trim()] || [];
+      L.push({
+        type: 'drugs', id: d.id, item: d,
+        name: (d.genericName + ' ' + (d.brandNames || []).join(' ')).toLowerCase(),
+        text: flat(d) + ' ' + ps.map(p => flat(p)).join(' ') + ' ' + (linksByDrug[(d.genericName || '').toLowerCase().trim()] || []).map(l => l.conditionName).join(' ')
+      });
+    });
+    vis.conditions.forEach(c => L.push({
+      type: 'conditions', id: c.id, item: c,
+      name: (c.name || '').toLowerCase(),
+      text: flat(c) + ' ' + (linksBy[c.id] || []).map(l => l.drugName).join(' ')
+    }));
+    vis.prices.forEach(p => L.push({
+      type: 'prices', id: p.id, item: p,
+      name: ((p.brandName || '') + ' ' + (p.genericName || '')).toLowerCase(),
+      text: flat(p)
+    }));
+    vis.references.forEach(r => L.push({
+      type: 'references', id: r.id, item: r,
+      name: (r.title || '').toLowerCase(),
+      text: flat(r)
+    }));
+    return L;
+  }, [vis, pricesByGeneric, linksBy, linksByDrug]);
+
+  const toks = useMemo(() => q.toLowerCase().split(/\s+/).filter(Boolean), [q]);
+  const results = useMemo(() => {
+    if (!toks.length) return [];
+    return index.filter(r => toks.every(t => r.text.includes(t) || r.name.includes(t)))
+      .map(r => ({ ...r, score: toks.reduce((s, t) => s + (r.name.startsWith(t) ? 4 : r.name.includes(t) ? 2 : 0), 0) }))
+      .sort((a, b) => b.score - a.score);
+  }, [index, toks]);
+
+  const ctx = {
+    route, data, vis, user, isAdmin, q, setQ, prefs, setPrefs, favs, setFavs, recent, setRecent,
+    cmp, setCmp, editor, setEditor, toast: setToast, results, toks, pricesByGeneric, index, linksBy,
+    linksByDrug, setReport, online
+  };
+
+  const ready = loaded.drugs && loaded.conditions && loaded.conditionDrugLinks && loaded.prices && loaded.references;
+  const n = route.n;
+  const nav = [
+    ['home', 'Home'], ['diseases', 'Diseases'], ['search', 'Search'],
+    ['prices', 'Prices'], ['favorites', `Saved (${favs.length})`],
+    ['compare', `Compare (${cmp.length})`], ['references', 'References'], ['settings', 'Settings']
+  ];
+  const tabs = [
+    ['home', 'Home', 'home'], ['diseases', 'Diseases', 'dis'],
+    ['search', 'Search', 'search'], ['prices', 'Prices', 'tag'], ['more', 'More', 'more']
+  ];
+  const moreSet = ['favorites', 'compare', 'references', 'settings', 'admin', 'reports', 'login'];
+
+  return (
+    <div className="min-h-screen flex flex-col">
+      <header className="sticky top-0 z-40 border-b" style={{ background: 'var(--card)', borderColor: 'var(--ln)' }}>
+        <div className="max-w-6xl mx-auto px-4 h-14 flex items-center gap-4">
+          <button onClick={() => go('home')} className="flex items-baseline gap-2 shrink-0" aria-label="DOC Nepal home">
+            <span className="serif text-xl font-bold" style={{ color: 'var(--br)' }}>DOC Nepal</span>
+            <span className="mu text-xs hidden sm:inline">Drug of Choice</span>
+          </button>
+          <nav className="dsk flex gap-1 overflow-x-auto hide-sb flex-1" aria-label="Main navigation">
+            {nav.map(([k, l]) => (
+              <button key={k} onClick={() => go(k)} className={'btn2 whitespace-nowrap ' + (n === k ? 'on' : '')} style={n === k ? {} : { border: 'none', background: 'transparent' }}>
+                {l}
+              </button>
+            ))}
+          </nav>
+          <div className="flex-1 mob"/>
+          <button className="btn2 shrink-0" aria-label="Toggle theme" onClick={() => setPrefs({ ...prefs, theme: prefs.theme === 'dark' ? 'light' : 'dark' })}>
+            {prefs.theme === 'dark' ? '☀' : '☾'}
+          </button>
+          {user ? (
+            <div className="dsk flex gap-2 shrink-0">
+              {isAdmin && (
+                <>
+                  <button className="btn" onClick={() => go('admin')}>Admin</button>
+                  <button className="btn2" onClick={() => go('reports')}>
+                    Reports{openReports > 0 && <span className="tag c ml-1">{openReports}</span>}
+                  </button>
+                </>
+              )}
+              <button className="btn2" onClick={() => auth.signOut()}>Log out</button>
+            </div>
+          ) : (
+            <button className="btn2 shrink-0 dsk" onClick={() => go('login')}>Admin login</button>
+          )}
+        </div>
+      </header>
+
+      {!online && (
+        <div className="text-sm text-center py-1.5" style={{ background: 'var(--ams)', color: 'var(--am)' }}>
+          You are offline. Displaying cached records. Reports will sync automatically once reconnected.
+        </div>
+      )}
+
+      {err && <div className="text-sm text-center py-2" style={{ background: 'var(--rds)', color: 'var(--rd)' }}>{err}</div>}
+
+      <main className="flex-1">
+        <div className="pg" key={route.n + '/' + route.id}>
+          {!ready && n !== 'login' && n !== 'settings' && n !== 'more' && !err ? (
+            <div className="max-w-6xl mx-auto px-4 py-8 space-y-3">
+              <div className="sk" style={{ height: 56 }}/>
+              {[0, 1, 2, 3].map(i => <div key={i} className="sk"/>)}
+              {!online && <p className="text-center mu text-sm">Connecting to offline local cache...</p>}
+            </div>
+          ) : (
+            <>
+              {n === 'home' && <Home {...ctx}/>}
+              {n === 'search' && <Search {...ctx}/>}
+              {n === 'diseases' && <Diseases {...ctx}/>}
+              {n === 'more' && <More {...ctx}/>}
+              {n === 'drug' && <DrugPage {...ctx}/>}
+              {n === 'condition' && <ConditionPage {...ctx}/>}
+              {n === 'prices' && <Prices {...ctx}/>}
+              {n === 'favorites' && <Favorites {...ctx}/>}
+              {n === 'compare' && <Compare {...ctx}/>}
+              {n === 'references' && <References {...ctx}/>}
+              {n === 'settings' && <Settings {...ctx}/>}
+              {n === 'login' && <Login/>}
+              {(n === 'admin' || n === 'reports') && (
+                isAdmin ? (
+                  n === 'admin' ? <Admin {...ctx}/> : <Reports {...ctx}/>
+                ) : user && adm === null ? (
+                  <div className="text-center py-20 mu">Verifying administrative access privileges…</div>
+                ) : (
+                  <div className="max-w-md mx-auto mt-16 card p-8 text-center">
+                    <p className="mb-4">{user ? 'This account lacks administrator privileges.' : 'Please log in with an administrator account to manage records.'}</p>
+                    {!user && <button className="btn" onClick={() => go('login')}>Go to login</button>}
+                  </div>
+                )
+              )}
+            </>
+          )}
+        </div>
+      </main>
+
+      <footer className="text-xs text-center py-6 mu border-t" style={{ borderColor: 'var(--ln)' }}>
+        Reference tool for healthcare professionals. Does not replace professional clinical judgment. Prices are indicative only.
+      </footer>
+
+      <nav className="tabbar" aria-label="Mobile Navigation">
+        {tabs.map(([k, l, i]) => (
+          <button key={k} className={n === k || (k === 'more' && moreSet.includes(n)) ? 'on' : ''} onClick={() => go(k)}>
+            <Ic n={i}/>{l}
+          </button>
+        ))}
+      </nav>
+
+      {editor && <Editor {...ctx}/>}
+      {report && <Report report={report} setReport={setReport} toast={setToast}/>}
+      {toast && (
+        <div role="status" className="toast fixed bottom-20 md:bottom-5 left-1/2 -translate-x-1/2 px-4 py-2 rounded-lg text-sm font-semibold shadow-lg z-50" style={{ background: 'var(--tx)', color: 'var(--bg)' }}>
+          {toast}
+        </div>
+      )}
+    </div>
+  );
+}
+
+/* ============ SEARCH BOX ============ */
+function SearchBox({ q, setQ, big, index, toks }) {
+  const [open, setOpen] = useState(false);
+  const sug = useMemo(() => {
+    if (!toks.length) return [];
+    return index.filter(r => toks.every(t => r.name.includes(t))).slice(0, 6);
+  }, [index, toks]);
+
+  return (
+    <div className="relative">
+      <form onSubmit={e => { e.preventDefault(); setOpen(false); go('search'); }}>
+        <input className="inp" style={big ? { padding: '.9rem 1rem', fontSize: '1.05rem' } : {}} value={q}
+          onChange={e => { setQ(e.target.value); setOpen(true); }} onFocus={() => setOpen(true)}
+          placeholder="Search disease, drug, brand, side effect, price…" inputMode="search" aria-label="Search"/>
+      </form>
+      {open && sug.length > 0 && (
+        <div className="card absolute left-0 right-0 mt-1 z-30 overflow-hidden shadow-lg">
+          {sug.map(r => (
+            <button key={r.type + r.id} className="w-full text-left px-4 py-2 hover:opacity-80 flex justify-between gap-2 border-b" style={{ borderColor: 'var(--ln)' }}
+              onClick={() => { setOpen(false); r.type === 'drugs' ? go('drug', r.id) : r.type === 'conditions' ? go('condition', r.id) : go('search'); }}>
+              <span>{hl(r.item.genericName || r.item.name || r.item.brandName || r.item.title, toks)}</span>
+              <span className="tag">{r.type}</span>
+            </button>
+          ))}
+          <button className="w-full text-left px-4 py-2 text-sm mu" onClick={() => { setOpen(false); go('search'); }}>See all results</button>
+        </div>
+      )}
+    </div>
+  );
+}
+
+const Empty = ({ children }) => <div className="card p-8 text-center mu text-sm">{children}</div>;
+
+function Star({ id, favs, setFavs }) {
+  const on = favs.includes(id);
+  return (
+    <button className={'btn2 ' + (on ? 'on' : '')} aria-pressed={on} onClick={() => setFavs(on ? favs.filter(x => x !== id) : [...favs, id])}>
+      {on ? '★ Saved' : '☆ Save'}
     </button>
-    <nav className="dsk flex gap-1 overflow-x-auto hide-sb flex-1" aria-label="Main">
-     {nav.map(([k,l])=><button key={k} onClick={()=>go(k)} className={'btn2 whitespace-nowrap '+(n===k?'on':'')} style={n===k?{}:{border:'none',background:'transparent'}}>{l}</button>)}
-    </nav><div className="flex-1 mob"/>
-    <button className="btn2 shrink-0" aria-label="Toggle dark mode" onClick={()=>setPrefs({...prefs,theme:prefs.theme==='dark'?'light':'dark'})}>{prefs.theme==='dark'?'☀':'☾'}</button>
-    {user?<div className="dsk flex gap-2 shrink-0">{isAdmin&&<><button className="btn" onClick={()=>go('admin')}>Admin</button><button className="btn2" onClick={()=>go('reports')}>Reports{openReports>0&&<span className="tag c ml-1">{openReports}</span>}</button></>}<button className="btn2" onClick={()=>auth.signOut()}>Log out</button></div>
-     :<button className="btn2 shrink-0 dsk" onClick={()=>go('login')}>Admin login</button>}
-   </div>
-  </header>
-  {!online&&<div className="text-sm text-center py-1.5" style={{background:'var(--ams)',color:'var(--am)'}}>You are offline. Showing data saved on this device. Reports will send when you reconnect.</div>}
-  {err&&<div className="text-sm text-center py-2" style={{background:'var(--rds)',color:'var(--rd)'}}>{err}</div>}
-  <main className="flex-1"><div className="pg" key={route.n+'/'+route.id}>
-   {!ready&&n!=='login'&&n!=='settings'&&n!=='more'&&!err?<div className="max-w-6xl mx-auto px-4 py-8 space-y-3"><div className="sk" style={{height:56}}/>{[0,1,2,3].map(i=><div key={i} className="sk"/>)}{!online&&<p className="text-center mu text-sm">Waiting for a connection to download the data for the first time…</p>}</div>:<>
-    {n==='home'&&<Home {...ctx}/>}
-    {n==='search'&&<Search {...ctx}/>}
-    {n==='diseases'&&<Diseases {...ctx}/>}
-    {n==='more'&&<More {...ctx}/>}
-    {n==='drug'&&<DrugPage {...ctx}/>}
-    {n==='condition'&&<ConditionPage {...ctx}/>}
-    {n==='prices'&&<Prices {...ctx}/>}
-    {n==='favorites'&&<Favorites {...ctx}/>}
-    {n==='compare'&&<Compare {...ctx}/>}
-    {n==='references'&&<References {...ctx}/>}
-    {n==='settings'&&<Settings {...ctx}/>}
-    {n==='login'&&<Login/>}
-    {(n==='admin'||n==='reports')&&(isAdmin?(n==='admin'?<Admin {...ctx}/>:<Reports {...ctx}/>):user&&adm===null?<div className="text-center py-20 mu">Checking admin access…</div>:<div className="max-w-md mx-auto mt-16 card p-8 text-center"><p className="mb-4">{user?'This account is not an administrator, so it cannot edit records.':'Log in as an administrator to manage records.'}</p>{!user&&<button className="btn" onClick={()=>go('login')}>Go to login</button>}</div>)}
-   </>}
-  </div></main>
-  <footer className="text-xs text-center py-6 mu border-t" style={{borderColor:'var(--ln)'}}>
-   Reference for healthcare professionals. It does not replace clinical judgment. Prices are indicative; check the label and the latest market rate.
-  </footer>
-  <nav className="tabbar" aria-label="Main">{tabs.map(([k,l,i])=><button key={k} className={n===k||(k==='more'&&moreSet.includes(n))?'on':''} onClick={()=>go(k)}><Ic n={i}/>{l}</button>)}</nav>
-  {editor&&<Editor {...ctx}/>}
-  {report&&<Report report={report} setReport={setReport} toast={setToast}/>}
-  {toast&&<div role="status" className="toast fixed bottom-20 md:bottom-5 left-1/2 -translate-x-1/2 px-4 py-2 rounded-lg text-sm font-semibold shadow-lg z-50" style={{background:'var(--tx)',color:'var(--bg)'}}>{toast}</div>}
- </div>);
+  );
 }
 
-/* ============ SMALL SHARED PIECES ============ */
-function SearchBox({q,setQ,big,index,toks}){
- const [open,setOpen]=useState(false);
- const sug=useMemo(()=>{if(!toks.length)return[];return index.filter(r=>toks.every(t=>r.name.includes(t))).slice(0,6)},[index,toks]);
- return(<div className="relative">
-  <form onSubmit={e=>{e.preventDefault();setOpen(false);go('search')}}>
-   <input className="inp" style={big?{padding:'.9rem 1rem',fontSize:'1.05rem'}:{}} value={q} onChange={e=>{setQ(e.target.value);setOpen(true)}} onFocus={()=>setOpen(true)}
-    placeholder="Search disease, drug, brand, side effect, price…" inputMode="search" aria-label="Search"/>
-  </form>
-  {open&&sug.length>0&&<div className="card absolute left-0 right-0 mt-1 z-30 overflow-hidden shadow-lg">
-   {sug.map(r=><button key={r.type+r.id} className="w-full text-left px-4 py-2 hover:opacity-80 flex justify-between gap-2 border-b" style={{borderColor:'var(--ln)'}}
-    onClick={()=>{setOpen(false);r.type==='drugs'?go('drug',r.id):r.type==='conditions'?go('condition',r.id):go('search')}}>
-    <span>{hl(r.item.genericName||r.item.name||r.item.brandName||r.item.title,toks)}</span><span className="tag">{r.type}</span></button>)}
-   <button className="w-full text-left px-4 py-2 text-sm mu" onClick={()=>{setOpen(false);go('search')}}>See all results</button>
-  </div>}
- </div>);
-}
-const Empty=({children})=><div className="card p-8 text-center mu text-sm">{children}</div>;
-function Star({id,favs,setFavs}){
- const on=favs.includes(id);
- return <button className={'btn2 '+(on?'on':'')} aria-pressed={on} onClick={()=>setFavs(on?favs.filter(x=>x!==id):[...favs,id])}>{on?'★ Saved':'☆ Save'}</button>;
-}
-function AdminBtns({coll,item,ctx,small}){
- if(!ctx.isAdmin)return null;
- return <span className="inline-flex gap-1"><button className="btn2" style={small?{padding:'.15rem .5rem',fontSize:'.75rem'}:{}} onClick={e=>{e.stopPropagation();ctx.setEditor({coll,item})}}>Edit</button>
-  <button className="btn2 dng" style={small?{padding:'.15rem .5rem',fontSize:'.75rem'}:{}} onClick={e=>{e.stopPropagation();delRec(coll,item,ctx)}}>Delete</button></span>;
-}
-async function delRec(coll,item,ctx){
- if(!confirm('Delete "'+(item[SCHEMAS[coll].title]||item.id)+'"? This cannot be undone.'))return;
- try{await db.collection(coll).doc(item.id).delete();ctx.toast('Deleted');if(coll==='drugs'||coll==='conditions')go('home')}catch(e){ctx.toast('Delete failed: '+e.message)}
-}
-function DrugCard({d,toks,pricesByGeneric,compact,favs}){
- const ps=pricesByGeneric[(d.genericName||'').toLowerCase().trim()]||[];
- const min=ps.length?Math.min(...ps.map(p=>p.priceNPR).filter(x=>typeof x==='number')):null;
- return(<button onClick={()=>go('drug',d.id)} className="card p-4 text-left w-full hover:shadow-md transition" style={{borderLeft:'4px solid var(--br)'}}>
-  <div className="flex justify-between gap-2 items-start"><div className="serif text-lg font-bold">{hl(d.genericName,toks)} {favs.includes('drugs:'+d.id)&&<span style={{color:'var(--am)'}}>★</span>}</div>
-   {d.published===false&&<span className="tag p">Draft</span>}</div>
-  <div className="text-sm" style={{color:'var(--brd)'}}>{hl(d.drugClass,toks)}</div>
-  {d.brandNames?.length>0&&<div className="text-xs mu mt-1">Brands: {hl(d.brandNames.join(', '),toks)}</div>}
-  {!compact&&d.indications&&<p className="text-sm mt-2 line-clamp-2">{hl(d.indications,toks)}</p>}
-  {Number.isFinite(min)&&<div className="text-xs mt-2 font-semibold" style={{color:'var(--am)'}}>From {npr(min)}</div>}
- </button>);
+function AdminBtns({ coll, item, ctx, small }) {
+  if (!ctx.isAdmin) return null;
+  return (
+    <span className="inline-flex gap-1">
+      <button className="btn2" style={small ? { padding: '.15rem .5rem', fontSize: '.75rem' } : {}} onClick={e => { e.stopPropagation(); ctx.setEditor({ coll, item }); }}>Edit</button>
+      <button className="btn2 dng" style={small ? { padding: '.15rem .5rem', fontSize: '.75rem' } : {}} onClick={e => { e.stopPropagation(); delRec(coll, item, ctx); }}>Delete</button>
+    </span>
+  );
 }
 
-/* ============ HOME ============ */
-function Home(c){
- const {vis,favs,recent,setQ,prefs}=c;
- const classes=useMemo(()=>{const m={};vis.drugs.forEach(d=>d.drugClass&&(m[d.drugClass]=(m[d.drugClass]||0)+1));return Object.entries(m).sort((a,b)=>b[1]-a[1]).slice(0,10)},[vis.drugs]);
- const favDrugs=vis.drugs.filter(d=>favs.includes('drugs:'+d.id));
- const pick=t=>{setQ(t);go('search')};
- return(<div className="max-w-6xl mx-auto px-4 py-8 space-y-8">
-  <section className="py-6">
-   <h1 className="serif text-3xl sm:text-4xl font-bold mb-2">From disease to prescription in seconds.</h1>
-   <p className="mu mb-5 max-w-xl">Search an illness, drug or brand. See what to prescribe, the dose, side effects, contraindications and Nepal prices.</p>
-   <SearchBox {...c} big/>
-   {recent.length>0&&<div className="flex flex-wrap gap-2 mt-3 items-center"><span className="text-xs mu">Recent:</span>
-    {recent.slice(0,6).map(r=><button key={r} className="btn2" style={{padding:'.15rem .6rem',fontSize:'.8rem'}} onClick={()=>pick(r)}>{r}</button>)}
-    <button className="text-xs mu underline" onClick={()=>c.setRecent([])}>Clear</button></div>}
-  </section>
-  <section><div className="flex justify-between items-center mb-2"><h2 className="font-bold">Diseases ({vis.conditions.length})</h2><button className="btn2" onClick={()=>go('diseases')}>See all</button></div>
-   {vis.conditions.length===0?<Empty>No diseases yet.{c.isAdmin?' Add them from Admin.':''}</Empty>:<div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-3">{[...vis.conditions].sort((a,b)=>(a.name||'').localeCompare(b.name||'')).slice(0,6).map(x=><DiseaseCard key={x.id} x={x} {...c} toks={[]}/>)}</div>}</section>
-  {classes.length>0&&<section><h2 className="font-bold mb-2">Browse by drug class</h2>
-   <div className="flex flex-wrap gap-2">{classes.map(([k,v])=><button key={k} className="btn2" onClick={()=>pick(k)}>{k} <span className="mu">{v}</span></button>)}</div></section>}
-  {favDrugs.length>0&&<section><h2 className="font-bold mb-2">Your saved drugs</h2>
-   <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-3">{favDrugs.map(d=><DrugCard key={d.id} d={d} {...c} toks={[]} compact/>)}</div></section>}
-  <section><div className="flex justify-between items-center mb-2"><h2 className="font-bold">All drugs ({vis.drugs.length})</h2>
-   {c.isAdmin&&<button className="btn" onClick={()=>c.setEditor({coll:'drugs',item:null})}>+ Add drug</button>}</div>
-   {vis.drugs.length===0?<Empty>No drugs yet. {c.isAdmin?'Use “Add drug” above.':'An administrator needs to add records.'}</Empty>:
-   <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-3">{[...vis.drugs].sort((a,b)=>(a.genericName||'').localeCompare(b.genericName||'')).slice(0,12).map(d=><DrugCard key={d.id} d={d} {...c} toks={[]} compact={prefs.compact}/>)}</div>}
-   {vis.drugs.length>12&&<button className="btn2 mt-3" onClick={()=>{setQ(' ');go('search')}}>Show all drugs</button>}
-  </section>
- </div>);
+async function delRec(coll, item, ctx) {
+  if (!confirm(`Delete "${item[SCHEMAS[coll].title] || item.id}"? This operation cannot be undone.`)) return;
+  try {
+    await db.collection(coll).doc(item.id).delete();
+    ctx.toast('Record deleted');
+    if (coll === 'drugs' || coll === 'conditions') go('home');
+  } catch (e) {
+    ctx.toast('Delete failed: ' + e.message);
+  }
 }
 
-/* ============ SEARCH ============ */
-function Search(c){
- const {results,toks,q,setQ,recent,setRecent,prefs,vis}=c;
- const [type,setType]=useState('all');
- const [sort,setSort]=useState('rel');
- useEffect(()=>{const t=q.trim();if(t.length>2){const id=setTimeout(()=>setRecent([t,...recent.filter(x=>x!==t)].slice(0,8)),1200);return()=>clearTimeout(id)}},[q]);
- const all=toks.length?results:c.index.filter(()=>true).slice(0,0);
- const counts={all:all.length};all.forEach(r=>counts[r.type]=(counts[r.type]||0)+1);
- let list=type==='all'?all:all.filter(r=>r.type===type);
- if(sort==='az')list=[...list].sort((a,b)=>a.name.localeCompare(b.name));
- if(sort==='price')list=[...list].sort((a,b)=>(a.item.priceNPR??1e12)-(b.item.priceNPR??1e12));
- const label={drugs:'Drugs',conditions:'Diseases',prices:'Prices',references:'References'};
- return(<div className="max-w-6xl mx-auto px-4 py-6 space-y-4">
-  <SearchBox {...c}/>
-  <div className="flex flex-wrap gap-2 items-center justify-between">
-   <div className="flex flex-wrap gap-2">{['all','drugs','conditions','prices','references'].map(t=><button key={t} className={'btn2 '+(type===t?'on':'')} onClick={()=>setType(t)}>{t==='all'?'Everything':label[t]} <span className="mu">{counts[t]||0}</span></button>)}</div>
-   <select className="inp" style={{width:'auto'}} value={sort} onChange={e=>setSort(e.target.value)} aria-label="Sort"><option value="rel">Best match</option><option value="az">A to Z</option><option value="price">Lowest price</option></select>
-  </div>
-  {!toks.length?<Empty>Type above to search. Try “headache”, “renal impairment”, “amoxicillin”, or a brand name.</Empty>
-   :list.length===0?<Empty>Nothing matched “{q}”. Check the spelling or try fewer words.</Empty>
-   :<div className="grid md:grid-cols-2 gap-3">{list.slice(0,80).map(r=>{
-     const x=r.item;
-     if(r.type==='drugs')return <DrugCard key={'d'+r.id} d={x} {...c} compact={prefs.compact}/>;
-     if(r.type==='conditions')return <DiseaseCard key={'c'+r.id} x={x} {...c}/>;
-     if(r.type==='prices')return(<div key={'p'+r.id} className="card p-4 flex justify-between gap-3"><div><span className="tag p">Price</span><div className="font-bold mt-1">{hl(x.brandName,toks)} <span className="mu font-normal text-sm">{hl(x.strength,toks)}</span></div><div className="text-sm mu">{hl(x.genericName,toks)} · {hl(x.manufacturer,toks)}</div></div><div className="text-right font-bold" style={{color:'var(--am)'}}>{npr(x.priceNPR)}</div></div>);
-     return(<div key={'r'+r.id} className="card p-4"><span className="tag">Reference</span><div className="font-bold mt-1">{hl(x.title,toks)}</div><div className="text-sm mu">{hl(x.publisher,toks)} {x.publicationDate}</div></div>);
-   })}</div>}
- </div>);
+function DrugCard({ d, toks, pricesByGeneric, compact, favs }) {
+  const ps = pricesByGeneric[(d.genericName || '').toLowerCase().trim()] || [];
+  const min = ps.length ? Math.min(...ps.map(p => p.priceNPR).filter(x => typeof x === 'number')) : null;
+  return (
+    <button onClick={() => go('drug', d.id)} className="card p-4 text-left w-full hover:shadow-md transition" style={{ borderLeft: '4px solid var(--br)' }}>
+      <div className="flex justify-between gap-2 items-start">
+        <div className="serif text-lg font-bold">{hl(d.genericName, toks)} {favs.includes('drugs:' + d.id) && <span style={{ color: 'var(--am)' }}>★</span>}</div>
+        {d.published === false && <span className="tag p">Draft</span>}
+      </div>
+      <div className="text-sm" style={{ color: 'var(--brd)' }}>{hl(d.drugClass, toks)}</div>
+      {d.brandNames?.length > 0 && <div className="text-xs mu mt-1">Brands: {hl(d.brandNames.join(', '), toks)}</div>}
+      {!compact && d.indications && <p className="text-sm mt-2 line-clamp-2">{hl(d.indications, toks)}</p>}
+      {Number.isFinite(min) && <div className="text-xs mt-2 font-semibold" style={{ color: 'var(--am)' }}>From {npr(min)}</div>}
+    </button>
+  );
+}
+
+/* ============ HOME PAGE ============ */
+function Home(c) {
+  const { vis, favs, recent, setQ, prefs } = c;
+  const classes = useMemo(() => {
+    const m = {};
+    vis.drugs.forEach(d => d.drugClass && (m[d.drugClass] = (m[d.drugClass] || 0) + 1));
+    return Object.entries(m).sort((a, b) => b[1] - a[1]).slice(0, 10);
+  }, [vis.drugs]);
+  const favDrugs = vis.drugs.filter(d => favs.includes('drugs:' + d.id));
+  const pick = t => { setQ(t); go('search'); };
+
+  return (
+    <div className="max-w-6xl mx-auto px-4 py-8 space-y-8">
+      <section className="py-6">
+        <h1 className="serif text-3xl sm:text-4xl font-bold mb-2">From disease to prescription in seconds.</h1>
+        <p className="mu mb-5 max-w-xl">Search an illness, drug, or brand to find standard dosages, indications, contraindications, and verified Nepal market prices.</p>
+        <SearchBox {...c} big/>
+        {recent.length > 0 && (
+          <div className="flex flex-wrap gap-2 mt-3 items-center">
+            <span className="text-xs mu">Recent:</span>
+            {recent.slice(0, 6).map(r => <button key={r} className="btn2" style={{ padding: '.15rem .6rem', fontSize: '.8rem' }} onClick={() => pick(r)}>{r}</button>)}
+            <button className="text-xs mu underline" onClick={() => c.setRecent([])}>Clear</button>
+          </div>
+        )}
+      </section>
+      <section>
+        <div className="flex justify-between items-center mb-2">
+          <h2 className="font-bold">Diseases ({vis.conditions.length})</h2>
+          <button className="btn2" onClick={() => go('diseases')}>See all</button>
+        </div>
+        {vis.conditions.length === 0 ? (
+          <Empty>No diseases available.{c.isAdmin ? ' Add them via the Admin panel.' : ''}</Empty>
+        ) : (
+          <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-3">
+            {[...vis.conditions].sort((a, b) => (a.name || '').localeCompare(b.name || '')).slice(0, 6).map(x => <DiseaseCard key={x.id} x={x} {...c} toks={[]}/>)}
+          </div>
+        )}
+      </section>
+      {classes.length > 0 && (
+        <section>
+          <h2 className="font-bold mb-2">Browse by drug class</h2>
+          <div className="flex flex-wrap gap-2">{classes.map(([k, v]) => <button key={k} className="btn2" onClick={() => pick(k)}>{k} <span className="mu">{v}</span></button>)}</div>
+        </section>
+      )}
+      {favDrugs.length > 0 && (
+        <section>
+          <h2 className="font-bold mb-2">Your saved drugs</h2>
+          <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-3">{favDrugs.map(d => <DrugCard key={d.id} d={d} {...c} toks={[]} compact/>)}</div>
+        </section>
+      )}
+      <section>
+        <div className="flex justify-between items-center mb-2">
+          <h2 className="font-bold">All drugs ({vis.drugs.length})</h2>
+          {c.isAdmin && <button className="btn" onClick={() => c.setEditor({ coll: 'drugs', item: null })}>+ Add drug</button>}
+        </div>
+        {vis.drugs.length === 0 ? (
+          <Empty>No drugs added yet.{c.isAdmin ? ' Use "+ Add drug" above.' : ''}</Empty>
+        ) : (
+          <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-3">
+            {[...vis.drugs].sort((a, b) => (a.genericName || '').localeCompare(b.genericName || '')).slice(0, 12).map(d => <DrugCard key={d.id} d={d} {...c} toks={[]} compact={prefs.compact}/>)}
+          </div>
+        )}
+        {vis.drugs.length > 12 && <button className="btn2 mt-3" onClick={() => { setQ(' '); go('search'); }}>Show all drugs</button>}
+      </section>
+    </div>
+  );
+}
+
+/* ============ SEARCH PAGE ============ */
+function Search(c) {
+  const { results, toks, q, setQ, recent, setRecent, prefs } = c;
+  const [type, setType] = useState('all');
+  const [sort, setSort] = useState('rel');
+
+  useEffect(() => {
+    const t = q.trim();
+    if (t.length > 2) {
+      const id = setTimeout(() => setRecent([t, ...recent.filter(x => x !== t)].slice(0, 8)), 1200);
+      return () => clearTimeout(id);
+    }
+  }, [q]);
+
+  const all = toks.length ? results : [];
+  const counts = { all: all.length };
+  all.forEach(r => counts[r.type] = (counts[r.type] || 0) + 1);
+
+  let list = type === 'all' ? all : all.filter(r => r.type === type);
+  if (sort === 'az') list = [...list].sort((a, b) => a.name.localeCompare(b.name));
+  if (sort === 'price') list = [...list].sort((a, b) => (a.item.priceNPR ?? 1e12) - (b.item.priceNPR ?? 1e12));
+
+  const label = { drugs: 'Drugs', conditions: 'Diseases', prices: 'Prices', references: 'References' };
+
+  return (
+    <div className="max-w-6xl mx-auto px-4 py-6 space-y-4">
+      <SearchBox {...c}/>
+      <div className="flex flex-wrap gap-2 items-center justify-between">
+        <div className="flex flex-wrap gap-2">
+          {['all', 'drugs', 'conditions', 'prices', 'references'].map(t => (
+            <button key={t} className={'btn2 ' + (type === t ? 'on' : '')} onClick={() => setType(t)}>
+              {t === 'all' ? 'Everything' : label[t]} <span className="mu">{counts[t] || 0}</span>
+            </button>
+          ))}
+        </div>
+        <select className="inp" style={{ width: 'auto' }} value={sort} onChange={e => setSort(e.target.value)} aria-label="Sort Order">
+          <option value="rel">Best match</option>
+          <option value="az">A to Z</option>
+          <option value="price">Lowest price</option>
+        </select>
+      </div>
+      {!toks.length ? (
+        <Empty>Type above to search across diseases, drug components, brand names, and price records.</Empty>
+      ) : list.length === 0 ? (
+        <Empty>No matches found for "{q}". Please verify the spelling or broaden search parameters.</Empty>
+      ) : (
+        <div className="grid md:grid-cols-2 gap-3">
+          {list.slice(0, 80).map(r => {
+            const x = r.item;
+            if (r.type === 'drugs') return <DrugCard key={'d' + r.id} d={x} {...c} compact={prefs.compact}/>;
+            if (r.type === 'conditions') return <DiseaseCard key={'c' + r.id} x={x} {...c}/>;
+            if (r.type === 'prices') return (
+              <div key={'p' + r.id} className="card p-4 flex justify-between gap-3">
+                <div>
+                  <span className="tag p">Price</span>
+                  <div className="font-bold mt-1">{hl(x.brandName, toks)} <span className="mu font-normal text-sm">{hl(x.strength, toks)}</span></div>
+                  <div className="text-sm mu">{hl(x.genericName, toks)} · {hl(x.manufacturer, toks)}</div>
+                </div>
+                <div className="text-right font-bold" style={{ color: 'var(--am)' }}>{npr(x.priceNPR)}</div>
+              </div>
+            );
+            return (
+              <div key={'r' + r.id} className="card p-4">
+                <span className="tag">Reference</span>
+                <div className="font-bold mt-1">{hl(x.title, toks)}</div>
+                <div className="text-sm mu">{hl(x.publisher, toks)} {x.publicationDate}</div>
+              </div>
+            );
+          })}
+        </div>
+      )}
+    </div>
+  );
 }
 
 /* ============ DRUG PAGE ============ */
-function Sec({title,children,alert,open=true,id}){
- return(<details open={open} id={id} className="card" style={alert?{borderColor:'var(--rd)'}:{}}>
-  <summary className="px-5 py-3 flex items-center gap-2 font-bold" style={alert?{color:'var(--rd)'}:{color:'var(--brd)'}}><span className="chev">▸</span>{title}</summary>
-  <div className="px-5 pb-4 text-[0.95rem] leading-relaxed whitespace-pre-line">{children}</div></details>);
+function Sec({ title, children, alert, open = true, id }) {
+  return (
+    <details open={open} id={id} className="card" style={alert ? { borderColor: 'var(--rd)' } : {}}>
+      <summary className="px-5 py-3 flex items-center gap-2 font-bold" style={alert ? { color: 'var(--rd)' } : { color: 'var(--brd)' }}>
+        <span className="chev">▸</span>{title}
+      </summary>
+      <div className="px-5 pb-4 text-[0.95rem] leading-relaxed whitespace-pre-line">{children}</div>
+    </details>
+  );
 }
-function DrugPage(c){
- const {route,data,vis,prefs,pricesByGeneric,cmp,setCmp,favs,setFavs,isAdmin}=c;
- const d=data.drugs.find(x=>x.id===route.id);
- if(!d)return <div className="p-16 text-center mu">Drug not found. <button className="underline" onClick={()=>go('home')}>Back to home</button></div>;
- const ps=(pricesByGeneric[(d.genericName||'').toLowerCase().trim()]||[]).slice().sort((a,b)=>(a.priceNPR??1e12)-(b.priceNPR??1e12));
- const inC=cmp.includes(d.id);
- const S=prefs.sections;
- const jump=DRUG_SECTIONS.filter(([k])=>S[k]);
- const dl=c.linksByDrug[(d.genericName||'').toLowerCase().trim()]||[];
- return(<div className="max-w-4xl mx-auto px-4 py-6 space-y-4">
-  <button className="text-sm mu" onClick={()=>history.length>1?history.back():go('home')}>← Back</button>
-  <div className="card p-5">
-   <div className="flex flex-wrap justify-between gap-3">
-    <div><div className="flex gap-2 items-center">{d.drugClass&&<span className="tag">{d.drugClass}</span>}{d.published===false&&<span className="tag p">Draft: hidden from public</span>}</div>
-     <h1 className="serif text-3xl font-bold mt-1">{d.genericName}</h1></div>
-    <div className="flex flex-wrap gap-2 items-start">
-     <Star id={'drugs:'+d.id} favs={favs} setFavs={setFavs}/>
-     <button className={'btn2 '+(inC?'on':'')} onClick={()=>setCmp(inC?cmp.filter(x=>x!==d.id):[...cmp,d.id].slice(-4))}>{inC?'✓ In compare':'+ Compare'}</button>
-     <RepBtn big c={c} t="drugs" id={d.id} n={d.genericName}/><AdminBtns coll="drugs" item={d} ctx={c}/>
+
+function DrugPage(c) {
+  const { route, data, prefs, pricesByGeneric, cmp, setCmp, favs, setFavs, isAdmin } = c;
+  const d = data.drugs.find(x => x.id === route.id);
+  if (!d) return <div className="p-16 text-center mu">Drug entry not found. <button className="underline" onClick={() => go('home')}>Return to home</button></div>;
+
+  const ps = (pricesByGeneric[(d.genericName || '').toLowerCase().trim()] || []).slice().sort((a, b) => (a.priceNPR ?? 1e12) - (b.priceNPR ?? 1e12));
+  const inC = cmp.includes(d.id);
+  const S = prefs.sections;
+  const jump = DRUG_SECTIONS.filter(([k]) => S[k]);
+  const dl = c.linksByDrug[(d.genericName || '').toLowerCase().trim()] || [];
+
+  return (
+    <div className="max-w-4xl mx-auto px-4 py-6 space-y-4">
+      <button className="text-sm mu" onClick={() => history.length > 1 ? history.back() : go('home')}>← Back</button>
+      <div className="card p-5">
+        <div className="flex flex-wrap justify-between gap-3">
+          <div>
+            <div className="flex gap-2 items-center">
+              {d.drugClass && <span className="tag">{d.drugClass}</span>}
+              {d.published === false && <span className="tag p">Draft: hidden from public</span>}
+            </div>
+            <h1 className="serif text-3xl font-bold mt-1">{d.genericName}</h1>
+          </div>
+          <div className="flex flex-wrap gap-2 items-start">
+            <Star id={'drugs:' + d.id} favs={favs} setFavs={setFavs}/>
+            <button className={'btn2 ' + (inC ? 'on' : '')} onClick={() => setCmp(inC ? cmp.filter(x => x !== d.id) : [...cmp, d.id].slice(-4))}>
+              {inC ? '✓ In compare' : '+ Compare'}
+            </button>
+            <RepBtn big c={c} t="drugs" id={d.id} n={d.genericName}/>
+            <AdminBtns coll="drugs" item={d} ctx={c}/>
+          </div>
+        </div>
+        {d.brandNames?.length > 0 && <p className="text-sm mt-3"><b>Brands in Nepal:</b> {d.brandNames.join(', ')}</p>}
+        <div className="flex flex-wrap gap-2 mt-4">
+          {jump.map(([k, l]) => (
+            <a key={k} href={'#/drug/' + encodeURIComponent(d.id)} onClick={e => {
+              e.preventDefault();
+              const el = document.getElementById('s-' + k);
+              if (el) { el.open = true; el.scrollIntoView({ behavior: 'smooth', block: 'start' }); }
+            }} className="btn2" style={{ padding: '.2rem .7rem', fontSize: '.8rem' }}>{l}</a>
+          ))}
+        </div>
+      </div>
+      {S.indications && d.indications && <Sec id="s-indications" title="Uses and indications">{d.indications}</Sec>}
+      {S.dose && (d.adultDose || d.pediatricDose) && (
+        <Sec id="s-dose" title="Dosage">
+          {d.adultDose && <p><b>Adult:</b> {d.adultDose}</p>}
+          {d.pediatricDose && <p className="mt-2"><b>Pediatric:</b> {d.pediatricDose}</p>}
+        </Sec>
+      )}
+      {S.adverseDrugReactions && d.adverseDrugReactions && <Sec id="s-adverseDrugReactions" title="Adverse drug reactions (ADR)">{d.adverseDrugReactions}</Sec>}
+      {S.contraindications && d.contraindications && <Sec id="s-contraindications" title="Contraindications (C/I)" alert>{d.contraindications}</Sec>}
+      {S.mechanismOfAction && d.mechanismOfAction && <Sec id="s-mechanismOfAction" title="Mechanism of action" open={false}>{d.mechanismOfAction}</Sec>}
+      {dl.length > 0 && S.diseases !== 0 && (
+        <Sec id="s-diseases" title={`Prescribed for (${dl.length})`}>
+          <div className="space-y-2">
+            {dl.map(l => (
+              <button key={l.id} onClick={() => go('condition', l.conditionId)} className="card p-3 text-left w-full block">
+                <div className="flex justify-between gap-2"><b>{l.conditionName}</b><span className="tag">{l.line}</span></div>
+                {l.regimen && <div className="text-sm mt-1 whitespace-normal">{l.regimen}</div>}
+              </button>
+            ))}
+          </div>
+        </Sec>
+      )}
+      {S.prices && (
+        <Sec id="s-prices" title={`Nepal prices (${ps.length})`}>
+          {ps.length === 0 ? (
+            <span className="mu">No verified price entries recorded.</span>
+          ) : (
+            <div className="overflow-x-auto">
+              <table className="w-full text-sm whitespace-normal">
+                <thead className="text-left mu">
+                  <tr><th className="py-1">Brand</th><th>Strength</th><th>Maker</th><th className="text-right">Price</th><th></th></tr>
+                </thead>
+                <tbody>
+                  {ps.map(p => (
+                    <tr key={p.id} className="border-t" style={{ borderColor: 'var(--ln)' }}>
+                      <td className="py-2 font-semibold">{p.brandName}</td>
+                      <td>{p.strength || p.packSize || '—'}</td>
+                      <td>{p.manufacturer}</td>
+                      <td className="text-right font-bold" style={{ color: 'var(--am)' }}>{npr(p.priceNPR)}</td>
+                      <td className="text-right whitespace-nowrap">
+                        <RepBtn c={c} t="prices" id={p.id} n={p.brandName + ' ' + (p.strength || '')}/> <AdminBtns coll="prices" item={p} ctx={c} small/>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
+          {isAdmin && (
+            <button className="btn2 mt-3" onClick={() => c.setEditor({ coll: 'prices', item: null, preset: { genericName: d.genericName } })}>
+              + Add price for {d.genericName}
+            </button>
+          )}
+        </Sec>
+      )}
     </div>
-   </div>
-   {d.brandNames?.length>0&&<p className="text-sm mt-3"><b>Brands in Nepal:</b> {d.brandNames.join(', ')}</p>}
-   <div className="flex flex-wrap gap-2 mt-4">{jump.map(([k,l])=><a key={k} href={'#/drug/'+encodeURIComponent(d.id)} onClick={e=>{e.preventDefault();const el=document.getElementById('s-'+k);if(el){el.open=true;el.scrollIntoView({behavior:'smooth',block:'start'})}}} className="btn2" style={{padding:'.2rem .7rem',fontSize:'.8rem'}}>{l}</a>)}</div>
-  </div>
-  {S.indications&&d.indications&&<Sec id="s-indications" title="Uses and indications">{d.indications}</Sec>}
-  {S.dose&&(d.adultDose||d.pediatricDose)&&<Sec id="s-dose" title="Dosage">{d.adultDose&&<p><b>Adult:</b> {d.adultDose}</p>}{d.pediatricDose&&<p className="mt-2"><b>Pediatric:</b> {d.pediatricDose}</p>}</Sec>}
-  {S.adverseDrugReactions&&d.adverseDrugReactions&&<Sec id="s-adverseDrugReactions" title="Adverse drug reactions (ADR)">{d.adverseDrugReactions}</Sec>}
-  {S.contraindications&&d.contraindications&&<Sec id="s-contraindications" title="Contraindications (C/I)" alert>{d.contraindications}</Sec>}
-  {S.mechanismOfAction&&d.mechanismOfAction&&<Sec id="s-mechanismOfAction" title="Mechanism of action" open={false}>{d.mechanismOfAction}</Sec>}
-  {dl.length>0&&S.diseases!==0&&<Sec id="s-diseases" title={'Prescribed for ('+dl.length+')'}><div className="space-y-2">{dl.map(l=><button key={l.id} onClick={()=>go('condition',l.conditionId)} className="card p-3 text-left w-full block"><div className="flex justify-between gap-2"><b>{l.conditionName}</b><span className="tag">{l.line}</span></div>{l.regimen&&<div className="text-sm mt-1 whitespace-normal">{l.regimen}</div>}</button>)}</div></Sec>}
-  {S.prices&&<Sec id="s-prices" title={'Nepal prices ('+ps.length+')'}>
-   {ps.length===0?<span className="mu">No prices recorded for this drug yet.</span>:
-   <div className="overflow-x-auto"><table className="w-full text-sm whitespace-normal"><thead className="text-left mu"><tr><th className="py-1">Brand</th><th>Strength</th><th>Maker</th><th className="text-right">Price</th><th></th></tr></thead>
-    <tbody>{ps.map(p=><tr key={p.id} className="border-t" style={{borderColor:'var(--ln)'}}><td className="py-2 font-semibold">{p.brandName}</td><td>{p.strength||p.packSize||'—'}</td><td>{p.manufacturer}</td><td className="text-right font-bold" style={{color:'var(--am)'}}>{npr(p.priceNPR)}</td><td className="text-right whitespace-nowrap"><RepBtn c={c} t="prices" id={p.id} n={p.brandName+' '+(p.strength||'')}/> <AdminBtns coll="prices" item={p} ctx={c} small/></td></tr>)}</tbody></table></div>}
-   {isAdmin&&<button className="btn2 mt-3" onClick={()=>c.setEditor({coll:'prices',item:null,preset:{genericName:d.genericName}})}>+ Add price for {d.genericName}</button>}
-  </Sec>}
- </div>);
+  );
 }
 
-const LINES=['First-line','Second-line','Alternative','Adjunct','Emergency'];
-function Rx({l,c}){
- const k=(l.drugName||'').toLowerCase().trim();
- const d=c.vis.drugs.find(x=>(x.genericName||'').toLowerCase().trim()===k);
- const ps=(c.pricesByGeneric[k]||[]).map(p=>p.priceNPR).filter(Number.isFinite);
- return(<div className="card p-3 whitespace-normal" style={{borderLeft:'3px solid var(--br)'}}>
-  <div className="flex justify-between gap-2 items-start"><div>{d?<button className="serif font-bold text-lg underline decoration-dotted" onClick={()=>go('drug',d.id)}>{l.drugName}</button>:<span className="serif font-bold text-lg">{l.drugName}</span>}
-   {d?.brandNames?.length>0&&<div className="text-xs mu">{d.brandNames.slice(0,4).join(', ')}</div>}</div>
-   {ps.length>0&&<span className="tag p">From {npr(Math.min(...ps))}</span>}</div>
-  {l.regimen&&<p className="mt-1">{l.regimen}</p>}
-  {l.duration&&<p className="text-sm mu">Duration: {l.duration}</p>}
-  {l.notes&&<p className="text-sm mt-1" style={{color:'var(--am)'}}>⚠ {l.notes}</p>}
-  <div className="flex gap-1 mt-2 flex-wrap"><RepBtn c={c} t="conditionDrugLinks" id={l.conditionId} n={(l.conditionName||'')+' → '+l.drugName}/><AdminBtns coll="conditionDrugLinks" item={l} ctx={c} small/></div></div>);
-}
-function ConditionPage(c){
- const {route,data,linksBy,isAdmin}=c;const x=data.conditions.find(y=>y.id===route.id);
- if(!x)return <div className="p-16 text-center mu">Disease not found. <button className="underline" onClick={()=>go('diseases')}>See all diseases</button></div>;
- const ls=linksBy[x.id]||[];
- return(<div className="max-w-4xl mx-auto px-4 py-6 space-y-4">
-  <button className="text-sm mu" onClick={()=>history.length>1?history.back():go('diseases')}>← Back</button>
-  <div className="card p-5"><div className="flex justify-between gap-3 flex-wrap"><div>{x.category&&<span className="tag">{x.category}</span>}<h1 className="serif text-3xl font-bold mt-1">{x.name}</h1></div>
-   <div className="flex gap-2 flex-wrap items-start"><RepBtn big c={c} t="conditions" id={x.id} n={x.name}/><AdminBtns coll="conditions" item={x} ctx={c}/></div></div>
-   {x.overview&&<p className="mt-2 mu whitespace-pre-line">{x.overview}</p>}</div>
-  {x.symptoms&&<Sec title="Symptoms and signs">{x.symptoms}</Sec>}
-  {x.investigations&&<Sec title="Investigations">{x.investigations}</Sec>}
-  <Sec title={'Prescriptions ('+ls.length+')'}>
-   {ls.length===0?<span className="mu">No prescriptions added yet.</span>:<div className="space-y-4">{LINES.map(g=>{const gs=ls.filter(l=>(l.line||'First-line')===g);return gs.length>0&&<div key={g}><div className="text-xs font-bold uppercase tracking-wide mu mb-2">{g}</div><div className="space-y-2">{gs.map(l=><Rx key={l.id} l={l} c={c}/>)}</div></div>})}</div>}
-   {isAdmin&&<button className="btn2 mt-3" onClick={()=>c.setEditor({coll:'conditionDrugLinks',item:null,preset:{conditionId:x.id}})}>+ Add prescription</button>}
-  </Sec>
-  {x.firstLineTreatment&&<Sec title="Treatment summary">{x.firstLineTreatment}</Sec>}
-  {x.alternativeTreatments&&<Sec title="Alternative treatments">{x.alternativeTreatments}</Sec>}
-  {x.nonPharm&&<Sec title="Non-drug advice">{x.nonPharm}</Sec>}
-  {x.referralCriteria&&<Sec title="When to refer" alert>{x.referralCriteria}</Sec>}
- </div>);
-}
-function DiseaseCard({x,linksBy,toks=[]}){
- const ls=linksBy[x.id]||[];const first=ls.filter(l=>(l.line||'First-line')==='First-line').map(l=>l.drugName);
- return(<button onClick={()=>go('condition',x.id)} className="card p-4 text-left w-full" style={{borderLeft:'4px solid var(--am)'}}>
-  <div className="flex justify-between gap-2 items-start"><div className="serif font-bold text-lg">{hl(x.name,toks)}</div>{x.category&&<span className="tag">{x.category}</span>}</div>
-  {first.length>0?<div className="text-sm mt-1" style={{color:'var(--brd)'}}>First-line: {first.join(', ')}</div>:x.overview&&<p className="text-sm mu mt-1 line-clamp-2">{x.overview}</p>}
-  <div className="text-xs mu mt-1">{ls.length} prescription{ls.length===1?'':'s'}</div></button>);
-}
-function Diseases(c){
- const {vis,linksBy}=c;const [f,setF]=useState('');const [cat,setCat]=useState('');
- const cats=[...new Set(vis.conditions.map(x=>x.category).filter(Boolean))].sort();
- const toks=f.toLowerCase().split(/\s+/).filter(Boolean);
- const list=vis.conditions.filter(x=>(!cat||x.category===cat)&&toks.every(t=>(flat(x)+' '+(linksBy[x.id]||[]).map(l=>l.drugName).join(' ')).includes(t))).sort((a,b)=>(a.name||'').localeCompare(b.name||''));
- return(<div className="max-w-6xl mx-auto px-4 py-6 space-y-4">
-  <div className="flex flex-wrap justify-between gap-2"><h1 className="serif text-2xl font-bold">Diseases and prescriptions</h1>{c.isAdmin&&<button className="btn" onClick={()=>c.setEditor({coll:'conditions',item:null})}>+ Add disease</button>}</div>
-  <input className="inp" placeholder="Search a disease, symptom or drug…" value={f} onChange={e=>setF(e.target.value)} aria-label="Search diseases"/>
-  {cats.length>0&&<div className="flex gap-2 overflow-x-auto hide-sb pb-1"><button className={'btn2 whitespace-nowrap '+(!cat?'on':'')} onClick={()=>setCat('')}>All</button>{cats.map(k=><button key={k} className={'btn2 whitespace-nowrap '+(cat===k?'on':'')} onClick={()=>setCat(k)}>{k}</button>)}</div>}
-  {list.length===0?<Empty>No diseases found.</Empty>:<div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-3">{list.map(x=><DiseaseCard key={x.id} x={x} linksBy={linksBy} toks={toks}/>)}</div>}
- </div>);
+const LINES = ['First-line', 'Second-line', 'Alternative', 'Adjunct', 'Emergency'];
+function Rx({ l, c }) {
+  const k = (l.drugName || '').toLowerCase().trim();
+  const d = c.vis.drugs.find(x => (x.genericName || '').toLowerCase().trim() === k);
+  const ps = (c.pricesByGeneric[k] || []).map(p => p.priceNPR).filter(Number.isFinite);
+  return (
+    <div className="card p-3 whitespace-normal" style={{ borderLeft: '3px solid var(--br)' }}>
+      <div className="flex justify-between gap-2 items-start">
+        <div>
+          {d ? <button className="serif font-bold text-lg underline decoration-dotted" onClick={() => go('drug', d.id)}>{l.drugName}</button> : <span className="serif font-bold text-lg">{l.drugName}</span>}
+          {d?.brandNames?.length > 0 && <div className="text-xs mu">{d.brandNames.slice(0, 4).join(', ')}</div>}
+        </div>
+        {ps.length > 0 && <span className="tag p">From {npr(Math.min(...ps))}</span>}
+      </div>
+      {l.regimen && <p className="mt-1">{l.regimen}</p>}
+      {l.duration && <p className="text-sm mu">Duration: {l.duration}</p>}
+      {l.notes && <p className="text-sm mt-1" style={{ color: 'var(--am)' }}>⚠ {l.notes}</p>}
+      <div className="flex gap-1 mt-2 flex-wrap">
+        <RepBtn c={c} t="conditionDrugLinks" id={l.conditionId} n={(l.conditionName || '') + ' → ' + l.drugName}/>
+        <AdminBtns coll="conditionDrugLinks" item={l} ctx={c} small/>
+      </div>
+    </div>
+  );
 }
 
-/* ============ PRICES ============ */
-function Prices(c){
- const {vis,isAdmin}=c;
- const [f,setF]=useState('');const [s,setS]=useState({k:'brandName',dir:1});
- const toks=f.toLowerCase().split(/\s+/).filter(Boolean);
- let rows=vis.prices.filter(p=>toks.every(t=>flat(p).includes(t)));
- rows=[...rows].sort((a,b)=>{const x=a[s.k],y=b[s.k];return (typeof x==='number'||typeof y==='number'?(x??1e12)-(y??1e12):String(x||'').localeCompare(String(y||'')))*s.dir});
- const th=(k,l,r)=><th className={'p-3 cursor-pointer select-none '+(r?'text-right':'')} onClick={()=>setS({k,dir:s.k===k?-s.dir:1})}>{l}{s.k===k?(s.dir>0?' ▲':' ▼'):''}</th>;
- return(<div className="max-w-6xl mx-auto px-4 py-6 space-y-4">
-  <div className="flex flex-wrap gap-3 justify-between items-center"><h1 className="serif text-2xl font-bold">Nepal medicine prices</h1>
-   {isAdmin&&<button className="btn" onClick={()=>c.setEditor({coll:'prices',item:null})}>+ Add price</button>}</div>
-  <input className="inp" placeholder="Filter by brand, generic, maker, strength…" value={f} onChange={e=>setF(e.target.value)} aria-label="Filter prices"/>
-  {rows.length===0?<Empty>No prices match.</Empty>:
-  <div className="card overflow-x-auto dsk"><table className="w-full text-sm"><thead className="text-left" style={{background:'var(--soft)'}}><tr>{th('brandName','Brand')}{th('genericName','Generic')}{th('strength','Strength')}{th('manufacturer','Maker')}{th('priceNPR','Price',1)}<th></th></tr></thead>
-   <tbody>{rows.map(p=><tr key={p.id} className="border-t" style={{borderColor:'var(--ln)'}}>
-    <td className="p-3 font-semibold">{hl(p.brandName,toks)}</td><td className="p-3">{hl(p.genericName,toks)}</td><td className="p-3">{hl(p.strength||p.packSize||'',toks)}</td>
-    <td className="p-3 mu">{hl(p.manufacturer,toks)}</td><td className="p-3 text-right font-bold" style={{color:'var(--am)'}}>{npr(p.priceNPR)}</td>
-    <td className="p-3 text-right whitespace-nowrap"><RepBtn c={c} t="prices" id={p.id} n={p.brandName+' '+(p.strength||'')}/> <AdminBtns coll="prices" item={p} ctx={c} small/></td></tr>)}</tbody></table></div>}
-  {rows.length>0&&<div className="mob space-y-2">{rows.slice(0,100).map(p=><div key={p.id} className="card p-3"><div className="flex justify-between gap-2"><div><div className="font-bold">{hl(p.brandName,toks)}</div><div className="text-sm mu">{hl(p.genericName,toks)} · {p.strength||p.packSize||''}</div><div className="text-xs mu">{p.manufacturer}</div></div><div className="font-bold" style={{color:'var(--am)'}}>{npr(p.priceNPR)}</div></div><div className="flex gap-1 mt-2"><RepBtn c={c} t="prices" id={p.id} n={p.brandName+' '+(p.strength||'')}/><AdminBtns coll="prices" item={p} ctx={c} small/></div></div>)}</div>}
- </div>);
+function ConditionPage(c) {
+  const { route, data, linksBy, isAdmin } = c;
+  const x = data.conditions.find(y => y.id === route.id);
+  if (!x) return <div className="p-16 text-center mu">Disease not found. <button className="underline" onClick={() => go('diseases')}>Return to disease listing</button></div>;
+
+  // Match links by exact condition ID or by matching lowercased condition name fallback
+  const ls = (linksBy[x.id] || data.conditionDrugLinks.filter(l => 
+    l.conditionId === x.id || 
+    (l.conditionName && x.name && l.conditionName.toLowerCase() === x.name.toLowerCase())
+  ));
+
+  // Group prescriptions by known line categories + fallback group for unclassified/custom lines
+  const lineGroups = useMemo(() => {
+    const map = {};
+    ls.forEach(l => {
+      const lineName = l.line || 'First-line';
+      if (!map[lineName]) map[lineName] = [];
+      map[lineName].push(l);
+    });
+    return map;
+  }, [ls]);
+
+  return (
+    <div className="max-w-4xl mx-auto px-4 py-6 space-y-4">
+      <button className="text-sm mu" onClick={() => history.length > 1 ? history.back() : go('diseases')}>← Back</button>
+      <div className="card p-5">
+        <div className="flex justify-between gap-3 flex-wrap">
+          <div>
+            {x.category && <span className="tag">{x.category}</span>}
+            <h1 className="serif text-3xl font-bold mt-1">{x.name}</h1>
+          </div>
+          <div className="flex gap-2 flex-wrap items-start">
+            <RepBtn big c={c} t="conditions" id={x.id} n={x.name}/>
+            <AdminBtns coll="conditions" item={x} ctx={c}/>
+          </div>
+        </div>
+        {x.overview && <p className="mt-2 mu whitespace-pre-line">{x.overview}</p>}
+      </div>
+      {x.symptoms && <Sec title="Symptoms and signs">{x.symptoms}</Sec>}
+      {x.investigations && <Sec title="Investigations">{x.investigations}</Sec>}
+      <Sec title={`Prescriptions (${ls.length})`}>
+        {ls.length === 0 ? (
+          <span className="mu">No linked prescriptions available yet.</span>
+        ) : (
+          <div className="space-y-4">
+            {Object.entries(lineGroups).map(([g, items]) => (
+              <div key={g}>
+                <div className="text-xs font-bold uppercase tracking-wide mu mb-2">{g}</div>
+                <div className="space-y-2">{items.map(l => <Rx key={l.id || (l.conditionId + l.drugName)} l={l} c={c}/>)}</div>
+              </div>
+            ))}
+          </div>
+        )}
+        {isAdmin && (
+          <button className="btn2 mt-3" onClick={() => c.setEditor({ coll: 'conditionDrugLinks', item: null, preset: { conditionId: x.id } })}>
+            + Add prescription
+          </button>
+        )}
+      </Sec>
+      {x.firstLineTreatment && <Sec title="Treatment summary">{x.firstLineTreatment}</Sec>}
+      {x.alternativeTreatments && <Sec title="Alternative treatments">{x.alternativeTreatments}</Sec>}
+      {x.nonPharm && <Sec title="Non-drug advice">{x.nonPharm}</Sec>}
+      {x.referralCriteria && <Sec title="When to refer" alert>{x.referralCriteria}</Sec>}
+    </div>
+  );
 }
 
-/* ============ SAVED / COMPARE / REFERENCES / SETTINGS ============ */
-function Favorites(c){
- const list=c.vis.drugs.filter(d=>c.favs.includes('drugs:'+d.id));
- return(<div className="max-w-6xl mx-auto px-4 py-6"><h1 className="serif text-2xl font-bold mb-4">Saved drugs</h1>
-  {list.length===0?<Empty>Nothing saved yet. Open a drug and tap “Save” to keep it here.</Empty>:<div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-3">{list.map(d=><DrugCard key={d.id} d={d} {...c} toks={[]} compact={c.prefs.compact}/>)}</div>}</div>);
-}
-function Compare(c){
- const list=c.cmp.map(id=>c.data.drugs.find(d=>d.id===id)).filter(Boolean);
- if(!list.length)return <div className="max-w-xl mx-auto px-4 py-16"><Empty>Pick up to 4 drugs with “+ Compare” on a drug page to see them side by side.</Empty></div>;
- const rows=[['Class','drugClass'],['Uses','indications'],['Adult dose','adultDose'],['Pediatric dose','pediatricDose'],['ADR','adverseDrugReactions'],['C/I','contraindications']];
- return(<div className="max-w-6xl mx-auto px-4 py-6"><div className="flex justify-between mb-4"><h1 className="serif text-2xl font-bold">Compare drugs</h1><button className="btn2" onClick={()=>c.setCmp([])}>Clear</button></div>
-  <div className="card overflow-x-auto"><table className="w-full text-sm align-top" style={{minWidth:640}}><thead><tr><th className="p-3 w-28"></th>{list.map(d=><th key={d.id} className="p-3 text-left serif text-lg"><button onClick={()=>go('drug',d.id)}>{d.genericName}</button></th>)}</tr></thead>
-   <tbody>{rows.map(([l,k])=><tr key={k} className="border-t align-top" style={{borderColor:'var(--ln)'}}><td className="p-3 font-bold mu">{l}</td>{list.map(d=><td key={d.id} className="p-3 whitespace-pre-line">{d[k]||'—'}</td>)}</tr>)}
-    <tr className="border-t" style={{borderColor:'var(--ln)'}}><td className="p-3 font-bold mu">Lowest price</td>{list.map(d=>{const ps=(c.pricesByGeneric[(d.genericName||'').toLowerCase().trim()]||[]).map(p=>p.priceNPR).filter(Number.isFinite);return <td key={d.id} className="p-3 font-bold" style={{color:'var(--am)'}}>{ps.length?npr(Math.min(...ps)):'—'}</td>})}</tr></tbody></table></div></div>);
-}
-function References({vis,isAdmin,setEditor}){
- return(<div className="max-w-4xl mx-auto px-4 py-6 space-y-3"><div className="flex justify-between"><h1 className="serif text-2xl font-bold">Sources</h1>{isAdmin&&<button className="btn" onClick={()=>setEditor({coll:'references',item:null})}>+ Add reference</button>}</div>
-  {vis.references.length===0?<Empty>No references yet.</Empty>:vis.references.map(r=><div key={r.id} className="card p-4 flex justify-between gap-3"><div><div className="font-bold">{r.url?<a className="underline" href={r.url} target="_blank" rel="noopener">{r.title}</a>:r.title}</div><div className="text-sm mu">{r.publisher} {r.publicationDate&&'('+r.publicationDate+')'}</div></div>
-   {isAdmin&&<div className="shrink-0"><button className="btn2" onClick={()=>setEditor({coll:'references',item:r})}>Edit</button></div>}</div>)}</div>);
-}
-function Settings({prefs,setPrefs,favs,setFavs,setRecent,toast}){
- const set=(k,v)=>setPrefs({...prefs,[k]:v});
- const Opt=({k,v,l})=><button className={'btn2 '+(prefs[k]===v?'on':'')} aria-pressed={prefs[k]===v} onClick={()=>set(k,v)}>{l}</button>;
- return(<div className="max-w-2xl mx-auto px-4 py-6 space-y-4"><h1 className="serif text-2xl font-bold">My preferences</h1>
-  <p className="text-sm mu">Saved on this device only. Anything you have opened is also kept for offline use.</p>
-  <div className="card p-5 space-y-5">
-   <div><div className="font-bold mb-2">Theme</div><div className="flex gap-2"><Opt k="theme" v="light" l="Light"/><Opt k="theme" v="dark" l="Dark (night shifts)"/></div></div>
-   <div><div className="font-bold mb-2">Text size</div><div className="flex gap-2"><Opt k="size" v="s" l="Small"/><Opt k="size" v="m" l="Medium"/><Opt k="size" v="l" l="Large"/></div></div>
-   <div><div className="font-bold mb-2">Drug cards</div><div className="flex gap-2"><button className={'btn2 '+(!prefs.compact?'on':'')} onClick={()=>set('compact',false)}>Detailed</button><button className={'btn2 '+(prefs.compact?'on':'')} onClick={()=>set('compact',true)}>Compact</button></div></div>
-   <div><div className="font-bold mb-2">Sections shown on drug pages</div><div className="flex flex-wrap gap-2">
-    {DRUG_SECTIONS.map(([k,l])=><label key={k} className="btn2 flex items-center gap-2 cursor-pointer"><input type="checkbox" checked={!!prefs.sections[k]} onChange={e=>setPrefs({...prefs,sections:{...prefs.sections,[k]:e.target.checked?1:0}})}/>{l}</label>)}</div></div>
-   <div className="flex gap-2 pt-2 border-t" style={{borderColor:'var(--ln)'}}><button className="btn2" onClick={()=>{setRecent([]);toast('Search history cleared')}}>Clear search history</button><button className="btn2" onClick={()=>{setFavs([]);toast('Saved drugs cleared')}}>Clear saved drugs</button></div>
-  </div></div>);
+function DiseaseCard({ x, linksBy, toks = [] }) {
+  const ls = linksBy[x.id] || [];
+  const first = ls.filter(l => (l.line || 'First-line') === 'First-line').map(l => l.drugName);
+  return (
+    <button onClick={() => go('condition', x.id)} className="card p-4 text-left w-full" style={{ borderLeft: '4px solid var(--am)' }}>
+      <div className="flex justify-between gap-2 items-start">
+        <div className="serif font-bold text-lg">{hl(x.name, toks)}</div>
+        {x.category && <span className="tag">{x.category}</span>}
+      </div>
+      {first.length > 0 ? (
+        <div className="text-sm mt-1" style={{ color: 'var(--brd)' }}>First-line: {first.join(', ')}</div>
+      ) : x.overview && <p className="text-sm mu mt-1 line-clamp-2">{x.overview}</p>}
+      <div className="text-xs mu mt-1">{ls.length} prescription{ls.length === 1 ? '' : 's'}</div>
+    </button>
+  );
 }
 
-/* ============ LOGIN ============ */
-function Login(){
- const [e,setE]=useState('');const [p,setP]=useState('');const [er,setEr]=useState('');
- const submit=async ev=>{ev.preventDefault();try{await auth.signInWithEmailAndPassword(e,p);go('admin')}catch(x){setEr(x.message)}};
- return(<form onSubmit={submit} className="max-w-sm mx-auto mt-16 card p-6 space-y-3"><h1 className="serif text-2xl font-bold">Admin login</h1>
-  {er&&<div className="text-sm p-2 rounded" style={{background:'var(--rds)',color:'var(--rd)'}}>{er}</div>}
-  <input className="inp" type="email" placeholder="Email" value={e} onChange={x=>setE(x.target.value)} required autoComplete="username"/>
-  <input className="inp" type="password" placeholder="Password" value={p} onChange={x=>setP(x.target.value)} required autoComplete="current-password"/>
-  <button className="btn w-full" type="submit">Log in</button></form>);
+function Diseases(c) {
+  const { vis, linksBy } = c;
+  const [f, setF] = useState('');
+  const [cat, setCat] = useState('');
+  const cats = [...new Set(vis.conditions.map(x => x.category).filter(Boolean))].sort();
+  const toks = f.toLowerCase().split(/\s+/).filter(Boolean);
+  const list = vis.conditions.filter(x => (!cat || x.category === cat) && toks.every(t => (flat(x) + ' ' + (linksBy[x.id] || []).map(l => l.drugName).join(' ')).includes(t))).sort((a, b) => (a.name || '').localeCompare(b.name || ''));
+
+  return (
+    <div className="max-w-6xl mx-auto px-4 py-6 space-y-4">
+      <div className="flex flex-wrap justify-between gap-2">
+        <h1 className="serif text-2xl font-bold">Diseases and prescriptions</h1>
+        {c.isAdmin && <button className="btn" onClick={() => c.setEditor({ coll: 'conditions', item: null })}>+ Add disease</button>}
+      </div>
+      <input className="inp" placeholder="Search a disease, symptom, or drug…" value={f} onChange={e => setF(e.target.value)} aria-label="Search diseases"/>
+      {cats.length > 0 && (
+        <div className="flex gap-2 overflow-x-auto hide-sb pb-1">
+          <button className={'btn2 whitespace-nowrap ' + (!cat ? 'on' : '')} onClick={() => setCat('')}>All</button>
+          {cats.map(k => <button key={k} className={'btn2 whitespace-nowrap ' + (cat === k ? 'on' : '')} onClick={() => setCat(k)}>{k}</button>)}
+        </div>
+      )}
+      {list.length === 0 ? <Empty>No matching diseases found.</Empty> : (
+        <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-3">{list.map(x => <DiseaseCard key={x.id} x={x} linksBy={linksBy} toks={toks}/>)}</div>
+      )}
+    </div>
+  );
 }
 
-/* ============ EDITOR: one form for every record type ============ */
-function Editor({editor,setEditor,toast,data}){
- const sc=SCHEMAS[editor.coll];const it=editor.item;
- const [v,setV]=useState(()=>{const o={};sc.fields.forEach(f=>{const x=it?it[f.k]:(editor.preset?.[f.k]);
-  o[f.k]=f.t==='list'?(x||[]).join(', '):f.t==='bool'?(x!==false):(x??(f.t==='sel'?f.o[0]:''))});return o});
- const [busy,setBusy]=useState(false);const [er,setEr]=useState('');
- const save=async ev=>{ev.preventDefault();setBusy(true);setEr('');
-  try{
-   const out={};
-   sc.fields.forEach(f=>{let x=v[f.k];
-    if(f.t==='list')x=String(x).split(',').map(s=>s.trim()).filter(Boolean);
-    if(f.t==='num')x=x===''?null:Number(x);
-    out[f.k]=x});
-   out.updatedAt=firebase.firestore.FieldValue.serverTimestamp();
-   if(editor.coll==='conditionDrugLinks')out.conditionName=(data.conditions.find(c=>c.id===out.conditionId)||{}).name||'';
-   const id=it?it.id:mkId(editor.coll,v);
-   await db.collection(editor.coll).doc(id).set(out,{merge:true});
-   toast(it?'Saved changes':'Added');setEditor(null);
-  }catch(x){setEr(x.message)}finally{setBusy(false)}};
- return(<div className="modal fixed inset-0 z-50 flex items-start justify-center overflow-y-auto p-4" style={{background:'rgba(0,0,0,.5)'}} onMouseDown={e=>e.target===e.currentTarget&&setEditor(null)}>
-  <form onSubmit={save} className="card w-full max-w-2xl p-5 my-6 space-y-3" role="dialog" aria-modal="true">
-   <h2 className="serif text-xl font-bold">{it?'Edit':'Add'} {sc.one}</h2>
-   {er&&<div className="text-sm p-2 rounded" style={{background:'var(--rds)',color:'var(--rd)'}}>{er}</div>}
-   {sc.fields.map(f=><label key={f.k} className="block text-sm font-semibold">{f.l}{f.req&&' *'}
-    {f.t==='area'?<textarea className="inp mt-1 font-normal" rows={3} value={v[f.k]} onChange={e=>setV({...v,[f.k]:e.target.value})}/>
-    :f.t==='bool'?<span className="flex items-center gap-2 mt-1 font-normal"><input type="checkbox" checked={!!v[f.k]} onChange={e=>setV({...v,[f.k]:e.target.checked})}/> {v[f.k]?'Published':'Draft (only admins can see it)'}</span>
-    :f.t==='cond'?<select className="inp mt-1 font-normal" required value={v[f.k]} onChange={e=>setV({...v,[f.k]:e.target.value})}><option value="">Choose a disease…</option>{[...data.conditions].sort((a,b)=>(a.name||'').localeCompare(b.name||'')).map(c=>{return <option key={c.id} value={c.id}>{c.name}</option>})}</select>
-    :f.t==='drug'?<><input className="inp mt-1 font-normal" list="dl-drugs" required value={v[f.k]} onChange={e=>setV({...v,[f.k]:e.target.value})}/><datalist id="dl-drugs">{data.drugs.map(d=><option key={d.id} value={d.genericName}/>)}</datalist></>
-    :f.t==='sel'?<select className="inp mt-1 font-normal" value={v[f.k]} onChange={e=>setV({...v,[f.k]:e.target.value})}>{f.o.map(o=><option key={o}>{o}</option>)}</select>
-    :<input className="inp mt-1 font-normal" type={f.t==='num'?'number':'text'} step="any" required={!!f.req} value={v[f.k]} onChange={e=>setV({...v,[f.k]:e.target.value})}/>}</label>)}
-   <div className="flex justify-end gap-2 pt-2"><button type="button" className="btn2" onClick={()=>setEditor(null)}>Cancel</button><button className="btn" disabled={busy}>{busy?'Saving…':'Save changes'}</button></div>
-  </form></div>);
+/* ============ PRICES PAGE ============ */
+function Prices(c) {
+  const { vis, isAdmin } = c;
+  const [f, setF] = useState('');
+  const [s, setS] = useState({ k: 'brandName', dir: 1 });
+  const toks = f.toLowerCase().split(/\s+/).filter(Boolean);
+
+  let rows = vis.prices.filter(p => toks.every(t => flat(p).includes(t)));
+  rows = [...rows].sort((a, b) => {
+    const x = a[s.k], y = b[s.k];
+    return (typeof x === 'number' || typeof y === 'number' ? (x ?? 1e12) - (y ?? 1e12) : String(x || '').localeCompare(String(y || ''))) * s.dir;
+  });
+
+  const th = (k, l, r) => (
+    <th className={'p-3 cursor-pointer select-none ' + (r ? 'text-right' : '')} onClick={() => setS({ k, dir: s.k === k ? -s.dir : 1 })}>
+      {l}{s.k === k ? (s.dir > 0 ? ' ▲' : ' ▼') : ''}
+    </th>
+  );
+
+  return (
+    <div className="max-w-6xl mx-auto px-4 py-6 space-y-4">
+      <div className="flex flex-wrap gap-3 justify-between items-center">
+        <h1 className="serif text-2xl font-bold">Nepal medicine prices</h1>
+        {isAdmin && <button className="btn" onClick={() => c.setEditor({ coll: 'prices', item: null })}>+ Add price</button>}
+      </div>
+      <input className="inp" placeholder="Filter by brand, generic, maker, strength…" value={f} onChange={e => setF(e.target.value)} aria-label="Filter prices"/>
+      {rows.length === 0 ? <Empty>No prices match the filter criteria.</Empty> : (
+        <div className="card overflow-x-auto dsk">
+          <table className="w-full text-sm">
+            <thead className="text-left" style={{ background: 'var(--soft)' }}>
+              <tr>{th('brandName', 'Brand')}{th('genericName', 'Generic')}{th('strength', 'Strength')}{th('manufacturer', 'Maker')}{th('priceNPR', 'Price', 1)}<th></th></tr>
+            </thead>
+            <tbody>
+              {rows.map(p => (
+                <tr key={p.id} className="border-t" style={{ borderColor: 'var(--ln)' }}>
+                  <td className="p-3 font-semibold">{hl(p.brandName, toks)}</td>
+                  <td className="p-3">{hl(p.genericName, toks)}</td>
+                  <td className="p-3">{hl(p.strength || p.packSize || '', toks)}</td>
+                  <td className="p-3 mu">{hl(p.manufacturer, toks)}</td>
+                  <td className="p-3 text-right font-bold" style={{ color: 'var(--am)' }}>{npr(p.priceNPR)}</td>
+                  <td className="p-3 text-right whitespace-nowrap">
+                    <RepBtn c={c} t="prices" id={p.id} n={p.brandName + ' ' + (p.strength || '')}/> <AdminBtns coll="prices" item={p} ctx={c} small/>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )}
+      {rows.length > 0 && (
+        <div className="mob space-y-2">
+          {rows.slice(0, 100).map(p => (
+            <div key={p.id} className="card p-3">
+              <div className="flex justify-between gap-2">
+                <div>
+                  <div className="font-bold">{hl(p.brandName, toks)}</div>
+                  <div className="text-sm mu">{hl(p.genericName, toks)} · {p.strength || p.packSize || ''}</div>
+                  <div className="text-xs mu">{p.manufacturer}</div>
+                </div>
+                <div className="font-bold" style={{ color: 'var(--am)' }}>{npr(p.priceNPR)}</div>
+              </div>
+              <div className="flex gap-1 mt-2">
+                <RepBtn c={c} t="prices" id={p.id} n={p.brandName + ' ' + (p.strength || '')}/>
+                <AdminBtns coll="prices" item={p} ctx={c} small/>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  );
 }
 
-/* ============ ADMIN DASHBOARD ============ */
-function Admin(c){
- const {data,setEditor,toast}=c;
- const [coll,setColl]=useState('drugs');const [f,setF]=useState('');const [json,setJson]=useState('');const [sel,setSel]=useState([]);
- const sc=SCHEMAS[coll];const toks=f.toLowerCase().split(/\s+/).filter(Boolean);
- const rows=data[coll].filter(x=>toks.every(t=>flat(x).includes(t))).sort((a,b)=>String(a[sc.title]||'').localeCompare(String(b[sc.title]||'')));
- const togglePub=async x=>{try{await db.collection(coll).doc(x.id).update({published:x.published===false})}catch(e){toast(e.message)}};
- const delMany=async()=>{if(!sel.length||!confirm('Delete '+sel.length+' selected records?'))return;
-  try{const b=db.batch();sel.forEach(id=>b.delete(db.collection(coll).doc(id)));await b.commit();setSel([]);toast('Deleted '+sel.length)}catch(e){toast(e.message)}};
- const summ=(()=>{if(!json.trim())return null;try{let d=JSON.parse(json);if(Array.isArray(d))d={[coll]:d};
-  const p=Object.keys(SCHEMAS).filter(k=>Array.isArray(d[k])).map(k=>d[k].length+' '+SCHEMAS[k].label.toLowerCase());
-  return p.length?{ok:1,t:'Ready to import: '+p.join(', ')+'.'}:{t:'No drugs, conditions, prices or references found in this file.'}}catch(e){return{t:'This is not valid JSON: '+e.message}}})();
- const sample=()=>download('doc-nepal-sample.json',{drugs:[{genericName:'Paracetamol',brandNames:['Crocin','Dolo'],drugClass:'Analgesic / antipyretic',indications:'Mild to moderate pain; fever.',adultDose:'500 to 1000 mg every 4 to 6 hours. Max 4 g/day.',pediatricDose:'10 to 15 mg/kg every 4 to 6 hours.',adverseDrugReactions:'Rash; hepatotoxicity in overdose.',contraindications:'Severe hepatic impairment; hypersensitivity.',mechanismOfAction:'Central COX inhibition.',published:true}],prices:[{brandName:'Dolo 500',genericName:'Paracetamol',strength:'500 mg tablet',packSize:'10 tablets',manufacturer:'Example Pharma',priceNPR:25,verificationStatus:'Verified'}],conditions:[{name:'Fever',category:'General',overview:'Raised body temperature.',symptoms:'Warmth, sweating, chills.',published:true}],conditionDrugLinks:[{conditionId:'fever',conditionName:'Fever',drugName:'Paracetamol',line:'First-line',regimen:'500 to 1000 mg orally every 6 hours',duration:'3 days',notes:'Max 4 g/day.',published:true}],references:[]});
- const bulk=async()=>{
-  try{let d=JSON.parse(json);if(Array.isArray(d))d={[coll]:d};let n=0,skipped=0;let b=db.batch();
-   for(const c2 of Object.keys(SCHEMAS)){if(!Array.isArray(d[c2]))continue;
-    for(const r of d[c2]){const t=SCHEMAS[c2].title;const id=r.id||mkId(c2,r);const {id:_,...rest}=r;
-     if(!r.id&&!r[t]){skipped++;continue}
-     if(typeof rest.brandNames==='string')rest.brandNames=rest.brandNames.split(',').map(s=>s.trim()).filter(Boolean);
-     if(typeof rest.priceNPR==='string')rest.priceNPR=Number(rest.priceNPR);
-     if(c2==='drugs'){rest.published=rest.published??true;rest.drugClass=rest.drugClass??''}
-     if(c2==='conditions'||c2==='conditionDrugLinks')rest.published=rest.published??true;
-     if(c2==='prices')rest.verificationStatus=rest.verificationStatus||'Verified';
-     b.set(db.collection(c2).doc(id),{...rest,updatedAt:firebase.firestore.FieldValue.serverTimestamp()},{merge:true});n++;
-     if(n%400===0){await b.commit();b=db.batch()}}}
-   await b.commit();toast('Imported '+n+' records'+(skipped?' ('+skipped+' skipped: no name)':''));setJson('')}catch(e){toast('Import failed: '+e.message)}};
- return(<div className="max-w-6xl mx-auto px-4 py-6 space-y-5">
-  <div className="flex flex-wrap justify-between gap-2"><h1 className="serif text-2xl font-bold">Admin: manage records</h1>
-   <button className="btn2" onClick={()=>download('doc-nepal-backup-'+new Date().toISOString().slice(0,10)+'.json',Object.fromEntries(Object.keys(SCHEMAS).map(k=>[k,data[k].map(({updatedAt,...r})=>r)])))}>Download backup (JSON)</button></div>
-  <div className="flex flex-wrap gap-2">{Object.entries(SCHEMAS).map(([k,s])=><button key={k} className={'btn2 '+(coll===k?'on':'')} onClick={()=>{setColl(k);setSel([]);setF('')}}>{s.label} <span className="mu">{data[k].length}</span></button>)}</div>
-  <div className="flex flex-wrap gap-2"><input className="inp flex-1" style={{minWidth:200}} placeholder={'Search '+sc.label.toLowerCase()+'…'} value={f} onChange={e=>setF(e.target.value)}/>
-   <button className="btn" onClick={()=>setEditor({coll,item:null})}>+ Add {sc.one}</button>
-   {sel.length>0&&<button className="btn2 dng" onClick={delMany}>Delete {sel.length} selected</button>}</div>
-  {rows.length===0?<Empty>No {sc.label.toLowerCase()} found.</Empty>:
-  <div className="card overflow-x-auto"><table className="w-full text-sm"><tbody>{rows.map(x=><tr key={x.id} className="border-t first:border-t-0" style={{borderColor:'var(--ln)'}}>
-   <td className="p-3 w-8"><input type="checkbox" aria-label="Select" checked={sel.includes(x.id)} onChange={e=>setSel(e.target.checked?[...sel,x.id]:sel.filter(i=>i!==x.id))}/></td>
-   <td className="p-3"><div className="font-bold">{x[sc.title]||x.id}</div><div className="mu line-clamp-1">{coll==='prices'?[x.genericName,x.strength,npr(x.priceNPR)].filter(Boolean).join(' · '):x[sc.sub]}</div></td>
-   <td className="p-3 text-right whitespace-nowrap">
-    {'published' in (sc.fields.find(f=>f.k==='published')?{published:1}:{})&&<button className={'tag mr-2 '+(x.published===false?'p':'')} onClick={()=>togglePub(x)} title="Click to toggle">{x.published===false?'Draft':'Published'}</button>}
-    {coll==='prices'&&x.verificationStatus&&<span className="tag mr-2">{x.verificationStatus}</span>}
-    <button className="btn2" onClick={()=>setEditor({coll,item:x})}>Edit</button></td></tr>)}</tbody></table></div>}
-  <details className="card"><summary className="px-5 py-3 font-bold">Bulk import (JSON)</summary><div className="px-5 pb-5 space-y-2">
-   <p className="text-sm mu">Upload a .json file or paste it below. Use {'{ "drugs": [...], "conditions": [...], "prices": [...], "references": [...] }'}, or a plain list, which goes into the tab you have open ({sc.label}). Records with the same id or name are updated, not duplicated.</p>
-   <div className="flex flex-wrap gap-2 items-center">
-    <label className="btn cursor-pointer">Choose JSON file<input type="file" accept=".json,application/json" className="sr-only" onChange={async e=>{const fl=e.target.files[0];if(fl){setJson(await fl.text());toast('Loaded '+fl.name)}e.target.value=''}}/></label>
-    <button type="button" className="btn2" onClick={sample}>Download sample file</button></div>
-   <textarea className="inp font-mono text-xs" rows={8} value={json} onChange={e=>setJson(e.target.value)} placeholder="Or paste JSON here"/>
-   {summ&&<div className="text-sm p-2 rounded" style={summ.ok?{background:'var(--soft)',color:'var(--brd)'}:{background:'var(--rds)',color:'var(--rd)'}}>{summ.t}</div>}
-   <button className="btn" onClick={bulk} disabled={!summ?.ok}>Import records</button></div></details>
- </div>);
+/* ============ UTILITY & AUXILIARY PAGES ============ */
+function Favorites(c) {
+  const list = c.vis.drugs.filter(d => c.favs.includes('drugs:' + d.id));
+  return (
+    <div className="max-w-6xl mx-auto px-4 py-6">
+      <h1 className="serif text-2xl font-bold mb-4">Saved drugs</h1>
+      {list.length === 0 ? <Empty>No items saved. Tap "☆ Save" on a drug page to add it here.</Empty> : (
+        <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-3">{list.map(d => <DrugCard key={d.id} d={d} {...c} toks={[]} compact={c.prefs.compact}/>)}</div>
+      )}
+    </div>
+  );
 }
 
-const IC={home:'M3 11l9-8 9 8M5 10v10h5v-6h4v6h5V10',dis:'M3 12h4l2-6 4 12 2-6h6',search:'M11 4a7 7 0 100 14 7 7 0 000-14zM21 21l-5-5',tag:'M20 12l-8 8-9-9V3h8l9 9zM7.5 7.5h.01',more:'M5 12h.01M12 12h.01M19 12h.01'};
-const Ic=({n})=><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d={IC[n]}/></svg>;
-function RepBtn({c,t,id,n,big}){return <button className="btn2" style={big?{}:{padding:'.15rem .5rem',fontSize:'.75rem'}} title="Report an error" onClick={e=>{e.stopPropagation();c.setReport({targetType:t,targetId:id,targetName:n})}}>⚑ Report error</button>}
+function Compare(c) {
+  const list = c.cmp.map(id => c.data.drugs.find(d => d.id === id)).filter(Boolean);
+  if (!list.length) return <div className="max-w-xl mx-auto px-4 py-16"><Empty>Select up to 4 drugs using "+ Compare" to view side-by-side details.</Empty></div>;
 
-const CATS=['Wrong dose','Wrong price','Side effect or C/I missing or wrong','Wrong drug for this disease','Spelling or other'];
-function Report({report,setReport,toast}){
- const [cat,setCat]=useState(CATS[0]);const [msg,setMsg]=useState('');const [ct,setCt]=useState('');const [busy,setBusy]=useState(false);const [er,setEr]=useState('');
- const send=async ev=>{ev.preventDefault();if(msg.trim().length<5){setEr('Please describe the problem in a few words.');return}
-  setBusy(true);
-  try{const p=db.collection('reports').add({targetType:report.targetType,targetId:report.targetId||'',targetName:report.targetName||'',category:cat,message:msg.trim().slice(0,1000),contact:ct.trim().slice(0,120),status:'Open',createdAt:firebase.firestore.FieldValue.serverTimestamp()});
-   if(navigator.onLine)await p;else p.catch(()=>{});
-   toast(navigator.onLine?'Thank you. Report sent to the admin.':'Saved. It will be sent when you are back online.');setReport(null);
-  }catch(x){setEr(x.message)}finally{setBusy(false)}};
- return(<div className="modal fixed inset-0 z-50 flex items-end sm:items-center justify-center sm:p-4" style={{background:'rgba(0,0,0,.5)'}} onMouseDown={e=>e.target===e.currentTarget&&setReport(null)}>
-  <form onSubmit={send} className="card w-full max-w-md p-5 space-y-3" role="dialog" aria-modal="true">
-   <h2 className="serif text-xl font-bold">Report an error</h2>
-   <p className="text-sm mu">About: <b>{report.targetName||'General'}</b></p>
-   {er&&<div className="text-sm p-2 rounded" style={{background:'var(--rds)',color:'var(--rd)'}}>{er}</div>}
-   <label className="block text-sm font-semibold">What is wrong?<select className="inp mt-1 font-normal" value={cat} onChange={e=>setCat(e.target.value)}>{CATS.map(x=><option key={x}>{x}</option>)}</select></label>
-   <label className="block text-sm font-semibold">Details<textarea className="inp mt-1 font-normal" rows={4} maxLength={1000} placeholder="What should it say instead? A source helps." value={msg} onChange={e=>setMsg(e.target.value)}/></label>
-   <label className="block text-sm font-semibold">Your phone or email (optional)<input className="inp mt-1 font-normal" maxLength={120} value={ct} onChange={e=>setCt(e.target.value)}/></label>
-   <div className="flex justify-end gap-2"><button type="button" className="btn2" onClick={()=>setReport(null)}>Cancel</button><button className="btn" disabled={busy}>{busy?'Sending…':'Send report'}</button></div>
-  </form></div>);
+  const rows = [
+    ['Class', 'drugClass'], ['Uses', 'indications'], ['Adult dose', 'adultDose'],
+    ['Pediatric dose', 'pediatricDose'], ['ADR', 'adverseDrugReactions'], ['C/I', 'contraindications']
+  ];
+
+  return (
+    <div className="max-w-6xl mx-auto px-4 py-6">
+      <div className="flex justify-between mb-4">
+        <h1 className="serif text-2xl font-bold">Compare drugs</h1>
+        <button className="btn2" onClick={() => c.setCmp([])}>Clear</button>
+      </div>
+      <div className="card overflow-x-auto">
+        <table className="w-full text-sm align-top" style={{ minWidth: 640 }}>
+          <thead>
+            <tr>
+              <th className="p-3 w-28"></th>
+              {list.map(d => <th key={d.id} className="p-3 text-left serif text-lg"><button onClick={() => go('drug', d.id)}>{d.genericName}</button></th>)}
+            </tr>
+          </thead>
+          <tbody>
+            {rows.map(([l, k]) => (
+              <tr key={k} className="border-t align-top" style={{ borderColor: 'var(--ln)' }}>
+                <td className="p-3 font-bold mu">{l}</td>
+                {list.map(d => <td key={d.id} className="p-3 whitespace-pre-line">{d[k] || '—'}</td>)}
+              </tr>
+            ))}
+            <tr className="border-t" style={{ borderColor: 'var(--ln)' }}>
+              <td className="p-3 font-bold mu">Lowest price</td>
+              {list.map(d => {
+                const ps = (c.pricesByGeneric[(d.genericName || '').toLowerCase().trim()] || []).map(p => p.priceNPR).filter(Number.isFinite);
+                return <td key={d.id} className="p-3 font-bold" style={{ color: 'var(--am)' }}>{ps.length ? npr(Math.min(...ps)) : '—'}</td>;
+              })}
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  );
 }
-function Reports(c){
- const {data,toast}=c;const [st,setSt]=useState('Open');
- const rows=data.reports.filter(r=>st==='All'||r.status===st).sort((a,b)=>(b.createdAt?.seconds||9e9)-(a.createdAt?.seconds||9e9));
- const setS=(r,v)=>db.collection('reports').doc(r.id).update({status:v}).then(()=>toast(v==='Open'?'Reopened':'Marked resolved')).catch(e=>toast(e.message));
- const del=r=>confirm('Delete this report?')&&db.collection('reports').doc(r.id).delete().catch(e=>toast(e.message));
- const open=r=>r.targetType==='drugs'?go('drug',r.targetId):(r.targetType==='conditions'||r.targetType==='conditionDrugLinks')?go('condition',r.targetId):r.targetType==='prices'?go('prices'):null;
- return(<div className="max-w-3xl mx-auto px-4 py-6 space-y-4"><h1 className="serif text-2xl font-bold">Error reports</h1>
-  <div className="flex gap-2">{['Open','Resolved','All'].map(k=><button key={k} className={'btn2 '+(st===k?'on':'')} onClick={()=>setSt(k)}>{k}</button>)}</div>
-  {rows.length===0?<Empty>No {st==='All'?'':st.toLowerCase()+' '}reports.</Empty>:rows.map(r=><div key={r.id} className="card p-4 space-y-1">
-   <div className="flex justify-between gap-2 flex-wrap"><div className="font-bold">{r.targetName||'General'}</div><div className="flex gap-1"><span className="tag">{r.targetType}</span><span className={'tag '+(r.status==='Open'?'c':'')}>{r.status}</span></div></div>
-   <div className="text-sm font-semibold" style={{color:'var(--am)'}}>{r.category}</div>
-   <p className="whitespace-pre-line">{r.message}</p>
-   <div className="text-xs mu">{r.createdAt?.toDate?r.createdAt.toDate().toLocaleString():'Just now'}{r.contact&&' · '+r.contact}</div>
-   <div className="flex gap-2 pt-1 flex-wrap">{open(r)!==null&&<button className="btn2" onClick={()=>open(r)}>Open record</button>}
-    <button className="btn2" onClick={()=>setS(r,r.status==='Open'?'Resolved':'Open')}>{r.status==='Open'?'Mark resolved':'Reopen'}</button><button className="btn2 dng" onClick={()=>del(r)}>Delete</button></div></div>)}
- </div>);
+
+function References({ vis, isAdmin, setEditor }) {
+  return (
+    <div className="max-w-4xl mx-auto px-4 py-6 space-y-3">
+      <div className="flex justify-between">
+        <h1 className="serif text-2xl font-bold">Sources & References</h1>
+        {isAdmin && <button className="btn" onClick={() => setEditor({ coll: 'references', item: null })}>+ Add reference</button>}
+      </div>
+      {vis.references.length === 0 ? <Empty>No sources added.</Empty> : vis.references.map(r => (
+        <div key={r.id} className="card p-4 flex justify-between gap-3">
+          <div>
+            <div className="font-bold">{r.url ? <a className="underline" href={r.url} target="_blank" rel="noopener">{r.title}</a> : r.title}</div>
+            <div className="text-sm mu">{r.publisher} {r.publicationDate && `(${r.publicationDate})`}</div>
+          </div>
+          {isAdmin && <div className="shrink-0"><button className="btn2" onClick={() => setEditor({ coll: 'references', item: r })}>Edit</button></div>}
+        </div>
+      ))}
+    </div>
+  );
 }
-function More(c){
- const {user,isAdmin,openReports}=c;
- const items=[['favorites','Saved drugs'],['compare','Compare drugs'],['references','Sources'],['settings','Settings and text size'],...(isAdmin?[['admin','Admin: manage records'],['reports','Error reports']]:[]),...(user?[]:[['login','Admin login']])];
- return(<div className="max-w-md mx-auto px-4 py-6 space-y-2"><h1 className="serif text-2xl font-bold mb-2">More</h1>
-  {items.map(([k,l])=><button key={k} className="card p-4 w-full text-left font-semibold flex justify-between" onClick={()=>go(k)}>{l}<span className="mu">›</span></button>)}
-  <button className="card p-4 w-full text-left font-semibold" onClick={()=>c.setReport({targetType:'other',targetId:'',targetName:'General'})}>⚑ Report a problem</button>
-  {user&&<button className="card p-4 w-full text-left font-semibold" onClick={()=>auth.signOut()}>Log out</button>}</div>);
+
+function Settings({ prefs, setPrefs, favs, setFavs, setRecent, toast }) {
+  const set = (k, v) => setPrefs({ ...prefs, [k]: v });
+  const Opt = ({ k, v, l }) => <button className={'btn2 ' + (prefs[k] === v ? 'on' : '')} aria-pressed={prefs[k] === v} onClick={() => set(k, v)}>{l}</button>;
+
+  return (
+    <div className="max-w-2xl mx-auto px-4 py-6 space-y-4">
+      <h1 className="serif text-2xl font-bold">Preferences</h1>
+      <p className="text-sm mu">Stored locally on your device.</p>
+      <div className="card p-5 space-y-5">
+        <div><div className="font-bold mb-2">Theme</div><div className="flex gap-2"><Opt k="theme" v="light" l="Light"/><Opt k="theme" v="dark" l="Dark"/></div></div>
+        <div><div className="font-bold mb-2">Text size</div><div className="flex gap-2"><Opt k="size" v="s" l="Small"/><Opt k="size" v="m" l="Medium"/><Opt k="size" v="l" l="Large"/></div></div>
+        <div><div className="font-bold mb-2">Drug card format</div><div className="flex gap-2"><button className={'btn2 ' + (!prefs.compact ? 'on' : '')} onClick={() => set('compact', false)}>Detailed</button><button className={'btn2 ' + (prefs.compact ? 'on' : '')} onClick={() => set('compact', true)}>Compact</button></div></div>
+        <div>
+          <div className="font-bold mb-2">Drug Sections Displayed</div>
+          <div className="flex flex-wrap gap-2">
+            {DRUG_SECTIONS.map(([k, l]) => (
+              <label key={k} className="btn2 flex items-center gap-2 cursor-pointer">
+                <input type="checkbox" checked={!!prefs.sections[k]} onChange={e => setPrefs({ ...prefs, sections: { ...prefs.sections, [k]: e.target.checked ? 1 : 0 } })}/>
+                {l}
+              </label>
+            ))}
+          </div>
+        </div>
+        <div className="flex gap-2 pt-2 border-t" style={{ borderColor: 'var(--ln)' }}>
+          <button className="btn2" onClick={() => { setRecent([]); toast('Search history cleared'); }}>Clear search history</button>
+          <button className="btn2" onClick={() => { setFavs([]); toast('Saved items cleared'); }}>Clear saved items</button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function Login() {
+  const [e, setE] = useState('');
+  const [p, setP] = useState('');
+  const [er, setEr] = useState('');
+
+  const submit = async ev => {
+    ev.preventDefault();
+    try {
+      await auth.signInWithEmailAndPassword(e, p);
+      go('admin');
+    } catch (x) {
+      setEr(x.message);
+    }
+  };
+
+  return (
+    <form onSubmit={submit} className="max-w-sm mx-auto mt-16 card p-6 space-y-3">
+      <h1 className="serif text-2xl font-bold">Admin Login</h1>
+      {er && <div className="text-sm p-2 rounded" style={{ background: 'var(--rds)', color: 'var(--rd)' }}>{er}</div>}
+      <input className="inp" type="email" placeholder="Email" value={e} onChange={x => setE(x.target.value)} required autoComplete="username"/>
+      <input className="inp" type="password" placeholder="Password" value={p} onChange={x => setP(x.target.value)} required autoComplete="current-password"/>
+      <button className="btn w-full" type="submit">Log in</button>
+    </form>
+  );
+}
+
+/* ============ SCHEMA EDITOR ============ */
+function Editor({ editor, setEditor, toast, data }) {
+  const sc = SCHEMAS[editor.coll];
+  const it = editor.item;
+  const [v, setV] = useState(() => {
+    const o = {};
+    sc.fields.forEach(f => {
+      const x = it ? it[f.k] : (editor.preset?.[f.k]);
+      o[f.k] = f.t === 'list' ? (x || []).join(', ') : f.t === 'bool' ? (x !== false) : (x ?? (f.t === 'sel' ? f.o[0] : ''));
+    });
+    return o;
+  });
+
+  const [busy, setBusy] = useState(false);
+  const [er, setEr] = useState('');
+
+  const save = async ev => {
+    ev.preventDefault();
+    setBusy(true);
+    setEr('');
+    try {
+      const out = {};
+      sc.fields.forEach(f => {
+        let x = v[f.k];
+        if (f.t === 'list') x = String(x).split(',').map(s => s.trim()).filter(Boolean);
+        if (f.t === 'num') x = x === '' ? null : Number(x);
+        out[f.k] = x;
+      });
+      out.updatedAt = firebase.firestore.FieldValue.serverTimestamp();
+      if (editor.coll === 'conditionDrugLinks') {
+        out.conditionName = (data.conditions.find(c => c.id === out.conditionId) || {}).name || '';
+      }
+      const id = it ? it.id : mkId(editor.coll, v);
+      await db.collection(editor.coll).doc(id).set(out, { merge: true });
+      toast(it ? 'Record updated' : 'Record created');
+      setEditor(null);
+    } catch (x) {
+      setEr(x.message);
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  return (
+    <div className="modal fixed inset-0 z-50 flex items-start justify-center overflow-y-auto p-4" style={{ background: 'rgba(0,0,0,.5)' }} onMouseDown={e => e.target === e.currentTarget && setEditor(null)}>
+      <form onSubmit={save} className="card w-full max-w-2xl p-5 my-6 space-y-3" role="dialog" aria-modal="true">
+        <h2 className="serif text-xl font-bold">{it ? 'Edit' : 'Add'} {sc.one}</h2>
+        {er && <div className="text-sm p-2 rounded" style={{ background: 'var(--rds)', color: 'var(--rd)' }}>{er}</div>}
+        {sc.fields.map(f => (
+          <label key={f.k} className="block text-sm font-semibold">
+            {f.l}{f.req && ' *'}
+            {f.t === 'area' ? (
+              <textarea className="inp mt-1 font-normal" rows={3} value={v[f.k]} onChange={e => setV({ ...v, [f.k]: e.target.value })}/>
+            ) : f.t === 'bool' ? (
+              <span className="flex items-center gap-2 mt-1 font-normal">
+                <input type="checkbox" checked={!!v[f.k]} onChange={e => setV({ ...v, [f.k]: e.target.checked })}/>
+                {v[f.k] ? 'Published (Publicly Visible)' : 'Draft (Admin Only)'}
+              </span>
+            ) : f.t === 'cond' ? (
+              <select className="inp mt-1 font-normal" required value={v[f.k]} onChange={e => setV({ ...v, [f.k]: e.target.value })}>
+                <option value="">Select a disease…</option>
+                {[...data.conditions].sort((a, b) => (a.name || '').localeCompare(b.name || '')).map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
+              </select>
+            ) : f.t === 'drug' ? (
+              <>
+                <input className="inp mt-1 font-normal" list="dl-drugs" required value={v[f.k]} onChange={e => setV({ ...v, [f.k]: e.target.value })}/>
+                <datalist id="dl-drugs">{data.drugs.map(d => <option key={d.id} value={d.genericName}/>)}</datalist>
+              </>
+            ) : f.t === 'sel' ? (
+              <select className="inp mt-1 font-normal" value={v[f.k]} onChange={e => setV({ ...v, [f.k]: e.target.value })}>
+                {f.o.map(o => <option key={o}>{o}</option>)}
+              </select>
+            ) : (
+              <input className="inp mt-1 font-normal" type={f.t === 'num' ? 'number' : 'text'} step="any" required={!!f.req} value={v[f.k]} onChange={e => setV({ ...v, [f.k]: e.target.value })}/>
+            )}
+          </label>
+        ))}
+        <div className="flex justify-end gap-2 pt-2">
+          <button type="button" className="btn2" onClick={() => setEditor(null)}>Cancel</button>
+          <button className="btn" disabled={busy}>{busy ? 'Saving…' : 'Save changes'}</button>
+        </div>
+      </form>
+    </div>
+  );
+}
+
+/* ============ ADMIN CONTROL PANEL ============ */
+function Admin(c) {
+  const { data, setEditor, toast } = c;
+  const [coll, setColl] = useState('drugs');
+  const [f, setF] = useState('');
+  const [json, setJson] = useState('');
+  const [sel, setSel] = useState([]);
+
+  const sc = SCHEMAS[coll];
+  const toks = f.toLowerCase().split(/\s+/).filter(Boolean);
+  const rows = data[coll].filter(x => toks.every(t => flat(x).includes(t))).sort((a, b) => String(a[sc.title] || '').localeCompare(String(b[sc.title] || '')));
+
+  const togglePub = async x => {
+    try {
+      await db.collection(coll).doc(x.id).update({ published: x.published === false });
+    } catch (e) {
+      toast(e.message);
+    }
+  };
+
+  const delMany = async () => {
+    if (!sel.length || !confirm(`Delete ${sel.length} selected items?`)) return;
+    try {
+      const b = db.batch();
+      sel.forEach(id => b.delete(db.collection(coll).doc(id)));
+      await b.commit();
+      setSel([]);
+      toast(`Successfully deleted ${sel.length} records`);
+    } catch (e) {
+      toast(e.message);
+    }
+  };
+
+  const summ = (() => {
+    if (!json.trim()) return null;
+    try {
+      let d = JSON.parse(json);
+      if (Array.isArray(d)) d = { [coll]: d };
+      const p = Object.keys(SCHEMAS).filter(k => Array.isArray(d[k])).map(k => d[k].length + ' ' + SCHEMAS[k].label.toLowerCase());
+      return p.length ? { ok: 1, t: 'Validated import payload: ' + p.join(', ') + '.' } : { t: 'No recognized datasets found.' };
+    } catch (e) {
+      return { t: 'Invalid JSON format: ' + e.message };
+    }
+  })();
+
+  const sample = () => download('doc-nepal-sample.json', {
+    drugs: [{ genericName: 'Paracetamol', brandNames: ['Crocin', 'Dolo'], drugClass: 'Analgesic / antipyretic', indications: 'Mild to moderate pain; fever.', adultDose: '500 to 1000 mg every 4 to 6 hours. Max 4 g/day.', pediatricDose: '10 to 15 mg/kg every 4 to 6 hours.', adverseDrugReactions: 'Rash; hepatotoxicity in overdose.', contraindications: 'Severe hepatic impairment; hypersensitivity.', mechanismOfAction: 'Central COX inhibition.', published: true }],
+    prices: [{ brandName: 'Dolo 500', genericName: 'Paracetamol', strength: '500 mg tablet', packSize: '10 tablets', manufacturer: 'Example Pharma', priceNPR: 25, verificationStatus: 'Verified' }],
+    conditions: [{ name: 'Fever', category: 'General', overview: 'Raised body temperature.', symptoms: 'Warmth, sweating, chills.', published: true }],
+    conditionDrugLinks: [{ conditionId: 'fever', conditionName: 'Fever', drugName: 'Paracetamol', line: 'First-line', regimen: '500 to 1000 mg orally every 6 hours', duration: '3 days', notes: 'Max 4 g/day.', published: true }],
+    references: []
+  });
+
+  const bulk = async () => {
+    try {
+      let d = JSON.parse(json);
+      if (Array.isArray(d)) d = { [coll]: d };
+      let n = 0, skipped = 0;
+      let b = db.batch();
+
+      for (const c2 of Object.keys(SCHEMAS)) {
+        if (!Array.isArray(d[c2])) continue;
+        for (const r of d[c2]) {
+          const t = SCHEMAS[c2].title;
+          const id = r.id || mkId(c2, r);
+          const { id: _, ...rest } = r;
+          if (!r.id && !r[t]) { skipped++; continue; }
+          if (typeof rest.brandNames === 'string') rest.brandNames = rest.brandNames.split(',').map(s => s.trim()).filter(Boolean);
+          if (typeof rest.priceNPR === 'string') rest.priceNPR = Number(rest.priceNPR);
+          if (c2 === 'drugs') { rest.published = rest.published ?? true; rest.drugClass = rest.drugClass ?? ''; }
+          if (c2 === 'conditions' || c2 === 'conditionDrugLinks') rest.published = rest.published ?? true;
+          if (c2 === 'prices') rest.verificationStatus = rest.verificationStatus || 'Verified';
+
+          b.set(db.collection(c2).doc(id), { ...rest, updatedAt: firebase.firestore.FieldValue.serverTimestamp() }, { merge: true });
+          n++;
+          if (n % 400 === 0) { await b.commit(); b = db.batch(); }
+        }
+      }
+      await b.commit();
+      toast(`Imported ${n} records` + (skipped ? ` (${skipped} skipped)` : ''));
+      setJson('');
+    } catch (e) {
+      toast('Import execution failed: ' + e.message);
+    }
+  };
+
+  return (
+    <div className="max-w-6xl mx-auto px-4 py-6 space-y-5">
+      <div className="flex flex-wrap justify-between gap-2">
+        <h1 className="serif text-2xl font-bold">Admin Dashboard</h1>
+        <button className="btn2" onClick={() => download(`doc-nepal-backup-${new Date().toISOString().slice(0, 10)}.json`, Object.fromEntries(Object.keys(SCHEMAS).map(k => [k, data[k].map(({ updatedAt, ...r }) => r)])))}>
+          Download Full Backup (JSON)
+        </button>
+      </div>
+      <div className="flex flex-wrap gap-2">
+        {Object.entries(SCHEMAS).map(([k, s]) => (
+          <button key={k} className={'btn2 ' + (coll === k ? 'on' : '')} onClick={() => { setColl(k); setSel([]); setF(''); }}>
+            {s.label} <span className="mu">{data[k].length}</span>
+          </button>
+        ))}
+      </div>
+      <div className="flex flex-wrap gap-2">
+        <input className="inp flex-1" style={{ minWidth: 200 }} placeholder={`Search ${sc.label.toLowerCase()}…`} value={f} onChange={e => setF(e.target.value)}/>
+        <button className="btn" onClick={() => setEditor({ coll, item: null })}>+ Add {sc.one}</button>
+        {sel.length > 0 && <button className="btn2 dng" onClick={delMany}>Delete {sel.length} selected</button>}
+      </div>
+      {rows.length === 0 ? <Empty>No records found in this dataset.</Empty> : (
+        <div className="card overflow-x-auto">
+          <table className="w-full text-sm">
+            <tbody>
+              {rows.map(x => (
+                <tr key={x.id} className="border-t first:border-t-0" style={{ borderColor: 'var(--ln)' }}>
+                  <td className="p-3 w-8">
+                    <input type="checkbox" aria-label="Select row" checked={sel.includes(x.id)} onChange={e => setSel(e.target.checked ? [...sel, x.id] : sel.filter(i => i !== x.id))}/>
+                  </td>
+                  <td className="p-3">
+                    <div className="font-bold">{x[sc.title] || x.id}</div>
+                    <div className="mu line-clamp-1">{coll === 'prices' ? [x.genericName, x.strength, npr(x.priceNPR)].filter(Boolean).join(' · ') : x[sc.sub]}</div>
+                  </td>
+                  <td className="p-3 text-right whitespace-nowrap">
+                    {'published' in (sc.fields.find(f => f.k === 'published') ? { published: 1 } : {}) && (
+                      <button className={'tag mr-2 ' + (x.published === false ? 'p' : '')} onClick={() => togglePub(x)} title="Click to toggle publication status">
+                        {x.published === false ? 'Draft' : 'Published'}
+                      </button>
+                    )}
+                    {coll === 'prices' && x.verificationStatus && <span className="tag mr-2">{x.verificationStatus}</span>}
+                    <button className="btn2" onClick={() => setEditor({ coll, item: x })}>Edit</button>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )}
+      <details className="card">
+        <summary className="px-5 py-3 font-bold">Bulk JSON Import / Patch</summary>
+        <div className="px-5 pb-5 space-y-2">
+          <p className="text-sm mu">Upload a valid .json dataset file or paste raw JSON below. Existing IDs or matching record names will be patched without data loss.</p>
+          <div className="flex flex-wrap gap-2 items-center">
+            <label className="btn cursor-pointer">
+              Choose JSON file
+              <input type="file" accept=".json,application/json" className="sr-only" onChange={async e => {
+                const fl = e.target.files[0];
+                if (fl) { setJson(await fl.text()); toast(`Loaded file ${fl.name}`); }
+                e.target.value = '';
+              }}/>
+            </label>
+            <button type="button" className="btn2" onClick={sample}>Download Sample JSON Schema</button>
+          </div>
+          <textarea className="inp font-mono text-xs" rows={8} value={json} onChange={e => setJson(e.target.value)} placeholder="Paste payload JSON structure here..."/>
+          {summ && <div className="text-sm p-2 rounded" style={summ.ok ? { background: 'var(--soft)', color: 'var(--brd)' } : { background: 'var(--rds)', color: 'var(--rd)' }}>{summ.t}</div>}
+          <button className="btn" onClick={bulk} disabled={!summ?.ok}>Execute Import</button>
+        </div>
+      </details>
+    </div>
+  );
+}
+
+/* ============ ICONS & REPORT SYSTEM ============ */
+const IC = {
+  home: 'M3 11l9-8 9 8M5 10v10h5v-6h4v6h5V10',
+  dis: 'M3 12h4l2-6 4 12 2-6h6',
+  search: 'M11 4a7 7 0 100 14 7 7 0 000-14zM21 21l-5-5',
+  tag: 'M20 12l-8 8-9-9V3h8l9 9zM7.5 7.5h.01',
+  more: 'M5 12h.01M12 12h.01M19 12h.01'
+};
+
+const Ic = ({ n }) => (
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <path d={IC[n]}/>
+  </svg>
+);
+
+function RepBtn({ c, t, id, n, big }) {
+  return (
+    <button className="btn2" style={big ? {} : { padding: '.15rem .5rem', fontSize: '.75rem' }} title="Report inaccurate information" onClick={e => {
+      e.stopPropagation();
+      c.setReport({ targetType: t, targetId: id, targetName: n });
+    }}>
+      ⚑ Report issue
+    </button>
+  );
+}
+
+const CATS = ['Wrong dose', 'Wrong price', 'Side effect or C/I missing/incorrect', 'Wrong drug for this disease', 'Typographical error'];
+
+function Report({ report, setReport, toast }) {
+  const [cat, setCat] = useState(CATS[0]);
+  const [msg, setMsg] = useState('');
+  const [ct, setCt] = useState('');
+  const [busy, setBusy] = useState(false);
+  const [er, setEr] = useState('');
+
+  const send = async ev => {
+    ev.preventDefault();
+    if (msg.trim().length < 5) {
+      setEr('Please enter a descriptive message (at least 5 characters).');
+      return;
+    }
+    setBusy(true);
+    try {
+      const p = db.collection('reports').add({
+        targetType: report.targetType,
+        targetId: report.targetId || '',
+        targetName: report.targetName || '',
+        category: cat,
+        message: msg.trim().slice(0, 1000),
+        contact: ct.trim().slice(0, 120),
+        status: 'Open',
+        createdAt: firebase.firestore.FieldValue.serverTimestamp()
+      });
+      if (navigator.onLine) await p; else p.catch(() => {});
+      toast(navigator.onLine ? 'Report submitted to administrators.' : 'Report queued locally. Will transmit upon reconnection.');
+      setReport(null);
+    } catch (x) {
+      setEr(x.message);
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  return (
+    <div className="modal fixed inset-0 z-50 flex items-end sm:items-center justify-center sm:p-4" style={{ background: 'rgba(0,0,0,.5)' }} onMouseDown={e => e.target === e.currentTarget && setReport(null)}>
+      <form onSubmit={send} className="card w-full max-w-md p-5 space-y-3" role="dialog" aria-modal="true">
+        <h2 className="serif text-xl font-bold">Report an error</h2>
+        <p className="text-sm mu">Target item: <b>{report.targetName || 'General'}</b></p>
+        {er && <div className="text-sm p-2 rounded" style={{ background: 'var(--rds)', color: 'var(--rd)' }}>{er}</div>}
+        <label className="block text-sm font-semibold">Category
+          <select className="inp mt-1 font-normal" value={cat} onChange={e => setCat(e.target.value)}>
+            {CATS.map(x => <option key={x}>{x}</option>)}
+          </select>
+        </label>
+        <label className="block text-sm font-semibold">Correction details
+          <textarea className="inp mt-1 font-normal" rows={4} maxLength={1000} placeholder="Describe what needs correction..." value={msg} onChange={e => setMsg(e.target.value)}/>
+        </label>
+        <label className="block text-sm font-semibold">Contact (Phone or email - optional)
+          <input className="inp mt-1 font-normal" maxLength={120} value={ct} onChange={e => setCt(e.target.value)}/>
+        </label>
+        <div className="flex justify-end gap-2">
+          <button type="button" className="btn2" onClick={() => setReport(null)}>Cancel</button>
+          <button className="btn" disabled={busy}>{busy ? 'Submitting…' : 'Submit report'}</button>
+        </div>
+      </form>
+    </div>
+  );
+}
+
+function Reports(c) {
+  const { data, toast } = c;
+  const [st, setSt] = useState('Open');
+  const rows = (data.reports || []).filter(r => st === 'All' || r.status === st).sort((a, b) => (b.createdAt?.seconds || 9e9) - (a.createdAt?.seconds || 9e9));
+
+  const setS = (r, v) => db.collection('reports').doc(r.id).update({ status: v })
+    .then(() => toast(v === 'Open' ? 'Report reopened' : 'Marked resolved'))
+    .catch(e => toast(e.message));
+
+  const del = r => confirm('Permanently remove this report log?') && db.collection('reports').doc(r.id).delete().catch(e => toast(e.message));
+
+  const open = r => r.targetType === 'drugs' ? go('drug', r.targetId) : (r.targetType === 'conditions' || r.targetType === 'conditionDrugLinks') ? go('condition', r.targetId) : r.targetType === 'prices' ? go('prices') : null;
+
+  return (
+    <div className="max-w-3xl mx-auto px-4 py-6 space-y-4">
+      <h1 className="serif text-2xl font-bold">Submitted Error Reports</h1>
+      <div className="flex gap-2">
+        {['Open', 'Resolved', 'All'].map(k => <button key={k} className={'btn2 ' + (st === k ? 'on' : '')} onClick={() => setSt(k)}>{k}</button>)}
+      </div>
+      {rows.length === 0 ? <Empty>No {st === 'All' ? '' : st.toLowerCase()} report tickets.</Empty> : rows.map(r => (
+        <div key={r.id} className="card p-4 space-y-1">
+          <div className="flex justify-between gap-2 flex-wrap">
+            <div className="font-bold">{r.targetName || 'General Ticket'}</div>
+            <div className="flex gap-1">
+              <span className="tag">{r.targetType}</span>
+              <span className={'tag ' + (r.status === 'Open' ? 'c' : '')}>{r.status}</span>
+            </div>
+          </div>
+          <div className="text-sm font-semibold" style={{ color: 'var(--am)' }}>{r.category}</div>
+          <p className="whitespace-pre-line">{r.message}</p>
+          <div className="text-xs mu">
+            {r.createdAt?.toDate ? r.createdAt.toDate().toLocaleString() : 'Just now'} {r.contact && ` · Contact: ${r.contact}`}
+          </div>
+          <div className="flex gap-2 pt-1 flex-wrap">
+            {open(r) !== null && <button className="btn2" onClick={() => open(r)}>Open target record</button>}
+            <button className="btn2" onClick={() => setS(r, r.status === 'Open' ? 'Resolved' : 'Open')}>{r.status === 'Open' ? 'Mark resolved' : 'Reopen'}</button>
+            <button className="btn2 dng" onClick={() => del(r)}>Delete</button>
+          </div>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+function More(c) {
+  const { user, isAdmin, openReports } = c;
+  const items = [
+    ['favorites', 'Saved drugs'],
+    ['compare', 'Compare drugs'],
+    ['references', 'Sources & References'],
+    ['settings', 'Settings and Display'],
+    ...(isAdmin ? [['admin', 'Admin: Manage Records'], ['reports', 'Error Reports']] : []),
+    ...(user ? [] : [['login', 'Admin login']])
+  ];
+
+  return (
+    <div className="max-w-md mx-auto px-4 py-6 space-y-2">
+      <h1 className="serif text-2xl font-bold mb-2">More Options</h1>
+      {items.map(([k, l]) => (
+        <button key={k} className="card p-4 w-full text-left font-semibold flex justify-between" onClick={() => go(k)}>
+          {l}
+          {k === 'reports' && openReports > 0 ? <span className="tag c">{openReports}</span> : <span className="mu">›</span>}
+        </button>
+      ))}
+      <button className="card p-4 w-full text-left font-semibold" onClick={() => c.setReport({ targetType: 'other', targetId: '', targetName: 'General Feedback' })}>
+        ⚑ Report an issue
+      </button>
+      {user && <button className="card p-4 w-full text-left font-semibold" onClick={() => auth.signOut()}>Log out</button>}
+    </div>
+  );
 }
 
 ReactDOM.createRoot(document.getElementById('root')).render(<App/>);
