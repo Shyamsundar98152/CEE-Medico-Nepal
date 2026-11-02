@@ -1,0 +1,669 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Advanced Medical MCQ Quiz & Analytics Platform</title>
+  <!-- Tailwind CSS -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- FontAwesome Icons -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <!-- Chart.js for Advanced Analytics -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <!-- Canvas Confetti -->
+  <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+  
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+    body { font-family: 'Inter', sans-serif; }
+    .custom-scrollbar::-webkit-scrollbar { width: 6px; }
+    .custom-scrollbar::-webkit-scrollbar-track { background: #f1f5f9; }
+    .custom-scrollbar::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
+  </style>
+</head>
+<body class="bg-slate-50 text-slate-800 min-h-screen flex flex-col">
+
+  <!-- Header / Navigation -->
+  <header class="bg-slate-900 text-white shadow-lg sticky top-0 z-50">
+    <div class="max-w-7xl mx-auto px-4 py-3 flex justify-between items-center">
+      <div class="flex items-center gap-3">
+        <div class="bg-indigo-600 p-2 rounded-lg">
+          <i class="fa-solid fa-square-plus text-2xl text-white"></i>
+        </div>
+        <div>
+          <h1 class="text-xl font-bold tracking-wide">MedPrep Portal</h1>
+          <p class="text-xs text-slate-400">Advanced Quiz & Performance Analytics</p>
+        </div>
+      </div>
+      <div class="flex items-center gap-4">
+        <span id="live-db-badge" class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
+          <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
+          Firebase Active
+        </span>
+        <button id="btn-admin-toggle" class="px-3 py-1.5 bg-slate-800 hover:bg-slate-700 text-xs font-medium rounded-lg border border-slate-700 transition">
+          <i class="fa-solid fa-gear mr-1"></i> Admin / Add Questions
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <!-- Main Container -->
+  <main class="flex-1 max-w-7xl w-full mx-auto p-4 md:p-6 grid grid-cols-1 gap-6">
+
+    <!-- Screen 1: Dashboard / Quiz Selection -->
+    <section id="screen-dashboard" class="space-y-6">
+      <div class="bg-gradient-to-r from-indigo-700 to-purple-700 rounded-2xl p-6 text-white shadow-xl relative overflow-hidden">
+        <div class="relative z-10 max-w-2xl">
+          <h2 class="text-2xl md:text-3xl font-extrabold mb-2">Master Your Medical Exams</h2>
+          <p class="text-indigo-100 text-sm md:text-base mb-4">Select a target question bank synced live from your Firebase Realtime Database. Practice with real-time feedback, detailed explanations, and performance metrics.</p>
+        </div>
+        <i class="fa-solid fa-stethoscope absolute -right-6 -bottom-6 text-9xl opacity-10 text-white"></i>
+      </div>
+
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <!-- Card 1: NMCLE Sets -->
+        <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-6 flex flex-col justify-between hover:shadow-md transition border-t-4 border-t-indigo-600">
+          <div>
+            <div class="flex items-center justify-between mb-3">
+              <span class="text-xs font-bold uppercase tracking-wider text-indigo-600 bg-indigo-50 px-2.5 py-1 rounded-md">Database Collection</span>
+              <i class="fa-solid fa-book-medical text-2xl text-indigo-600"></i>
+            </div>
+            <h3 class="text-xl font-bold text-slate-900">NMCLE Question Sets</h3>
+            <p class="text-slate-500 text-sm mt-2">Access comprehensive practice sets tailored for the NMCLE examination.</p>
+            <div class="mt-4 flex items-center gap-4 text-xs font-medium text-slate-500">
+              <span><i class="fa-solid fa-layer-group mr-1 text-indigo-500"></i> Key: <code class="bg-slate-100 px-1 py-0.5 rounded">mcq_sets</code></span>
+              <span id="nmcle-count"><i class="fa-solid fa-spinner animate-spin"></i> Loading...</span>
+            </div>
+          </div>
+          <button onclick="appManager.startQuiz('mcq_sets')" class="mt-6 w-full py-3 bg-indigo-600 hover:bg-indigo-700 text-white font-semibold rounded-lg shadow-md transition flex items-center justify-center gap-2">
+            <i class="fa-solid fa-play text-xs"></i> Start Practice Session
+          </button>
+        </div>
+
+        <!-- Card 2: NEET PG Sets -->
+        <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-6 flex flex-col justify-between hover:shadow-md transition border-t-4 border-t-purple-600">
+          <div>
+            <div class="flex items-center justify-between mb-3">
+              <span class="text-xs font-bold uppercase tracking-wider text-purple-600 bg-purple-50 px-2.5 py-1 rounded-md">Database Collection</span>
+              <i class="fa-solid fa-user-doctor text-2xl text-purple-600"></i>
+            </div>
+            <h3 class="text-xl font-bold text-slate-900">NEET-PG MCQ Sets</h3>
+            <p class="text-slate-500 text-sm mt-2">High-yield postgraduate medical entrance examination question sets.</p>
+            <div class="mt-4 flex items-center gap-4 text-xs font-medium text-slate-500">
+              <span><i class="fa-solid fa-layer-group mr-1 text-purple-500"></i> Key: <code class="bg-slate-100 px-1 py-0.5 rounded">neetpg_mcq_sets</code></span>
+              <span id="neetpg-count"><i class="fa-solid fa-spinner animate-spin"></i> Loading...</span>
+            </div>
+          </div>
+          <button onclick="appManager.startQuiz('neetpg_mcq_sets')" class="mt-6 w-full py-3 bg-purple-600 hover:bg-purple-700 text-white font-semibold rounded-lg shadow-md transition flex items-center justify-center gap-2">
+            <i class="fa-solid fa-play text-xs"></i> Start Practice Session
+          </button>
+        </div>
+      </div>
+    </section>
+
+    <!-- Screen 2: Active Quiz Interface -->
+    <section id="screen-quiz" class="hidden space-y-6">
+      <!-- Quiz Header Controls -->
+      <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-4 flex flex-wrap items-center justify-between gap-4">
+        <div>
+          <span id="quiz-set-title" class="text-xs font-bold uppercase tracking-wider text-indigo-600 bg-indigo-50 px-2.5 py-1 rounded-md">Category</span>
+          <h2 class="text-lg font-bold text-slate-800 mt-1">Question <span id="current-q-index">1</span> of <span id="total-q-count">0</span></h2>
+        </div>
+        
+        <!-- Timer Display -->
+        <div class="flex items-center gap-2 bg-slate-900 text-white px-4 py-2 rounded-lg font-mono text-sm shadow">
+          <i class="fa-regular fa-clock text-amber-400"></i>
+          <span id="timer-display">00:00</span>
+        </div>
+
+        <button onclick="appManager.confirmExitQuiz()" class="px-3 py-1.5 text-xs font-semibold text-rose-600 hover:bg-rose-50 rounded-lg border border-rose-200 transition">
+          <i class="fa-solid fa-right-from-bracket mr-1"></i> Quit Quiz
+        </button>
+      </div>
+
+      <!-- Progress Bar -->
+      <div class="w-full bg-slate-200 rounded-full h-2.5 overflow-hidden">
+        <div id="quiz-progress-bar" class="bg-indigo-600 h-2.5 rounded-full transition-all duration-300" style="width: 0%"></div>
+      </div>
+
+      <!-- Question Box -->
+      <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-6 md:p-8">
+        <div id="question-text" class="text-slate-800 font-semibold text-lg md:text-xl mb-6 leading-relaxed">
+          Loading Question...
+        </div>
+
+        <!-- Options Container -->
+        <div id="options-container" class="space-y-3">
+          <!-- Options rendered dynamically -->
+        </div>
+
+        <!-- Explanation Block (Shown after selecting an option) -->
+        <div id="explanation-box" class="hidden mt-6 p-4 rounded-xl border bg-slate-50 transition-all">
+          <div class="flex items-center gap-2 font-bold mb-1" id="explanation-title">
+            <i class="fa-solid fa-circle-info"></i> Explanation
+          </div>
+          <p id="explanation-text" class="text-sm text-slate-600 leading-relaxed"></p>
+        </div>
+      </div>
+
+      <!-- Navigation & Action Buttons -->
+      <div class="flex justify-between items-center bg-white rounded-xl shadow-sm border border-slate-200 p-4">
+        <button id="btn-prev" onclick="appManager.prevQuestion()" class="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 font-medium rounded-lg text-sm transition disabled:opacity-50">
+          <i class="fa-solid fa-arrow-left mr-1"></i> Previous
+        </button>
+
+        <button id="btn-next" onclick="appManager.nextQuestion()" class="px-5 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white font-semibold rounded-lg text-sm shadow transition flex items-center gap-2">
+          Next <i class="fa-solid fa-arrow-right"></i>
+        </button>
+      </div>
+    </section>
+
+    <!-- Screen 3: Performance Analysis & Error Breakdown -->
+    <section id="screen-analysis" class="hidden space-y-6">
+      <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-6 text-center">
+        <div id="score-badge" class="w-20 h-20 mx-auto bg-indigo-100 text-indigo-600 rounded-full flex items-center justify-center text-3xl font-bold mb-4 shadow-inner">
+          0%
+        </div>
+        <h2 class="text-2xl font-bold text-slate-900">Quiz Completed!</h2>
+        <p class="text-slate-500 text-sm mt-1">Here is a complete analytical breakdown of your test performance.</p>
+
+        <!-- Stat Badges -->
+        <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mt-6">
+          <div class="p-3 bg-slate-50 rounded-lg border border-slate-100">
+            <p class="text-xs text-slate-500 font-medium">Total Questions</p>
+            <p id="stat-total" class="text-xl font-bold text-slate-800">0</p>
+          </div>
+          <div class="p-3 bg-emerald-50 rounded-lg border border-emerald-100">
+            <p class="text-xs text-emerald-600 font-medium">Correct Answers</p>
+            <p id="stat-correct" class="text-xl font-bold text-emerald-600">0</p>
+          </div>
+          <div class="p-3 bg-rose-50 rounded-lg border border-rose-100">
+            <p class="text-xs text-rose-600 font-medium">Wrong Answers</p>
+            <p id="stat-wrong" class="text-xl font-bold text-rose-600">0</p>
+          </div>
+          <div class="p-3 bg-amber-50 rounded-lg border border-amber-100">
+            <p class="text-xs text-amber-600 font-medium">Time Taken</p>
+            <p id="stat-time" class="text-xl font-bold text-amber-600">0s</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Visual Chart Analytics -->
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-6 flex flex-col items-center">
+          <h3 class="text-sm font-bold text-slate-700 mb-4 uppercase tracking-wider">Accuracy Distribution</h3>
+          <div class="w-64 h-64">
+            <canvas id="accuracyChart"></canvas>
+          </div>
+        </div>
+        <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-6 flex flex-col justify-between">
+          <div>
+            <h3 class="text-sm font-bold text-slate-700 mb-2 uppercase tracking-wider">Diagnostic Insights</h3>
+            <div id="diagnostic-text" class="text-sm text-slate-600 space-y-2 mt-4">
+              <!-- Rendered via JS -->
+            </div>
+          </div>
+          <button onclick="appManager.showDashboard()" class="mt-6 w-full py-2.5 bg-slate-900 hover:bg-slate-800 text-white font-medium rounded-lg transition text-sm">
+            <i class="fa-solid fa-house mr-1"></i> Return to Dashboard
+          </button>
+        </div>
+      </div>
+
+      <!-- Comprehensive Error & Review Log -->
+      <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-6">
+        <div class="flex justify-between items-center mb-6">
+          <h3 class="text-lg font-bold text-slate-900">Detailed Question Review & Error Analysis</h3>
+          <div class="flex gap-2 text-xs">
+            <button onclick="appManager.filterReview('all')" class="px-3 py-1 rounded bg-slate-100 text-slate-700 hover:bg-slate-200 font-medium">All</button>
+            <button onclick="appManager.filterReview('incorrect')" class="px-3 py-1 rounded bg-rose-100 text-rose-700 hover:bg-rose-200 font-medium">Incorrect Only</button>
+          </div>
+        </div>
+
+        <div id="review-list" class="space-y-4">
+          <!-- Dynamic Review Items -->
+        </div>
+      </div>
+    </section>
+
+    <!-- Admin / Add Question Modal -->
+    <div id="modal-admin" class="hidden fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+      <div class="bg-white rounded-2xl shadow-2xl max-w-xl w-full p-6 max-h-[90vh] overflow-y-auto custom-scrollbar">
+        <div class="flex justify-between items-center border-b pb-3 mb-4">
+          <h3 class="text-lg font-bold text-slate-900">Add New MCQ to Firebase</h3>
+          <button onclick="appManager.toggleAdminModal(false)" class="text-slate-400 hover:text-slate-600">
+            <i class="fa-solid fa-xmark text-xl"></i>
+          </button>
+        </div>
+
+        <form id="form-add-question" class="space-y-4">
+          <div>
+            <label class="block text-xs font-bold text-slate-700 uppercase mb-1">Target Collection</label>
+            <select id="admin-collection" class="w-full bg-slate-50 border border-slate-300 rounded-lg p-2.5 text-sm">
+              <option value="mcq_sets">NMCLE Sets (mcq_sets)</option>
+              <option value="neetpg_mcq_sets">NEET-PG Sets (neetpg_mcq_sets)</option>
+            </select>
+          </div>
+
+          <div>
+            <label class="block text-xs font-bold text-slate-700 uppercase mb-1">Question Statement</label>
+            <textarea id="admin-question" rows="3" required class="w-full bg-slate-50 border border-slate-300 rounded-lg p-2.5 text-sm" placeholder="Type question here..."></textarea>
+          </div>
+
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+            <div>
+              <label class="block text-xs font-medium text-slate-600 mb-1">Option A</label>
+              <input type="text" id="admin-opt-0" required class="w-full bg-slate-50 border border-slate-300 rounded-lg p-2 text-sm">
+            </div>
+            <div>
+              <label class="block text-xs font-medium text-slate-600 mb-1">Option B</label>
+              <input type="text" id="admin-opt-1" required class="w-full bg-slate-50 border border-slate-300 rounded-lg p-2 text-sm">
+            </div>
+            <div>
+              <label class="block text-xs font-medium text-slate-600 mb-1">Option C</label>
+              <input type="text" id="admin-opt-2" required class="w-full bg-slate-50 border border-slate-300 rounded-lg p-2 text-sm">
+            </div>
+            <div>
+              <label class="block text-xs font-medium text-slate-600 mb-1">Option D</label>
+              <input type="text" id="admin-opt-3" required class="w-full bg-slate-50 border border-slate-300 rounded-lg p-2 text-sm">
+            </div>
+          </div>
+
+          <div>
+            <label class="block text-xs font-bold text-slate-700 uppercase mb-1">Correct Option Index</label>
+            <select id="admin-correct-idx" class="w-full bg-slate-50 border border-slate-300 rounded-lg p-2.5 text-sm">
+              <option value="0">Option A (Index 0)</option>
+              <option value="1">Option B (Index 1)</option>
+              <option value="2">Option C (Index 2)</option>
+              <option value="3">Option D (Index 3)</option>
+            </select>
+          </div>
+
+          <div>
+            <label class="block text-xs font-bold text-slate-700 uppercase mb-1">Detailed Explanation</label>
+            <textarea id="admin-explanation" rows="2" class="w-full bg-slate-50 border border-slate-300 rounded-lg p-2.5 text-sm" placeholder="Provide clinical reasoning or reference..."></textarea>
+          </div>
+
+          <div class="flex justify-end gap-3 pt-3 border-t">
+            <button type="button" onclick="appManager.toggleAdminModal(false)" class="px-4 py-2 text-slate-600 text-sm font-medium">Cancel</button>
+            <button type="submit" class="px-5 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg text-sm font-semibold shadow">Save Question</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </main>
+
+  <!-- Firebase Modular SDK Script Integration -->
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+    import { getDatabase, ref, onValue, push } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
+
+    // Provided Firebase Web Configuration
+    const firebaseConfig = {
+      apiKey: "AIzaSyD7oo7cXU3KxNimQ8BK8T8GtKeQOSpU_Sc",
+      authDomain: "nmcle-94a3d.firebaseapp.com",
+      databaseURL: "https://nmcle-94a3d-default-rtdb.asia-southeast1.firebasedatabase.app",
+      projectId: "nmcle-94a3d",
+      storageBucket: "nmcle-94a3d.firebasestorage.app",
+      messagingSenderId: "1024414109225",
+      appId: "1:1024414109225:web:7505bbb4a3a9551303d638"
+    };
+
+    // Initialize Firebase Services
+    const app = initializeApp(firebaseConfig);
+    const db = getDatabase(app);
+
+    // Global Application State Manager
+    class QuizApplication {
+      constructor() {
+        this.rawStore = { mcq_sets: {}, neetpg_mcq_sets: {} };
+        this.currentSetKey = '';
+        this.questions = [];
+        this.currentIndex = 0;
+        this.userAnswers = [];
+        this.timer = null;
+        this.secondsElapsed = 0;
+        this.chartInstance = null;
+
+        this.initFirebaseListeners();
+        this.bindEvents();
+      }
+
+      initFirebaseListeners() {
+        // Sync mcq_sets
+        onValue(ref(db, 'mcq_sets'), (snapshot) => {
+          this.rawStore.mcq_sets = snapshot.val() || {};
+          this.updateDashboardCounts();
+        });
+
+        // Sync neetpg_mcq_sets
+        onValue(ref(db, 'neetpg_mcq_sets'), (snapshot) => {
+          this.rawStore.neetpg_mcq_sets = snapshot.val() || {};
+          this.updateDashboardCounts();
+        });
+      }
+
+      updateDashboardCounts() {
+        const countNmcle = this.extractQuestions('mcq_sets').length;
+        const countNeet = this.extractQuestions('neetpg_mcq_sets').length;
+
+        document.getElementById('nmcle-count').innerHTML = `<i class="fa-solid fa-circle-question text-indigo-500"></i> ${countNmcle} Questions`;
+        document.getElementById('neetpg-count').innerHTML = `<i class="fa-solid fa-circle-question text-purple-500"></i> ${countNeet} Questions`;
+      }
+
+      extractQuestions(setKey) {
+        const data = this.rawStore[setKey];
+        if (!data) return [];
+        
+        let list = [];
+        // Flatten nested items or direct object maps
+        Object.keys(data).forEach(key => {
+          const item = data[key];
+          if (item.question && item.options) {
+            list.push({ id: key, ...item });
+          } else if (typeof item === 'object') {
+            Object.keys(item).forEach(subKey => {
+              if (item[subKey] && item[subKey].question) {
+                list.push({ id: subKey, ...item[subKey] });
+              }
+            });
+          }
+        });
+
+        // Fallback sample mock data if collection is empty in DB
+        if (list.length === 0) {
+          list = [
+            {
+              question: "Which organelle is primarily responsible for ATP production via oxidative phosphorylation in eukaryotic cells?",
+              options: ["Ribosome", "Mitochondrion", "Endoplasmic Reticulum", "Golgi Apparatus"],
+              correctIndex: 1,
+              explanation: "Mitochondria are known as the powerhouses of the cell. They generate most of the chemical energy needed to power the cell's biochemical reactions via oxidative phosphorylation."
+            },
+            {
+              question: "What is the primary action of Insulin on muscle and adipose tissue?",
+              options: ["Inhibits glycogen synthesis", "Promotes cellular glucose uptake via GLUT4", "Stimulates lipolysis", "Increases hepatic gluconeogenesis"],
+              correctIndex: 1,
+              explanation: "Insulin stimulates translocation of the GLUT4 transporter to the cell membrane in muscle and adipose tissue, increasing glucose influx."
+            }
+          ];
+        }
+
+        return list;
+      }
+
+      startQuiz(setKey) {
+        this.currentSetKey = setKey;
+        this.questions = this.extractQuestions(setKey);
+        this.currentIndex = 0;
+        this.userAnswers = new Array(this.questions.length).fill(null);
+        this.secondsElapsed = 0;
+
+        document.getElementById('quiz-set-title').innerText = setKey === 'mcq_sets' ? 'NMCLE Practice' : 'NEET-PG Practice';
+        document.getElementById('total-q-count').innerText = this.questions.length;
+
+        this.showScreen('quiz');
+        this.renderQuestion();
+        this.startTimer();
+      }
+
+      startTimer() {
+        clearInterval(this.timer);
+        this.timer = setInterval(() => {
+          this.secondsElapsed++;
+          const mins = String(Math.floor(this.secondsElapsed / 60)).padStart(2, '0');
+          const secs = String(this.secondsElapsed % 60).padStart(2, '0');
+          document.getElementById('timer-display').innerText = `${mins}:${secs}`;
+        }, 1000);
+      }
+
+      renderQuestion() {
+        const q = this.questions[this.currentIndex];
+        document.getElementById('current-q-index').innerText = this.currentIndex + 1;
+        
+        // Progress bar
+        const progress = ((this.currentIndex + 1) / this.questions.length) * 100;
+        document.getElementById('quiz-progress-bar').style.width = `${progress}%`;
+
+        document.getElementById('question-text').innerText = q.question;
+
+        // Render Options
+        const container = document.getElementById('options-container');
+        container.innerHTML = '';
+
+        const selectedAnswer = this.userAnswers[this.currentIndex];
+        const isAnswered = selectedAnswer !== null;
+
+        q.options.forEach((optText, idx) => {
+          const btn = document.createElement('button');
+          btn.className = `w-full text-left p-4 rounded-xl border text-sm font-medium transition flex items-center justify-between `;
+          
+          if (!isAnswered) {
+            btn.className += `border-slate-200 hover:border-indigo-400 hover:bg-indigo-50/50 text-slate-700`;
+            btn.onclick = () => this.selectAnswer(idx);
+          } else {
+            btn.disabled = true;
+            if (idx === q.correctIndex) {
+              btn.className += `border-emerald-500 bg-emerald-50 text-emerald-800 font-bold`;
+            } else if (idx === selectedAnswer) {
+              btn.className += `border-rose-500 bg-rose-50 text-rose-800 font-bold`;
+            } else {
+              btn.className += `border-slate-100 bg-slate-50 text-slate-400`;
+            }
+          }
+
+          btn.innerHTML = `
+            <div class="flex items-center gap-3">
+              <span class="w-7 h-7 rounded-lg flex items-center justify-center border ${isAnswered && idx === q.correctIndex ? 'border-emerald-600 bg-emerald-600 text-white' : 'border-slate-300 bg-slate-100 text-slate-600'} text-xs font-bold">
+                ${String.fromCharCode(65 + idx)}
+              </span>
+              <span>${optText}</span>
+            </div>
+            ${isAnswered && idx === q.correctIndex ? '<i class="fa-solid fa-circle-check text-emerald-600 text-lg"></i>' : ''}
+            ${isAnswered && idx === selectedAnswer && idx !== q.correctIndex ? '<i class="fa-solid fa-circle-xmark text-rose-600 text-lg"></i>' : ''}
+          `;
+          container.appendChild(btn);
+        });
+
+        // Handle Explanation Box Visibility
+        const expBox = document.getElementById('explanation-box');
+        const expTitle = document.getElementById('explanation-title');
+        const expText = document.getElementById('explanation-text');
+
+        if (isAnswered) {
+          expBox.classList.remove('hidden');
+          expText.innerText = q.explanation || "No specific explanation provided for this question.";
+          if (selectedAnswer === q.correctIndex) {
+            expBox.className = "mt-6 p-4 rounded-xl border bg-emerald-50/80 border-emerald-200 text-emerald-900";
+            expTitle.innerHTML = `<i class="fa-solid fa-circle-check text-emerald-600"></i> Correct Answer!`;
+          } else {
+            expBox.className = "mt-6 p-4 rounded-xl border bg-rose-50/80 border-rose-200 text-rose-900";
+            expTitle.innerHTML = `<i class="fa-solid fa-triangle-exclamation text-rose-600"></i> Incorrect Answer`;
+          }
+        } else {
+          expBox.classList.add('hidden');
+        }
+
+        // Navigation state
+        document.getElementById('btn-prev').disabled = this.currentIndex === 0;
+        document.getElementById('btn-next').innerText = this.currentIndex === this.questions.length - 1 ? 'Finish & Analyze' : 'Next';
+      }
+
+      selectAnswer(index) {
+        this.userAnswers[this.currentIndex] = index;
+        this.renderQuestion();
+      }
+
+      nextQuestion() {
+        if (this.currentIndex < this.questions.length - 1) {
+          this.currentIndex++;
+          this.renderQuestion();
+        } else {
+          this.finishQuiz();
+        }
+      }
+
+      prevQuestion() {
+        if (this.currentIndex > 0) {
+          this.currentIndex--;
+          this.renderQuestion();
+        }
+      }
+
+      confirmExitQuiz() {
+        if (confirm("Are you sure you want to exit? Your current session progress will be lost.")) {
+          clearInterval(this.timer);
+          this.showDashboard();
+        }
+      }
+
+      finishQuiz() {
+        clearInterval(this.timer);
+
+        let correct = 0;
+        let wrong = 0;
+        
+        this.questions.forEach((q, idx) => {
+          if (this.userAnswers[idx] === q.correctIndex) {
+            correct++;
+          } else {
+            wrong++;
+          }
+        });
+
+        const total = this.questions.length;
+        const percentage = Math.round((correct / total) * 100);
+
+        // Stats Display
+        document.getElementById('score-badge').innerText = `${percentage}%`;
+        document.getElementById('stat-total').innerText = total;
+        document.getElementById('stat-correct').innerText = correct;
+        document.getElementById('stat-wrong').innerText = wrong;
+        document.getElementById('stat-time').innerText = `${this.secondsElapsed}s`;
+
+        // Diagnostic text logic
+        const diag = document.getElementById('diagnostic-text');
+        if (percentage >= 80) {
+          diag.innerHTML = `<p class="text-emerald-600 font-semibold"><i class="fa-solid fa-award"></i> Outstanding Performance!</p><p>You demonstrated high accuracy and deep mastery of the topics covered in this set.</p>`;
+          confetti({ particleCount: 100, spread: 70, origin: { y: 0.6 } });
+        } else if (percentage >= 50) {
+          diag.innerHTML = `<p class="text-amber-600 font-semibold"><i class="fa-solid fa-chart-line"></i> Moderate Mastery.</p><p>You have a solid foundation, but review the detailed error analysis below to eliminate mistakes.</p>`;
+        } else {
+          diag.innerHTML = `<p class="text-rose-600 font-semibold"><i class="fa-solid fa-triangle-exclamation"></i> Further Study Required.</p><p>Focus on reviewing the detailed explanations for incorrect answers to bridge core concepts.</p>`;
+        }
+
+        this.renderChart(correct, wrong);
+        this.renderReviewLog('all');
+        this.showScreen('analysis');
+      }
+
+      renderChart(correct, wrong) {
+        const ctx = document.getElementById('accuracyChart').getContext('2d');
+        if (this.chartInstance) this.chartInstance.destroy();
+
+        this.chartInstance = new Chart(ctx, {
+          type: 'doughnut',
+          data: {
+            labels: ['Correct', 'Incorrect / Skipped'],
+            datasets: [{
+              data: [correct, wrong],
+              backgroundColor: ['#10b981', '#f43f5e'],
+              borderWidth: 0
+            }]
+          },
+          options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+              legend: { position: 'bottom' }
+            }
+          }
+        });
+      }
+
+      filterReview(filter) {
+        this.renderReviewLog(filter);
+      }
+
+      renderReviewLog(filter) {
+        const container = document.getElementById('review-list');
+        container.innerHTML = '';
+
+        this.questions.forEach((q, idx) => {
+          const userAns = this.userAnswers[idx];
+          const isCorrect = userAns === q.correctIndex;
+
+          if (filter === 'incorrect' && isCorrect) return;
+
+          const div = document.createElement('div');
+          div.className = `p-4 rounded-xl border ${isCorrect ? 'border-emerald-200 bg-emerald-50/30' : 'border-rose-200 bg-rose-50/30'} space-y-2`;
+          
+          div.innerHTML = `
+            <div class="flex items-start justify-between gap-2">
+              <span class="font-bold text-sm text-slate-800">Q${idx + 1}. ${q.question}</span>
+              <span class="text-xs px-2 py-0.5 rounded font-semibold ${isCorrect ? 'bg-emerald-100 text-emerald-700' : 'bg-rose-100 text-rose-700'}">
+                ${isCorrect ? 'Correct' : 'Incorrect'}
+              </span>
+            </div>
+            <div class="text-xs space-y-1 text-slate-600">
+              <p><span class="font-semibold">Your Selection:</span> ${userAns !== null ? q.options[userAns] : '<i class="text-slate-400">Not Answered</i>'}</p>
+              ${!isCorrect ? `<p class="text-emerald-700 font-semibold">Correct Answer: ${q.options[q.correctIndex]}</p>` : ''}
+              <p class="mt-2 bg-white p-2.5 rounded border border-slate-200 text-slate-700 leading-relaxed"><i class="fa-solid fa-circle-info text-indigo-500 mr-1"></i> ${q.explanation || 'No explanation available.'}</p>
+            </div>
+          `;
+          container.appendChild(div);
+        });
+      }
+
+      showScreen(screenId) {
+        ['dashboard', 'quiz', 'analysis'].forEach(s => {
+          document.getElementById(`screen-${s}`).classList.add('hidden');
+        });
+        document.getElementById(`screen-${screenId}`).classList.remove('hidden');
+      }
+
+      showDashboard() {
+        this.showScreen('dashboard');
+      }
+
+      toggleAdminModal(show) {
+        const modal = document.getElementById('modal-admin');
+        if (show) modal.classList.remove('hidden');
+        else modal.classList.add('hidden');
+      }
+
+      bindEvents() {
+        document.getElementById('btn-admin-toggle').onclick = () => this.toggleAdminModal(true);
+
+        document.getElementById('form-add-question').onsubmit = (e) => {
+          e.preventDefault();
+          const targetCol = document.getElementById('admin-collection').value;
+          const newQ = {
+            question: document.getElementById('admin-question').value,
+            options: [
+              document.getElementById('admin-opt-0').value,
+              document.getElementById('admin-opt-1').value,
+              document.getElementById('admin-opt-2').value,
+              document.getElementById('admin-opt-3').value
+            ],
+            correctIndex: parseInt(document.getElementById('admin-correct-idx').value),
+            explanation: document.getElementById('admin-explanation').value
+          };
+
+          // Push to Firebase Realtime Database
+          push(ref(db, targetCol), newQ)
+            .then(() => {
+              alert('Question successfully saved to Firebase!');
+              e.target.reset();
+              this.toggleAdminModal(false);
+            })
+            .catch(err => {
+              alert('Error saving question: ' + err.message);
+            });
+        };
+      }
+    }
+
+    // Attach App Instance to window for inline onclick handlers
+    window.appManager = new QuizApplication();
+  </script>
+</body>
+</html>
