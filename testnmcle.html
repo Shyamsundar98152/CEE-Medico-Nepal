@@ -1,669 +1,1429 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" class="h-full bg-slate-900 text-slate-100">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Advanced Medical MCQ Quiz & Analytics Platform</title>
-  <!-- Tailwind CSS -->
-  <script src="https://cdn.tailwindcss.com"></script>
-  <!-- FontAwesome Icons -->
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-  <!-- Chart.js for Advanced Analytics -->
-  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-  <!-- Canvas Confetti -->
-  <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
-  
-  <style>
-    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
-    body { font-family: 'Inter', sans-serif; }
-    .custom-scrollbar::-webkit-scrollbar { width: 6px; }
-    .custom-scrollbar::-webkit-scrollbar-track { background: #f1f5f9; }
-    .custom-scrollbar::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
-  </style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Medical Board Exam Master - AI & Flashcards Powered</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- FontAwesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        body { font-family: 'Inter', sans-serif; }
+        .glass-card {
+            background: rgba(30, 41, 59, 0.75);
+            backdrop-filter: blur(16px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        .option-card {
+            transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        .option-card:hover:not(:disabled) {
+            transform: translateY(-2px);
+        }
+        .custom-scrollbar::-webkit-scrollbar {
+            width: 6px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-track {
+            background: rgba(15, 23, 42, 0.6);
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb {
+            background: rgba(99, 102, 241, 0.5);
+            border-radius: 3px;
+        }
+        /* Flashcard Flip CSS */
+        .perspective-1000 { perspective: 1000px; }
+        .transform-style-3d { transform-style: preserve-3d; }
+        .backface-hidden { backface-visibility: hidden; }
+        .rotate-y-180 { transform: rotateY(180deg); }
+        .custom-select-option { cursor: pointer; transition: all 0.2s; }
+    </style>
 </head>
-<body class="bg-slate-50 text-slate-800 min-h-screen flex flex-col">
+<body class="min-h-full flex flex-col justify-between bg-slate-950 text-slate-100 selection:bg-indigo-500 selection:text-white">
 
-  <!-- Header / Navigation -->
-  <header class="bg-slate-900 text-white shadow-lg sticky top-0 z-50">
-    <div class="max-w-7xl mx-auto px-4 py-3 flex justify-between items-center">
-      <div class="flex items-center gap-3">
-        <div class="bg-indigo-600 p-2 rounded-lg">
-          <i class="fa-solid fa-square-plus text-2xl text-white"></i>
-        </div>
-        <div>
-          <h1 class="text-xl font-bold tracking-wide">MedPrep Portal</h1>
-          <p class="text-xs text-slate-400">Advanced Quiz & Performance Analytics</p>
-        </div>
-      </div>
-      <div class="flex items-center gap-4">
-        <span id="live-db-badge" class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
-          <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
-          Firebase Active
-        </span>
-        <button id="btn-admin-toggle" class="px-3 py-1.5 bg-slate-800 hover:bg-slate-700 text-xs font-medium rounded-lg border border-slate-700 transition">
-          <i class="fa-solid fa-gear mr-1"></i> Admin / Add Questions
-        </button>
-      </div>
-    </div>
-  </header>
-
-  <!-- Main Container -->
-  <main class="flex-1 max-w-7xl w-full mx-auto p-4 md:p-6 grid grid-cols-1 gap-6">
-
-    <!-- Screen 1: Dashboard / Quiz Selection -->
-    <section id="screen-dashboard" class="space-y-6">
-      <div class="bg-gradient-to-r from-indigo-700 to-purple-700 rounded-2xl p-6 text-white shadow-xl relative overflow-hidden">
-        <div class="relative z-10 max-w-2xl">
-          <h2 class="text-2xl md:text-3xl font-extrabold mb-2">Master Your Medical Exams</h2>
-          <p class="text-indigo-100 text-sm md:text-base mb-4">Select a target question bank synced live from your Firebase Realtime Database. Practice with real-time feedback, detailed explanations, and performance metrics.</p>
-        </div>
-        <i class="fa-solid fa-stethoscope absolute -right-6 -bottom-6 text-9xl opacity-10 text-white"></i>
-      </div>
-
-      <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-        <!-- Card 1: NMCLE Sets -->
-        <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-6 flex flex-col justify-between hover:shadow-md transition border-t-4 border-t-indigo-600">
-          <div>
-            <div class="flex items-center justify-between mb-3">
-              <span class="text-xs font-bold uppercase tracking-wider text-indigo-600 bg-indigo-50 px-2.5 py-1 rounded-md">Database Collection</span>
-              <i class="fa-solid fa-book-medical text-2xl text-indigo-600"></i>
-            </div>
-            <h3 class="text-xl font-bold text-slate-900">NMCLE Question Sets</h3>
-            <p class="text-slate-500 text-sm mt-2">Access comprehensive practice sets tailored for the NMCLE examination.</p>
-            <div class="mt-4 flex items-center gap-4 text-xs font-medium text-slate-500">
-              <span><i class="fa-solid fa-layer-group mr-1 text-indigo-500"></i> Key: <code class="bg-slate-100 px-1 py-0.5 rounded">mcq_sets</code></span>
-              <span id="nmcle-count"><i class="fa-solid fa-spinner animate-spin"></i> Loading...</span>
-            </div>
-          </div>
-          <button onclick="appManager.startQuiz('mcq_sets')" class="mt-6 w-full py-3 bg-indigo-600 hover:bg-indigo-700 text-white font-semibold rounded-lg shadow-md transition flex items-center justify-center gap-2">
-            <i class="fa-solid fa-play text-xs"></i> Start Practice Session
-          </button>
-        </div>
-
-        <!-- Card 2: NEET PG Sets -->
-        <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-6 flex flex-col justify-between hover:shadow-md transition border-t-4 border-t-purple-600">
-          <div>
-            <div class="flex items-center justify-between mb-3">
-              <span class="text-xs font-bold uppercase tracking-wider text-purple-600 bg-purple-50 px-2.5 py-1 rounded-md">Database Collection</span>
-              <i class="fa-solid fa-user-doctor text-2xl text-purple-600"></i>
-            </div>
-            <h3 class="text-xl font-bold text-slate-900">NEET-PG MCQ Sets</h3>
-            <p class="text-slate-500 text-sm mt-2">High-yield postgraduate medical entrance examination question sets.</p>
-            <div class="mt-4 flex items-center gap-4 text-xs font-medium text-slate-500">
-              <span><i class="fa-solid fa-layer-group mr-1 text-purple-500"></i> Key: <code class="bg-slate-100 px-1 py-0.5 rounded">neetpg_mcq_sets</code></span>
-              <span id="neetpg-count"><i class="fa-solid fa-spinner animate-spin"></i> Loading...</span>
-            </div>
-          </div>
-          <button onclick="appManager.startQuiz('neetpg_mcq_sets')" class="mt-6 w-full py-3 bg-purple-600 hover:bg-purple-700 text-white font-semibold rounded-lg shadow-md transition flex items-center justify-center gap-2">
-            <i class="fa-solid fa-play text-xs"></i> Start Practice Session
-          </button>
-        </div>
-      </div>
-    </section>
-
-    <!-- Screen 2: Active Quiz Interface -->
-    <section id="screen-quiz" class="hidden space-y-6">
-      <!-- Quiz Header Controls -->
-      <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-4 flex flex-wrap items-center justify-between gap-4">
-        <div>
-          <span id="quiz-set-title" class="text-xs font-bold uppercase tracking-wider text-indigo-600 bg-indigo-50 px-2.5 py-1 rounded-md">Category</span>
-          <h2 class="text-lg font-bold text-slate-800 mt-1">Question <span id="current-q-index">1</span> of <span id="total-q-count">0</span></h2>
-        </div>
-        
-        <!-- Timer Display -->
-        <div class="flex items-center gap-2 bg-slate-900 text-white px-4 py-2 rounded-lg font-mono text-sm shadow">
-          <i class="fa-regular fa-clock text-amber-400"></i>
-          <span id="timer-display">00:00</span>
-        </div>
-
-        <button onclick="appManager.confirmExitQuiz()" class="px-3 py-1.5 text-xs font-semibold text-rose-600 hover:bg-rose-50 rounded-lg border border-rose-200 transition">
-          <i class="fa-solid fa-right-from-bracket mr-1"></i> Quit Quiz
-        </button>
-      </div>
-
-      <!-- Progress Bar -->
-      <div class="w-full bg-slate-200 rounded-full h-2.5 overflow-hidden">
-        <div id="quiz-progress-bar" class="bg-indigo-600 h-2.5 rounded-full transition-all duration-300" style="width: 0%"></div>
-      </div>
-
-      <!-- Question Box -->
-      <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-6 md:p-8">
-        <div id="question-text" class="text-slate-800 font-semibold text-lg md:text-xl mb-6 leading-relaxed">
-          Loading Question...
-        </div>
-
-        <!-- Options Container -->
-        <div id="options-container" class="space-y-3">
-          <!-- Options rendered dynamically -->
-        </div>
-
-        <!-- Explanation Block (Shown after selecting an option) -->
-        <div id="explanation-box" class="hidden mt-6 p-4 rounded-xl border bg-slate-50 transition-all">
-          <div class="flex items-center gap-2 font-bold mb-1" id="explanation-title">
-            <i class="fa-solid fa-circle-info"></i> Explanation
-          </div>
-          <p id="explanation-text" class="text-sm text-slate-600 leading-relaxed"></p>
-        </div>
-      </div>
-
-      <!-- Navigation & Action Buttons -->
-      <div class="flex justify-between items-center bg-white rounded-xl shadow-sm border border-slate-200 p-4">
-        <button id="btn-prev" onclick="appManager.prevQuestion()" class="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 font-medium rounded-lg text-sm transition disabled:opacity-50">
-          <i class="fa-solid fa-arrow-left mr-1"></i> Previous
-        </button>
-
-        <button id="btn-next" onclick="appManager.nextQuestion()" class="px-5 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white font-semibold rounded-lg text-sm shadow transition flex items-center gap-2">
-          Next <i class="fa-solid fa-arrow-right"></i>
-        </button>
-      </div>
-    </section>
-
-    <!-- Screen 3: Performance Analysis & Error Breakdown -->
-    <section id="screen-analysis" class="hidden space-y-6">
-      <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-6 text-center">
-        <div id="score-badge" class="w-20 h-20 mx-auto bg-indigo-100 text-indigo-600 rounded-full flex items-center justify-center text-3xl font-bold mb-4 shadow-inner">
-          0%
-        </div>
-        <h2 class="text-2xl font-bold text-slate-900">Quiz Completed!</h2>
-        <p class="text-slate-500 text-sm mt-1">Here is a complete analytical breakdown of your test performance.</p>
-
-        <!-- Stat Badges -->
-        <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mt-6">
-          <div class="p-3 bg-slate-50 rounded-lg border border-slate-100">
-            <p class="text-xs text-slate-500 font-medium">Total Questions</p>
-            <p id="stat-total" class="text-xl font-bold text-slate-800">0</p>
-          </div>
-          <div class="p-3 bg-emerald-50 rounded-lg border border-emerald-100">
-            <p class="text-xs text-emerald-600 font-medium">Correct Answers</p>
-            <p id="stat-correct" class="text-xl font-bold text-emerald-600">0</p>
-          </div>
-          <div class="p-3 bg-rose-50 rounded-lg border border-rose-100">
-            <p class="text-xs text-rose-600 font-medium">Wrong Answers</p>
-            <p id="stat-wrong" class="text-xl font-bold text-rose-600">0</p>
-          </div>
-          <div class="p-3 bg-amber-50 rounded-lg border border-amber-100">
-            <p class="text-xs text-amber-600 font-medium">Time Taken</p>
-            <p id="stat-time" class="text-xl font-bold text-amber-600">0s</p>
-          </div>
-        </div>
-      </div>
-
-      <!-- Visual Chart Analytics -->
-      <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-        <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-6 flex flex-col items-center">
-          <h3 class="text-sm font-bold text-slate-700 mb-4 uppercase tracking-wider">Accuracy Distribution</h3>
-          <div class="w-64 h-64">
-            <canvas id="accuracyChart"></canvas>
-          </div>
-        </div>
-        <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-6 flex flex-col justify-between">
-          <div>
-            <h3 class="text-sm font-bold text-slate-700 mb-2 uppercase tracking-wider">Diagnostic Insights</h3>
-            <div id="diagnostic-text" class="text-sm text-slate-600 space-y-2 mt-4">
-              <!-- Rendered via JS -->
-            </div>
-          </div>
-          <button onclick="appManager.showDashboard()" class="mt-6 w-full py-2.5 bg-slate-900 hover:bg-slate-800 text-white font-medium rounded-lg transition text-sm">
-            <i class="fa-solid fa-house mr-1"></i> Return to Dashboard
-          </button>
-        </div>
-      </div>
-
-      <!-- Comprehensive Error & Review Log -->
-      <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-6">
-        <div class="flex justify-between items-center mb-6">
-          <h3 class="text-lg font-bold text-slate-900">Detailed Question Review & Error Analysis</h3>
-          <div class="flex gap-2 text-xs">
-            <button onclick="appManager.filterReview('all')" class="px-3 py-1 rounded bg-slate-100 text-slate-700 hover:bg-slate-200 font-medium">All</button>
-            <button onclick="appManager.filterReview('incorrect')" class="px-3 py-1 rounded bg-rose-100 text-rose-700 hover:bg-rose-200 font-medium">Incorrect Only</button>
-          </div>
-        </div>
-
-        <div id="review-list" class="space-y-4">
-          <!-- Dynamic Review Items -->
-        </div>
-      </div>
-    </section>
-
-    <!-- Admin / Add Question Modal -->
-    <div id="modal-admin" class="hidden fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-      <div class="bg-white rounded-2xl shadow-2xl max-w-xl w-full p-6 max-h-[90vh] overflow-y-auto custom-scrollbar">
-        <div class="flex justify-between items-center border-b pb-3 mb-4">
-          <h3 class="text-lg font-bold text-slate-900">Add New MCQ to Firebase</h3>
-          <button onclick="appManager.toggleAdminModal(false)" class="text-slate-400 hover:text-slate-600">
-            <i class="fa-solid fa-xmark text-xl"></i>
-          </button>
-        </div>
-
-        <form id="form-add-question" class="space-y-4">
-          <div>
-            <label class="block text-xs font-bold text-slate-700 uppercase mb-1">Target Collection</label>
-            <select id="admin-collection" class="w-full bg-slate-50 border border-slate-300 rounded-lg p-2.5 text-sm">
-              <option value="mcq_sets">NMCLE Sets (mcq_sets)</option>
-              <option value="neetpg_mcq_sets">NEET-PG Sets (neetpg_mcq_sets)</option>
-            </select>
-          </div>
-
-          <div>
-            <label class="block text-xs font-bold text-slate-700 uppercase mb-1">Question Statement</label>
-            <textarea id="admin-question" rows="3" required class="w-full bg-slate-50 border border-slate-300 rounded-lg p-2.5 text-sm" placeholder="Type question here..."></textarea>
-          </div>
-
-          <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
-            <div>
-              <label class="block text-xs font-medium text-slate-600 mb-1">Option A</label>
-              <input type="text" id="admin-opt-0" required class="w-full bg-slate-50 border border-slate-300 rounded-lg p-2 text-sm">
-            </div>
-            <div>
-              <label class="block text-xs font-medium text-slate-600 mb-1">Option B</label>
-              <input type="text" id="admin-opt-1" required class="w-full bg-slate-50 border border-slate-300 rounded-lg p-2 text-sm">
-            </div>
-            <div>
-              <label class="block text-xs font-medium text-slate-600 mb-1">Option C</label>
-              <input type="text" id="admin-opt-2" required class="w-full bg-slate-50 border border-slate-300 rounded-lg p-2 text-sm">
-            </div>
-            <div>
-              <label class="block text-xs font-medium text-slate-600 mb-1">Option D</label>
-              <input type="text" id="admin-opt-3" required class="w-full bg-slate-50 border border-slate-300 rounded-lg p-2 text-sm">
-            </div>
-          </div>
-
-          <div>
-            <label class="block text-xs font-bold text-slate-700 uppercase mb-1">Correct Option Index</label>
-            <select id="admin-correct-idx" class="w-full bg-slate-50 border border-slate-300 rounded-lg p-2.5 text-sm">
-              <option value="0">Option A (Index 0)</option>
-              <option value="1">Option B (Index 1)</option>
-              <option value="2">Option C (Index 2)</option>
-              <option value="3">Option D (Index 3)</option>
-            </select>
-          </div>
-
-          <div>
-            <label class="block text-xs font-bold text-slate-700 uppercase mb-1">Detailed Explanation</label>
-            <textarea id="admin-explanation" rows="2" class="w-full bg-slate-50 border border-slate-300 rounded-lg p-2.5 text-sm" placeholder="Provide clinical reasoning or reference..."></textarea>
-          </div>
-
-          <div class="flex justify-end gap-3 pt-3 border-t">
-            <button type="button" onclick="appManager.toggleAdminModal(false)" class="px-4 py-2 text-slate-600 text-sm font-medium">Cancel</button>
-            <button type="submit" class="px-5 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg text-sm font-semibold shadow">Save Question</button>
-          </div>
-        </form>
-      </div>
-    </div>
-  </main>
-
-  <!-- Firebase Modular SDK Script Integration -->
-  <script type="module">
-    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
-    import { getDatabase, ref, onValue, push } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
-
-    // Provided Firebase Web Configuration
-    const firebaseConfig = {
-      apiKey: "AIzaSyD7oo7cXU3KxNimQ8BK8T8GtKeQOSpU_Sc",
-      authDomain: "nmcle-94a3d.firebaseapp.com",
-      databaseURL: "https://nmcle-94a3d-default-rtdb.asia-southeast1.firebasedatabase.app",
-      projectId: "nmcle-94a3d",
-      storageBucket: "nmcle-94a3d.firebasestorage.app",
-      messagingSenderId: "1024414109225",
-      appId: "1:1024414109225:web:7505bbb4a3a9551303d638"
-    };
-
-    // Initialize Firebase Services
-    const app = initializeApp(firebaseConfig);
-    const db = getDatabase(app);
-
-    // Global Application State Manager
-    class QuizApplication {
-      constructor() {
-        this.rawStore = { mcq_sets: {}, neetpg_mcq_sets: {} };
-        this.currentSetKey = '';
-        this.questions = [];
-        this.currentIndex = 0;
-        this.userAnswers = [];
-        this.timer = null;
-        this.secondsElapsed = 0;
-        this.chartInstance = null;
-
-        this.initFirebaseListeners();
-        this.bindEvents();
-      }
-
-      initFirebaseListeners() {
-        // Sync mcq_sets
-        onValue(ref(db, 'mcq_sets'), (snapshot) => {
-          this.rawStore.mcq_sets = snapshot.val() || {};
-          this.updateDashboardCounts();
-        });
-
-        // Sync neetpg_mcq_sets
-        onValue(ref(db, 'neetpg_mcq_sets'), (snapshot) => {
-          this.rawStore.neetpg_mcq_sets = snapshot.val() || {};
-          this.updateDashboardCounts();
-        });
-      }
-
-      updateDashboardCounts() {
-        const countNmcle = this.extractQuestions('mcq_sets').length;
-        const countNeet = this.extractQuestions('neetpg_mcq_sets').length;
-
-        document.getElementById('nmcle-count').innerHTML = `<i class="fa-solid fa-circle-question text-indigo-500"></i> ${countNmcle} Questions`;
-        document.getElementById('neetpg-count').innerHTML = `<i class="fa-solid fa-circle-question text-purple-500"></i> ${countNeet} Questions`;
-      }
-
-      extractQuestions(setKey) {
-        const data = this.rawStore[setKey];
-        if (!data) return [];
-        
-        let list = [];
-        // Flatten nested items or direct object maps
-        Object.keys(data).forEach(key => {
-          const item = data[key];
-          if (item.question && item.options) {
-            list.push({ id: key, ...item });
-          } else if (typeof item === 'object') {
-            Object.keys(item).forEach(subKey => {
-              if (item[subKey] && item[subKey].question) {
-                list.push({ id: subKey, ...item[subKey] });
-              }
-            });
-          }
-        });
-
-        // Fallback sample mock data if collection is empty in DB
-        if (list.length === 0) {
-          list = [
-            {
-              question: "Which organelle is primarily responsible for ATP production via oxidative phosphorylation in eukaryotic cells?",
-              options: ["Ribosome", "Mitochondrion", "Endoplasmic Reticulum", "Golgi Apparatus"],
-              correctIndex: 1,
-              explanation: "Mitochondria are known as the powerhouses of the cell. They generate most of the chemical energy needed to power the cell's biochemical reactions via oxidative phosphorylation."
-            },
-            {
-              question: "What is the primary action of Insulin on muscle and adipose tissue?",
-              options: ["Inhibits glycogen synthesis", "Promotes cellular glucose uptake via GLUT4", "Stimulates lipolysis", "Increases hepatic gluconeogenesis"],
-              correctIndex: 1,
-              explanation: "Insulin stimulates translocation of the GLUT4 transporter to the cell membrane in muscle and adipose tissue, increasing glucose influx."
-            }
-          ];
-        }
-
-        return list;
-      }
-
-      startQuiz(setKey) {
-        this.currentSetKey = setKey;
-        this.questions = this.extractQuestions(setKey);
-        this.currentIndex = 0;
-        this.userAnswers = new Array(this.questions.length).fill(null);
-        this.secondsElapsed = 0;
-
-        document.getElementById('quiz-set-title').innerText = setKey === 'mcq_sets' ? 'NMCLE Practice' : 'NEET-PG Practice';
-        document.getElementById('total-q-count').innerText = this.questions.length;
-
-        this.showScreen('quiz');
-        this.renderQuestion();
-        this.startTimer();
-      }
-
-      startTimer() {
-        clearInterval(this.timer);
-        this.timer = setInterval(() => {
-          this.secondsElapsed++;
-          const mins = String(Math.floor(this.secondsElapsed / 60)).padStart(2, '0');
-          const secs = String(this.secondsElapsed % 60).padStart(2, '0');
-          document.getElementById('timer-display').innerText = `${mins}:${secs}`;
-        }, 1000);
-      }
-
-      renderQuestion() {
-        const q = this.questions[this.currentIndex];
-        document.getElementById('current-q-index').innerText = this.currentIndex + 1;
-        
-        // Progress bar
-        const progress = ((this.currentIndex + 1) / this.questions.length) * 100;
-        document.getElementById('quiz-progress-bar').style.width = `${progress}%`;
-
-        document.getElementById('question-text').innerText = q.question;
-
-        // Render Options
-        const container = document.getElementById('options-container');
-        container.innerHTML = '';
-
-        const selectedAnswer = this.userAnswers[this.currentIndex];
-        const isAnswered = selectedAnswer !== null;
-
-        q.options.forEach((optText, idx) => {
-          const btn = document.createElement('button');
-          btn.className = `w-full text-left p-4 rounded-xl border text-sm font-medium transition flex items-center justify-between `;
-          
-          if (!isAnswered) {
-            btn.className += `border-slate-200 hover:border-indigo-400 hover:bg-indigo-50/50 text-slate-700`;
-            btn.onclick = () => this.selectAnswer(idx);
-          } else {
-            btn.disabled = true;
-            if (idx === q.correctIndex) {
-              btn.className += `border-emerald-500 bg-emerald-50 text-emerald-800 font-bold`;
-            } else if (idx === selectedAnswer) {
-              btn.className += `border-rose-500 bg-rose-50 text-rose-800 font-bold`;
-            } else {
-              btn.className += `border-slate-100 bg-slate-50 text-slate-400`;
-            }
-          }
-
-          btn.innerHTML = `
+    <!-- Header Navigation -->
+    <header class="border-b border-slate-800 bg-slate-900/90 sticky top-0 z-50 backdrop-blur-md">
+        <div class="max-w-6xl mx-auto px-4 py-3.5 flex justify-between items-center">
             <div class="flex items-center gap-3">
-              <span class="w-7 h-7 rounded-lg flex items-center justify-center border ${isAnswered && idx === q.correctIndex ? 'border-emerald-600 bg-emerald-600 text-white' : 'border-slate-300 bg-slate-100 text-slate-600'} text-xs font-bold">
-                ${String.fromCharCode(65 + idx)}
-              </span>
-              <span>${optText}</span>
+                <div class="bg-gradient-to-tr from-indigo-600 to-violet-600 text-white p-2.5 rounded-xl shadow-lg shadow-indigo-500/25">
+                    <i class="fa-solid fa-graduation-cap text-xl"></i>
+                </div>
+                <div>
+                    <div class="flex items-center gap-2">
+                        <h1 class="font-bold text-lg leading-tight text-white tracking-wide">MedPrep Pro</h1>
+                        <span class="px-2 py-0.5 rounded-md text-[10px] bg-indigo-500/20 text-indigo-300 font-bold border border-indigo-500/30">v4.0 Adaptive Engine</span>
+                    </div>
+                    <p id="db-status" class="text-xs text-amber-400 flex items-center gap-1 mt-0.5">
+                        <i class="fa-solid fa-spinner animate-spin"></i> Synchronizing Curriculum Database...
+                    </p>
+                </div>
             </div>
-            ${isAnswered && idx === q.correctIndex ? '<i class="fa-solid fa-circle-check text-emerald-600 text-lg"></i>' : ''}
-            ${isAnswered && idx === selectedAnswer && idx !== q.correctIndex ? '<i class="fa-solid fa-circle-xmark text-rose-600 text-lg"></i>' : ''}
-          `;
-          container.appendChild(btn);
-        });
-
-        // Handle Explanation Box Visibility
-        const expBox = document.getElementById('explanation-box');
-        const expTitle = document.getElementById('explanation-title');
-        const expText = document.getElementById('explanation-text');
-
-        if (isAnswered) {
-          expBox.classList.remove('hidden');
-          expText.innerText = q.explanation || "No specific explanation provided for this question.";
-          if (selectedAnswer === q.correctIndex) {
-            expBox.className = "mt-6 p-4 rounded-xl border bg-emerald-50/80 border-emerald-200 text-emerald-900";
-            expTitle.innerHTML = `<i class="fa-solid fa-circle-check text-emerald-600"></i> Correct Answer!`;
-          } else {
-            expBox.className = "mt-6 p-4 rounded-xl border bg-rose-50/80 border-rose-200 text-rose-900";
-            expTitle.innerHTML = `<i class="fa-solid fa-triangle-exclamation text-rose-600"></i> Incorrect Answer`;
-          }
-        } else {
-          expBox.classList.add('hidden');
-        }
-
-        // Navigation state
-        document.getElementById('btn-prev').disabled = this.currentIndex === 0;
-        document.getElementById('btn-next').innerText = this.currentIndex === this.questions.length - 1 ? 'Finish & Analyze' : 'Next';
-      }
-
-      selectAnswer(index) {
-        this.userAnswers[this.currentIndex] = index;
-        this.renderQuestion();
-      }
-
-      nextQuestion() {
-        if (this.currentIndex < this.questions.length - 1) {
-          this.currentIndex++;
-          this.renderQuestion();
-        } else {
-          this.finishQuiz();
-        }
-      }
-
-      prevQuestion() {
-        if (this.currentIndex > 0) {
-          this.currentIndex--;
-          this.renderQuestion();
-        }
-      }
-
-      confirmExitQuiz() {
-        if (confirm("Are you sure you want to exit? Your current session progress will be lost.")) {
-          clearInterval(this.timer);
-          this.showDashboard();
-        }
-      }
-
-      finishQuiz() {
-        clearInterval(this.timer);
-
-        let correct = 0;
-        let wrong = 0;
-        
-        this.questions.forEach((q, idx) => {
-          if (this.userAnswers[idx] === q.correctIndex) {
-            correct++;
-          } else {
-            wrong++;
-          }
-        });
-
-        const total = this.questions.length;
-        const percentage = Math.round((correct / total) * 100);
-
-        // Stats Display
-        document.getElementById('score-badge').innerText = `${percentage}%`;
-        document.getElementById('stat-total').innerText = total;
-        document.getElementById('stat-correct').innerText = correct;
-        document.getElementById('stat-wrong').innerText = wrong;
-        document.getElementById('stat-time').innerText = `${this.secondsElapsed}s`;
-
-        // Diagnostic text logic
-        const diag = document.getElementById('diagnostic-text');
-        if (percentage >= 80) {
-          diag.innerHTML = `<p class="text-emerald-600 font-semibold"><i class="fa-solid fa-award"></i> Outstanding Performance!</p><p>You demonstrated high accuracy and deep mastery of the topics covered in this set.</p>`;
-          confetti({ particleCount: 100, spread: 70, origin: { y: 0.6 } });
-        } else if (percentage >= 50) {
-          diag.innerHTML = `<p class="text-amber-600 font-semibold"><i class="fa-solid fa-chart-line"></i> Moderate Mastery.</p><p>You have a solid foundation, but review the detailed error analysis below to eliminate mistakes.</p>`;
-        } else {
-          diag.innerHTML = `<p class="text-rose-600 font-semibold"><i class="fa-solid fa-triangle-exclamation"></i> Further Study Required.</p><p>Focus on reviewing the detailed explanations for incorrect answers to bridge core concepts.</p>`;
-        }
-
-        this.renderChart(correct, wrong);
-        this.renderReviewLog('all');
-        this.showScreen('analysis');
-      }
-
-      renderChart(correct, wrong) {
-        const ctx = document.getElementById('accuracyChart').getContext('2d');
-        if (this.chartInstance) this.chartInstance.destroy();
-
-        this.chartInstance = new Chart(ctx, {
-          type: 'doughnut',
-          data: {
-            labels: ['Correct', 'Incorrect / Skipped'],
-            datasets: [{
-              data: [correct, wrong],
-              backgroundColor: ['#10b981', '#f43f5e'],
-              borderWidth: 0
-            }]
-          },
-          options: {
-            responsive: true,
-            maintainAspectRatio: false,
-            plugins: {
-              legend: { position: 'bottom' }
-            }
-          }
-        });
-      }
-
-      filterReview(filter) {
-        this.renderReviewLog(filter);
-      }
-
-      renderReviewLog(filter) {
-        const container = document.getElementById('review-list');
-        container.innerHTML = '';
-
-        this.questions.forEach((q, idx) => {
-          const userAns = this.userAnswers[idx];
-          const isCorrect = userAns === q.correctIndex;
-
-          if (filter === 'incorrect' && isCorrect) return;
-
-          const div = document.createElement('div');
-          div.className = `p-4 rounded-xl border ${isCorrect ? 'border-emerald-200 bg-emerald-50/30' : 'border-rose-200 bg-rose-50/30'} space-y-2`;
-          
-          div.innerHTML = `
-            <div class="flex items-start justify-between gap-2">
-              <span class="font-bold text-sm text-slate-800">Q${idx + 1}. ${q.question}</span>
-              <span class="text-xs px-2 py-0.5 rounded font-semibold ${isCorrect ? 'bg-emerald-100 text-emerald-700' : 'bg-rose-100 text-rose-700'}">
-                ${isCorrect ? 'Correct' : 'Incorrect'}
-              </span>
+            
+            <div class="flex items-center gap-2">
+                <button onclick="app.openCustomImporter()" class="text-xs bg-slate-800 hover:bg-slate-700 text-emerald-400 font-semibold py-2 px-3 rounded-lg border border-slate-700 transition flex items-center gap-1.5">
+                    <i class="fa-solid fa-plus-circle"></i> Add Qs
+                </button>
+                <button id="flashcards-btn" onclick="app.openFlashcards()" class="text-xs bg-slate-800 hover:bg-slate-700 text-indigo-300 font-semibold py-2 px-3.5 rounded-lg border border-slate-700 transition flex items-center gap-2">
+                    <i class="fa-solid fa-layer-group text-indigo-400"></i>
+                    <span>Bookmarks (<span id="bookmark-count">0</span>)</span>
+                </button>
+                <button id="reset-btn" onclick="app.resetQuiz()" class="hidden text-xs bg-slate-800 hover:bg-slate-700 text-slate-300 font-medium py-2 px-3 rounded-lg border border-slate-700 transition flex items-center gap-1.5">
+                    <i class="fa-solid fa-house"></i> Dashboard
+                </button>
             </div>
-            <div class="text-xs space-y-1 text-slate-600">
-              <p><span class="font-semibold">Your Selection:</span> ${userAns !== null ? q.options[userAns] : '<i class="text-slate-400">Not Answered</i>'}</p>
-              ${!isCorrect ? `<p class="text-emerald-700 font-semibold">Correct Answer: ${q.options[q.correctIndex]}</p>` : ''}
-              <p class="mt-2 bg-white p-2.5 rounded border border-slate-200 text-slate-700 leading-relaxed"><i class="fa-solid fa-circle-info text-indigo-500 mr-1"></i> ${q.explanation || 'No explanation available.'}</p>
+        </div>
+    </header>
+
+    <!-- Main Container -->
+    <main class="max-w-4xl w-full mx-auto px-4 py-6 flex-grow flex flex-col justify-center">
+
+        <!-- Notification Banner -->
+        <div id="toast" class="hidden mb-6 p-4 rounded-xl border text-sm flex items-start gap-3 shadow-xl transition-all duration-300">
+            <i id="toast-icon" class="fa-solid text-lg mt-0.5"></i>
+            <div class="flex-grow">
+                <p id="toast-title" class="font-semibold"></p>
+                <p id="toast-message" class="text-xs opacity-90 mt-0.5"></p>
             </div>
-          `;
-          container.appendChild(div);
-        });
-      }
+            <button onclick="document.getElementById('toast').classList.add('hidden')" class="opacity-70 hover:opacity-100">
+                <i class="fa-solid fa-xmark"></i>
+            </button>
+        </div>
 
-      showScreen(screenId) {
-        ['dashboard', 'quiz', 'analysis'].forEach(s => {
-          document.getElementById(`screen-${s}`).classList.add('hidden');
-        });
-        document.getElementById(`screen-${screenId}`).classList.remove('hidden');
-      }
+        <!-- 1. START / DASHBOARD SCREEN -->
+        <div id="start-screen" class="glass-card rounded-2xl p-6 sm:p-10 shadow-2xl">
+            <div class="text-center mb-6">
+                <div class="w-16 h-16 bg-gradient-to-tr from-indigo-500/20 to-purple-500/20 text-indigo-400 rounded-2xl flex items-center justify-center mx-auto mb-3 border border-indigo-500/30 shadow-inner">
+                    <i class="fa-solid fa-book-open-reader text-3xl"></i>
+                </div>
+                <h2 class="text-2xl sm:text-3xl font-extrabold mb-1 text-white">Syllabus-Based Exam Prep</h2>
+                <p class="text-slate-400 text-xs sm:text-sm max-w-lg mx-auto">
+                    Select by Specialty, Chapter & Sub-Topic, or launch dedicated study modes tailored to your weak points.
+                </p>
+            </div>
 
-      showDashboard() {
-        this.showScreen('dashboard');
-      }
+            <!-- Progress Dashboard -->
+            <div class="grid grid-cols-2 sm:grid-cols-4 gap-2 mb-6 text-center">
+                <button onclick="app.setMode('review')" title="Start spaced-repetition review" class="bg-amber-500/10 hover:bg-amber-500/20 p-3 rounded-xl border border-amber-500/30 transition">
+                    <span class="text-[11px] text-amber-300 block mb-0.5"><i class="fa-solid fa-calendar-check"></i> Due for Review</span>
+                    <span id="dash-due" class="text-xl font-extrabold text-amber-300">0</span>
+                </button>
+                <div class="bg-slate-900/60 p-3 rounded-xl border border-slate-800">
+                    <span class="text-[11px] text-slate-400 block mb-0.5">Recent Accuracy</span>
+                    <span id="dash-acc" class="text-xl font-extrabold text-white">--</span>
+                </div>
+                <div class="bg-slate-900/60 p-3 rounded-xl border border-slate-800">
+                    <span class="text-[11px] text-slate-400 block mb-0.5"><i class="fa-solid fa-fire text-orange-400"></i> Day Streak</span>
+                    <span id="dash-streak" class="text-xl font-extrabold text-white">0</span>
+                </div>
+                <div class="bg-slate-900/60 p-3 rounded-xl border border-slate-800">
+                    <span class="text-[11px] text-slate-400 block mb-0.5">Mastered</span>
+                    <span id="dash-mastered" class="text-xl font-extrabold text-emerald-400">0</span>
+                </div>
+            </div>
 
-      toggleAdminModal(show) {
-        const modal = document.getElementById('modal-admin');
-        if (show) modal.classList.remove('hidden');
-        else modal.classList.add('hidden');
-      }
+            <!-- Mode Selection Tabs (6 Modes) -->
+            <div class="mb-6">
+                <label class="text-[11px] font-bold text-slate-400 uppercase tracking-wider block mb-2">
+                    <i class="fa-solid fa-sliders text-indigo-400"></i> Select Exam Mode
+                </label>
+                <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-2 text-xs font-semibold">
+                    <button id="mode-practice-btn" onclick="app.setMode('practice')" class="p-2.5 rounded-xl border border-indigo-500 bg-indigo-600 text-white text-center transition flex flex-col items-center justify-center gap-1 shadow-md">
+                        <i class="fa-solid fa-lightbulb text-sm"></i> Practice
+                    </button>
+                    <button id="mode-exam-btn" onclick="app.setMode('exam')" class="p-2.5 rounded-xl border border-slate-800 bg-slate-900/80 text-slate-400 hover:text-white text-center transition flex flex-col items-center justify-center gap-1">
+                        <i class="fa-solid fa-stopwatch text-sm"></i> Timed Board
+                    </button>
+                    <button id="mode-mock-btn" onclick="app.setMode('mock')" class="p-2.5 rounded-xl border border-slate-800 bg-slate-900/80 text-slate-400 hover:text-white text-center transition flex flex-col items-center justify-center gap-1">
+                        <i class="fa-solid fa-award text-sm"></i> Full Mock
+                    </button>
+                    <button id="mode-weak-btn" onclick="app.setMode('weak')" class="p-2.5 rounded-xl border border-slate-800 bg-slate-900/80 text-slate-400 hover:text-white text-center transition flex flex-col items-center justify-center gap-1">
+                        <i class="fa-solid fa-bullseye text-sm"></i> Weak Area
+                    </button>
+                    <button id="mode-speed-btn" onclick="app.setMode('speed')" class="p-2.5 rounded-xl border border-slate-800 bg-slate-900/80 text-slate-400 hover:text-white text-center transition flex flex-col items-center justify-center gap-1 col-span-2 sm:col-span-1">
+                        <i class="fa-solid fa-bolt text-sm"></i> Speed Sprint
+                    </button>
+                    <button id="mode-review-btn" onclick="app.setMode('review')" class="p-2.5 rounded-xl border border-slate-800 bg-slate-900/80 text-slate-400 hover:text-white text-center transition flex flex-col items-center justify-center gap-1">
+                        <i class="fa-solid fa-brain text-sm"></i> Smart Review
+                    </button>
+                </div>
+            </div>
 
-      bindEvents() {
-        document.getElementById('btn-admin-toggle').onclick = () => this.toggleAdminModal(true);
+            <!-- Multi-Tiered Syllabus Filters: Subject -> Chapter -> Topic -->
+            <div class="mb-6 bg-slate-900/80 p-4 rounded-xl border border-slate-800 space-y-3">
+                <div class="flex justify-between items-center mb-1">
+                    <label class="text-xs font-bold text-slate-300 uppercase tracking-wider flex items-center gap-1.5">
+                        <i class="fa-solid fa-diagram-project text-indigo-400"></i> Curriculum Filter Hierarchy
+                    </label>
+                    <span id="q-matching-count" class="text-xs font-mono font-bold text-indigo-400">0 Matching Qs</span>
+                </div>
 
-        document.getElementById('form-add-question').onsubmit = (e) => {
-          e.preventDefault();
-          const targetCol = document.getElementById('admin-collection').value;
-          const newQ = {
-            question: document.getElementById('admin-question').value,
-            options: [
-              document.getElementById('admin-opt-0').value,
-              document.getElementById('admin-opt-1').value,
-              document.getElementById('admin-opt-2').value,
-              document.getElementById('admin-opt-3').value
-            ],
-            correctIndex: parseInt(document.getElementById('admin-correct-idx').value),
-            explanation: document.getElementById('admin-explanation').value
-          };
+                <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                    <!-- Subject Dropdown -->
+                    <div>
+                        <label class="text-[11px] text-slate-400 block mb-1">1. Specialty / Subject</label>
+                        <select id="select-subject" onchange="app.onSubjectChange(this.value)" class="w-full bg-slate-950 border border-slate-700 rounded-lg p-2.5 text-xs text-slate-200 focus:outline-none focus:border-indigo-500">
+                            <option value="ALL">All Specialties</option>
+                        </select>
+                    </div>
 
-          // Push to Firebase Realtime Database
-          push(ref(db, targetCol), newQ)
-            .then(() => {
-              alert('Question successfully saved to Firebase!');
-              e.target.reset();
-              this.toggleAdminModal(false);
-            })
-            .catch(err => {
-              alert('Error saving question: ' + err.message);
-            });
+                    <!-- Chapter Dropdown -->
+                    <div>
+                        <label class="text-[11px] text-slate-400 block mb-1">2. Chapter System</label>
+                        <select id="select-chapter" onchange="app.onChapterChange(this.value)" class="w-full bg-slate-950 border border-slate-700 rounded-lg p-2.5 text-xs text-slate-200 focus:outline-none focus:border-indigo-500">
+                            <option value="ALL">All Chapters</option>
+                        </select>
+                    </div>
+
+                    <!-- Topic Dropdown -->
+                    <div>
+                        <label class="text-[11px] text-slate-400 block mb-1">3. Topic / Disease</label>
+                        <select id="select-topic" onchange="app.onTopicChange(this.value)" class="w-full bg-slate-950 border border-slate-700 rounded-lg p-2.5 text-xs text-slate-200 focus:outline-none focus:border-indigo-500">
+                            <option value="ALL">All Sub-topics</option>
+                        </select>
+                    </div>
+                </div>
+
+                <!-- Custom Question Limit & Shuffle Config -->
+                <div class="pt-2 border-t border-slate-800 flex flex-wrap items-center justify-between gap-3 text-xs">
+                    <div class="flex items-center gap-2">
+                        <span class="text-slate-400">Question Batch Count:</span>
+                        <select id="select-q-limit" onchange="app.updateSelectedPool()" class="bg-slate-950 border border-slate-700 rounded-md py-1 px-2.5 text-slate-200 font-mono">
+                            <option value="10">10 Questions</option>
+                            <option value="25" selected>25 Questions</option>
+                            <option value="50">50 Questions</option>
+                            <option value="100">100 Questions</option>
+                            <option value="ALL">Max Available</option>
+                        </select>
+                    </div>
+                    <label class="flex items-center gap-2 cursor-pointer text-slate-300">
+                        <input type="checkbox" id="chk-shuffle" checked class="rounded border-slate-700 bg-slate-900 text-indigo-600 focus:ring-0">
+                        <span>Randomize / Shuffle Batch</span>
+                    </label>
+                </div>
+            </div>
+
+            <!-- Subject Category Quick Selector Cards -->
+            <div class="mb-6">
+                <div class="flex justify-between items-center mb-2">
+                    <label class="text-xs font-semibold text-slate-400 uppercase tracking-wider flex items-center gap-1.5">
+                        <i class="fa-solid fa-list-check text-indigo-400"></i> Subject Quick Select
+                    </label>
+                    <span id="subject-count-badge" class="text-[11px] text-slate-500">0 Categories</span>
+                </div>
+                <div id="subject-selector-container" class="grid grid-cols-1 sm:grid-cols-2 gap-2.5 max-h-48 overflow-y-auto pr-1 custom-scrollbar mb-2">
+                    <!-- Dynamic subject cards -->
+                </div>
+            </div>
+
+            <div class="grid grid-cols-3 gap-3 max-w-md mx-auto mb-8 text-center">
+                <div class="bg-slate-900/60 p-3.5 rounded-xl border border-slate-800">
+                    <span class="text-[11px] text-slate-400 block mb-1">Batch Pool</span>
+                    <span id="stat-total" class="text-lg font-bold text-white">0</span>
+                </div>
+                <div class="bg-slate-900/60 p-3.5 rounded-xl border border-slate-800">
+                    <span class="text-[11px] text-slate-400 block mb-1">Timing Standard</span>
+                    <span id="stat-time" class="text-lg font-bold text-white">Unlimited</span>
+                </div>
+                <div class="bg-slate-900/60 p-3.5 rounded-xl border border-slate-800">
+                    <span class="text-[11px] text-slate-400 block mb-1">Target Pass Mark</span>
+                    <span class="text-lg font-bold text-emerald-400">75%</span>
+                </div>
+            </div>
+
+            <button onclick="app.startQuiz()" class="w-full sm:w-auto px-10 py-3.5 bg-gradient-to-r from-indigo-600 to-violet-600 hover:from-indigo-500 hover:to-violet-500 text-white font-semibold rounded-xl shadow-lg shadow-indigo-600/30 transition transform active:scale-95 flex items-center justify-center gap-2.5 mx-auto text-sm">
+                <span>Launch Custom Exam Session</span>
+                <i class="fa-solid fa-arrow-right text-xs"></i>
+            </button>
+        </div>
+
+        <!-- 2. QUIZ QUESTION SCREEN -->
+        <div id="quiz-screen" class="hidden space-y-5">
+            <!-- Progress Bar & Header Control -->
+            <div class="glass-card rounded-xl p-4 flex flex-wrap items-center justify-between gap-4">
+                <div class="flex-grow min-w-[200px]">
+                    <div class="flex justify-between text-xs font-medium text-slate-400 mb-2">
+                        <span class="flex items-center gap-2">
+                            <span>Question Progress</span>
+                            <span id="mode-tag" class="px-2 py-0.5 rounded text-[10px] bg-slate-800 text-indigo-400 font-semibold border border-slate-700">Practice</span>
+                        </span>
+                        <span id="progress-text" class="text-indigo-400 font-bold">1 / 5</span>
+                    </div>
+                    <div class="w-full bg-slate-900 rounded-full h-2.5 overflow-hidden border border-slate-800">
+                        <div id="progress-bar" class="bg-gradient-to-r from-indigo-500 to-violet-500 h-2.5 rounded-full transition-all duration-300" style="width: 20%"></div>
+                    </div>
+                </div>
+
+                <div class="flex items-center gap-2">
+                    <!-- TTS Readout Button -->
+                    <button onclick="app.speakCurrentQuestion()" title="Listen to question" class="p-2.5 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-lg border border-slate-700 transition">
+                        <i id="tts-icon" class="fa-solid fa-volume-high text-xs"></i>
+                    </button>
+
+                    <!-- Bookmark Toggle -->
+                    <button id="bookmark-toggle-btn" onclick="app.toggleBookmarkCurrent()" title="Bookmark question" class="p-2.5 bg-slate-800 hover:bg-slate-700 text-slate-400 rounded-lg border border-slate-700 transition">
+                        <i class="fa-regular fa-bookmark text-xs"></i>
+                    </button>
+
+                    <!-- Timer Box -->
+                    <div class="flex items-center gap-2 bg-slate-900 px-3.5 py-2 rounded-lg border border-slate-800">
+                        <i class="fa-regular fa-clock text-indigo-400 text-xs"></i>
+                        <span id="timer" class="font-mono font-bold text-sm text-slate-200">00:30</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Question Card -->
+            <div class="glass-card rounded-2xl p-6 sm:p-8 shadow-xl">
+                <div class="flex justify-between items-center mb-4">
+                    <span id="category-badge" class="px-3 py-1 bg-indigo-500/10 text-indigo-400 text-xs font-semibold rounded-full border border-indigo-500/20">
+                        General Knowledge
+                    </span>
+                    <span class="text-xs text-slate-500 flex items-center gap-1 font-mono">
+                        ID: #<span id="question-id">101</span>
+                    </span>
+                </div>
+
+                <h3 id="question-text" class="text-base sm:text-lg font-semibold text-slate-100 mb-6 leading-relaxed">
+                    Loading medical scenario...
+                </h3>
+
+                <!-- Options Grid -->
+                <div id="options-container" class="space-y-3">
+                    <!-- Dynamic Options Inserted Here -->
+                </div>
+
+                <!-- Explanation Container -->
+                <div id="explanation-container" class="hidden mt-6 p-4 rounded-xl bg-slate-900/90 border border-slate-800 text-xs sm:text-sm text-slate-300">
+                    <p class="font-bold text-indigo-400 mb-1 flex items-center gap-1.5">
+                        <i class="fa-solid fa-lightbulb"></i> Rationale & Explanation:
+                    </p>
+                    <p id="explanation-text" class="leading-relaxed opacity-95"></p>
+                </div>
+
+                <!-- Footer Navigation -->
+                <div class="mt-8 pt-6 border-t border-slate-800/80 flex justify-between items-center">
+                    <div class="text-xs text-slate-400">
+                        Score: <span id="current-score" class="font-bold text-indigo-400">0</span>
+                    </div>
+                    <button id="next-btn" onclick="app.nextQuestion()" disabled class="px-6 py-2.5 bg-slate-800 text-slate-500 font-semibold text-xs sm:text-sm rounded-xl border border-slate-700 disabled:opacity-50 disabled:cursor-not-allowed hover:bg-indigo-600 hover:text-white hover:border-indigo-500 transition flex items-center gap-2">
+                        <span>Next Question</span>
+                        <i class="fa-solid fa-chevron-right text-xs"></i>
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- 3. RESULTS & REVIEW SCREEN -->
+        <div id="result-screen" class="hidden space-y-6">
+            <div class="glass-card rounded-2xl p-6 sm:p-10 shadow-2xl text-center">
+                <div id="score-badge" class="w-20 h-20 rounded-full flex items-center justify-center mx-auto mb-4 border-4 text-2xl font-extrabold shadow-lg">
+                    <!-- Score % -->
+                </div>
+                <h2 id="result-title" class="text-2xl sm:text-3xl font-extrabold mb-2 text-white">Quiz Completed!</h2>
+                <p id="result-message" class="text-slate-400 text-sm mb-6">Performance summary and mastery breakdown.</p>
+
+                <div class="grid grid-cols-3 gap-3 max-w-md mx-auto mb-8">
+                    <div class="bg-slate-900/60 p-3.5 rounded-xl border border-slate-800">
+                        <span class="text-xs text-slate-400 block mb-1">Score</span>
+                        <span id="final-score" class="text-lg font-bold text-white">0/0</span>
+                    </div>
+                    <div class="bg-slate-900/60 p-3.5 rounded-xl border border-slate-800">
+                        <span class="text-xs text-slate-400 block mb-1">Accuracy</span>
+                        <span id="final-accuracy" class="text-lg font-bold text-emerald-400">0%</span>
+                    </div>
+                    <div class="bg-slate-900/60 p-3.5 rounded-xl border border-slate-800">
+                        <span class="text-xs text-slate-400 block mb-1">Total Time</span>
+                        <span id="total-time" class="text-lg font-bold text-indigo-400">0s</span>
+                    </div>
+                </div>
+
+                <div class="flex flex-wrap justify-center gap-3">
+                    <button onclick="app.startQuiz()" class="px-6 py-3 bg-gradient-to-r from-indigo-600 to-violet-600 hover:from-indigo-500 hover:to-violet-500 text-white font-semibold rounded-xl shadow-lg shadow-indigo-600/30 transition flex items-center gap-2 text-xs sm:text-sm">
+                        <i class="fa-solid fa-rotate-right"></i>
+                        <span>Retake Exam</span>
+                    </button>
+                    <button id="retry-missed-btn" onclick="app.retryMissed()" class="hidden px-6 py-3 bg-amber-600 hover:bg-amber-500 text-white font-semibold rounded-xl shadow-lg shadow-amber-600/20 transition flex items-center gap-2 text-xs sm:text-sm">
+                        <i class="fa-solid fa-crosshairs"></i>
+                        <span>Retry Missed Only</span>
+                    </button>
+                    <button onclick="app.resetQuiz()" class="px-6 py-3 bg-slate-800 hover:bg-slate-700 text-slate-200 font-semibold rounded-xl border border-slate-700 transition flex items-center gap-2 text-xs sm:text-sm">
+                        <i class="fa-solid fa-house"></i>
+                        <span>Dashboard</span>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Subject Performance Breakdown Bar Chart -->
+            <div class="glass-card rounded-2xl p-6 sm:p-8">
+                <h3 class="text-base font-bold text-white mb-4 flex items-center gap-2">
+                    <i class="fa-solid fa-chart-pie text-indigo-400"></i>
+                    Specialty Analytics Breakdown
+                </h3>
+                <div id="subject-breakdown-container" class="space-y-3">
+                    <!-- Rendered bar charts for accuracy per subject -->
+                </div>
+            </div>
+
+            <!-- Weakest Topics -->
+            <div id="weak-topics-card" class="hidden glass-card rounded-2xl p-6 sm:p-8">
+                <h3 class="text-base font-bold text-white mb-4 flex items-center gap-2">
+                    <i class="fa-solid fa-bullseye text-amber-400"></i> Topics To Fix First
+                </h3>
+                <div id="weak-topics-container" class="space-y-2"></div>
+                <p class="text-[11px] text-slate-500 mt-3">Missed questions are automatically scheduled in Smart Review.</p>
+            </div>
+
+            <!-- Detailed Answer Review Section -->
+            <div class="glass-card rounded-2xl p-6 sm:p-8">
+                <h3 class="text-base font-bold text-white mb-6 flex items-center gap-2">
+                    <i class="fa-solid fa-list-check text-indigo-400"></i>
+                    Comprehensive Item Review
+                </h3>
+                <div id="review-container" class="space-y-4">
+                    <!-- Review cards rendered dynamically -->
+                </div>
+            </div>
+        </div>
+
+        <!-- 4. FLASHCARD / BOOKMARKS MODAL SCREEN -->
+        <div id="flashcards-screen" class="hidden glass-card rounded-2xl p-6 sm:p-8 shadow-2xl">
+            <div class="flex justify-between items-center mb-6 border-b border-slate-800 pb-4">
+                <div>
+                    <h3 class="text-xl font-bold text-white flex items-center gap-2">
+                        <i class="fa-solid fa-layer-group text-indigo-400"></i> High-Yield Flashcard Deck
+                    </h3>
+                    <p class="text-xs text-slate-400 mt-1">Review your bookmarked clinical questions.</p>
+                </div>
+                <button onclick="app.closeFlashcards()" class="text-slate-400 hover:text-white p-2">
+                    <i class="fa-solid fa-xmark text-lg"></i>
+                </button>
+            </div>
+
+            <div id="flashcard-deck-empty" class="text-center py-12 hidden">
+                <i class="fa-regular fa-bookmark text-4xl text-slate-600 mb-3 block"></i>
+                <p class="text-slate-300 font-semibold text-sm">No Bookmarks Saved Yet</p>
+                <p class="text-slate-500 text-xs mt-1">Bookmark questions during a practice session to flip through them here.</p>
+            </div>
+
+            <div id="flashcard-deck-content" class="space-y-6">
+                <!-- 3D Interactive Card Container -->
+                <div class="perspective-1000 max-w-xl mx-auto">
+                    <div id="flashcard-inner" onclick="app.flipFlashcard()" class="transform-style-3d cursor-pointer min-h-[260px] w-full rounded-2xl bg-slate-900 border border-slate-700/80 p-6 sm:p-8 shadow-2xl transition-transform duration-500 relative flex flex-col justify-between">
+                        <!-- Front of Card -->
+                        <div id="flashcard-front" class="backface-hidden w-full flex-grow flex flex-col justify-between">
+                            <div>
+                                <div class="flex justify-between text-xs text-indigo-400 font-semibold mb-3">
+                                    <span id="fc-category">Card Category</span>
+                                    <span>Click to flip <i class="fa-solid fa-rotate"></i></span>
+                                </div>
+                                <h4 id="fc-question" class="text-slate-100 font-semibold text-sm sm:text-base leading-relaxed">
+                                    Question text goes here...
+                                </h4>
+                            </div>
+                            <p class="text-[11px] text-slate-500 italic mt-4 text-center">Tap anywhere to reveal correct answer & explanation</p>
+                        </div>
+
+                        <!-- Back of Card -->
+                        <div id="flashcard-back" class="backface-hidden rotate-y-180 absolute inset-0 p-6 sm:p-8 bg-indigo-950/90 border border-indigo-500/50 rounded-2xl flex flex-col justify-between overflow-y-auto custom-scrollbar">
+                            <div>
+                                <span class="text-xs text-emerald-400 font-bold block mb-1">
+                                    <i class="fa-solid fa-circle-check"></i> Correct Answer:
+                                </span>
+                                <h4 id="fc-answer" class="text-white font-bold text-sm mb-3">Answer text</h4>
+                                <div class="text-xs text-slate-300 leading-relaxed border-t border-indigo-500/30 pt-2">
+                                    <span class="font-semibold text-indigo-300 block mb-1">Explanation:</span>
+                                    <p id="fc-explanation"></p>
+                                </div>
+                            </div>
+                            <p class="text-[11px] text-indigo-300 italic text-center mt-3">Tap to flip back</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Navigation Controls -->
+                <div class="flex items-center justify-between max-w-xl mx-auto pt-2">
+                    <button onclick="app.prevFlashcard()" class="px-4 py-2 bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-semibold rounded-lg border border-slate-700 flex items-center gap-1.5">
+                        <i class="fa-solid fa-chevron-left"></i> Previous
+                    </button>
+                    <span id="fc-progress" class="text-xs text-slate-400 font-mono">1 / 1</span>
+                    <button onclick="app.nextFlashcard()" class="px-4 py-2 bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-semibold rounded-lg border border-slate-700 flex items-center gap-1.5">
+                        Next <i class="fa-solid fa-chevron-right"></i>
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- 5. CUSTOM QUESTION IMPORTER MODAL -->
+        <div id="importer-screen" class="hidden glass-card rounded-2xl p-6 sm:p-8 shadow-2xl">
+            <div class="flex justify-between items-center mb-6 border-b border-slate-800 pb-4">
+                <div>
+                    <h3 class="text-xl font-bold text-white flex items-center gap-2">
+                        <i class="fa-solid fa-folder-plus text-emerald-400"></i> Custom Syllabus Importer
+                    </h3>
+                    <p class="text-xs text-slate-400 mt-1">Add custom JSON question sets mapping Subject -> Chapter -> Topic syllabus.</p>
+                </div>
+                <button onclick="app.closeCustomImporter()" class="text-slate-400 hover:text-white p-2">
+                    <i class="fa-solid fa-xmark text-lg"></i>
+                </button>
+            </div>
+
+            <div class="space-y-4">
+                <div>
+                    <label class="text-xs text-slate-300 block mb-1 font-semibold">Paste JSON MCQ Format:</label>
+                    <textarea id="import-json-input" rows="8" class="w-full bg-slate-950 border border-slate-800 rounded-xl p-3 text-xs font-mono text-emerald-300 focus:outline-none focus:border-emerald-500" placeholder='[
+  {
+    "question": "Which enzyme is deficient in Tay-Sachs Disease?",
+    "options": ["Hexosaminidase A", "Glucocerebrosidase", "Sphingomyelinase", "Galactocerebrosidase"],
+    "correct": 0,
+    "explanation": "Tay-Sachs disease results from Hexosaminidase A deficiency.",
+    "subject": "Pathology",
+    "chapter": "Genetic & Metabolic Disorders",
+    "topic": "Lysosomal Storage Diseases"
+  }
+]'></textarea>
+                </div>
+                <div class="flex justify-end gap-2">
+                    <button onclick="app.closeCustomImporter()" class="px-4 py-2 bg-slate-800 text-slate-300 text-xs rounded-lg border border-slate-700">Cancel</button>
+                    <button onclick="app.importCustomQuestions()" class="px-5 py-2 bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold rounded-lg shadow-lg shadow-emerald-600/30">Import to Database</button>
+                </div>
+            </div>
+        </div>
+
+    </main>
+
+    <!-- Footer -->
+    <footer class="border-t border-slate-800/80 py-4 text-center text-xs text-slate-500">
+        Medical Board Preparation Platform &bull; Shortcuts: <b>1-4/A-D</b> answer &bull; <b>Enter</b> next &bull; <b>M</b> bookmark &bull; <b>S</b> read aloud
+    </footer>
+
+    <!-- Application Logic -->
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+        import { getDatabase, ref, get, child } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyD7oo7cXU3KxNimQ8BK8T8GtKeQOSpU_Sc",
+            authDomain: "nmcle-94a3d.firebaseapp.com",
+            databaseURL: "https://nmcle-94a3d-default-rtdb.asia-southeast1.firebasedatabase.app",
+            projectId: "nmcle-94a3d",
+            storageBucket: "nmcle-94a3d.firebasestorage.app",
+            messagingSenderId: "1024414109225",
+            appId: "1:1024414109225:web:7505bbb4a3a9551303d638"
         };
-      }
-    }
 
-    // Attach App Instance to window for inline onclick handlers
-    window.appManager = new QuizApplication();
-  </script>
+        class QuizApp {
+            constructor() {
+                this.db = null;
+                this.allQuestions = [];
+                this.filteredPool = [];
+                this.questions = [];
+                
+                // Syllabus selection state
+                this.selectedSubject = 'ALL';
+                this.selectedChapter = 'ALL';
+                this.selectedTopic = 'ALL';
+                
+                this.currentIndex = 0;
+                this.score = 0;
+                this.userAnswers = [];
+                this.selectedOptionIndex = null;
+                this.timerInterval = null;
+                this.timeLeft = 30;
+                this.totalTimeSpent = 0;
+                this.quizMode = 'practice'; // 'practice', 'exam', 'mock', 'weak', 'speed'
+                
+                // Analytics & Memory Tracking
+                this.performanceHistory = JSON.parse(localStorage.getItem('medprep_history') || '[]');
+                this.bookmarks = new Set();
+                this.srs = JSON.parse(localStorage.getItem('medprep_srs') || '{}');
+                this.savedBm = new Set(JSON.parse(localStorage.getItem('medprep_bm') || '[]'));
+                this.qStart = Date.now();
+                this.flashcardIndex = 0;
+                this.isFlipped = false;
+                this.searchFilter = '';
+
+                this.initFirebase();
+                this.initSpeechSynth();
+            }
+
+            esc(t) { const d = document.createElement('div'); d.textContent = t; return d.innerHTML; }
+
+            qkey(q) {
+                if (q._key) return q._key;
+                let h = 5381; const t = q.question;
+                for (let i = 0; i < t.length; i++) h = ((h << 5) + h + t.charCodeAt(i)) | 0;
+                return q._key = 'q' + (h >>> 0).toString(36);
+            }
+
+            shuffle(arr) {
+                const a = [...arr];
+                for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; }
+                return a;
+            }
+
+            shuffleOptions(q) {
+                this.qkey(q);
+                const fixed = q.options.length < 2 || q.options.some(o => /all of the above|none of the above|both |a and b/i.test(String(o)));
+                if (fixed) return { ...q, _src: q };
+                const idx = this.shuffle(q.options.map((_, i) => i));
+                return { ...q, options: idx.map(i => q.options[i]), correct: idx.indexOf(q.correct), _src: q };
+            }
+
+            updateSrs(key, correct) {
+                const days = [0, 1, 3, 7, 14, 30];
+                const prev = this.srs[key] || { box: 0 };
+                const box = correct ? Math.min(5, prev.box + 1) : 0;
+                this.srs[key] = { box, due: Date.now() + days[box] * 86400000 };
+                try { localStorage.setItem('medprep_srs', JSON.stringify(this.srs)); } catch (e) {}
+            }
+
+            hydrateBookmarks() {
+                this.allQuestions.forEach(q => { if (this.savedBm.has(this.qkey(q))) this.bookmarks.add(q); });
+                const c = document.getElementById('bookmark-count');
+                if (c) c.innerText = this.bookmarks.size;
+            }
+
+            renderDashboard() {
+                const now = Date.now(), h = this.performanceHistory;
+                const set = (id, v) => { const e = document.getElementById(id); if (e) e.innerText = v; };
+                const st = q => this.srs[this.qkey(q)];
+                set('dash-due', this.allQuestions.filter(q => st(q) && st(q).due <= now).length);
+                set('dash-mastered', this.allQuestions.filter(q => st(q) && st(q).box >= 4).length);
+                const rec = h.slice(-100);
+                set('dash-acc', rec.length ? Math.round(rec.filter(a => a.isCorrect).length / rec.length * 100) + '%' : '--');
+                const days = new Set(h.map(a => (a.timestamp || '').slice(0, 10)));
+                const d = new Date(); let streak = 0;
+                if (!days.has(d.toISOString().slice(0, 10))) d.setDate(d.getDate() - 1);
+                while (days.has(d.toISOString().slice(0, 10))) { streak++; d.setDate(d.getDate() - 1); }
+                set('dash-streak', streak);
+            }
+
+            renderWeakTopics() {
+                const m = new Map();
+                this.userAnswers.forEach(a => {
+                    const k = `${a.chapter} → ${a.topic}`;
+                    if (!m.has(k)) m.set(k, { t: 0, c: 0 });
+                    const o = m.get(k); o.t++; if (a.isCorrect) o.c++;
+                });
+                const list = [...m.entries()].filter(([, v]) => v.c < v.t).sort((a, b) => a[1].c / a[1].t - b[1].c / b[1].t).slice(0, 5);
+                const card = document.getElementById('weak-topics-card');
+                const box = document.getElementById('weak-topics-container');
+                box.innerHTML = list.map(([k, v]) => `<div class="flex justify-between text-xs p-2.5 rounded-lg bg-slate-900/70 border border-slate-800"><span class="text-slate-300">${this.esc(k)}</span><span class="font-mono text-rose-400">${v.c}/${v.t}</span></div>`).join('');
+                card.classList.toggle('hidden', list.length === 0);
+                document.getElementById('retry-missed-btn').classList.toggle('hidden', !this.userAnswers.some(a => !a.isCorrect));
+            }
+
+            retryMissed() {
+                const keys = new Set(this.userAnswers.filter(a => !a.isCorrect).map(a => a.key));
+                const list = this.allQuestions.filter(q => keys.has(this.qkey(q)));
+                if (list.length) this.startQuiz(list);
+            }
+
+            initSpeechSynth() {
+                this.synth = window.speechSynthesis || null;
+            }
+
+            speakCurrentQuestion() {
+                if (!this.synth) return;
+                this.synth.cancel();
+
+                const current = this.questions[this.currentIndex];
+                if (!current) return;
+
+                const textToRead = `Question ${this.currentIndex + 1}. ${current.question}. Options are: ` + 
+                    current.options.map((opt, i) => `Option ${String.fromCharCode(65 + i)}: ${opt}`).join('. ');
+
+                const utterance = new SpeechSynthesisUtterance(textToRead);
+                utterance.rate = 0.95;
+                
+                const icon = document.getElementById('tts-icon');
+                if (icon) icon.className = "fa-solid fa-volume-high text-xs animate-bounce text-indigo-400";
+                
+                utterance.onend = () => {
+                    if (icon) icon.className = "fa-solid fa-volume-high text-xs";
+                };
+
+                this.synth.speak(utterance);
+            }
+
+            async initFirebase() {
+                const statusEl = document.getElementById('db-status');
+                try {
+                    const app = initializeApp(firebaseConfig);
+                    this.db = getDatabase(app);
+                    
+                    const dbRef = ref(this.db);
+                    let snapshot = await get(child(dbRef, 'mcq_sets'));
+
+                    if (snapshot.exists()) {
+                        const rawData = snapshot.val();
+                        this.processRawDataIntoSyllabus(rawData);
+                        
+                        statusEl.innerHTML = '<i class="fa-solid fa-circle-check text-emerald-400"></i> Board Syllabus Synchronized';
+                        statusEl.className = "text-xs text-emerald-400 flex items-center gap-1 mt-0.5";
+                        this.showToast('success', 'Syllabus Synced', `Loaded ${this.allQuestions.length} medical board questions across all specialties.`);
+                    } else {
+                        this.loadFallbackQuestions();
+                    }
+                } catch (error) {
+                    console.warn("Firebase fetch notice:", error);
+                    this.loadFallbackQuestions();
+                }
+            }
+
+            loadFallbackQuestions() {
+                // High-yield structured syllabus fallback dataset
+                const fallback = [
+                    { question: "A 45-year-old female presents with hyperpigmentation, fatigue, and hypotension. Serum potassium is elevated. What is the most likely diagnosis?", options: ["Addison Disease", "Cushing Syndrome", "Conn Syndrome", "Pheochromocytoma"], correct: 0, explanation: "Primary adrenal insufficiency (Addison disease) manifests with hyperpigmentation due to elevated MSH/ACTH, along with hyponatremia and hyperkalemia.", subject: "Internal Medicine", chapter: "Endocrinology", topic: "Adrenal Disorders" },
+                    { question: "Which characteristic histological feature is associated with Glioblastoma Multiforme?", options: ["Psammoma bodies", "Pseudopalisading necrosis", "Fried egg appearance", "Perivascular pseudorosettes"], correct: 1, explanation: "Glioblastoma Multiforme (GBM) is characterized by pseudopalisading necrosis surrounded by tumor cells.", subject: "Pathology", chapter: "Neuropathology", topic: "CNS Tumors" },
+                    { question: "A 3-year-old child presents with a barking cough and inspiratory stridor. X-ray shows subglottic narrowing (steeple sign). Pathogen responsible?", options: ["Parainfluenza virus", "RSV", "Adenovirus", "Haemophilus influenzae type B"], correct: 0, explanation: "Laryngotracheobronchitis (Croup) is caused predominantly by Parainfluenza virus type 1 and presents with a steeple sign.", subject: "Pediatrics", chapter: "Pulmonology", topic: "Upper Airway Infection" },
+                    { question: "Which antiarrhythmic drug causes pulmonary fibrosis, corneal microdeposits, and thyroid dysfunction?", options: ["Procainamide", "Amiodarone", "Metoprolol", "Verapamil"], correct: 1, explanation: "Amiodarone (Class III antiarrhythmic) carries risk of pulmonary toxicity, thyroid disease, and corneal microdeposits.", subject: "Pharmacology", chapter: "Cardiovascular Pharmacology", topic: "Antiarrhythmics" },
+                    { question: "First-line surgical treatment for acute appendicitis without rupture?", options: ["Laparoscopic Appendectomy", "Open Drainage", "Conservative IV Antibiotics", "Hemicolectomy"], correct: 0, explanation: "Laparoscopic appendectomy is the gold standard for uncomplicated acute appendicitis.", subject: "General Surgery", chapter: "Gastrointestinal Surgery", topic: "Appendicitis" }
+                ];
+
+                this.processRawDataIntoSyllabus({ fallbackSet: { subject: "General", questions: fallback } });
+                const statusEl = document.getElementById('db-status');
+                statusEl.innerHTML = '<i class="fa-solid fa-check text-indigo-400"></i> Offline Syllabus Loaded';
+            }
+
+            processRawDataIntoSyllabus(rawData) {
+                this.allQuestions = [];
+
+                Object.keys(rawData).forEach(setKey => {
+                    const setObj = rawData[setKey];
+                    if (!setObj) return;
+
+                    const defaultSubject = setObj.subject || setObj.name || "Internal Medicine";
+                    const qList = setObj.questions || [];
+
+                    qList.forEach((q, idx) => {
+                        const normalized = this.normalizeQuestionObj(q, idx, defaultSubject);
+                        if (normalized) this.allQuestions.push(normalized);
+                    });
+                });
+
+                this.populateSyllabusDropdowns();
+                this.hydrateBookmarks();
+                this.renderSubjectQuickCards();
+                this.updateSelectedPool();
+            }
+
+            normalizeQuestionObj(q, idx, defaultSubject) {
+                if (!q) return null;
+
+                const questionText = q.question || q.title || q.q || `Question ${idx + 1}`;
+                let options = q.options || q.choices || q.answers || [];
+                
+                if (!Array.isArray(options) && typeof options === 'object') {
+                    options = Object.values(options);
+                }
+
+                let correctIndex = 0;
+                if (q.correct !== undefined) correctIndex = parseInt(q.correct);
+                else if (q.answer !== undefined) correctIndex = parseInt(q.answer);
+                else if (q.correctIndex !== undefined) correctIndex = parseInt(q.correctIndex);
+                else if (q.correctAnswer !== undefined) {
+                    const foundIdx = options.findIndex(opt => String(opt).trim() === String(q.correctAnswer).trim());
+                    if (foundIdx !== -1) correctIndex = foundIdx;
+                }
+
+                const subject = q.subject || defaultSubject || "Internal Medicine";
+                const chapter = q.chapter || q.category || "General Principles";
+                const topic = q.topic || q.subtopic || "Clinical Vignettes";
+
+                return {
+                    id: q.id || `Q-${Math.random().toString(36).substr(2, 6)}`,
+                    question: questionText,
+                    options: options,
+                    correct: isNaN(correctIndex) ? 0 : correctIndex,
+                    explanation: q.explanation || "Detailed clinical rationale for this concept.",
+                    subject: subject,
+                    chapter: chapter,
+                    topic: topic
+                };
+            }
+
+            populateSyllabusDropdowns() {
+                const subjectSelect = document.getElementById('select-subject');
+                const subjects = Array.from(new Set(this.allQuestions.map(q => q.subject))).sort();
+
+                subjectSelect.innerHTML = '<option value="ALL">All Specialties</option>';
+                subjects.forEach(subj => {
+                    const count = this.allQuestions.filter(q => q.subject === subj).length;
+                    subjectSelect.innerHTML += `<option value="${subj}">${subj} (${count} Qs)</option>`;
+                });
+
+                this.onSubjectChange('ALL');
+            }
+
+            onSubjectChange(subject) {
+                this.selectedSubject = subject;
+                const chapterSelect = document.getElementById('select-chapter');
+
+                let filtered = this.allQuestions;
+                if (subject !== 'ALL') {
+                    filtered = filtered.filter(q => q.subject === subject);
+                }
+
+                const chapters = Array.from(new Set(filtered.map(q => q.chapter))).sort();
+                chapterSelect.innerHTML = '<option value="ALL">All Chapters</option>';
+                chapters.forEach(chap => {
+                    const count = filtered.filter(q => q.chapter === chap).length;
+                    chapterSelect.innerHTML += `<option value="${chap}">${chap} (${count})</option>`;
+                });
+
+                this.onChapterChange('ALL');
+            }
+
+            onChapterChange(chapter) {
+                this.selectedChapter = chapter;
+                const topicSelect = document.getElementById('select-topic');
+
+                let filtered = this.allQuestions;
+                if (this.selectedSubject !== 'ALL') filtered = filtered.filter(q => q.subject === this.selectedSubject);
+                if (chapter !== 'ALL') filtered = filtered.filter(q => q.chapter === chapter);
+
+                const topics = Array.from(new Set(filtered.map(q => q.topic))).sort();
+                topicSelect.innerHTML = '<option value="ALL">All Sub-topics</option>';
+                topics.forEach(top => {
+                    const count = filtered.filter(q => q.topic === top).length;
+                    topicSelect.innerHTML += `<option value="${top}">${top} (${count})</option>`;
+                });
+
+                this.onTopicChange('ALL');
+            }
+
+            onTopicChange(topic) {
+                this.selectedTopic = topic;
+                this.updateSelectedPool();
+            }
+
+            updateSelectedPool() {
+                let pool = [...this.allQuestions];
+
+                if (this.selectedSubject !== 'ALL') pool = pool.filter(q => q.subject === this.selectedSubject);
+                if (this.selectedChapter !== 'ALL') pool = pool.filter(q => q.chapter === this.selectedChapter);
+                if (this.selectedTopic !== 'ALL') pool = pool.filter(q => q.topic === this.selectedTopic);
+
+                // Filter for weak mode
+                if (this.quizMode === 'weak') {
+                    const weakCategories = this.getWeakCategories();
+                    if (weakCategories.length > 0) {
+                        pool = pool.filter(q => weakCategories.includes(q.subject));
+                    }
+                }
+
+                if (this.quizMode === 'review') {
+                    const now = Date.now();
+                    pool = pool.filter(q => { const x = this.srs[this.qkey(q)]; return x && x.due <= now; });
+                }
+
+                this.filteredPool = pool;
+                document.getElementById('q-matching-count').innerText = `${pool.length} Matching Qs`;
+
+                const limitVal = document.getElementById('select-q-limit').value;
+                const limit = limitVal === 'ALL' ? pool.length : parseInt(limitVal);
+                document.getElementById('stat-total').innerText = Math.min(limit, pool.length);
+                this.renderDashboard();
+            }
+
+            renderSubjectQuickCards() {
+                const container = document.getElementById('subject-selector-container');
+                container.innerHTML = '';
+
+                const subjects = Array.from(new Set(this.allQuestions.map(q => q.subject)));
+                const countBadge = document.getElementById('subject-count-badge');
+                if (countBadge) countBadge.innerText = `${subjects.length} Specialties`;
+
+                // All Categories Button
+                const allBtn = document.createElement('button');
+                allBtn.onclick = () => {
+                    document.getElementById('select-subject').value = 'ALL';
+                    this.onSubjectChange('ALL');
+                };
+                allBtn.className = `p-2.5 rounded-xl border border-indigo-500 bg-indigo-950/40 text-left transition text-xs font-semibold flex justify-between items-center text-white`;
+                allBtn.innerHTML = `<span><i class="fa-solid fa-layer-group text-indigo-400 mr-1.5"></i> Entire Medical Syllabus</span> <span class="px-2 py-0.5 bg-indigo-500/20 text-indigo-300 rounded-full font-mono text-[10px]">${this.allQuestions.length}</span>`;
+                container.appendChild(allBtn);
+
+                subjects.forEach(subj => {
+                    const qCount = this.allQuestions.filter(q => q.subject === subj).length;
+                    const btn = document.createElement('button');
+                    btn.onclick = () => {
+                        document.getElementById('select-subject').value = subj;
+                        this.onSubjectChange(subj);
+                    };
+                    btn.className = `p-2.5 rounded-xl border border-slate-800 bg-slate-900/60 hover:bg-slate-800 text-left transition text-xs text-slate-300 flex justify-between items-center`;
+                    btn.innerHTML = `<span class="truncate"><i class="fa-solid fa-folder-medical text-slate-400 mr-1.5"></i> ${subj}</span> <span class="px-2 py-0.5 bg-slate-800 text-slate-400 rounded-full font-mono text-[10px]">${qCount}</span>`;
+                    container.appendChild(btn);
+                });
+            }
+
+            setMode(mode) {
+                this.quizMode = mode;
+                const modes = ['practice', 'exam', 'mock', 'weak', 'speed', 'review'];
+
+                modes.forEach(m => {
+                    const btn = document.getElementById(`mode-${m}-btn`);
+                    if (btn) {
+                        if (m === mode) {
+                            btn.className = "p-2.5 rounded-xl border border-indigo-500 bg-indigo-600 text-white text-center transition flex flex-col items-center justify-center gap-1 shadow-md";
+                        } else {
+                            btn.className = "p-2.5 rounded-xl border border-slate-800 bg-slate-900/80 text-slate-400 hover:text-white text-center transition flex flex-col items-center justify-center gap-1";
+                        }
+                    }
+                });
+
+                const statTime = document.getElementById('stat-time');
+                if (mode === 'practice') statTime.innerText = "Unlimited";
+                else if (mode === 'exam') statTime.innerText = "45s / qn";
+                else if (mode === 'mock') statTime.innerText = "Strict Board";
+                else if (mode === 'weak') statTime.innerText = "Adaptive Target";
+                else if (mode === 'speed') statTime.innerText = "15s Sprint";
+                else if (mode === 'review') statTime.innerText = "Spaced Repetition";
+
+                this.updateSelectedPool();
+            }
+
+            getWeakCategories() {
+                if (this.performanceHistory.length === 0) return [];
+                const catStats = {};
+
+                this.performanceHistory.forEach(ans => {
+                    if (!catStats[ans.subject]) catStats[ans.subject] = { total: 0, correct: 0 };
+                    catStats[ans.subject].total++;
+                    if (ans.isCorrect) catStats[ans.subject].correct++;
+                });
+
+                return Object.keys(catStats).filter(cat => {
+                    const pct = (catStats[cat].correct / catStats[cat].total) * 100;
+                    return pct < 70;
+                });
+            }
+
+            openCustomImporter() {
+                document.getElementById('importer-screen').classList.remove('hidden');
+                document.getElementById('start-screen').classList.add('hidden');
+            }
+
+            closeCustomImporter() {
+                document.getElementById('importer-screen').classList.add('hidden');
+                document.getElementById('start-screen').classList.remove('hidden');
+            }
+
+            importCustomQuestions() {
+                const text = document.getElementById('import-json-input').value.trim();
+                try {
+                    const parsed = JSON.parse(text);
+                    const list = Array.isArray(parsed) ? parsed : [parsed];
+
+                    let count = 0;
+                    list.forEach((item, idx) => {
+                        const normalized = this.normalizeQuestionObj(item, idx, item.subject || "Custom Import");
+                        if (normalized) {
+                            this.allQuestions.push(normalized);
+                            count++;
+                        }
+                    });
+
+                    this.populateSyllabusDropdowns();
+                    this.hydrateBookmarks();
+                    this.renderSubjectQuickCards();
+                    this.closeCustomImporter();
+                    this.showToast('success', 'Import Successful', `Added ${count} questions to your active syllabus bank.`);
+                } catch (e) {
+                    this.showToast('warning', 'JSON Error', 'Failed to parse JSON. Ensure proper array and key structure.');
+                }
+            }
+
+            showToast(type, title, message) {
+                const toast = document.getElementById('toast');
+                const toastTitle = document.getElementById('toast-title');
+                const toastMessage = document.getElementById('toast-message');
+                const toastIcon = document.getElementById('toast-icon');
+
+                toastTitle.innerText = title;
+                toastMessage.innerText = message;
+
+                if (type === 'success') {
+                    toast.className = 'mb-6 p-4 rounded-xl border text-sm flex items-start gap-3 shadow-xl bg-emerald-950/90 border-emerald-800/80 text-emerald-200';
+                    toastIcon.className = 'fa-solid fa-circle-check text-emerald-400 text-lg mt-0.5';
+                } else if (type === 'warning') {
+                    toast.className = 'mb-6 p-4 rounded-xl border text-sm flex items-start gap-3 shadow-xl bg-amber-950/90 border-amber-800/80 text-amber-200';
+                    toastIcon.className = 'fa-solid fa-triangle-exclamation text-amber-400 text-lg mt-0.5';
+                }
+
+                toast.classList.remove('hidden');
+                setTimeout(() => toast.classList.add('hidden'), 4000);
+            }
+
+            startQuiz(customList) {
+                if (!customList && this.filteredPool.length === 0) {
+                    this.showToast('warning', 'Empty Pool', this.quizMode === 'review' ? 'Nothing is due for review right now. Come back later!' : 'No questions match the current syllabus filter.');
+                    return;
+                }
+
+                let pool = customList ? [...customList] : [...this.filteredPool];
+
+                if (customList || document.getElementById('chk-shuffle').checked) pool = this.shuffle(pool);
+
+                const limitVal = document.getElementById('select-q-limit').value;
+                const limit = (customList || limitVal === 'ALL') ? pool.length : parseInt(limitVal);
+                this.questions = pool.slice(0, limit).map(q => this.shuffleOptions(q));
+
+                this.currentIndex = 0;
+                this.score = 0;
+                this.userAnswers = [];
+                this.totalTimeSpent = 0;
+
+                document.getElementById('start-screen').classList.add('hidden');
+                document.getElementById('result-screen').classList.add('hidden');
+                document.getElementById('quiz-screen').classList.remove('hidden');
+                document.getElementById('reset-btn').classList.remove('hidden');
+                document.getElementById('mode-tag').innerText = this.quizMode.toUpperCase();
+
+                this.loadQuestion();
+            }
+
+            loadQuestion() {
+                this.selectedOptionIndex = null;
+                this.qStart = Date.now();
+                const current = this.questions[this.currentIndex];
+
+                const nextBtn = document.getElementById('next-btn');
+                if (nextBtn) nextBtn.disabled = true;
+
+                const explanationContainer = document.getElementById('explanation-container');
+                if (explanationContainer) explanationContainer.classList.add('hidden');
+
+                document.getElementById('category-badge').innerText = `${current.subject} • ${current.chapter}`;
+                document.getElementById('question-id').innerText = current.id;
+                document.getElementById('question-text').innerText = `${this.currentIndex + 1}. ${current.question}`;
+                document.getElementById('progress-text').innerText = `${this.currentIndex + 1} / ${this.questions.length}`;
+                document.getElementById('current-score').innerText = this.score;
+
+                const progressPct = ((this.currentIndex + 1) / this.questions.length) * 100;
+                document.getElementById('progress-bar').style.width = `${progressPct}%`;
+
+                this.updateBookmarkButtonState();
+
+                // Render Options
+                const optionsContainer = document.getElementById('options-container');
+                optionsContainer.innerHTML = '';
+
+                current.options.forEach((option, idx) => {
+                    const btn = document.createElement('button');
+                    btn.className = `option-card w-full text-left p-4 rounded-xl border border-slate-800 bg-slate-900/60 hover:bg-slate-800 hover:border-indigo-500/50 flex items-center gap-3 transition text-xs sm:text-sm text-slate-200`;
+                    btn.onclick = () => this.selectOption(idx);
+                    btn.innerHTML = `
+                        <span class="w-7 h-7 rounded-lg bg-slate-800 border border-slate-700 flex items-center justify-center text-xs font-bold text-slate-300 shrink-0 option-prefix">
+                            ${String.fromCharCode(65 + idx)}
+                        </span>
+                        <span class="flex-grow">${option}</span>
+                        <i class="fa-regular fa-circle text-slate-600 check-icon shrink-0"></i>
+                    `;
+                    optionsContainer.appendChild(btn);
+                });
+
+                if (this.quizMode === 'exam') this.startTimer(45);
+                else if (this.quizMode === 'speed') this.startTimer(15);
+                else if (this.quizMode === 'mock') this.startTimer(60);
+                else document.getElementById('timer').innerText = "Unlimited";
+            }
+
+            selectOption(index) {
+                if (this.selectedOptionIndex !== null && ['practice', 'review'].includes(this.quizMode)) return;
+                this.selectedOptionIndex = index;
+                const current = this.questions[this.currentIndex];
+                const optionsContainer = document.getElementById('options-container');
+                const children = optionsContainer.children;
+
+                for (let i = 0; i < children.length; i++) {
+                    const card = children[i];
+                    const prefix = card.querySelector('.option-prefix');
+                    const icon = card.querySelector('.check-icon');
+
+                    if (['practice', 'review'].includes(this.quizMode)) {
+                        if (i === current.correct) {
+                            card.className = "option-card w-full text-left p-4 rounded-xl border-2 border-emerald-500 bg-emerald-950/30 flex items-center gap-3 transition text-xs sm:text-sm text-white font-medium";
+                            if (prefix) prefix.className = "option-prefix w-7 h-7 rounded-lg bg-emerald-600 text-white flex items-center justify-center text-xs font-bold shrink-0";
+                            if (icon) icon.className = "check-icon fa-solid fa-circle-check text-emerald-400 shrink-0";
+                        } else if (i === index && index !== current.correct) {
+                            card.className = "option-card w-full text-left p-4 rounded-xl border-2 border-rose-500 bg-rose-950/30 flex items-center gap-3 transition text-xs sm:text-sm text-white";
+                            if (prefix) prefix.className = "option-prefix w-7 h-7 rounded-lg bg-rose-600 text-white flex items-center justify-center text-xs font-bold shrink-0";
+                            if (icon) icon.className = "check-icon fa-solid fa-circle-xmark text-rose-400 shrink-0";
+                        } else {
+                            card.className = "option-card w-full text-left p-4 rounded-xl border border-slate-800 bg-slate-900/40 opacity-50 flex items-center gap-3 text-xs sm:text-sm text-slate-400";
+                        }
+                    } else {
+                        if (i === index) {
+                            card.className = "option-card w-full text-left p-4 rounded-xl border-2 border-indigo-500 bg-indigo-950/40 flex items-center gap-3 transition text-xs sm:text-sm text-white font-semibold shadow-lg shadow-indigo-500/10";
+                            if (prefix) prefix.className = "option-prefix w-7 h-7 rounded-lg bg-indigo-600 text-white flex items-center justify-center text-xs font-bold shrink-0";
+                            if (icon) icon.className = "check-icon fa-solid fa-circle-check text-indigo-400 shrink-0";
+                        } else {
+                            card.className = "option-card w-full text-left p-4 rounded-xl border border-slate-800 bg-slate-900/40 opacity-60 flex items-center gap-3 text-xs sm:text-sm text-slate-300";
+                            if (prefix) prefix.className = "option-prefix w-7 h-7 rounded-lg bg-slate-800 border border-slate-700 flex items-center justify-center text-xs font-semibold text-slate-400 shrink-0";
+                            if (icon) icon.className = "check-icon fa-regular fa-circle text-slate-600 shrink-0";
+                        }
+                    }
+                }
+
+                if (['practice', 'review'].includes(this.quizMode) && current.explanation) {
+                    const explanationText = document.getElementById('explanation-text');
+                    const explanationContainer = document.getElementById('explanation-container');
+                    if (explanationText && explanationContainer) {
+                        explanationText.innerText = current.explanation;
+                        explanationContainer.classList.remove('hidden');
+                    }
+                }
+
+                const nextBtn = document.getElementById('next-btn');
+                if (nextBtn) nextBtn.disabled = false;
+            }
+
+            toggleBookmarkCurrent() {
+                const cq = this.questions[this.currentIndex];
+                const current = cq && (cq._src || cq);
+                if (!current) return;
+
+                if (this.bookmarks.has(current)) {
+                    this.bookmarks.delete(current);
+                    this.showToast('info', 'Bookmark Removed', 'Question removed from flashcard deck.');
+                } else {
+                    this.bookmarks.add(current);
+                    this.showToast('success', 'Bookmarked', 'Added to your interactive review flashcards!');
+                }
+
+                try { localStorage.setItem('medprep_bm', JSON.stringify([...this.bookmarks].map(q => this.qkey(q)))); } catch (e) {}
+                this.updateBookmarkButtonState();
+            }
+
+            updateBookmarkButtonState() {
+                const btn = document.getElementById('bookmark-toggle-btn');
+                const countBadge = document.getElementById('bookmark-count');
+                const cq = this.questions[this.currentIndex];
+                const current = cq && (cq._src || cq);
+
+                if (countBadge) countBadge.innerText = this.bookmarks.size;
+
+                if (btn && current) {
+                    if (this.bookmarks.has(current)) {
+                        btn.className = "p-2.5 bg-indigo-600/30 text-indigo-400 rounded-lg border border-indigo-500/50 transition";
+                        btn.innerHTML = `<i class="fa-solid fa-bookmark text-xs"></i>`;
+                    } else {
+                        btn.className = "p-2.5 bg-slate-800 hover:bg-slate-700 text-slate-400 rounded-lg border border-slate-700 transition";
+                        btn.innerHTML = `<i class="fa-regular fa-bookmark text-xs"></i>`;
+                    }
+                }
+            }
+
+            startTimer(seconds) {
+                clearInterval(this.timerInterval);
+                this.timeLeft = seconds;
+                this.updateTimerDisplay();
+
+                this.timerInterval = setInterval(() => {
+                    this.timeLeft--;
+                    this.totalTimeSpent++;
+                    this.updateTimerDisplay();
+
+                    if (this.timeLeft <= 0) {
+                        clearInterval(this.timerInterval);
+                        this.handleTimeout();
+                    }
+                }, 1000);
+            }
+
+            updateTimerDisplay() {
+                const timerEl = document.getElementById('timer');
+                const mm = String(Math.floor(this.timeLeft / 60)).padStart(2, '0'), ss = String(this.timeLeft % 60).padStart(2, '0');
+                timerEl.innerText = `${mm}:${ss}`;
+
+                if (this.timeLeft <= 5) {
+                    timerEl.className = "font-mono font-bold text-sm text-rose-400 animate-pulse";
+                } else {
+                    timerEl.className = "font-mono font-bold text-sm text-slate-200";
+                }
+            }
+
+            handleTimeout() {
+                this.recordAnswer(null);
+                this.nextOrFinish();
+            }
+
+            nextQuestion() {
+                if (this.synth) this.synth.cancel();
+                clearInterval(this.timerInterval);
+                this.recordAnswer(this.selectedOptionIndex);
+                this.nextOrFinish();
+            }
+
+            recordAnswer(selectedIdx) {
+                const current = this.questions[this.currentIndex];
+                const isCorrect = selectedIdx === current.correct;
+
+                if (isCorrect) this.score++;
+
+                const record = {
+                    question: current.question,
+                    options: current.options,
+                    correct: current.correct,
+                    explanation: current.explanation,
+                    subject: current.subject,
+                    chapter: current.chapter,
+                    topic: current.topic,
+                    selected: selectedIdx,
+                    isCorrect: isCorrect,
+                    timestamp: new Date().toISOString()
+                };
+
+                record.key = this.qkey(current);
+                record.time = Math.round((Date.now() - this.qStart) / 1000);
+                this.userAnswers.push(record);
+                this.performanceHistory.push({ key: record.key, subject: record.subject, chapter: record.chapter, topic: record.topic, isCorrect, timestamp: record.timestamp, time: record.time });
+                try { localStorage.setItem('medprep_history', JSON.stringify(this.performanceHistory.slice(-1500))); } catch (e) {}
+                this.updateSrs(record.key, isCorrect);
+            }
+
+            nextOrFinish() {
+                if (this.currentIndex < this.questions.length - 1) {
+                    this.currentIndex++;
+                    this.loadQuestion();
+                } else {
+                    this.finishQuiz();
+                }
+            }
+
+            finishQuiz() {
+                clearInterval(this.timerInterval);
+                if (this.synth) this.synth.cancel();
+
+                document.getElementById('quiz-screen').classList.add('hidden');
+                document.getElementById('result-screen').classList.remove('hidden');
+
+                const total = this.questions.length;
+                const percentage = Math.round((this.score / total) * 100);
+
+                document.getElementById('final-score').innerText = `${this.score} / ${total}`;
+                document.getElementById('final-accuracy').innerText = `${percentage}%`;
+                document.getElementById('total-time').innerText = `${this.totalTimeSpent}s`;
+
+                const badge = document.getElementById('score-badge');
+                badge.innerText = `${percentage}%`;
+
+                if (percentage >= 75) {
+                    badge.className = "w-20 h-20 rounded-full flex items-center justify-center mx-auto mb-4 border-4 border-emerald-500 text-emerald-400 bg-emerald-500/10 text-2xl font-extrabold shadow-lg shadow-emerald-500/20";
+                    document.getElementById('result-title').innerText = "Passing Score Attained!";
+                    document.getElementById('result-message').innerText = "Exceeds standard 75% medical board benchmark.";
+                } else {
+                    badge.className = "w-20 h-20 rounded-full flex items-center justify-center mx-auto mb-4 border-4 border-rose-500 text-rose-400 bg-rose-500/10 text-2xl font-extrabold shadow-lg shadow-rose-500/20";
+                    document.getElementById('result-title').innerText = "Review Recommended";
+                    document.getElementById('result-message').innerText = "Below passing threshold. Focus on weak sub-topics.";
+                }
+
+                this.renderSubjectAnalytics();
+                this.renderReview();
+                this.renderWeakTopics();
+                this.renderDashboard();
+            }
+
+            renderSubjectAnalytics() {
+                const container = document.getElementById('subject-breakdown-container');
+                container.innerHTML = '';
+
+                const statsMap = new Map();
+
+                this.userAnswers.forEach(ans => {
+                    const cat = ans.subject || 'General Medicine';
+                    if (!statsMap.has(cat)) statsMap.set(cat, { total: 0, correct: 0 });
+                    const stat = statsMap.get(cat);
+                    stat.total++;
+                    if (ans.isCorrect) stat.correct++;
+                });
+
+                statsMap.forEach((stat, catName) => {
+                    const pct = Math.round((stat.correct / stat.total) * 100);
+                    const row = document.createElement('div');
+                    row.className = 'space-y-1';
+                    row.innerHTML = `
+                        <div class="flex justify-between text-xs font-semibold">
+                            <span class="text-slate-300">${catName}</span>
+                            <span class="${pct >= 75 ? 'text-emerald-400' : 'text-rose-400'} font-mono">${stat.correct}/${stat.total} (${pct}%)</span>
+                        </div>
+                        <div class="w-full bg-slate-900 rounded-full h-2 border border-slate-800 overflow-hidden">
+                            <div class="${pct >= 75 ? 'bg-emerald-500' : 'bg-rose-500'} h-2 rounded-full" style="width: ${pct}%"></div>
+                        </div>
+                    `;
+                    container.appendChild(row);
+                });
+            }
+
+            renderReview() {
+                const reviewContainer = document.getElementById('review-container');
+                reviewContainer.innerHTML = '';
+
+                this.userAnswers.forEach((ans, idx) => {
+                    const reviewCard = document.createElement('div');
+                    const isSkipped = ans.selected === null;
+
+                    let borderClass = 'border-slate-800 bg-slate-900/40';
+                    let statusBadge = '<span class="px-2.5 py-1 text-xs rounded-full bg-slate-800 text-slate-400 font-medium">Skipped</span>';
+
+                    if (!isSkipped) {
+                        if (ans.isCorrect) {
+                            borderClass = 'border-emerald-500/30 bg-emerald-950/20';
+                            statusBadge = '<span class="px-2.5 py-1 text-[11px] rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 font-medium"><i class="fa-solid fa-check mr-1"></i> Correct</span>';
+                        } else {
+                            borderClass = 'border-rose-500/30 bg-rose-950/20';
+                            statusBadge = '<span class="px-2.5 py-1 text-[11px] rounded-full bg-rose-500/10 text-rose-400 border border-rose-500/20 font-medium"><i class="fa-solid fa-xmark mr-1"></i> Incorrect</span>';
+                        }
+                    }
+
+                    reviewCard.className = `p-4 sm:p-5 rounded-xl border ${borderClass} space-y-3`;
+
+                    let optionsListHtml = '';
+                    ans.options.forEach((opt, optIdx) => {
+                        let optStyle = "text-slate-400 border-slate-800 bg-slate-900/40";
+                        let optIcon = "";
+
+                        if (optIdx === ans.correct) {
+                            optStyle = "text-emerald-300 font-medium border-emerald-500/40 bg-emerald-950/40";
+                            optIcon = '<i class="fa-solid fa-check text-emerald-400 ml-auto"></i>';
+                        } else if (optIdx === ans.selected && !ans.isCorrect) {
+                            optStyle = "text-rose-300 line-through border-rose-500/40 bg-rose-950/40";
+                            optIcon = '<i class="fa-solid fa-xmark text-rose-400 ml-auto"></i>';
+                        }
+
+                        optionsListHtml += `
+                            <div class="p-2.5 rounded-lg border text-xs flex items-center gap-2 ${optStyle}">
+                                <span class="font-bold opacity-75">${String.fromCharCode(65 + optIdx)}.</span>
+                                <span>${opt}</span>
+                                ${optIcon}
+                            </div>
+                        `;
+                    });
+
+                    let explanationHtml = ans.explanation ? `
+                        <div class="mt-2 p-3 rounded-lg bg-slate-900 border border-slate-800 text-xs text-slate-300">
+                            <span class="font-bold text-indigo-400"><i class="fa-solid fa-lightbulb mr-1"></i> Rationale (${ans.chapter} → ${ans.topic}):</span> ${ans.explanation}
+                        </div>
+                    ` : '';
+
+                    reviewCard.innerHTML = `
+                        <div class="flex justify-between items-start gap-3">
+                            <h4 class="font-semibold text-slate-200 text-xs sm:text-sm">${idx + 1}. ${ans.question}</h4>
+                            ${statusBadge}
+                        </div>
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-2 pt-1">
+                            ${optionsListHtml}
+                        </div>
+                        ${explanationHtml}
+                    `;
+
+                    reviewContainer.appendChild(reviewCard);
+                });
+            }
+
+            openFlashcards() {
+                const list = Array.from(this.bookmarks);
+                const emptyState = document.getElementById('flashcard-deck-empty');
+                const contentState = document.getElementById('flashcard-deck-content');
+
+                if (list.length === 0) {
+                    emptyState.classList.remove('hidden');
+                    contentState.classList.add('hidden');
+                } else {
+                    emptyState.classList.add('hidden');
+                    contentState.classList.remove('hidden');
+                    this.flashcardIndex = 0;
+                    this.renderFlashcard();
+                }
+
+                document.getElementById('start-screen').classList.add('hidden');
+                document.getElementById('quiz-screen').classList.add('hidden');
+                document.getElementById('result-screen').classList.add('hidden');
+                document.getElementById('importer-screen').classList.add('hidden');
+                document.getElementById('flashcards-screen').classList.remove('hidden');
+            }
+
+            closeFlashcards() {
+                document.getElementById('flashcards-screen').classList.add('hidden');
+                document.getElementById('start-screen').classList.remove('hidden');
+            }
+
+            renderFlashcard() {
+                const list = Array.from(this.bookmarks);
+                if (list.length === 0) return;
+
+                const current = list[this.flashcardIndex];
+                this.isFlipped = false;
+
+                const inner = document.getElementById('flashcard-inner');
+                if (inner) inner.classList.remove('rotate-y-180');
+
+                document.getElementById('fc-category').innerText = `${current.subject} • ${current.chapter}`;
+                document.getElementById('fc-question').innerText = current.question;
+                document.getElementById('fc-answer').innerText = `${String.fromCharCode(65 + current.correct)}: ${current.options[current.correct]}`;
+                document.getElementById('fc-explanation').innerText = current.explanation || "No additional notes.";
+                document.getElementById('fc-progress').innerText = `${this.flashcardIndex + 1} / ${list.length}`;
+            }
+
+            flipFlashcard() {
+                this.isFlipped = !this.isFlipped;
+                const inner = document.getElementById('flashcard-inner');
+                if (inner) {
+                    if (this.isFlipped) inner.classList.add('rotate-y-180');
+                    else inner.classList.remove('rotate-y-180');
+                }
+            }
+
+            nextFlashcard() {
+                const list = Array.from(this.bookmarks);
+                if (this.flashcardIndex < list.length - 1) {
+                    this.flashcardIndex++;
+                    this.renderFlashcard();
+                }
+            }
+
+            prevFlashcard() {
+                if (this.flashcardIndex > 0) {
+                    this.flashcardIndex--;
+                    this.renderFlashcard();
+                }
+            }
+
+            resetQuiz() {
+                clearInterval(this.timerInterval);
+                if (this.synth) this.synth.cancel();
+
+                document.getElementById('quiz-screen').classList.add('hidden');
+                document.getElementById('result-screen').classList.add('hidden');
+                document.getElementById('flashcards-screen').classList.add('hidden');
+                document.getElementById('importer-screen').classList.add('hidden');
+                document.getElementById('start-screen').classList.remove('hidden');
+                document.getElementById('reset-btn').classList.add('hidden');
+            }
+        }
+
+        window.app = new QuizApp();
+
+        // Keyboard shortcuts during a quiz
+        document.addEventListener('keydown', e => {
+            if (e.ctrlKey || e.metaKey || e.altKey) return;
+            if (/INPUT|TEXTAREA|SELECT/.test(e.target.tagName)) return;
+            if (document.getElementById('quiz-screen').classList.contains('hidden')) return;
+            const a = window.app, k = e.key.toLowerCase();
+            const q = a.questions[a.currentIndex];
+            if (!q) return;
+            let idx = -1;
+            if (/^[1-9]$/.test(k)) idx = parseInt(k) - 1;
+            else if (/^[a-f]$/.test(k) && k !== 'm' && k !== 's') idx = k.charCodeAt(0) - 97;
+            if (idx >= 0 && idx < q.options.length) { a.selectOption(idx); e.preventDefault(); }
+            else if (k === 'enter' || k === 'arrowright') { if (!document.getElementById('next-btn').disabled) a.nextQuestion(); }
+            else if (k === 'm') a.toggleBookmarkCurrent();
+            else if (k === 's') a.speakCurrentQuestion();
+        });
+    </script>
 </body>
 </html>
