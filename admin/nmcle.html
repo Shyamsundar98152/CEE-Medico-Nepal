@@ -256,6 +256,15 @@
     .options-grid { grid-template-columns: 1fr; }
     .nav-tab span { display: none; }
   }
+
+  /* ── Flagged Questions ── */
+  .flag-item { background: #fafbfc; border: 1px solid var(--border); border-radius: var(--radius); padding: 14px 16px; margin-bottom: 10px; }
+  .flag-item:hover { border-color: var(--primary); }
+  .flag-meta { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; font-size: .76rem; color: var(--text-muted); margin-bottom: 8px; }
+  .flag-q { font-size: .92rem; font-weight: 600; color: var(--text-md); white-space: pre-wrap; margin-bottom: 6px; }
+  .flag-ans { font-size: .8rem; color: #1a7a40; margin-bottom: 10px; }
+  .flag-act { display: flex; gap: 8px; flex-wrap: wrap; }
+  #flag-badge { margin-left: 4px; background: var(--danger); color: #fff; display: none; }
   </style>
 </head>
 <body>
@@ -312,9 +321,26 @@
     <!-- Nav Tabs -->
     <div class="nav-tabs">
       <button class="nav-tab active" data-panel="panel-sets"><i class="fas fa-list"></i> <span>All Sets</span></button>
+      <button class="nav-tab" data-panel="panel-flags"><i class="fas fa-flag"></i> <span>Flagged</span><span class="badge" id="flag-badge" style="display:none">0</span></button>
       <button class="nav-tab" data-panel="panel-editor"><i class="fas fa-edit"></i> <span>Question Editor</span></button>
       <button class="nav-tab" data-panel="panel-upload"><i class="fas fa-upload"></i> <span>Upload New</span></button>
       <button class="nav-tab" data-panel="panel-guide"><i class="fas fa-code"></i> <span>Format Guide</span></button>
+    </div>
+
+    <!-- PANEL: FLAGGED QUESTIONS -->
+    <div class="nav-panel" id="panel-flags">
+      <div class="card">
+        <div class="card-header">
+          <div class="card-title"><i class="fas fa-flag"></i> Flagged Questions</div>
+          <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;">
+            <span id="flag-count-label" style="font-size:.82rem;color:var(--text-muted);font-weight:700;"></span>
+            <select id="flag-filter" style="padding:7px 12px;border:2px solid var(--border);border-radius:var(--radius-sm);">
+              <option value="open">Open</option><option value="resolved">Resolved</option><option value="all">All</option>
+            </select>
+          </div>
+        </div>
+        <div id="flag-list"></div>
+      </div>
     </div>
 
     <!-- PANEL: ALL SETS -->
@@ -731,6 +757,7 @@ function showPanel() {
   $('admin-panel').style.display = 'block';
   $('btn-admin-logout').style.display = 'inline-flex';
   loadSets();
+  startFlagsListener();
 }
 
 /* ── Nav Tabs ── */
@@ -969,6 +996,74 @@ function renderQList() {
   });
 }
 
+/* ── Flagged Questions (flags saved by users during mock tests) ── */
+let flagsData = {};
+function startFlagsListener() {
+  db.ref('flags').on('value', snap => { flagsData = snap.val() || {}; renderFlags(); },
+    err => { $('flag-list').innerHTML = '<div class="empty-state" style="padding:30px;"><p>'+escHtml(err.message)+' — check the database rules for "flags".</p></div>'; });
+}
+function renderFlags() {
+  const f = $('flag-filter').value;
+  const all = Object.entries(flagsData).map(([id,v]) => ({ id, ...v, n: Object.keys(v.reporters||{}).length, st: v.status||'open' }));
+  const openCount = all.filter(r => r.st==='open').length;
+  const badge = $('flag-badge'); badge.textContent = openCount; badge.style.display = openCount ? 'inline-block' : 'none';
+  const rows = all.filter(r => f==='all' || r.st===f).sort((a,b) => b.n-a.n || (b.lastFlaggedAt||0)-(a.lastFlaggedAt||0));
+  $('flag-count-label').textContent = `${rows.length} flagged`;
+  $('flag-list').innerHTML = rows.length ? rows.map(r => {
+    const opts = Array.isArray(r.options) ? r.options : [];
+    const ans = opts[r.correct] != null ? `${'ABCDEF'[r.correct]}. ${opts[r.correct]}` : '';
+    return `<div class="flag-item">
+      <div class="flag-meta">
+        <span class="badge badge-blue">${escHtml(r.subject||'Other')}</span>
+        <span>${escHtml(r.setName||r.setKey)} · Q#${escHtml(String(Number(r.qKey)+1 || r.qKey))}</span>
+        <span class="badge badge-yellow"><i class="fas fa-flag"></i> ${r.n} user${r.n!==1?'s':''}</span>
+        <span class="badge ${r.st==='open'?'badge-purple':'badge-green'}">${r.st}</span>
+        ${r.lastFlaggedAt ? `<span>${new Date(r.lastFlaggedAt).toLocaleString('en-GB')}</span>` : ''}
+      </div>
+      <div class="flag-q">${escHtml(r.question)}</div>
+      ${ans ? `<div class="flag-ans"><i class="fas fa-check"></i> ${escHtml(ans)}</div>` : ''}
+      <div class="flag-act">
+        <button class="btn btn-primary btn-sm" data-act="open" data-id="${escHtml(r.id)}"><i class="fas fa-edit"></i> Open in Editor</button>
+        <button class="btn btn-light btn-sm" data-act="toggle" data-id="${escHtml(r.id)}">${r.st==='open'?'Mark resolved':'Reopen'}</button>
+        <button class="btn btn-light btn-sm" data-act="del" data-id="${escHtml(r.id)}"><i class="fas fa-trash"></i></button>
+      </div>
+    </div>`;
+  }).join('') : '<div class="empty-state" style="padding:30px;"><i class="fas fa-flag"></i><p>No flagged questions here.</p></div>';
+}
+$('flag-filter').addEventListener('change', renderFlags);
+$('flag-list').addEventListener('click', e => {
+  const b = e.target.closest('button[data-act]'); if (!b) return;
+  const id = b.dataset.id, r = flagsData[id]; if (!r) return;
+  if (b.dataset.act === 'open') openFlag(id);
+  else if (b.dataset.act === 'toggle') {
+    db.ref('flags/'+id).update({ status: (r.status||'open')==='open' ? 'resolved' : 'open', resolvedAt: Date.now() }).catch(err => toast(err.message,'error'));
+  } else if (b.dataset.act === 'del') {
+    if (confirm('Delete this flag record? The question itself is not changed.')) db.ref('flags/'+id).remove().catch(err => toast(err.message,'error'));
+  }
+});
+function openFlag(id) {
+  const r = flagsData[id];
+  if (!r || !allSets[r.setKey]) { toast('Set not found — it may have been deleted.','error'); return; }
+  $('q-search').value = '';
+  openEditor(r.setKey);
+  const raw = allSets[r.setKey].questions || {};
+  const keys = Array.isArray(raw) ? raw.map((_,i) => String(i)) : Object.keys(raw);
+  let i = keys.indexOf(String(r.qKey));
+  if (i < 0 || !editQuestions[i] || editQuestions[i].question !== r.question) {
+    const j = editQuestions.findIndex(q => q.question === r.question);
+    if (j >= 0) i = j;
+  }
+  if (i < 0 || !editQuestions[i]) { toast('Question not found in this set.','error'); return; }
+  toggleQCard(i);
+  setTimeout(() => { const c = $('qcard-'+i); if (c) c.scrollIntoView({ behavior:'smooth', block:'center' }); }, 80);
+}
+function autoResolveFlag(setKey, i) {
+  Object.entries(flagsData).forEach(([id,r]) => {
+    if (r.setKey === setKey && String(r.qKey) === String(i) && (r.status||'open') === 'open')
+      db.ref('flags/'+id).update({ status:'resolved', resolvedAt: Date.now() });
+  });
+}
+
 function escHtml(s) {
   if (!s) return '';
   return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
@@ -1003,6 +1098,7 @@ async function saveOneQ(i) {
     await db.ref('mcq_sets/'+currentKey+'/questions/'+i).set(editQuestions[i]);
     allSets[currentKey].questions=editQuestions;
     toast(`Question ${i+1} saved ✓`,'success');
+    autoResolveFlag(currentKey,i);
   } catch(err){ toast('Save failed: '+err.message,'error'); }
 }
 
