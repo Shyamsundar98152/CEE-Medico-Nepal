@@ -472,6 +472,13 @@
       margin-bottom: 28px;
     }
 
+    /* Mobile TOC Drawer Header & Backdrop (Hidden on Desktop) */
+    .mobile-toc-bar,
+    .mobile-sidebar-header,
+    .mobile-toc-backdrop {
+      display: none;
+    }
+
     /* Left Sidebar: Volumes & Subjects Index */
     .book-sidebar {
       background: var(--bg-surface);
@@ -1279,11 +1286,271 @@
       color: var(--text-muted);
     }
 
-    /* ── Responsive ── */
+    /* ── Responsive: Enhanced Mobile Table of Contents (<= 860px) ── */
     @media (max-width: 860px) {
-      .book-layout { grid-template-columns: 1fr; }
-      .book-sidebar { position: static; max-height: none; }
+      .book-layout {
+        grid-template-columns: 1fr;
+        gap: 14px;
+      }
+
+      /* Sticky Mobile Subject Selector Bar + Quick Pills */
+      .mobile-toc-bar {
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+        position: sticky;
+        top: 67px;
+        z-index: 900;
+        background: var(--bg-page);
+        padding: 10px 0 8px;
+        margin: -6px 0 4px;
+        border-bottom: 1px solid var(--border-subtle);
+      }
+
+      .mobile-toc-trigger {
+        width: 100%;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 12px;
+        padding: 12px 15px;
+        background: var(--bg-surface);
+        border: 1.5px solid var(--primary);
+        border-radius: var(--radius);
+        box-shadow: var(--shadow-sm);
+        color: var(--text-main);
+        text-align: left;
+      }
+
+      .mobile-toc-trigger-left {
+        display: flex;
+        align-items: center;
+        gap: 11px;
+        min-width: 0;
+      }
+
+      .mobile-toc-icon {
+        width: 34px;
+        height: 34px;
+        border-radius: var(--radius-sm);
+        background: var(--primary-soft);
+        color: var(--primary);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 0.95rem;
+        flex-shrink: 0;
+      }
+
+      .mobile-toc-labels {
+        min-width: 0;
+      }
+
+      .mobile-toc-kicker {
+        display: block;
+        font-size: 0.68rem;
+        font-weight: 800;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        color: var(--primary);
+        line-height: 1.1;
+      }
+
+      .mobile-toc-current {
+        display: block;
+        font-size: 0.94rem;
+        font-weight: 800;
+        color: var(--text-main);
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        margin-top: 2px;
+      }
+
+      .mobile-toc-action {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        font-size: 0.76rem;
+        font-weight: 800;
+        color: #ffffff;
+        background: var(--primary);
+        padding: 6px 11px;
+        border-radius: var(--radius-full);
+        flex-shrink: 0;
+      }
+
+      /* Horizontal Swipeable Subject Quick-Strip */
+      .mobile-quick-pills {
+        display: flex;
+        align-items: center;
+        gap: 7px;
+        overflow-x: auto;
+        padding-bottom: 2px;
+        scrollbar-width: none;
+        -ms-overflow-style: none;
+      }
+      .mobile-quick-pills::-webkit-scrollbar {
+        display: none;
+      }
+
+      .mobile-pill-chip {
+        flex-shrink: 0;
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        padding: 6px 12px;
+        border-radius: var(--radius-full);
+        border: 1px solid var(--border);
+        background: var(--bg-surface);
+        color: var(--text-secondary);
+        font-size: 0.78rem;
+        font-weight: 700;
+        white-space: nowrap;
+      }
+      .mobile-pill-chip.active {
+        background: var(--primary);
+        border-color: var(--primary);
+        color: #ffffff;
+      }
+      .mobile-pill-chip span.m-cnt {
+        font-size: 0.68rem;
+        padding: 1px 6px;
+        border-radius: 99px;
+        background: var(--bg-subtle);
+        color: var(--text-muted);
+      }
+      .mobile-pill-chip.active span.m-cnt {
+        background: rgba(255, 255, 255, 0.22);
+        color: #ffffff;
+      }
+
+      /* Bottom-Sheet Drawer for Full Subject Index on Mobile */
+      .mobile-toc-backdrop {
+        position: fixed;
+        inset: 0;
+        background: rgba(15, 23, 42, 0.58);
+        backdrop-filter: blur(4px);
+        z-index: 1490;
+      }
+      .mobile-toc-backdrop.open {
+        display: block;
+      }
+
+      .book-sidebar {
+        position: fixed;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        top: auto;
+        z-index: 1500;
+        max-height: 82vh;
+        border-radius: 22px 22px 0 0;
+        border: 1.5px solid var(--border);
+        border-bottom: none;
+        padding: 0 16px 24px;
+        box-shadow: 0 -12px 36px rgba(15, 23, 42, 0.24);
+        transform: translateY(105%);
+        transition: transform 0.28s cubic-bezier(0.22, 1, 0.36, 1);
+      }
+      .book-sidebar.drawer-open {
+        transform: translateY(0);
+      }
+
+      .mobile-sidebar-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        position: sticky;
+        top: 0;
+        background: var(--bg-surface);
+        padding: 14px 0 12px;
+        margin-bottom: 10px;
+        border-bottom: 1px solid var(--border-subtle);
+        z-index: 2;
+      }
+      .mobile-sidebar-header h4 {
+        font-size: 1rem;
+        font-weight: 800;
+        color: var(--text-main);
+        display: flex;
+        align-items: center;
+        gap: 8px;
+      }
+      .mobile-sidebar-close {
+        width: 34px;
+        height: 34px;
+        border-radius: 50%;
+        border: 1px solid var(--border);
+        background: var(--bg-subtle);
+        color: var(--text-main);
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 0.95rem;
+      }
+
+      .book-subj-btn {
+        padding: 11px 12px;
+        font-size: 0.9rem;
+      }
+
+      /* Cleaner, Scannable Chapter & Topic Cards on Mobile */
+      .book-subject-banner {
+        padding: 15px 16px;
+        flex-direction: column;
+        align-items: stretch;
+      }
+      .book-subject-banner h4 {
+        font-size: 1.15rem;
+      }
+      .book-subject-banner .btn-primary {
+        width: 100%;
+        justify-content: center;
+      }
+
+      .chapter-header {
+        padding: 13px 15px;
+        flex-direction: column;
+        align-items: stretch;
+        gap: 10px;
+      }
+      .chapter-title-wrap {
+        align-items: flex-start;
+        gap: 10px;
+      }
+      .chapter-name {
+        font-size: 0.98rem;
+        line-height: 1.35;
+      }
+      .chapter-meta {
+        justify-content: space-between;
+        padding-top: 8px;
+        border-top: 1px dashed var(--border-subtle);
+      }
+
+      .topic-row {
+        padding: 13px 15px;
+        gap: 10px;
+      }
+      .topic-left {
+        align-items: flex-start;
+        gap: 9px;
+      }
+      .topic-index {
+        min-width: 30px;
+        padding-top: 2px;
+      }
+      .topic-title {
+        font-size: 0.89rem;
+        line-height: 1.4;
+      }
+      .topic-badge {
+        padding: 3px 8px;
+        font-size: 0.72rem;
+      }
     }
+
     @media (max-width: 768px) {
       .main-nav {
         display: none;
@@ -1306,7 +1573,6 @@
       .result-stats { grid-template-columns: repeat(2, 1fr); }
       .quiz-body { padding: 18px 15px; }
       .dot { width: 29px; height: 29px; font-size: 0.7rem; }
-      .chapter-header { flex-wrap: wrap; }
     }
 
     /* ── Custom Test Builder & Admin ── */
@@ -1512,6 +1778,24 @@
           <div class="cb-summary" id="cb-summary"></div>
           <button class="btn-primary" id="cb-start" disabled><i class="fas fa-play"></i> Start Custom Test</button>
         </div>
+
+        <!-- Mobile-Only Sticky Subject Bar & Quick Pills -->
+        <div class="mobile-toc-bar" id="mobile-toc-bar">
+          <button type="button" class="mobile-toc-trigger" id="mobile-toc-open" aria-expanded="false" aria-controls="book-sidebar">
+            <div class="mobile-toc-trigger-left">
+              <div class="mobile-toc-icon"><i class="fas fa-book-open"></i></div>
+              <div class="mobile-toc-labels">
+                <span class="mobile-toc-kicker">Table of Contents · Volume &amp; Subject</span>
+                <span class="mobile-toc-current" id="mobile-toc-current">📚 All Subjects</span>
+              </div>
+            </div>
+            <span class="mobile-toc-action"><i class="fas fa-list-ul"></i> Browse</span>
+          </button>
+          <div class="mobile-quick-pills" id="mobile-quick-pills" aria-label="Quick subject filter"></div>
+        </div>
+
+        <!-- Mobile Bottom-Sheet Backdrop -->
+        <div class="mobile-toc-backdrop" id="mobile-toc-backdrop"></div>
 
         <!-- Standard Book Table of Contents Layout -->
         <div class="book-layout">
@@ -1876,6 +2160,34 @@
       Radiology: '🩻', Anaesthesia: '💉', 'Emergency Medicine': '🚑', Mixed: '📚'
     };
 
+    /* ── Mobile Table of Contents Drawer Controls ── */
+    function openMobileTocDrawer() {
+      const sidebar = $('book-sidebar');
+      const backdrop = $('mobile-toc-backdrop');
+      const trigger = $('mobile-toc-open');
+      if (sidebar) sidebar.classList.add('drawer-open');
+      if (backdrop) backdrop.classList.add('open');
+      if (trigger) trigger.setAttribute('aria-expanded', 'true');
+      document.body.style.overflow = 'hidden';
+    }
+
+    function closeMobileTocDrawer() {
+      const sidebar = $('book-sidebar');
+      const backdrop = $('mobile-toc-backdrop');
+      const trigger = $('mobile-toc-open');
+      if (sidebar) sidebar.classList.remove('drawer-open');
+      if (backdrop) backdrop.classList.remove('open');
+      if (trigger) trigger.setAttribute('aria-expanded', 'false');
+      document.body.style.overflow = '';
+    }
+
+    if ($('mobile-toc-open')) {
+      $('mobile-toc-open').addEventListener('click', openMobileTocDrawer);
+    }
+    if ($('mobile-toc-backdrop')) {
+      $('mobile-toc-backdrop').addEventListener('click', closeMobileTocDrawer);
+    }
+
     /* ── Smart Chapter & Topic Extractor ── */
     function parseChapterAndTopic(setObj) {
       if (setObj.chapter) {
@@ -2028,6 +2340,7 @@
 
     /* ── Section Switcher ── */
     function showSection(name) {
+      closeMobileTocDrawer();
       elLoading.style.display = name === 'loading' ? 'block' : 'none';
       elError.style.display = name === 'error' ? 'block' : 'none';
       elSetPanel.style.display = name === 'select' ? 'block' : 'none';
@@ -2129,9 +2442,48 @@
       showSection('select');
     }
 
-    /* ── Textbook Volume & Subject Index Sidebar ── */
+    /* ── Helper: Select Subject Across Desktop Sidebar, Mobile Drawer & Quick Pills ── */
+    function selectSubjectAndSync(subj, scrollMobileToContent = false) {
+      activeSubject = subj;
+      const sidebar = $('book-sidebar');
+      if (sidebar) {
+        sidebar.querySelectorAll('.book-subj-btn').forEach(b => {
+          b.classList.toggle('active', b.dataset.subject === subj);
+        });
+      }
+
+      const quickPills = $('mobile-quick-pills');
+      if (quickPills) {
+        quickPills.querySelectorAll('.mobile-pill-chip').forEach(chip => {
+          const isMatch = chip.dataset.subject === subj;
+          chip.classList.toggle('active', isMatch);
+          if (isMatch) {
+            chip.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' });
+          }
+        });
+      }
+
+      const currentLabel = $('mobile-toc-current');
+      if (currentLabel) {
+        const icon = subj === 'All' ? '📚' : (SUBJ_ICONS[subj] || '📖');
+        currentLabel.textContent = `${icon} ${subj === 'All' ? 'All Subjects' : subj}`;
+      }
+
+      renderSetGrid(subj, elSetsSearch.value);
+
+      if (scrollMobileToContent && window.innerWidth <= 860) {
+        const contentEl = $('book-content');
+        if (contentEl) {
+          const y = contentEl.getBoundingClientRect().top + window.scrollY - 145;
+          window.scrollTo({ top: Math.max(0, y), behavior: 'smooth' });
+        }
+      }
+    }
+
+    /* ── Textbook Volume & Subject Index Sidebar + Mobile Drawer/Pills ── */
     function buildSubjectTabs() {
       const sidebar = $('book-sidebar');
+      const quickPills = $('mobile-quick-pills');
       if (!sidebar) return;
 
       const counts = { All: allSets.length };
@@ -2149,7 +2501,20 @@
         ...(extraSubjects.length ? [{ volume: 'Vol. V · Special & Mixed', subjects: extraSubjects }] : [])
       ];
 
-      sidebar.innerHTML = '';
+      sidebar.innerHTML = `
+        <div class="mobile-sidebar-header">
+          <h4><i class="fas fa-book-medical" style="color:var(--primary)"></i> Select Volume &amp; Subject</h4>
+          <button type="button" class="mobile-sidebar-close" id="mobile-sidebar-close" aria-label="Close Table of Contents">
+            <i class="fas fa-xmark"></i>
+          </button>
+        </div>
+      `;
+
+      const closeBtn = sidebar.querySelector('#mobile-sidebar-close');
+      if (closeBtn) closeBtn.addEventListener('click', closeMobileTocDrawer);
+
+      const orderedSubjects = [];
+
       volumesToRender.forEach(vol => {
         const availableSubjs = vol.subjects.filter(subj => subj === 'All' || counts[subj] > 0);
         if (!availableSubjs.length) return;
@@ -2159,6 +2524,7 @@
         group.innerHTML = `<div class="book-vol-title">${vol.volume}</div>`;
 
         availableSubjs.forEach(subj => {
+          orderedSubjects.push(subj);
           const btn = document.createElement('button');
           btn.type = 'button';
           btn.className = 'book-subj-btn' + (subj === activeSubject ? ' active' : '');
@@ -2166,16 +2532,37 @@
           const icon = subj === 'All' ? '📚' : (SUBJ_ICONS[subj] || '📖');
           btn.innerHTML = `<span>${icon} ${esc(subj)}</span><span class="cnt">${counts[subj] || 0}</span>`;
           btn.addEventListener('click', () => {
-            activeSubject = subj;
-            sidebar.querySelectorAll('.book-subj-btn').forEach(b => b.classList.remove('active'));
-            btn.classList.add('active');
-            renderSetGrid(subj, elSetsSearch.value);
+            closeMobileTocDrawer();
+            selectSubjectAndSync(subj, true);
           });
           group.appendChild(btn);
         });
 
         sidebar.appendChild(group);
       });
+
+      // Populate Mobile Horizontal Quick-Pills
+      if (quickPills) {
+        quickPills.innerHTML = '';
+        orderedSubjects.forEach(subj => {
+          const chip = document.createElement('button');
+          chip.type = 'button';
+          chip.className = 'mobile-pill-chip' + (subj === activeSubject ? ' active' : '');
+          chip.dataset.subject = subj;
+          const icon = subj === 'All' ? '📚' : (SUBJ_ICONS[subj] || '📖');
+          chip.innerHTML = `${icon} ${esc(subj === 'All' ? 'All' : subj)} <span class="m-cnt">${counts[subj] || 0}</span>`;
+          chip.addEventListener('click', () => {
+            selectSubjectAndSync(subj, false);
+          });
+          quickPills.appendChild(chip);
+        });
+      }
+
+      const currentLabel = $('mobile-toc-current');
+      if (currentLabel) {
+        const icon = activeSubject === 'All' ? '📚' : (SUBJ_ICONS[activeSubject] || '📖');
+        currentLabel.textContent = `${icon} ${activeSubject === 'All' ? 'All Subjects' : activeSubject}`;
+      }
     }
 
     /* ── Textbook Chapter & Topic Table of Contents ── */
