@@ -2720,6 +2720,256 @@
 
     /* ── Boot ── */
     loadIndex();
+
+    /* ─────────────────────────────────────────────────────────────
+   NMCLE Offline Layer
+   Load AFTER the main page script. It relies on the page's globals
+   (db, allSets, renderSetGrid, buildSubjectTabs, showSection, toast…).
+
+   1. Service worker  → app shell works offline, updates itself
+   2. IndexedDB cache → question sets shown instantly, even offline
+   3. Auto-sync       → re-checks Firebase on start, focus, reconnect
+                        and every 5 min; updates only if data changed
+   4. Flag queue      → flags made offline are sent when back online
+   ───────────────────────────────────────────────────────────── */
+(() => {
+  'use strict';
+
+  const DB_NAME = 'nmcle-cache', STORE = 'kv', KEY = 'mcq_sets_v1';
+  const SYNC_EVERY = 5 * 60 * 1000;
+  const FETCH_TIMEOUT = 20000;
+
+  /* ── 1. Service worker ─────────────────────────────────────── */
+  if ('serviceWorker' in navigator) {
+    const hadController = !!navigator.serviceWorker.controller;
+    navigator.serviceWorker.register('sw.js').then(reg => {
+      reg.update().catch(() => {});
+      setInterval(() => reg.update().catch(() => {}), 60 * 60 * 1000);
+    }).catch(err => console.warn('SW registration failed:', err));
+
+    let reloadPending = false;
+    navigator.serviceWorker.addEventListener('controllerchange', () => {
+      if (!hadController) return;                 // first install, nothing to refresh
+      if (examActive && !examDone) { reloadPending = true; return; }
+      location.reload();
+    });
+    // Apply a waiting page update once the exam is over
+    setInterval(() => {
+      if (reloadPending && !(examActive && !examDone)) location.reload();
+    }, 3000);
+  }
+
+  /* ── 2. IndexedDB helpers ──────────────────────────────────── */
+  const idb = () => new Promise((resolve, reject) => {
+    const r = indexedDB.open(DB_NAME, 1);
+    r.onupgradeneeded = () => r.result.createObjectStore(STORE);
+    r.onsuccess = () => resolve(r.result);
+    r.onerror = () => reject(r.error);
+  });
+  const cacheGet = () => idb().then(d => new Promise(res => {
+    const q = d.transaction(STORE).objectStore(STORE).get(KEY);
+    q.onsuccess = () => res(q.result || null);
+    q.onerror = () => res(null);
+  })).catch(() => null);
+  const cacheSet = val => idb().then(d => new Promise(res => {
+    const t = d.transaction(STORE, 'readwrite');
+    t.objectStore(STORE).put(val, KEY);
+    t.oncomplete = () => res(true);
+    t.onerror = () => res(false);
+  })).catch(() => false);
+
+  const signature = obj => {                       // cheap change detector
+    const s = JSON.stringify(obj || {});
+    let h = 5381;
+    for (let i = 0; i < s.length; i++) h = ((h << 5) + h + s.charCodeAt(i)) | 0;
+    return s.length + ':' + h;
+  };
+
+  /* ── Convert raw Firebase data → page's allSets ────────────── */
+  function applyData(raw) {
+    let totalQ = 0;
+    const sets = Object.entries(raw || {}).map(([key, val]) => {
+      const qs = Object.entries(val.questions || {})
+        .filter(([, v]) => v && v.question)
+        .map(([k, v]) => ({ ...v, _k: k }));
+      totalQ += qs.length;
+      return {
+        key, name: val.name || key, subject: val.subject || '',
+        uploadedAt: val.uploadedAt || '', count: qs.length, questions: qs
+      };
+    });
+    if (!sets.length) return false;
+
+    sets.sort((a, b) => (a.uploadedAt && b.uploadedAt)
+      ? b.uploadedAt.localeCompare(a.uploadedAt)
+      : b.key.localeCompare(a.key));
+
+    allSets = sets;
+    document.getElementById('stat-sets').textContent = sets.length;
+    document.getElementById('stat-questions').textContent = totalQ.toLocaleString();
+    buildSubjectTabs();
+    renderSetGrid(activeSubject, document.getElementById('sets-search').value);
+    return true;
+  }
+
+  /* ── 3. Load + background sync ─────────────────────────────── */
+  let currentSig = null, syncing = false;
+
+  const fetchFresh = () => Promise.race([
+    db.ref('mcq_sets').once('value').then(s => s.val() || {}),
+    new Promise((_, rej) => setTimeout(() => rej(new Error('timeout')), FETCH_TIMEOUT))
+  ]);
+
+  async function sync(silent) {
+    if (syncing || !navigator.onLine) return;
+    syncing = true;
+    try {
+      const raw = await fetchFresh();
+      const sig = signature(raw);
+      if (sig !== currentSig) {
+        const hadData = currentSig !== null;
+        if (applyData(raw)) {
+          currentSig = sig;
+          cacheSet({ sig, raw, savedAt: Date.now() });
+          if (hadData && !silent) toast('Question bank updated to the latest version.', 'success');
+        }
+      }
+    } catch (err) {
+      if (!silent) console.warn('Sync failed:', err.message);
+    } finally { syncing = false; }
+  }
+
+  window.loadIndex = async function loadIndex() {
+    showSection('loading');
+    const cached = await cacheGet();
+
+    if (cached && applyData(cached.raw)) {            // instant, works offline
+      currentSig = cached.sig;
+      showSection('select');
+      if (!navigator.onLine) toast('Offline mode — using saved question sets.', 'info');
+      sync(false);                                    // check for updates in background
+      return;
+    }
+
+    // First visit (no cache yet)
+    if (!navigator.onLine) {
+      document.getElementById('error-msg').textContent =
+        'You are offline and no saved data exists yet. Connect once to download the question sets.';
+      showSection('error');
+      return;
+    }
+    try {
+      const raw = await fetchFresh();
+      if (applyData(raw)) {
+        currentSig = signature(raw);
+        cacheSet({ sig: currentSig, raw, savedAt: Date.now() });
+        showSection('select');
+      } else {
+        showDemoFallback();
+      }
+    } catch (err) {
+      document.getElementById('error-msg').textContent = 'Database error: ' + err.message;
+      showSection('error');
+    }
+  };
+
+  window.addEventListener('online', () => { toast('Back online — checking for updates…', 'info'); sync(false); flushFlags(); });
+  window.addEventListener('offline', () => toast('You are offline. Saved sets still work.', 'info'));
+  document.addEventListener('visibilitychange', () => { if (!document.hidden) sync(true); });
+  setInterval(() => { if (!document.hidden) sync(true); }, SYNC_EVERY);
+
+  /* ── 4. Offline flag queue ─────────────────────────────────── */
+  const QKEY = 'nmcle_flag_queue';
+  const readQ = () => { try { return JSON.parse(localStorage.getItem(QKEY) || '[]'); } catch { return []; } };
+  const writeQ = q => { try { localStorage.setItem(QKEY, JSON.stringify(q)); } catch {} };
+
+  const originalSyncFlag = window.syncFlag;
+  window.syncFlag = function (q, on) {
+    if (navigator.onLine) return originalSyncFlag(q, on);
+    const queue = readQ().filter(x => !(x.q._set === q._set && x.q._k === q._k));
+    queue.push({ q: { _set: q._set, _k: q._k, _setName: q._setName, _subject: q._subject,
+      question: q.question, _o: q._o, _c: q._c, explanation: q.explanation }, on });
+    writeQ(queue);
+    toast('Flag saved offline — will sync when online.', 'info');
+  };
+
+  function flushFlags() {
+    const queue = readQ();
+    if (!queue.length) return;
+    writeQ([]);
+    queue.forEach(({ q, on }) => originalSyncFlag(q, on));
+  }
+
+  /* ── Boot ──────────────────────────────────────────────────── */
+  loadIndex();
+  flushFlags();
+})();
+    /* CEE Medico Nepal – NMCLE service worker
+   Bump VERSION whenever you want to force every device to drop old caches. */
+const VERSION = 'nmcle-v1';
+const CACHE = VERSION + '-shell';
+
+// Hosts whose static files are safe to cache (fonts, icons, Firebase SDK)
+const STATIC_HOSTS = [
+  'fonts.googleapis.com', 'fonts.gstatic.com',
+  'cdnjs.cloudflare.com', 'www.gstatic.com'
+];
+// Never touch these (live data, auth, ads, analytics)
+const SKIP = /firebaseio\.com|identitytoolkit|securetoken|googlesyndication|googletagmanager|google-analytics|doubleclick/;
+
+self.addEventListener('install', e => {
+  e.waitUntil(caches.open(CACHE).then(c => c.add('./').catch(() => {})));
+  self.skipWaiting();
+});
+
+self.addEventListener('activate', e => {
+  e.waitUntil(
+    caches.keys()
+      .then(keys => Promise.all(keys.filter(k => k !== CACHE).map(k => caches.delete(k))))
+      .then(() => self.clients.claim())
+  );
+});
+
+self.addEventListener('message', e => {
+  if (e.data === 'SKIP_WAITING') self.skipWaiting();
+});
+
+self.addEventListener('fetch', e => {
+  const req = e.request;
+  if (req.method !== 'GET' || SKIP.test(req.url)) return;
+  const url = new URL(req.url);
+
+  // Page navigations: network first (auto-updates), cache fallback offline
+  if (req.mode === 'navigate') {
+    e.respondWith(
+      fetch(req)
+        .then(res => {
+          const copy = res.clone();
+          caches.open(CACHE).then(c => c.put(req, copy));
+          return res;
+        })
+        .catch(() => caches.match(req, { ignoreSearch: true }).then(r => r || caches.match('./')))
+    );
+    return;
+  }
+
+  // Static assets: stale-while-revalidate
+  if (url.origin === location.origin || STATIC_HOSTS.includes(url.hostname)) {
+    e.respondWith(
+      caches.open(CACHE).then(cache =>
+        cache.match(req).then(cached => {
+          const fresh = fetch(req)
+            .then(res => {
+              if (res && (res.ok || res.type === 'opaque')) cache.put(req, res.clone());
+              return res;
+            })
+            .catch(() => cached);
+          return cached || fresh;
+        })
+      )
+    );
+  }
+});
   </script>
 </body>
 </html>
