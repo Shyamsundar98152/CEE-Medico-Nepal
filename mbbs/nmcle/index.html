@@ -2068,14 +2068,21 @@
       messagingSenderId: "1024414109225",
       appId: "1:1024414109225:web:7505bbb4a3a9551303d638"
     };
+    let db = null;
     try {
-      if (!firebase.apps.length) {
-        firebase.initializeApp(firebaseConfig);
+      if (window.firebase) {
+        if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
+        db = firebase.database();
       }
     } catch (err) {
       console.error('Firebase initialization error:', err);
     }
-    const db = firebase.database();
+    if (!db) {
+      // Offline / SDK unavailable: inert stub so nothing throws; cached data is used instead
+      const offlineErr = () => Promise.reject(new Error('Offline'));
+      const stubRef = { once: offlineErr, update: offlineErr, set: offlineErr, remove: offlineErr, on() {}, off() {}, push: offlineErr, child() { return stubRef; } };
+      db = { ref: () => stubRef };
+    }
 
     /* ── Constants & State ── */
     const LETTERS = ['A', 'B', 'C', 'D', 'E', 'F'];
@@ -3334,9 +3341,10 @@
     $('open-admin').addEventListener('click', e => { e.preventDefault(); openAdmin(); });
     $('adm-back').addEventListener('click', () => showSection('select'));
     $('adm-filter').addEventListener('change', renderFlags);
-    $('adm-signout').addEventListener('click', () => firebase.auth().signOut());
+    $('adm-signout').addEventListener('click', () => { if (window.firebase) firebase.auth().signOut(); });
     $('adm-signin').addEventListener('click', () => {
       $('adm-err').textContent = '';
+      if (!window.firebase) { $('adm-err').textContent = 'You are offline.'; return; }
       firebase.auth().signInWithEmailAndPassword($('adm-email').value.trim(), $('adm-pass').value)
         .catch(err => { $('adm-err').textContent = err.message; });
     });
@@ -3434,8 +3442,7 @@
         .catch(err => toast('Save failed: ' + err.message, 'error'));
     });
 
-    /* ── Boot ── */
-    loadIndex();
+    /* ── Boot: loadIndex() is invoked by the Offline Layer below ── */
 
     /* ─────────────────────────────────────────────────────────────
        NMCLE Offline Layer
@@ -3608,6 +3615,79 @@
       loadIndex();
       flushFlags();
     })();
+    /* NMCLE service worker – lets the page open & refresh while offline */
+const VERSION = 'nmcle-sw-v1';
+const SHELL = 'shell-' + VERSION;
+const RUNTIME = 'runtime-' + VERSION;
+const SHELL_URLS = ['./', 'index.html'];
+
+// Cross-origin hosts worth caching (fonts, icons, Firebase SDK)
+const CACHEABLE_HOSTS = [
+  'fonts.googleapis.com', 'fonts.gstatic.com',
+  'cdnjs.cloudflare.com', 'www.gstatic.com'
+];
+// Never intercept: live database, auth, ads, analytics
+const SKIP_HOSTS = [
+  'firebasedatabase.app', 'firebaseio.com', 'googleapis.com/identitytoolkit',
+  'securetoken.googleapis.com', 'pagead2.googlesyndication.com',
+  'googletagmanager.com', 'google-analytics.com', 'doubleclick.net'
+];
+
+self.addEventListener('install', e => {
+  e.waitUntil(
+    caches.open(SHELL)
+      .then(c => Promise.allSettled(SHELL_URLS.map(u => c.add(new Request(u, { cache: 'reload' })))))
+      .then(() => self.skipWaiting())
+  );
+});
+
+self.addEventListener('activate', e => {
+  e.waitUntil(
+    caches.keys()
+      .then(keys => Promise.all(keys.filter(k => k !== SHELL && k !== RUNTIME).map(k => caches.delete(k))))
+      .then(() => self.clients.claim())
+  );
+});
+
+const ok = r => r && (r.ok || r.type === 'opaque');
+
+self.addEventListener('fetch', e => {
+  const req = e.request;
+  if (req.method !== 'GET') return;
+  const url = new URL(req.url);
+  if (SKIP_HOSTS.some(h => (url.host + url.pathname).includes(h))) return;
+
+  // Page navigations: network first, fall back to cached page when offline
+  if (req.mode === 'navigate') {
+    e.respondWith(
+      fetch(req).then(res => {
+        if (ok(res)) { const copy = res.clone(); caches.open(SHELL).then(c => c.put('index.html', copy)); }
+        return res;
+      }).catch(async () => {
+        const c = await caches.open(SHELL);
+        return (await c.match('index.html')) || (await c.match('./')) ||
+               (await caches.match(req, { ignoreSearch: true })) ||
+               new Response('Offline', { status: 503, headers: { 'Content-Type': 'text/plain' } });
+      })
+    );
+    return;
+  }
+
+  const sameOrigin = url.origin === self.location.origin;
+  if (!sameOrigin && !CACHEABLE_HOSTS.includes(url.host)) return;
+
+  // Static assets: cache first, refresh in background
+  e.respondWith(
+    caches.open(RUNTIME).then(async cache => {
+      const cached = await cache.match(req);
+      const network = fetch(req).then(res => {
+        if (ok(res)) cache.put(req, res.clone());
+        return res;
+      }).catch(() => null);
+      return cached || (await network) || new Response('', { status: 504 });
+    })
+  );
+});
   </script>
 </body>
 </html>
