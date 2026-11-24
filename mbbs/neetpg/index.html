@@ -1618,6 +1618,13 @@
     .adm-empty{color:var(--text-muted);text-align:center;padding:18px;font-size:.88rem}
     .adm-opt{display:flex;gap:8px;align-items:center;margin-bottom:6px}
     .adm-err{color:var(--danger);font-size:.84rem;margin-top:8px}
+    .flag-reasons{display:flex;flex-direction:column;gap:8px;text-align:left;margin-bottom:14px}
+    .flag-reason-item{display:flex;align-items:center;gap:10px;padding:10px 12px;border:1.5px solid var(--border);border-radius:var(--radius-sm);background:var(--bg-subtle);cursor:pointer;font-size:.88rem;font-weight:600;color:var(--text-main)}
+    .flag-reason-item:has(input:checked){border-color:var(--warning);background:var(--warning-bg)}
+    .flag-reason-item input{accent-color:var(--warning);width:16px;height:16px}
+    .adm-tag-list{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:8px}
+    .adm-tag{font-size:.73rem;font-weight:700;padding:2px 8px;border-radius:99px;background:var(--bg-surface);border:1px solid var(--border);color:var(--text-secondary)}
+    .adm-note{font-size:.82rem;color:var(--text-secondary);background:var(--bg-surface);border-left:3px solid var(--warning);padding:6px 10px;border-radius:4px;margin-bottom:8px}
   </style>
 </head>
 <body>
@@ -1903,6 +1910,14 @@
           <div id="adm-body" style="display:none">
             <div class="adm-bar">
               <div><select id="adm-filter" class="exam-select"><option value="open">Open</option><option value="resolved">Resolved</option><option value="all">All</option></select>
+                <select id="adm-reason-filter" class="exam-select" style="margin-left:6px">
+                  <option value="all">All Flag Types</option>
+                  <option value="wrong_answer">Wrong Answer Key</option>
+                  <option value="typo_question">Typo / Incomplete Question</option>
+                  <option value="explanation_issue">Unclear / Wrong Explanation</option>
+                  <option value="outdated_guideline">Outdated Clinical Guideline</option>
+                  <option value="other">Other</option>
+                </select>
                 <span id="adm-count" style="margin-left:10px;font-size:.84rem;color:var(--text-muted);font-weight:600"></span></div>
               <button type="button" class="btn-ghost" id="adm-signout">Sign out</button>
             </div>
@@ -2018,6 +2033,27 @@
     </div>
   </div>
 
+  <!-- Flag Reason Selection Modal -->
+  <div class="modal-backdrop" id="flag-modal" role="dialog" aria-modal="true" aria-labelledby="flag-modal-title">
+    <div class="modal-card" style="max-width:460px">
+      <div class="modal-icon warn"><i class="fa-solid fa-flag"></i></div>
+      <h3 id="flag-modal-title">Report / Flag Question</h3>
+      <p style="margin-bottom:12px">Select the issue type so our medical faculty can review and update it accurately.</p>
+      <div class="flag-reasons" id="flag-reasons">
+        <label class="flag-reason-item"><input type="radio" name="flag-reason" value="wrong_answer" checked><span>Wrong Answer Key</span></label>
+        <label class="flag-reason-item"><input type="radio" name="flag-reason" value="typo_question"><span>Typo / Incomplete Question or Options</span></label>
+        <label class="flag-reason-item"><input type="radio" name="flag-reason" value="explanation_issue"><span>Unclear / Incorrect Explanation</span></label>
+        <label class="flag-reason-item"><input type="radio" name="flag-reason" value="outdated_guideline"><span>Outdated Clinical / NEET PG Guideline</span></label>
+        <label class="flag-reason-item"><input type="radio" name="flag-reason" value="other"><span>Other Issue</span></label>
+      </div>
+      <textarea id="flag-note" class="adm-in" rows="2" placeholder="Optional note (e.g., Harrison 21st ed. states...)"></textarea>
+      <div class="modal-actions" style="margin-top:14px">
+        <button type="button" class="btn-ghost" id="flag-cancel">Cancel</button>
+        <button type="button" class="btn-primary" id="flag-submit" style="background:var(--warning);color:#1b2d45">Submit Flag</button>
+      </div>
+    </div>
+  </div>
+
   <!-- Admin Edit Modal -->
   <div class="modal-backdrop" id="edit-modal" role="dialog" aria-modal="true">
     <div class="modal-card" style="max-width:640px;width:94%;max-height:90vh;overflow:auto;text-align:left">
@@ -2094,6 +2130,7 @@
     let questions = [];
     let userAnswers = [];
     let flaggedQuestions = [];
+    let flagMetaByIdx = [];
     let eliminatedOptions = [];
     let currentIdx = 0;
     let liveScore = 0;
@@ -2764,6 +2801,7 @@
       currentSetName = label;
       userAnswers = new Array(questions.length).fill(null);
       flaggedQuestions = new Array(questions.length).fill(false);
+      flagMetaByIdx = new Array(questions.length).fill(null);
       eliminatedOptions = questions.map(q => new Array(q.options.length).fill(false));
       currentIdx = 0;
       liveScore = 0;
@@ -2876,9 +2914,43 @@
     }
 
     /* ── Flag & Font Size Controls ── */
+    const FLAG_REASON_LABELS = {
+      wrong_answer: 'Wrong Answer Key',
+      typo_question: 'Typo / Incomplete',
+      explanation_issue: 'Explanation Issue',
+      outdated_guideline: 'Outdated Guideline',
+      other: 'Other'
+    };
+
     btnFlag.addEventListener('click', () => {
-      flaggedQuestions[currentIdx] = !flaggedQuestions[currentIdx];
-      syncFlag(questions[currentIdx], flaggedQuestions[currentIdx]);
+      if (flaggedQuestions[currentIdx]) {
+        flaggedQuestions[currentIdx] = false;
+        flagMetaByIdx[currentIdx] = null;
+        syncFlag(questions[currentIdx], false);
+        renderQuestion();
+        toast('Flag removed.', 'info');
+      } else {
+        $('flag-note').value = '';
+        const firstRadio = document.querySelector('input[name="flag-reason"][value="wrong_answer"]');
+        if (firstRadio) firstRadio.checked = true;
+        $('flag-modal').classList.add('open');
+      }
+    });
+
+    $('flag-cancel').addEventListener('click', () => $('flag-modal').classList.remove('open'));
+    $('flag-modal').addEventListener('click', (e) => {
+      if (e.target === $('flag-modal')) $('flag-modal').classList.remove('open');
+    });
+
+    $('flag-submit').addEventListener('click', () => {
+      const checked = document.querySelector('input[name="flag-reason"]:checked');
+      const reason = checked ? checked.value : 'other';
+      const note = $('flag-note').value.trim();
+      $('flag-modal').classList.remove('open');
+
+      flaggedQuestions[currentIdx] = true;
+      flagMetaByIdx[currentIdx] = { reason, note };
+      syncFlag(questions[currentIdx], true, { reason, note });
       renderQuestion();
     });
 
@@ -3130,7 +3202,7 @@
 
     /* ── Keyboard Shortcuts During Quiz ── */
     document.addEventListener('keydown', (e) => {
-      if (!examActive || examDone || confirmModal.classList.contains('open')) return;
+      if (!examActive || examDone || confirmModal.classList.contains('open') || $('flag-modal').classList.contains('open')) return;
       if (['INPUT', 'TEXTAREA', 'SELECT'].includes(document.activeElement.tagName)) return;
 
       const key = e.key.toUpperCase();
@@ -3191,16 +3263,22 @@
     })();
     const flagId = q => (q._set + '__' + q._k).replace(/[.#$\[\]\/]/g, '_');
 
-    function syncFlag(q, on) {
+    function syncFlag(q, on, meta = {}) {
       if (!q || q._k == null || String(q._set).startsWith('demo')) return;
+      const reason = meta.reason || 'other';
+      const note = (meta.note || '').slice(0, 400);
       const ref = db.ref('neetpg_flags/' + flagId(q));
       if (on) {
         ref.update({
           setKey: q._set, setName: q._setName || '', subject: q._subject || '', qKey: String(q._k),
           question: q.question, options: q._o, correct: q._c, explanation: q.explanation || '',
-          status: 'open', lastFlaggedAt: Date.now()
-        }).then(() => ref.child('reporters/' + CID).set(Date.now()))
-          .then(() => toast('Flag saved for admin review.', 'info'))
+          status: 'open', primaryReason: reason, lastFlaggedAt: Date.now()
+        }).then(() => ref.child('reporters/' + CID).set({
+            at: Date.now(),
+            reason,
+            note
+          }))
+          .then(() => toast(`Flagged (${FLAG_REASON_LABELS[reason] || reason}) for review.`, 'info'))
           .catch(() => toast('Could not sync flag to server.', 'error'));
       } else {
         ref.child('reporters/' + CID).remove()
@@ -3209,6 +3287,7 @@
           .catch(() => {});
       }
     }
+    window.syncFlag = syncFlag;
 
     /* ── Custom Test Builder ── */
     const cbSubjects = new Set(), cbSets = new Set();
@@ -3330,6 +3409,7 @@
     $('open-admin').addEventListener('click', e => { e.preventDefault(); openAdmin(); });
     $('adm-back').addEventListener('click', () => showSection('select'));
     $('adm-filter').addEventListener('change', renderFlags);
+    $('adm-reason-filter').addEventListener('change', renderFlags);
     $('adm-signout').addEventListener('click', () => firebase.auth().signOut());
     $('adm-signin').addEventListener('click', () => {
       $('adm-err').textContent = '';
@@ -3343,7 +3423,7 @@
         $('adm-body').style.display = user ? 'block' : 'none';
         if (flagsRef) { flagsRef.off(); flagsRef = null; }
         if (user) {
-          flagsRef = db.ref('neetpg_flags');
+          flagsRef = db.ref('flags');
           flagsRef.on('value', snap => { flagsData = snap.val() || {}; renderFlags(); },
             err => { $('adm-list').innerHTML = `<p class="adm-empty">${esc(err.message)} — check your database rules.</p>`; });
         }
@@ -3352,9 +3432,31 @@
 
     function renderFlags() {
       const f = $('adm-filter').value;
+      const rf = $('adm-reason-filter').value;
       const rows = Object.entries(flagsData)
-        .map(([id, v]) => ({ id, ...v, n: Object.keys(v.reporters || {}).length, st: v.status || 'open' }))
-        .filter(r => f === 'all' || r.st === f)
+        .map(([id, v]) => {
+          const reps = Object.values(v.reporters || {});
+          const reasons = new Set();
+          const notes = [];
+          reps.forEach(entry => {
+            if (entry && typeof entry === 'object') {
+              if (entry.reason) reasons.add(entry.reason);
+              if (entry.note) notes.push(entry.note);
+            } else if (v.primaryReason) {
+              reasons.add(v.primaryReason);
+            }
+          });
+          if (!reasons.size && v.primaryReason) reasons.add(v.primaryReason);
+          return {
+            id,
+            ...v,
+            n: reps.length,
+            st: v.status || 'open',
+            reasons: [...reasons],
+            notes
+          };
+        })
+        .filter(r => (f === 'all' || r.st === f) && (rf === 'all' || r.reasons.includes(rf)))
         .sort((a, b) => b.n - a.n || (b.lastFlaggedAt || 0) - (a.lastFlaggedAt || 0));
       $('adm-count').textContent = `${rows.length} flagged`;
       $('adm-list').innerHTML = rows.length ? rows.map(r => `
@@ -3366,7 +3468,9 @@
             <span class="adm-badge st-${r.st}">${r.st}</span>
             ${r.lastFlaggedAt ? `<span>${new Date(r.lastFlaggedAt).toLocaleString('en-GB')}</span>` : ''}
           </div>
+          ${r.reasons.length ? `<div class="adm-tag-list">${r.reasons.map(code => `<span class="adm-tag">${esc(FLAG_REASON_LABELS[code] || code)}</span>`).join('')}</div>` : ''}
           <div class="adm-q">${esc(r.question)}</div>
+          ${r.notes.length ? r.notes.map(nt => `<div class="adm-note"><i class="fa-regular fa-comment-dots"></i> ${esc(nt)}</div>`).join('') : ''}
           <div class="adm-act">
             <button type="button" class="btn-primary" data-act="edit" data-id="${esc(r.id)}"><i class="fas fa-pen"></i> Edit</button>
             <button type="button" class="btn-ghost" data-act="toggle" data-id="${esc(r.id)}">${r.st === 'open' ? 'Mark resolved' : 'Reopen'}</button>
@@ -3382,13 +3486,13 @@
       if (!r) return;
       if (b.dataset.act === 'edit') openEdit(id);
       else if (b.dataset.act === 'toggle') {
-        db.ref('neetpg_flags/' + id).update({ status: (r.status || 'open') === 'open' ? 'resolved' : 'open', resolvedAt: Date.now() })
+        db.ref('flags/' + id).update({ status: (r.status || 'open') === 'open' ? 'resolved' : 'open', resolvedAt: Date.now() })
           .catch(err => toast(err.message, 'error'));
       } else if (b.dataset.act === 'del') {
         openConfirmModal({
           title: 'Delete this flag?', desc: 'The flag record will be removed. The question itself is not changed.',
           confirmLabel: 'Delete', cancelLabel: 'Cancel', type: 'danger',
-          onConfirm: () => db.ref('neetpg_flags/' + id).remove().catch(err => toast(err.message, 'error'))
+          onConfirm: () => db.ref('flags/' + id).remove().catch(err => toast(err.message, 'error'))
         });
       }
     });
@@ -3419,7 +3523,7 @@
       const upd = { question, options, correct: +checked.value, explanation: $('ed-exp').value.trim() };
       const ctx = editCtx;
       db.ref(ctx.path).update(upd)
-        .then(() => $('ed-resolve').checked ? db.ref('neetpg_flags/' + ctx.id).update({ status: 'resolved', resolvedAt: Date.now() }) : null)
+        .then(() => $('ed-resolve').checked ? db.ref('flags/' + ctx.id).update({ status: 'resolved', resolvedAt: Date.now() }) : null)
         .then(() => {
           const set = allSets.find(s => s.key === ctx.setKey);
           const q = set && set.questions.find(x => String(x._k) === String(ctx.qKey));
@@ -3585,11 +3689,11 @@
       const writeQ = q => { try { localStorage.setItem(QKEY, JSON.stringify(q)); } catch {} };
 
       const originalSyncFlag = window.syncFlag;
-      window.syncFlag = function (q, on) {
-        if (navigator.onLine) return originalSyncFlag(q, on);
+      window.syncFlag = function (q, on, meta = {}) {
+        if (navigator.onLine) return originalSyncFlag(q, on, meta);
         const queue = readQ().filter(x => !(x.q._set === q._set && x.q._k === q._k));
         queue.push({ q: { _set: q._set, _k: q._k, _setName: q._setName, _subject: q._subject,
-          question: q.question, _o: q._o, _c: q._c, explanation: q.explanation }, on });
+          question: q.question, _o: q._o, _c: q._c, explanation: q.explanation }, on, meta });
         writeQ(queue);
         toast('Flag saved offline — will sync when online.', 'info');
       };
@@ -3598,7 +3702,7 @@
         const queue = readQ();
         if (!queue.length) return;
         writeQ([]);
-        queue.forEach(({ q, on }) => originalSyncFlag(q, on));
+        queue.forEach(({ q, on, meta }) => originalSyncFlag(q, on, meta || {}));
       }
 
       loadIndex();
